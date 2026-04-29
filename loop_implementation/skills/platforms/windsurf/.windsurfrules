@@ -1,0 +1,62 @@
+# Windsurf / Codeium rules — Loop project
+
+## Project context
+
+You are working on **Loop**, an open-source, agent-first, cloud-agnostic runtime for production AI agents.
+
+- Strategic spec: `botpress_competitor_spec.md`
+- Implementation docs: `loop_implementation/`
+
+## Always read before any task
+
+1. `loop_implementation/AGENTS.md`
+2. `loop_implementation/skills/_base/SKILL_ROUTER.md`
+3. `loop_implementation/engineering/GLOSSARY.md`
+4. `loop_implementation/architecture/ARCHITECTURE.md`
+
+Use the SKILL_ROUTER's Task → Skill table to pick the specific skill, then read it and follow its Steps.
+
+## Hard rules
+
+1. **Cloud portability**: no cloud SDK imports in `packages/runtime/`, `packages/gateway/`, `packages/sdk-py/`, `packages/channels/`. Use abstractions from `architecture/CLOUD_PORTABILITY.md` §4.
+2. **Tenant isolation**: Postgres RLS; cross-tenant negative test.
+3. **Docs with code**: schema/ADR/architecture/API in the SAME PR.
+4. **Conventional Commits** for PR titles.
+5. **Errors carry `LOOP-XX-NNN` codes**.
+6. **OTel span** on every async op.
+7. **Secrets**: Vault only.
+8. **Eval-gating** for runtime PRs.
+9. **Perf budgets** on hot paths.
+
+## Style
+
+- Python: ruff + pyright strict; asyncio; Pydantic v2; structlog.
+- TypeScript: biome strict; named exports; TanStack Query; Tailwind + shadcn/ui.
+- Go: cobra + viper; wrapped errors; no global state.
+- SQL: snake_case; `workspace_id NOT NULL` + RLS.
+
+## Forbidden
+
+- Cloud SDK imports in forbidden packages.
+- Editing `LICENSE`, release workflow, xlsx tracker, parent's `.docx`/`.pptx`.
+- Hard-coded concrete cloud regions in code.
+- Token markup > 5%.
+- Cross-workspace cache keys / shared sandboxes / cross-tenant queries.
+
+## Tracker lifecycle (mandatory)
+
+Every PR has:
+- FIRST commit: `chore(tracker): claim S0NN` (status `In progress` + Owner).
+- LAST commit: `chore(tracker): close S0NN` (status `Done` + `PR #<n>` in notes).
+
+Apply `skills/meta/update-tracker.md` for both phases. PRs without these commits are rejected.
+
+## Available skills (forty)
+
+See `loop_implementation/skills/README.md`. Categories: meta · architecture · coding · data · api · security · testing · observability · ux · ops · devrel.
+
+End every task with `meta/write-pr.md`.
+
+## Apply COPY_GUIDE for user-facing strings
+
+Lead with the verb. Concrete > abstract. No "Awesome!", "Whoops!", "synergy". See `engineering/COPY_GUIDE.md`.

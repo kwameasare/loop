@@ -1,0 +1,193 @@
+# Loop — Implementation Tracker (Markdown view)
+
+**Generated from** `IMPLEMENTATION_TRACKER.xlsx` — keep both in sync.  
+**Format-friendliness:** this `.md` is the canonical AI-readable view; `.xlsx` is for humans, `.json`/CSVs for machines.
+
+---
+
+## Epics
+
+| ID | Epic | Owner | Target milestone | Status | Stories total | Stories done | % complete | Notes |
+|---|---|---|---|---|---|---|---|---|
+| E1 | Agent runtime core | Eng #1 | MVP M6 | In progress |  |  |  | Hot path: TurnExecutor, streaming, budgets, idempotency |
+| E2 | LLM Gateway | Eng #1 | MVP M6 | Not started |  |  |  | Multi-provider, semantic cache, cost accounting |
+| E3 | MCP / Tool layer | Eng #1 | MVP M6 | Not started |  |  |  | Auto-MCP, Firecracker sandboxes, allow-lists |
+| E4 | Memory tiers | Eng #1 | MVP M6 | Not started |  |  |  | User/session/scratch + episodic at M7 |
+| E5 | KB / RAG engine | Eng #1 | MVP M6 | Not started |  |  |  | PDF/web/Notion + hybrid retrieval + vision |
+| E6 | Channel adapters | Eng #7 | Rolling | Not started |  |  |  | Web, Slack, WhatsApp, SMS first |
+| E7 | Voice subsystem | Eng #3 | MVP M6 | Not started |  |  |  | WebRTC + STT + TTS + barge-in. Sub-700ms p50 |
+| E8 | Eval harness | Eng #4 | MVP M6 | Not started |  |  |  | 8 scorers, replay, registry |
+| E9 | Observability backend | Eng #4 | MVP M6 | Not started |  |  |  | OTel + ClickHouse + Studio dashboards |
+| E10 | Studio (UI) | Eng #5 | MVP M6 | Not started |  |  |  | Conversations, traces, replay, costs |
+| E11 | CLI & SDKs | Eng #1+5 | MVP M6 | Not started |  |  |  | Python core, Go CLI; TS gen later |
+| E12 | Cloud control plane | Eng #2 | MVP M6 | Not started |  |  |  | Auth, billing, deploy, multi-tenant |
+| E13 | Self-host (docker-compose + Helm) | Eng #2 | M7 | Not started |  |  |  | Compose at MVP, Helm at M7 |
+| E14 | Multi-agent orchestration | Eng #1 | M9 | Not started |  |  |  | Supervisor, Pipeline, Parallel, AgentGraph |
+| E15 | HITL / Operator inbox | Eng #5 | M7 | Not started |  |  |  | Takeover, shared inbox, CRM connectors |
+| E16 | Security & compliance (SOC2 Type 1) | Sec eng | M12 | Not started |  |  |  | Vanta, audit log, RLS, KMS |
+| E17 | Docs site & DevRel | Eng #6 | Rolling | Not started |  |  |  | Quickstart, API ref, examples |
+| E18 | MCP marketplace | Eng #6 | M6 | Not started |  |  |  | 25 servers at MVP, 200 by M12 |
+| E19 | Pricing & billing | Eng #2 | M6 | Not started |  |  |  | Stripe + 3-meter + cap rules |
+| E20 | Enterprise (SSO, audit UI, on-prem parity) | Eng #2+sec | M12 | Not started |  |  |  | SAML, residency, BYOK |
+
+
+## Stories
+
+| ID | Story | Owner | Sprint | Epic | Estimate (pts) | Priority | Status | Notes |
+|---|---|---|---|---|---|---|---|---|
+| S001 | Repo init, CI skeleton, branch protection, CODEOWNERS | CTO | S0 | E12 | 3 | P0 | Not started | Week 1 |
+| S002 | Cloud accounts (chosen launch cloud — see CLOUD_PORTABILITY.md), Auth0 dev tenant, Stripe test, Sentry, Linear, PagerDuty | CTO | S0 | E12 | 5 | P0 | Not started | Week 1 |
+| S003 | docker-compose: Postgres, Redis, Qdrant, NATS, MinIO, ClickHouse, OTel | Eng #2 | S0 | E13 | 5 | P0 | Not started | Week 1 |
+| S004 | Runtime package skeleton; AgentEvent/AgentResponse/Turn types | Eng #1 | S0 | E1 | 5 | P0 | Not started | Week 1 |
+| S005 | Studio Next.js skeleton + shadcn/ui + Tailwind | Eng #5 | S0 | E10 | 3 | P0 | Not started | Week 1 |
+| S006 | Postgres migrations: control plane + data plane core tables | Eng #2 | S0 | E12 | 5 | P0 | Not started | Week 2 |
+| S007 | LLM Gateway client: streaming OpenAI + Anthropic | Eng #1 | S0 | E2 | 8 | P0 | Not started | Week 2 |
+| S008 | TurnExecutor reasoning loop v0 (no tools yet) | Eng #1 | S0 | E1 | 8 | P0 | Not started | Week 2 |
+| S009 | OTel collector wired; first span exported to ClickHouse | Eng #4 | S0 | E9 | 5 | P0 | Not started | Week 2 |
+| S010 | Studio agents-list page (read from cp-api) | Eng #5 | S0 | E10 | 3 | P1 | Not started | Week 2 |
+| S011 | MCP client; auto-MCP decorator for Python functions | Eng #1 | S0 | E3 | 8 | P0 | Not started | Week 3 |
+| S012 | Multi-iteration reasoning loop with parallel tool dispatch | Eng #1 | S0 | E1 | 5 | P0 | Not started | Week 3 |
+| S013 | Memory loader/persister (user + session) | Eng #1 | S0 | E4 | 5 | P0 | Not started | Week 3 |
+| S014 | Firecracker via Kata k8s runtime class + prewarmed pool | Eng #2 | S0 | E3 | 8 | P0 | Not started | Week 3 |
+| S015 | KB engine v0: PDF ingest, Qdrant write, hybrid retrieval | Eng #4 | S0 | E5 | 8 | P0 | Not started | Week 3 |
+| S016 | Voice pipeline PoC (LiveKit + Deepgram + ElevenLabs) | Eng #3 | S0 | E7 | 5 | P1 | Not started | Week 3 |
+| S017 | Channel layer abstraction; web channel adapter (REST + SSE) | Eng #1 | S0 | E6 | 5 | P0 | Not started | Week 4 |
+| S018 | Slack channel adapter (Block Kit, slash command, threaded) | Eng #1 | S0 | E6 | 5 | P0 | Not started | Week 4 |
+| S019 | cp-api: Auth0 OIDC, workspace mgmt, API keys | Eng #2 | S0 | E12 | 8 | P0 | Not started | Week 4 |
+| S020 | Deploy controller v0: artifact → image → k8s | Eng #2 | S0 | E12 | 8 | P0 | Not started | Week 4 |
+| S021 | Eval harness skeleton: 6 scorers + `loop eval run` | Eng #4 | S0 | E8 | 8 | P0 | Not started | Week 4 |
+| S022 | Studio: trace waterfall + span detail tabs | Eng #5 | S0 | E10 | 8 | P0 | Not started | Week 4 |
+| S023 | WhatsApp channel adapter (Cloud API direct) | Eng #1 | S0 | E6 | 8 | P0 | Not started | Week 5 |
+| S024 | Streaming SSE: tool_call_start/end events on the wire | Eng #1 | S0 | E1 | 3 | P1 | Not started | Week 5 |
+| S025 | Stripe billing wire-up (test); usage rollup nightly job | Eng #2 | S0 | E19 | 5 | P0 | Not started | Week 5 |
+| S026 | Eval harness: production-replay capture (failed turns) | Eng #4 | S0 | E8 | 5 | P1 | Not started | Week 5 |
+| S027 | Studio: cost dashboard v0 (workspace MTD + per-agent) | Eng #5 | S0 | E10 | 5 | P0 | Not started | Week 5 |
+| S028 | Examples repo: support_agent + docs site v0 | Eng #6 | S0 | E17 | 5 | P0 | Not started | Week 5 |
+| S029 | Hard caps + graceful degrade; budget pre-flight at gateway | Eng #1 | S0 | E2 | 5 | P0 | Not started | Week 6 |
+| S030 | HITL takeover endpoint + operator inbox queue | Eng #1 | S0 | E15 | 5 | P1 | Not started | Week 6 |
+| S031 | Eval-gated deploy: block prod promotion on regression | Eng #4 | S0 | E8 | 5 | P0 | Not started | Week 6 |
+| S032 | Studio: operator inbox MVP (queue + takeover + composer) | Eng #5 | S0 | E15 | 8 | P1 | Not started | Week 6 |
+| S033 | Voice MVP: web-RTC echo agent end-to-end | Eng #3 | S0 | E7 | 8 | P0 | Not started | Week 6 |
+| S034 | First 3 design partners onboarded; weekly office hour | CEO | S0 | E17 | 3 | P0 | Not started | Week 6 |
+| S035 | Episodic memory (Qdrant collection + auto-summarize) | Eng #1 | S1 | E4 | 8 | P1 | Not started | M7 |
+| S036 | Helm chart for self-host with feature parity goal | Eng #2 | S1 | E13 | 13 | P0 | Not started | M7 |
+| S037 | Email channel via SES; Telegram channel | Eng #7 | S1 | E6 | 8 | P1 | Not started | M7 |
+| S038 | Multi-agent v0: Supervisor + Pipeline patterns | Eng #1 | S1 | E14 | 13 | P1 | Not started | M7 |
+| S039 | TS SDK auto-gen from Pydantic types | Eng #5 | S1 | E11 | 8 | P1 | Not started | M8 |
+| S040 | Discord + Teams channels | Eng #7 | S1 | E6 | 8 | P2 | Not started | M8 |
+| S041 | Replay/time-travel debugging in Studio | Eng #5 | S1 | E10 | 8 | P1 | Not started | M8 |
+| S042 | Multi-agent GA: Parallel + AgentGraph (cyclic) | Eng #1 | S1 | E14 | 13 | P0 | Not started | M9 |
+| S043 | Public eval registry (community suites) | Eng #4 | S1 | E8 | 8 | P1 | Not started | M9 |
+| S044 | Series A fundraise narrative + data room | CEO | S1 | — | 5 | P0 | Not started | M9 |
+| S045 | EU region (`eu-west`) deploy on chosen cloud (cloud-agnostic) | Eng #2 | S1 | E12 | 13 | P0 | Not started | M10 |
+| S046 | SOC2 Type 1 kickoff with Vanta | Sec eng | S1 | E16 | 13 | P0 | Not started | M10 |
+| S047 | Salesforce + Zendesk first-party MCP servers | Eng #6 | S1 | E18 | 13 | P1 | Not started | M10 |
+| S048 | Voice latency push to ≤700ms p50 | Eng #3 | S1 | E7 | 13 | P0 | Not started | M11 |
+| S049 | Phone number provisioning at the Loop layer | Eng #3 | S1 | E7 | 8 | P1 | Not started | M11 |
+| S050 | Enterprise GA: SSO/SAML, audit log UI, on-prem parity | Eng #2 | S1 | E20 | 13 | P0 | Not started | M12 |
+
+
+## Sprints
+
+| Sprint | Window | Theme | Goal | Stories | Total points | Status |  |
+|---|---|---|---|---|---|---|---|
+| S0 | Wk 1–6 | Bootstrap | Local stack + first turn + first deploy + 3 design partners onboarded | S001-S034 |  | Not started |  |
+| S1 | Wk 7–8 | Episodic memory + Helm | Episodic memory; helm chart; email + telegram; multi-agent v0 | S035-S038 |  | Not started |  |
+| S2 | Wk 9–10 | TS SDK + Discord/Teams + replay | TS SDK GA; Discord + Teams; replay debugging in Studio | S039-S041 |  | Not started |  |
+| S3 | Wk 11–12 | Multi-agent GA + eval registry + Series A | Parallel + AgentGraph; public eval registry; Series A narrative | S042-S044 |  | Not started |  |
+| S4 | Wk 13–14 | EU region + SOC2 kickoff | Deploy `eu-west` (cloud-agnostic); Vanta; Salesforce + Zendesk MCP | S045-S047 |  | Not started |  |
+| S5 | Wk 15–16 | Voice latency + phone provisioning | Voice ≤700ms; phone number provisioning | S048-S049 |  | Not started |  |
+| S6 | Wk 17–18 | Enterprise GA | SSO/SAML, audit UI, on-prem parity, SOC2 Type 1 done | S050 |  | Not started |  |
+
+
+## Hiring plan
+
+| # | Role | Why first | Start month | Stage | Owner | Notes |  |
+|---|---|---|---|---|---|---|---|
+| 1 | Founding engineer — Runtime (Python core) | Owns the agent loop. Senior, opinionated. | M0 | Searching | CTO | Bar: shipped a high-throughput Python service before |  |
+| 2 | Founding engineer — Infra / Platform | Postgres, Redis, NATS, k8s, Terraform. Builds data plane. | M0 | Searching | CTO | Bar: production k8s, observability |  |
+| 3 | Founding engineer — Voice / Real-time | WebRTC, STT/TTS, latency. The voice moat. | M0 | Pipeline | CTO | Bar: ≤500ms voice in prod |  |
+| 4 | Founding engineer — Observability + Eval harness | ClickHouse, OTel, eval scorers. The other moat. | M1 | Pipeline | CTO | Bar: scaled tracing/eval system before |  |
+| 5 | Founding engineer — Full-stack / Studio | Next.js, React, tRPC. Debugger UI. | M1 | Pipeline | CTO | Bar: shipped a polished web app to GA |  |
+| 6 | DevRel / Docs engineer | Examples, blog, docs, MCP server contributions. OSS adoption. | M3 | Pipeline | CEO | Critical for community velocity |  |
+| 7 | Senior engineer — Channel integrations | WhatsApp, Slack, Teams, email. Compounding work. | M3 | Pipeline | CTO | Bar: 3+ external API integrations |  |
+| 8 | Security / Compliance engineer | SOC2, HIPAA-readiness, audit logs, secrets. Unlocks enterprise. | M5 | Searching | CTO | Bar: led SOC2 effort end-to-end |  |
+
+
+## Risks register
+
+| ID | Risk | Likelihood | Severity | Owner | Mitigation | Status |  |
+|---|---|---|---|---|---|---|---|
+| R1 | Frontier-lab SDKs (OpenAI Agents, Claude Agent) eat the category | Med | High | CEO | Be the agnostic Switzerland. Run on every provider. Own observability + evals + voice as differentiators. | Watching |  |
+| R2 | MCP standard fragments (OpenAI/Google compete) | Low | Med | Eng #1 | MCP-first but adapter-flexible; can speak OpenAI tool format too. | Watching |  |
+| R3 | Voice latency target (≤700ms p50) misses | Med | High | Eng #3 | Schedule slip is acceptable; ship voice at M7 instead of MVP. Edge POPs + warm pool. | Watching |  |
+| R4 | Hire #1 (runtime) takes >60 days to fill | Med | High | CTO | CTO writes first-draft TurnExecutor; new hire inherits. Multiple parallel candidates. | Active |  |
+| R5 | Botpress closes the gap (voice + MCP + true OSS in 12mo) | Low | Med | CEO | Architecture mid-pivot makes this unlikely. We move faster on each axis. | Watching |  |
+| R6 | Runtime engineering complexity (async + streaming + sandboxes) | Med | High | Eng #1 | Hire bar #1 must be exceptional. Sprint 0 establishes a working baseline. | Active |  |
+| R7 | Compliance burden (SOC2, HIPAA) blocks enterprise revenue | Med | High | Sec eng | Vanta day 1. Hire sec eng by M5. SOC2 Type 1 by M12. | Watching |  |
+| R8 | OSS license arbitrage (hyperscaler offers managed Loop) | Low | Med | CEO | Apache 2.0 accepts the risk; brand + control plane + network effects are the moat. | Watching |  |
+| R9 | Eval harness over-promises; teams don't adopt | Med | Med | Eng #4 | `loop eval init` scaffolds from production replay automatically. Public registry seeds value. | Watching |  |
+| R10 | Cost overruns on infra (LLM, ClickHouse, voice POPs) | Med | Med | CTO | Budget caps + monthly review. Negotiate annual commits with providers post-Series A. | Watching |  |
+| R11 | Channel provider terms change (Meta WhatsApp policies) | High | Low | Eng #7 | Multi-BSP support; document fallback path; surface channel cost on invoice. | Watching |  |
+| R12 | Studio scope creep (users want a flow editor) | Med | Low | Eng #5 | Politely decline. Code-first is the wedge. Optional read-only DAG view at M9. | Active |  |
+
+
+## 12-month roadmap
+
+| Month | Milestone | Key deliverables | Status |  |  |  |  |
+|---|---|---|---|---|---|---|---|
+| M0 | Hire + scope | Hire engineers 1–4; tech-stack lock-in; runtime + SDK started | Not started |  |  |  |  |
+| M1 | Runtime alpha | Python SDK skeleton; LLM gateway w/ OpenAI + Anthropic; Slack channel | Not started |  |  |  |  |
+| M2 | Tools + KB | Tool/MCP layer; auto-MCP; KB ingestion v0; web widget | Not started |  |  |  |  |
+| M3 | Eval + cloud | Eval harness v0 (6 scorers); CLI v0; cloud control plane (auth, deploy) | Not started |  |  |  |  |
+| M4 | Closed alpha | 10 design partners; WhatsApp; Studio v0 (conversations + traces) | Not started |  |  |  |  |
+| M5 | Voice MVP | Voice channel MVP; memory tiers; cost dashboard | Not started |  |  |  |  |
+| M6 | Public beta | OSS the runtime (Apache 2.0); Hub v0; free hobby tier; PUBLIC BETA | Not started |  |  |  |  |
+| M7 | Episodic + helm | Episodic memory; Helm chart; email + Telegram; multi-agent primitives v0 | Not started |  |  |  |  |
+| M8 | TS SDK + replay | TS SDK GA; Discord + Teams; replay/time-travel debugging | Not started |  |  |  |  |
+| M9 | Multi-agent GA | Multi-agent GA (Graph, Parallel, Blackboard); public eval registry; Series A | Not started |  |  |  |  |
+| M10 | EU + SOC2 | EU region (`eu-west`, cloud-agnostic); SOC2 Type 1 kickoff; Salesforce + Zendesk MCP | Not started |  |  |  |  |
+| M11 | Voice latency | Voice ≤700ms p50; phone-number provisioning; RCS | Not started |  |  |  |  |
+| M12 | Enterprise GA | SSO/SAML, audit logs, on-prem parity, SOC2 Type 1 done; ENTERPRISE GA | Not started |  |  |  |  |
+
+
+## Budgets & metrics
+
+**Performance budgets**
+
+| Metric | Target | Owner |  |  |  |  |  |
+|---|---|---|---|---|---|---|---|
+| Voice latency p50 (end-to-end) | ≤ 700 ms | Eng #3 |  |  |  |  |  |
+| Chat first-token p50 | ≤ 600 ms | Eng #1 |  |  |  |  |  |
+| Chat p99 | ≤ 2000 ms | Eng #1 |  |  |  |  |  |
+| API availability (Pro/Team) | 99.9% | Eng #2 |  |  |  |  |  |
+| API availability (Enterprise) | 99.95% | Eng #2 |  |  |  |  |  |
+| Trace ingestion lag | ≤ 5 s | Eng #4 |  |  |  |  |  |
+| Cold start (warm pool) | 0 (not user-visible) | Eng #2 |  |  |  |  |  |
+| Deploy time (push → live) | ≤ 60 s | Eng #2 |  |  |  |  |  |
+| Eval suite of 100 cases | ≤ 90 s | Eng #4 |  |  |  |  |  |
+
+
+**Unit-economics targets**
+
+| Metric | Target | Notes |  |  |  |  |  |
+|---|---|---|---|---|---|---|---|
+| Gross margin | 75% | LLM ~95% on 5%, compute ~70%, storage ~85% |  |  |  |  |  |
+| LTV : CAC | ≥ 3 : 1 by month 18 | Bottom-up PLG with sales-led at the top |  |  |  |  |  |
+| ARR per FTE (by M24) | $300K | Industry P75 for OSS/PLG infra |  |  |  |  |  |
+| LLM token markup | 5%, fully disclosed | Trust commitment |  |  |  |  |  |
+| Hard-cap behavior | Graceful degrade, never drop | Trust commitment |  |  |  |  |  |
+
+
+## Quick links (from Overview sheet)
+
+- **Architecture** — `loop_implementation/architecture/ARCHITECTURE.md`
+- **Data model** — `loop_implementation/data/SCHEMA.md`
+- **API spec** — `loop_implementation/api/openapi.yaml`
+- **ADRs** — `loop_implementation/adrs/README.md`
+- **UX/UI** — `loop_implementation/ux/UX_DESIGN.md`
+- **Engineering handbook** — `loop_implementation/engineering/HANDBOOK.md`
+- **Security** — `loop_implementation/engineering/SECURITY.md`
+- **Testing** — `loop_implementation/engineering/TESTING.md`
+- **Sprint 0 plan** — `loop_implementation/tracker/SPRINT_0.md`
+- **Master spec** — `botpress_competitor_spec.md`

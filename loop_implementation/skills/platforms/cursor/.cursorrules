@@ -1,0 +1,66 @@
+# Cursor rules — Loop project (legacy single-file format)
+
+## Project context
+
+You are working on **Loop**, an open-source, agent-first, cloud-agnostic runtime for production AI agents.
+
+- Strategic spec: `botpress_competitor_spec.md`
+- Implementation docs: `loop_implementation/`
+
+## Always read before any task
+
+1. `loop_implementation/AGENTS.md`
+2. `loop_implementation/skills/_base/SKILL_ROUTER.md`
+3. `loop_implementation/engineering/GLOSSARY.md`
+4. `loop_implementation/architecture/ARCHITECTURE.md`
+
+For any specific task, find the matching skill in `loop_implementation/skills/_base/SKILL_ROUTER.md` Task → Skill table, open the skill file, read its `required_reading`, and follow its Steps.
+
+## Hard rules
+
+1. **Cloud portability**: never import a cloud SDK from `packages/runtime/`, `packages/gateway/`, `packages/sdk-py/`, or `packages/channels/`. Use abstractions from `architecture/CLOUD_PORTABILITY.md` §4.
+2. **Tenant isolation**: every DB-touching change respects Postgres RLS; every test includes a cross-tenant negative case.
+3. **Docs with code**: schema/ADR/architecture/API changes are in the SAME PR as the code.
+4. **Conventional Commits** for PR titles.
+5. **Errors carry codes** per `engineering/ERROR_CODES.md`.
+6. **OTel span** on every async op.
+7. **Secrets**: Vault only.
+8. **Eval-gating** for runtime PRs.
+9. **Perf budgets** on hot paths.
+
+## Style
+
+- Python: ruff + pyright strict; asyncio; Pydantic v2; structlog; `from __future__ import annotations`.
+- TypeScript: biome strict; named exports; TanStack Query; Tailwind + shadcn/ui.
+- Go: cobra + viper; wrapped errors; no global state.
+- SQL: snake_case; `workspace_id NOT NULL` + RLS on tenanted tables.
+
+## Forbidden
+
+- Cloud SDK imports in forbidden packages.
+- Editing `LICENSE`, `.github/workflows/release.yml`, the xlsx tracker (regenerate from `tools/build_tracker.py`), or parent folder's `.docx`/`.pptx`.
+- Hard-coded `us-east-1` or other concrete cloud regions in code.
+- Marking up LLM tokens beyond 5%.
+- Cross-workspace cache keys, shared sandboxes, cross-tenant queries.
+
+## Tracker lifecycle (mandatory)
+
+Every PR contains:
+- **First commit:** `chore(tracker): claim S0NN` (status `In progress` + Owner). Apply `skills/meta/update-tracker.md` BEFORE phase.
+- **Last commit:** `chore(tracker): close S0NN` (status `Done` + `PR #<n>` in notes). Apply AFTER phase.
+
+PRs without tracker claim+close commits are rejected.
+
+## Available skills (forty)
+
+See `loop_implementation/skills/README.md` for the full catalog. Categories:
+meta · architecture · coding · data · api · security · testing · observability · ux · ops · devrel.
+
+Always end with `meta/write-pr.md` to open the PR correctly.
+
+## Communication
+
+- Concrete > abstract. Numbers > vibes.
+- Apply `engineering/COPY_GUIDE.md` for any user-facing string.
+- Lead with the verb.
+- No marketing voice in errors.

@@ -1,0 +1,53 @@
+Stories,,,,,,,,
+Sprint-sized work items. Map back to an Epic via the Epic column.,,,,,,,,
+ID,Story,Owner,Sprint,Epic,Estimate (pts),Priority,Status,Notes
+S001,"Repo init, CI skeleton, branch protection, CODEOWNERS",CTO,S0,E12,3,P0,Not started,Week 1
+S002,"Cloud accounts (chosen launch cloud — see CLOUD_PORTABILITY.md), Auth0 dev tenant, Stripe test, Sentry, Linear, PagerDuty",CTO,S0,E12,5,P0,Not started,Week 1
+S003,"docker-compose: Postgres, Redis, Qdrant, NATS, MinIO, ClickHouse, OTel",Eng #2,S0,E13,5,P0,Not started,Week 1
+S004,Runtime package skeleton; AgentEvent/AgentResponse/Turn types,Eng #1,S0,E1,5,P0,Not started,Week 1
+S005,Studio Next.js skeleton + shadcn/ui + Tailwind,Eng #5,S0,E10,3,P0,Not started,Week 1
+S006,Postgres migrations: control plane + data plane core tables,Eng #2,S0,E12,5,P0,Not started,Week 2
+S007,LLM Gateway client: streaming OpenAI + Anthropic,Eng #1,S0,E2,8,P0,Not started,Week 2
+S008,TurnExecutor reasoning loop v0 (no tools yet),Eng #1,S0,E1,8,P0,Not started,Week 2
+S009,OTel collector wired; first span exported to ClickHouse,Eng #4,S0,E9,5,P0,Not started,Week 2
+S010,Studio agents-list page (read from cp-api),Eng #5,S0,E10,3,P1,Not started,Week 2
+S011,MCP client; auto-MCP decorator for Python functions,Eng #1,S0,E3,8,P0,Not started,Week 3
+S012,Multi-iteration reasoning loop with parallel tool dispatch,Eng #1,S0,E1,5,P0,Not started,Week 3
+S013,Memory loader/persister (user + session),Eng #1,S0,E4,5,P0,Not started,Week 3
+S014,Firecracker via Kata k8s runtime class + prewarmed pool,Eng #2,S0,E3,8,P0,Not started,Week 3
+S015,"KB engine v0: PDF ingest, Qdrant write, hybrid retrieval",Eng #4,S0,E5,8,P0,Not started,Week 3
+S016,Voice pipeline PoC (LiveKit + Deepgram + ElevenLabs),Eng #3,S0,E7,5,P1,Not started,Week 3
+S017,Channel layer abstraction; web channel adapter (REST + SSE),Eng #1,S0,E6,5,P0,Not started,Week 4
+S018,"Slack channel adapter (Block Kit, slash command, threaded)",Eng #1,S0,E6,5,P0,Not started,Week 4
+S019,"cp-api: Auth0 OIDC, workspace mgmt, API keys",Eng #2,S0,E12,8,P0,Not started,Week 4
+S020,Deploy controller v0: artifact → image → k8s,Eng #2,S0,E12,8,P0,Not started,Week 4
+S021,Eval harness skeleton: 6 scorers + `loop eval run`,Eng #4,S0,E8,8,P0,Not started,Week 4
+S022,Studio: trace waterfall + span detail tabs,Eng #5,S0,E10,8,P0,Not started,Week 4
+S023,WhatsApp channel adapter (Cloud API direct),Eng #1,S0,E6,8,P0,Not started,Week 5
+S024,Streaming SSE: tool_call_start/end events on the wire,Eng #1,S0,E1,3,P1,Not started,Week 5
+S025,Stripe billing wire-up (test); usage rollup nightly job,Eng #2,S0,E19,5,P0,Not started,Week 5
+S026,Eval harness: production-replay capture (failed turns),Eng #4,S0,E8,5,P1,Not started,Week 5
+S027,Studio: cost dashboard v0 (workspace MTD + per-agent),Eng #5,S0,E10,5,P0,Not started,Week 5
+S028,Examples repo: support_agent + docs site v0,Eng #6,S0,E17,5,P0,Not started,Week 5
+S029,Hard caps + graceful degrade; budget pre-flight at gateway,Eng #1,S0,E2,5,P0,Not started,Week 6
+S030,HITL takeover endpoint + operator inbox queue,Eng #1,S0,E15,5,P1,Not started,Week 6
+S031,Eval-gated deploy: block prod promotion on regression,Eng #4,S0,E8,5,P0,Not started,Week 6
+S032,Studio: operator inbox MVP (queue + takeover + composer),Eng #5,S0,E15,8,P1,Not started,Week 6
+S033,Voice MVP: web-RTC echo agent end-to-end,Eng #3,S0,E7,8,P0,Not started,Week 6
+S034,First 3 design partners onboarded; weekly office hour,CEO,S0,E17,3,P0,Not started,Week 6
+S035,Episodic memory (Qdrant collection + auto-summarize),Eng #1,S1,E4,8,P1,Not started,M7
+S036,Helm chart for self-host with feature parity goal,Eng #2,S1,E13,13,P0,Not started,M7
+S037,Email channel via SES; Telegram channel,Eng #7,S1,E6,8,P1,Not started,M7
+S038,Multi-agent v0: Supervisor + Pipeline patterns,Eng #1,S1,E14,13,P1,Not started,M7
+S039,TS SDK auto-gen from Pydantic types,Eng #5,S1,E11,8,P1,Not started,M8
+S040,Discord + Teams channels,Eng #7,S1,E6,8,P2,Not started,M8
+S041,Replay/time-travel debugging in Studio,Eng #5,S1,E10,8,P1,Not started,M8
+S042,Multi-agent GA: Parallel + AgentGraph (cyclic),Eng #1,S1,E14,13,P0,Not started,M9
+S043,Public eval registry (community suites),Eng #4,S1,E8,8,P1,Not started,M9
+S044,Series A fundraise narrative + data room,CEO,S1,—,5,P0,Not started,M9
+S045,EU region (`eu-west`) deploy on chosen cloud (cloud-agnostic),Eng #2,S1,E12,13,P0,Not started,M10
+S046,SOC2 Type 1 kickoff with Vanta,Sec eng,S1,E16,13,P0,Not started,M10
+S047,Salesforce + Zendesk first-party MCP servers,Eng #6,S1,E18,13,P1,Not started,M10
+S048,Voice latency push to ≤700ms p50,Eng #3,S1,E7,13,P0,Not started,M11
+S049,Phone number provisioning at the Loop layer,Eng #3,S1,E7,8,P1,Not started,M11
+S050,"Enterprise GA: SSO/SAML, audit log UI, on-prem parity",Eng #2,S1,E20,13,P0,Not started,M12

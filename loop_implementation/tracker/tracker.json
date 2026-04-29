@@ -1,0 +1,1558 @@
+{
+  "_meta": {
+    "source_file": "IMPLEMENTATION_TRACKER.xlsx",
+    "generated_by": "tools/tracker_to_machine.py",
+    "format_version": 1
+  },
+  "overview": {
+    "raw_rows": [
+      [
+        "Loop — Implementation Tracker",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Companion to /loop_implementation/. Update weekly.",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Owner",
+        "CTO",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Last updated",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Sprint length",
+        "2 weeks (Sprint 0 is 6w bootstrap)",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Working days / sprint",
+        10,
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Quick links",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Architecture",
+        "loop_implementation/architecture/ARCHITECTURE.md",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Data model",
+        "loop_implementation/data/SCHEMA.md",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "API spec",
+        "loop_implementation/api/openapi.yaml",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "ADRs",
+        "loop_implementation/adrs/README.md",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "UX/UI",
+        "loop_implementation/ux/UX_DESIGN.md",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Engineering handbook",
+        "loop_implementation/engineering/HANDBOOK.md",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Security",
+        "loop_implementation/engineering/SECURITY.md",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Testing",
+        "loop_implementation/engineering/TESTING.md",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Sprint 0 plan",
+        "loop_implementation/tracker/SPRINT_0.md",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Master spec",
+        "botpress_competitor_spec.md",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Status legend",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Done",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "In progress",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Blocked",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "At risk",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Not started",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ]
+  },
+  "epics": [
+    {
+      "ID": "E1",
+      "Epic": "Agent runtime core",
+      "Owner": "Eng #1",
+      "Target milestone": "MVP M6",
+      "Status": "In progress",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Hot path: TurnExecutor, streaming, budgets, idempotency"
+    },
+    {
+      "ID": "E2",
+      "Epic": "LLM Gateway",
+      "Owner": "Eng #1",
+      "Target milestone": "MVP M6",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Multi-provider, semantic cache, cost accounting"
+    },
+    {
+      "ID": "E3",
+      "Epic": "MCP / Tool layer",
+      "Owner": "Eng #1",
+      "Target milestone": "MVP M6",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Auto-MCP, Firecracker sandboxes, allow-lists"
+    },
+    {
+      "ID": "E4",
+      "Epic": "Memory tiers",
+      "Owner": "Eng #1",
+      "Target milestone": "MVP M6",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "User/session/scratch + episodic at M7"
+    },
+    {
+      "ID": "E5",
+      "Epic": "KB / RAG engine",
+      "Owner": "Eng #1",
+      "Target milestone": "MVP M6",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "PDF/web/Notion + hybrid retrieval + vision"
+    },
+    {
+      "ID": "E6",
+      "Epic": "Channel adapters",
+      "Owner": "Eng #7",
+      "Target milestone": "Rolling",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Web, Slack, WhatsApp, SMS first"
+    },
+    {
+      "ID": "E7",
+      "Epic": "Voice subsystem",
+      "Owner": "Eng #3",
+      "Target milestone": "MVP M6",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "WebRTC + STT + TTS + barge-in. Sub-700ms p50"
+    },
+    {
+      "ID": "E8",
+      "Epic": "Eval harness",
+      "Owner": "Eng #4",
+      "Target milestone": "MVP M6",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "8 scorers, replay, registry"
+    },
+    {
+      "ID": "E9",
+      "Epic": "Observability backend",
+      "Owner": "Eng #4",
+      "Target milestone": "MVP M6",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "OTel + ClickHouse + Studio dashboards"
+    },
+    {
+      "ID": "E10",
+      "Epic": "Studio (UI)",
+      "Owner": "Eng #5",
+      "Target milestone": "MVP M6",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Conversations, traces, replay, costs"
+    },
+    {
+      "ID": "E11",
+      "Epic": "CLI & SDKs",
+      "Owner": "Eng #1+5",
+      "Target milestone": "MVP M6",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Python core, Go CLI; TS gen later"
+    },
+    {
+      "ID": "E12",
+      "Epic": "Cloud control plane",
+      "Owner": "Eng #2",
+      "Target milestone": "MVP M6",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Auth, billing, deploy, multi-tenant"
+    },
+    {
+      "ID": "E13",
+      "Epic": "Self-host (docker-compose + Helm)",
+      "Owner": "Eng #2",
+      "Target milestone": "M7",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Compose at MVP, Helm at M7"
+    },
+    {
+      "ID": "E14",
+      "Epic": "Multi-agent orchestration",
+      "Owner": "Eng #1",
+      "Target milestone": "M9",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Supervisor, Pipeline, Parallel, AgentGraph"
+    },
+    {
+      "ID": "E15",
+      "Epic": "HITL / Operator inbox",
+      "Owner": "Eng #5",
+      "Target milestone": "M7",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Takeover, shared inbox, CRM connectors"
+    },
+    {
+      "ID": "E16",
+      "Epic": "Security & compliance (SOC2 Type 1)",
+      "Owner": "Sec eng",
+      "Target milestone": "M12",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Vanta, audit log, RLS, KMS"
+    },
+    {
+      "ID": "E17",
+      "Epic": "Docs site & DevRel",
+      "Owner": "Eng #6",
+      "Target milestone": "Rolling",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Quickstart, API ref, examples"
+    },
+    {
+      "ID": "E18",
+      "Epic": "MCP marketplace",
+      "Owner": "Eng #6",
+      "Target milestone": "M6",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "25 servers at MVP, 200 by M12"
+    },
+    {
+      "ID": "E19",
+      "Epic": "Pricing & billing",
+      "Owner": "Eng #2",
+      "Target milestone": "M6",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "Stripe + 3-meter + cap rules"
+    },
+    {
+      "ID": "E20",
+      "Epic": "Enterprise (SSO, audit UI, on-prem parity)",
+      "Owner": "Eng #2+sec",
+      "Target milestone": "M12",
+      "Status": "Not started",
+      "Stories total": "",
+      "Stories done": "",
+      "% complete": "",
+      "Notes": "SAML, residency, BYOK"
+    }
+  ],
+  "stories": [
+    {
+      "ID": "S001",
+      "Story": "Repo init, CI skeleton, branch protection, CODEOWNERS",
+      "Owner": "CTO",
+      "Sprint": "S0",
+      "Epic": "E12",
+      "Estimate (pts)": 3,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 1"
+    },
+    {
+      "ID": "S002",
+      "Story": "Cloud accounts (chosen launch cloud — see CLOUD_PORTABILITY.md), Auth0 dev tenant, Stripe test, Sentry, Linear, PagerDuty",
+      "Owner": "CTO",
+      "Sprint": "S0",
+      "Epic": "E12",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 1"
+    },
+    {
+      "ID": "S003",
+      "Story": "docker-compose: Postgres, Redis, Qdrant, NATS, MinIO, ClickHouse, OTel",
+      "Owner": "Eng #2",
+      "Sprint": "S0",
+      "Epic": "E13",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 1"
+    },
+    {
+      "ID": "S004",
+      "Story": "Runtime package skeleton; AgentEvent/AgentResponse/Turn types",
+      "Owner": "Eng #1",
+      "Sprint": "S0",
+      "Epic": "E1",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 1"
+    },
+    {
+      "ID": "S005",
+      "Story": "Studio Next.js skeleton + shadcn/ui + Tailwind",
+      "Owner": "Eng #5",
+      "Sprint": "S0",
+      "Epic": "E10",
+      "Estimate (pts)": 3,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 1"
+    },
+    {
+      "ID": "S006",
+      "Story": "Postgres migrations: control plane + data plane core tables",
+      "Owner": "Eng #2",
+      "Sprint": "S0",
+      "Epic": "E12",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 2"
+    },
+    {
+      "ID": "S007",
+      "Story": "LLM Gateway client: streaming OpenAI + Anthropic",
+      "Owner": "Eng #1",
+      "Sprint": "S0",
+      "Epic": "E2",
+      "Estimate (pts)": 8,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 2"
+    },
+    {
+      "ID": "S008",
+      "Story": "TurnExecutor reasoning loop v0 (no tools yet)",
+      "Owner": "Eng #1",
+      "Sprint": "S0",
+      "Epic": "E1",
+      "Estimate (pts)": 8,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 2"
+    },
+    {
+      "ID": "S009",
+      "Story": "OTel collector wired; first span exported to ClickHouse",
+      "Owner": "Eng #4",
+      "Sprint": "S0",
+      "Epic": "E9",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 2"
+    },
+    {
+      "ID": "S010",
+      "Story": "Studio agents-list page (read from cp-api)",
+      "Owner": "Eng #5",
+      "Sprint": "S0",
+      "Epic": "E10",
+      "Estimate (pts)": 3,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "Week 2"
+    },
+    {
+      "ID": "S011",
+      "Story": "MCP client; auto-MCP decorator for Python functions",
+      "Owner": "Eng #1",
+      "Sprint": "S0",
+      "Epic": "E3",
+      "Estimate (pts)": 8,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 3"
+    },
+    {
+      "ID": "S012",
+      "Story": "Multi-iteration reasoning loop with parallel tool dispatch",
+      "Owner": "Eng #1",
+      "Sprint": "S0",
+      "Epic": "E1",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 3"
+    },
+    {
+      "ID": "S013",
+      "Story": "Memory loader/persister (user + session)",
+      "Owner": "Eng #1",
+      "Sprint": "S0",
+      "Epic": "E4",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 3"
+    },
+    {
+      "ID": "S014",
+      "Story": "Firecracker via Kata k8s runtime class + prewarmed pool",
+      "Owner": "Eng #2",
+      "Sprint": "S0",
+      "Epic": "E3",
+      "Estimate (pts)": 8,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 3"
+    },
+    {
+      "ID": "S015",
+      "Story": "KB engine v0: PDF ingest, Qdrant write, hybrid retrieval",
+      "Owner": "Eng #4",
+      "Sprint": "S0",
+      "Epic": "E5",
+      "Estimate (pts)": 8,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 3"
+    },
+    {
+      "ID": "S016",
+      "Story": "Voice pipeline PoC (LiveKit + Deepgram + ElevenLabs)",
+      "Owner": "Eng #3",
+      "Sprint": "S0",
+      "Epic": "E7",
+      "Estimate (pts)": 5,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "Week 3"
+    },
+    {
+      "ID": "S017",
+      "Story": "Channel layer abstraction; web channel adapter (REST + SSE)",
+      "Owner": "Eng #1",
+      "Sprint": "S0",
+      "Epic": "E6",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 4"
+    },
+    {
+      "ID": "S018",
+      "Story": "Slack channel adapter (Block Kit, slash command, threaded)",
+      "Owner": "Eng #1",
+      "Sprint": "S0",
+      "Epic": "E6",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 4"
+    },
+    {
+      "ID": "S019",
+      "Story": "cp-api: Auth0 OIDC, workspace mgmt, API keys",
+      "Owner": "Eng #2",
+      "Sprint": "S0",
+      "Epic": "E12",
+      "Estimate (pts)": 8,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 4"
+    },
+    {
+      "ID": "S020",
+      "Story": "Deploy controller v0: artifact → image → k8s",
+      "Owner": "Eng #2",
+      "Sprint": "S0",
+      "Epic": "E12",
+      "Estimate (pts)": 8,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 4"
+    },
+    {
+      "ID": "S021",
+      "Story": "Eval harness skeleton: 6 scorers + `loop eval run`",
+      "Owner": "Eng #4",
+      "Sprint": "S0",
+      "Epic": "E8",
+      "Estimate (pts)": 8,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 4"
+    },
+    {
+      "ID": "S022",
+      "Story": "Studio: trace waterfall + span detail tabs",
+      "Owner": "Eng #5",
+      "Sprint": "S0",
+      "Epic": "E10",
+      "Estimate (pts)": 8,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 4"
+    },
+    {
+      "ID": "S023",
+      "Story": "WhatsApp channel adapter (Cloud API direct)",
+      "Owner": "Eng #1",
+      "Sprint": "S0",
+      "Epic": "E6",
+      "Estimate (pts)": 8,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 5"
+    },
+    {
+      "ID": "S024",
+      "Story": "Streaming SSE: tool_call_start/end events on the wire",
+      "Owner": "Eng #1",
+      "Sprint": "S0",
+      "Epic": "E1",
+      "Estimate (pts)": 3,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "Week 5"
+    },
+    {
+      "ID": "S025",
+      "Story": "Stripe billing wire-up (test); usage rollup nightly job",
+      "Owner": "Eng #2",
+      "Sprint": "S0",
+      "Epic": "E19",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 5"
+    },
+    {
+      "ID": "S026",
+      "Story": "Eval harness: production-replay capture (failed turns)",
+      "Owner": "Eng #4",
+      "Sprint": "S0",
+      "Epic": "E8",
+      "Estimate (pts)": 5,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "Week 5"
+    },
+    {
+      "ID": "S027",
+      "Story": "Studio: cost dashboard v0 (workspace MTD + per-agent)",
+      "Owner": "Eng #5",
+      "Sprint": "S0",
+      "Epic": "E10",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 5"
+    },
+    {
+      "ID": "S028",
+      "Story": "Examples repo: support_agent + docs site v0",
+      "Owner": "Eng #6",
+      "Sprint": "S0",
+      "Epic": "E17",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 5"
+    },
+    {
+      "ID": "S029",
+      "Story": "Hard caps + graceful degrade; budget pre-flight at gateway",
+      "Owner": "Eng #1",
+      "Sprint": "S0",
+      "Epic": "E2",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 6"
+    },
+    {
+      "ID": "S030",
+      "Story": "HITL takeover endpoint + operator inbox queue",
+      "Owner": "Eng #1",
+      "Sprint": "S0",
+      "Epic": "E15",
+      "Estimate (pts)": 5,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "Week 6"
+    },
+    {
+      "ID": "S031",
+      "Story": "Eval-gated deploy: block prod promotion on regression",
+      "Owner": "Eng #4",
+      "Sprint": "S0",
+      "Epic": "E8",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 6"
+    },
+    {
+      "ID": "S032",
+      "Story": "Studio: operator inbox MVP (queue + takeover + composer)",
+      "Owner": "Eng #5",
+      "Sprint": "S0",
+      "Epic": "E15",
+      "Estimate (pts)": 8,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "Week 6"
+    },
+    {
+      "ID": "S033",
+      "Story": "Voice MVP: web-RTC echo agent end-to-end",
+      "Owner": "Eng #3",
+      "Sprint": "S0",
+      "Epic": "E7",
+      "Estimate (pts)": 8,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 6"
+    },
+    {
+      "ID": "S034",
+      "Story": "First 3 design partners onboarded; weekly office hour",
+      "Owner": "CEO",
+      "Sprint": "S0",
+      "Epic": "E17",
+      "Estimate (pts)": 3,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "Week 6"
+    },
+    {
+      "ID": "S035",
+      "Story": "Episodic memory (Qdrant collection + auto-summarize)",
+      "Owner": "Eng #1",
+      "Sprint": "S1",
+      "Epic": "E4",
+      "Estimate (pts)": 8,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "M7"
+    },
+    {
+      "ID": "S036",
+      "Story": "Helm chart for self-host with feature parity goal",
+      "Owner": "Eng #2",
+      "Sprint": "S1",
+      "Epic": "E13",
+      "Estimate (pts)": 13,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "M7"
+    },
+    {
+      "ID": "S037",
+      "Story": "Email channel via SES; Telegram channel",
+      "Owner": "Eng #7",
+      "Sprint": "S1",
+      "Epic": "E6",
+      "Estimate (pts)": 8,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "M7"
+    },
+    {
+      "ID": "S038",
+      "Story": "Multi-agent v0: Supervisor + Pipeline patterns",
+      "Owner": "Eng #1",
+      "Sprint": "S1",
+      "Epic": "E14",
+      "Estimate (pts)": 13,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "M7"
+    },
+    {
+      "ID": "S039",
+      "Story": "TS SDK auto-gen from Pydantic types",
+      "Owner": "Eng #5",
+      "Sprint": "S1",
+      "Epic": "E11",
+      "Estimate (pts)": 8,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "M8"
+    },
+    {
+      "ID": "S040",
+      "Story": "Discord + Teams channels",
+      "Owner": "Eng #7",
+      "Sprint": "S1",
+      "Epic": "E6",
+      "Estimate (pts)": 8,
+      "Priority": "P2",
+      "Status": "Not started",
+      "Notes": "M8"
+    },
+    {
+      "ID": "S041",
+      "Story": "Replay/time-travel debugging in Studio",
+      "Owner": "Eng #5",
+      "Sprint": "S1",
+      "Epic": "E10",
+      "Estimate (pts)": 8,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "M8"
+    },
+    {
+      "ID": "S042",
+      "Story": "Multi-agent GA: Parallel + AgentGraph (cyclic)",
+      "Owner": "Eng #1",
+      "Sprint": "S1",
+      "Epic": "E14",
+      "Estimate (pts)": 13,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "M9"
+    },
+    {
+      "ID": "S043",
+      "Story": "Public eval registry (community suites)",
+      "Owner": "Eng #4",
+      "Sprint": "S1",
+      "Epic": "E8",
+      "Estimate (pts)": 8,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "M9"
+    },
+    {
+      "ID": "S044",
+      "Story": "Series A fundraise narrative + data room",
+      "Owner": "CEO",
+      "Sprint": "S1",
+      "Epic": "—",
+      "Estimate (pts)": 5,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "M9"
+    },
+    {
+      "ID": "S045",
+      "Story": "EU region (`eu-west`) deploy on chosen cloud (cloud-agnostic)",
+      "Owner": "Eng #2",
+      "Sprint": "S1",
+      "Epic": "E12",
+      "Estimate (pts)": 13,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "M10"
+    },
+    {
+      "ID": "S046",
+      "Story": "SOC2 Type 1 kickoff with Vanta",
+      "Owner": "Sec eng",
+      "Sprint": "S1",
+      "Epic": "E16",
+      "Estimate (pts)": 13,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "M10"
+    },
+    {
+      "ID": "S047",
+      "Story": "Salesforce + Zendesk first-party MCP servers",
+      "Owner": "Eng #6",
+      "Sprint": "S1",
+      "Epic": "E18",
+      "Estimate (pts)": 13,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "M10"
+    },
+    {
+      "ID": "S048",
+      "Story": "Voice latency push to ≤700ms p50",
+      "Owner": "Eng #3",
+      "Sprint": "S1",
+      "Epic": "E7",
+      "Estimate (pts)": 13,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "M11"
+    },
+    {
+      "ID": "S049",
+      "Story": "Phone number provisioning at the Loop layer",
+      "Owner": "Eng #3",
+      "Sprint": "S1",
+      "Epic": "E7",
+      "Estimate (pts)": 8,
+      "Priority": "P1",
+      "Status": "Not started",
+      "Notes": "M11"
+    },
+    {
+      "ID": "S050",
+      "Story": "Enterprise GA: SSO/SAML, audit log UI, on-prem parity",
+      "Owner": "Eng #2",
+      "Sprint": "S1",
+      "Epic": "E20",
+      "Estimate (pts)": 13,
+      "Priority": "P0",
+      "Status": "Not started",
+      "Notes": "M12"
+    }
+  ],
+  "sprints": [
+    {
+      "Sprint": "S0",
+      "Window": "Wk 1–6",
+      "Theme": "Bootstrap",
+      "Goal": "Local stack + first turn + first deploy + 3 design partners onboarded",
+      "Stories": "S001-S034",
+      "Total points": "",
+      "Status": "Not started"
+    },
+    {
+      "Sprint": "S1",
+      "Window": "Wk 7–8",
+      "Theme": "Episodic memory + Helm",
+      "Goal": "Episodic memory; helm chart; email + telegram; multi-agent v0",
+      "Stories": "S035-S038",
+      "Total points": "",
+      "Status": "Not started"
+    },
+    {
+      "Sprint": "S2",
+      "Window": "Wk 9–10",
+      "Theme": "TS SDK + Discord/Teams + replay",
+      "Goal": "TS SDK GA; Discord + Teams; replay debugging in Studio",
+      "Stories": "S039-S041",
+      "Total points": "",
+      "Status": "Not started"
+    },
+    {
+      "Sprint": "S3",
+      "Window": "Wk 11–12",
+      "Theme": "Multi-agent GA + eval registry + Series A",
+      "Goal": "Parallel + AgentGraph; public eval registry; Series A narrative",
+      "Stories": "S042-S044",
+      "Total points": "",
+      "Status": "Not started"
+    },
+    {
+      "Sprint": "S4",
+      "Window": "Wk 13–14",
+      "Theme": "EU region + SOC2 kickoff",
+      "Goal": "Deploy `eu-west` (cloud-agnostic); Vanta; Salesforce + Zendesk MCP",
+      "Stories": "S045-S047",
+      "Total points": "",
+      "Status": "Not started"
+    },
+    {
+      "Sprint": "S5",
+      "Window": "Wk 15–16",
+      "Theme": "Voice latency + phone provisioning",
+      "Goal": "Voice ≤700ms; phone number provisioning",
+      "Stories": "S048-S049",
+      "Total points": "",
+      "Status": "Not started"
+    },
+    {
+      "Sprint": "S6",
+      "Window": "Wk 17–18",
+      "Theme": "Enterprise GA",
+      "Goal": "SSO/SAML, audit UI, on-prem parity, SOC2 Type 1 done",
+      "Stories": "S050",
+      "Total points": "",
+      "Status": "Not started"
+    }
+  ],
+  "hiring": [
+    {
+      "#": 1,
+      "Role": "Founding engineer — Runtime (Python core)",
+      "Why first": "Owns the agent loop. Senior, opinionated.",
+      "Start month": "M0",
+      "Stage": "Searching",
+      "Owner": "CTO",
+      "Notes": "Bar: shipped a high-throughput Python service before"
+    },
+    {
+      "#": 2,
+      "Role": "Founding engineer — Infra / Platform",
+      "Why first": "Postgres, Redis, NATS, k8s, Terraform. Builds data plane.",
+      "Start month": "M0",
+      "Stage": "Searching",
+      "Owner": "CTO",
+      "Notes": "Bar: production k8s, observability"
+    },
+    {
+      "#": 3,
+      "Role": "Founding engineer — Voice / Real-time",
+      "Why first": "WebRTC, STT/TTS, latency. The voice moat.",
+      "Start month": "M0",
+      "Stage": "Pipeline",
+      "Owner": "CTO",
+      "Notes": "Bar: ≤500ms voice in prod"
+    },
+    {
+      "#": 4,
+      "Role": "Founding engineer — Observability + Eval harness",
+      "Why first": "ClickHouse, OTel, eval scorers. The other moat.",
+      "Start month": "M1",
+      "Stage": "Pipeline",
+      "Owner": "CTO",
+      "Notes": "Bar: scaled tracing/eval system before"
+    },
+    {
+      "#": 5,
+      "Role": "Founding engineer — Full-stack / Studio",
+      "Why first": "Next.js, React, tRPC. Debugger UI.",
+      "Start month": "M1",
+      "Stage": "Pipeline",
+      "Owner": "CTO",
+      "Notes": "Bar: shipped a polished web app to GA"
+    },
+    {
+      "#": 6,
+      "Role": "DevRel / Docs engineer",
+      "Why first": "Examples, blog, docs, MCP server contributions. OSS adoption.",
+      "Start month": "M3",
+      "Stage": "Pipeline",
+      "Owner": "CEO",
+      "Notes": "Critical for community velocity"
+    },
+    {
+      "#": 7,
+      "Role": "Senior engineer — Channel integrations",
+      "Why first": "WhatsApp, Slack, Teams, email. Compounding work.",
+      "Start month": "M3",
+      "Stage": "Pipeline",
+      "Owner": "CTO",
+      "Notes": "Bar: 3+ external API integrations"
+    },
+    {
+      "#": 8,
+      "Role": "Security / Compliance engineer",
+      "Why first": "SOC2, HIPAA-readiness, audit logs, secrets. Unlocks enterprise.",
+      "Start month": "M5",
+      "Stage": "Searching",
+      "Owner": "CTO",
+      "Notes": "Bar: led SOC2 effort end-to-end"
+    }
+  ],
+  "risks": [
+    {
+      "ID": "R1",
+      "Risk": "Frontier-lab SDKs (OpenAI Agents, Claude Agent) eat the category",
+      "Likelihood": "Med",
+      "Severity": "High",
+      "Owner": "CEO",
+      "Mitigation": "Be the agnostic Switzerland. Run on every provider. Own observability + evals + voice as differentiators.",
+      "Status": "Watching"
+    },
+    {
+      "ID": "R2",
+      "Risk": "MCP standard fragments (OpenAI/Google compete)",
+      "Likelihood": "Low",
+      "Severity": "Med",
+      "Owner": "Eng #1",
+      "Mitigation": "MCP-first but adapter-flexible; can speak OpenAI tool format too.",
+      "Status": "Watching"
+    },
+    {
+      "ID": "R3",
+      "Risk": "Voice latency target (≤700ms p50) misses",
+      "Likelihood": "Med",
+      "Severity": "High",
+      "Owner": "Eng #3",
+      "Mitigation": "Schedule slip is acceptable; ship voice at M7 instead of MVP. Edge POPs + warm pool.",
+      "Status": "Watching"
+    },
+    {
+      "ID": "R4",
+      "Risk": "Hire #1 (runtime) takes >60 days to fill",
+      "Likelihood": "Med",
+      "Severity": "High",
+      "Owner": "CTO",
+      "Mitigation": "CTO writes first-draft TurnExecutor; new hire inherits. Multiple parallel candidates.",
+      "Status": "Active"
+    },
+    {
+      "ID": "R5",
+      "Risk": "Botpress closes the gap (voice + MCP + true OSS in 12mo)",
+      "Likelihood": "Low",
+      "Severity": "Med",
+      "Owner": "CEO",
+      "Mitigation": "Architecture mid-pivot makes this unlikely. We move faster on each axis.",
+      "Status": "Watching"
+    },
+    {
+      "ID": "R6",
+      "Risk": "Runtime engineering complexity (async + streaming + sandboxes)",
+      "Likelihood": "Med",
+      "Severity": "High",
+      "Owner": "Eng #1",
+      "Mitigation": "Hire bar #1 must be exceptional. Sprint 0 establishes a working baseline.",
+      "Status": "Active"
+    },
+    {
+      "ID": "R7",
+      "Risk": "Compliance burden (SOC2, HIPAA) blocks enterprise revenue",
+      "Likelihood": "Med",
+      "Severity": "High",
+      "Owner": "Sec eng",
+      "Mitigation": "Vanta day 1. Hire sec eng by M5. SOC2 Type 1 by M12.",
+      "Status": "Watching"
+    },
+    {
+      "ID": "R8",
+      "Risk": "OSS license arbitrage (hyperscaler offers managed Loop)",
+      "Likelihood": "Low",
+      "Severity": "Med",
+      "Owner": "CEO",
+      "Mitigation": "Apache 2.0 accepts the risk; brand + control plane + network effects are the moat.",
+      "Status": "Watching"
+    },
+    {
+      "ID": "R9",
+      "Risk": "Eval harness over-promises; teams don't adopt",
+      "Likelihood": "Med",
+      "Severity": "Med",
+      "Owner": "Eng #4",
+      "Mitigation": "`loop eval init` scaffolds from production replay automatically. Public registry seeds value.",
+      "Status": "Watching"
+    },
+    {
+      "ID": "R10",
+      "Risk": "Cost overruns on infra (LLM, ClickHouse, voice POPs)",
+      "Likelihood": "Med",
+      "Severity": "Med",
+      "Owner": "CTO",
+      "Mitigation": "Budget caps + monthly review. Negotiate annual commits with providers post-Series A.",
+      "Status": "Watching"
+    },
+    {
+      "ID": "R11",
+      "Risk": "Channel provider terms change (Meta WhatsApp policies)",
+      "Likelihood": "High",
+      "Severity": "Low",
+      "Owner": "Eng #7",
+      "Mitigation": "Multi-BSP support; document fallback path; surface channel cost on invoice.",
+      "Status": "Watching"
+    },
+    {
+      "ID": "R12",
+      "Risk": "Studio scope creep (users want a flow editor)",
+      "Likelihood": "Med",
+      "Severity": "Low",
+      "Owner": "Eng #5",
+      "Mitigation": "Politely decline. Code-first is the wedge. Optional read-only DAG view at M9.",
+      "Status": "Active"
+    }
+  ],
+  "roadmap": [
+    {
+      "Month": "M0",
+      "Milestone": "Hire + scope",
+      "Key deliverables": "Hire engineers 1–4; tech-stack lock-in; runtime + SDK started",
+      "Status": "Not started"
+    },
+    {
+      "Month": "M1",
+      "Milestone": "Runtime alpha",
+      "Key deliverables": "Python SDK skeleton; LLM gateway w/ OpenAI + Anthropic; Slack channel",
+      "Status": "Not started"
+    },
+    {
+      "Month": "M2",
+      "Milestone": "Tools + KB",
+      "Key deliverables": "Tool/MCP layer; auto-MCP; KB ingestion v0; web widget",
+      "Status": "Not started"
+    },
+    {
+      "Month": "M3",
+      "Milestone": "Eval + cloud",
+      "Key deliverables": "Eval harness v0 (6 scorers); CLI v0; cloud control plane (auth, deploy)",
+      "Status": "Not started"
+    },
+    {
+      "Month": "M4",
+      "Milestone": "Closed alpha",
+      "Key deliverables": "10 design partners; WhatsApp; Studio v0 (conversations + traces)",
+      "Status": "Not started"
+    },
+    {
+      "Month": "M5",
+      "Milestone": "Voice MVP",
+      "Key deliverables": "Voice channel MVP; memory tiers; cost dashboard",
+      "Status": "Not started"
+    },
+    {
+      "Month": "M6",
+      "Milestone": "Public beta",
+      "Key deliverables": "OSS the runtime (Apache 2.0); Hub v0; free hobby tier; PUBLIC BETA",
+      "Status": "Not started"
+    },
+    {
+      "Month": "M7",
+      "Milestone": "Episodic + helm",
+      "Key deliverables": "Episodic memory; Helm chart; email + Telegram; multi-agent primitives v0",
+      "Status": "Not started"
+    },
+    {
+      "Month": "M8",
+      "Milestone": "TS SDK + replay",
+      "Key deliverables": "TS SDK GA; Discord + Teams; replay/time-travel debugging",
+      "Status": "Not started"
+    },
+    {
+      "Month": "M9",
+      "Milestone": "Multi-agent GA",
+      "Key deliverables": "Multi-agent GA (Graph, Parallel, Blackboard); public eval registry; Series A",
+      "Status": "Not started"
+    },
+    {
+      "Month": "M10",
+      "Milestone": "EU + SOC2",
+      "Key deliverables": "EU region (`eu-west`, cloud-agnostic); SOC2 Type 1 kickoff; Salesforce + Zendesk MCP",
+      "Status": "Not started"
+    },
+    {
+      "Month": "M11",
+      "Milestone": "Voice latency",
+      "Key deliverables": "Voice ≤700ms p50; phone-number provisioning; RCS",
+      "Status": "Not started"
+    },
+    {
+      "Month": "M12",
+      "Milestone": "Enterprise GA",
+      "Key deliverables": "SSO/SAML, audit logs, on-prem parity, SOC2 Type 1 done; ENTERPRISE GA",
+      "Status": "Not started"
+    }
+  ],
+  "budgets": {
+    "raw_rows": [
+      [
+        "Budgets & metrics",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Working numbers — refine with finance once seed closes.",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Performance budgets (hard)",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Metric",
+        "Target",
+        "Owner",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Voice latency p50 (end-to-end)",
+        "≤ 700 ms",
+        "Eng #3",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Chat first-token p50",
+        "≤ 600 ms",
+        "Eng #1",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Chat p99",
+        "≤ 2000 ms",
+        "Eng #1",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "API availability (Pro/Team)",
+        "99.9%",
+        "Eng #2",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "API availability (Enterprise)",
+        "99.95%",
+        "Eng #2",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Trace ingestion lag",
+        "≤ 5 s",
+        "Eng #4",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Cold start (warm pool)",
+        "0 (not user-visible)",
+        "Eng #2",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Deploy time (push → live)",
+        "≤ 60 s",
+        "Eng #2",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Eval suite of 100 cases",
+        "≤ 90 s",
+        "Eng #4",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Concurrent conversations / pod",
+        "100",
+        "Eng #1",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Unit-economics targets (steady state)",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Metric",
+        "Target",
+        "Notes",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Gross margin",
+        "75%",
+        "LLM ~95% on 5%, compute ~70%, storage ~85%",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "LTV : CAC",
+        "≥ 3 : 1 by month 18",
+        "Bottom-up PLG with sales-led at the top",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "ARR per FTE (by M24)",
+        "$300K",
+        "Industry P75 for OSS/PLG infra",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "LLM token markup",
+        "5%, fully disclosed",
+        "Trust commitment",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Hard-cap behavior",
+        "Graceful degrade, never drop",
+        "Trust commitment",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ]
+  }
+}

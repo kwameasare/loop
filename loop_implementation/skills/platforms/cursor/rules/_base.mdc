@@ -1,0 +1,31 @@
+---
+description: Loop base rule — applies to every file. Read SKILL_ROUTER first; pick the right specific skill.
+alwaysApply: true
+---
+
+# Loop — base rule
+
+You are working on **Loop**, an open-source, agent-first, cloud-agnostic runtime for production AI agents.
+
+## Always read first
+
+1. `loop_implementation/AGENTS.md`
+2. `loop_implementation/skills/_base/SKILL_ROUTER.md`
+3. `loop_implementation/engineering/GLOSSARY.md`
+4. `loop_implementation/architecture/ARCHITECTURE.md`
+
+Use the SKILL_ROUTER's Task → Skill table to pick the matching skill. Read its `required_reading`. Follow its Steps. End with `skills/meta/write-pr.md`.
+
+## Hard rules every change must follow
+
+1. Cloud portability — no cloud SDK imports in `packages/runtime/`, `packages/gateway/`, `packages/sdk-py/`, `packages/channels/`. Use abstractions from `architecture/CLOUD_PORTABILITY.md` §4.
+2. Tenant isolation — Postgres RLS on every tenanted table, cross-tenant negative test.
+3. Docs with code — schema/ADR/architecture/API in the SAME PR.
+4. Conventional Commits for titles.
+5. Errors carry `LOOP-XX-NNN` codes.
+6. OTel span on every async op.
+7. Secrets in Vault only.
+8. Runtime PRs eval-gated.
+9. Hot paths bench-gated.
+
+See `skills/_base/SKILL_ROUTER.md` for the canonical rule list.

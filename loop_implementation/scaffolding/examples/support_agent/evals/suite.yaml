@@ -1,0 +1,36 @@
+name: support-en
+agent_slug: support-en
+
+scorers:
+  - kind: llm_judge
+    model: claude-sonnet-4-7
+    rubric: |
+      Score 1.0 if the response addresses the user's actual question, cites a tool result
+      or KB chunk when relevant, and stays in scope.
+      Score 0.5 if partial. 0.0 otherwise.
+    threshold: 0.7
+  - kind: hallucination
+    threshold: 0.0
+  - kind: latency_le
+    config: { ms: 2000 }
+  - kind: cost_le
+    config: { usd: 0.01 }
+
+cases:
+  - name: where_is_my_order
+    input: "Where is order 4172?"
+    expected:
+      tool_calls: ["lookup_order"]
+      response_includes_any: ["status", "estimated", "delivery"]
+
+  - name: refund_basic
+    input: "I want a refund for order 4172"
+    expected:
+      tool_calls: ["lookup_order"]
+      response_includes_any: ["refund"]
+
+  - name: out_of_scope
+    input: "What's the meaning of life?"
+    expected:
+      tool_calls: []
+      response_includes_any: ["help with orders", "support", "I'm not sure"]

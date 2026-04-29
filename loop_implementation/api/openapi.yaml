@@ -1,0 +1,1213 @@
+openapi: 3.1.0
+info:
+  title: Loop Platform API
+  version: 0.1.0
+  description: |
+    Public REST API for the Loop agent platform.
+
+    All endpoints require a Bearer token scoped to a workspace.
+    Streaming endpoints additionally support Server-Sent Events (SSE) and WebSocket.
+  contact:
+    name: Loop Engineering
+    email: eng@loop.example
+  license:
+    name: Apache-2.0
+servers:
+  - url: https://api.loop.example/v1
+    description: Production (na-east — abstract region; concrete cloud may be AWS/Azure/GCP/Alibaba/self-host)
+  - url: https://api-eu.loop.example/v1
+    description: Production (eu-west — same)
+  - url: http://localhost:8080/v1
+    description: Local dev
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Agents
+    description: Agent lifecycle, versioning, and deployment
+  - name: Conversations
+    description: Message history, HITL takeovers, escalations
+  - name: Knowledge
+    description: Knowledge base ingestion and search
+  - name: MCP
+    description: MCP server registration and tool management
+  - name: Evals
+    description: Evaluation suites, runs, and test cases
+  - name: Usage
+    description: Cost and usage analytics
+  - name: Traces
+    description: Turn traces and observability
+  - name: Workspaces
+    description: Workspace and member management
+  - name: Admin
+    description: Audit logs, API keys, secrets, webhooks
+  - name: Health
+    description: Operational readiness and version checks
+
+paths:
+
+  # ──────────────── Workspaces ────────────────
+  /workspaces:
+    get:
+      tags: [Workspaces]
+      summary: List workspaces the caller is a member of
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Workspace" }
+
+  /workspaces/{workspace_id}:
+    get:
+      tags: [Workspaces]
+      summary: Get workspace
+      parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Workspace" }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /workspaces/{workspace_id}/members:
+    parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+    get:
+      tags: [Workspaces]
+      summary: List workspace members
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/WorkspaceMember" }
+    post:
+      tags: [Workspaces]
+      summary: Invite a member to workspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email: { type: string, format: email }
+                role: { type: string, enum: [owner, admin, editor, operator, viewer] }
+      responses:
+        "201":
+          description: Invitation sent
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkspaceMember" }
+
+  /workspaces/{workspace_id}/api-keys:
+    parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+    get:
+      tags: [Admin]
+      summary: List API keys
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/APIKey" }
+    post:
+      tags: [Admin]
+      summary: Create an API key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, scopes]
+              properties:
+                name: { type: string }
+                scopes: { type: array, items: { type: string }, example: ["agents:deploy", "traces:read"] }
+      responses:
+        "201":
+          description: Created (key shown once)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/APIKeyCreated" }
+
+  /workspaces/{workspace_id}/secrets:
+    parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+    get:
+      tags: [Admin]
+      summary: List agent secrets (names only, not values)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SecretRef" }
+
+  # ──────────────── Agents ────────────────
+  /agents:
+    post:
+      tags: [Agents]
+      summary: Create an agent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Agent" }
+    get:
+      tags: [Agents]
+      summary: List agents in the active workspace
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-RateLimit-Limit:
+              schema: { type: integer }
+            X-RateLimit-Remaining:
+              schema: { type: integer }
+            X-RateLimit-Reset:
+              schema: { type: integer }
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Agent" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /agents/{agent_id}:
+    parameters: [{ $ref: "#/components/parameters/AgentId" }]
+    get:
+      tags: [Agents]
+      summary: Get an agent
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Agent" }
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Agents]
+      summary: Soft-delete (archive) an agent
+      responses:
+        "204":
+          description: Archived
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /agents/{agent_id}/versions:
+    parameters: [{ $ref: "#/components/parameters/AgentId" }]
+    post:
+      tags: [Agents]
+      summary: Deploy a new agent version
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          schema: { type: string, format: uuid }
+          required: false
+          description: Idempotency key to prevent duplicate deploys
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                config:
+                  type: string
+                  description: JSON config
+                code:
+                  type: string
+                  format: binary
+                  description: Tar.zst archive of the agent source
+      responses:
+        "202":
+          description: Deploy accepted (eval & rollout in progress)
+          headers:
+            X-RateLimit-Limit:
+              schema: { type: integer }
+            X-RateLimit-Remaining:
+              schema: { type: integer }
+            X-RateLimit-Reset:
+              schema: { type: integer }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentVersion" }
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /agents/{agent_id}/invoke:
+    parameters: [{ $ref: "#/components/parameters/AgentId" }]
+    post:
+      tags: [Agents]
+      summary: Run a turn against the active version of an agent
+      description: |
+        Invokes an agent. If `?stream=true`, returns Server-Sent Events of `TurnEvent`.
+        Otherwise returns a single `AgentResponse` once the turn completes.
+      parameters:
+        - in: query
+          name: stream
+          schema: { type: boolean, default: false }
+        - in: header
+          name: Idempotency-Key
+          schema: { type: string, format: uuid }
+          required: false
+          description: Idempotency key for idempotent invocation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InvokeRequest" }
+      responses:
+        "200":
+          description: OK (non-streaming)
+          headers:
+            X-RateLimit-Limit:
+              schema: { type: integer }
+            X-RateLimit-Remaining:
+              schema: { type: integer }
+            X-RateLimit-Reset:
+              schema: { type: integer }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentResponse" }
+            text/event-stream:
+              schema:
+                type: string
+                description: |
+                  SSE stream; each `data:` line is a JSON `TurnEvent`.
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  # ──────────────── Conversations ────────────────
+  /agents/{agent_id}/conversations:
+    parameters: [{ $ref: "#/components/parameters/AgentId" }]
+    get:
+      tags: [Conversations]
+      summary: List recent conversations
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, maximum: 500 }
+        - in: query
+          name: cursor
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Conversation" }
+                  next_cursor: { type: string, nullable: true }
+
+  /conversations/{conversation_id}:
+    parameters: [{ $ref: "#/components/parameters/ConversationId" }]
+    get:
+      tags: [Conversations]
+      summary: Get a conversation with full turns + traces
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConversationDetail" }
+
+  /conversations/{conversation_id}/takeover:
+    parameters: [{ $ref: "#/components/parameters/ConversationId" }]
+    post:
+      tags: [Conversations]
+      summary: Operator takes over the conversation (HITL)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Conversation" }
+
+  /conversations/{conversation_id}/messages:
+    parameters: [{ $ref: "#/components/parameters/ConversationId" }]
+    post:
+      tags: [Conversations]
+      summary: Operator sends a message in a taken-over conversation
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          schema: { type: string, format: uuid }
+          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: array
+                  items: { $ref: "#/components/schemas/ContentPart" }
+      responses:
+        "201":
+          description: Sent
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ──────────────── Knowledge ────────────────
+  /kb:
+    post:
+      tags: [Knowledge]
+      summary: Create a knowledge base
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KBCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KB" }
+
+  /kb/{kb_id}/ingest:
+    parameters: [{ $ref: "#/components/parameters/KBId" }]
+    post:
+      tags: [Knowledge]
+      summary: Ingest a source into a KB
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/KBIngestUrl"
+                - $ref: "#/components/schemas/KBIngestNotion"
+                - $ref: "#/components/schemas/KBIngestS3"
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "202":
+          description: Ingestion queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  document_id: { type: string, format: uuid }
+                  status: { type: string }
+
+  /kb/{kb_id}/search:
+    parameters: [{ $ref: "#/components/parameters/KBId" }]
+    get:
+      tags: [Knowledge]
+      summary: Search the KB
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema: { type: string }
+        - in: query
+          name: top_k
+          schema: { type: integer, default: 8, maximum: 50 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RetrievalChunk" }
+
+  # ──────────────── MCP ────────────────
+  /mcp:
+    get:
+      tags: [MCP]
+      summary: List installed MCP servers
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MCPServer" }
+    post:
+      tags: [MCP]
+      summary: Install an MCP server from the Hub or a URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source]
+              properties:
+                source: { type: string, example: "loop-hub://stripe@1.4.0" }
+                config: { type: object }
+      responses:
+        "202":
+          description: Install queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MCPServer" }
+
+  # ──────────────── Evals ────────────────
+  /eval-suites:
+    post:
+      tags: [Evals]
+      summary: Create an eval suite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                cases:
+                  type: array
+                  items: { $ref: "#/components/schemas/EvalCase" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EvalSuite" }
+
+  /eval-suites/{suite_id}/runs:
+    parameters: [{ $ref: "#/components/parameters/SuiteId" }]
+    post:
+      tags: [Evals]
+      summary: Start an eval run against an agent version
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agent_version_id]
+              properties:
+                agent_version_id: { type: string, format: uuid }
+                baseline_version_id: { type: string, format: uuid }
+      responses:
+        "202":
+          description: Run queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EvalRun" }
+
+  /eval-runs/{run_id}:
+    parameters: [{ $ref: "#/components/parameters/RunId" }]
+    get:
+      tags: [Evals]
+      summary: Get eval run status + results
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EvalRunDetail" }
+
+  # ──────────────── Usage / Traces ────────────────
+  /usage:
+    get:
+      tags: [Usage]
+      summary: Per-workspace usage rollup
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          schema: { type: string, format: date }
+        - in: query
+          name: group_by
+          schema: { type: string, enum: [day, agent, channel] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UsageReport" }
+
+  /traces/{turn_id}:
+    parameters: [{ $ref: "#/components/parameters/TurnId" }]
+    get:
+      tags: [Traces]
+      summary: Full trace detail for a turn
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Trace" }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /traces/search:
+    get:
+      tags: [Traces]
+      summary: Search traces by filters
+      parameters:
+        - in: query
+          name: agent_id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: conversation_id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: status
+          schema: { type: string, enum: [ok, error, timeout] }
+        - in: query
+          name: from_date
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to_date
+          schema: { type: string, format: date-time }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, maximum: 500 }
+        - in: query
+          name: cursor
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Trace" }
+                  next_cursor: { type: string, nullable: true }
+
+  /audit-events:
+    get:
+      tags: [Admin]
+      summary: Get audit log entries
+      parameters:
+        - in: query
+          name: action
+          schema: { type: string, example: "agent:deploy" }
+        - in: query
+          name: resource_type
+          schema: { type: string, example: "agent" }
+        - in: query
+          name: from_date
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to_date
+          schema: { type: string, format: date-time }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100, maximum: 1000 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AuditLogEntry" }
+
+  /webhooks/incoming:
+    post:
+      tags: [Admin]
+      summary: Register customer webhook for deployment/eval events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url, events]
+              properties:
+                url: { type: string, format: uri }
+                events: { type: array, items: { type: string }, example: ["deploy.complete", "eval.finished", "budget.alert"] }
+                secret: { type: string, description: "HMAC secret for signature verification" }
+      responses:
+        "201":
+          description: Webhook registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookRegistration" }
+
+  /budgets:
+    get:
+      tags: [Usage]
+      summary: List budgets for workspace
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Budget" }
+    post:
+      tags: [Usage]
+      summary: Create a budget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scope]
+              properties:
+                scope: { type: string, enum: [workspace, agent, conversation, day] }
+                scope_id: { type: string, format: uuid, nullable: true }
+                soft_usd: { type: number }
+                hard_usd: { type: number }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Budget" }
+
+  /eval-suites/{suite_id}/cases:
+    parameters: [{ $ref: "#/components/parameters/SuiteId" }]
+    get:
+      tags: [Evals]
+      summary: List eval cases in suite
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/EvalCase" }
+    post:
+      tags: [Evals]
+      summary: Add a test case to suite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EvalCase" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EvalCase" }
+    delete:
+      tags: [Evals]
+      summary: Delete a test case
+      responses:
+        "204":
+          description: Deleted
+
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Readiness check
+      security: []
+      responses:
+        "200":
+          description: Service is ready
+
+  /readyz:
+    get:
+      tags: [Health]
+      summary: Liveness check
+      security: []
+      responses:
+        "200":
+          description: Service is alive
+
+  /version:
+    get:
+      tags: [Health]
+      summary: Get API version
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Version" }
+
+
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: PASETO
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ProblemDetail" }
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ProblemDetail" }
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ProblemDetail" }
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema: { type: integer, description: "Seconds to wait before retrying" }
+        X-RateLimit-Limit:
+          schema: { type: integer }
+        X-RateLimit-Remaining:
+          schema: { type: integer }
+        X-RateLimit-Reset:
+          schema: { type: integer, description: "Unix timestamp of reset" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ProblemDetail" }
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ProblemDetail" }
+
+  parameters:
+    WorkspaceId:
+      in: path
+      name: workspace_id
+      required: true
+      schema: { type: string, format: uuid }
+    AgentId:
+      in: path
+      name: agent_id
+      required: true
+      schema: { type: string, format: uuid }
+    ConversationId:
+      in: path
+      name: conversation_id
+      required: true
+      schema: { type: string, format: uuid }
+    KBId:
+      in: path
+      name: kb_id
+      required: true
+      schema: { type: string, format: uuid }
+    SuiteId:
+      in: path
+      name: suite_id
+      required: true
+      schema: { type: string, format: uuid }
+    RunId:
+      in: path
+      name: run_id
+      required: true
+      schema: { type: string, format: uuid }
+    TurnId:
+      in: path
+      name: turn_id
+      required: true
+      schema: { type: string, format: uuid }
+
+  schemas:
+
+    ProblemDetail:
+      description: RFC 9457 Problem Details for HTTP APIs
+      type: object
+      required: [type, status, title]
+      properties:
+        type: { type: string, format: uri, example: "https://api.loop.example/errors/rate-limit" }
+        status: { type: integer, example: 429 }
+        title: { type: string, example: "Too Many Requests" }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+        request_id: { type: string, description: "Correlation ID for logs" }
+
+    Workspace:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        plan: { type: string, enum: [hobby, pro, team, enterprise] }
+        region: { type: string }
+        created_at: { type: string, format: date-time }
+
+    Agent:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        workspace_id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string }
+        active_version: { type: integer, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    AgentCreate:
+      type: object
+      required: [name, slug]
+      properties:
+        name: { type: string }
+        slug: { type: string, pattern: "^[a-z0-9-]+$" }
+        description: { type: string }
+
+    AgentVersion:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        agent_id: { type: string, format: uuid }
+        version: { type: integer }
+        eval_status: { type: string, enum: [pending, running, passed, failed, skipped] }
+        deploy_state: { type: string, enum: [inactive, canary, active, rolled_back] }
+        deployed_at: { type: string, format: date-time, nullable: true }
+
+    InvokeRequest:
+      type: object
+      required: [conversation_id, user_id, channel, content]
+      properties:
+        conversation_id: { type: string, format: uuid }
+        user_id: { type: string }
+        channel: { type: string, enum: [web, whatsapp, slack, teams, telegram, sms, email, discord, voice, webhook] }
+        content:
+          type: array
+          items: { $ref: "#/components/schemas/ContentPart" }
+        metadata: { type: object }
+
+    ContentPart:
+      type: object
+      required: [type]
+      properties:
+        type: { type: string, enum: [text, image, audio, file] }
+        text: { type: string }
+        url: { type: string }
+        mime_type: { type: string }
+        bytes_b64: { type: string }
+
+    AgentResponse:
+      type: object
+      properties:
+        conversation_id: { type: string, format: uuid }
+        content:
+          type: array
+          items: { $ref: "#/components/schemas/ContentPart" }
+        suggested_actions:
+          type: array
+          items: { type: object }
+        end_turn: { type: boolean }
+
+    Conversation:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        agent_id: { type: string, format: uuid }
+        channel_type: { type: string }
+        user_id: { type: string }
+        status: { type: string, enum: [active, idle, closed, escalated] }
+        last_at: { type: string, format: date-time }
+
+    ConversationDetail:
+      allOf:
+        - $ref: "#/components/schemas/Conversation"
+        - type: object
+          properties:
+            turns:
+              type: array
+              items: { $ref: "#/components/schemas/Turn" }
+
+    Turn:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        seq: { type: integer }
+        role: { type: string }
+        content_json: { type: object }
+        token_in: { type: integer }
+        token_out: { type: integer }
+        cost_usd: { type: number }
+        latency_ms: { type: integer }
+        started_at: { type: string, format: date-time }
+        ended_at: { type: string, format: date-time }
+
+    KB:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        embedding_model: { type: string }
+        vector_dim: { type: integer }
+
+    KBCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        embedding_model: { type: string }
+        vector_dim: { type: integer }
+
+    KBIngestUrl:
+      type: object
+      required: [type, url]
+      properties:
+        type: { type: string, const: url }
+        url: { type: string, format: uri }
+        crawl: { type: boolean, default: false }
+
+    KBIngestNotion:
+      type: object
+      required: [type, integration_token, page_or_db]
+      properties:
+        type: { type: string, const: notion }
+        integration_token: { type: string }
+        page_or_db: { type: string }
+
+    KBIngestS3:
+      type: object
+      required: [type, s3_uri]
+      properties:
+        type: { type: string, const: s3 }
+        s3_uri: { type: string }
+
+    RetrievalChunk:
+      type: object
+      properties:
+        chunk_id: { type: string }
+        doc_id: { type: string }
+        score: { type: number }
+        content: { type: string }
+        source_uri: { type: string }
+        byte_range: { type: array, items: { type: integer }, minItems: 2, maxItems: 2 }
+
+    MCPServer:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        source_url: { type: string }
+        version: { type: string }
+        install_status: { type: string, enum: [pending, installed, failed, disabled] }
+        manifest:
+          type: object
+          properties:
+            tools:
+              type: array
+              items:
+                type: object
+                properties:
+                  name: { type: string }
+                  description: { type: string }
+                  input_schema: { type: object }
+
+    EvalCase:
+      type: object
+      required: [name, input, expected, scorers]
+      properties:
+        name: { type: string }
+        input: { type: object }
+        expected: { type: object }
+        scorers:
+          type: array
+          items:
+            type: object
+            properties:
+              kind: { type: string, enum: [llm_judge, embedding_sim, regex_match, json_schema, tool_call_assert, latency_le, cost_le, hallucination, toxicity, pii_leak] }
+              config: { type: object }
+
+    EvalSuite:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        case_count: { type: integer }
+
+    EvalRun:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        suite_id: { type: string, format: uuid }
+        agent_version_id: { type: string, format: uuid }
+        status: { type: string }
+        started_at: { type: string, format: date-time }
+        ended_at: { type: string, format: date-time, nullable: true }
+
+    EvalRunDetail:
+      allOf:
+        - $ref: "#/components/schemas/EvalRun"
+        - type: object
+          properties:
+            results:
+              type: array
+              items:
+                type: object
+                properties:
+                  case_name: { type: string }
+                  score: { type: number }
+                  passed: { type: boolean }
+                  regressed: { type: boolean }
+
+    UsageReport:
+      type: object
+      properties:
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              date: { type: string, format: date }
+              dim: { type: string }
+              llm_input_tokens: { type: integer }
+              llm_output_tokens: { type: integer }
+              llm_usd: { type: number }
+              agent_seconds: { type: integer }
+              compute_usd: { type: number }
+              tool_usd: { type: number }
+
+    Trace:
+      type: object
+      properties:
+        turn_id: { type: string, format: uuid }
+        spans:
+          type: array
+          items:
+            type: object
+            properties:
+              span_id: { type: string }
+              parent_span_id: { type: string, nullable: true }
+              kind: { type: string, enum: [llm, tool, retrieval, memory, channel] }
+              name: { type: string }
+              started_at: { type: string, format: date-time }
+              latency_ms: { type: integer }
+              cost_usd: { type: number }
+              status: { type: string }
+              attrs: { type: object }
+
+    WorkspaceMember:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        full_name: { type: string }
+        role: { type: string, enum: [owner, admin, editor, operator, viewer] }
+        invited_at: { type: string, format: date-time }
+        joined_at: { type: string, format: date-time, nullable: true }
+
+    APIKey:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        key_prefix: { type: string, description: "First 8 characters of the key" }
+        scopes: { type: array, items: { type: string } }
+        created_at: { type: string, format: date-time }
+        last_used_at: { type: string, format: date-time, nullable: true }
+        revoked_at: { type: string, format: date-time, nullable: true }
+
+    APIKeyCreated:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        key: { type: string, description: "Full key (shown once only)" }
+        scopes: { type: array, items: { type: string } }
+
+    SecretRef:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        agent_version_id: { type: string, format: uuid }
+        secret_name: { type: string }
+        created_at: { type: string, format: date-time }
+        rotated_at: { type: string, format: date-time, nullable: true }
+
+    AuditLogEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        action: { type: string, example: "agent:deploy" }
+        actor_user_id: { type: string, format: uuid, nullable: true }
+        resource_type: { type: string }
+        resource_id: { type: string, format: uuid, nullable: true }
+        before_state: { type: object, nullable: true }
+        after_state: { type: object, nullable: true }
+        client_ip: { type: string }
+        user_agent: { type: string, nullable: true }
+        request_id: { type: string }
+        created_at: { type: string, format: date-time }
+
+    WebhookRegistration:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        url: { type: string, format: uri }
+        events: { type: array, items: { type: string } }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+        last_triggered_at: { type: string, format: date-time, nullable: true }
+
+    Budget:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        scope: { type: string, enum: [workspace, agent, conversation, day] }
+        scope_id: { type: string, format: uuid, nullable: true }
+        soft_usd: { type: number, nullable: true }
+        hard_usd: { type: number, nullable: true }
+        spent_usd: { type: number }
+        remaining_usd: { type: number, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    Version:
+      type: object
+      properties:
+        api_version: { type: string, example: "0.1.0" }
+        build_hash: { type: string }
+        built_at: { type: string, format: date-time }

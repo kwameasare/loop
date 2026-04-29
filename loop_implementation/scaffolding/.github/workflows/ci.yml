@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with: { python-version: "3.12" }
+      - run: uv sync --all-packages
+      - run: uv run ruff check .
+      - run: uv run pyright
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --all-packages
+      - run: uv run pytest -q --cov=packages --cov-fail-under=85 -m "not integration and not e2e"
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: docker compose -f infra/docker-compose.yml up -d
+      - run: uv sync --all-packages
+      - run: uv run pytest -q -m integration
+      - if: always()
+        run: docker compose -f infra/docker-compose.yml logs
+
+  studio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - run: pnpm -C apps/studio install
+      - run: pnpm -C apps/studio lint
+      - run: pnpm -C apps/studio test
+      - run: pnpm -C apps/studio build
+
+  cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.22" }
+      - run: cd cli && go test ./...
+      - run: cd cli && golangci-lint run
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv tool install pip-audit
+      - run: uv tool run pip-audit
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: pnpm audit --audit-level=high
+      - uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+  evals:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.changed_files, 'packages/runtime/')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --all-packages
+      - run: docker compose -f infra/docker-compose.yml up -d
+      - run: uv run loop eval run tests/evals/runtime --fail-on "regression>5%"
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_TEST_KEY }}
