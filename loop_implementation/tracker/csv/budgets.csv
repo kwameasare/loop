@@ -1,21 +1,15 @@
-Budgets & metrics,,,,,,,
-Working numbers — refine with finance once seed closes.,,,,,,,
-Performance budgets (hard),,,,,,,
-Metric,Target,Owner,,,,,
-Voice latency p50 (end-to-end),≤ 700 ms,Eng #3,,,,,
-Chat first-token p50,≤ 600 ms,Eng #1,,,,,
-Chat p99,≤ 2000 ms,Eng #1,,,,,
-API availability (Pro/Team),99.9%,Eng #2,,,,,
-API availability (Enterprise),99.95%,Eng #2,,,,,
-Trace ingestion lag,≤ 5 s,Eng #4,,,,,
-Cold start (warm pool),0 (not user-visible),Eng #2,,,,,
-Deploy time (push → live),≤ 60 s,Eng #2,,,,,
-Eval suite of 100 cases,≤ 90 s,Eng #4,,,,,
-Concurrent conversations / pod,100,Eng #1,,,,,
-Unit-economics targets (steady state),,,,,,,
-Metric,Target,Notes,,,,,
-Gross margin,75%,"LLM ~95% on 5%, compute ~70%, storage ~85%",,,,,
-LTV : CAC,≥ 3 : 1 by month 18,Bottom-up PLG with sales-led at the top,,,,,
-ARR per FTE (by M24),$300K,Industry P75 for OSS/PLG infra,,,,,
-LLM token markup,"5%, fully disclosed",Trust commitment,,,,,
-Hard-cap behavior,"Graceful degrade, never drop",Trust commitment,,,,,
+metric,target,owner,notes
+Voice latency p50 (end-to-end),≤ 700 ms,Eng #3,
+Chat first-token p50,≤ 600 ms,Eng #1,
+Chat p99,≤ 2000 ms,Eng #1,
+API availability (Pro/Team),99.9%,Eng #2,
+API availability (Enterprise),99.95%,Eng #2,
+Trace ingestion lag,≤ 5 s,Eng #4,
+Cold start (warm pool),0 (not user-visible),Eng #2,
+Deploy time (push → live),≤ 60 s,Eng #2,
+Eval suite of 100 cases,≤ 90 s,Eng #4,
+Gross margin,75%,,"LLM ~95% on 5%, compute ~70%, storage ~85%"
+LTV : CAC,≥ 3 : 1 by month 18,,Bottom-up PLG with sales-led at the top
+ARR per FTE (by M24),$300K,,Industry P75 for OSS/PLG infra
+LLM token markup,"5%, fully disclosed",,Trust commitment
+Hard-cap behavior,"Graceful degrade, never drop",,Trust commitment

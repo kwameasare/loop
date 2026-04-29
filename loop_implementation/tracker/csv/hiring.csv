@@ -1,11 +1,9 @@
-Hiring plan,,,,,,,
-First 8 engineers. Onboarding sequence in HANDBOOK.md §11.,,,,,,,
-#,Role,Why first,Start month,Stage,Owner,Notes,
-1,Founding engineer — Runtime (Python core),"Owns the agent loop. Senior, opinionated.",M0,Searching,CTO,Bar: shipped a high-throughput Python service before,
-2,Founding engineer — Infra / Platform,"Postgres, Redis, NATS, k8s, Terraform. Builds data plane.",M0,Searching,CTO,"Bar: production k8s, observability",
-3,Founding engineer — Voice / Real-time,"WebRTC, STT/TTS, latency. The voice moat.",M0,Pipeline,CTO,Bar: ≤500ms voice in prod,
-4,Founding engineer — Observability + Eval harness,"ClickHouse, OTel, eval scorers. The other moat.",M1,Pipeline,CTO,Bar: scaled tracing/eval system before,
-5,Founding engineer — Full-stack / Studio,"Next.js, React, tRPC. Debugger UI.",M1,Pipeline,CTO,Bar: shipped a polished web app to GA,
-6,DevRel / Docs engineer,"Examples, blog, docs, MCP server contributions. OSS adoption.",M3,Pipeline,CEO,Critical for community velocity,
-7,Senior engineer — Channel integrations,"WhatsApp, Slack, Teams, email. Compounding work.",M3,Pipeline,CTO,Bar: 3+ external API integrations,
-8,Security / Compliance engineer,"SOC2, HIPAA-readiness, audit logs, secrets. Unlocks enterprise.",M5,Searching,CTO,Bar: led SOC2 effort end-to-end,
+n,role,why,start_month,stage,owner,notes
+1,Founding engineer — Runtime (Python core),"Owns the agent loop. Senior, opinionated.",M0,Searching,CTO,Bar: shipped a high-throughput Python service before
+2,Founding engineer — Infra / Platform,"Postgres, Redis, NATS, k8s, Terraform. Builds data plane.",M0,Searching,CTO,"Bar: production k8s, observability"
+3,Founding engineer — Voice / Real-time,"WebRTC, STT/TTS, latency. The voice moat.",M0,Pipeline,CTO,Bar: ≤500ms voice in prod
+4,Founding engineer — Observability + Eval harness,"ClickHouse, OTel, eval scorers. The other moat.",M1,Pipeline,CTO,Bar: scaled tracing/eval system before
+5,Founding engineer — Full-stack / Studio,"Next.js, React, tRPC. Debugger UI.",M1,Pipeline,CTO,Bar: shipped a polished web app to GA
+6,DevRel / Docs engineer,"Examples, blog, docs, MCP server contributions. OSS adoption.",M3,Pipeline,CEO,Critical for community velocity
+7,Senior engineer — Channel integrations,"WhatsApp, Slack, Teams, email. Compounding work.",M3,Pipeline,CTO,Bar: 3+ external API integrations
+8,Security / Compliance engineer,"SOC2, HIPAA-readiness, audit logs, secrets. Unlocks enterprise.",M5,Searching,CTO,Bar: led SOC2 effort end-to-end

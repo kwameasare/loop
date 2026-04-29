@@ -1,7 +1,12 @@
-Stories,,,,,,,,
-Sprint-sized work items. Map back to an Epic via the Epic column.,,,,,,,,
-ID,Story,Owner,Sprint,Epic,Estimate (pts),Priority,Status,Notes
-S001,"Repo init, CI skeleton, branch protection, CODEOWNERS",CTO,S0,E12,3,P0,Not started,Week 1
+id,title,owner,sprint,epic,points,priority,status,notes
+S001,"Repo init, CI skeleton, branch protection, CODEOWNERS",GitHub Copilot,S0,E12,3,P0,In progress,"**Active.**
+Branch: copilot/s001-repo-init
+Skill: skills/_base/SKILL_ROUTER.md (no specific bootstrap skill; HANDBOOK §1.3 + §2.5 + §3 govern)
+Last step: 2/9 (tracker tooling under construction)
+Heartbeat: 2026-04-29T23:15Z (GitHub Copilot)
+Open questions: tracker tooling bootstrap (this story builds it) — first claim done by hand-edit, all subsequent tracker mutations go through tools/build_tracker.py
+Blockers: none
+Commits: (will accumulate)"
 S002,"Cloud accounts (chosen launch cloud — see CLOUD_PORTABILITY.md), Auth0 dev tenant, Stripe test, Sentry, Linear, PagerDuty",CTO,S0,E12,5,P0,Not started,Week 1
 S003,"docker-compose: Postgres, Redis, Qdrant, NATS, MinIO, ClickHouse, OTel",Eng #2,S0,E13,5,P0,Not started,Week 1
 S004,Runtime package skeleton; AgentEvent/AgentResponse/Turn types,Eng #1,S0,E1,5,P0,Not started,Week 1
