@@ -35,7 +35,7 @@
 
 | ID | Story | Owner | Sprint | Epic | Estimate (pts) | Priority | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
-| S001 | Repo init, CI skeleton, branch protection, CODEOWNERS | CTO | S0 | E12 | 3 | P0 | Not started | Week 1 |
+| S001 | Repo init, CI skeleton, branch protection, CODEOWNERS | GitHub Copilot | S0 | E12 | 3 | P0 | In progress | **Active.**<br>Branch: copilot/s001-repo-init<br>Skill: skills/_base/SKILL_ROUTER.md (no specific bootstrap skill; HANDBOOK §1.3 + §2.5 + §3 govern)<br>Last step: 0/9 (just claimed)<br>Heartbeat: 2026-04-29T23:10Z (GitHub Copilot)<br>Open questions: tracker tooling bootstrap (this story builds it) — first claim done by hand-edit, all subsequent tracker mutations go through tools/build_tracker.py<br>Blockers: none<br>Commits: (will accumulate) |
 | S002 | Cloud accounts (chosen launch cloud — see CLOUD_PORTABILITY.md), Auth0 dev tenant, Stripe test, Sentry, Linear, PagerDuty | CTO | S0 | E12 | 5 | P0 | Not started | Week 1 |
 | S003 | docker-compose: Postgres, Redis, Qdrant, NATS, MinIO, ClickHouse, OTel | Eng #2 | S0 | E13 | 5 | P0 | Not started | Week 1 |
 | S004 | Runtime package skeleton; AgentEvent/AgentResponse/Turn types | Eng #1 | S0 | E1 | 5 | P0 | Not started | Week 1 |
