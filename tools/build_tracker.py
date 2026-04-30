@@ -382,16 +382,15 @@ STORIES: list[Story] = [
         "E12",
         5,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s006-pg-migrations. "
-            "Skill: skills/data/add-postgres-migration.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T02:00Z (GitHub Copilot). "
-            "Open questions: none — using Alembic with two trees (control_plane, data_plane). "
-            "Blockers: none. "
-            "Commits: claim."
+            "Two Alembic trees under packages/control-plane (loop_control_plane.migrations) "
+            "and packages/data-plane (loop_data_plane.migrations). cp_0001 creates "
+            "workspaces / users / workspace_members / api_keys / agent_secrets / agents / "
+            "agent_versions with RLS on customer-data tables. dp_0001 creates conversations "
+            "/ turns / memory_user / memory_bot / tool_calls — every table has workspace_id "
+            "NOT NULL and FORCE ROW LEVEL SECURITY (ADR-020). Offline SQL render tests "
+            "(tests/test_migrations.py) green; ruff + pyright clean."
         ),
     ),
     Story(

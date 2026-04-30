@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T00:59:42.339146+00:00",
+    "generated_at": "2026-04-30T01:05:26.511266+00:00",
     "format_version": 2
   },
   "epics": [
@@ -231,8 +231,8 @@
       "epic": "E12",
       "points": 5,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.** Branch: copilot/s006-pg-migrations. Skill: skills/data/add-postgres-migration.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T02:00Z (GitHub Copilot). Open questions: none — using Alembic with two trees (control_plane, data_plane). Blockers: none. Commits: claim."
+      "status": "Done",
+      "notes": "Two Alembic trees under packages/control-plane (loop_control_plane.migrations) and packages/data-plane (loop_data_plane.migrations). cp_0001 creates workspaces / users / workspace_members / api_keys / agent_secrets / agents / agent_versions with RLS on customer-data tables. dp_0001 creates conversations / turns / memory_user / memory_bot / tool_calls — every table has workspace_id NOT NULL and FORCE ROW LEVEL SECURITY (ADR-020). Offline SQL render tests (tests/test_migrations.py) green; ruff + pyright clean."
     },
     {
       "id": "S007",
