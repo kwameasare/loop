@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T14:41:02.517337+00:00",
+    "generated_at": "2026-04-30T14:41:54.435375+00:00",
     "format_version": 2
   },
   "epics": [
@@ -468,13 +468,13 @@
     {
       "id": "S028",
       "title": "Examples repo: support_agent + docs site v0",
-      "owner": "Eng #6",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E17",
       "points": 5,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "Week 5"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s028-examples-docs. Skill: skills/devrel/write-docs-page.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T16:00Z (GitHub Copilot). Open questions: none -- expanding examples/support_agent with README + run_eval.py harness wiring + per-case expectations doc, plus docs/ site v0 (index, quickstart, concepts {agents, tools, memory, channels, eval}, and a cookbook page mirroring the support example) and a navigation manifest tools/check_docs_links.py validates. Blockers: none. Commits: claim."
     },
     {
       "id": "S029",

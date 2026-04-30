@@ -1031,13 +1031,27 @@ STORIES: list[Story] = [
     Story(
         "S028",
         "Examples repo: support_agent + docs site v0",
-        "Eng #6",
+        "GitHub Copilot",
         "S0",
         "E17",
         5,
         "P0",
-        "Not started",
-        "Week 5",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s028-examples-docs. "
+            "Skill: skills/devrel/write-docs-page.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T16:00Z (GitHub Copilot). "
+            "Open questions: none -- expanding examples/support_agent "
+            "with README + run_eval.py harness wiring + per-case "
+            "expectations doc, plus docs/ site v0 (index, quickstart, "
+            "concepts {agents, tools, memory, channels, eval}, and a "
+            "cookbook page mirroring the support example) and a "
+            "navigation manifest tools/check_docs_links.py validates. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S029",
