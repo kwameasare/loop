@@ -513,13 +513,26 @@ STORIES: list[Story] = [
     Story(
         "S013",
         "Memory loader/persister (user + session)",
-        "Eng #1",
+        "GitHub Copilot",
         "S0",
         "E4",
         5,
         "P0",
-        "Not started",
-        "Week 3",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s013-memory. "
+            "Skill: skills/coding/implement-runtime-feature.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T06:00Z (GitHub Copilot). "
+            "Open questions: none -- ship loop-memory package with "
+            "UserMemoryStore + SessionMemoryStore protocols, in-memory "
+            "implementations, Postgres adapter (SQLAlchemy async, "
+            "memory_user/memory_bot tables), Redis adapter "
+            "(loop:session:{conv_id}:{key} keyspace, 24h TTL). "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S014",
