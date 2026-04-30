@@ -401,16 +401,14 @@ STORIES: list[Story] = [
         "E2",
         8,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s007-llm-gateway. "
-            "Skill: skills/coding/implement-llm-gateway-change.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T03:00Z (GitHub Copilot). "
-            "Open questions: none -- streaming-first provider skeleton with cost.py + 5% markup. "
-            "Blockers: none. "
-            "Commits: claim."
+            "packages/gateway skeleton: strict streaming wire types, OpenAI + Anthropic "
+            "SSE parsers with injectable transports, cost.py with cited rates and the "
+            "5% disclosed markup (ADR-012), alias resolution from aliases.yaml + per-"
+            "workspace overrides for BYOK, GatewayClient with (workspace_id, request_id) "
+            "idempotency cache (cross-workspace replay physically blocked, ADR-022). "
+            "17 unit tests, ruff + pyright clean."
         ),
     ),
     Story(
