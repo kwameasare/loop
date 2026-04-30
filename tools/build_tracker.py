@@ -717,13 +717,25 @@ STORIES: list[Story] = [
     Story(
         "S017",
         "Channel layer abstraction; web channel adapter (REST + SSE)",
-        "Eng #1",
+        "GitHub Copilot",
         "S0",
         "E6",
         5,
         "P0",
-        "Not started",
-        "Week 4",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s017-channel-web. "
+            "Skill: skills/coding/implement-channel-adapter.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T09:00Z (GitHub Copilot). "
+            "Open questions: none -- ship loop-channels-core (Channel "
+            "Protocol + InboundEvent / OutboundFrame / TurnEvent types) "
+            "and loop-channels-web (REST POST /messages + SSE GET "
+            "/messages/stream). "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S018",
