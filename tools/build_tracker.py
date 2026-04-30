@@ -537,13 +537,28 @@ STORIES: list[Story] = [
     Story(
         "S014",
         "Firecracker via Kata k8s runtime class + prewarmed pool",
-        "Eng #2",
+        "GitHub Copilot",
         "S0",
         "E3",
         8,
         "P0",
-        "Not started",
-        "Week 3",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s014-firecracker. "
+            "Skill: skills/coding/implement-runtime-feature.md "
+            "(ADR-005 + ADR-021 already accepted; this is the impl). "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T07:00Z (GitHub Copilot). "
+            "Open questions: none -- ship loop-tool-host package with "
+            "Sandbox abstraction (acquire/release/exec) and a WarmPool "
+            "that pre-allocates idle sandboxes; in-memory impl for the "
+            "studio + tests; Kata RuntimeClass + dp-tool-host k8s "
+            "manifests under infra/k8s/. Real k8s warmpool controller "
+            "deferred to S028. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S015",
