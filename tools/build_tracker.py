@@ -471,17 +471,16 @@ STORIES: list[Story] = [
         "E3",
         8,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s011-mcp-client. "
-            "Skill: skills/coding/implement-mcp-tool.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T05:00Z (GitHub Copilot). "
-            "Open questions: none -- new loop-mcp package; @tool decorator + "
-            "type-hint to JSON Schema + process-local registry + stdio transport stub. "
-            "Blockers: none. "
-            "Commits: claim."
+            "New loop-mcp package: @tool decorator turns annotated Python callables "
+            "into MCP tool descriptors (type hints -> JSON Schema), "
+            "process-local ToolRegistry validates required args before dispatch, "
+            "and StdioMcpClient speaks Content-Length-framed JSON-RPC 2.0 for "
+            "out-of-process servers. Async-native, sandbox-agnostic (Firecracker "
+            "wrap-up lands in S014/S028). 12 tests cover schema generation, "
+            "decorator behaviour, registry, and a socketpair-based round-trip; "
+            "ruff + pyright clean."
         ),
     ),
     Story(
