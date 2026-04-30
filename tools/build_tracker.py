@@ -749,18 +749,22 @@ STORIES: list[Story] = [
         "E6",
         5,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
+            "PR #018 / merged to main as fast-forward. "
             "Branch: copilot/s018-slack-channel. "
             "Skill: skills/coding/implement-channel-adapter.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T09:30Z (GitHub Copilot). "
-            "Open questions: none -- ship loop-channels-slack with HMAC "
-            "request verifier (v0:timestamp:body), event/command parsers, "
-            "Block Kit formatter, thread_ts -> conversation_id mapping. "
-            "Blockers: none. "
-            "Commits: claim."
+            "Shipped packages/channels/slack (loop-channels-slack v0.1.0): "
+            "verify_request -- HMAC-SHA256 v0 scheme with constant-time "
+            "compare and 5-min replay window; parse_event / parse_command "
+            "lift Slack JSON into InboundEvents (filters bot echoes); "
+            "to_blocks renders OutboundFrames as chat.postMessage payloads "
+            "with mrkdwn sections (token frames suppressed since Slack "
+            "is non-streaming); SlackChannel adapter with in-memory "
+            "ThreadIndex (thread_ts -> conversation_id, asyncio.Lock). "
+            "12 tests covering verifier, parsers, Block Kit rendering, "
+            "thread reuse, slash command flow. ruff + pyright clean. "
+            "Commits: claim, substance, close."
         ),
     ),
     Story(
