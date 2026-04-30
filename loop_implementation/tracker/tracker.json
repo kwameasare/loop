@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T14:35:49.064340+00:00",
+    "generated_at": "2026-04-30T14:36:31.752484+00:00",
     "format_version": 2
   },
   "epics": [
@@ -446,13 +446,13 @@
     {
       "id": "S026",
       "title": "Eval harness: production-replay capture (failed turns)",
-      "owner": "Eng #4",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E8",
       "points": 5,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "Week 5"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s026-eval-replay-capture. Skill: skills/coding/implement-eval-scorer.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T15:00Z (GitHub Copilot). Open questions: none -- adding loop_eval.replay module with FailedTurn pydantic model, deterministic sampling policy keyed on (workspace_id,request_id), InMemoryReplaySink + Protocol, and to_samples() to feed captured failures back into EvalRunner. PII redaction hook left as injected callable. Blockers: none. Commits: claim."
     },
     {
       "id": "S027",

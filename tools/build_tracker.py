@@ -972,13 +972,27 @@ STORIES: list[Story] = [
     Story(
         "S026",
         "Eval harness: production-replay capture (failed turns)",
-        "Eng #4",
+        "GitHub Copilot",
         "S0",
         "E8",
         5,
         "P1",
-        "Not started",
-        "Week 5",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s026-eval-replay-capture. "
+            "Skill: skills/coding/implement-eval-scorer.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T15:00Z (GitHub Copilot). "
+            "Open questions: none -- adding loop_eval.replay module "
+            "with FailedTurn pydantic model, deterministic sampling "
+            "policy keyed on (workspace_id,request_id), "
+            "InMemoryReplaySink + Protocol, and to_samples() to feed "
+            "captured failures back into EvalRunner. PII redaction "
+            "hook left as injected callable. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S027",
