@@ -36,7 +36,9 @@ import csv
 import json
 import sys
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+
+UTC = timezone.utc  # python<=3.10 compat (datetime.UTC arrived in 3.11)
 from pathlib import Path
 from typing import Any
 
@@ -1863,9 +1865,372 @@ STORIES: list[Story] = [
 ]
 
 
+# --------------------------------------------------------------------------- #
+# Bite-sized backlog (S100+) — see tools/_stories_v2.py for the rationale.    #
+# Every old vision-headline story (S015-S050) shipped a stub; the bite-sized #
+# stories below are what's actually needed to take each stub to production.  #
+# --------------------------------------------------------------------------- #
+
+# Re-tag every vision-headline-shaped story (S015-S050) into a single sprint
+# 'S1' labeled "Vision-headline stub layer" so the new bite-sized sprints
+# (S2-S30) get a clean number space. The old per-story sprint assignment was
+# never meaningful — every story closed in one pass.
+_VISION_STUB_STORY_IDS: set[str] = {f"S{i:03d}" for i in range(15, 51)}
+for _story in STORIES:
+    if _story.id in _VISION_STUB_STORY_IDS:
+        _story.sprint = "S1"
+del _story
+
+# Append the bite-sized backlog. Imported lazily so editing _stories_v2.py
+# alone is enough to grow the backlog — no churn here. The sibling module
+# is loaded by absolute path so this works whether run as `python
+# tools/build_tracker.py` (no package context) or `python -m
+# tools.build_tracker` (package context).
+import importlib.util as _ilu  # noqa: E402
+
+_v2_path = Path(__file__).with_name("_stories_v2.py")
+_v2_spec = _ilu.spec_from_file_location("_stories_v2", _v2_path)
+_v2_mod = _ilu.module_from_spec(_v2_spec)
+assert _v2_spec.loader is not None
+sys.modules["_stories_v2"] = _v2_mod  # required so @dataclass introspection works
+_v2_spec.loader.exec_module(_v2_mod)
+_NEW_OWNER = _v2_mod.DEFAULT_OWNER
+_NEW_STATUS = _v2_mod.DEFAULT_STATUS
+_NEW_STORIES_V2 = _v2_mod.NEW_STORIES
+
+for _v2 in _NEW_STORIES_V2:
+    STORIES.append(
+        Story(
+            id=_v2.id,
+            title=_v2.title,
+            owner=_NEW_OWNER,
+            sprint=_v2.sprint,
+            epic=_v2.epic,
+            points=_v2.points,
+            priority=_v2.priority,
+            status=_NEW_STATUS,
+            notes=_v2.notes,
+        )
+    )
+del _v2
+
+
 SPRINTS: list[Sprint] = [
     Sprint(
         "S0",
+        "Wk 1–6",
+        "Bootstrap (closed)",
+        "Foundation: repo, CI, types, docker-compose, migrations, gateway+runtime+memory+tools skeletons. 14/15 closed; S002 blocked on CTO.",
+        "S001-S014, S002",
+        "Done",
+    ),
+    Sprint(
+        "S1",
+        "Wk 7–18",
+        "Vision-headline stub layer (closed; stubs only)",
+        "Each S015-S050 shipped a stub under a vision-headline title. The real production work is decomposed across S2-S30 below.",
+        "S015-S050",
+        "Done",
+    ),
+    Sprint(
+        "S2",
+        "Wk 19–20",
+        "cp-api basics",
+        "A live cp-api a developer can hit — auth, workspaces, members, API keys, error mapping, integration smoke.",
+        "S100-S122",
+        "Not started",
+    ),
+    Sprint(
+        "S3",
+        "Wk 21–22",
+        "dp-runtime HTTP service",
+        "POST /v1/turns returns SSE TurnEvent stream end-to-end with API-key auth and persistence.",
+        "S130-S143",
+        "Not started",
+    ),
+    Sprint(
+        "S4",
+        "Wk 23–24",
+        "Studio MVP",
+        "User logs in, sees workspaces+agents from real cp-api, runs an emulator turn, manages versions+secrets.",
+        "S150-S164",
+        "Not started",
+    ),
+    Sprint(
+        "S5",
+        "Wk 25–26",
+        "Web channel + first end-to-end demo",
+        "Visitor on a webpage talks to a Loop agent via embedded ChatWidget; demo + smoke test live.",
+        "S170-S181",
+        "Not started",
+    ),
+    Sprint(
+        "S6",
+        "Wk 27–30",
+        "KB engine v0 (productionization)",
+        "Upload a PDF, agent answers from it with citations. Full parser registry, chunkers, embeddings, hybrid retrieval, reranker, studio UI.",
+        "S190-S213",
+        "Not started",
+    ),
+    Sprint(
+        "S7",
+        "Wk 31–32",
+        "Slack channel productionization",
+        "Threaded conversations, signed webhooks, Block Kit, OAuth install, integration tests.",
+        "S220-S229",
+        "Not started",
+    ),
+    Sprint(
+        "S8",
+        "Wk 33–34",
+        "Eval harness productionization",
+        "Real scorers, cassette record/replay, suite runner, regression detector, studio UI.",
+        "S240-S253",
+        "Not started",
+    ),
+    Sprint(
+        "S9",
+        "Wk 35–36",
+        "Deploy controller v0",
+        "Artifact → image → k8s with canary promotion, rollback, deploy events.",
+        "S260-S271",
+        "Not started",
+    ),
+    Sprint(
+        "S10",
+        "Wk 37–38",
+        "Cost / observability v1",
+        "ClickHouse rollups, cost dashboard, trace search + waterfall, alert rules.",
+        "S280-S291",
+        "Not started",
+    ),
+    Sprint(
+        "S11",
+        "Wk 39–40",
+        "HITL operator inbox v0",
+        "Real takeover state machine, queue, conversation viewer, composer, handback.",
+        "S300-S309",
+        "Not started",
+    ),
+    Sprint(
+        "S12",
+        "Wk 41–42",
+        "Billing v0 (Stripe)",
+        "Customer creation, plans, webhooks, metered usage push, suspension, studio billing tab.",
+        "S320-S331",
+        "Not started",
+    ),
+    Sprint(
+        "S13",
+        "Wk 43–44",
+        "WhatsApp channel productionization",
+        "Cloud API webhooks, 24h-window enforcement, templates, media, interactive elements, studio connect.",
+        "S340-S349",
+        "Not started",
+    ),
+    Sprint(
+        "S14",
+        "Wk 45–46",
+        "Voice infrastructure",
+        "Real ASR/TTS/VAD adapters, turn-take FSM, LiveKit room bridge, tracing, web-RTC echo agent.",
+        "S360-S371",
+        "Not started",
+    ),
+    Sprint(
+        "S15",
+        "Wk 47–48",
+        "Voice MVP — phone calls",
+        "Twilio SIP gateway, outbound call API, number provisioning, voice widget, latency benchmark, integration test.",
+        "S380-S389",
+        "Not started",
+    ),
+    Sprint(
+        "S16",
+        "Wk 49–50",
+        "Multi-agent orchestration v0",
+        "AgentGraph types, Supervisor/Pipeline/Parallel patterns, executor with cycle detection, shared memory + cost rollup, integration test.",
+        "S400-S410",
+        "Not started",
+    ),
+    Sprint(
+        "S17",
+        "Wk 51–52",
+        "TS SDK + CLI v0",
+        "Auto-gen TS client, react hooks, full CLI surface (login/init/deploy/logs/eval/secrets), multi-arch release pipeline.",
+        "S420-S433",
+        "Not started",
+    ),
+    Sprint(
+        "S18",
+        "Wk 53–54",
+        "Helm chart for self-host",
+        "Per-service subcharts, dependencies (Postgres/Redis/Qdrant/NATS/ClickHouse/MinIO), ingress + cert-manager, kind smoke test.",
+        "S440-S453",
+        "Not started",
+    ),
+    Sprint(
+        "S19",
+        "Wk 55–56",
+        "Studio flow editor v0",
+        "Visual node-based editor with palette/config/edges/serialize/emulator/templates — Botpress's killer UX.",
+        "S460-S472",
+        "Not started",
+    ),
+    Sprint(
+        "S20",
+        "Wk 57–58",
+        "Trace viewer + replay",
+        "Frame recorder, deterministic replayer, side-by-side diff, prod-failure → eval-case auto-flow.",
+        "S480-S487",
+        "Not started",
+    ),
+    Sprint(
+        "S21",
+        "Wk 59–60",
+        "Episodic memory + KB v1",
+        "Auto-summarize on conv close, retrieval at turn-start, scheduled refresh, layout-aware chunking.",
+        "S490-S497",
+        "Not started",
+    ),
+    Sprint(
+        "S22",
+        "Wk 61–62",
+        "SMS + RCS + Email + Telegram channels",
+        "Twilio SMS w/ STOP compliance, RCS via Jibe/MaaP, SES inbound+outbound w/ DKIM, Telegram polling+webhook.",
+        "S510-S519, S540-S545",
+        "Not started",
+    ),
+    Sprint(
+        "S23",
+        "Wk 63–64",
+        "Discord + Teams channels",
+        "Bot SDK adapters; studio connect flows; cross-channel test fixture.",
+        "S530-S536",
+        "Not started",
+    ),
+    Sprint(
+        "S24",
+        "Wk 65–66",
+        "MCP marketplace v0",
+        "Registry table, signed-manifest verification, install flow, browse/install UI, first 4 first-party MCP servers.",
+        "S550-S559",
+        "Not started",
+    ),
+    Sprint(
+        "S25",
+        "Wk 67–70",
+        "SOC2 Type 1 prep",
+        "Vanta sync, control mapping, backups+DR, pen-test, SBOM, scanning gates, audit-trail review, attestation kickoff.",
+        "S570-S582",
+        "Not started",
+    ),
+    Sprint(
+        "S26",
+        "Wk 71–72",
+        "EU region (data residency)",
+        "Region pinning, EU stack, region-aware routing, cross-region export blocker, smoke test.",
+        "S590-S597",
+        "Not started",
+    ),
+    Sprint(
+        "S27",
+        "Wk 73–74",
+        "Enterprise SSO/SAML",
+        "PySAML2 SP, SCIM provisioning, Okta/Entra/Google recipes, JIT user provisioning, group→role mapping.",
+        "S610-S618",
+        "Not started",
+    ),
+    Sprint(
+        "S28",
+        "Wk 75–76",
+        "Audit log UI + DPA + on-prem parity",
+        "Audit events table+middleware, studio audit UI, SIEM webhook, DPA, GDPR Art-17, CMK, BYO Vault, dedicated single-tenant.",
+        "S630-S639",
+        "Not started",
+    ),
+    Sprint(
+        "S29",
+        "Wk 77–78",
+        "Voice latency + GA polish",
+        "Voice ≤700ms p50; design-system audit; a11y WCAG-AA; i18n; support runbook; docs.loop.example v1.",
+        "S650-S659",
+        "Not started",
+    ),
+    Sprint(
+        "S30",
+        "Wk 79–80",
+        "1.0 launch + Series A",
+        "Release notes, pricing page, design-partner conversion, HN/PH launch, Series A data room.",
+        "S670-S674",
+        "Not started",
+    ),
+    # ---- Audit-follow-up sprints (added after vision-coverage audit) ----
+    # These five sprints close gaps the v1 plan missed: LLM gateway breadth,
+    # MCP production hardening, marketplace scale, cloud-portability proof,
+    # and production-security/ops acceptance gates. Plus a memory-providers
+    # sprint and a hard performance-gates sprint. Run in parallel with the
+    # main S2-S30 arc when capacity allows; serial-blocking points called out
+    # below.
+    Sprint(
+        "S31",
+        "Wk 23–28 (parallel w/ S3-S6)",
+        "LLM gateway breadth",
+        "Bedrock + Vertex/Gemini + Mistral + Cohere + Groq + vLLM + generic OpenAI-compat. Semantic cache, BYO keys, model aliases, routing engine, failover, rate-limiting, Decimal cost precision, 50-prompt provider eval.",
+        "S700-S714",
+        "Not started",
+    ),
+    Sprint(
+        "S32",
+        "Wk 29–34 (parallel w/ S7-S10)",
+        "MCP production hardening",
+        "Tool policy engine, egress allowlist, rate-limit, schema validation, secrets injection, sandbox controller, hot-restart, inbound MCP, version negotiation, resource quotas, signed-tool verification, hostile-tool kill-switch.",
+        "S720-S735",
+        "Not started",
+    ),
+    Sprint(
+        "S33",
+        "Wk 65–68 (after S24)",
+        "MCP marketplace scale + community",
+        "Quality scoring, community-publish PR flow, reviews/ratings, usage analytics, 12 first-party servers (Calendar, Gmail, GitHub, Linear, Jira, Notion, Asana, Stripe-write, Slack-write, HubSpot-write, web-search), 25-server MVP acceptance gate.",
+        "S750-S765",
+        "Not started",
+    ),
+    Sprint(
+        "S34",
+        "Wk 71–76 (parallel w/ S26-S28)",
+        "Cloud-portability proof",
+        "Terraform modules for AWS / Azure / GCP / Alibaba / OVH / Hetzner. Protocol parity tests for ObjectStore + KMS + SecretsBackend + EmailSender. Cross-cloud nightly smoke matrix. Live CLOUD_PROOF.md report.",
+        "S770-S781",
+        "Not started",
+    ),
+    Sprint(
+        "S35",
+        "Wk 67–72 (overlap w/ S25)",
+        "Production security / ops acceptance gates",
+        "Continuous fuzz testing, STRIDE PR-gate, SLSA-3 provenance, Falco runtime detection, chaos-eng harness, SLOs + error-budget alerts, incident-response game-days, data-retention enforcement, backup-restore verification, bug bounty.",
+        "S800-S809",
+        "Not started",
+    ),
+    Sprint(
+        "S36",
+        "Wk 59–62 (parallel w/ S21-S22)",
+        "Memory providers + KB v2",
+        "Mem0 + Zep adapters, hybrid summarization, per-user isolation tests, PII-redaction-on-write, memory dashboard, ColBERT late-interaction retrieval, structured-data (SQL-on-spreadsheet) retrieval.",
+        "S820-S827",
+        "Not started",
+    ),
+    Sprint(
+        "S37",
+        "Wk 77–80 (overlap w/ S29-S30)",
+        "Latency + scale acceptance gates",
+        "Hard performance gates: turn p95 <2s, gateway cache-hit >30%, KB p50 <200ms at 1M chunks, tool-host warm <300ms p95, 1000 concurrent turns/pod, cp-api 5000 RPS, perf-regression budget enforced in CI.",
+        "S840-S846",
+        "Not started",
+    ),
+]
+_LEGACY_SPRINTS_BELOW: list[Sprint] = [
+    Sprint(
+        "_LEGACY_S0",
         "Wk 1–6",
         "Bootstrap",
         "Local stack + first turn + first deploy + 3 design partners onboarded",
