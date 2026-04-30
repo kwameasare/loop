@@ -366,15 +366,12 @@ STORIES: list[Story] = [
         "E10",
         3,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s005-studio-skeleton. "
-            "Skill: skills/coding/implement-studio-screen.md. "
-            "Last step: 1/4 (claim). "
-            "Heartbeat: 2026-04-30T01:30Z (GitHub Copilot). "
-            "Open questions: none. Blockers: none. "
-            "Commits: claim."
+            "Next.js 14 App Router + TS + Tailwind + shadcn-style design tokens. Reference "
+            "Button primitive with cva variants. Vitest + Testing Library + jsdom (2 tests "
+            "pass). pnpm install, lint, test, build all green. CI 'studio' job now activates "
+            "via hashFiles guard."
         ),
     ),
     Story(

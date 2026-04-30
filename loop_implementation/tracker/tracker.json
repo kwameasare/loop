@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T00:55:36.977282+00:00",
+    "generated_at": "2026-04-30T00:58:27.912931+00:00",
     "format_version": 2
   },
   "epics": [
@@ -220,8 +220,8 @@
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.** Branch: copilot/s005-studio-skeleton. Skill: skills/coding/implement-studio-screen.md. Last step: 1/4 (claim). Heartbeat: 2026-04-30T01:30Z (GitHub Copilot). Open questions: none. Blockers: none. Commits: claim."
+      "status": "Done",
+      "notes": "Next.js 14 App Router + TS + Tailwind + shadcn-style design tokens. Reference Button primitive with cva variants. Vitest + Testing Library + jsdom (2 tests pass). pnpm install, lint, test, build all green. CI 'studio' job now activates via hashFiles guard."
     },
     {
       "id": "S006",
