@@ -1358,8 +1358,28 @@ STORIES: list[Story] = [
         "E6",
         8,
         "P1",
-        "Not started",
-        "M7",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s037-email-telegram. "
+            "Skill: skills/coding/implement-channel-adapter.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T20:30Z (GitHub Copilot). "
+            "Open questions: none -- adding two new "
+            "channel packages: packages/channels/email "
+            "(loop_channels_email; SES inbound MIME -> "
+            "InboundEvent + outbound frame -> SES SendEmail "
+            "request body; thread-id keyed conversation index) "
+            "and packages/channels/telegram "
+            "(loop_channels_telegram; Bot API webhook update "
+            "-> InboundEvent + outbound frame -> sendMessage "
+            "request body; chat-id keyed conversation index). "
+            "Both reuse the existing loop-channels-core "
+            "frames + ChannelDispatcher Protocol -- no SES / "
+            "Telegram SDK dependency, just the wire-shape "
+            "translation. Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S038",
