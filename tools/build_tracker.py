@@ -1678,8 +1678,33 @@ STORIES: list[Story] = [
         "E16",
         13,
         "P0",
-        "Not started",
-        "M10",
+        "Done",
+        (
+            "**Done.** "
+            "Branch: copilot/s046-soc2-kickoff (merged). "
+            "PR: local-merge (ff to main). "
+            "Skill: skills/security/update-threat-model.md. "
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T23:35Z (GitHub Copilot). "
+            "Open questions: auditor selection (Vanta-pool, "
+            "decision end of week); IdP/MDM/HRIS vendor "
+            "selection. "
+            "Shipped loop_implementation/engineering/SOC2.md "
+            "as the Type 1 kickoff tracker: scope (Security "
+            "TSC only for T1; A+C planned for T2), RACI, "
+            "Vanta integration checklist (IdP, GitHub, CI/CD, "
+            "cloud, MDM, HRIS, background check, vuln "
+            "scanner, vendor-risk), control families "
+            "CC1-CC9 with per-row owner/evidence/status, "
+            "evidence collection cadence (continuous to "
+            "annual), milestone schedule (kickoff -> T1 "
+            "report end of Q3 -> T2 window opens), and "
+            "explicit out-of-scope clarifications "
+            "(HIPAA/FedRAMP/PCI). Cross-references "
+            "SECURITY.md, DR.md, REGIONAL_DEPLOYS.md. "
+            "Pure docs change. Blockers: none. "
+            "Commits: substance, close."
+        ),
     ),
     Story(
         "S047",
