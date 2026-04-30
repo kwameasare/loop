@@ -1792,8 +1792,35 @@ STORIES: list[Story] = [
         "E7",
         8,
         "P1",
-        "Not started",
-        "M11",
+        "Done",
+        (
+            "**Done.** "
+            "Branch: copilot/s049-phone-provisioning (merged). "
+            "PR: local-merge (ff to main). "
+            "Skill: skills/coding/implement-runtime-feature.md. "
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T23:58Z (GitHub Copilot). "
+            "Open questions: real-carrier adapters "
+            "(twilio/telnyx/vonage/bandwidth) deferred to "
+            "S049b; inbound-port flow deferred to S076. "
+            "Shipped engineering/PHONE_PROVISIONING.md and "
+            "loop_voice.phone: PhoneCapability + "
+            "PhoneNumberStatus StrEnums, strict-pydantic "
+            "PhoneNumberSearchQuery / PhoneNumberCandidate / "
+            "PhoneNumber models, validate_e164 helper, "
+            "PhoneNumberProvisioner Protocol with "
+            "search/buy/assign/release/list_active, "
+            "InMemoryPhoneNumberProvisioner test double "
+            "(country/area-code/contains/capability filters, "
+            "auto pn_NNNNNN ids, double-purchase + "
+            "double-release guards, tenant-scoped listing, "
+            "injectable clock). 14 new tests covering E.164 "
+            "validation, every search axis, lifecycle "
+            "transitions, error paths, and Protocol "
+            "conformance. ruff clean. Suite 340 -> 354. "
+            "Blockers: none. "
+            "Commits: substance, close."
+        ),
     ),
     Story(
         "S050",

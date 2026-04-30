@@ -29,6 +29,17 @@ from loop_voice.models import (
     VoiceTurn,
     VoiceTurnState,
 )
+from loop_voice.phone import (
+    InMemoryPhoneNumberProvisioner,
+    PhoneCapability,
+    PhoneNumber,
+    PhoneNumberCandidate,
+    PhoneNumberProvisioner,
+    PhoneNumberSearchQuery,
+    PhoneNumberStatus,
+    PhoneProvisioningError,
+    validate_e164,
+)
 from loop_voice.protocols import (
     InMemoryRealtimeTransport,
     InMemorySpeechToText,
@@ -53,6 +64,7 @@ __all__ = [
     "AgentResponder",
     "AudioFrame",
     "BudgetBreach",
+    "InMemoryPhoneNumberProvisioner",
     "InMemoryRealtimeTransport",
     "InMemorySpeechToText",
     "InMemoryTextToSpeech",
@@ -60,6 +72,13 @@ __all__ = [
     "LatencyMeasurement",
     "LatencyStage",
     "LatencyTracker",
+    "PhoneCapability",
+    "PhoneNumber",
+    "PhoneNumberCandidate",
+    "PhoneNumberProvisioner",
+    "PhoneNumberSearchQuery",
+    "PhoneNumberStatus",
+    "PhoneProvisioningError",
     "RealtimeTransport",
     "SignalKind",
     "SpeechToText",
@@ -76,4 +95,5 @@ __all__ = [
     "WebRTCSignal",
     "echo_answer_for",
     "make_echo_agent",
+    "validate_e164",
 ]
