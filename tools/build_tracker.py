@@ -1245,20 +1245,32 @@ STORIES: list[Story] = [
         "E17",
         3,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s034-design-partners. "
-            "Skill: skills/meta/update-tracker.md. "
-            "Last step: 1/3 (claim). "
-            "Heartbeat: 2026-04-30T19:00Z (GitHub Copilot). "
-            "Open questions: none -- adding "
-            "loop_implementation/operations/DESIGN_PARTNERS.md "
-            "with the three pilot slots (placeholders P1/P2/P3 "
-            "with intake checklist), Friday weekly office-hour "
-            "cadence, and the feedback intake link convention. "
-            "Blockers: none. "
-            "Commits: claim."
+            "PR#S034. Branch: copilot/s034-design-partners "
+            "(merged). Adds loop_implementation/operations/"
+            "DESIGN_PARTNERS.md as the canonical programme "
+            "doc: three pilot slots P1/P2/P3 in an Intake "
+            "table (placeholder rows the CEO fills in as "
+            "partners sign), a 7-step intake checklist "
+            "(workspace + first agent ready, hard caps wired, "
+            "100-case eval baseline recorded against "
+            "BaselineRegistry, HITL inbox round-trip "
+            "verified, cost dashboard rollup confirmed, "
+            "office-hour invite added, feedback-intake board "
+            "column provisioned), Friday 16:00 UTC 45-minute "
+            "office hour with standing agenda owned by the "
+            "CEO and notes archived under "
+            "operations/office-hours/, and a 5-label feedback "
+            "taxonomy (bug/p0..p2, feedback/dx, "
+            "feedback/runtime, feedback/ux, nomination) that "
+            "feeds the weekly triage. The doc also pins the "
+            "Onboarded promotion gate: all 7 checklist items "
+            "green + >=50 turns or >=10 voice minutes + at "
+            "least one office hour attended. Pure operations "
+            "/ tracker entry -- no code, no test impact "
+            "(suite stays at 218 passed). "
+            "Skill: skills/meta/update-tracker.md."
         ),
     ),
     Story(
