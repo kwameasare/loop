@@ -22,6 +22,7 @@ members = [
     "packages/channels/web",
     "packages/control-plane",
     "packages/data-plane",
+    "packages/eval-harness",
     "packages/gateway",
     "packages/kb-engine",
     "packages/mcp-client",
@@ -39,6 +40,7 @@ loop-channels-slack = { workspace = true }
 loop-channels-web = { workspace = true }
 loop-runtime = { workspace = true }
 loop-control-plane = { workspace = true }
+loop-eval = { workspace = true }
 loop-data-plane = { workspace = true }
 loop-gateway = { workspace = true }
 loop-kb-engine = { workspace = true }
@@ -56,6 +58,7 @@ dev = [
     "loop-runtime",
     "loop-control-plane",
     "loop-data-plane",
+    "loop-eval",
     "loop-gateway",
     "loop-kb-engine",
     "loop-mcp",

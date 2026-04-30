@@ -10,6 +10,7 @@ members = [
     "loop-channels-web",
     "loop-control-plane",
     "loop-data-plane",
+    "loop-eval",
     "loop-gateway",
     "loop-kb-engine",
     "loop-mcp",
@@ -442,6 +443,17 @@ requires-dist = [
 ]
 
 [[package]]
+name = "loop-eval"
+version = "0.1.0"
+source = { editable = "packages/eval-harness" }
+dependencies = [
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pydantic", specifier = ">=2" }]
+
+[[package]]
 name = "loop-gateway"
 version = "0.1.0"
 source = { editable = "packages/gateway" }
@@ -554,6 +566,7 @@ dev = [
     { name = "loop-channels-web" },
     { name = "loop-control-plane" },
     { name = "loop-data-plane" },
+    { name = "loop-eval" },
     { name = "loop-gateway" },
     { name = "loop-kb-engine" },
     { name = "loop-mcp" },
@@ -582,6 +595,7 @@ dev = [
     { name = "loop-channels-web", editable = "packages/channels/web" },
     { name = "loop-control-plane", editable = "packages/control-plane" },
     { name = "loop-data-plane", editable = "packages/data-plane" },
+    { name = "loop-eval", editable = "packages/eval-harness" },
     { name = "loop-gateway", editable = "packages/gateway" },
     { name = "loop-kb-engine", editable = "packages/kb-engine" },
     { name = "loop-mcp", editable = "packages/mcp-client" },
