@@ -1392,8 +1392,28 @@ STORIES: list[Story] = [
         "E14",
         13,
         "P1",
-        "Not started",
-        "M7",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s038-multiagent-v0. "
+            "Skill: skills/coding/implement-multi-agent-pattern.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T21:00Z (GitHub Copilot). "
+            "Open questions: none -- adding "
+            "packages/runtime/loop_runtime/multi_agent.py "
+            "with frozen pydantic AgentSpec + Protocol "
+            "AgentRunner; Supervisor (router-based delegation "
+            "to one of N sub-agents with handoff trail) and "
+            "Pipeline (sequential chain, output of i feeds "
+            "input of i+1). MultiAgentError raised on "
+            "router-returned-unknown-name and empty pipeline. "
+            "Tests in packages/runtime/_tests covering: "
+            "supervisor route to expected agent; supervisor "
+            "raises on unknown name; pipeline chains output; "
+            "pipeline empty raises; AgentSpec validation; "
+            "handoff trail recorded in Supervisor result. "
+            "Blockers: none. Commits: claim."
+        ),
     ),
     Story(
         "S039",

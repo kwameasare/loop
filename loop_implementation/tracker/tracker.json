@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T15:36:01.495881+00:00",
+    "generated_at": "2026-04-30T15:36:46.626934+00:00",
     "format_version": 2
   },
   "epics": [
@@ -583,8 +583,8 @@
       "epic": "E14",
       "points": 13,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "M7"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s038-multiagent-v0. Skill: skills/coding/implement-multi-agent-pattern.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T21:00Z (GitHub Copilot). Open questions: none -- adding packages/runtime/loop_runtime/multi_agent.py with frozen pydantic AgentSpec + Protocol AgentRunner; Supervisor (router-based delegation to one of N sub-agents with handoff trail) and Pipeline (sequential chain, output of i feeds input of i+1). MultiAgentError raised on router-returned-unknown-name and empty pipeline. Tests in packages/runtime/_tests covering: supervisor route to expected agent; supervisor raises on unknown name; pipeline chains output; pipeline empty raises; AgentSpec validation; handoff trail recorded in Supervisor result. Blockers: none. Commits: claim."
     },
     {
       "id": "S039",
