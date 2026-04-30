@@ -9,6 +9,43 @@ Naming convention: `LOOP_<DOMAIN>_<NAME>` (e.g. `LOOP_RUNTIME_PORT`). Avoid `_` 
 
 ---
 
+## 0. As-shipped — env vars actually present in the codebase today
+
+> The sections below describe the **target** env-var surface. This section is
+> the live truth as of the Sprint-0 cut-off (S001–S014). The
+> `docs-with-code` CI gate (`tools/check_docs_with_code.py`) requires this
+> section to be updated when any `LOOP_*` literal is added or changed in code.
+
+| Variable | Where it's read | Story |
+|----------|------------------|-------|
+| `LOOP_ENV` | `packages/observability/loop_observability/config.py` (deployment label) | S009 |
+| `LOOP_SERVICE_NAME` | observability `Settings` — OTel `service.name` resource attribute (no default; required) | S009 |
+| `LOOP_SERVICE_VERSION` | observability `Settings` — OTel `service.version` resource attribute (default `"0.0.0"`) | S009 |
+| `LOOP_OTEL_ENDPOINT` | observability `Settings` — OTLP endpoint (defaults to `http://otel-collector:4317`); identical to §1 | S009 |
+| `LOOP_OTEL_EXPORTER` | observability `Settings` — exporter selector (`"otlp"` / `"inmemory"` / `"none"`); used by tests | S009 |
+| `LOOP_CP_DB_URL` | `packages/control-plane` Alembic `env.py` and `cp-api` settings | S006, S019 |
+| `LOOP_RUNTIME_DB_URL` | `packages/data-plane` Alembic `env.py` and runtime settings | S006, S008 |
+| `LOOP_GATEWAY_REQUEST_ID_TTL_SECONDS` | `packages/gateway` idempotency cache | S007 |
+| `LOOP_DEV_BIND` | `infra/docker-compose.yml` — host bind address for service ports (default `127.0.0.1`) | S003 |
+| `LOOP_EGRESS_ALLOWLIST` | `infra/k8s/sandbox/pod-template.yaml` — comma-separated CIDR list mounted into Firecracker pods | S014 |
+| `LOOP_CP_API_BASE_URL` | `apps/studio/src/lib/cp-api.ts` — runtime CP API URL (server-side; complements `NEXT_PUBLIC_LOOP_API_URL` for browser-side fetches) | S010 |
+
+> Note — **`LOOP_WORKSPACE_ID` is not an env var.** It is a Postgres
+> session-scoped setting (`SET LOCAL loop.workspace_id = '<uuid>'`) used by
+> the row-level-security policy in cp_0001 / dp_0001. Don't expose it as an
+> environment variable in any service config — that would defeat tenant
+> isolation.
+
+### 0.1 Adding a new `LOOP_*` variable
+
+The flow in §13 still applies. Additionally, the `docs-with-code` CI gate
+greps for new `LOOP_[A-Z][A-Z0-9_]+` literals introduced under `packages/`,
+`apps/`, `cli/`, `infra/`, `tools/` and **fails the PR** if this file is not
+also touched. Update this section (table 0) at the same time, even if you also
+update §1–§11.
+
+---
+
 ## 1. Common (every service)
 
 | Variable | Default | Type | Description |

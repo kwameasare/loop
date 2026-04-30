@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T10:06:35.083690+00:00",
+    "generated_at": "2026-04-30T13:07:10.461345+00:00",
     "format_version": 2
   },
   "epics": [
@@ -187,8 +187,8 @@
       "epic": "E12",
       "points": 5,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "Week 1"
+      "status": "Blocked",
+      "notes": "**Blocked.** Branch: n/a (no code change). Skill: n/a (operational provisioning, not a coding task). Last step: n/a (operational provisioning — handled by founder/CTO outside the tracker-claim flow). Heartbeat: 2026-04-30T00:00Z (audit follow-up). Blockers: requires CTO (or designated human with billing authority) to provision external SaaS accounts: cloud (chosen launch cloud per CLOUD_PORTABILITY.md), Auth0 dev tenant, Stripe test mode, Sentry, Linear, PagerDuty. Each of these requires a credit card / contract / verified email an autonomous agent cannot legitimately supply. Unblocks: S019 (cp-api Auth0 OIDC), S025 (Stripe billing wire-up). Open questions: chosen launch cloud (AWS / Azure / GCP / Alibaba) is still TBD — see README §'Day-1 checklist for the founder/CTO'. Commits: none."
     },
     {
       "id": "S003",
@@ -199,7 +199,7 @@
       "points": 5,
       "priority": "P0",
       "status": "Done",
-      "notes": "Hardened compose: localhost binds, healthchecks across all 7 services, fixed ClickHouse↔MinIO 9001 collision (CH native → host 19000), top-level loop network, otel-collector.yaml config, .env.example, tools/infra_smoke.sh, `make up` now uses --wait."
+      "notes": "**Done.** PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S003 = ac7c1b0). Branch: copilot/s003-docker-compose (merged + deletable). Skill: skills/coding|data|... per the S003 scope. Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). Scope shipped: infra/docker-compose.yml, otel-collector.yaml, .env.example, tools/infra_smoke.sh, Makefile. Original closing notes: Hardened compose: localhost binds, healthchecks across all 7 services, fixed ClickHouse↔MinIO 9001 collision (CH native → host 19000), top-level loop network, otel-collector.yaml config, .env.example, tools/infra_smoke.sh, `make up` now uses --wait."
     },
     {
       "id": "S004",
@@ -210,7 +210,7 @@
       "points": 5,
       "priority": "P0",
       "status": "Done",
-      "notes": "Formalized SDK public wire types (AgentEvent, AgentResponse, ContentPart, ToolCall, TurnEvent, Span, Trace, Turn, TurnStatus). Strict (extra=forbid) base, exported from loop package, 9 round-trip tests. Aligns with ARCHITECTURE.md §3.3."
+      "notes": "**Done.** PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S004 = e1a88df). Branch: copilot/s004-runtime-types (merged + deletable). Skill: skills/coding|data|... per the S004 scope. Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). Scope shipped: packages/sdk-py/loop/types.py + 9 round-trip tests. Original closing notes: Formalized SDK public wire types (AgentEvent, AgentResponse, ContentPart, ToolCall, TurnEvent, Span, Trace, Turn, TurnStatus). Strict (extra=forbid) base, exported from loop package, 9 round-trip tests. Aligns with ARCHITECTURE.md §3.3."
     },
     {
       "id": "S005",
@@ -221,7 +221,7 @@
       "points": 3,
       "priority": "P0",
       "status": "Done",
-      "notes": "Next.js 14 App Router + TS + Tailwind + shadcn-style design tokens. Reference Button primitive with cva variants. Vitest + Testing Library + jsdom (2 tests pass). pnpm install, lint, test, build all green. CI 'studio' job now activates via hashFiles guard."
+      "notes": "**Done.** PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S005 = 47d2c1f). Branch: copilot/s005-studio-skeleton (merged + deletable). Skill: skills/coding|data|... per the S005 scope. Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). Scope shipped: apps/studio (Next.js 14 + Tailwind + shadcn) + 2 Vitest tests + CI 'studio' job. Original closing notes: Next.js 14 App Router + TS + Tailwind + shadcn-style design tokens. Reference Button primitive with cva variants. Vitest + Testing Library + jsdom (2 tests pass). pnpm install, lint, test, build all green. CI 'studio' job now activates via hashFiles guard."
     },
     {
       "id": "S006",
@@ -232,7 +232,7 @@
       "points": 5,
       "priority": "P0",
       "status": "Done",
-      "notes": "Two Alembic trees under packages/control-plane (loop_control_plane.migrations) and packages/data-plane (loop_data_plane.migrations). cp_0001 creates workspaces / users / workspace_members / api_keys / agent_secrets / agents / agent_versions with RLS on customer-data tables. dp_0001 creates conversations / turns / memory_user / memory_bot / tool_calls — every table has workspace_id NOT NULL and FORCE ROW LEVEL SECURITY (ADR-020). Offline SQL render tests (tests/test_migrations.py) green; ruff + pyright clean."
+      "notes": "**Done.** PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S006 = ac787cb). Branch: copilot/s006-pg-migrations (merged + deletable). Skill: skills/coding|data|... per the S006 scope. Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). Scope shipped: packages/{control,data}-plane/migrations/versions/*_0001_initial.py + tests/test_migrations.py — RLS on every customer-data table. Original closing notes: Two Alembic trees under packages/control-plane (loop_control_plane.migrations) and packages/data-plane (loop_data_plane.migrations). cp_0001 creates workspaces / users / workspace_members / api_keys / agent_secrets / agents / agent_versions with RLS on customer-data tables. dp_0001 creates conversations / turns / memory_user / memory_bot / tool_calls — every table has workspace_id NOT NULL and FORCE ROW LEVEL SECURITY (ADR-020). Offline SQL render tests (tests/test_migrations.py) green; ruff + pyright clean."
     },
     {
       "id": "S007",
@@ -243,7 +243,7 @@
       "points": 8,
       "priority": "P0",
       "status": "Done",
-      "notes": "packages/gateway skeleton: strict streaming wire types, OpenAI + Anthropic SSE parsers with injectable transports, cost.py with cited rates and the 5% disclosed markup (ADR-012), alias resolution from aliases.yaml + per-workspace overrides for BYOK, GatewayClient with (workspace_id, request_id) idempotency cache (cross-workspace replay physically blocked, ADR-022). 17 unit tests, ruff + pyright clean."
+      "notes": "**Done.** PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S007 = bcb023f). Branch: copilot/s007-llm-gateway (merged + deletable). Skill: skills/coding|data|... per the S007 scope. Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). Scope shipped: packages/gateway (providers, cost.py with 5% disclosed markup, aliases.yaml, idempotency cache) + 17 unit tests. Original closing notes: packages/gateway skeleton: strict streaming wire types, OpenAI + Anthropic SSE parsers with injectable transports, cost.py with cited rates and the 5% disclosed markup (ADR-012), alias resolution from aliases.yaml + per-workspace overrides for BYOK, GatewayClient with (workspace_id, request_id) idempotency cache (cross-workspace replay physically blocked, ADR-022). 17 unit tests, ruff + pyright clean."
     },
     {
       "id": "S008",
@@ -254,7 +254,7 @@
       "points": 8,
       "priority": "P0",
       "status": "Done",
-      "notes": "loop_runtime.TurnExecutor: single-pass executor over the S007 gateway client. AgentConfig/TurnBudget pydantic models, GatewayLike Protocol for test injection, GatewayDelta->'token' / GatewayDone->'complete' / GatewayError->'degrade' translation, workspace_id flows verbatim from inbound AgentEvent. Tools land in S012. 6 unit tests; 45 workspace tests."
+      "notes": "**Done.** PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S008 = 688c018). Branch: copilot/s008-turn-executor (merged + deletable). Skill: skills/coding|data|... per the S008 scope. Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). Scope shipped: packages/runtime/loop_runtime/turn_executor.py + AgentConfig/TurnBudget + 6 unit tests. Original closing notes: loop_runtime.TurnExecutor: single-pass executor over the S007 gateway client. AgentConfig/TurnBudget pydantic models, GatewayLike Protocol for test injection, GatewayDelta->'token' / GatewayDone->'complete' / GatewayError->'degrade' translation, workspace_id flows verbatim from inbound AgentEvent. Tools land in S012. 6 unit tests; 45 workspace tests."
     },
     {
       "id": "S009",
@@ -265,7 +265,7 @@
       "points": 5,
       "priority": "P0",
       "status": "Done",
-      "notes": "loop.observability.tracer facade with closed-set span kinds (llm/tool/retrieval/memory/channel), auto exception recording with loop.error.code stamping, OTLP/HTTP exporter (default :4318) + InMemoryExporter for tests. TurnExecutor wraps each execute() in a 'turn.execute' span with required ids + token counts + cost. infra/otel-collector.yaml now exports traces+logs to ClickHouse (lz4, 720h TTL). 4 + 1 unit tests, 50 workspace tests."
+      "notes": "**Done.** PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S009 = 01784ed). Branch: copilot/s009-otel-spans (merged + deletable). Skill: skills/coding|data|... per the S009 scope. Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). Scope shipped: packages/observability + tracer facade + InMemoryExporter + ClickHouse export config + 5 unit tests. Original closing notes: loop.observability.tracer facade with closed-set span kinds (llm/tool/retrieval/memory/channel), auto exception recording with loop.error.code stamping, OTLP/HTTP exporter (default :4318) + InMemoryExporter for tests. TurnExecutor wraps each execute() in a 'turn.execute' span with required ids + token counts + cost. infra/otel-collector.yaml now exports traces+logs to ClickHouse (lz4, 720h TTL). 4 + 1 unit tests, 50 workspace tests."
     },
     {
       "id": "S010",
@@ -276,7 +276,7 @@
       "points": 3,
       "priority": "P1",
       "status": "Done",
-      "notes": "App Router /agents page (server component) renders an AgentsList presentational component fed by listAgents() in src/lib/cp-api.ts. Live mode hits LOOP_CP_API_BASE_URL; unset falls back to an in-memory fixture so the studio renders offline. AgentSummary type mirrors the cp-api payload from E5/S023. 5 Vitest tests, next lint clean."
+      "notes": "**Done.** PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S010 = 702a6d8). Branch: copilot/s010-studio-agents (merged + deletable). Skill: skills/coding|data|... per the S010 scope. Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). Scope shipped: apps/studio/src/app/agents + listAgents() + 5 Vitest tests. Original closing notes: App Router /agents page (server component) renders an AgentsList presentational component fed by listAgents() in src/lib/cp-api.ts. Live mode hits LOOP_CP_API_BASE_URL; unset falls back to an in-memory fixture so the studio renders offline. AgentSummary type mirrors the cp-api payload from E5/S023. 5 Vitest tests, next lint clean."
     },
     {
       "id": "S011",
@@ -287,7 +287,7 @@
       "points": 8,
       "priority": "P0",
       "status": "Done",
-      "notes": "New loop-mcp package: @tool decorator turns annotated Python callables into MCP tool descriptors (type hints -> JSON Schema), process-local ToolRegistry validates required args before dispatch, and StdioMcpClient speaks Content-Length-framed JSON-RPC 2.0 for out-of-process servers. Async-native, sandbox-agnostic (Firecracker wrap-up lands in S014/S028). 12 tests cover schema generation, decorator behaviour, registry, and a socketpair-based round-trip; ruff + pyright clean."
+      "notes": "**Done.** PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S011 = 287e732). Branch: copilot/s011-mcp-client (merged + deletable). Skill: skills/coding|data|... per the S011 scope. Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). Scope shipped: packages/mcp-client + @tool decorator + ToolRegistry + StdioMcpClient + 12 tests. Original closing notes: New loop-mcp package: @tool decorator turns annotated Python callables into MCP tool descriptors (type hints -> JSON Schema), process-local ToolRegistry validates required args before dispatch, and StdioMcpClient speaks Content-Length-framed JSON-RPC 2.0 for out-of-process servers. Async-native, sandbox-agnostic (Firecracker wrap-up lands in S014/S028). 12 tests cover schema generation, decorator behaviour, registry, and a socketpair-based round-trip; ruff + pyright clean."
     },
     {
       "id": "S012",
@@ -298,7 +298,7 @@
       "points": 5,
       "priority": "P0",
       "status": "Done",
-      "notes": "Done. TurnExecutor now drives N reasoning iterations against the gateway, dispatching every tool call the model emits in parallel via asyncio.gather and re-streaming once tool messages are appended. Cap = AgentConfig.budget.max_iterations (default 4); cost + wall-clock budgets still enforced. Wire types extended additively (ADR-022 compat): ToolCall, ToolSpec, GatewayMessage tool fields + role='tool', GatewayRequest.tools, GatewayDone.tool_calls. TurnEvent gains 'tool_call' and 'tool_result' frames. Tools are passed via execute(..., tools=registry) so the runtime never imports loop_mcp. Per-iteration request_id '<base>:i<n>' keeps retries idempotent. Degrade reasons: tool_calls_without_registry, max_iterations; tool exceptions surface as tool_result errors without aborting siblings. 12 runtime tests, 67 workspace tests, ruff + pyright clean."
+      "notes": "**Done.** PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S012 = 6cc435e). Branch: copilot/s012-reasoning-loop (merged + deletable). Skill: skills/coding|data|... per the S012 scope. Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). Scope shipped: packages/runtime extension: parallel tool dispatch + N-iteration loop + new TurnEvent frames + 12 tests. Original closing notes: Done. TurnExecutor now drives N reasoning iterations against the gateway, dispatching every tool call the model emits in parallel via asyncio.gather and re-streaming once tool messages are appended. Cap = AgentConfig.budget.max_iterations (default 4); cost + wall-clock budgets still enforced. Wire types extended additively (ADR-022 compat): ToolCall, ToolSpec, GatewayMessage tool fields + role='tool', GatewayRequest.tools, GatewayDone.tool_calls. TurnEvent gains 'tool_call' and 'tool_result' frames. Tools are passed via execute(..., tools=registry) so the runtime never imports loop_mcp. Per-iteration request_id '<base>:i<n>' keeps retries idempotent. Degrade reasons: tool_calls_without_registry, max_iterations; tool exceptions surface as tool_result errors without aborting siblings. 12 runtime tests, 67 workspace tests, ruff + pyright clean."
     },
     {
       "id": "S013",
@@ -309,7 +309,7 @@
       "points": 5,
       "priority": "P0",
       "status": "Done",
-      "notes": "Done. Shipped packages/memory (loop-memory) with UserMemoryStore + SessionMemoryStore Protocols and four concrete drivers: InMemory{User,Session}MemoryStore for tests/studio, PostgresUserMemoryStore (SQLAlchemy 2.0 async, ON CONFLICT DO UPDATE on memory_user/memory_bot, RLS-aware), RedisSessionMemoryStore (loop:session:{conv_id} hash + 24h TTL refreshed atomically via pipeline). MemoryScope StrEnum, MemoryEntry / SessionEntry pydantic v2 strict frozen models. Episodic memory deferred to S015 with the KB engine. 11 unit tests covering tenant isolation, deep-copy semantics, missing-key/get-or-none, list/delete, TTL refresh, TTL validation. 78 workspace tests, ruff + pyright clean."
+      "notes": "**Done.** PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S013 = 9f30e7c). Branch: copilot/s013-memory (merged + deletable). Skill: skills/coding|data|... per the S013 scope. Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). Scope shipped: packages/memory + 4 store drivers + 11 unit tests. Original closing notes: Done. Shipped packages/memory (loop-memory) with UserMemoryStore + SessionMemoryStore Protocols and four concrete drivers: InMemory{User,Session}MemoryStore for tests/studio, PostgresUserMemoryStore (SQLAlchemy 2.0 async, ON CONFLICT DO UPDATE on memory_user/memory_bot, RLS-aware), RedisSessionMemoryStore (loop:session:{conv_id} hash + 24h TTL refreshed atomically via pipeline). MemoryScope StrEnum, MemoryEntry / SessionEntry pydantic v2 strict frozen models. Episodic memory deferred to S015 with the KB engine. 11 unit tests covering tenant isolation, deep-copy semantics, missing-key/get-or-none, list/delete, TTL refresh, TTL validation. 78 workspace tests, ruff + pyright clean."
     },
     {
       "id": "S014",
@@ -320,7 +320,7 @@
       "points": 8,
       "priority": "P0",
       "status": "Done",
-      "notes": "Done. Shipped packages/tool-host (loop-tool-host) with Sandbox + SandboxFactory Protocols and a WarmPool that keeps min_idle prewarmed sandboxes ahead of demand and caps concurrency at max_size with deterministic acquire/release semantics (asyncio.Lock + Condition; SandboxBusyError on timeout; auto-refill on unhealthy release; drain()). InMemorySandbox + InMemorySandboxFactory drive the runtime + studio + tests today; the k8s-backed factory lands with S028. infra/k8s/sandbox/ ships RuntimeClass loop-firecracker pinned to kata-fc, the per-sandbox Pod template (read-only rootfs, all caps dropped, non-root, guaranteed QoS, emptyDir tmpfs scratch, no SA token), and a default-deny NetworkPolicy. Typed errors LOOP-TH-001 (startup) / LOOP-TH-002 (busy). 8 pool tests cover prewarm, idle round-trip, growth-up-to-max, blocking acquire, startup failure, drain, sizing validation, exec-error handling. Workspace: 86 tests pass, ruff + pyright clean."
+      "notes": "**Done.** PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S014 = 84ad457). Branch: copilot/s014-firecracker (merged + deletable). Skill: skills/coding|data|... per the S014 scope. Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). Scope shipped: packages/tool-host + WarmPool + infra/k8s/sandbox manifests + 8 pool tests. Original closing notes: Done. Shipped packages/tool-host (loop-tool-host) with Sandbox + SandboxFactory Protocols and a WarmPool that keeps min_idle prewarmed sandboxes ahead of demand and caps concurrency at max_size with deterministic acquire/release semantics (asyncio.Lock + Condition; SandboxBusyError on timeout; auto-refill on unhealthy release; drain()). InMemorySandbox + InMemorySandboxFactory drive the runtime + studio + tests today; the k8s-backed factory lands with S028. infra/k8s/sandbox/ ships RuntimeClass loop-firecracker pinned to kata-fc, the per-sandbox Pod template (read-only rootfs, all caps dropped, non-root, guaranteed QoS, emptyDir tmpfs scratch, no SA token), and a default-deny NetworkPolicy. Typed errors LOOP-TH-001 (startup) / LOOP-TH-002 (busy). 8 pool tests cover prewarm, idle round-trip, growth-up-to-max, blocking acquire, startup failure, drain, sizing validation, exec-error handling. Workspace: 86 tests pass, ruff + pyright clean."
     },
     {
       "id": "S015",

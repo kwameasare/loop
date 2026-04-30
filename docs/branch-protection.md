@@ -25,6 +25,8 @@ pattern `main`:
     - `CI / unit`
     - `CI / tracker-clean`
     - `CI / security`
+    - `CI / docs-with-code`
+    - `CI / checkpoint-discipline`
   - **Conditionally required** (added once the corresponding code lands):
     - `CI / integration` — once `infra/docker-compose.yml` carries the full stack (S003).
     - `CI / studio` — once `apps/studio` exists (S005).
@@ -89,3 +91,4 @@ Record the verification date here: `____-__-__` (initial: pending).
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-04-29 | Initial settings drafted (S001). Awaiting GitHub admin to apply. | GitHub Copilot |
+| 2026-04-30 | Added `docs-with-code` and `checkpoint-discipline` to required-checks. Tightened `tracker-clean` to also lint structured Notes-cell format. | Audit follow-up |

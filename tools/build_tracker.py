@@ -36,7 +36,9 @@ import csv
 import json
 import sys
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+
+UTC = timezone.utc
 from pathlib import Path
 from typing import Any
 
@@ -324,8 +326,23 @@ STORIES: list[Story] = [
         "E12",
         5,
         "P0",
-        "Not started",
-        "Week 1",
+        "Blocked",
+        (
+            "**Blocked.** "
+            "Branch: n/a (no code change). "
+            "Skill: n/a (operational provisioning, not a coding task). "
+            "Last step: n/a (operational provisioning — handled by founder/CTO outside the tracker-claim flow). "
+            "Heartbeat: 2026-04-30T00:00Z (audit follow-up). "
+            "Blockers: requires CTO (or designated human with billing authority) to "
+            "provision external SaaS accounts: cloud (chosen launch cloud per "
+            "CLOUD_PORTABILITY.md), Auth0 dev tenant, Stripe test mode, Sentry, "
+            "Linear, PagerDuty. Each of these requires a credit card / contract / "
+            "verified email an autonomous agent cannot legitimately supply. "
+            "Unblocks: S019 (cp-api Auth0 OIDC), S025 (Stripe billing wire-up). "
+            "Open questions: chosen launch cloud (AWS / Azure / GCP / Alibaba) is "
+            "still TBD — see README §'Day-1 checklist for the founder/CTO'. "
+            "Commits: none."
+        ),
     ),
     Story(
         "S003",
@@ -337,7 +354,14 @@ STORIES: list[Story] = [
         "P0",
         "Done",
         (
-            "Hardened compose: localhost binds, healthchecks across all 7 services, "
+            "**Done.** "
+            "PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S003 = ac7c1b0). "
+            "Branch: copilot/s003-docker-compose (merged + deletable). "
+            "Skill: skills/coding|data|... per the S003 scope. "
+            "Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). "
+            "Scope shipped: infra/docker-compose.yml, otel-collector.yaml, .env.example, tools/infra_smoke.sh, Makefile. "
+            "Original closing notes: "
+                        "Hardened compose: localhost binds, healthchecks across all 7 services, "
             "fixed ClickHouse↔MinIO 9001 collision (CH native → host 19000), top-level "
             "loop network, otel-collector.yaml config, .env.example, tools/infra_smoke.sh, "
             "`make up` now uses --wait."
@@ -353,7 +377,14 @@ STORIES: list[Story] = [
         "P0",
         "Done",
         (
-            "Formalized SDK public wire types (AgentEvent, AgentResponse, ContentPart, ToolCall, "
+            "**Done.** "
+            "PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S004 = e1a88df). "
+            "Branch: copilot/s004-runtime-types (merged + deletable). "
+            "Skill: skills/coding|data|... per the S004 scope. "
+            "Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). "
+            "Scope shipped: packages/sdk-py/loop/types.py + 9 round-trip tests. "
+            "Original closing notes: "
+                        "Formalized SDK public wire types (AgentEvent, AgentResponse, ContentPart, ToolCall, "
             "TurnEvent, Span, Trace, Turn, TurnStatus). Strict (extra=forbid) base, exported from "
             "loop package, 9 round-trip tests. Aligns with ARCHITECTURE.md §3.3."
         ),
@@ -368,7 +399,14 @@ STORIES: list[Story] = [
         "P0",
         "Done",
         (
-            "Next.js 14 App Router + TS + Tailwind + shadcn-style design tokens. Reference "
+            "**Done.** "
+            "PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S005 = 47d2c1f). "
+            "Branch: copilot/s005-studio-skeleton (merged + deletable). "
+            "Skill: skills/coding|data|... per the S005 scope. "
+            "Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). "
+            "Scope shipped: apps/studio (Next.js 14 + Tailwind + shadcn) + 2 Vitest tests + CI 'studio' job. "
+            "Original closing notes: "
+                        "Next.js 14 App Router + TS + Tailwind + shadcn-style design tokens. Reference "
             "Button primitive with cva variants. Vitest + Testing Library + jsdom (2 tests "
             "pass). pnpm install, lint, test, build all green. CI 'studio' job now activates "
             "via hashFiles guard."
@@ -384,7 +422,14 @@ STORIES: list[Story] = [
         "P0",
         "Done",
         (
-            "Two Alembic trees under packages/control-plane (loop_control_plane.migrations) "
+            "**Done.** "
+            "PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S006 = ac787cb). "
+            "Branch: copilot/s006-pg-migrations (merged + deletable). "
+            "Skill: skills/coding|data|... per the S006 scope. "
+            "Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). "
+            "Scope shipped: packages/{control,data}-plane/migrations/versions/*_0001_initial.py + tests/test_migrations.py — RLS on every customer-data table. "
+            "Original closing notes: "
+                        "Two Alembic trees under packages/control-plane (loop_control_plane.migrations) "
             "and packages/data-plane (loop_data_plane.migrations). cp_0001 creates "
             "workspaces / users / workspace_members / api_keys / agent_secrets / agents / "
             "agent_versions with RLS on customer-data tables. dp_0001 creates conversations "
@@ -403,7 +448,14 @@ STORIES: list[Story] = [
         "P0",
         "Done",
         (
-            "packages/gateway skeleton: strict streaming wire types, OpenAI + Anthropic "
+            "**Done.** "
+            "PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S007 = bcb023f). "
+            "Branch: copilot/s007-llm-gateway (merged + deletable). "
+            "Skill: skills/coding|data|... per the S007 scope. "
+            "Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). "
+            "Scope shipped: packages/gateway (providers, cost.py with 5% disclosed markup, aliases.yaml, idempotency cache) + 17 unit tests. "
+            "Original closing notes: "
+                        "packages/gateway skeleton: strict streaming wire types, OpenAI + Anthropic "
             "SSE parsers with injectable transports, cost.py with cited rates and the "
             "5% disclosed markup (ADR-012), alias resolution from aliases.yaml + per-"
             "workspace overrides for BYOK, GatewayClient with (workspace_id, request_id) "
@@ -421,7 +473,14 @@ STORIES: list[Story] = [
         "P0",
         "Done",
         (
-            "loop_runtime.TurnExecutor: single-pass executor over the S007 gateway "
+            "**Done.** "
+            "PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S008 = 688c018). "
+            "Branch: copilot/s008-turn-executor (merged + deletable). "
+            "Skill: skills/coding|data|... per the S008 scope. "
+            "Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). "
+            "Scope shipped: packages/runtime/loop_runtime/turn_executor.py + AgentConfig/TurnBudget + 6 unit tests. "
+            "Original closing notes: "
+                        "loop_runtime.TurnExecutor: single-pass executor over the S007 gateway "
             "client. AgentConfig/TurnBudget pydantic models, GatewayLike Protocol "
             "for test injection, GatewayDelta->'token' / GatewayDone->'complete' / "
             "GatewayError->'degrade' translation, workspace_id flows verbatim from "
@@ -438,7 +497,14 @@ STORIES: list[Story] = [
         "P0",
         "Done",
         (
-            "loop.observability.tracer facade with closed-set span kinds (llm/tool/"
+            "**Done.** "
+            "PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S009 = 01784ed). "
+            "Branch: copilot/s009-otel-spans (merged + deletable). "
+            "Skill: skills/coding|data|... per the S009 scope. "
+            "Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). "
+            "Scope shipped: packages/observability + tracer facade + InMemoryExporter + ClickHouse export config + 5 unit tests. "
+            "Original closing notes: "
+                        "loop.observability.tracer facade with closed-set span kinds (llm/tool/"
             "retrieval/memory/channel), auto exception recording with loop.error.code "
             "stamping, OTLP/HTTP exporter (default :4318) + InMemoryExporter for tests. "
             "TurnExecutor wraps each execute() in a 'turn.execute' span with required "
@@ -456,7 +522,14 @@ STORIES: list[Story] = [
         "P1",
         "Done",
         (
-            "App Router /agents page (server component) renders an AgentsList "
+            "**Done.** "
+            "PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S010 = 702a6d8). "
+            "Branch: copilot/s010-studio-agents (merged + deletable). "
+            "Skill: skills/coding|data|... per the S010 scope. "
+            "Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). "
+            "Scope shipped: apps/studio/src/app/agents + listAgents() + 5 Vitest tests. "
+            "Original closing notes: "
+                        "App Router /agents page (server component) renders an AgentsList "
             "presentational component fed by listAgents() in src/lib/cp-api.ts. "
             "Live mode hits LOOP_CP_API_BASE_URL; unset falls back to an in-memory "
             "fixture so the studio renders offline. AgentSummary type mirrors the "
@@ -473,7 +546,14 @@ STORIES: list[Story] = [
         "P0",
         "Done",
         (
-            "New loop-mcp package: @tool decorator turns annotated Python callables "
+            "**Done.** "
+            "PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S011 = 287e732). "
+            "Branch: copilot/s011-mcp-client (merged + deletable). "
+            "Skill: skills/coding|data|... per the S011 scope. "
+            "Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). "
+            "Scope shipped: packages/mcp-client + @tool decorator + ToolRegistry + StdioMcpClient + 12 tests. "
+            "Original closing notes: "
+                        "New loop-mcp package: @tool decorator turns annotated Python callables "
             "into MCP tool descriptors (type hints -> JSON Schema), "
             "process-local ToolRegistry validates required args before dispatch, "
             "and StdioMcpClient speaks Content-Length-framed JSON-RPC 2.0 for "
@@ -493,7 +573,14 @@ STORIES: list[Story] = [
         "P0",
         "Done",
         (
-            "Done. TurnExecutor now drives N reasoning iterations against the "
+            "**Done.** "
+            "PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S012 = 6cc435e). "
+            "Branch: copilot/s012-reasoning-loop (merged + deletable). "
+            "Skill: skills/coding|data|... per the S012 scope. "
+            "Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). "
+            "Scope shipped: packages/runtime extension: parallel tool dispatch + N-iteration loop + new TurnEvent frames + 12 tests. "
+            "Original closing notes: "
+                        "Done. TurnExecutor now drives N reasoning iterations against the "
             "gateway, dispatching every tool call the model emits in parallel "
             "via asyncio.gather and re-streaming once tool messages are "
             "appended. Cap = AgentConfig.budget.max_iterations (default 4); "
@@ -520,7 +607,14 @@ STORIES: list[Story] = [
         "P0",
         "Done",
         (
-            "Done. Shipped packages/memory (loop-memory) with "
+            "**Done.** "
+            "PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S013 = 9f30e7c). "
+            "Branch: copilot/s013-memory (merged + deletable). "
+            "Skill: skills/coding|data|... per the S013 scope. "
+            "Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). "
+            "Scope shipped: packages/memory + 4 store drivers + 11 unit tests. "
+            "Original closing notes: "
+                        "Done. Shipped packages/memory (loop-memory) with "
             "UserMemoryStore + SessionMemoryStore Protocols and four "
             "concrete drivers: InMemory{User,Session}MemoryStore for "
             "tests/studio, PostgresUserMemoryStore (SQLAlchemy 2.0 async, "
@@ -544,7 +638,14 @@ STORIES: list[Story] = [
         "P0",
         "Done",
         (
-            "Done. Shipped packages/tool-host (loop-tool-host) with "
+            "**Done.** "
+            "PR: TBD (not recorded by closing agent; see git commit chore(tracker): close S014 = 84ad457). "
+            "Branch: copilot/s014-firecracker (merged + deletable). "
+            "Skill: skills/coding|data|... per the S014 scope. "
+            "Final heartbeat: 2026-04-30 (GitHub Copilot Coding Agent). "
+            "Scope shipped: packages/tool-host + WarmPool + infra/k8s/sandbox manifests + 8 pool tests. "
+            "Original closing notes: "
+                        "Done. Shipped packages/tool-host (loop-tool-host) with "
             "Sandbox + SandboxFactory Protocols and a WarmPool that "
             "keeps min_idle prewarmed sandboxes ahead of demand and "
             "caps concurrency at max_size with deterministic acquire/"

@@ -118,23 +118,40 @@ Regenerate; push; tag the unblocker.
 
 ### Phase 3: AFTER — mark done
 
-Run this **before opening the PR for review**, not after merge:
+Run this **before opening the PR for review**, not after merge.
 
-1. Edit `tools/build_tracker.py` to set status `Done` and write a closing notes block (preserving the audit trail):
+**The Notes block is mandatory and CI-linted** (`tools/check_tracker_notes.py` runs on every PR; missing tokens fail the `tracker-clean` check):
+
+1. Edit `tools/build_tracker.py` to set status `Done` and write a closing notes block (preserving the audit trail). The block MUST contain `PR` and `Branch:` tokens at minimum; the canonical shape:
    ```python
    ("S0NN", "...", "agent-bot",  "S0",  "EX",  ..., ..., "Done",
     "**Done.**\n"
     "PR: #123 (2026-04-30)\n"
     "Branch: agent-bot/runtime-graceful-degrade (merged + deleted)\n"
     "Skill: skills/coding/implement-runtime-feature.md (all 12 steps complete)\n"
-    "Final heartbeat: 2026-04-30T17:30Z (Claude)\n"
-    "Notes: <any post-merge ops, e.g. eval cassette refreshed, perf gain measured>"),
+    "Final heartbeat: 2026-04-30T17:30Z (<agent-identity-with-vendor>)\n"
+    "Tests: <X unit + Y integration; ruff + pyright clean>\n"
+    "Docs touched: <SCHEMA.md / ENV_REFERENCE.md / ERROR_CODES.md / ARCHITECTURE.md as applicable>\n"
+    "Follow-ups: <none | S0NN+ reference>"),
    ```
+   - Prose-only Notes are no longer accepted on `Done`. The `tracker-clean` job will fail.
+   - `<agent-identity-with-vendor>` should be specific enough that a successor knows what tool ran the work: e.g. `Claude Sonnet 4.7 / Cursor`, `GitHub Copilot Coding Agent`, `Codex CLI / o-series`. Bare `"GitHub Copilot"` is ambiguous.
 2. Regenerate all five outputs (`build_tracker.py` + `tracker_to_machine.py` + `recalc.py`).
 3. Commit the regen output **as the LAST commit** of the feature PR. Title: `chore(tracker): close S0NN`.
 4. The PR now contains: claim → checkpoints → close. The whole lifecycle is captured in one branch.
 
 If the merged PR is later **rolled back**, flip the story to `In progress` (or `Blocked`) in a follow-up `chore(tracker): reopen S0NN` PR with a new structured Notes block explaining what failed.
+
+---
+
+## CI-enforced gates
+
+Two automated checks run on every PR:
+
+- **`tools/check_tracker_notes.py`** — fails if any `In progress`, `Handing off`, `Blocked`, or `Done` story has a Notes cell missing the canonical structured-block tokens. Exempted: stories listed in `SKIP_IDS` inside the script (currently only `S002`, the CTO-setup story).
+- **`tools/check_checkpoint_discipline.py`** — fails if a feature commit has > 90 lines of code-relevant diff with no preceding `chore(tracker): claim` or `chore(tracker): checkpoint` commit on the same branch. Exempted paths: `_tests/`, `tests/`, `docs/`, `loop_implementation/`, lock files, and any `.md` / `.yaml` / `.toml` / `.json`.
+
+Both gates are wired into `.github/workflows/ci.yml` and listed as required checks in `docs/branch-protection.md`.
 
 ---
 

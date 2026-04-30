@@ -8,6 +8,51 @@ This is the canonical data model for Loop. Every table, collection, and key name
 
 ---
 
+## 0. As-shipped — what actually lives in the database today
+
+> This section is the single source of truth for the **live** schema. Everything
+> else in this document is design intent — some of it is shipped, some of it is
+> deferred to later migrations. **If sections 0 and 2/3 disagree, section 0 is
+> right.** The `docs-with-code` CI gate requires this section to be updated in
+> the same PR as any new migration.
+
+### 0.1 Migrations shipped
+
+| Migration | Plane | Story | Tables created |
+|-----------|-------|-------|----------------|
+| `cp_0001_initial` (`packages/control-plane/.../202604300215_cp_0001_initial.py`) | Control plane | S006 | `workspaces`, `users`, `workspace_members`, `api_keys`, `agent_secrets`, `agents`, `agent_versions` |
+| `dp_0001_initial` (`packages/data-plane/.../202604300220_dp_0001_initial.py`) | Data plane | S006 | `conversations`, `turns`, `memory_user`, `memory_bot`, `tool_calls` |
+
+Every customer-data table from these migrations has **row-level security
+enabled** under the policy `tenant_isolation`, gated by
+`current_setting('loop.workspace_id')::uuid` (ADR-020). Data-plane tables
+additionally use `FORCE ROW LEVEL SECURITY` so even the table owner is bound
+by the policy.
+
+### 0.2 Divergences between as-shipped and the design draft below
+
+The cp_0001/dp_0001 migrations intentionally ship a leaner initial cut. The
+following fields described in sections 2/3 are **deferred** — they will be
+added in cp_0002 / dp_0002. Until those land, these names do not exist:
+
+| Table | Deferred fields | Tracking story |
+|-------|-----------------|----------------|
+| `agents` | `name`, `description` (cp_0001 ships `display_name` instead — no separate description column) | cp_0002 |
+| `agent_versions` | `version` is `TEXT` (not `INTEGER`); `config_json`, `eval_status`, `eval_run_id`, `deployed_at`, `version_tag` not yet present; deploy state is `promoted_to` with values `'dev','staging','prod','rolled_back'` (not `deploy_state` with `inactive/canary/active/rolled_back`) | cp_0002 |
+| `agent_versions` | Artifact location is `artifact_uri` + `artifact_sha256` (not `code_artifact_url` + `code_hash`) | doc-only; will be reconciled in cp_0002 |
+| `agent_secrets` | FK is `agent_id` (nullable; secrets can be workspace-wide) — not `agent_version_id`. Field names are `name` / `secret_ref` (not `secret_name` / `vault_path`). Adds `tenant_kms_key TEXT NOT NULL` not in design draft. | cp_0002 |
+| `api_keys` | Field is `prefix` (not `key_prefix`); adds `hash BYTEA`, `scopes TEXT[]`, `created_by` not present in the design-draft snippet. | doc-only |
+| `deployment_events`, `channel_configs`, `voice_calls`, `eval_runs`, `usage_counters` | Not yet created. | cp_0002+ |
+| Data-plane: `kb_documents`, `kb_chunks` (Qdrant-mirror metadata), `feedback`, `escalations` | Not yet created. | dp_0002+ |
+
+### 0.3 Read-this-first when adding a migration
+
+1. Author the migration under `packages/{control,data}-plane/.../migrations/versions/<utc_ts>_<rev>_<slug>.py`.
+2. In the **same PR**, update section 0.1 above with the new revision id + tables, and update section 0.2 to remove any divergence the migration closes (or to add new ones).
+3. The `docs-with-code` CI gate (`tools/check_docs_with_code.py`) will fail the PR if a `migrations/versions/*.py` file is touched without a `loop_implementation/data/SCHEMA.md` change in the same diff.
+
+---
+
 ## 1. Storage map at a glance
 
 | Backend | What lives here | Why |

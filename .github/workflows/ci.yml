@@ -54,6 +54,44 @@ jobs:
       # build_tracker.py is stdlib-only, no uv sync needed.
       - name: Tracker outputs are up to date
         run: python tools/build_tracker.py --check
+      - name: Tracker Notes-cell structure
+        run: python tools/check_tracker_notes.py
+
+  docs-with-code:
+    name: docs-with-code
+    runs-on: ubuntu-latest
+    # Skip on push-to-main (we only enforce on PRs against main, where the
+    # diff is well-defined).
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need history for `git diff base...head`
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Code touching schemas/types/errors/env-vars must update docs
+        run: |
+          python tools/check_docs_with_code.py \
+            --base "origin/${{ github.base_ref }}" \
+            --head HEAD
+
+  checkpoint-discipline:
+    name: checkpoint-discipline
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Long feature commits must be preceded by a checkpoint
+        run: |
+          python tools/check_checkpoint_discipline.py \
+            --base "origin/${{ github.base_ref }}" \
+            --head HEAD
 
   security:
     name: security

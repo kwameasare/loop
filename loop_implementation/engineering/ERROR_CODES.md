@@ -7,6 +7,51 @@ Every error in Loop has a stable code. Codes never change meaning. They are part
 
 ---
 
+## 0. As-shipped — codes actually emitted by the codebase today
+
+> This is the live truth as of the Sprint-0 cut-off (S001–S014). The
+> `docs-with-code` CI gate (`tools/check_docs_with_code.py`) requires this
+> file to be updated in any PR that touches `packages/**/errors.py`.
+
+| Code | Class | Where defined | Story |
+|------|-------|---------------|-------|
+| `LOOP-TH-000` | `ToolHostError` (base) | `packages/tool-host/loop_tool_host/errors.py` | S014 |
+| `LOOP-TH-001` | `SandboxStartupError` (image pull failure / kata-runtime unavailable / image hash mismatch) | `packages/tool-host/loop_tool_host/errors.py` | S014 |
+| `LOOP-TH-002` | `SandboxBusyError` (warm-pool exhausted within wait budget) | `packages/tool-host/loop_tool_host/errors.py` | S014 |
+
+### 0.1 Known drift — pending renumber
+
+The S014 implementation of `loop-tool-host` claimed `LOOP-TH-001` /
+`LOOP-TH-002` for sandbox-lifecycle failures, but §3 below has those numbers
+reserved for input-validation errors (`Unknown tool` / `Args schema
+mismatch`). Per §1, the number bands are:
+
+- `001-099` input validation
+- `300-399` rate limit / budget
+- `500-599` internal / bug
+
+So `SandboxStartupError` belongs in `5xx` and `SandboxBusyError` belongs in
+`3xx`. **Tracking item:** before any of these codes are exposed in a
+public-facing API response (no S0 endpoint emits them yet — they are
+internal-only), renumber to:
+
+| Now | Renumber to | Reason |
+|-----|-------------|--------|
+| `LOOP-TH-001` `SandboxStartupError` | `LOOP-TH-502` | Internal infra failure |
+| `LOOP-TH-002` `SandboxBusyError` | `LOOP-TH-302` | Capacity / budget |
+| `LOOP-TH-000` `ToolHostError` (base) | (leave as `000`) | Base class is conventionally `xxx-000` |
+
+Filed as **follow-up FU-014-A** (see tracker). Until that PR lands, do not
+add `LOOP-TH-001` / `LOOP-TH-002` to any user-facing error response.
+
+### 0.2 Adding a new error code
+
+1. Add the class with a `code` class-var to the appropriate `packages/<svc>/<pkg>/errors.py`.
+2. Add the code to either §0 (as-shipped) or §3 (canonical reference) — both is fine.
+3. The `docs-with-code` CI gate fails the PR otherwise.
+
+---
+
 ## 1. Format
 
 `LOOP-<SERVICE>-<NUMBER>` — fixed-width, all caps, three sections.

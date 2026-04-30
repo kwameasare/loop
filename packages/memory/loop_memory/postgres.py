@@ -7,9 +7,15 @@ don't need ORM mappings for two tables of two value columns).
 Tenancy is enforced two ways:
 
 1. Every statement filters by ``workspace_id``.
-2. Callers are expected to have already executed
-   ``SET LOCAL loop.workspace_id = '<uuid>'`` on the connection so
-   the data-plane RLS policy double-checks at the database level.
+2. Every operation opens its own transaction and executes
+   ``SET LOCAL loop.workspace_id = '<uuid>'`` **before** any data
+   query, so the data-plane RLS policy (``FORCE ROW LEVEL SECURITY``
+   from dp_0001) double-checks at the database level.
+
+   Without that ``SET LOCAL``, ``current_setting('loop.workspace_id',
+   true)`` returns NULL, the policy ``USING (workspace_id = ...)``
+   evaluates to NULL → row filtered out, and **every read returns
+   zero rows**. Always set the GUC first.
 
 Conflict-on-insert uses ``ON CONFLICT ... DO UPDATE`` so concurrent
 writers converge on last-write-wins by ``updated_at``.
@@ -23,10 +29,20 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 from loop_memory.models import MemoryEntry, MemoryScope
 from loop_memory.stores import MemoryNotFoundError
+
+# `SET LOCAL` must be issued inside an explicit transaction; that's why
+# every operation below uses ``engine.begin()`` (never ``engine.connect()``)
+# and routes through this helper.
+_SET_WS_SQL = text("SET LOCAL loop.workspace_id = :ws")
+
+
+async def _enter_workspace(conn: AsyncConnection, workspace_id: UUID) -> None:
+    """Bind ``loop.workspace_id`` for the lifetime of this transaction."""
+    await conn.execute(_SET_WS_SQL, {"ws": str(workspace_id)})
 
 
 class PostgresUserMemoryStore:
@@ -73,7 +89,8 @@ class PostgresUserMemoryStore:
               AND user_id = :uid AND key = :k
             """
         )
-        async with self._engine.connect() as conn:
+        async with self._engine.begin() as conn:
+            await _enter_workspace(conn, workspace_id)
             row = (
                 await conn.execute(
                     sql,
@@ -114,6 +131,7 @@ class PostgresUserMemoryStore:
             """
         )
         async with self._engine.begin() as conn:
+            await _enter_workspace(conn, workspace_id)
             row = (
                 await conn.execute(
                     sql,
@@ -153,6 +171,7 @@ class PostgresUserMemoryStore:
             """
         )
         async with self._engine.begin() as conn:
+            await _enter_workspace(conn, workspace_id)
             result = await conn.execute(
                 sql,
                 {"ws": workspace_id, "ag": agent_id, "uid": user_id, "k": key},
@@ -173,7 +192,8 @@ class PostgresUserMemoryStore:
             ORDER BY key
             """
         )
-        async with self._engine.connect() as conn:
+        async with self._engine.begin() as conn:
+            await _enter_workspace(conn, workspace_id)
             rows = (
                 await conn.execute(
                     sql, {"ws": workspace_id, "ag": agent_id, "uid": user_id}
@@ -219,7 +239,8 @@ class PostgresUserMemoryStore:
             WHERE workspace_id = :ws AND agent_id = :ag AND key = :k
             """
         )
-        async with self._engine.connect() as conn:
+        async with self._engine.begin() as conn:
+            await _enter_workspace(conn, workspace_id)
             row = (
                 await conn.execute(
                     sql, {"ws": workspace_id, "ag": agent_id, "k": key}
@@ -257,6 +278,7 @@ class PostgresUserMemoryStore:
             """
         )
         async with self._engine.begin() as conn:
+            await _enter_workspace(conn, workspace_id)
             row = (
                 await conn.execute(
                     sql,

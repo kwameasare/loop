@@ -11,6 +11,8 @@ from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from loop_gateway.cost import DISCLOSED_MARKUP_PCT
+
 Role = Literal["system", "user", "assistant", "tool"]
 
 
@@ -84,7 +86,10 @@ class GatewayDone(_StrictModel):
     kind: Literal["done"] = "done"
     usage: Usage
     cost_usd: float
-    cost_disclosed_markup_pct: float = 5.0
+    # Disclosed markup percentage. Must always equal cost.DISCLOSED_MARKUP_PCT
+    # — the value is in the wire shape so consumers don't need to import the
+    # cost module, but the source of truth is cost.py (ADR-012, ADR-028).
+    cost_disclosed_markup_pct: float = DISCLOSED_MARKUP_PCT
     cached: bool = False
     # Tool calls the model emitted this iteration. The runtime dispatches
     # them, appends ``tool`` messages, and re-streams. Empty iff the turn

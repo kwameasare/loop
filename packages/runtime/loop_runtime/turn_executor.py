@@ -178,6 +178,14 @@ class TurnExecutor:
                 if time.monotonic() - started >= agent.budget.max_runtime_seconds:
                     degrade_reason = "timeout"
                     break
+                # Symmetric with the timeout guard: don't START a new iteration
+                # if the cost budget is already exhausted by prior iterations.
+                # The mid-stream check at line ~210 handles overshoot inside
+                # the current iteration; this prevents one extra iteration
+                # from being launched after a prior one tipped over.
+                if cost_usd >= agent.budget.max_cost_usd:
+                    degrade_reason = "budget"
+                    break
 
                 gw_request = GatewayRequest(
                     request_id=f"{base_request_id}:i{iteration}",

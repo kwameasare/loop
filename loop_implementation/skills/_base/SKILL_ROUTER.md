@@ -198,6 +198,9 @@ These rules cut across every skill. Violate any and the PR is rejected:
 10. **Performance budgets.** Hot-path PRs run the bench rig; regressions ≥10% block merge.
 11. **Tracker lifecycle.** Every PR contains a tracker claim (first commit) and a tracker close (last commit) — see "Tracker lifecycle protocol" above. PRs without tracker touches are rejected.
 12. **Resumption-friendly work.** Long tasks (> 1 h) commit checkpoints every numbered step / 30 min. Never leave uncommitted work. Notes cell follows the canonical structured format so any agent (different vendor, different shift) can resume from `meta/resume-task.md`.
+13. **No giant feature commits.** A `feat(...)` / `fix(...)` / `refactor(...)` commit with > 90 lines of code-relevant diff (excluding tests, docs, lockfiles) MUST be preceded by a `chore(tracker): claim` or `chore(tracker): checkpoint` commit on the same branch. Enforced by `tools/check_checkpoint_discipline.py` in CI. Split big commits or insert a checkpoint — both are fine.
+14. **Docs-with-code.** Any change touching schemas, public types, error classes, env vars, REST routes, or new packages MUST update the paired doc in `loop_implementation/` in the same PR. Enforced by `tools/check_docs_with_code.py` in CI. See `meta/docs-with-code-check.md` for the full rule table.
+15. **Done-notes structure.** `Done` stories carry the canonical Notes block (PR, Branch, Skill, Final heartbeat with vendor specificity, Tests, Docs touched, Follow-ups). Bare-prose notes fail the `tracker-clean` check.
 
 ---
 
