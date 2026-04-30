@@ -1830,8 +1830,35 @@ STORIES: list[Story] = [
         "E20",
         13,
         "P0",
-        "Not started",
-        "M12",
+        "Done",
+        (
+            "**Done.** "
+            "Branch: copilot/s050-enterprise-ga (merged). "
+            "PR: local-merge (ff to main). "
+            "Skill: skills/architecture/propose-adr.md. "
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T23:59Z (GitHub Copilot). "
+            "Open questions: custom RBAC (S067), audit "
+            "alert subscriptions (S068), HPA + cross-region "
+            "for on-prem (S081, S083), air-gapped bundle "
+            "(S080), multi-tenant on-prem (S082) all "
+            "explicitly out of scope and tracked. "
+            "Shipped engineering/ENTERPRISE_GA.md (the "
+            "definition of done across the three GA "
+            "pillars: SSO/SAML, audit log UI, on-prem "
+            "parity matrix with cloud-vs-on-prem deltas, "
+            "install footprint, and five hard GA gates "
+            "tying SOC2/SSO/audit-UI/on-prem-matrix/voice-"
+            "latency together) and engineering/SSO_SAML.md "
+            "(per-IdP click-by-click recipes for Okta, "
+            "Entra ID, Google Workspace, generic SAML + "
+            "OIDC; tenant-level SSO record schema; SCIM "
+            "endpoint pattern; troubleshooting matrix; the "
+            "auth.sso.* audit event namespace). No code "
+            "changes; ruff + suite stay at 354 passing. "
+            "Blockers: none. "
+            "Commits: substance, close."
+        ),
     ),
 ]
 
