@@ -542,22 +542,25 @@ STORIES: list[Story] = [
         "E3",
         8,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s014-firecracker. "
-            "Skill: skills/coding/implement-runtime-feature.md "
-            "(ADR-005 + ADR-021 already accepted; this is the impl). "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T07:00Z (GitHub Copilot). "
-            "Open questions: none -- ship loop-tool-host package with "
-            "Sandbox abstraction (acquire/release/exec) and a WarmPool "
-            "that pre-allocates idle sandboxes; in-memory impl for the "
-            "studio + tests; Kata RuntimeClass + dp-tool-host k8s "
-            "manifests under infra/k8s/. Real k8s warmpool controller "
-            "deferred to S028. "
-            "Blockers: none. "
-            "Commits: claim."
+            "Done. Shipped packages/tool-host (loop-tool-host) with "
+            "Sandbox + SandboxFactory Protocols and a WarmPool that "
+            "keeps min_idle prewarmed sandboxes ahead of demand and "
+            "caps concurrency at max_size with deterministic acquire/"
+            "release semantics (asyncio.Lock + Condition; SandboxBusyError "
+            "on timeout; auto-refill on unhealthy release; drain()). "
+            "InMemorySandbox + InMemorySandboxFactory drive the runtime + "
+            "studio + tests today; the k8s-backed factory lands with S028. "
+            "infra/k8s/sandbox/ ships RuntimeClass loop-firecracker pinned "
+            "to kata-fc, the per-sandbox Pod template (read-only rootfs, "
+            "all caps dropped, non-root, guaranteed QoS, emptyDir tmpfs "
+            "scratch, no SA token), and a default-deny NetworkPolicy. "
+            "Typed errors LOOP-TH-001 (startup) / LOOP-TH-002 (busy). "
+            "8 pool tests cover prewarm, idle round-trip, growth-up-to-max, "
+            "blocking acquire, startup failure, drain, sizing validation, "
+            "exec-error handling. Workspace: 86 tests pass, ruff + pyright "
+            "clean."
         ),
     ),
     Story(
