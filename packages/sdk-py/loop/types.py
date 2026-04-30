@@ -103,6 +103,8 @@ class TurnEvent(_StrictModel):
     type: Literal[
         "token",
         "tool_call",
+        "tool_call_start",
+        "tool_call_end",
         "tool_result",
         "retrieval",
         "trace",

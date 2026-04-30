@@ -913,13 +913,28 @@ STORIES: list[Story] = [
     Story(
         "S024",
         "Streaming SSE: tool_call_start/end events on the wire",
-        "Eng #1",
+        "GitHub Copilot",
         "S0",
         "E1",
         3,
         "P1",
-        "Not started",
-        "Week 5",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s024-sse-tool-events. "
+            "Skill: skills/coding/implement-runtime-feature.md. "
+            "Last step: 4/5 (substance staged). "
+            "Heartbeat: 2026-04-30T13:00Z (GitHub Copilot). "
+            "Open questions: none -- runtime turn_executor now "
+            "emits tool_call_start (pre-dispatch, with id+name+args) "
+            "and tool_call_end (post-result, with id+name+result+"
+            "error+latency_ms) replacing tool_call/tool_result; "
+            "TurnEvent literal extended; channels-core gains "
+            "from_turn_event() projection; SSE serializer wires "
+            "TOOL_CALL_START/END frames untouched. "
+            "Blockers: none. "
+            "Commits: claim, substance."
+        ),
     ),
     Story(
         "S025",

@@ -24,6 +24,7 @@ from loop_channels_core.protocol import (
     from_list_factory,
     to_dispatcher,
 )
+from loop_channels_core.translate import from_turn_event
 
 __all__ = [
     "Channel",
@@ -35,5 +36,6 @@ __all__ = [
     "OutboundFrameKind",
     "from_async_generator",
     "from_list_factory",
+    "from_turn_event",
     "to_dispatcher",
 ]

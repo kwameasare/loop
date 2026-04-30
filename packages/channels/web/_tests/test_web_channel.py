@@ -87,3 +87,37 @@ async def test_collect_returns_frames() -> None:
     frames = await ch.collect(_event())
     assert len(frames) == 1
     assert frames[0].text == "ok"
+
+
+def test_sse_serialise_emits_tool_call_start_end_events() -> None:
+    cid = uuid4()
+    start = OutboundFrame(
+        conversation_id=cid,
+        kind=OutboundFrameKind.TOOL_CALL_START,
+        payload={"id": "c1", "name": "search", "arguments": '{"q":"x"}'},
+        sequence=1,
+    )
+    end = OutboundFrame(
+        conversation_id=cid,
+        kind=OutboundFrameKind.TOOL_CALL_END,
+        payload={
+            "id": "c1",
+            "name": "search",
+            "result": "hit",
+            "error": "",
+            "latency_ms": "42",
+        },
+        sequence=2,
+    )
+    out_start = sse_serialise(start).decode("utf-8")
+    out_end = sse_serialise(end).decode("utf-8")
+    assert out_start.startswith("event: tool_call_start\n")
+    assert out_end.startswith("event: tool_call_end\n")
+    data_start = json.loads(
+        next(ln for ln in out_start.splitlines() if ln.startswith("data: ")).removeprefix("data: ")
+    )
+    data_end = json.loads(
+        next(ln for ln in out_end.splitlines() if ln.startswith("data: ")).removeprefix("data: ")
+    )
+    assert data_start["payload"]["name"] == "search"
+    assert data_end["payload"]["latency_ms"] == "42"

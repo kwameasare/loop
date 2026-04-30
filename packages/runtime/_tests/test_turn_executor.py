@@ -294,10 +294,10 @@ async def test_tool_calls_are_dispatched_in_parallel_then_resolved() -> None:
     types = [e.type for e in out]
     assert types == [
         "token",
-        "tool_call",
-        "tool_call",
-        "tool_result",
-        "tool_result",
+        "tool_call_start",
+        "tool_call_start",
+        "tool_call_end",
+        "tool_call_end",
         "token",
         "complete",
     ]
@@ -353,7 +353,7 @@ async def test_tool_failure_surfaces_as_tool_result_error_and_continues() -> Non
     executor = TurnExecutor(gateway=gw)
     out = [e async for e in executor.execute(_agent(), _event(), tools=registry)]
 
-    tool_results = [e for e in out if e.type == "tool_result"]
+    tool_results = [e for e in out if e.type == "tool_call_end"]
     assert len(tool_results) == 2
     by_id = {r.payload["id"]: r.payload for r in tool_results}
     assert by_id["c1"]["error"] is not None and "kaboom" in by_id["c1"]["error"]

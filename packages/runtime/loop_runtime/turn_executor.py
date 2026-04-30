@@ -235,9 +235,11 @@ class TurnExecutor:
                     )
                 )
 
+                tool_started_at: dict[str, float] = {}
                 for c in pending_tool_calls:
+                    tool_started_at[c.id] = time.monotonic()
                     yield TurnEvent(
-                        type="tool_call",
+                        type="tool_call_start",
                         payload={
                             "id": c.id,
                             "name": c.name,
@@ -251,13 +253,15 @@ class TurnExecutor:
                     *(_dispatch_tool(tools, c) for c in pending_tool_calls)
                 )
                 for call, result_str, err in results:
+                    latency_ms = int((time.monotonic() - tool_started_at[call.id]) * 1000)
                     yield TurnEvent(
-                        type="tool_result",
+                        type="tool_call_end",
                         payload={
                             "id": call.id,
                             "name": call.name,
                             "result": result_str,
                             "error": err,
+                            "latency_ms": latency_ms,
                         },
                         ts=_now(),
                     )
