@@ -1200,13 +1200,31 @@ STORIES: list[Story] = [
     Story(
         "S033",
         "Voice MVP: web-RTC echo agent end-to-end",
-        "Eng #3",
+        "GitHub Copilot",
         "S0",
         "E7",
         8,
         "P0",
-        "Not started",
-        "Week 6",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s033-voice-echo. "
+            "Skill: skills/coding/implement-channel-adapter.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T18:30Z (GitHub Copilot). "
+            "Open questions: none -- adding packages/channels/"
+            "voice with a WebRTC-shaped signaling layer "
+            "(WebRTCSession state machine: negotiating -> "
+            "connected -> closed; SignalEnvelope offer/answer/"
+            "ice frames), AudioFrame model, EchoVoiceAgent that "
+            "produces outbound frames preserving PCM payload + "
+            "advancing sequence/timestamp, and a "
+            "VoiceSessionRegistry. aiortc is intentionally out "
+            "of scope for v0; a thin asyncio.Queue transport is "
+            "shipped as the in-memory fake. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S034",
