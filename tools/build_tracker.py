@@ -1612,8 +1612,32 @@ STORIES: list[Story] = [
         "—",
         5,
         "P0",
-        "Not started",
-        "M9",
+        "Done",
+        (
+            "**Done.** "
+            "Branch: copilot/s044-series-a (merged). "
+            "PR: local-merge (ff to main). "
+            "Skill: skills/meta/update-tracker.md. "
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T23:15Z (GitHub Copilot). "
+            "Open questions: none. "
+            "Shipped loop_implementation/operations/SERIES_A.md "
+            "as the single source of truth for the round: "
+            "round summary table ($18M primary, $90-110M "
+            "pre, 24mo runway, use of funds), narrative "
+            "spine (why now / what we are / traction / "
+            "team / use of $18M), anti-pitch responses, "
+            "bear-case table (OpenAI bundling, hyperscalers, "
+            "LangGraph parity, eval commoditisation, "
+            "enterprise demand), data-room index "
+            "(00 one-pager through 70 references with "
+            "owners), KPI commitments at T0/+12mo/+24mo, "
+            "process timeline, and ownership matrix. "
+            "Cross-references existing docs (architecture, "
+            "security, eval registry S043, replay S041). "
+            "Pure docs change; no code. Blockers: none. "
+            "Commits: substance, close."
+        ),
     ),
     Story(
         "S045",
