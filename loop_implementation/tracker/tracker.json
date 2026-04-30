@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T14:54:01.045099+00:00",
+    "generated_at": "2026-04-30T14:55:03.999460+00:00",
     "format_version": 2
   },
   "epics": [
@@ -501,13 +501,13 @@
     {
       "id": "S031",
       "title": "Eval-gated deploy: block prod promotion on regression",
-      "owner": "Eng #4",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E8",
       "points": 5,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "Week 6"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s031-eval-gated-deploy. Skill: skills/coding/implement-eval-scorer.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T17:30Z (GitHub Copilot). Open questions: none -- adding EvalGate Protocol + BaselineRegistry Protocol to loop_control_plane.deploy with a new EVALUATING phase between BUILDING and PUSHING. On regression (candidate pass_rate < baseline) deploy transitions to FAILED with a typed eval-regression error; on success the new pass_rate is recorded to the baseline registry once READY. Blockers: none. Commits: claim."
     },
     {
       "id": "S032",

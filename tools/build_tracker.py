@@ -1124,13 +1124,28 @@ STORIES: list[Story] = [
     Story(
         "S031",
         "Eval-gated deploy: block prod promotion on regression",
-        "Eng #4",
+        "GitHub Copilot",
         "S0",
         "E8",
         5,
         "P0",
-        "Not started",
-        "Week 6",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s031-eval-gated-deploy. "
+            "Skill: skills/coding/implement-eval-scorer.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T17:30Z (GitHub Copilot). "
+            "Open questions: none -- adding EvalGate Protocol + "
+            "BaselineRegistry Protocol to loop_control_plane.deploy "
+            "with a new EVALUATING phase between BUILDING and "
+            "PUSHING. On regression (candidate pass_rate < "
+            "baseline) deploy transitions to FAILED with a typed "
+            "eval-regression error; on success the new pass_rate "
+            "is recorded to the baseline registry once READY. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S032",
