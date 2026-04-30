@@ -20,6 +20,7 @@ members = [
     "packages/control-plane",
     "packages/data-plane",
     "packages/gateway",
+    "packages/kb-engine",
     "packages/mcp-client",
     "packages/memory",
     "packages/runtime",
@@ -33,6 +34,7 @@ loop-runtime = { workspace = true }
 loop-control-plane = { workspace = true }
 loop-data-plane = { workspace = true }
 loop-gateway = { workspace = true }
+loop-kb-engine = { workspace = true }
 loop-mcp = { workspace = true }
 loop-memory = { workspace = true }
 loop-tool-host = { workspace = true }
@@ -44,6 +46,7 @@ dev = [
     "loop-control-plane",
     "loop-data-plane",
     "loop-gateway",
+    "loop-kb-engine",
     "loop-mcp",
     "loop-memory",
     "loop-tool-host",

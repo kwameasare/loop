@@ -8,6 +8,7 @@ members = [
     "loop-control-plane",
     "loop-data-plane",
     "loop-gateway",
+    "loop-kb-engine",
     "loop-mcp",
     "loop-memory",
     "loop-runtime",
@@ -413,6 +414,17 @@ requires-dist = [
 ]
 
 [[package]]
+name = "loop-kb-engine"
+version = "0.1.0"
+source = { editable = "packages/kb-engine" }
+dependencies = [
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pydantic", specifier = ">=2" }]
+
+[[package]]
 name = "loop-mcp"
 version = "0.1.0"
 source = { editable = "packages/mcp-client" }
@@ -482,6 +494,7 @@ dev = [
     { name = "loop-control-plane" },
     { name = "loop-data-plane" },
     { name = "loop-gateway" },
+    { name = "loop-kb-engine" },
     { name = "loop-mcp" },
     { name = "loop-memory" },
     { name = "loop-runtime" },
@@ -505,6 +518,7 @@ dev = [
     { name = "loop-control-plane", editable = "packages/control-plane" },
     { name = "loop-data-plane", editable = "packages/data-plane" },
     { name = "loop-gateway", editable = "packages/gateway" },
+    { name = "loop-kb-engine", editable = "packages/kb-engine" },
     { name = "loop-mcp", editable = "packages/mcp-client" },
     { name = "loop-memory", editable = "packages/memory" },
     { name = "loop-runtime", editable = "packages/runtime" },
