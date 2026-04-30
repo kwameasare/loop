@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T15:04:37.591982+00:00",
+    "generated_at": "2026-04-30T15:05:07.445784+00:00",
     "format_version": 2
   },
   "epics": [
@@ -528,8 +528,8 @@
       "epic": "E7",
       "points": 8,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.** Branch: copilot/s033-voice-echo. Skill: skills/coding/implement-channel-adapter.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T18:30Z (GitHub Copilot). Open questions: none -- adding packages/channels/voice with a WebRTC-shaped signaling layer (WebRTCSession state machine: negotiating -> connected -> closed; SignalEnvelope offer/answer/ice frames), AudioFrame model, EchoVoiceAgent that produces outbound frames preserving PCM payload + advancing sequence/timestamp, and a VoiceSessionRegistry. aiortc is intentionally out of scope for v0; a thin asyncio.Queue transport is shipped as the in-memory fake. Blockers: none. Commits: claim."
+      "status": "Done",
+      "notes": "PR#S033. Branch: copilot/s033-voice-echo (merged). loop_voice.webrtc adds the WebRTC-shaped signaling envelope: WebRTCSignal (frozen pydantic, kind: offer|answer|ice with sdp / candidate fields), WebRTCSession (state machine: NEGOTIATING -> CONNECTED -> CLOSED, with sdp_offer / sdp_answer / ice_candidates / connected_at_ms / closed_at_ms), and WebRTCSessionRegistry which validates each envelope, synthesises a deterministic SDP answer via echo_answer_for(), serialises ICE additions (refused once the session is CLOSED), and treats close() as idempotent. loop_voice.echo provides make_echo_agent(prefix='You said: '), an AgentResponder that returns the user's transcript verbatim. The end-to-end test wires negotiate(offer) -> answer, then drives a VoiceSession with InMemoryRealtimeTransport / InMemorySpeechToText / InMemoryTextToSpeech and make_echo_agent, asserting the user audio comes back out as 'echo: hello world' and the session closes cleanly. aiortc-backed adapter is intentionally deferred to S033b -- the signaling + session contract is what the next layer needs to speak. 8 tests added (7 signaling cases covering every illegal transition, plus the e2e echo round-trip); voice tests 3 -> 11; suite 210 -> 218 passed; ruff clean. Skill: skills/coding/implement-channel-adapter.md."
     },
     {
       "id": "S034",
