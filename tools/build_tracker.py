@@ -1316,8 +1316,27 @@ STORIES: list[Story] = [
         "E13",
         13,
         "P0",
-        "Not started",
-        "M7",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s036-helm-chart. "
+            "Skill: skills/architecture/cloud-portability-check.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T20:00Z (GitHub Copilot). "
+            "Open questions: none -- adding "
+            "infra/helm/loop/ with Chart.yaml, values.yaml "
+            "(image refs, replicas, resources, ingress, "
+            "managed-service URI overrides per "
+            "CLOUD_PORTABILITY), templates for control-plane "
+            "/ runtime / gateway Deployments + Services, "
+            "shared ConfigMap + Secret, ServiceAccount, and "
+            "an Ingress. A pure-Python validator under "
+            "tools/check_helm_chart.py loads + structurally "
+            "checks the chart so CI doesn't need the helm "
+            "binary, and a unit test guards the validator. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S037",
