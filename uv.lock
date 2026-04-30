@@ -8,6 +8,7 @@ members = [
     "loop-control-plane",
     "loop-data-plane",
     "loop-gateway",
+    "loop-mcp",
     "loop-runtime",
     "loop-workspace",
 ]
@@ -410,6 +411,17 @@ requires-dist = [
 ]
 
 [[package]]
+name = "loop-mcp"
+version = "0.1.0"
+source = { editable = "packages/mcp-client" }
+dependencies = [
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pydantic", specifier = ">=2.7" }]
+
+[[package]]
 name = "loop-runtime"
 version = "0.1.0"
 source = { editable = "packages/runtime" }
@@ -440,6 +452,7 @@ dev = [
     { name = "loop-control-plane" },
     { name = "loop-data-plane" },
     { name = "loop-gateway" },
+    { name = "loop-mcp" },
     { name = "loop-runtime" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pyright" },
@@ -460,6 +473,7 @@ dev = [
     { name = "loop-control-plane", editable = "packages/control-plane" },
     { name = "loop-data-plane", editable = "packages/data-plane" },
     { name = "loop-gateway", editable = "packages/gateway" },
+    { name = "loop-mcp", editable = "packages/mcp-client" },
     { name = "loop-runtime", editable = "packages/runtime" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "pyright", specifier = ">=1.1.380" },

@@ -10,7 +10,6 @@ requires-python = ">=3.12"
 # unblocked by a specific Sprint-0 story; add it here in the same PR that
 # creates the package skeleton (story IDs in parentheses):
 #   packages/gateway        (S007)
-#   packages/mcp-client     (S011)
 #   packages/kb-engine      (S015)
 #   packages/eval-harness   (S021)
 #   packages/observability  (S009 / S022 territory)
@@ -21,6 +20,7 @@ members = [
     "packages/control-plane",
     "packages/data-plane",
     "packages/gateway",
+    "packages/mcp-client",
     "packages/runtime",
     "packages/sdk-py",
 ]
@@ -31,6 +31,7 @@ loop-runtime = { workspace = true }
 loop-control-plane = { workspace = true }
 loop-data-plane = { workspace = true }
 loop-gateway = { workspace = true }
+loop-mcp = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -39,6 +40,7 @@ dev = [
     "loop-control-plane",
     "loop-data-plane",
     "loop-gateway",
+    "loop-mcp",
     "ruff>=0.6.0",
     "pyright>=1.1.380",
     "pytest>=8.0",
