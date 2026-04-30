@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T13:54:20.983367+00:00",
+    "generated_at": "2026-04-30T13:54:59.960376+00:00",
     "format_version": 2
   },
   "epics": [
@@ -391,13 +391,13 @@
     {
       "id": "S021",
       "title": "Eval harness skeleton: 6 scorers + `loop eval run`",
-      "owner": "Eng #4",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E8",
       "points": 8,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "Week 4"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s021-eval-harness. Skill: skills/coding/implement-eval-scorer.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T11:30Z (GitHub Copilot). Open questions: none -- ship loop-eval with Scorer Protocol, 6 scorers (exact_match, regex_match, json_schema, llm_judge with injectable judge, latency, cost), Sample/Score/EvalReport models, and an EvalRunner that scores a dataset against an agent function. Blockers: none. Commits: claim."
     },
     {
       "id": "S022",

@@ -824,13 +824,26 @@ STORIES: list[Story] = [
     Story(
         "S021",
         "Eval harness skeleton: 6 scorers + `loop eval run`",
-        "Eng #4",
+        "GitHub Copilot",
         "S0",
         "E8",
         8,
         "P0",
-        "Not started",
-        "Week 4",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s021-eval-harness. "
+            "Skill: skills/coding/implement-eval-scorer.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T11:30Z (GitHub Copilot). "
+            "Open questions: none -- ship loop-eval with Scorer "
+            "Protocol, 6 scorers (exact_match, regex_match, "
+            "json_schema, llm_judge with injectable judge, latency, "
+            "cost), Sample/Score/EvalReport models, and an EvalRunner "
+            "that scores a dataset against an agent function. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S022",
