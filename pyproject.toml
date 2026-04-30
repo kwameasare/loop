@@ -31,6 +31,8 @@ members = [
     "packages/gateway",
     "packages/kb-engine",
     "packages/mcp-client",
+    "packages/mcp-servers/salesforce",
+    "packages/mcp-servers/zendesk",
     "packages/memory",
     "packages/runtime",
     "packages/sdk-py",
@@ -55,6 +57,8 @@ loop-data-plane = { workspace = true }
 loop-gateway = { workspace = true }
 loop-kb-engine = { workspace = true }
 loop-mcp = { workspace = true }
+loop-mcp-salesforce = { workspace = true }
+loop-mcp-zendesk = { workspace = true }
 loop-memory = { workspace = true }
 loop-tool-host = { workspace = true }
 loop-voice = { workspace = true }
@@ -77,6 +81,8 @@ dev = [
     "loop-gateway",
     "loop-kb-engine",
     "loop-mcp",
+    "loop-mcp-salesforce",
+    "loop-mcp-zendesk",
     "loop-memory",
     "loop-tool-host",
     "loop-voice",

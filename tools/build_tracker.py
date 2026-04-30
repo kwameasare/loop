@@ -1714,8 +1714,38 @@ STORIES: list[Story] = [
         "E18",
         13,
         "P1",
-        "Not started",
-        "M10",
+        "Done",
+        (
+            "**Done.** "
+            "Branch: copilot/s047-mcp-sf-zendesk (merged). "
+            "PR: local-merge (ff to main). "
+            "Skill: skills/coding/implement-mcp-tool.md. "
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T23:50Z (GitHub Copilot). "
+            "Open questions: production HTTP adapters (OAuth "
+            "refresh, rate-limit) deferred to a follow-up "
+            "story; in-memory clients ship now to unblock "
+            "agent authors. "
+            "Shipped two new packages under "
+            "packages/mcp-servers/: loop-mcp-salesforce and "
+            "loop-mcp-zendesk. Each provides strict pydantic "
+            "models (Account/Contact/Opportunity/Case for SF; "
+            "User/Ticket/Comment for ZD), a Config.from_env() "
+            "loader, a Protocol-based Client + an "
+            "InMemoryClient test double, and four "
+            "@tool-decorated MCP tools "
+            "(salesforce_find_account / find_contact / "
+            "create_case / list_open_opportunities; "
+            "zendesk_find_user / get_ticket / create_ticket / "
+            "add_comment) plus a server_registry() factory. "
+            "Wired into the uv workspace (members, sources, "
+            "dev group). 26 new tests covering config "
+            "from_env, find/create/error paths, registry "
+            "enumeration + dispatch, Protocol conformance, "
+            "and unbound-client guard (suite 306 -> 332). "
+            "ruff clean. Blockers: none. "
+            "Commits: substance, close."
+        ),
     ),
     Story(
         "S048",
