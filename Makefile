@@ -1,4 +1,4 @@
-.PHONY: bootstrap up down migrate seed dev test lint format clean logs
+.PHONY: bootstrap up down migrate seed dev test lint format clean logs infra-smoke
 
 PY := uv run python
 NODE := pnpm
@@ -10,13 +10,14 @@ bootstrap:
 	pre-commit install
 
 up:
-	docker compose -f infra/docker-compose.yml up -d
-	@echo "Waiting for services to be healthy..."
-	@sleep 5
+	docker compose -f infra/docker-compose.yml up -d --wait
 	@docker compose -f infra/docker-compose.yml ps
 
 down:
 	docker compose -f infra/docker-compose.yml down
+
+infra-smoke:
+	./tools/infra_smoke.sh
 
 migrate:
 	$(PY) -m loop.cp_migrations upgrade head

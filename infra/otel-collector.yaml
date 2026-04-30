@@ -1,0 +1,59 @@
+# OpenTelemetry Collector — local-dev configuration.
+#
+# Receives OTLP gRPC (4317) and HTTP (4318) from the runtime, gateway,
+# control-plane API, and channel adapters. In dev we batch everything to
+# stdout (via the debug exporter); ClickHouse export is wired in S009.
+#
+# Production configs live in infra/otel-collector/ (Helm chart values, S036).
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    send_batch_size: 1024
+    timeout: 1s
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+
+exporters:
+  debug:
+    verbosity: normal
+    sampling_initial: 5
+    sampling_thereafter: 50
+  # Future (S009): ClickHouse exporter for traces + logs.
+  # clickhouse:
+  #   endpoint: tcp://clickhouse:9000?dial_timeout=10s
+  #   database: loop_telemetry
+  #   logs_table_name: otel_logs
+  #   traces_table_name: otel_traces
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
+  telemetry:
+    logs:
+      level: info

@@ -1,3 +1,26 @@
+# Loop local development stack — cloud-neutral.
+#
+# Brought up by `make up` (or `docker compose -f infra/docker-compose.yml up -d`).
+# Ports bind to 127.0.0.1 only by default so a shared dev machine doesn't
+# expose Postgres to the LAN. Override via LOOP_DEV_BIND=0.0.0.0 if needed.
+#
+# Service → host port mapping (override via .env if you have collisions):
+#   postgres        5432
+#   redis           6379
+#   qdrant          6333 (REST), 6334 (gRPC)
+#   nats            4222 (client), 8222 (monitoring)
+#   minio           9000 (s3), 9001 (console)
+#   clickhouse      8123 (HTTP), 19000 (native — moved off 9000 to avoid MinIO)
+#   otel-collector  4317 (gRPC), 4318 (HTTP), 13133 (healthz)
+#
+# In production these are replaced by managed services through the
+# CLOUD_PORTABILITY abstractions (ManagedPostgres, ManagedRedis, ObjectStore,
+# EventBus). Never `import` from any client library against these endpoints
+# from runtime/gateway/sdk-py — go through packages/observability and the
+# control-plane data layer.
+
+name: loop-dev
+
 services:
 
   postgres:
@@ -6,69 +29,114 @@ services:
       POSTGRES_USER: loop
       POSTGRES_PASSWORD: loop
       POSTGRES_DB: loop
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
     ports:
-      - "5432:5432"
+      - "${LOOP_DEV_BIND:-127.0.0.1}:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U loop"]
+      test: ["CMD-SHELL", "pg_isready -U loop -d loop"]
       interval: 3s
       timeout: 3s
       retries: 10
+    restart: unless-stopped
+    networks: [loop]
 
   redis:
     image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
     ports:
-      - "6379:6379"
+      - "${LOOP_DEV_BIND:-127.0.0.1}:6379:6379"
     volumes:
       - redisdata:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 3s
+      timeout: 2s
+      retries: 10
+    restart: unless-stopped
+    networks: [loop]
 
   qdrant:
     image: qdrant/qdrant:v1.11.0
     ports:
-      - "6333:6333"
-      - "6334:6334"
+      - "${LOOP_DEV_BIND:-127.0.0.1}:6333:6333"   # REST
+      - "${LOOP_DEV_BIND:-127.0.0.1}:6334:6334"   # gRPC
     volumes:
       - qdrantdata:/qdrant/storage
     environment:
       QDRANT__LOG_LEVEL: INFO
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    healthcheck:
+      # Qdrant ships /readyz from v1.10+. The container has no curl/wget;
+      # bash + /dev/tcp probes the listener.
+      test: ["CMD-SHELL", "bash -c 'cat </dev/tcp/127.0.0.1/6333' >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks: [loop]
 
   nats:
     image: nats:2.10-alpine
-    command: ["-js", "-sd", "/data"]
+    command: ["-js", "-sd", "/data", "-m", "8222"]
     ports:
-      - "4222:4222"
-      - "8222:8222"
+      - "${LOOP_DEV_BIND:-127.0.0.1}:4222:4222"
+      - "${LOOP_DEV_BIND:-127.0.0.1}:8222:8222"   # monitoring
     volumes:
       - natsdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8222/healthz || exit 1"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+    restart: unless-stopped
+    networks: [loop]
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2024-08-17T01-24-54Z
     command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: loop
       MINIO_ROOT_PASSWORD: looploop
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${LOOP_DEV_BIND:-127.0.0.1}:9000:9000"   # S3 API
+      - "${LOOP_DEV_BIND:-127.0.0.1}:9001:9001"   # Console UI
     volumes:
       - miniodata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/minio/health/ready || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks: [loop]
 
   clickhouse:
     image: clickhouse/clickhouse-server:24.8-alpine
+    environment:
+      CLICKHOUSE_USER: loop
+      CLICKHOUSE_PASSWORD: loop
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      CLICKHOUSE_DB: loop_telemetry
     ports:
-      - "8123:8123"
-      - "9001:9000"
+      - "${LOOP_DEV_BIND:-127.0.0.1}:8123:8123"   # HTTP
+      # Native protocol mapped to host 19000 to avoid the MinIO console (9001)
+      # collision the previous version had. In-cluster clients keep using 9000.
+      - "${LOOP_DEV_BIND:-127.0.0.1}:19000:9000"
     volumes:
       - chdata:/var/lib/clickhouse
     ulimits:
       nofile:
         soft: 262144
         hard: 262144
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8123/ping || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks: [loop]
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.105.0
@@ -76,8 +144,24 @@ services:
     volumes:
       - ./otel-collector.yaml:/etc/otel/config.yaml:ro
     ports:
-      - "4317:4317"   # gRPC OTLP
-      - "4318:4318"   # HTTP OTLP
+      - "${LOOP_DEV_BIND:-127.0.0.1}:4317:4317"   # gRPC OTLP
+      - "${LOOP_DEV_BIND:-127.0.0.1}:4318:4318"   # HTTP OTLP
+      - "${LOOP_DEV_BIND:-127.0.0.1}:13133:13133" # health_check extension
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:13133/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks: [loop]
+
+networks:
+  loop:
+    name: loop-dev
+    driver: bridge
 
 volumes:
   pgdata:
