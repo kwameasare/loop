@@ -21,6 +21,17 @@ Episodic memory (Qdrant + Postgres long-form recall) is intentionally
 out of scope here -- it lands with the KB engine in S015.
 """
 
+from loop_memory.episodic import (
+    EMBEDDING_DIM,
+    Embedder,
+    EpisodicEntry,
+    EpisodicError,
+    EpisodicStore,
+    HashEmbedder,
+    InMemoryEpisodicStore,
+    auto_summarize,
+    cosine_similarity,
+)
 from loop_memory.inmemory import InMemorySessionMemoryStore, InMemoryUserMemoryStore
 from loop_memory.models import MemoryEntry, MemoryScope, SessionEntry
 from loop_memory.postgres import PostgresUserMemoryStore
@@ -34,6 +45,13 @@ from loop_memory.stores import (
 __version__ = "0.1.0"
 
 __all__ = [
+    "EMBEDDING_DIM",
+    "Embedder",
+    "EpisodicEntry",
+    "EpisodicError",
+    "EpisodicStore",
+    "HashEmbedder",
+    "InMemoryEpisodicStore",
     "InMemorySessionMemoryStore",
     "InMemoryUserMemoryStore",
     "MemoryEntry",
@@ -45,4 +63,6 @@ __all__ = [
     "SessionMemoryStore",
     "UserMemoryStore",
     "__version__",
+    "auto_summarize",
+    "cosine_similarity",
 ]

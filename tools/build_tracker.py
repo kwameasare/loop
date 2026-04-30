@@ -1281,26 +1281,31 @@ STORIES: list[Story] = [
         "E4",
         8,
         "P1",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s035-episodic-memory. "
-            "Skill: skills/coding/implement-kb-feature.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T19:30Z (GitHub Copilot). "
-            "Open questions: none -- adding episodic memory "
-            "tier under loop_memory.episodic: EpisodicEntry "
-            "(workspace + agent + conversation scoped, summary "
-            "+ embedding tuple, salience 0-1, ts_ms), "
-            "Embedder Protocol with deterministic HashEmbedder "
-            "for tests, EpisodicStore Protocol with "
-            "InMemoryEpisodicStore using cosine similarity, "
-            "and auto_summarize() that compresses a message "
-            "list into a single salient summary line. Qdrant "
-            "adapter is intentionally deferred to S035b -- the "
-            "Protocol contract is what the runtime needs. "
-            "Blockers: none. "
-            "Commits: claim."
+            "PR#S035. Branch: copilot/s035-episodic-memory "
+            "(merged). loop_memory.episodic adds the long-form "
+            "recall tier: EpisodicEntry (frozen pydantic, "
+            "workspace + agent + conversation scoped, "
+            "summary, 16-d embedding tuple, salience 0..1, "
+            "ts_ms), Embedder Protocol, HashEmbedder "
+            "(deterministic SHA-256 -> centred + unit-normed "
+            "16-d vectors so cosine similarity is meaningful "
+            "and tests stay reproducible), EpisodicStore "
+            "Protocol (upsert / query / list_recent), "
+            "InMemoryEpisodicStore (brute-force cosine, "
+            "scoped per workspace + agent, ranks by similarity "
+            "then salience then ts), and auto_summarize() "
+            "(deterministic '|'-join with ellipsis truncation "
+            "to max_chars). Qdrant adapter + LLM summariser "
+            "are deferred to S035b -- the Protocol is what "
+            "the runtime depends on. 11 tests added covering "
+            "embedder determinism, cosine self/orthogonal/ "
+            "mismatch, query ranking + scoping + min_score, "
+            "list_recent ordering, salience+dim validation, "
+            "and summariser truncation/edge cases. Suite 218 "
+            "-> 229 passed; ruff clean. "
+            "Skill: skills/coding/implement-kb-feature.md."
         ),
     ),
     Story(
