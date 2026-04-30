@@ -377,13 +377,22 @@ STORIES: list[Story] = [
     Story(
         "S006",
         "Postgres migrations: control plane + data plane core tables",
-        "Eng #2",
+        "GitHub Copilot",
         "S0",
         "E12",
         5,
         "P0",
-        "Not started",
-        "Week 2",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s006-pg-migrations. "
+            "Skill: skills/data/add-postgres-migration.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T02:00Z (GitHub Copilot). "
+            "Open questions: none — using Alembic with two trees (control_plane, data_plane). "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S007",
