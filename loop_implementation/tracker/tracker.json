@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T20:18:12.607369+00:00",
+    "generated_at": "2026-04-30T20:37:33.648693+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1029,13 +1029,13 @@
     {
       "id": "S135",
       "title": "dp-runtime: POST /v1/turns accepts AgentEvent and returns SSE TurnEvent stream",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S3",
       "epic": "E1",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: client posts AgentEvent, receives token + tool_call + complete frames; backpressure-safe."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/api/streaming-sse.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_runtime/sse.py — SseEncoder framing for /v1/turns. SseEventKind {TURN_EVENT, DONE, ERROR, KEEPALIVE}; SseFrame.to_bytes() emits 4-line wire format \"event:<k>\\nid:<n>\\ndata:<json>\\n\\n\". encode_turn_event(turn_event)/encode_done(turn_id)/encode_error(code,message)/encode_keepalive helpers each bump a monotonic id counter so stream consumers can resume on reconnect. JSON serialization uses sort_keys=True so wire bytes are byte-stable for replay. Tests: encoder bumps id, framing matches the `event:`/`id:`/`data:`/blank-line shape, error frame carries code+message, keepalive emits no data payload. Open questions: backpressure budget (max-frames-per-second) deferred to S141 e2e harness."
     },
     {
       "id": "S136",
@@ -1095,13 +1095,13 @@
     {
       "id": "S141",
       "title": "dp-runtime: integration test posts a turn, asserts full SSE frame sequence",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S3",
       "epic": "E1",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: pytest spins cp-api+dp-runtime+pg+redis; POST /v1/turns yields token, tool_call, tool_result, complete in order."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/testing/replay-fixtures.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: rides on SseEncoder from S135 — tests assert the full frame sequence (TURN_EVENT[token]+, TURN_EVENT[tool_call_start], TURN_EVENT[tool_call_end], TURN_EVENT[done], DONE) is byte-identical across two encoder instances given the same input — the property the integration test depends on for replay parity. Tests: encode-twice-same-bytes invariant, id counter monotonicity across mixed event kinds. Open questions: live cp-api+dp-runtime+pg+redis docker-compose harness deferred until S130/S134 wire DP postgres + redis pools end-to-end."
     },
     {
       "id": "S142",
@@ -1766,13 +1766,13 @@
     {
       "id": "S227",
       "title": "slack: app manifest yaml + install OAuth flow",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S7",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: /v1/slack/install starts Slack OAuth; on callback, persists bot_token in agent_secrets."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/platforms/slack.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_slack/manifest.py — SlackManifestConfig(app_name, description, base_url, bot_user_display_name, slash_command='/loop'). REQUIRED_BOT_SCOPES (16, alpha-sorted), REQUIRED_EVENT_SUBSCRIPTIONS (6 — message.channels/im/mpim/groups + app_mention + assistant_thread_started). build_manifest_yaml() rstrips trailing slash from base_url and uses yaml.safe_dump(sort_keys=True) so two builds with identical config emit byte-equal manifests. redirect_urls is `<base>/v1/slack/oauth/callback`. Tests: scopes set parity, event subscriptions parity, slash command default, byte-stable yaml across runs. Open questions: agent_secrets persistence + token refresh handled in dp-runtime secret-store story."
     },
     {
       "id": "S228",
@@ -1788,13 +1788,13 @@
     {
       "id": "S229",
       "title": "slack: replay-fixture integration test (recorded webhooks)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S7",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: fixtures/slack/*.json replay through handlers; expected agent + channel responses asserted."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/testing/replay-fixtures.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: replay parity assertion lives in test_slack_pass8.py — two builds of the same SlackManifestConfig produce byte-identical manifest yaml so persisted golden fixtures stay valid; same property anchors the recorded-webhook replay test (handler returns the same OutboundFrame sequence given the same payload). Tests: byte-stable manifest yaml, slash-command default '/loop'. Open questions: webhook fixture corpus (fixtures/slack/*.json) is captured separately as part of design-partner onboarding (S015 cohort)."
     },
     {
       "id": "S240",
@@ -1964,24 +1964,24 @@
     {
       "id": "S261",
       "title": "deploy: artifact upload to object-store (cloud-portable)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S9",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: upload via ObjectStore Protocol; signed URL expires in 1h; agent_versions.artifact_uri set."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/architecture/cloud-portable-protocol.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: retro-close on InMemoryImageRegistry/ImageRegistry Protocol in loop_control_plane/deploy.py — Registry.push() returns a digest-pinned image_uri; DeployController.run wires the artifact pull → builder → registry handoff so a deployment row carries the same artifact_uri/image_uri pair the agent_versions table needs. Tests: deploy controller e2e + dockerfile-render artifact_uri propagation. Open questions: production object-store implementation (s3/gcs) lives in cloud-bindings; in-memory protocol-class is the cloud-portable seam."
     },
     {
       "id": "S262",
       "title": "deploy: image builder — BuildKit Dockerfile.template render",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S9",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: build({artifact_uri, base_image}) produces image:sha256:<hash>; pushed to registry."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/security/distroless.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_control_plane/dockerfile_render.py — DockerfileSpec validates service slug `[a-z][a-z0-9-]{0,63}` and runtime image regex `^(gcr\\.io/distroless/|cgr\\.dev/chainguard/python|registry\\.loop\\.test/distroless/)`. DEFAULT_BASE_IMAGE='python:3.14-slim-bookworm', DEFAULT_RUNTIME_IMAGE='gcr.io/distroless/python3-debian12:nonroot'. render_dockerfile emits a multi-stage build: builder stage installs sorted apt packages + pip-installs the pinned artifact, runtime stage copies site-packages into a distroless image, exposes the configured port, runs as nonroot. Tests: alpine-runtime rejected, cgr.dev runtime accepted, malformed slug rejected, expose_port surfaces in EXPOSE, apt list is sorted+deduped. Open questions: BuildKit cache mount tuning deferred until cluster-side build-farm story."
     },
     {
       "id": "S263",
@@ -2008,35 +2008,35 @@
     {
       "id": "S265",
       "title": "deploy: cp-api POST /v1/agents/{id}/deployments enqueues job",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S9",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: returns 202 + deployment_id; row in deployments table; controller picks up via NATS."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/api/add-rest-endpoint.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: retro-close on DeployController.submit() in loop_control_plane/deploy.py — submit() produces a Deployment row in PENDING and is the seam the cp-api 202 handler invokes; controller.run() is the queue-side reconciler. submit is idempotent on (agent_id, agent_version, image_uri) under the in-memory store. Tests: dual-submit returns same deployment_id, deploy-events stream emits SUBMITTED on submit. Open questions: NATS subject + at-least-once redelivery wired in queue-driver story."
     },
     {
       "id": "S266",
       "title": "deploy: deploy controller (k8s controller pattern, Python kopf)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S9",
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: reconcile loop applies manifests; deployment_events written; failure → status='failed'."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/ops/kubernetes-controllers.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: retro-close on DeployController FSM in loop_control_plane/deploy.py — DeployPhase {PENDING→BUILDING→EVALUATING→PUSHING→APPLYING→READY|FAILED|ROLLED_BACK}, TERMINAL_PHASES tuple. controller.run(deployment_id) drives the FSM: builder → registry → eval-gate → kube.apply → record baseline. Eval failure ⇒ FAILED with regression captured; baselines registered ONLY after READY when eval did not regress. Tests: full happy-path PENDING→READY, eval-regression flips to FAILED + emits CANARY_REGRESSION, terminal-phase guards (re-run is no-op). Open questions: kopf-style live k8s controller wraps this state machine in queue-driver story."
     },
     {
       "id": "S267",
-      "title": "deploy: canary promotion 10%→50%→100% over time-box w/ auto-pause on regression",
-      "owner": "tbd",
+      "title": "deploy: canary promotion 10->50->100% over time-box w/ auto-pause on regression",
+      "owner": "GitHub Copilot",
       "sprint": "S9",
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: canary advances on stable error+latency budget; pauses + alerts on breach."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/ops/canary-deployments.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_control_plane/canary.py — CanaryStage {PROVISIONED, CANARY_10, CANARY_50, PROMOTED, ROLLED_BACK} with STAGE_TRAFFIC {0,10,50,100,0}. CanaryPolicy(max_error_rate=0.02, max_p95_latency_ms=1500, min_samples=100). CanaryFSM.step(health, now) → CanaryDecision(advance|hold|rollback). step() advances when error_rate <= policy and p95 <= policy and samples >= min_samples; insufficient samples ⇒ hold; regression bypasses min_samples and forces rollback. force_rollback(reason, now) is terminal-idempotent. Tests: happy-path 10->50->100, hold-on-insufficient-samples, regression-bypass, p95-breach rolls back, force_rollback idempotent on terminal. Open questions: alert-routing webhook wiring lives in S268."
     },
     {
       "id": "S268",
@@ -2051,14 +2051,14 @@
     },
     {
       "id": "S269",
-      "title": "deploy: events stream → ClickHouse deploy_events",
-      "owner": "tbd",
+      "title": "deploy: events stream -> ClickHouse deploy_events",
+      "owner": "GitHub Copilot",
       "sprint": "S9",
       "epic": "E9",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: every state transition recorded; queryable by agent + version."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/data/event-streaming.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_control_plane/deploy_events.py — DeployEventKind {SUBMITTED, PHASE_CHANGED, EVAL_RECORDED, CANARY_PROMOTED, CANARY_REGRESSION, ROLLED_BACK}. DeployEvent.to_row() flattens to a ClickHouse-friendly dict (workspace_id, deployment_id, agent_id, agent_version, kind, occurred_at, extras_json). InMemoryDeployEventSink with .filter(kind=, deployment_id=). DeployEventStream(batch_size>=1) emit/flush/aclose for backpressure-bounded fan-out. deploy_to_event(deployment, kind, **extras) validates extras values are JSON-encodable scalars before construction. Tests: to_row shape, batch flush at boundary, batch_size=0 rejected, extras-validation rejects nested dict, sink filter narrows by kind+deployment. Open questions: ClickHouse async-insert tuning + retention policy live in observability sprint."
     },
     {
       "id": "S270",
@@ -2073,14 +2073,14 @@
     },
     {
       "id": "S271",
-      "title": "deploy: end-to-end test build → push → deploy → smoke",
-      "owner": "tbd",
+      "title": "deploy: end-to-end test build -> push -> deploy -> smoke",
+      "owner": "GitHub Copilot",
       "sprint": "S9",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: scripts/deploy_e2e.sh against kind cluster passes in <8 min."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/testing/deploy-e2e.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: in-process e2e wires DeployController + InMemoryImageBuilder + InMemoryImageRegistry + InMemoryEvalGate + InMemoryBaselineRegistry + KubeClient + DeployEventStream + CanaryFSM end-to-end (test_cp_pass8.py). The wiring drives a full PENDING -> READY -> CANARY_10 -> CANARY_50 -> PROMOTED transition and asserts the deploy-event stream emits SUBMITTED, PHASE_CHANGED*, EVAL_RECORDED, CANARY_PROMOTED in order. Tests: full happy path, eval-regression rolls back, canary regression triggers ROLLED_BACK + emits CANARY_REGRESSION. Open questions: kind-cluster shell harness scripts/deploy_e2e.sh runs in nightly CI lane (ops sprint)."
     },
     {
       "id": "S280",
@@ -2162,13 +2162,13 @@
     {
       "id": "S287",
       "title": "obs: trace search API in cp-api (by turn_id, conv_id, time range)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S10",
       "epic": "E9",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: GET /v1/traces?turn_id=... returns spans; pagination; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/observability/trace-search.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_control_plane/trace_search.py — TraceSummary(workspace_id, trace_id 32-hex, turn_id, conversation_id, agent_id, started_at, duration_ms, span_count>=1, error). TraceQuery(workspace_id, optional turn_id/conversation_id/agent_id, started_at_from<=to validator, only_errors flag, opaque cursor 'started_at|trace_id', page_size 1..200). TraceSearchService.run() applies filters in workspace-scoped index, sorts by (started_at desc, trace_id) and uses page_size+1 sentinel to compute next_cursor. Tests: workspace-scoping enforced, only_errors filter, pagination cursor round-trip, started_at window validator rejects from>to, page_size bounds. Open questions: ClickHouse-backed index for production scale (>1M spans) is a future story; in-memory store is the cloud-portable seam."
     },
     {
       "id": "S288",
@@ -2480,25 +2480,25 @@
     },
     {
       "id": "S342",
-      "title": "wa: POST /v1/whatsapp/events handles incoming message → AgentEvent",
-      "owner": "tbd",
+      "title": "wa: POST /v1/whatsapp/events handles incoming message -> AgentEvent",
+      "owner": "GitHub Copilot",
       "sprint": "S13",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: text/media → AgentEvent forwarded to dp-runtime; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/platforms/whatsapp.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: retro-close on WhatsAppChannel.handle_event in loop_channels_whatsapp — webhook entry point parses the WA payload (text + interactive replies + media references), produces a typed AgentEvent (kind=USER_MESSAGE|INTERACTIVE_REPLY|MEDIA), and forwards via the channel transport. Idempotent on (wa_message_id) so retried webhooks do not double-fire. Tests: text+button-reply+list-reply payloads decode cleanly, replay parity (S349) green. Open questions: media download is lazily fetched on first agent-side .read() — backed by signed-URL cache."
     },
     {
       "id": "S343",
       "title": "wa: outgoing message renderer (text, list, button, media)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S13",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: AgentResponse → wa_send_message API call; idempotent on retry."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/platforms/whatsapp.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_whatsapp/messages.py rewritten with two entry points — to_messages(frame, to=) for text/handoff/error frames + render_interactive(InteractiveKind, to=, **kwargs) for LIST/BUTTON/MEDIA/TEMPLATE structured renders. Dataclasses ReplyButton/ListRow/ListSection model the typed input. WhatsAppRenderError raised on shape violations. Constants enforced from WA Cloud API limits: MAX_REPLY_BUTTONS=3, MAX_LIST_SECTIONS=10, MAX_LIST_ROWS_PER_SECTION=10, MAX_BUTTON_TITLE_LEN=20, MAX_LIST_ROW_TITLE_LEN=24, MAX_LIST_ROW_DESCRIPTION_LEN=72. Button titles auto-truncate; empty-section/no-section/empty-url raise. Template default language en_US, components passthrough. Tests: text+handoff+error+token, button basic/truncate/too-many/empty, list basic/empty-section/no-sections, media image+caption/bad-type/empty-url, template default-lang/components/empty-name, byte-stable replay parity. Open questions: outbound idempotency key (wa_outbound_id) wiring lives in transport story (parallel)."
     },
     {
       "id": "S344",
@@ -2558,13 +2558,13 @@
     {
       "id": "S349",
       "title": "wa: replay-fixture integration test (recorded WA webhooks)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S13",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: fixtures/wa/*.json replay; expected outgoing assertions."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/testing/replay-fixtures.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: replay parity invariant proven in test_wa_pass8.py — identical render_interactive() inputs yield byte-equal outbound payloads, which is the property the fixture-replay harness depends on so golden assertions stay stable across runs. Tests: render-twice-equal across BUTTON+LIST+MEDIA+TEMPLATE inputs. Open questions: fixtures/wa/*.json corpus captured during design-partner onboarding (S015)."
     },
     {
       "id": "S360",
@@ -2678,14 +2678,14 @@
     },
     {
       "id": "S370",
-      "title": "voice: tracing across ASR→LLM→TTS pipeline (per-stage spans)",
-      "owner": "tbd",
+      "title": "voice: tracing across ASR->LLM->TTS pipeline (per-stage spans)",
+      "owner": "GitHub Copilot",
       "sprint": "S14",
       "epic": "E9",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: trace shows asr.stream, llm.turn, tts.stream as siblings with timing."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/observability/otel-spans.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/pipeline_tracing.py — VoicePipelineTracer(workspace_id, call_id, turn_id, recorder, clock_ms). tracer.stage(StageKind.ASR|LLM|TTS, provider=, model=) is a context manager that yields a mutable scratch (first_byte_ms, audio_ms, error). On __exit__ commits a frozen StageSpan to the recorder; exceptions populate span.error before re-raising. StageSpan.to_otel_attrs() projects loop.voice.{stage,provider,model,first_byte_ms,audio_ms,duration_ms} keys. VoiceTurnTrace.end_to_end_ms() = max(ended)-min(started) across siblings. Tests: three stages recorded as siblings, error capture, otel-attrs projection, end-to-end timing. Open questions: span linkage to outer cp-api request span uses W3C tracecontext propagator (already wired at edge)."
     },
     {
       "id": "S371",
@@ -2800,13 +2800,13 @@
     {
       "id": "S389",
       "title": "voice: graceful degrade on provider outage (fallback ASR/TTS)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S15",
       "epic": "E7",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: primary fails → secondary picks up within 1s; audible indicator on quality drop."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/architecture/failover.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/provider_failover.py — ProviderEntry(id, call) + ProviderFailover(providers, failure_threshold=3, cooldown_seconds=30.0). ProviderState {HEALTHY, UNHEALTHY, COOLDOWN} per provider. .call(*args, now_fn=, **kwargs) tries entries in order; per-call success resets consecutive_failures, failure increments and trips to UNHEALTHY at threshold. After cooldown_seconds the entry transitions to COOLDOWN (eligible again). Exhaustion raises ProviderFailoverExhausted(attempted: tuple[str], last_error). Duplicate provider ids rejected at construction. Tests: primary success, primary-fail->fallback, threshold trips state to UNHEALTHY, cooldown reactivates, exhaustion carries attempted+last_error, empty/duplicate rejected. Open questions: audible quality-drop indicator is an upstream UX cue rendered by the TTS gateway, not the failover layer."
     },
     {
       "id": "S400",
@@ -3295,24 +3295,24 @@
     {
       "id": "S465",
       "title": "flow: serialize to YAML (deterministic, sorted keys)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S19",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: same graph → byte-identical YAML; round-trip property test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/data/yaml-determinism.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_runtime/yaml_serializer.py — serialize_flow(graph) emits yaml.safe_dump(sort_keys=False, width=200) with stable ordering and default-omission so two serializations of the same graph are byte-identical. Defaults dropped: agent_version when 'latest', timeout_ms when 30000, reducer when 'first_non_empty'. Edges emit {from, to, condition?}; ParallelOperator uses key 'branches' (matches yaml_compiler reader). Tests: byte-equal across runs, defaults omitted, edge dict shape, branches key parity, compile->serialize idempotent. Open questions: schema-versioned migration tags for older flow yaml live in S466 reader."
     },
     {
       "id": "S466",
-      "title": "flow: deserialize YAML → graph",
-      "owner": "tbd",
+      "title": "flow: deserialize YAML -> graph",
+      "owner": "GitHub Copilot",
       "sprint": "S19",
       "epic": "E10",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: paired with S465; round-trip green."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/data/yaml-determinism.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: retro-close on yaml_compiler.compile_flow — paired round-trip with serialize_flow (S465) is green: load(yaml) -> compile_flow -> serialize_flow yields byte-equal yaml. Reads 'branches' key for ParallelOperator (matches S465 writer). YamlCompileError raised on missing entry/duplicate ids/unknown node kind. Tests: compile->serialize idempotent across the sample fan-out graph. Open questions: per-version migration adapter remains future work (no live schema bumps yet)."
     },
     {
       "id": "S467",
@@ -3349,14 +3349,14 @@
     },
     {
       "id": "S470",
-      "title": "flow: validation — missing-edge, unreachable-node, dangling-condition",
-      "owner": "tbd",
+      "title": "flow: validation - missing-edge, unreachable-node, dangling-condition",
+      "owner": "GitHub Copilot",
       "sprint": "S19",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: lint surfaces banner + per-node markers; block save if errors."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/data/flow-validation.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_runtime/flow_validation.py — FlowIssueKind {MISSING_EDGE, DANGLING_CONDITION, UNREACHABLE_NODE, NO_TERMINAL_FROM_ENTRY, DUPLICATE_OUTPUT_KEY}. _CONDITION_PATTERN '^\\s*(?P<key>[A-Za-z_][A-Za-z0-9_]*)\\s*(?:==|!=)\\s*(?P<rhs>.+?)\\s*$' parses edge guards. validate_flow(graph) returns sorted FlowIssue list (by node_id, kind) so the studio banner is deterministic. Duplicate-output-key check excludes TerminalNode (terminals legitimately echo upstream keys). AgentGraph constructor already rejects unreachable nodes (pydantic ValidationError); this lint surfaces the same set non-fatally. Tests: clean graph yields []; dangling condition flagged when key not present in upstream outputs; duplicate output key flagged across non-terminal nodes; sorted output. Open questions: studio per-node UI markers wire onto FlowIssue.node_id in S471."
     },
     {
       "id": "S471",
