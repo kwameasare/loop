@@ -13,6 +13,7 @@ members = [
     "loop-memory",
     "loop-runtime",
     "loop-tool-host",
+    "loop-voice",
     "loop-workspace",
 ]
 
@@ -483,6 +484,17 @@ dependencies = [
 requires-dist = [{ name = "pydantic", specifier = ">=2" }]
 
 [[package]]
+name = "loop-voice"
+version = "0.1.0"
+source = { editable = "packages/voice" }
+dependencies = [
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pydantic", specifier = ">=2" }]
+
+[[package]]
 name = "loop-workspace"
 version = "0.0.0"
 source = { virtual = "." }
@@ -499,6 +511,7 @@ dev = [
     { name = "loop-memory" },
     { name = "loop-runtime" },
     { name = "loop-tool-host" },
+    { name = "loop-voice" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pyright" },
     { name = "pytest" },
@@ -523,6 +536,7 @@ dev = [
     { name = "loop-memory", editable = "packages/memory" },
     { name = "loop-runtime", editable = "packages/runtime" },
     { name = "loop-tool-host", editable = "packages/tool-host" },
+    { name = "loop-voice", editable = "packages/voice" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "pyright", specifier = ">=1.1.380" },
     { name = "pytest", specifier = ">=8.0" },

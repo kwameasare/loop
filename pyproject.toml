@@ -26,6 +26,7 @@ members = [
     "packages/runtime",
     "packages/sdk-py",
     "packages/tool-host",
+    "packages/voice",
 ]
 
 [tool.uv.sources]
@@ -38,6 +39,7 @@ loop-kb-engine = { workspace = true }
 loop-mcp = { workspace = true }
 loop-memory = { workspace = true }
 loop-tool-host = { workspace = true }
+loop-voice = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -50,6 +52,7 @@ dev = [
     "loop-mcp",
     "loop-memory",
     "loop-tool-host",
+    "loop-voice",
     "ruff>=0.6.0",
     "pyright>=1.1.380",
     "pytest>=8.0",
