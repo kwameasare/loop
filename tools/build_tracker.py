@@ -1058,13 +1058,29 @@ STORIES: list[Story] = [
     Story(
         "S029",
         "Hard caps + graceful degrade; budget pre-flight at gateway",
-        "Eng #1",
+        "GitHub Copilot",
         "S0",
         "E2",
         5,
         "P0",
-        "Not started",
-        "Week 6",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s029-hard-caps-degrade. "
+            "Skill: skills/coding/implement-runtime-feature.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T16:30Z (GitHub Copilot). "
+            "Open questions: none -- adding loop_gateway.preflight "
+            "with estimate_upper_bound_cost() and preflight_budget() "
+            "that returns a typed allow|swap|deny verdict, then "
+            "wiring TurnExecutor to consult it at the start of each "
+            "iteration so we can fall back to a cheaper model or "
+            "emit `degrade` before we burn the upstream call. "
+            "Adds fallback_model and max_output_tokens_per_iter to "
+            "TurnBudget. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S030",

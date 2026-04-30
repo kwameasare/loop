@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T14:46:25.625409+00:00",
+    "generated_at": "2026-04-30T14:47:33.098490+00:00",
     "format_version": 2
   },
   "epics": [
@@ -479,13 +479,13 @@
     {
       "id": "S029",
       "title": "Hard caps + graceful degrade; budget pre-flight at gateway",
-      "owner": "Eng #1",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E2",
       "points": 5,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "Week 6"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s029-hard-caps-degrade. Skill: skills/coding/implement-runtime-feature.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T16:30Z (GitHub Copilot). Open questions: none -- adding loop_gateway.preflight with estimate_upper_bound_cost() and preflight_budget() that returns a typed allow|swap|deny verdict, then wiring TurnExecutor to consult it at the start of each iteration so we can fall back to a cheaper model or emit `degrade` before we burn the upstream call. Adds fallback_model and max_output_tokens_per_iter to TurnBudget. Blockers: none. Commits: claim."
     },
     {
       "id": "S030",
