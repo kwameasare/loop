@@ -5,6 +5,11 @@ Public surface (so far):
 * `auth` -- token verifier abstractions + an HS256 dev impl.
 * `workspaces` -- workspace + membership domain (in-memory store).
 * `api_keys` -- API key issue / verify / revoke (plaintext returned once).
+* `authorize` -- workspace-scope RBAC helper used by every facade.
+* `workspace_api` -- HTTP-shaped facade over the workspace service.
+* `api_keys_api` -- HTTP-shaped facade over the API-key service.
+* `errors` -- canonical LOOP-API-* error mapper.
+* `logging` -- structlog wiring + per-request log context.
 """
 
 from loop_control_plane.api_keys import (
@@ -13,12 +18,18 @@ from loop_control_plane.api_keys import (
     ApiKeyService,
     IssuedApiKey,
 )
+from loop_control_plane.api_keys_api import ApiKeyAPI
 from loop_control_plane.auth import (
     AuthError,
     HS256Verifier,
     IdentityClaims,
     TokenVerifier,
     has_scope,
+)
+from loop_control_plane.authorize import (
+    AuthorisationError,
+    authorize_workspace_access,
+    role_satisfies,
 )
 from loop_control_plane.billing import (
     BillingError,
@@ -48,6 +59,10 @@ from loop_control_plane.deploy import (
     InMemoryKubeClient,
     KubeClient,
 )
+from loop_control_plane.errors import (
+    LoopApiError,
+    map_to_loop_api_error,
+)
 from loop_control_plane.inbox import (
     InboxError,
     InboxItem,
@@ -62,6 +77,7 @@ from loop_control_plane.usage import (
     UsageRollup,
     aggregate,
 )
+from loop_control_plane.workspace_api import WorkspaceAPI
 from loop_control_plane.workspaces import (
     Membership,
     Role,
@@ -73,9 +89,11 @@ from loop_control_plane.workspaces import (
 __all__ = [
     "DAY_MS",
     "ApiKey",
+    "ApiKeyAPI",
     "ApiKeyError",
     "ApiKeyService",
     "AuthError",
+    "AuthorisationError",
     "BaselineRegistry",
     "BillingError",
     "BillingService",
@@ -104,6 +122,7 @@ __all__ = [
     "InboxStatus",
     "IssuedApiKey",
     "KubeClient",
+    "LoopApiError",
     "Membership",
     "Role",
     "StripeClient",
@@ -115,8 +134,12 @@ __all__ = [
     "UsageLedger",
     "UsageRollup",
     "Workspace",
+    "WorkspaceAPI",
     "WorkspaceError",
     "WorkspaceService",
     "aggregate",
+    "authorize_workspace_access",
     "has_scope",
+    "map_to_loop_api_error",
+    "role_satisfies",
 ]

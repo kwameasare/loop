@@ -1903,13 +1903,13 @@ for _v2 in _NEW_STORIES_V2:
         Story(
             id=_v2.id,
             title=_v2.title,
-            owner=_NEW_OWNER,
+            owner=_v2.owner or _NEW_OWNER,
             sprint=_v2.sprint,
             epic=_v2.epic,
             points=_v2.points,
             priority=_v2.priority,
-            status=_NEW_STATUS,
-            notes=_v2.notes,
+            status=_v2.status or _NEW_STATUS,
+            notes=_v2.notes_override if _v2.notes_override is not None else _v2.notes,
         )
     )
 del _v2

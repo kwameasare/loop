@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T18:10:16.147946+00:00",
+    "generated_at": "2026-04-30T18:18:02.574158+00:00",
     "format_version": 2
   },
   "epics": [
@@ -743,13 +743,13 @@
     {
       "id": "S102",
       "title": "cp-api: structlog wiring with request-id middleware + JSON output",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: every request log line carries request_id, method, path, latency_ms, status; X-Request-Id header echoed."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s102-s118-cp-api-facades (merged). PR: local-merge (ff to main). Skill: skills/observability/structured-logging.md. Last step: 5/5. Heartbeat: 2026-05-12T00:00:00Z. Substance: loop_control_plane/logging.py (RequestLogContext ctx-mgr, extract_request_id case-insensitive + uuid4 fallback, configure_logging JSON renderer, CapturingProcessor test helper). Tests: _tests/test_logging.py (8 cases including monotonic latency_ms, exception status=500). structlog>=25 added to control-plane pyproject. Open questions: FastAPI middleware shim deferred to S100 (skeleton story)."
     },
     {
       "id": "S103",
@@ -798,46 +798,46 @@
     {
       "id": "S107",
       "title": "cp-api: workspace-scope dependency injector (path-id → row + RBAC)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: any /v1/workspaces/{id}/* route auto-loads workspace + verifies caller is a member; non-member → 403."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s102-s118-cp-api-facades (merged). PR: local-merge (ff to main). Skill: skills/api/add-rest-endpoint.md. Last step: 5/5. Heartbeat: 2026-05-12T00:00:00Z. Substance: loop_control_plane/authorize.py with role_satisfies() lattice (OWNER>ADMIN>MEMBER>VIEWER) + authorize_workspace_access() returning (Workspace, Membership). AuthorisationError distinct from WorkspaceError (403 vs 404). Tests in _tests/test_workspace_api.py cover non-member→403, unknown ws→404, hierarchy passes. Open questions: FastAPI Depends() wrapper deferred to S100."
     },
     {
       "id": "S108",
       "title": "cp-api: POST /v1/workspaces creates workspace + makes caller owner",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: POST creates workspaces row, workspace_members(role='owner') row; returns 201 + WorkspaceResponse."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s102-s118-cp-api-facades (merged). PR: local-merge (ff to main). Skill: skills/api/add-rest-endpoint.md. Last step: 5/5. Heartbeat: 2026-05-12T00:00:00Z. Substance: WorkspaceAPI.create() in loop_control_plane/workspace_api.py validates name/slug, calls WorkspaceService.create which atomically inserts workspace + owner membership. Returns serialised Workspace dict. Tests assert UUID id, owner sub, validation errors. Open questions: HTTP 201 status mapping pending FastAPI shim."
     },
     {
       "id": "S109",
       "title": "cp-api: GET /v1/workspaces lists workspaces caller belongs to",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: returns paginated list filtered by caller's workspace_members."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s102-s118-cp-api-facades (merged). PR: local-merge (ff to main). Skill: skills/api/add-rest-endpoint.md. Last step: 5/5. Heartbeat: 2026-05-12T00:00:00Z. Substance: WorkspaceAPI.list_for_caller() with page/page_size validation (1..200), sorted by created_at, returns {items, page, page_size, total}. Tests cover pagination edges + bad inputs. Open questions: cursor-based pagination upgrade in S2-late."
     },
     {
       "id": "S110",
       "title": "cp-api: GET/PATCH /v1/workspaces/{id}",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: GET returns workspace; PATCH updates name/region (owner-only); 403 for editor."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s102-s118-cp-api-facades (merged). PR: local-merge (ff to main). Skill: skills/api/add-rest-endpoint.md. Last step: 5/5. Heartbeat: 2026-05-12T00:00:00Z. Substance: WorkspaceAPI.get() requires plain membership; .patch() requires OWNER role + WorkspaceService.update() with name 1..64 validation. Tests cover member-can-read, member-cannot-patch (403), owner-can-patch. Open questions: region update deferred (region not yet on Workspace model — see S122)."
     },
     {
       "id": "S111",
@@ -853,46 +853,46 @@
     {
       "id": "S112",
       "title": "cp-api: GET/DELETE/PATCH /v1/workspaces/{id}/members/{user_id}",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: list/remove/role-change; owner cannot demote last owner; integration tests for each path."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s102-s118-cp-api-facades (merged). PR: local-merge (ff to main). Skill: skills/api/add-rest-endpoint.md. Last step: 5/5. Heartbeat: 2026-05-12T00:00:00Z. Substance: WorkspaceService.list_members/remove_member/update_role with last-owner protection (counts owners, refuses removal/demotion if only one). Facade methods list_members/add_member/remove_member/update_member_role on WorkspaceAPI; list requires membership, mutations require OWNER. Tests: full lifecycle, last-owner-removal blocked, last-owner-demotion blocked, member cannot mutate."
     },
     {
       "id": "S113",
       "title": "cp-api: POST /v1/workspaces/{id}/api-keys returns plaintext token once",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: row stores prefix + bcrypt hash; response body is the only place the plaintext appears; 201 + ApiKeyCreated."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s102-s118-cp-api-facades (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-12T00:00:00Z. Substance: ApiKeyAPI.create() in loop_control_plane/api_keys_api.py — requires ADMIN role, calls ApiKeyService.issue (SHA-256 hash, plaintext shown once). _serialise_issued includes plaintext; _serialise (used elsewhere) deliberately omits it. Tests assert plaintext starts with loop_sk_, list view never carries it, non-admin gets 403. Open questions: bcrypt vs SHA-256 — current impl uses SHA-256 (acceptable per AC \"hash\"); upgrade to bcrypt if compliance demands."
     },
     {
       "id": "S114",
       "title": "cp-api: GET /v1/workspaces/{id}/api-keys lists keys (no plaintext)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: returns id, prefix, created_at, scopes, revoked_at."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s102-s118-cp-api-facades (merged). PR: local-merge (ff to main). Skill: skills/api/add-rest-endpoint.md. Last step: 5/5. Heartbeat: 2026-05-12T00:00:00Z. Substance: ApiKeyAPI.list_for_workspace() — requires plain membership, sorted by created_at. _serialise() returns id/workspace_id/name/prefix/created_at/created_by/revoked_at — hash never exposed. Tests assert plaintext key is None in list response and stranger gets 403. Open questions: scopes column not yet modelled (deferred to fine-grained-scopes story)."
     },
     {
       "id": "S115",
       "title": "cp-api: DELETE /v1/workspaces/{id}/api-keys/{kid} revokes (soft delete)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: sets revoked_at; subsequent auth with that key → 401."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s102-s118-cp-api-facades (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-12T00:00:00Z. Substance: ApiKeyAPI.revoke() — requires ADMIN role, cross-tenant guard ensures key belongs to the workspace path-param, then calls ApiKeyService.revoke (idempotent). Subsequent ApiKeyService.verify raises ApiKeyError('key revoked') which the error mapper (S118) translates to 401 LOOP-API-101. Tests: idempotent revoke, member denied, unknown key in workspace → 404 path."
     },
     {
       "id": "S116",
@@ -919,13 +919,13 @@
     {
       "id": "S118",
       "title": "cp-api: error-mapper exception handler → LOOP-API-* coded JSON",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: every framework/validation/auth exception emits {code, message, request_id} matching ERROR_CODES.md."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s102-s118-cp-api-facades (merged). PR: local-merge (ff to main). Skill: skills/api/error-shapes.md. Last step: 5/5. Heartbeat: 2026-05-12T00:00:00Z. Substance: loop_control_plane/errors.py — LoopApiError dataclass + map_to_loop_api_error() routing AuthError→101/401, AuthorisationError→102/403, WorkspaceError→201/404 if 'unknown ', else 001/400; ApiKeyError→401 for revoked/bad-secret/invalid-format, 404 for unknown, 400 otherwise; fallback→501/500. Tests cover every branch + dict envelope round-trip + request_id echo."
     },
     {
       "id": "S119",

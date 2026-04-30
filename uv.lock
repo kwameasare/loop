@@ -500,6 +500,7 @@ dependencies = [
     { name = "alembic" },
     { name = "pydantic" },
     { name = "sqlalchemy" },
+    { name = "structlog" },
 ]
 
 [package.metadata]
@@ -507,6 +508,7 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.13" },
     { name = "pydantic", specifier = ">=2" },
     { name = "sqlalchemy", specifier = ">=2.0" },
+    { name = "structlog", specifier = ">=25" },
 ]
 
 [[package]]
