@@ -1091,13 +1091,26 @@ STORIES: list[Story] = [
     Story(
         "S030",
         "HITL takeover endpoint + operator inbox queue",
-        "Eng #1",
+        "GitHub Copilot",
         "S0",
         "E15",
         5,
         "P1",
-        "Not started",
-        "Week 6",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s030-hitl-takeover. "
+            "Skill: skills/api/add-rest-endpoint.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T17:00Z (GitHub Copilot). "
+            "Open questions: none -- adding loop_control_plane.inbox "
+            "with InboxQueue domain (escalate -> claim -> release/"
+            "resolve state machine, single-claim invariant per "
+            "conversation), InboxItem pydantic model, InboxError, "
+            "and an in-memory store. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S031",

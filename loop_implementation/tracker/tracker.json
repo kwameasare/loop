@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T14:50:48.290481+00:00",
+    "generated_at": "2026-04-30T14:51:35.185166+00:00",
     "format_version": 2
   },
   "epics": [
@@ -490,13 +490,13 @@
     {
       "id": "S030",
       "title": "HITL takeover endpoint + operator inbox queue",
-      "owner": "Eng #1",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E15",
       "points": 5,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "Week 6"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s030-hitl-takeover. Skill: skills/api/add-rest-endpoint.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T17:00Z (GitHub Copilot). Open questions: none -- adding loop_control_plane.inbox with InboxQueue domain (escalate -> claim -> release/resolve state machine, single-claim invariant per conversation), InboxItem pydantic model, InboxError, and an in-memory store. Blockers: none. Commits: claim."
     },
     {
       "id": "S031",
