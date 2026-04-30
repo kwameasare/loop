@@ -770,13 +770,25 @@ STORIES: list[Story] = [
     Story(
         "S019",
         "cp-api: Auth0 OIDC, workspace mgmt, API keys",
-        "Eng #2",
+        "GitHub Copilot",
         "S0",
         "E12",
         8,
         "P0",
-        "Not started",
-        "Week 4",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s019-cp-api. "
+            "Skill: skills/coding/implement-runtime-feature.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T10:30Z (GitHub Copilot). "
+            "Open questions: none -- ship Auth0 OIDC verifier (JWKS cache "
+            "with TTL), workspace CRUD, API-key issue/revoke with "
+            "constant-time hash compare, and FastAPI routers wired into "
+            "loop-control-plane. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S020",
