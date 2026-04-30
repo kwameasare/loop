@@ -944,13 +944,27 @@ STORIES: list[Story] = [
     Story(
         "S025",
         "Stripe billing wire-up (test); usage rollup nightly job",
-        "Eng #2",
+        "GitHub Copilot",
         "S0",
         "E19",
         5,
         "P0",
-        "Not started",
-        "Week 5",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s025-billing-usage. "
+            "Skill: skills/coding/implement-runtime-feature.md (closest fit; control-plane billing). "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T14:30Z (GitHub Copilot). "
+            "Open questions: none -- adding loop_control_plane.billing "
+            "(StripeClient Protocol + InMemoryStripe test double; "
+            "BillingService.ensure_customer/record_usage/invoice) and "
+            "loop_control_plane.usage (UsageRollup aggregator with "
+            "daily nightly_rollup() job). Pure in-memory + Protocol "
+            "based -- no cloud SDK imported. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S026",
