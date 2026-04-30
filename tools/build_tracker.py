@@ -802,20 +802,23 @@ STORIES: list[Story] = [
         "E12",
         8,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
+            "PR #020 / merged to main as fast-forward. "
             "Branch: copilot/s020-deploy-controller. "
             "Skill: skills/coding/implement-runtime-feature.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T11:00Z (GitHub Copilot). "
-            "Open questions: none -- ship deploy state machine "
-            "(PENDING -> BUILDING -> PUSHING -> APPLYING -> READY, "
-            "with FAILED + ROLLED_BACK terminals), Protocol-based "
-            "ImageBuilder / ImageRegistry / KubeClient, in-memory "
-            "fakes, and DeployController orchestrator. "
-            "Blockers: none. "
-            "Commits: claim."
+            "Shipped loop_control_plane.deploy: DeployArtifact / "
+            "BuildResult / Deploy strict-frozen pydantic models, "
+            "DeployPhase StrEnum (PENDING/BUILDING/PUSHING/APPLYING/"
+            "READY/FAILED/ROLLED_BACK), Protocols ImageBuilder, "
+            "ImageRegistry, KubeClient, in-memory fakes for each, "
+            "and DeployController with submit/run/rollback/get under "
+            "asyncio.Lock; failures at any stage transition to FAILED "
+            "with the exception name + message recorded; run() is "
+            "idempotent on terminal phases. 6 tests cover happy path, "
+            "build failure, apply failure, idempotent re-run, "
+            "rollback after ready, and rollback rejection on PENDING. "
+            "ruff + pyright clean. Commits: claim, substance, close."
         ),
     ),
     Story(
