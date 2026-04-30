@@ -1003,13 +1003,29 @@ STORIES: list[Story] = [
     Story(
         "S027",
         "Studio: cost dashboard v0 (workspace MTD + per-agent)",
-        "Eng #5",
+        "GitHub Copilot",
         "S0",
         "E10",
         5,
         "P0",
-        "Not started",
-        "Week 5",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s027-studio-cost-dashboard. "
+            "Skill: skills/coding/implement-studio-screen.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T15:30Z (GitHub Copilot). "
+            "Open questions: none -- adding apps/studio/src/lib/"
+            "costs.ts (UsageRecord type, summariseCosts() reducer "
+            "computing workspace MTD + per-agent breakdown + "
+            "per-metric line items with rate*qty math) and "
+            "apps/studio/src/components/cost/cost-dashboard.tsx "
+            "client component rendering MTD card + agent table + "
+            "metric breakdown. Page mounted at /costs. Vitest "
+            "coverage for reducer and component. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S028",

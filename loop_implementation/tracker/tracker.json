@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T14:38:25.052741+00:00",
+    "generated_at": "2026-04-30T14:39:06.123783+00:00",
     "format_version": 2
   },
   "epics": [
@@ -457,13 +457,13 @@
     {
       "id": "S027",
       "title": "Studio: cost dashboard v0 (workspace MTD + per-agent)",
-      "owner": "Eng #5",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E10",
       "points": 5,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "Week 5"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s027-studio-cost-dashboard. Skill: skills/coding/implement-studio-screen.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T15:30Z (GitHub Copilot). Open questions: none -- adding apps/studio/src/lib/costs.ts (UsageRecord type, summariseCosts() reducer computing workspace MTD + per-agent breakdown + per-metric line items with rate*qty math) and apps/studio/src/components/cost/cost-dashboard.tsx client component rendering MTD card + agent table + metric breakdown. Page mounted at /costs. Vitest coverage for reducer and component. Blockers: none. Commits: claim."
     },
     {
       "id": "S028",
