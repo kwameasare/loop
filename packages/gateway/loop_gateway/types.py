@@ -7,7 +7,7 @@ change is a wire-compat decision (see ADR-022).
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -18,9 +18,35 @@ class _StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
 
+class ToolCall(_StrictModel):
+    """A single tool invocation requested by the model in one turn.
+
+    ``id`` is opaque and assigned by the provider; the runtime echoes it
+    back on the matching ``tool`` message so the model can correlate.
+    """
+
+    id: str
+    name: str
+    arguments: dict[str, Any]
+
+
 class GatewayMessage(_StrictModel):
     role: Role
-    content: str
+    content: str = ""
+    # Populated on assistant messages that requested tools; empty otherwise.
+    tool_calls: tuple[ToolCall, ...] = ()
+    # Populated only on role="tool" messages: which call this is a result for.
+    tool_call_id: str | None = None
+    # Optional human-readable tool name on tool result messages.
+    name: str | None = None
+
+
+class ToolSpec(_StrictModel):
+    """JSON-Schema descriptor for a tool exposed to the model."""
+
+    name: str
+    description: str = ""
+    input_schema: dict[str, Any]
 
 
 class GatewayRequest(_StrictModel):
@@ -30,6 +56,7 @@ class GatewayRequest(_StrictModel):
     workspace_id: str
     model: str
     messages: tuple[GatewayMessage, ...]
+    tools: tuple[ToolSpec, ...] = ()
     temperature: float = 0.7
     max_output_tokens: int | None = None
 
@@ -59,6 +86,10 @@ class GatewayDone(_StrictModel):
     cost_usd: float
     cost_disclosed_markup_pct: float = 5.0
     cached: bool = False
+    # Tool calls the model emitted this iteration. The runtime dispatches
+    # them, appends ``tool`` messages, and re-streams. Empty iff the turn
+    # is finished from the model's perspective.
+    tool_calls: tuple[ToolCall, ...] = ()
 
 
 class GatewayError(_StrictModel):

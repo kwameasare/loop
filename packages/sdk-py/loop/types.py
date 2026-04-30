@@ -100,7 +100,15 @@ class TurnEvent(_StrictModel):
     each event 1:1 to a wire frame.
     """
 
-    type: Literal["token", "tool_call", "retrieval", "trace", "degrade", "complete"]
+    type: Literal[
+        "token",
+        "tool_call",
+        "tool_result",
+        "retrieval",
+        "trace",
+        "degrade",
+        "complete",
+    ]
     payload: dict[str, Any]
     ts: datetime
 
