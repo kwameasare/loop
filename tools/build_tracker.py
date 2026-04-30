@@ -1495,8 +1495,38 @@ STORIES: list[Story] = [
         "E10",
         8,
         "P1",
-        "Not started",
-        "M8",
+        "Done",
+        (
+            "**Done.** "
+            "Branch: copilot/s041-studio-replay (merged). "
+            "PR: local-merge (ff to main). "
+            "Skill: skills/coding/implement-studio-screen.md. "
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T22:25Z (GitHub Copilot). "
+            "Open questions: none. "
+            "Shipped pure replay engine "
+            "apps/studio/src/lib/replay.ts: ReplayEvent "
+            "+ ReplayTrace + snapshotAt(trace, cursor) "
+            "+ collapseToBubbles (coalesces streaming "
+            "agent_token deltas into a single transient "
+            "agent bubble; final agent_message subsumes "
+            "the partial stream) + previousBoundary / "
+            "nextBoundary (skip token noise to the next "
+            "user_message / agent_message / tool_call_end "
+            "/ handoff / error step). React component "
+            "components/replay/replay-player.tsx (client) "
+            "renders the cursor-prefixed transcript with "
+            "role-tagged bubbles + scrubber + first/prev/"
+            "next/last + active-event detail rail with "
+            "attributes table. Page route /replay/[id] "
+            "wired via getReplayTrace fixture. Vitest "
+            "covers clamping, empty trace, token "
+            "coalescing, agent_message subsuming tokens, "
+            "boundary stepping, scrubber, detail rail, "
+            "empty state (Studio 41/41 -> 57/57; +16). "
+            "Blockers: none. "
+            "Commits: claim, replay (substance), close."
+        ),
     ),
     Story(
         "S042",
