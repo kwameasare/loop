@@ -1,5 +1,17 @@
 """Loop runtime hot-path package."""
 
+from loop_runtime.multi_agent import (
+    AgentRunner,
+    AgentSpec,
+    CallableRunner,
+    HandoffStep,
+    HandoffTrail,
+    MultiAgentError,
+    MultiAgentResult,
+    Pipeline,
+    Router,
+    Supervisor,
+)
 from loop_runtime.turn_executor import (
     AgentConfig,
     ToolRegistryLike,
@@ -11,6 +23,16 @@ __version__ = "0.1.0"
 
 __all__ = [
     "AgentConfig",
+    "AgentRunner",
+    "AgentSpec",
+    "CallableRunner",
+    "HandoffStep",
+    "HandoffTrail",
+    "MultiAgentError",
+    "MultiAgentResult",
+    "Pipeline",
+    "Router",
+    "Supervisor",
     "ToolRegistryLike",
     "TurnBudget",
     "TurnExecutor",
