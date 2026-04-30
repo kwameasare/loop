@@ -454,16 +454,13 @@ STORIES: list[Story] = [
         "E10",
         3,
         "P1",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s010-studio-agents. "
-            "Skill: skills/coding/implement-studio-screen.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T04:30Z (GitHub Copilot). "
-            "Open questions: none -- App Router /agents page + cp-api fetcher stub. "
-            "Blockers: none. "
-            "Commits: claim."
+            "App Router /agents page (server component) renders an AgentsList "
+            "presentational component fed by listAgents() in src/lib/cp-api.ts. "
+            "Live mode hits LOOP_CP_API_BASE_URL; unset falls back to an in-memory "
+            "fixture so the studio renders offline. AgentSummary type mirrors the "
+            "cp-api payload from E5/S023. 5 Vitest tests, next lint clean."
         ),
     ),
     Story(
