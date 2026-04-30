@@ -883,22 +883,31 @@ STORIES: list[Story] = [
         "E6",
         8,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s023-whatsapp-channel. "
-            "Skill: skills/coding/implement-channel-adapter.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T12:30Z (GitHub Copilot). "
-            "Open questions: none -- new packages/channels/whatsapp/ "
-            "(loop-channels-whatsapp v0.1.0) modeled on the Slack "
-            "adapter. Webhook hub.challenge GET verification, "
-            "X-Hub-Signature-256 HMAC verify, parse_event filtering "
-            "to text + media messages, to_messages() projection of "
-            "OutboundFrame -> Cloud API request bodies, and "
-            "WhatsAppChannel start/stop/handle_event. "
-            "Blockers: none. "
-            "Commits: claim."
+            "PR#S023. Branch: copilot/s023-whatsapp-channel "
+            "(merged). New packages/channels/whatsapp/ "
+            "(loop-channels-whatsapp v0.1.0). "
+            "verify.py: hub.challenge GET handshake + "
+            "X-Hub-Signature-256 HMAC-SHA256 verify with "
+            "hmac.compare_digest, accepts both header casings. "
+            "parser.py: filters whatsapp_business_account, ignores "
+            "status-only callbacks, lifts the first text/image/audio/"
+            "video/document message to InboundEvent with "
+            "wa_message_id/wa_phone_number_id/wa_message_type/"
+            "wa_media_id metadata; image captions surface as text. "
+            "messages.py: to_messages() projects "
+            "AGENT_MESSAGE/HANDOFF/ERROR -> Cloud API request bodies; "
+            "AGENT_TOKEN/TOOL_CALL_*/DONE return {} (server-internal). "
+            "channel.py: ConversationIndex (asyncio.Lock keyed on "
+            "(phone_number_id, msisdn)); WhatsAppChannel start/stop/"
+            "handle_event raises RuntimeError if start() not called. "
+            "Registered loop-channels-whatsapp in root pyproject "
+            "(members + sources + dev). Pytest: 14 new tests "
+            "(challenge, signature good/bad/tamper, text+image+status "
+            "parse, frame projection, index stability, end-to-end "
+            "channel dispatch); full suite 156 passed. ruff + pyright "
+            "clean. Skill: skills/coding/implement-channel-adapter.md."
         ),
     ),
     Story(
