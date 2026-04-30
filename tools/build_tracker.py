@@ -1424,8 +1424,30 @@ STORIES: list[Story] = [
         "E11",
         8,
         "P1",
-        "Not started",
-        "M8",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s039-ts-sdk-gen. "
+            "Skill: skills/api/update-openapi.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T21:30Z (GitHub Copilot). "
+            "Open questions: none -- adding "
+            "tools/gen_ts_sdk.py that walks the public "
+            "pydantic models in packages/sdk-py/loop/types.py "
+            "via __pydantic_core_schema__ + emits a "
+            "TypeScript declaration file at "
+            "apps/studio/src/lib/sdk-types.ts. Output is "
+            "deterministic (sorted by definition order). "
+            "Test snapshot in tests/test_gen_ts_sdk.py "
+            "asserts the generator matches the committed "
+            "TS file (drift-detection guard for CI). "
+            "Mappings: str->string, int/float->number, "
+            "bool->boolean, datetime->string (ISO), "
+            "UUID->string, Literal[...]->TS string union, "
+            "list[T]->T[], dict[str, V]->Record<string, V>, "
+            "Optional[T]->T|null, StrEnum->TS string union. "
+            "Blockers: none. Commits: claim."
+        ),
     ),
     Story("S040", "Discord + Teams channels", "Eng #7", "S1", "E6", 8, "P2", "Not started", "M8"),
     Story(

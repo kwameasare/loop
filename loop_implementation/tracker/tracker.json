@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T15:38:21.322435+00:00",
+    "generated_at": "2026-04-30T15:38:59.164827+00:00",
     "format_version": 2
   },
   "epics": [
@@ -594,8 +594,8 @@
       "epic": "E11",
       "points": 8,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "M8"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s039-ts-sdk-gen. Skill: skills/api/update-openapi.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T21:30Z (GitHub Copilot). Open questions: none -- adding tools/gen_ts_sdk.py that walks the public pydantic models in packages/sdk-py/loop/types.py via __pydantic_core_schema__ + emits a TypeScript declaration file at apps/studio/src/lib/sdk-types.ts. Output is deterministic (sorted by definition order). Test snapshot in tests/test_gen_ts_sdk.py asserts the generator matches the committed TS file (drift-detection guard for CI). Mappings: str->string, int/float->number, bool->boolean, datetime->string (ISO), UUID->string, Literal[...]->TS string union, list[T]->T[], dict[str, V]->Record<string, V>, Optional[T]->T|null, StrEnum->TS string union. Blockers: none. Commits: claim."
     },
     {
       "id": "S040",
