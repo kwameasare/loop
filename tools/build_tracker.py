@@ -697,19 +697,21 @@ STORIES: list[Story] = [
         "E7",
         5,
         "P1",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
+            "PR #016 / merged to main as fast-forward. "
             "Branch: copilot/s016-voice-pipeline. "
             "Skill: skills/coding/implement-runtime-feature.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T08:30Z (GitHub Copilot). "
-            "Open questions: none -- ship loop-voice with VoiceSession "
-            "orchestrator, STT/TTS/RealtimeTransport Protocols, in-memory "
-            "test impls; LiveKit/Deepgram/ElevenLabs adapter shells deferred "
-            "to S016b once gateway voice route lands. "
-            "Blockers: none. "
-            "Commits: claim."
+            "Shipped packages/voice (loop-voice v0.1.0): "
+            "AudioFrame/Transcript/VoiceTurn strict pydantic models; "
+            "RealtimeTransport / SpeechToText / TextToSpeech runtime_checkable "
+            "Protocols; in-memory queue-backed test impls; "
+            "VoiceSession orchestrator (audio in -> ASR -> AgentResponder -> "
+            "TTS -> audio out, partials suppressed, per-turn duration). "
+            "LiveKit + Deepgram + ElevenLabs adapters deferred to S016b. "
+            "3 unit tests covering happy-path round trip, partial-suppression, "
+            "transport stop. ruff + pyright clean. "
+            "Commits: claim, substance, close."
         ),
     ),
     Story(
