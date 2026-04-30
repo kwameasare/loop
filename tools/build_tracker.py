@@ -829,20 +829,24 @@ STORIES: list[Story] = [
         "E8",
         8,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
+            "PR #021 / merged to main as fast-forward. "
             "Branch: copilot/s021-eval-harness. "
             "Skill: skills/coding/implement-eval-scorer.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T11:30Z (GitHub Copilot). "
-            "Open questions: none -- ship loop-eval with Scorer "
-            "Protocol, 6 scorers (exact_match, regex_match, "
-            "json_schema, llm_judge with injectable judge, latency, "
-            "cost), Sample/Score/EvalReport models, and an EvalRunner "
-            "that scores a dataset against an agent function. "
-            "Blockers: none. "
-            "Commits: claim."
+            "Shipped packages/eval-harness (loop-eval v0.1.0): "
+            "Sample/Run/Score/EvalReport strict-frozen pydantic models; "
+            "Scorer Protocol; six built-in scorers (exact_match, "
+            "regex_match factory, json_schema_scorer factory, llm_judge "
+            "with injectable JudgeFn, latency_scorer with budget, "
+            "cost_scorer with budget); EvalRunner that measures latency "
+            "itself, calls a Sample -> (output, cost_usd) async agent, "
+            "and aggregates pass_rate / mean_latency / total_cost. "
+            "8 tests cover every scorer plus end-to-end runner. "
+            "Notes: CLI integration deferred -- the loop CLI does not "
+            "exist yet; the harness is library-first and the CLI will "
+            "wrap EvalRunner in a later story. "
+            "ruff + pyright clean. Commits: claim, substance, close."
         ),
     ),
     Story(
