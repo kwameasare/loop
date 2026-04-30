@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T00:54:43.258507+00:00",
+    "generated_at": "2026-04-30T00:55:36.977282+00:00",
     "format_version": 2
   },
   "epics": [
@@ -215,13 +215,13 @@
     {
       "id": "S005",
       "title": "Studio Next.js skeleton + shadcn/ui + Tailwind",
-      "owner": "Eng #5",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "Week 1"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s005-studio-skeleton. Skill: skills/coding/implement-studio-screen.md. Last step: 1/4 (claim). Heartbeat: 2026-04-30T01:30Z (GitHub Copilot). Open questions: none. Blockers: none. Commits: claim."
     },
     {
       "id": "S006",

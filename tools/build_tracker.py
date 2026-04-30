@@ -361,13 +361,21 @@ STORIES: list[Story] = [
     Story(
         "S005",
         "Studio Next.js skeleton + shadcn/ui + Tailwind",
-        "Eng #5",
+        "GitHub Copilot",
         "S0",
         "E10",
         3,
         "P0",
-        "Not started",
-        "Week 1",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s005-studio-skeleton. "
+            "Skill: skills/coding/implement-studio-screen.md. "
+            "Last step: 1/4 (claim). "
+            "Heartbeat: 2026-04-30T01:30Z (GitHub Copilot). "
+            "Open questions: none. Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S006",
