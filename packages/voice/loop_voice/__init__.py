@@ -14,6 +14,15 @@ runner; the real adapters land in S016b under loop_voice.adapters.
 """
 
 from loop_voice.echo import make_echo_agent
+from loop_voice.latency import (
+    DEFAULT_BUDGET,
+    BudgetBreach,
+    LatencyBudget,
+    LatencyMeasurement,
+    LatencyStage,
+    LatencyTracker,
+    StageBudget,
+)
 from loop_voice.models import (
     AudioFrame,
     Transcript,
@@ -40,14 +49,21 @@ from loop_voice.webrtc import (
 )
 
 __all__ = [
+    "DEFAULT_BUDGET",
     "AgentResponder",
     "AudioFrame",
+    "BudgetBreach",
     "InMemoryRealtimeTransport",
     "InMemorySpeechToText",
     "InMemoryTextToSpeech",
+    "LatencyBudget",
+    "LatencyMeasurement",
+    "LatencyStage",
+    "LatencyTracker",
     "RealtimeTransport",
     "SignalKind",
     "SpeechToText",
+    "StageBudget",
     "TextToSpeech",
     "Transcript",
     "VoiceSession",

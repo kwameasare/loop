@@ -1755,8 +1755,34 @@ STORIES: list[Story] = [
         "E7",
         13,
         "P0",
-        "Not started",
-        "M11",
+        "Done",
+        (
+            "**Done.** "
+            "Branch: copilot/s048-voice-latency (merged). "
+            "PR: local-merge (ff to main). "
+            "Skill: skills/testing/perf-check.md. "
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T23:55Z (GitHub Copilot). "
+            "Open questions: PSTN leg budget owns its own "
+            "300 ms outer envelope (S049 lands the model). "
+            "Shipped engineering/VOICE_LATENCY.md (the source "
+            "of truth for the 700 ms p50 commitment) plus "
+            "loop_voice.latency: LatencyStage StrEnum, "
+            "StageBudget / LatencyBudget pydantic models, "
+            "DEFAULT_BUDGET (network_in 20/45 ms p50/p95, "
+            "asr_final 160/280, agent 280/520, "
+            "tts_first_byte 160/260, network_out 20/45, "
+            "end-to-end 640/1150 — 60 ms headroom under the "
+            "public commitment), LatencyMeasurement, "
+            "LatencyTracker with linear-interp percentiles + "
+            ".breaches() that returns the empty tuple when "
+            "every stage and the e2e total fits, BudgetBreach "
+            "with .over_ms. 8 new tests covering budget "
+            "invariants, percentile math, breach detection, "
+            "happy path, and empty-tracker guard. ruff clean. "
+            "Suite 332 -> 340. Blockers: none. "
+            "Commits: substance, close."
+        ),
     ),
     Story(
         "S049",
