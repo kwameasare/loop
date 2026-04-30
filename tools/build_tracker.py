@@ -419,16 +419,13 @@ STORIES: list[Story] = [
         "E1",
         8,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s008-turn-executor. "
-            "Skill: skills/coding/implement-runtime-feature.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T03:30Z (GitHub Copilot). "
-            "Open questions: none -- single-pass executor over the S007 gateway client. "
-            "Blockers: none. "
-            "Commits: claim."
+            "loop_runtime.TurnExecutor: single-pass executor over the S007 gateway "
+            "client. AgentConfig/TurnBudget pydantic models, GatewayLike Protocol "
+            "for test injection, GatewayDelta->'token' / GatewayDone->'complete' / "
+            "GatewayError->'degrade' translation, workspace_id flows verbatim from "
+            "inbound AgentEvent. Tools land in S012. 6 unit tests; 45 workspace tests."
         ),
     ),
     Story(
