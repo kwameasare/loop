@@ -59,9 +59,7 @@ class ToolRegistry:
         required = tool_def.input_schema.get("required", [])
         missing = [k for k in required if k not in arguments]
         if missing:
-            raise ValueError(
-                f"tool '{name}' missing required arguments: {sorted(missing)}"
-            )
+            raise ValueError(f"tool '{name}' missing required arguments: {sorted(missing)}")
         return await tool_def.invoke(**arguments)
 
     def clear(self) -> None:

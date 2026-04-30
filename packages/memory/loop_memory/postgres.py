@@ -195,9 +195,7 @@ class PostgresUserMemoryStore:
         async with self._engine.begin() as conn:
             await _enter_workspace(conn, workspace_id)
             rows = (
-                await conn.execute(
-                    sql, {"ws": workspace_id, "ag": agent_id, "uid": user_id}
-                )
+                await conn.execute(sql, {"ws": workspace_id, "ag": agent_id, "uid": user_id})
             ).all()
         out: list[MemoryEntry] = []
         for k, raw_value, updated in rows:
@@ -217,16 +215,11 @@ class PostgresUserMemoryStore:
 
     # -- bot ----------------------------------------------------------------
 
-    async def get_bot(
-        self, *, workspace_id: UUID, agent_id: UUID, key: str
-    ) -> MemoryEntry:
-        entry = await self.get_bot_or_none(
-            workspace_id=workspace_id, agent_id=agent_id, key=key
-        )
+    async def get_bot(self, *, workspace_id: UUID, agent_id: UUID, key: str) -> MemoryEntry:
+        entry = await self.get_bot_or_none(workspace_id=workspace_id, agent_id=agent_id, key=key)
         if entry is None:
             raise MemoryNotFoundError(
-                f"bot memory not found: workspace={workspace_id} "
-                f"agent={agent_id} key={key!r}"
+                f"bot memory not found: workspace={workspace_id} agent={agent_id} key={key!r}"
             )
         return entry
 
@@ -241,11 +234,7 @@ class PostgresUserMemoryStore:
         )
         async with self._engine.begin() as conn:
             await _enter_workspace(conn, workspace_id)
-            row = (
-                await conn.execute(
-                    sql, {"ws": workspace_id, "ag": agent_id, "k": key}
-                )
-            ).first()
+            row = (await conn.execute(sql, {"ws": workspace_id, "ag": agent_id, "k": key})).first()
         if row is None:
             return None
         value, updated = _decode_row(row)

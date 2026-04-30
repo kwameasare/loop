@@ -32,9 +32,7 @@ class Sandbox(Protocol):
         will create a replacement.
         """
 
-    async def exec(
-        self, *, tool: str, arguments: dict[str, Any]
-    ) -> SandboxExecResult:
+    async def exec(self, *, tool: str, arguments: dict[str, Any]) -> SandboxExecResult:
         """Run a tool call. Caller has already acquired the sandbox
         from the pool, so concurrent ``exec`` on the same sandbox is
         a programmer error and implementations may raise."""

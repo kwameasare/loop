@@ -112,7 +112,10 @@ def main() -> int:
         print("checkpoint-discipline: all feature commits respect the rule — pass.")
         return 0
 
-    print("checkpoint-discipline: feature commits exceed the limit without a checkpoint:\n", file=sys.stderr)
+    print(
+        "checkpoint-discipline: feature commits exceed the limit without a checkpoint:\n",
+        file=sys.stderr,
+    )
     for failure in failures:
         print(failure, file=sys.stderr)
     print(

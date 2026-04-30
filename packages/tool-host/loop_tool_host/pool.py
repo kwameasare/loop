@@ -158,9 +158,7 @@ class WarmPool:
                         f"(max_size={self._max_size})"
                     )
                 try:
-                    await asyncio.wait_for(
-                        self._available.wait(), timeout=remaining
-                    )
+                    await asyncio.wait_for(self._available.wait(), timeout=remaining)
                 except TimeoutError as exc:
                     raise SandboxBusyError(
                         f"no sandbox available within "
@@ -171,10 +169,7 @@ class WarmPool:
     async def _release(self, sandbox: Sandbox) -> None:
         async with self._lock:
             self._in_flight.discard(sandbox)
-            healthy = (
-                not self._draining
-                and sandbox.state is SandboxState.READY
-            )
+            healthy = not self._draining and sandbox.state is SandboxState.READY
             if healthy:
                 self._idle.append(sandbox)
                 self._available.notify()

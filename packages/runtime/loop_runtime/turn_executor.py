@@ -99,9 +99,7 @@ def _initial_messages(agent: AgentConfig, event: AgentEvent) -> list[GatewayMess
     out: list[GatewayMessage] = []
     if agent.system_prompt:
         out.append(GatewayMessage(role="system", content=agent.system_prompt))
-    user_text = "\n".join(
-        part.text for part in event.content if part.type == "text" and part.text
-    )
+    user_text = "\n".join(part.text for part in event.content if part.type == "text" and part.text)
     if user_text:
         out.append(GatewayMessage(role="user", content=user_text))
     return out
@@ -294,9 +292,7 @@ class TurnExecutor:
             )
 
         response = self._materialize_response(event.conversation_id, accumulated_text)
-        yield TurnEvent(
-            type="complete", payload=response.model_dump(mode="json"), ts=_now()
-        )
+        yield TurnEvent(type="complete", payload=response.model_dump(mode="json"), ts=_now())
 
         latency_ms = int((time.monotonic() - started) * 1000)
         log.info(
@@ -308,14 +304,10 @@ class TurnExecutor:
         )
 
     @staticmethod
-    def _materialize_response(
-        conversation_id: UUID, parts: list[str]
-    ) -> AgentResponse:
+    def _materialize_response(conversation_id: UUID, parts: list[str]) -> AgentResponse:
         text = "".join(parts)
         content = [ContentPart(type="text", text=text)] if text else []
-        return AgentResponse(
-            conversation_id=conversation_id, content=content, end_turn=True
-        )
+        return AgentResponse(conversation_id=conversation_id, content=content, end_turn=True)
 
 
 __all__ = [

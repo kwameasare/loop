@@ -189,9 +189,7 @@ class StdioMcpClient:
         return list(result["tools"])
 
     async def call_tool(self, name: str, arguments: Mapping[str, Any]) -> Any:
-        return await self._request(
-            "tools/call", {"name": name, "arguments": dict(arguments)}
-        )
+        return await self._request("tools/call", {"name": name, "arguments": dict(arguments)})
 
     async def close(self) -> None:
         if self._closed:

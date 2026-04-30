@@ -142,9 +142,7 @@ async def test_streams_tokens_then_complete() -> None:
 
 @pytest.mark.asyncio
 async def test_request_includes_system_and_user_messages() -> None:
-    gw = _FakeGateway(
-        [GatewayDone(usage=Usage(input_tokens=0, output_tokens=0), cost_usd=0.0)]
-    )
+    gw = _FakeGateway([GatewayDone(usage=Usage(input_tokens=0, output_tokens=0), cost_usd=0.0)])
     executor = TurnExecutor(gateway=gw)
     [_ async for _ in executor.execute(_agent(system="ROLE"), _event(text="ping"))]
 
@@ -157,16 +155,9 @@ async def test_request_includes_system_and_user_messages() -> None:
 
 @pytest.mark.asyncio
 async def test_request_id_overrides_default() -> None:
-    gw = _FakeGateway(
-        [GatewayDone(usage=Usage(input_tokens=0, output_tokens=0), cost_usd=0.0)]
-    )
+    gw = _FakeGateway([GatewayDone(usage=Usage(input_tokens=0, output_tokens=0), cost_usd=0.0)])
     executor = TurnExecutor(gateway=gw)
-    [
-        _
-        async for _ in executor.execute(
-            _agent(), _event(), request_id="caller-pinned-id"
-        )
-    ]
+    [_ async for _ in executor.execute(_agent(), _event(), request_id="caller-pinned-id")]
     assert gw.last_request is not None
     # Per-iteration suffix is deterministic so retries hit the cache.
     assert gw.last_request.request_id == "caller-pinned-id:i0"
@@ -174,9 +165,7 @@ async def test_request_id_overrides_default() -> None:
 
 @pytest.mark.asyncio
 async def test_workspace_id_propagates_to_gateway_request() -> None:
-    gw = _FakeGateway(
-        [GatewayDone(usage=Usage(input_tokens=0, output_tokens=0), cost_usd=0.0)]
-    )
+    gw = _FakeGateway([GatewayDone(usage=Usage(input_tokens=0, output_tokens=0), cost_usd=0.0)])
     executor = TurnExecutor(gateway=gw)
     event = _event()
     [_ async for _ in executor.execute(_agent(), event)]
@@ -194,10 +183,7 @@ async def test_emits_degrade_when_done_cost_exceeds_budget() -> None:
     )
     executor = TurnExecutor(gateway=gw)
     out = [
-        e
-        async for e in executor.execute(
-            _agent(budget=TurnBudget(max_cost_usd=0.10)), _event()
-        )
+        e async for e in executor.execute(_agent(budget=TurnBudget(max_cost_usd=0.10)), _event())
     ]
     types = [e.type for e in out]
     assert "degrade" in types
@@ -360,9 +346,7 @@ async def test_tool_failure_surfaces_as_tool_result_error_and_continues() -> Non
             ],
             [
                 GatewayDelta(text="recovered"),
-                GatewayDone(
-                    usage=Usage(input_tokens=1, output_tokens=1), cost_usd=0.0
-                ),
+                GatewayDone(usage=Usage(input_tokens=1, output_tokens=1), cost_usd=0.0),
             ],
         ]
     )
@@ -462,9 +446,7 @@ async def test_tool_specs_forwarded_to_gateway_request() -> None:
             )
         ],
     )
-    gw = _FakeGateway(
-        [GatewayDone(usage=Usage(input_tokens=1, output_tokens=1), cost_usd=0.0)]
-    )
+    gw = _FakeGateway([GatewayDone(usage=Usage(input_tokens=1, output_tokens=1), cost_usd=0.0)])
     executor = TurnExecutor(gateway=gw)
     [_ async for _ in executor.execute(_agent(), _event(), tools=registry)]
 

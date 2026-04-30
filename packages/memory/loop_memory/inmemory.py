@@ -123,13 +123,10 @@ class InMemoryUserMemoryStore:
         agent_id: UUID,
         key: str,
     ) -> MemoryEntry:
-        entry = await self.get_bot_or_none(
-            workspace_id=workspace_id, agent_id=agent_id, key=key
-        )
+        entry = await self.get_bot_or_none(workspace_id=workspace_id, agent_id=agent_id, key=key)
         if entry is None:
             raise MemoryNotFoundError(
-                f"bot memory not found: workspace={workspace_id} "
-                f"agent={agent_id} key={key!r}"
+                f"bot memory not found: workspace={workspace_id} agent={agent_id} key={key!r}"
             )
         return entry
 
@@ -175,9 +172,7 @@ class InMemorySessionMemoryStore:
         async with self._lock:
             return deepcopy(self._sessions.get(conversation_id, {}).get(key))
 
-    async def set(
-        self, *, conversation_id: UUID, key: str, value: Any
-    ) -> None:
+    async def set(self, *, conversation_id: UUID, key: str, value: Any) -> None:
         async with self._lock:
             self._sessions.setdefault(conversation_id, {})[key] = deepcopy(value)
 

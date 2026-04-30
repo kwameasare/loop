@@ -34,9 +34,7 @@ async def _read_one_request(reader: asyncio.StreamReader) -> dict[str, Any]:
     return json.loads(body)
 
 
-async def _make_pair() -> tuple[
-    StdioMcpClient, asyncio.StreamReader, asyncio.StreamWriter
-]:
+async def _make_pair() -> tuple[StdioMcpClient, asyncio.StreamReader, asyncio.StreamWriter]:
     """Wire a duplex socket pair into a client + raw server-side streams."""
 
     cs, ss = socket.socketpair()
@@ -83,9 +81,7 @@ async def test_list_tools_returns_tools_array() -> None:
                 "inputSchema": {"type": "object"},
             }
         ]
-        server_task = asyncio.create_task(
-            _serve_one(sr, sw, {"result": {"tools": tools_payload}})
-        )
+        server_task = asyncio.create_task(_serve_one(sr, sw, {"result": {"tools": tools_payload}}))
         result = await client.list_tools()
         await server_task
         assert result == tools_payload

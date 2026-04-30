@@ -25,9 +25,7 @@ def _render(ini_resource: str) -> str:
     ini_path = Path(str(files(ini_resource).joinpath("alembic.ini")))
     cfg = Config(file_=str(ini_path), ini_section="alembic")
     # Pin a deterministic DSN so SQL rendering doesn't depend on host env.
-    cfg.set_main_option(
-        "sqlalchemy.url", "postgresql+psycopg://loop:loop@localhost:5432/loop"
-    )
+    cfg.set_main_option("sqlalchemy.url", "postgresql+psycopg://loop:loop@localhost:5432/loop")
     buf = io.StringIO()
     with redirect_stdout(buf):
         command.upgrade(cfg, "head", sql=True)
@@ -55,7 +53,14 @@ def dp_sql() -> str:
 
 
 def test_cp_creates_core_identity_tables(cp_sql: str) -> None:
-    for table in ("workspaces", "users", "workspace_members", "api_keys", "agents", "agent_versions"):
+    for table in (
+        "workspaces",
+        "users",
+        "workspace_members",
+        "api_keys",
+        "agents",
+        "agent_versions",
+    ):
         assert f"CREATE TABLE {table}" in cp_sql, f"cp migration missing table {table}"
 
 
@@ -91,7 +96,11 @@ def test_dp_every_tenanted_table_has_rls_policy(dp_sql: str) -> None:
 def test_dp_workspace_id_is_not_null(dp_sql: str) -> None:
     # Spot-check: the column must appear with NOT NULL on each tenanted table.
     # Alembic's --sql output preserves our literal CREATE TABLE bodies.
-    for table_marker in ("CREATE TABLE conversations", "CREATE TABLE turns", "CREATE TABLE tool_calls"):
+    for table_marker in (
+        "CREATE TABLE conversations",
+        "CREATE TABLE turns",
+        "CREATE TABLE tool_calls",
+    ):
         idx = dp_sql.index(table_marker)
         body = dp_sql[idx : idx + 1500]
         assert "workspace_id" in body and "NOT NULL" in body

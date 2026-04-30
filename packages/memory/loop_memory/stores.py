@@ -110,9 +110,7 @@ class SessionMemoryStore(Protocol):
     conversation never loses session state mid-turn.
     """
 
-    async def get(
-        self, *, conversation_id: UUID, key: str
-    ) -> Any | None: ...
+    async def get(self, *, conversation_id: UUID, key: str) -> Any | None: ...
 
     async def set(
         self,
@@ -122,9 +120,7 @@ class SessionMemoryStore(Protocol):
         value: Any,
     ) -> None: ...
 
-    async def delete(
-        self, *, conversation_id: UUID, key: str
-    ) -> bool: ...
+    async def delete(self, *, conversation_id: UUID, key: str) -> bool: ...
 
     async def all(self, *, conversation_id: UUID) -> dict[str, Any]: ...
 

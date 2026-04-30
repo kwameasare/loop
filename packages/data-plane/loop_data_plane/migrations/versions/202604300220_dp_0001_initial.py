@@ -52,13 +52,8 @@ def upgrade() -> None:
         )
         """
     )
-    op.execute(
-        "CREATE INDEX idx_conv_workspace_last "
-        "ON conversations (workspace_id, last_at DESC)"
-    )
-    op.execute(
-        "CREATE INDEX idx_conv_agent_user ON conversations (agent_id, user_id)"
-    )
+    op.execute("CREATE INDEX idx_conv_workspace_last ON conversations (workspace_id, last_at DESC)")
+    op.execute("CREATE INDEX idx_conv_agent_user ON conversations (agent_id, user_id)")
 
     # turns -------------------------------------------------------------------
     op.execute(

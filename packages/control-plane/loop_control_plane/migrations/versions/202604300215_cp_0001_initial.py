@@ -42,9 +42,7 @@ def upgrade() -> None:
         )
         """
     )
-    op.execute(
-        "CREATE INDEX idx_workspaces_slug ON workspaces(slug) WHERE deleted_at IS NULL"
-    )
+    op.execute("CREATE INDEX idx_workspaces_slug ON workspaces(slug) WHERE deleted_at IS NULL")
 
     # users -------------------------------------------------------------------
     op.execute(

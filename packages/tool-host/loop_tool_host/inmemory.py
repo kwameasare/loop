@@ -54,13 +54,9 @@ class InMemorySandbox:
             )
         self._state = SandboxState.READY
 
-    async def exec(
-        self, *, tool: str, arguments: dict[str, Any]
-    ) -> SandboxExecResult:
+    async def exec(self, *, tool: str, arguments: dict[str, Any]) -> SandboxExecResult:
         if self._state is not SandboxState.READY:
-            return SandboxExecResult(
-                ok=False, error=f"sandbox not ready: {self._state.value}"
-            )
+            return SandboxExecResult(ok=False, error=f"sandbox not ready: {self._state.value}")
         self._state = SandboxState.RUNNING
         started = time.perf_counter()
         try:

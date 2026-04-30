@@ -45,9 +45,7 @@ class RedisSessionMemoryStore:
             return None
         return _decode(raw)
 
-    async def set(
-        self, *, conversation_id: UUID, key: str, value: Any
-    ) -> None:
+    async def set(self, *, conversation_id: UUID, key: str, value: Any) -> None:
         k = _key(conversation_id)
         encoded = json.dumps(value, default=str)
         # Pipeline so the TTL refresh and write are atomic against a

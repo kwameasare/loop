@@ -79,9 +79,7 @@ def _annotation_to_schema(annotation: Any) -> dict[str, Any]:
     if isinstance(annotation, type) and annotation in _PRIMITIVE_TO_SCHEMA:
         return dict(_PRIMITIVE_TO_SCHEMA[annotation])
 
-    raise UnsupportedAnnotationError(
-        f"unsupported annotation for MCP tool: {annotation!r}"
-    )
+    raise UnsupportedAnnotationError(f"unsupported annotation for MCP tool: {annotation!r}")
 
 
 def build_input_schema(fn: typing.Callable[..., Any]) -> dict[str, Any]:

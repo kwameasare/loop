@@ -20,7 +20,6 @@ import argparse
 import re
 import subprocess
 import sys
-from collections.abc import Iterable
 from dataclasses import dataclass
 
 
@@ -138,10 +137,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Path-based rules.
     for rule in RULES:
-        offending = [
-            f for f in files
-            if rule.code_pattern.match(f) and not is_exempt(f)
-        ]
+        offending = [f for f in files if rule.code_pattern.match(f) and not is_exempt(f)]
         if not offending:
             continue
         if rule.required_doc in files:

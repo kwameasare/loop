@@ -35,9 +35,12 @@ def test_span_emits_with_required_attrs() -> None:
 
 def test_invalid_span_kind_rejected() -> None:
     reset_for_test()
-    with pytest.raises(ValueError, match="Invalid span kind"), tracer.span(
-        "oops",
-        kind="database",  # type: ignore[arg-type]
+    with (
+        pytest.raises(ValueError, match="Invalid span kind"),
+        tracer.span(
+            "oops",
+            kind="database",  # type: ignore[arg-type]
+        ),
     ):
         pass
 

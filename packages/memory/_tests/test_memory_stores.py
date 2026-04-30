@@ -33,9 +33,7 @@ async def test_user_memory_set_then_get_round_trips_value() -> None:
     assert entry.scope is MemoryScope.USER
     assert entry.user_id == "u-1"
 
-    got = await store.get_user(
-        workspace_id=ws, agent_id=ag, user_id="u-1", key="lang"
-    )
+    got = await store.get_user(workspace_id=ws, agent_id=ag, user_id="u-1", key="lang")
     assert got.value == {"primary": "en", "secondary": "fr"}
     assert got.workspace_id == ws
 
@@ -46,9 +44,7 @@ async def test_user_memory_get_missing_raises_not_found_get_or_none_returns_none
     ws, ag = uuid4(), uuid4()
     with pytest.raises(MemoryNotFoundError):
         await store.get_user(workspace_id=ws, agent_id=ag, user_id="u", key="x")
-    got = await store.get_user_or_none(
-        workspace_id=ws, agent_id=ag, user_id="u", key="x"
-    )
+    got = await store.get_user_or_none(workspace_id=ws, agent_id=ag, user_id="u", key="x")
     assert got is None
 
 
@@ -58,40 +54,20 @@ async def test_user_memory_isolated_per_tenant() -> None:
 
     store = InMemoryUserMemoryStore()
     ws_a, ws_b, ag = uuid4(), uuid4(), uuid4()
-    await store.set_user(
-        workspace_id=ws_a, agent_id=ag, user_id="u", key="k", value="A"
-    )
-    await store.set_user(
-        workspace_id=ws_b, agent_id=ag, user_id="u", key="k", value="B"
-    )
-    assert (
-        await store.get_user(
-            workspace_id=ws_a, agent_id=ag, user_id="u", key="k"
-        )
-    ).value == "A"
-    assert (
-        await store.get_user(
-            workspace_id=ws_b, agent_id=ag, user_id="u", key="k"
-        )
-    ).value == "B"
+    await store.set_user(workspace_id=ws_a, agent_id=ag, user_id="u", key="k", value="A")
+    await store.set_user(workspace_id=ws_b, agent_id=ag, user_id="u", key="k", value="B")
+    assert (await store.get_user(workspace_id=ws_a, agent_id=ag, user_id="u", key="k")).value == "A"
+    assert (await store.get_user(workspace_id=ws_b, agent_id=ag, user_id="u", key="k")).value == "B"
 
 
 @pytest.mark.asyncio
 async def test_user_memory_list_returns_all_keys_for_user_only() -> None:
     store = InMemoryUserMemoryStore()
     ws, ag = uuid4(), uuid4()
-    await store.set_user(
-        workspace_id=ws, agent_id=ag, user_id="u-1", key="a", value=1
-    )
-    await store.set_user(
-        workspace_id=ws, agent_id=ag, user_id="u-1", key="b", value=2
-    )
-    await store.set_user(
-        workspace_id=ws, agent_id=ag, user_id="u-2", key="a", value=99
-    )
-    entries = await store.list_user(
-        workspace_id=ws, agent_id=ag, user_id="u-1"
-    )
+    await store.set_user(workspace_id=ws, agent_id=ag, user_id="u-1", key="a", value=1)
+    await store.set_user(workspace_id=ws, agent_id=ag, user_id="u-1", key="b", value=2)
+    await store.set_user(workspace_id=ws, agent_id=ag, user_id="u-2", key="a", value=99)
+    entries = await store.list_user(workspace_id=ws, agent_id=ag, user_id="u-1")
     keys = sorted(e.key for e in entries)
     assert keys == ["a", "b"]
 
@@ -100,15 +76,9 @@ async def test_user_memory_list_returns_all_keys_for_user_only() -> None:
 async def test_user_memory_delete_returns_true_only_when_present() -> None:
     store = InMemoryUserMemoryStore()
     ws, ag = uuid4(), uuid4()
-    await store.set_user(
-        workspace_id=ws, agent_id=ag, user_id="u", key="k", value=1
-    )
-    assert await store.delete_user(
-        workspace_id=ws, agent_id=ag, user_id="u", key="k"
-    )
-    assert not await store.delete_user(
-        workspace_id=ws, agent_id=ag, user_id="u", key="k"
-    )
+    await store.set_user(workspace_id=ws, agent_id=ag, user_id="u", key="k", value=1)
+    assert await store.delete_user(workspace_id=ws, agent_id=ag, user_id="u", key="k")
+    assert not await store.delete_user(workspace_id=ws, agent_id=ag, user_id="u", key="k")
 
 
 @pytest.mark.asyncio
@@ -131,13 +101,9 @@ async def test_user_memory_set_does_not_alias_callers_value() -> None:
     store = InMemoryUserMemoryStore()
     ws, ag = uuid4(), uuid4()
     payload: dict[str, list[int]] = {"items": [1, 2]}
-    await store.set_user(
-        workspace_id=ws, agent_id=ag, user_id="u", key="cart", value=payload
-    )
+    await store.set_user(workspace_id=ws, agent_id=ag, user_id="u", key="cart", value=payload)
     payload["items"].append(99)
-    got = await store.get_user(
-        workspace_id=ws, agent_id=ag, user_id="u", key="cart"
-    )
+    got = await store.get_user(workspace_id=ws, agent_id=ag, user_id="u", key="cart")
     assert got.value == {"items": [1, 2]}
 
 

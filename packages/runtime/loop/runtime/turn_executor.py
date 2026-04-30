@@ -23,8 +23,6 @@ from typing import Protocol
 from uuid import UUID, uuid4
 
 import structlog
-from pydantic import BaseModel, ConfigDict, Field
-
 from loop.types import AgentEvent, AgentResponse, ContentPart, TurnEvent
 from loop_gateway import (
     GatewayDelta,
@@ -34,6 +32,7 @@ from loop_gateway import (
     GatewayRequest,
 )
 from loop_gateway.types import GatewayMessage
+from pydantic import BaseModel, ConfigDict, Field
 
 logger = structlog.get_logger(__name__)
 
@@ -78,9 +77,7 @@ def _build_messages(agent: AgentConfig, event: AgentEvent) -> tuple[GatewayMessa
     out: list[GatewayMessage] = []
     if agent.system_prompt:
         out.append(GatewayMessage(role="system", content=agent.system_prompt))
-    user_text = "\n".join(
-        part.text for part in event.content if part.type == "text" and part.text
-    )
+    user_text = "\n".join(part.text for part in event.content if part.type == "text" and part.text)
     if user_text:
         out.append(GatewayMessage(role="user", content=user_text))
     return tuple(out)

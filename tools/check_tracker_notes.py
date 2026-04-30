@@ -15,7 +15,6 @@ from __future__ import annotations
 import argparse
 import csv
 import sys
-from collections.abc import Iterable
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -25,8 +24,8 @@ STORIES_CSV = REPO_ROOT / "loop_implementation" / "tracker" / "csv" / "stories.c
 REQUIRED_FIELDS: dict[str, frozenset[str]] = {
     "In progress": frozenset({"Branch:", "Skill:", "Last step:", "Heartbeat:"}),
     "Handing off": frozenset({"Branch:", "Skill:", "Last step:", "Heartbeat:"}),
-    "Blocked":     frozenset({"Branch:", "Skill:", "Heartbeat:", "Blockers:"}),
-    "Done":        frozenset({"PR", "Branch:"}),  # PR # or PR: link; branch reference
+    "Blocked": frozenset({"Branch:", "Skill:", "Heartbeat:", "Blockers:"}),
+    "Done": frozenset({"PR", "Branch:"}),  # PR # or PR: link; branch reference
 }
 
 # Stories where a richer note is not required (CTO setup, hiring, etc.).
@@ -71,7 +70,7 @@ def lint(strict: bool = False) -> int:
         "skills/meta/update-tracker.md §'Canonical Notes-cell format'.",
         file=sys.stderr,
     )
-    return 1 if strict else 1
+    return 1
 
 
 if __name__ == "__main__":

@@ -51,9 +51,7 @@ async def test_alias_resolves_and_routes_to_correct_provider() -> None:
             AnthropicProvider(transport=lambda _r: _wrap(_anthropic_canned_lines("ANTH"))),
         ]
     )
-    req = GatewayRequest(
-        request_id="r1", workspace_id="ws-a", model="cheap", messages=_msgs()
-    )
+    req = GatewayRequest(request_id="r1", workspace_id="ws-a", model="cheap", messages=_msgs())
     events = [e async for e in client.stream(req)]
     deltas = [e.text for e in events if isinstance(e, GatewayDelta)]
     assert deltas == ["ANTH"], "cheap alias must hit Anthropic"
@@ -106,9 +104,7 @@ async def test_idempotency_cache_does_not_leak_across_workspaces() -> None:
 
 @pytest.mark.asyncio
 async def test_unknown_model_raises_lookup_error() -> None:
-    client = GatewayClient(
-        providers=[OpenAIProvider(transport=lambda _r: _wrap([]))]
-    )
+    client = GatewayClient(providers=[OpenAIProvider(transport=lambda _r: _wrap([]))])
     req = GatewayRequest(
         request_id="r1",
         workspace_id="ws-a",

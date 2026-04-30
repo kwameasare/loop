@@ -46,9 +46,7 @@ from opentelemetry.trace import Span as OtelSpan
 from opentelemetry.trace import StatusCode
 
 SpanKind = Literal["llm", "tool", "retrieval", "memory", "channel"]
-_VALID_KINDS: frozenset[str] = frozenset(
-    ("llm", "tool", "retrieval", "memory", "channel")
-)
+_VALID_KINDS: frozenset[str] = frozenset(("llm", "tool", "retrieval", "memory", "channel"))
 
 _DEFAULT_ENDPOINT = "http://localhost:4318/v1/traces"
 _DEFAULT_SERVICE = "loop-runtime"
@@ -175,10 +173,7 @@ class Tracer:
         rare cases (CLI startup, sync tests) where async is awkward.
         """
         if kind not in _VALID_KINDS:
-            raise ValueError(
-                f"Invalid span kind {kind!r}; must be one of "
-                f"{sorted(_VALID_KINDS)}"
-            )
+            raise ValueError(f"Invalid span kind {kind!r}; must be one of {sorted(_VALID_KINDS)}")
         provider = _provider if _provider is not None else trace.get_tracer_provider()
         otel = provider.get_tracer(self._name)
         with otel.start_as_current_span(name) as raw:
@@ -215,7 +210,5 @@ tracer = Tracer()
 def get_finished_spans() -> list[ReadableSpan]:
     """Test helper -- returns spans recorded by the in-memory exporter."""
     if _memory_exporter is None:
-        raise RuntimeError(
-            "No in-memory exporter installed; call reset_for_test() first."
-        )
+        raise RuntimeError("No in-memory exporter installed; call reset_for_test() first.")
     return list(_memory_exporter.get_finished_spans())
