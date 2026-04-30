@@ -797,13 +797,26 @@ STORIES: list[Story] = [
     Story(
         "S020",
         "Deploy controller v0: artifact → image → k8s",
-        "Eng #2",
+        "GitHub Copilot",
         "S0",
         "E12",
         8,
         "P0",
-        "Not started",
-        "Week 4",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s020-deploy-controller. "
+            "Skill: skills/coding/implement-runtime-feature.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T11:00Z (GitHub Copilot). "
+            "Open questions: none -- ship deploy state machine "
+            "(PENDING -> BUILDING -> PUSHING -> APPLYING -> READY, "
+            "with FAILED + ROLLED_BACK terminals), Protocol-based "
+            "ImageBuilder / ImageRegistry / KubeClient, in-memory "
+            "fakes, and DeployController orchestrator. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S021",
