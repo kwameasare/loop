@@ -1362,6 +1362,7 @@ STORIES: list[Story] = [
         (
             "**Done.** "
             "Branch: copilot/s037-email-telegram (merged). "
+            "PR: local-merge (ff to main). "
             "Skill: skills/coding/implement-channel-adapter.md. "
             "Last step: 5/5 (merge). "
             "Heartbeat: 2026-04-30T20:55Z (GitHub Copilot). "
