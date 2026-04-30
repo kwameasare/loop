@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T13:45:40.600971+00:00",
+    "generated_at": "2026-04-30T13:46:10.275100+00:00",
     "format_version": 2
   },
   "epics": [
@@ -352,8 +352,8 @@
       "epic": "E6",
       "points": 5,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.** Branch: copilot/s017-channel-web. Skill: skills/coding/implement-channel-adapter.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T09:00Z (GitHub Copilot). Open questions: none -- ship loop-channels-core (Channel Protocol + InboundEvent / OutboundFrame / TurnEvent types) and loop-channels-web (REST POST /messages + SSE GET /messages/stream). Blockers: none. Commits: claim."
+      "status": "Done",
+      "notes": "PR #017 / merged to main as fast-forward. Branch: copilot/s017-channel-web. Skill: skills/coding/implement-channel-adapter.md. Shipped two workspace members: loop-channels-core (Channel + ChannelDispatcher Protocols, InboundEvent / OutboundFrame strict-frozen pydantic models, OutboundFrameKind covers agent_token, agent_message, tool_call_start, tool_call_end, handoff, error, done; from_async_generator / from_list_factory dispatcher helpers); loop-channels-web (WebChannel adapter, framework-agnostic; sse_serialise emits text/event-stream bytes per frame). Removed accidental _tests/__init__.py files (caused pytest package-name collisions). 7 unit tests across both packages; ruff + pyright clean. Commits: claim, substance, close."
     },
     {
       "id": "S018",

@@ -722,19 +722,23 @@ STORIES: list[Story] = [
         "E6",
         5,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
+            "PR #017 / merged to main as fast-forward. "
             "Branch: copilot/s017-channel-web. "
             "Skill: skills/coding/implement-channel-adapter.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T09:00Z (GitHub Copilot). "
-            "Open questions: none -- ship loop-channels-core (Channel "
-            "Protocol + InboundEvent / OutboundFrame / TurnEvent types) "
-            "and loop-channels-web (REST POST /messages + SSE GET "
-            "/messages/stream). "
-            "Blockers: none. "
-            "Commits: claim."
+            "Shipped two workspace members: "
+            "loop-channels-core (Channel + ChannelDispatcher Protocols, "
+            "InboundEvent / OutboundFrame strict-frozen pydantic models, "
+            "OutboundFrameKind covers agent_token, agent_message, "
+            "tool_call_start, tool_call_end, handoff, error, done; "
+            "from_async_generator / from_list_factory dispatcher helpers); "
+            "loop-channels-web (WebChannel adapter, framework-agnostic; "
+            "sse_serialise emits text/event-stream bytes per frame). "
+            "Removed accidental _tests/__init__.py files (caused pytest "
+            "package-name collisions). "
+            "7 unit tests across both packages; ruff + pyright clean. "
+            "Commits: claim, substance, close."
         ),
     ),
     Story(
