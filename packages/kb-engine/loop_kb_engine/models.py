@@ -33,4 +33,41 @@ class Chunk(_StrictModel):
     metadata: dict[str, str] = Field(default_factory=dict)
 
 
-__all__ = ["Chunk", "Document"]
+class EmbeddingVector(_StrictModel):
+    """A dense embedding tied to a chunk.
+
+    Validates dimensionality and rejects non-finite components so callers
+    cannot accidentally persist NaN/Inf into a vector store.
+    """
+
+    chunk_id: UUID
+    workspace_id: UUID
+    model: str = Field(min_length=1)
+    values: tuple[float, ...] = Field(min_length=1)
+
+    @classmethod
+    def of(
+        cls,
+        *,
+        chunk: Chunk,
+        model: str,
+        values: tuple[float, ...] | list[float],
+    ) -> EmbeddingVector:
+        coerced = tuple(float(v) for v in values)
+        for v in coerced:
+            # Reject NaN and +/-inf explicitly: pydantic accepts them by default.
+            if v != v or v in (float("inf"), float("-inf")):
+                raise ValueError("embedding values must be finite")
+        return cls(
+            chunk_id=chunk.id,
+            workspace_id=chunk.workspace_id,
+            model=model,
+            values=coerced,
+        )
+
+    @property
+    def dim(self) -> int:
+        return len(self.values)
+
+
+__all__ = ["Chunk", "Document", "EmbeddingVector"]

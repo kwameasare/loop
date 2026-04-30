@@ -23,7 +23,7 @@ from loop_kb_engine.embeddings import (
     EmbeddingService,
 )
 from loop_kb_engine.kb import KnowledgeBase, RetrievalResult
-from loop_kb_engine.models import Chunk, Document
+from loop_kb_engine.models import Chunk, Document, EmbeddingVector
 from loop_kb_engine.parsers import (
     DocumentParseError,
     Parser,
@@ -32,15 +32,24 @@ from loop_kb_engine.parsers import (
     UnsupportedDocumentType,
     default_registry,
 )
+from loop_kb_engine.retrieval import (
+    ChunkDiff,
+    TombstoneRegistry,
+    chunk_content_hash,
+    diff_chunks,
+    rrf_combine,
+)
 from loop_kb_engine.store import InMemoryVectorStore, VectorStore
 
 __all__ = [
     "Chunk",
+    "ChunkDiff",
     "Chunker",
     "DeterministicEmbeddingService",
     "Document",
     "DocumentParseError",
     "EmbeddingService",
+    "EmbeddingVector",
     "FixedSizeChunker",
     "HeadingChunker",
     "InMemoryVectorStore",
@@ -50,7 +59,11 @@ __all__ = [
     "RetrievalResult",
     "SemanticChunker",
     "TextParser",
+    "TombstoneRegistry",
     "UnsupportedDocumentType",
     "VectorStore",
+    "chunk_content_hash",
     "default_registry",
+    "diff_chunks",
+    "rrf_combine",
 ]

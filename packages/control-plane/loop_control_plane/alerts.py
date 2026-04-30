@@ -30,9 +30,9 @@ from __future__ import annotations
 
 import operator as _op
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Protocol, runtime_checkable
 
 import yaml
 
@@ -168,11 +168,89 @@ def evaluate(
     return tuple(fired)
 
 
+# ---------------------------------------------------------------------------
+# Delivery dispatcher (S291)
+# ---------------------------------------------------------------------------
+
+
+@runtime_checkable
+class AlertSink(Protocol):
+    """A single delivery target (Slack webhook, email, PagerDuty key)."""
+
+    name: str
+    accepts: frozenset[Severity]
+
+    async def send(self, alert: Alert) -> None: ...
+
+
+@dataclass
+class InMemoryAlertSink:
+    """Test sink that records every alert it accepts."""
+
+    name: str
+    accepts: frozenset[Severity] = frozenset({"info", "warning", "critical"})
+    delivered: list[Alert] = field(default_factory=list)
+
+    async def send(self, alert: Alert) -> None:
+        self.delivered.append(alert)
+
+
+@dataclass(frozen=True)
+class DeliveryResult:
+    """Outcome of one alert -> one sink delivery attempt."""
+
+    alert: Alert
+    sink: str
+    delivered: bool
+    error: str = ""
+
+
+@dataclass
+class AlertDispatcher:
+    """Fan-outs each fired alert to all sinks whose ``accepts`` covers
+    its severity. Per-sink failures are captured (not raised) so one
+    bad webhook does not silence the rest.
+    """
+
+    sinks: tuple[AlertSink, ...]
+
+    async def dispatch(self, alerts: tuple[Alert, ...]) -> tuple[DeliveryResult, ...]:
+        results: list[DeliveryResult] = []
+        for alert in alerts:
+            for sink in self.sinks:
+                if alert.rule.severity not in sink.accepts:
+                    continue
+                try:
+                    await sink.send(alert)
+                except Exception as exc:
+                    results.append(
+                        DeliveryResult(
+                            alert=alert,
+                            sink=sink.name,
+                            delivered=False,
+                            error=f"{type(exc).__name__}: {exc}",
+                        )
+                    )
+                else:
+                    results.append(
+                        DeliveryResult(
+                            alert=alert,
+                            sink=sink.name,
+                            delivered=True,
+                        )
+                    )
+        return tuple(results)
+
+
 __all__ = [
     "Alert",
+    "AlertDispatcher",
     "AlertRule",
     "AlertRuleError",
+    "AlertSink",
     "ComparisonOp",
+    "DeliveryResult",
+    "InMemoryAlertSink",
     "Severity",
     "evaluate",
     "load_rules",

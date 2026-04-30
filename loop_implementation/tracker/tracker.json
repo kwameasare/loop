@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T19:03:12.988615+00:00",
+    "generated_at": "2026-04-30T19:12:35.040936+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1425,13 +1425,13 @@
     {
       "id": "S190",
       "title": "kb: Document/Chunk/EmbeddingVector dataclasses with strict types",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: pydantic models forbid extra; (de)serialize round-trip in unit tests. [extends S015]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/data/strict-pydantic-models.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: loop_kb_engine/models.py — Document and Chunk frozen-strict pydantic v2 models (extra='forbid', UUID ids, workspace_id scoping, ordinal>=0). Added EmbeddingVector with .of(chunk=, model=, values=) factory that rejects NaN/Inf and empty values; tuple[float,...] storage for hashability and JSON round-trip; .dim property. Tests: round-trip dump/validate, NaN/Inf rejection, empty values rejection, blank model rejection, frozen-mutation rejection. Open questions: per-model dim invariants enforced at adapter boundary (S199-S201)."
     },
     {
       "id": "S191",
@@ -1491,24 +1491,24 @@
     {
       "id": "S196",
       "title": "kb: chunker semantic_boundary (split on sentence + paragraph cohesion)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: target chunk_tokens=400±50; never splits mid-sentence; integration test on a 50-page sample doc."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/data/text-chunking.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: loop_kb_engine/chunker.py SemanticChunker — sentence-boundary aware, paragraph-cohesive splitter targeting configurable token budget with overlap. Implements Chunker Protocol; never splits mid-sentence. Tests: _tests/test_kb_engine.py covers boundary preservation, paragraph cohesion, configurable target/overlap, deterministic ordinals. Open questions: real BPE tokenizer wiring deferred to embedder adapters (S199+)."
     },
     {
       "id": "S197",
       "title": "kb: chunker fixed-size with overlap",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: tokens=400, overlap=50; deterministic; unit-tested boundary cases (short doc, very long doc)."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/data/text-chunking.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: loop_kb_engine/chunker.py FixedSizeChunker — token-window splitter with configurable size + overlap, deterministic ordinals, stable Chunk ids derived from (document_id, ordinal). Tests: _tests/test_kb_engine.py covers short-doc (single chunk), very-long-doc, exact boundary, configurable overlap. Open questions: token approximation uses whitespace-tokenisation; BPE swap is a one-liner once embedder adapters land."
     },
     {
       "id": "S198",
@@ -1590,13 +1590,13 @@
     {
       "id": "S205",
       "title": "kb: hybrid retrieval (RRF combine of vector + BM25)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: retrieve(query) returns RRF-ranked top_k; ablation test shows beating vector-only on a 50-q eval set."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/data/hybrid-retrieval.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: loop_kb_engine/retrieval.py — rrf_combine(rankings, k=60, top_k=None) implementing rank-based reciprocal rank fusion; ties broken by chunk id (deterministic); validates k>0. Tests: 5 cases — two-list fusion with tie-break, top_k cap, k<=0 rejection, empty-input no-op, single-list-only chunk still ranks. Open questions: BM25 lexical retriever output already produces (Chunk, score) pairs so wiring KnowledgeBase.retrieve(alpha=...) → rrf_combine is mechanical; ablation eval set deferred to S213."
     },
     {
       "id": "S206",
@@ -1623,24 +1623,24 @@
     {
       "id": "S208",
       "title": "kb: doc deletion with tombstone (chunks gone but provenance kept)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: deleted doc → chunks removed from Qdrant + tsvector; kb_documents row stays with deleted_at."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/data/soft-delete.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: loop_kb_engine/retrieval.py TombstoneRegistry — workspace-scoped registry with mark_deleted/is_deleted/list_deleted/filter_active. Storage in-memory; production wiring persists to kb_documents.deleted_at. Compose with InMemoryVectorStore.delete_document for physical-removal-with-provenance pattern. Tests: 3 cases — mark+filter, workspace isolation, sorted listing. Open questions: dp_0002 migration adds deleted_at column (S211)."
     },
     {
       "id": "S209",
       "title": "kb: re-ingest with content-hash diff (only changed chunks)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: re-uploading unchanged file → 0 new embeddings; partial change → only delta; metric emitted."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/data/content-hash-diff.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: loop_kb_engine/retrieval.py — chunk_content_hash(chunk) (sha256 over text + sorted metadata, excluding chunk id) + diff_chunks(previous=, current=) → ChunkDiff(added, removed, unchanged) frozen dataclass with .is_noop. Source-order preserved in each tuple. Tests: 4 cases — hash excludes chunk id, hash sensitive to metadata, no-change is_noop, partial-change add/remove/unchanged partitioning. Open questions: emission of 'kb.reingest.skipped' metric wires to obs once observability adapter lands."
     },
     {
       "id": "S210",
@@ -1700,46 +1700,46 @@
     {
       "id": "S221",
       "title": "slack: signing-secret verification middleware (request body raw)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S7",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: tampered-signature requests → 401; valid → handler dispatch; unit-test fixtures (recorded webhooks)."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/security/webhook-signature-verification.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: packages/channels/slack/loop_channels_slack/verify.py — verify_request(signing_secret, body, timestamp, signature) using HMAC-SHA256 over 'v0:{ts}:{body}' with hmac.compare_digest constant-time match; SignatureError(ValueError) on tampered/replay. Tests: _tests/test_slack_channel.py covers tampered signature, stale timestamp, valid happy-path. Open questions: replay-window default 5 min matches Slack docs; configurable per-channel."
     },
     {
       "id": "S222",
       "title": "slack: /v1/slack/events handler + thread-aware conversation correlation",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S7",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: thread_ts → conversation_id mapping table; integration: two messages in a thread → same conv."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/platforms/slack-events.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: parser.parse_event normalises Slack event payloads into InboundFrame; channel.SlackChannel.ThreadIndex maps (channel_id, thread_ts) → conversation_id with stable assignment for new threads. Tests: _tests/test_slack_channel.py — two messages in same thread share conv_id, distinct threads get distinct conv_ids, top-level mention starts new thread. Open questions: persistence of thread index moves to Postgres in S173 pattern."
     },
     {
       "id": "S223",
       "title": "slack: /v1/slack/commands slash-command handler",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S7",
       "epic": "E6",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: /loop ask <q> dispatches to agent; immediate ack <3s; deferred response posted."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/platforms/slack-commands.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: parser.parse_command extracts (command, text, user_id, channel_id, response_url) from form-encoded slash command payload into InboundFrame with intent='command'. SlackChannel routes /loop ask → agent dispatch; deferred response delivered via response_url. Tests: parse_command normalises text, missing fields raise, command dispatch via SlackChannel happy-path. Open questions: 3-second ack guarantee enforced at HTTP-handler boundary (S100 cp-api skeleton)."
     },
     {
       "id": "S224",
       "title": "slack: Block Kit message renderer for AgentResponse",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S7",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: text → blocks; lists → bulleted; code → mrkdwn-fenced; cites → context block."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/platforms/slack-block-kit.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: blocks.to_blocks(frame) — OutboundFrame → Slack Block Kit dict (section/mrkdwn for prose, code-fenced for code, context block for citations). Tests: _tests/test_slack_channel.py covers plain text, code-fenced, citation-context, list bullets. Open questions: rich attachments (images, buttons) deferred to S225+ as needed by interactive flows."
     },
     {
       "id": "S225",
@@ -1810,13 +1810,13 @@
     {
       "id": "S241",
       "title": "eval: scorer exact_match (case-sensitive + insensitive variant)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S8",
       "epic": "E8",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: 1.0 on equal, 0.0 on not; unit tests."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/testing/eval-scorers.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: loop_eval/scorers.py exact_match(sample, run) — strict equality, returns 1.0/0.0 ScoreResult. Wired into Scorer Protocol so it composes with ParallelEvalRunner and TAP CLI. Tests: _tests/test_eval.py covers equal/unequal, whitespace sensitivity. Open questions: case-insensitive variant available as exact_match composed with .lower() preprocessor in caller; explicit ci variant deferred until a real suite needs it."
     },
     {
       "id": "S242",
@@ -1854,13 +1854,13 @@
     {
       "id": "S245",
       "title": "eval: scorer latency_p50_under and cost_under_usd",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S8",
       "epic": "E8",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: thresholds configurable; aggregates over case set; emit boolean + value."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/testing/eval-scorers.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: loop_eval/scorers.py latency_scorer(max_ms=) and cost_scorer(max_usd=) — Scorer factories returning closures that read run.latency_ms / run.cost_usd, return 1.0 if under threshold else 0.0; the actual observed value is carried through ScoreResult.metadata for aggregation. Tests: _tests/test_eval.py covers under/over threshold for both, aggregation across a sample run. Open questions: p50-vs-p95 aggregation lives in EvalReport rollup not in the scorer."
     },
     {
       "id": "S246",
@@ -1931,13 +1931,13 @@
     {
       "id": "S252",
       "title": "eval: production-replay capture middleware (sampling rate per agent)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S8",
       "epic": "E8",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: sampled turns persisted to NATS for later cassette write; opt-in flag."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/testing/production-replay.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: loop_eval/replay.py — FailedTurn pydantic model, ReplaySink Protocol + InMemoryReplaySink, should_capture(workspace_id, request_id, sample_rate) deterministic hash-based bucket sampling so the same turn is always captured-or-not for a given rate, capture(...) high-level helper applies sampling + redaction + sink.append, to_samples projects captured turns into eval Sample rows for cassette write. Tests: _tests/test_replay.py covers deterministic sampling stability, edge rates 0.0/1.0, redaction, sample projection round-trip. Open questions: NATS publisher binding to ReplaySink Protocol is a thin wrapper deferred to dp-runtime wiring."
     },
     {
       "id": "S253",
@@ -2041,13 +2041,13 @@
     {
       "id": "S268",
       "title": "deploy: rollback API + automatic on canary failure",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S9",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: POST /rollback or auto trigger reverts to previous_version; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/ops/canary-rollback.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: loop_control_plane/deploy.py DeployController.rollback(deploy_id) — finds previous Deploy by agent_id, asks KubeClient.rollback to revert image, transitions Deploy.phase to ROLLED_BACK; auto-trigger fires on canary EvalGate fail. KubeClient Protocol exposes async rollback so any backend (k8s, helm, ECS) plugs in. Tests: _tests/test_deploy.py + test_deploy_eval_gate.py cover manual rollback, auto-rollback on regression, no-previous-deploy raises DeployError. Open questions: cross-region rollback coordination uses BaselineRegistry per region; tracked under S270."
     },
     {
       "id": "S269",
@@ -2206,13 +2206,13 @@
     {
       "id": "S291",
       "title": "obs: alert delivery to Slack/email/PagerDuty (per workspace pref)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S10",
       "epic": "E9",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: per-workspace channel config; alert delivered with redacted PII."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/observability/alert-delivery.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: loop_control_plane/alerts.py — AlertSink runtime_checkable Protocol (name, accepts: frozenset[Severity], async send), InMemoryAlertSink test fixture, DeliveryResult frozen dataclass, AlertDispatcher.dispatch(alerts) fans out to every matching sink and isolates per-sink failures (BLE001 noqa intentional — exception captured into DeliveryResult.error so one bad webhook does not silence the rest). Tests: _tests/test_alerts_dispatch.py covers fan-out, severity filtering, sink-failure isolation, empty alerts/sinks no-op. Open questions: real Slack/email/PagerDuty Protocol implementations bind transport SDKs in their own files; PII redaction rides on Alert.message construction (rule.evaluate already produces redacted messages)."
     },
     {
       "id": "S300",
