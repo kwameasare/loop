@@ -1,0 +1,32 @@
+# Deny-all egress for sandbox pods. The control plane patches a per-Pod
+# NetworkPolicy with the workspace's egress allowlist (CIDRs / FQDNs)
+# at acquire time; this baseline ensures a misconfigured controller
+# fails closed.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dp-tool-host-default-deny
+  labels:
+    app.kubernetes.io/part-of: loop
+    app.kubernetes.io/component: dp-tool-host
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: dp-tool-host
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: []
+  egress:
+    # DNS is allowed; the per-Pod allowlist policy must permit the
+    # specific hosts MCP servers are allowed to reach.
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

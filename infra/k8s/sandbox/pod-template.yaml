@@ -1,0 +1,67 @@
+# Pod template the dp-tool-host warmpool controller stamps out for
+# every prewarmed sandbox. Real dispatch substitutes:
+#   ${WORKSPACE_ID}   per-tenant label
+#   ${MCP_SERVER}     logical MCP server name (e.g. stripe, github)
+#   ${IMAGE}          MCP server image (digest-pinned: image@sha256:...)
+#   ${EGRESS_CIDRS}   comma-separated allowlist passed via env
+#
+# Notes on isolation (ADR-005, ADR-021, ADR-026):
+#   - `runtimeClassName: loop-firecracker` forces Kata + Firecracker.
+#   - One Pod per microVM; no sidecars share the kernel boundary.
+#   - Read-only root filesystem; only /tmp tmpfs is writable.
+#   - Drops every Linux capability; non-root user only.
+#   - Resource limits == requests so microVMs are guaranteed-class.
+#   - `automountServiceAccountToken: false` -- MCP servers must never
+#     see a Kubernetes API token.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dp-tool-host-${MCP_SERVER}-${WORKSPACE_ID}-XXXX
+  labels:
+    app.kubernetes.io/part-of: loop
+    app.kubernetes.io/component: dp-tool-host
+    loop.run/workspace-id: ${WORKSPACE_ID}
+    loop.run/mcp-server: ${MCP_SERVER}
+spec:
+  runtimeClassName: loop-firecracker
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  enableServiceLinks: false
+  terminationGracePeriodSeconds: 5
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    fsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: mcp
+      image: ${IMAGE}
+      imagePullPolicy: IfNotPresent
+      args: ["--stdio"]
+      env:
+        - name: LOOP_WORKSPACE_ID
+          value: ${WORKSPACE_ID}
+        - name: LOOP_EGRESS_ALLOWLIST
+          value: ${EGRESS_CIDRS}
+      resources:
+        requests:
+          cpu: 500m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: scratch
+          mountPath: /tmp
+  volumes:
+    - name: scratch
+      emptyDir:
+        medium: Memory
+        sizeLimit: 64Mi

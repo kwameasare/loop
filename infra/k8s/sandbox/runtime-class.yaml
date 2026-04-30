@@ -1,0 +1,38 @@
+# RuntimeClass that pins the dp-tool-host workload to Kata Containers
+# with a Firecracker hypervisor (ADR-005, ADR-021).
+#
+# The Kata operator (deployed via `kata-deploy`) is expected to have
+# already installed `containerd` shim binaries named `kata-fc` on every
+# tool-host node. Nodes carry the `loop.run/sandbox=firecracker` label
+# so the scheduler keeps non-sandbox workloads off them.
+#
+# Tuning knobs:
+#   - `default_memory`: per-microVM RAM ceiling. Override per-Pod via
+#     `io.katacontainers.config.hypervisor.default_memory` annotation.
+#   - `disable_block_device_use`: true so MCP servers cannot mount the
+#     host filesystem; only the rootfs and a tmpfs scratch are visible.
+#   - `enable_iothreads`: false -- microVMs are short-lived; the extra
+#     thread costs more than it saves.
+#
+# This file is the source of truth. Apply via:
+#   kubectl apply -f infra/k8s/sandbox/runtime-class.yaml
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: loop-firecracker
+  labels:
+    app.kubernetes.io/part-of: loop
+    app.kubernetes.io/component: dp-tool-host
+handler: kata-fc
+scheduling:
+  nodeSelector:
+    loop.run/sandbox: firecracker
+  tolerations:
+    - key: loop.run/sandbox
+      operator: Equal
+      value: firecracker
+      effect: NoSchedule
+overhead:
+  podFixed:
+    cpu: 50m
+    memory: 160Mi
