@@ -26,6 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class DeployPhase(StrEnum):
     PENDING = "pending"
     BUILDING = "building"
+    EVALUATING = "evaluating"
     PUSHING = "pushing"
     APPLYING = "applying"
     READY = "ready"
@@ -53,6 +54,21 @@ class BuildResult(BaseModel):
     digest: str = Field(min_length=8)
 
 
+class EvalReport(BaseModel):
+    """Outcome of a candidate-vs-baseline regression run.
+
+    ``baseline_pass_rate`` is ``None`` for the very first deploy of an
+    agent (no prior baseline exists). ``regression`` is true iff a
+    baseline exists and ``pass_rate < baseline_pass_rate``.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+    pass_rate: float = Field(ge=0.0, le=1.0)
+    total_cases: int = Field(ge=0)
+    baseline_pass_rate: float | None = Field(default=None, ge=0.0, le=1.0)
+    regression: bool = False
+
+
 class Deploy(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
     id: UUID
@@ -62,6 +78,7 @@ class Deploy(BaseModel):
     updated_at: datetime
     image_ref: str | None = None
     error: str | None = None
+    eval_report: EvalReport | None = None
 
 
 class DeployError(RuntimeError):
@@ -80,6 +97,46 @@ class ImageRegistry(Protocol):
 class KubeClient(Protocol):
     async def apply(self, *, deploy_id: UUID, image_ref: str) -> None: ...
     async def rollback(self, deploy_id: UUID) -> None: ...
+
+
+class EvalGate(Protocol):
+    """Runs a regression eval suite against a candidate artifact.
+
+    Implementations call into ``loop_eval`` (or any harness) and
+    return an :class:`EvalReport` whose ``regression`` flag drives
+    deploy gating. The gate MUST set ``regression=True`` whenever a
+    baseline is provided and the candidate's ``pass_rate`` is
+    strictly lower than that baseline.
+    """
+
+    async def evaluate(
+        self,
+        artifact: DeployArtifact,
+        *,
+        baseline_pass_rate: float | None,
+    ) -> EvalReport: ...
+
+
+class BaselineRegistry(Protocol):
+    """Stores the most recent passing eval pass_rate per agent.
+
+    The controller reads via :meth:`get` before evaluating a
+    candidate and writes via :meth:`record` only after a deploy
+    reaches READY -- so a failed candidate never poisons the
+    baseline.
+    """
+
+    async def get(
+        self, *, workspace_id: UUID, agent_id: UUID
+    ) -> float | None: ...
+
+    async def record(
+        self,
+        *,
+        workspace_id: UUID,
+        agent_id: UUID,
+        pass_rate: float,
+    ) -> None: ...
 
 
 # ----------------------------------------------------------- in-memory fakes
@@ -111,6 +168,60 @@ class InMemoryImageRegistry:
     async def push(self, build: BuildResult) -> str:
         self.pushed.append(build)
         return f"registry.loop.test/{build.image_ref}@{build.digest}"
+
+
+class InMemoryEvalGate:
+    """Test fake: returns a queued sequence of ``pass_rate`` values.
+
+    Each call pops the next configured pass_rate; ``regression`` is
+    derived against the supplied baseline.
+    """
+
+    def __init__(self, *, pass_rates: list[float], total_cases: int = 10) -> None:
+        self._pass_rates = list(pass_rates)
+        self._total_cases = total_cases
+        self.calls: list[tuple[DeployArtifact, float | None]] = []
+
+    async def evaluate(
+        self,
+        artifact: DeployArtifact,
+        *,
+        baseline_pass_rate: float | None,
+    ) -> EvalReport:
+        if not self._pass_rates:
+            raise DeployError("InMemoryEvalGate: no more pass_rates queued")
+        pr = self._pass_rates.pop(0)
+        self.calls.append((artifact, baseline_pass_rate))
+        regression = (
+            baseline_pass_rate is not None and pr < baseline_pass_rate
+        )
+        return EvalReport(
+            pass_rate=pr,
+            total_cases=self._total_cases,
+            baseline_pass_rate=baseline_pass_rate,
+            regression=regression,
+        )
+
+
+class InMemoryBaselineRegistry:
+    def __init__(self) -> None:
+        self._values: dict[tuple[UUID, UUID], float] = {}
+        self.records: list[tuple[UUID, UUID, float]] = []
+
+    async def get(
+        self, *, workspace_id: UUID, agent_id: UUID
+    ) -> float | None:
+        return self._values.get((workspace_id, agent_id))
+
+    async def record(
+        self,
+        *,
+        workspace_id: UUID,
+        agent_id: UUID,
+        pass_rate: float,
+    ) -> None:
+        self._values[(workspace_id, agent_id)] = pass_rate
+        self.records.append((workspace_id, agent_id, pass_rate))
 
 
 class InMemoryKubeClient:
@@ -149,10 +260,18 @@ class DeployController:
         builder: ImageBuilder,
         registry: ImageRegistry,
         kube: KubeClient,
+        eval_gate: EvalGate | None = None,
+        baselines: BaselineRegistry | None = None,
     ) -> None:
+        if (eval_gate is None) != (baselines is None):
+            raise DeployError(
+                "eval_gate and baselines must be provided together"
+            )
         self._builder = builder
         self._registry = registry
         self._kube = kube
+        self._eval_gate = eval_gate
+        self._baselines = baselines
         self._deploys: dict[UUID, Deploy] = {}
         self._lock = asyncio.Lock()
 
@@ -189,6 +308,25 @@ class DeployController:
             deploy = await self._advance(deploy, DeployPhase.BUILDING)
             built = await self._builder.build(deploy.artifact)
 
+            report: EvalReport | None = None
+            if self._eval_gate is not None and self._baselines is not None:
+                deploy = await self._advance(deploy, DeployPhase.EVALUATING)
+                baseline = await self._baselines.get(
+                    workspace_id=deploy.artifact.workspace_id,
+                    agent_id=deploy.artifact.agent_id,
+                )
+                report = await self._eval_gate.evaluate(
+                    deploy.artifact, baseline_pass_rate=baseline
+                )
+                deploy = await self._advance(
+                    deploy, DeployPhase.EVALUATING, eval_report=report
+                )
+                if report.regression:
+                    raise DeployError(
+                        f"eval-regression: pass_rate {report.pass_rate:.4f} "
+                        f"< baseline {baseline:.4f}"  # type: ignore[str-bytes-safe]
+                    )
+
             deploy = await self._advance(deploy, DeployPhase.PUSHING)
             image_ref = await self._registry.push(built)
 
@@ -196,6 +334,16 @@ class DeployController:
             await self._kube.apply(deploy_id=deploy.id, image_ref=image_ref)
 
             deploy = await self._advance(deploy, DeployPhase.READY)
+            if (
+                self._baselines is not None
+                and report is not None
+                and not report.regression
+            ):
+                await self._baselines.record(
+                    workspace_id=deploy.artifact.workspace_id,
+                    agent_id=deploy.artifact.agent_id,
+                    pass_rate=report.pass_rate,
+                )
         except Exception as exc:
             deploy = await self._advance(
                 deploy, DeployPhase.FAILED, error=f"{type(exc).__name__}: {exc}"
@@ -218,6 +366,7 @@ class DeployController:
         *,
         image_ref: str | None = None,
         error: str | None = None,
+        eval_report: EvalReport | None = None,
     ) -> Deploy:
         update: dict[str, object] = {
             "phase": phase,
@@ -227,6 +376,8 @@ class DeployController:
             update["image_ref"] = image_ref
         if error is not None:
             update["error"] = error
+        if eval_report is not None:
+            update["eval_report"] = eval_report
         async with self._lock:
             new = deploy.model_copy(update=update)
             self._deploys[deploy.id] = new
@@ -235,14 +386,19 @@ class DeployController:
 
 __all__ = [
     "TERMINAL_PHASES",
+    "BaselineRegistry",
     "BuildResult",
     "Deploy",
     "DeployArtifact",
     "DeployController",
     "DeployError",
     "DeployPhase",
+    "EvalGate",
+    "EvalReport",
     "ImageBuilder",
     "ImageRegistry",
+    "InMemoryBaselineRegistry",
+    "InMemoryEvalGate",
     "InMemoryImageBuilder",
     "InMemoryImageRegistry",
     "InMemoryKubeClient",
