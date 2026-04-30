@@ -852,13 +852,26 @@ STORIES: list[Story] = [
     Story(
         "S022",
         "Studio: trace waterfall + span detail tabs",
-        "Eng #5",
+        "GitHub Copilot",
         "S0",
         "E10",
         8,
         "P0",
-        "Not started",
-        "Week 4",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s022-trace-waterfall. "
+            "Skill: skills/coding/implement-studio-screen.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T12:00Z (GitHub Copilot). "
+            "Open questions: none -- ship apps/studio /traces/[id] "
+            "page with TraceWaterfall (proportional bars from earliest "
+            "start_ns), SpanDetail tabs (Attributes / Events / Raw), "
+            "Vitest coverage for layout math + tab switching, and a "
+            "fixtures module under src/lib/traces.ts. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S023",
