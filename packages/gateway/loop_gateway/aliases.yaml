@@ -1,0 +1,5 @@
+# Default model aliases. Workspace plans + BYOK overrides layer on top of
+# this map at resolution time (loop_gateway.aliases.resolve).
+fast: gpt-4o-mini
+cheap: claude-3-5-haiku
+best: claude-3-5-sonnet

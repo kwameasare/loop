@@ -20,6 +20,7 @@ requires-python = ">=3.12"
 members = [
     "packages/control-plane",
     "packages/data-plane",
+    "packages/gateway",
     "packages/runtime",
     "packages/sdk-py",
 ]
@@ -29,6 +30,7 @@ loop = { workspace = true }
 loop-runtime = { workspace = true }
 loop-control-plane = { workspace = true }
 loop-data-plane = { workspace = true }
+loop-gateway = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -36,6 +38,7 @@ dev = [
     "loop-runtime",
     "loop-control-plane",
     "loop-data-plane",
+    "loop-gateway",
     "ruff>=0.6.0",
     "pyright>=1.1.380",
     "pytest>=8.0",
