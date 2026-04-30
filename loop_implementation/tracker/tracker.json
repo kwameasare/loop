@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T01:24:21.131205+00:00",
+    "generated_at": "2026-04-30T01:25:14.893808+00:00",
     "format_version": 2
   },
   "epics": [
@@ -270,13 +270,13 @@
     {
       "id": "S010",
       "title": "Studio agents-list page (read from cp-api)",
-      "owner": "Eng #5",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E10",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "Week 2"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s010-studio-agents. Skill: skills/coding/implement-studio-screen.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T04:30Z (GitHub Copilot). Open questions: none -- App Router /agents page + cp-api fetcher stub. Blockers: none. Commits: claim."
     },
     {
       "id": "S011",

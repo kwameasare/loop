@@ -449,13 +449,22 @@ STORIES: list[Story] = [
     Story(
         "S010",
         "Studio agents-list page (read from cp-api)",
-        "Eng #5",
+        "GitHub Copilot",
         "S0",
         "E10",
         3,
         "P1",
-        "Not started",
-        "Week 2",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s010-studio-agents. "
+            "Skill: skills/coding/implement-studio-screen.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T04:30Z (GitHub Copilot). "
+            "Open questions: none -- App Router /agents page + cp-api fetcher stub. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S011",
