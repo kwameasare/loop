@@ -1647,8 +1647,28 @@ STORIES: list[Story] = [
         "E12",
         13,
         "P0",
-        "Not started",
-        "M10",
+        "Done",
+        (
+            "**Done.** "
+            "Branch: copilot/s045-eu-region (merged). "
+            "PR: local-merge (ff to main). "
+            "Skill: skills/architecture/cloud-portability-check.md. "
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T23:25Z (GitHub Copilot). "
+            "Open questions: none. "
+            "Shipped infra/helm/loop/values-eu-west.yaml "
+            "as a cloud-agnostic Helm overlay (region pin, "
+            "data-residency env, in-region KMS/OTLP/object "
+            "store, NetworkPolicy enforceRegionPin, audit "
+            "retention 1y hot / 6y cold) and "
+            "loop_implementation/engineering/REGIONAL_DEPLOYS.md "
+            "with install steps, per-cloud externals matrix "
+            "(AWS/GCP/Azure/on-prem OVH), residency preflight "
+            "command, failure modes, rollback, and "
+            "add-a-new-region runbook. Pure ops/docs change; "
+            "no application code touched. Blockers: none. "
+            "Commits: substance, close."
+        ),
     ),
     Story(
         "S046",

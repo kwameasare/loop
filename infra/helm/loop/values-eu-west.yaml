@@ -1,0 +1,83 @@
+# EU-West region values overlay.
+#
+# Apply on top of the base chart for an EU-resident deploy:
+#
+#   helm install loop ./infra/helm/loop \
+#     -f ./infra/helm/loop/values-eu-west.yaml
+#
+# The overlay is intentionally cloud-agnostic. Every value here
+# is generic Kubernetes / OpenTelemetry / Postgres / object-store
+# config; the ops team picks the concrete provider (AWS eu-west-1,
+# GCP europe-west1, Azure westeurope, on-prem OVH) by editing
+# `.externals.*` to managed-service URIs per
+# loop_implementation/architecture/CLOUD_PORTABILITY.md.
+#
+# Regulatory posture: EU data residency.
+#   * No data egress to non-EU regions.
+#   * KMS keys live in the same region as the data.
+#   * OTLP export targets an in-region collector.
+#   * See loop_implementation/architecture/CLOUD_PORTABILITY.md
+#     §"EU residency" for the full control list.
+
+global:
+  region: eu-west
+  dataResidency: eu
+  imagePullPolicy: IfNotPresent
+  # Region-pinned mirror; pulls from non-EU registries are blocked
+  # at the cluster network policy layer.
+  imageRegistry: registry.eu.loop.local
+
+controlPlane:
+  replicaCount: 3
+  env:
+    LOOP_REGION: "eu-west"
+    LOOP_DATA_RESIDENCY: "eu"
+    # Disallow cross-region replication at the app layer; the
+    # storage layer enforces this independently.
+    LOOP_DISABLE_CROSS_REGION_REPLICATION: "true"
+
+runtime:
+  replicaCount: 6
+  env:
+    LOOP_REGION: "eu-west"
+    LOOP_DATA_RESIDENCY: "eu"
+
+# All managed-service URIs MUST resolve to in-region endpoints.
+# These are placeholders -- ops fills concrete values per cloud.
+externals:
+  postgresUrl: "postgresql://loop@postgres.eu-west.svc:5432/loop"
+  redisUrl: "redis://redis.eu-west.svc:6379/0"
+  objectStore:
+    endpoint: "https://objects.eu-west.loop.local"
+    bucket: "loop-eu-west"
+    region: "eu-west"
+  kafka:
+    brokers: "kafka.eu-west.svc:9092"
+  kms:
+    provider: "byok"          # bring-your-own-key; no provider lock-in
+    keyArn: "REPLACE_ME_EU_WEST_KMS_KEY"
+    region: "eu-west"
+  otel:
+    endpoint: "https://otel-collector.eu-west.loop.local:4318"
+
+# Network-policy guardrails. The chart's NetworkPolicy templates
+# read these to forbid traffic to/from anything not labelled
+# `region=eu-west`.
+networkPolicy:
+  enforceRegionPin: true
+  allowedRegions:
+    - eu-west
+
+# Audit logging is mandatory for EU deploys; SECURITY.md §audit
+# spells out the retention contract (1y hot, 6y cold).
+audit:
+  enabled: true
+  hotRetentionDays: 365
+  coldRetentionDays: 2190
+
+# Telemetry sinks must be EU-resident; the chart fails its NOTES.txt
+# preflight if these are unset.
+telemetry:
+  metricsEndpoint: "https://metrics.eu-west.loop.local"
+  logsEndpoint: "https://logs.eu-west.loop.local"
+  tracesEndpoint: "https://traces.eu-west.loop.local"
