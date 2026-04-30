@@ -670,20 +670,23 @@ STORIES: list[Story] = [
         "E5",
         8,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
+            "PR #015 / merged to main as fast-forward. "
             "Branch: copilot/s015-kb-engine. "
             "Skill: skills/coding/implement-kb-feature.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T08:00Z (GitHub Copilot). "
-            "Open questions: none -- ship loop-kb-engine package with "
-            "Document/Chunk types, Chunker (fixed-size + semantic-boundary), "
-            "EmbeddingService + VectorStore Protocols, InMemoryVectorStore, "
-            "QdrantVectorStore stub, hybrid retrieval (BM25 + dense). "
-            "Real PDF ingest (pypdf) deferred to S015b. "
-            "Blockers: none. "
-            "Commits: claim."
+            "Shipped packages/kb-engine (loop-kb-engine v0.1.0): "
+            "Document/Chunk strict-frozen pydantic models; "
+            "FixedSizeChunker + SemanticChunker (paragraph-aware); "
+            "EmbeddingService Protocol + DeterministicEmbeddingService "
+            "(SHA-256 stretch, L2-normalised, test-only); "
+            "VectorStore Protocol + InMemoryVectorStore (cosine, "
+            "tenant-isolated, asyncio-locked); "
+            "KnowledgeBase orchestrator with BM25 + dense hybrid "
+            "retrieval (k1=1.5, b=0.75; alpha-blended, per-set normalised). "
+            "QdrantVectorStore + pypdf ingest deferred to S015b. "
+            "10 unit tests; ruff + pyright clean. "
+            "Commits: claim, substance, close."
         ),
     ),
     Story(

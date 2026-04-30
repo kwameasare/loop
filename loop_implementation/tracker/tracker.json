@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T13:38:25.497555+00:00",
+    "generated_at": "2026-04-30T13:38:51.850926+00:00",
     "format_version": 2
   },
   "epics": [
@@ -330,8 +330,8 @@
       "epic": "E5",
       "points": 8,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.** Branch: copilot/s015-kb-engine. Skill: skills/coding/implement-kb-feature.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T08:00Z (GitHub Copilot). Open questions: none -- ship loop-kb-engine package with Document/Chunk types, Chunker (fixed-size + semantic-boundary), EmbeddingService + VectorStore Protocols, InMemoryVectorStore, QdrantVectorStore stub, hybrid retrieval (BM25 + dense). Real PDF ingest (pypdf) deferred to S015b. Blockers: none. Commits: claim."
+      "status": "Done",
+      "notes": "PR #015 / merged to main as fast-forward. Branch: copilot/s015-kb-engine. Skill: skills/coding/implement-kb-feature.md. Shipped packages/kb-engine (loop-kb-engine v0.1.0): Document/Chunk strict-frozen pydantic models; FixedSizeChunker + SemanticChunker (paragraph-aware); EmbeddingService Protocol + DeterministicEmbeddingService (SHA-256 stretch, L2-normalised, test-only); VectorStore Protocol + InMemoryVectorStore (cosine, tenant-isolated, asyncio-locked); KnowledgeBase orchestrator with BM25 + dense hybrid retrieval (k1=1.5, b=0.75; alpha-blended, per-set normalised). QdrantVectorStore + pypdf ingest deferred to S015b. 10 unit tests; ruff + pyright clean. Commits: claim, substance, close."
     },
     {
       "id": "S016",
