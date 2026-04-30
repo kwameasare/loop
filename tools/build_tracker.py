@@ -436,16 +436,14 @@ STORIES: list[Story] = [
         "E9",
         5,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s009-otel-spans. "
-            "Skill: skills/observability/add-otel-span.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T03:55Z (GitHub Copilot). "
-            "Open questions: none -- loop.observability.tracer + ClickHouse exporter wiring. "
-            "Blockers: none. "
-            "Commits: claim."
+            "loop.observability.tracer facade with closed-set span kinds (llm/tool/"
+            "retrieval/memory/channel), auto exception recording with loop.error.code "
+            "stamping, OTLP/HTTP exporter (default :4318) + InMemoryExporter for tests. "
+            "TurnExecutor wraps each execute() in a 'turn.execute' span with required "
+            "ids + token counts + cost. infra/otel-collector.yaml now exports traces+"
+            "logs to ClickHouse (lz4, 720h TTL). 4 + 1 unit tests, 50 workspace tests."
         ),
     ),
     Story(
