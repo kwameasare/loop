@@ -1008,23 +1008,24 @@ STORIES: list[Story] = [
         "E10",
         5,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s027-studio-cost-dashboard. "
-            "Skill: skills/coding/implement-studio-screen.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T15:30Z (GitHub Copilot). "
-            "Open questions: none -- adding apps/studio/src/lib/"
-            "costs.ts (UsageRecord type, summariseCosts() reducer "
-            "computing workspace MTD + per-agent breakdown + "
-            "per-metric line items with rate*qty math) and "
-            "apps/studio/src/components/cost/cost-dashboard.tsx "
-            "client component rendering MTD card + agent table + "
-            "metric breakdown. Page mounted at /costs. Vitest "
-            "coverage for reducer and component. "
-            "Blockers: none. "
-            "Commits: claim."
+            "PR#S027. Branch: copilot/s027-studio-cost-dashboard "
+            "(merged). apps/studio/src/lib/costs.ts: UsageRecord + "
+            "UsageMetric union (tokens.in/out, tool_calls, "
+            "retrievals); pure summariseCosts() reducer that "
+            "window-filters by workspace_id + day_ms, applies "
+            "DEFAULT_RATES (1c, 3c, 50c, 10c) or caller-supplied "
+            "rates_cents_per_unit, and returns total_cents + "
+            "by_agent + by_metric ordered by spend desc; formatUSD "
+            "and monthBoundsUTC helpers; FIXTURE_USAGE for /costs "
+            "page. apps/studio/src/components/cost/cost-dashboard"
+            ".tsx client component renders MTD card + spend-by-agent "
+            "table + spend-by-metric table with empty-state copy. "
+            "Page mounted at /costs (force-dynamic) using fixture "
+            "data. 7 reducer tests + 3 component tests; vitest 25 "
+            "passed (was 15). next lint clean, tsc --noEmit clean. "
+            "Skill: skills/coding/implement-studio-screen.md."
         ),
     ),
     Story(
