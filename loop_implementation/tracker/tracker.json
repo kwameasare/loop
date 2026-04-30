@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T01:26:38.786503+00:00",
+    "generated_at": "2026-04-30T01:27:31.837029+00:00",
     "format_version": 2
   },
   "epics": [
@@ -281,13 +281,13 @@
     {
       "id": "S011",
       "title": "MCP client; auto-MCP decorator for Python functions",
-      "owner": "Eng #1",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E3",
       "points": 8,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "Week 3"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s011-mcp-client. Skill: skills/coding/implement-mcp-tool.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T05:00Z (GitHub Copilot). Open questions: none -- new loop-mcp package; @tool decorator + type-hint to JSON Schema + process-local registry + stdio transport stub. Blockers: none. Commits: claim."
     },
     {
       "id": "S012",
