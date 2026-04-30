@@ -289,14 +289,18 @@ EPICS: list[Epic] = [
 # format every In-progress / Blocked / Handing-off story must use. See
 # skills/meta/update-tracker.md "Canonical Notes-cell format."
 S001_NOTES = (
-    "**Active.**\n"
-    "Branch: copilot/s001-repo-init\n"
-    "Skill: skills/_base/SKILL_ROUTER.md (no specific bootstrap skill; HANDBOOK §1.3 + §2.5 + §3 govern)\n"
-    "Last step: 2/9 (tracker tooling under construction)\n"
-    "Heartbeat: 2026-04-29T23:15Z (GitHub Copilot)\n"
-    "Open questions: tracker tooling bootstrap (this story builds it) — first claim done by hand-edit, all subsequent tracker mutations go through tools/build_tracker.py\n"
-    "Blockers: none\n"
-    "Commits: (will accumulate)"
+    "**Done 2026-04-30 (GitHub Copilot).** "
+    "Branch: copilot/s001-repo-init. "
+    "Scaffolding promoted to repo root (LICENSE Apache-2.0, README, Makefile, "
+    ".github/{CI,CODEOWNERS,PULL_REQUEST_TEMPLATE,SECURITY,release}, "
+    ".pre-commit-config, .secrets.baseline, docs/branch-protection.md). "
+    "uv workspace pyproject + dev group; package skeletons for runtime, sdk-py. "
+    "Tracker tooling bootstrapped (tools/build_tracker.py with --check; "
+    "tracker_to_machine.py + scripts/recalc.py stubbed for future xlsx work). "
+    "CI gated jobs: lint+unit+tracker-clean+security required, "
+    "integration/studio/cli/evals conditional on hashFiles. "
+    "All green: ruff + pyright (strict on tools/scripts/tests) + 7/7 pytest. "
+    "PR: TBD on push."
 )
 
 
@@ -309,7 +313,7 @@ STORIES: list[Story] = [
         "E12",
         3,
         "P0",
-        "In progress",
+        "Done",
         S001_NOTES,
     ),
     Story(
