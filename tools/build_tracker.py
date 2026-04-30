@@ -949,21 +949,24 @@ STORIES: list[Story] = [
         "E19",
         5,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s025-billing-usage. "
-            "Skill: skills/coding/implement-runtime-feature.md (closest fit; control-plane billing). "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T14:30Z (GitHub Copilot). "
-            "Open questions: none -- adding loop_control_plane.billing "
-            "(StripeClient Protocol + InMemoryStripe test double; "
-            "BillingService.ensure_customer/record_usage/invoice) and "
-            "loop_control_plane.usage (UsageRollup aggregator with "
-            "daily nightly_rollup() job). Pure in-memory + Protocol "
-            "based -- no cloud SDK imported. "
-            "Blockers: none. "
-            "Commits: claim."
+            "PR#S025. Branch: copilot/s025-billing-usage (merged). "
+            "loop_control_plane.billing introduces StripeClient "
+            "Protocol + InMemoryStripe test double + BillingService "
+            "with ensure_customer (idempotent per workspace), "
+            "record_usage (rejects negative qty, requires customer), "
+            "and draft_invoice (window-bounded aggregation, configurable "
+            "rates_cents_per_unit, deterministic line items). "
+            "loop_control_plane.usage adds UsageEvent (pydantic v2 "
+            "strict), append-only UsageLedger, pure aggregate() "
+            "helper bucketing per (workspace, metric, day_ms), and "
+            "UsageRollup.nightly_rollup(now_ms) projecting yesterday's "
+            "window into BillingService.record_usage exactly once per "
+            "bucket. No stripe SDK imported -- cloud-portability "
+            "clean. 7 new tests; full suite 170 passed (was 163). "
+            "ruff + pyright clean. Skill: skills/coding/"
+            "implement-runtime-feature.md (closest fit)."
         ),
     ),
     Story(

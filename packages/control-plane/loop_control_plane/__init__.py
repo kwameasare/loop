@@ -20,6 +20,15 @@ from loop_control_plane.auth import (
     TokenVerifier,
     has_scope,
 )
+from loop_control_plane.billing import (
+    BillingError,
+    BillingService,
+    InMemoryStripe,
+    StripeClient,
+    StripeCustomer,
+    StripeInvoice,
+    StripeUsageRecord,
+)
 from loop_control_plane.deploy import (
     BuildResult,
     Deploy,
@@ -34,6 +43,13 @@ from loop_control_plane.deploy import (
     InMemoryKubeClient,
     KubeClient,
 )
+from loop_control_plane.usage import (
+    DAY_MS,
+    UsageEvent,
+    UsageLedger,
+    UsageRollup,
+    aggregate,
+)
 from loop_control_plane.workspaces import (
     Membership,
     Role,
@@ -43,10 +59,13 @@ from loop_control_plane.workspaces import (
 )
 
 __all__ = [
+    "DAY_MS",
     "ApiKey",
     "ApiKeyError",
     "ApiKeyService",
     "AuthError",
+    "BillingError",
+    "BillingService",
     "BuildResult",
     "Deploy",
     "DeployArtifact",
@@ -60,13 +79,22 @@ __all__ = [
     "InMemoryImageBuilder",
     "InMemoryImageRegistry",
     "InMemoryKubeClient",
+    "InMemoryStripe",
     "IssuedApiKey",
     "KubeClient",
     "Membership",
     "Role",
+    "StripeClient",
+    "StripeCustomer",
+    "StripeInvoice",
+    "StripeUsageRecord",
     "TokenVerifier",
+    "UsageEvent",
+    "UsageLedger",
+    "UsageRollup",
     "Workspace",
     "WorkspaceError",
     "WorkspaceService",
+    "aggregate",
     "has_scope",
 ]
