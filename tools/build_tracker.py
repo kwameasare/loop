@@ -744,13 +744,24 @@ STORIES: list[Story] = [
     Story(
         "S018",
         "Slack channel adapter (Block Kit, slash command, threaded)",
-        "Eng #1",
+        "GitHub Copilot",
         "S0",
         "E6",
         5,
         "P0",
-        "Not started",
-        "Week 4",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s018-slack-channel. "
+            "Skill: skills/coding/implement-channel-adapter.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T09:30Z (GitHub Copilot). "
+            "Open questions: none -- ship loop-channels-slack with HMAC "
+            "request verifier (v0:timestamp:body), event/command parsers, "
+            "Block Kit formatter, thread_ts -> conversation_id mapping. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S019",
