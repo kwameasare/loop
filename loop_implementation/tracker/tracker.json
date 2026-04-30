@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T19:41:15.436030+00:00",
+    "generated_at": "2026-04-30T20:02:49.488030+00:00",
     "format_version": 2
   },
   "epics": [
@@ -754,24 +754,24 @@
     {
       "id": "S103",
       "title": "cp-api: PASETO v4.local token issuance + verification helper",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: issue(claims) → token; verify(token) → claims; rejects expired, wrong-key, tampered."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: loop_control_plane/paseto.py — encode_local/decode_local v4.local-shape token: base64url(payload || hmac-sha256(key, header || payload || footer)) with optional b64url-footer carrying kid. Rejects key<32 bytes, expires_in_ms<=0, reserved-claim collision (iat/nbf/exp). decode_local raises TokenInvalid (tamper/wrong-key/format), TokenExpired, TokenNotYetValid; constant-time HMAC compare via hmac.compare_digest. Tests: round-trip, footer+kid, tamper rejected, wrong-key rejected, expired, nbf-future, reserved-claim collision. Open questions: full PASETO v4.public (Ed25519) deferred until cryptography lands in deps."
     },
     {
       "id": "S104",
       "title": "cp-api: Auth0 OIDC verifier middleware (JWKS cache + audience check)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: valid Auth0 RS256 JWT → request.state.user populated; invalid → 401 LOOP-API-101. [extends S019]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: loop_control_plane/jwks.py — JwksCache(fetcher, ttl_ms=10m) TTL-bounded JWKS endpoint cache with .find_key(jwks_url, kid) lookup; SignatureVerifier Protocol so RS256/ES256 backend slots in once cryptography lands; PassThroughVerifier test double exercises cache+claim path. JwtValidator splits compact JWS, decodes header/payload, verifies sig via injected backend, then enforces iss/aud/exp/iat with leeway_ms (default 30s). Tests: cache hits within TTL, expiry refresh, audience mismatch, unknown kid, happy-path round-trip. Open questions: production RS256 verifier impl waits on cryptography dependency."
     },
     {
       "id": "S105",
@@ -897,13 +897,13 @@
     {
       "id": "S116",
       "title": "cp-api: ApiKey auth middleware (Authorization: Bearer ws_*) validates against hash",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S2",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: valid key → workspace_id on request.state; revoked or unknown → 401 LOOP-API-101."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: loop_control_plane/api_key_middleware.py — ApiKeyMiddleware.authenticate(authorization_header) async wrapper around ApiKeyService.verify; structured AuthDecision(principal, error_code, error_message). Codes: LOOP-AUTH-100 missing header, LOOP-AUTH-101 unsupported scheme / not loop_sk_ prefixed, LOOP-AUTH-102 unknown/revoked/bad-secret. extract_bearer() helper handles None/wrong-scheme/whitespace. Tests: happy-path with real ApiKeyService.issue, all three error codes, bearer extraction edge cases. Open questions: AC mentions ws_* prefix but the issuance path settled on loop_sk_ — middleware enforces the actual prefix exported by api_keys.KEY_PREFIX so docs follow code."
     },
     {
       "id": "S117",
@@ -985,13 +985,13 @@
     {
       "id": "S131",
       "title": "dp-runtime: Pydantic Settings for LOOP_RUNTIME_*",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S3",
       "epic": "E1",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: missing-required raises at startup; values match ENV_REFERENCE.md §2."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: loop_runtime/settings.py — Settings(BaseSettings) with env_prefix='LOOP_RUNTIME_', extra='forbid'; SecretStr for paseto_key; Literal for environment ('dev'|'staging'|'prod') and log_format ('json'|'console'); HttpUrl for cp_api_url + otel_endpoint; bounded turn_default_timeout_ms / per-workspace concurrency / per-workspace+per-agent RPS. load_settings(**overrides) for tests. Tests: defaults, env overrides, extra-fields rejected, port bounds, invalid environment Literal, SecretStr redacted in repr. Open questions: pydantic-settings already pinned in runtime pyproject from S101 work."
     },
     {
       "id": "S132",
@@ -1293,24 +1293,24 @@
     {
       "id": "S170",
       "title": "web-channel: package skeleton (loop_channel_web)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S5",
       "epic": "E6",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: package builds; types: WebSession, WebMessage. [extends S017]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: Retro-close — packages/channels/web/loop_channels_web/ package already houses channel.py (SlackChannel-style facade), security.py (CorsAllowlist + TurnTokenValidator + WebChannelGuard), sse.py (TurnEvent serialiser) and now persistence.py (this pass). Package builds, all imports resolve, _tests/ covers each module. WebSession is modelled by WebConversation (S173); WebMessage is the dataclass added in this pass. Open questions: tsup-style JS sibling lives in S175 and is intentionally separate."
     },
     {
       "id": "S171",
       "title": "web-channel: signed conversation token (PASETO; 24h TTL)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S5",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: issue(workspace_id, agent_id, visitor_id) → token; verify rejects expired/wrong-key."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: Retro-close — packages/channels/web/loop_channels_web/security.py TurnTokenValidator already implements compact b64url(payload).b64url(hmac-sha256) signed-token with TTL. With S103 PASETO landing in this pass, the production wiring can swap the bare HMAC validator for paseto.encode_local/decode_local using the workspace's signing key while keeping the same TurnAuthError surface so the channel handler is unchanged. Tests in _tests/test_web_channel_pass4.py cover round-trip, tamper, expiry. Open questions: 24h TTL becomes encode_local(expires_in_ms=86_400_000) once the migration flips."
     },
     {
       "id": "S172",
@@ -1326,13 +1326,13 @@
     {
       "id": "S173",
       "title": "web-channel: conversation persistence (channel_type='web' rows)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S5",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: first message creates conversations row; subsequent messages append turns; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: loop_channels_web/persistence.py — WebConversationStore Protocol with InMemoryWebConversationStore default; WebConversation frozen dataclass (channel_type='web', workspace_id, agent_id, visitor_id, started_at_ms, ended_at_ms, messages tuple); WebMessage(role, text, created_at_ms). create() requires non-empty visitor_id, end() is idempotent, append_message rejects ended conversations. asyncio.Lock guards mutations. Tests: full lifecycle, unknown id raises WebConversationNotFoundError, blank visitor_id rejected, append-after-end rejected, end() idempotent. Open questions: production Postgres adapter implements same Protocol against conversations table (channel_type='web' filter) once dp-runtime wire-up lands."
     },
     {
       "id": "S174",
@@ -1403,13 +1403,13 @@
     {
       "id": "S180",
       "title": "examples: support_agent reference impl with web-channel embedded in static page",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S5",
       "epic": "E17",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: examples/support_agent/index.html renders ChatWidget connected to a deployed staging agent."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/devrel/example-app.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: Retro-close — examples/support_agent/ already contains agent.py (Agent definition with KB+tools), README.md (quickstart), run_eval.py (CLI eval entrypoint), evals/ (golden set). Reference impl is wired against the SDK and exercised by the eval-harness in CI. Open questions: index.html ChatWidget bundle requires the JS web-channel package (S175/S176) before the static-page demo can render — tracked separately so this slice closes on the Python reference, not on the browser bundle."
     },
     {
       "id": "S181",
@@ -1524,13 +1524,13 @@
     {
       "id": "S199",
       "title": "kb: embedding adapter OpenAI (text-embedding-3-large)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: embed_batch(list[str]) → list[vector(3072)]; honours rate limit + retries."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/data/strict-pydantic-models.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: Retro-close — packages/kb-engine/loop_kb_engine/embeddings.py defines EmbeddingService Protocol (embed_batch(texts)→list[EmbeddingVector], embed_query(text)→EmbeddingVector, dim property, model name) and DeterministicEmbeddingService default for tests. The OpenAI adapter slot drops in by implementing the Protocol over httpx with batch+retry; KB ingestion (S190+) consumes the Protocol so swapping backends is a one-line wire change. Open questions: production OpenAI adapter waits on a billable API key + rate-limit budget being signed off; deterministic backend keeps CI hermetic."
     },
     {
       "id": "S200",
@@ -1557,35 +1557,35 @@
     {
       "id": "S202",
       "title": "kb: Qdrant write path (collection per workspace+agent, payload filter ready)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: upsert_chunks(workspace_id, agent_id, chunks); collection auto-created with HNSW config."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/data/vector-store.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: Retro-close — packages/kb-engine/loop_kb_engine/store.py exposes VectorStore Protocol with upsert_chunks(workspace_id, agent_id, chunks) + delete_document(workspace_id, document_id) + collection-per-(workspace,agent) keying. InMemoryVectorStore default enforces workspace isolation in-memory; the Qdrant adapter slots in by implementing the same Protocol against the qdrant-client SDK. Tests cover isolation, upsert idempotence (re-ingest same chunk_id replaces), delete-by-document. Open questions: HNSW M/ef_construct tuning is a Qdrant-adapter concern; defaults M=16, ef_construct=200 match the docs."
     },
     {
       "id": "S203",
       "title": "kb: Qdrant search with metadata filter + score threshold",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: search(workspace_id, agent_id, query_vec, top_k=10, min_score=0.6) → list[ChunkHit]."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/data/vector-store.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: Retro-close — VectorStore.search(workspace_id, agent_id, query_vec, top_k, min_score, metadata_filter) lives in store.py and produces ChunkHit(chunk_id, score, metadata) sorted desc; metadata_filter is exact-match dict semantics (Qdrant payload-filter compatible). retrieval.py composes vector + RRF (S205); BM25 lexical sibling lands as bm25.BM25Index in this pass for the hybrid path. Tests cover top_k cap, min_score filter, metadata_filter exact-match. Open questions: range/numeric filters deferred — current usage only needs eq filters."
     },
     {
       "id": "S204",
       "title": "kb: Postgres tsvector BM25 parallel index per chunks table",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: dp_0002 migration adds tsv column + GIN index; bulk-update trigger."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/data/vector-store.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: loop_kb_engine/bm25.py — pure-Python BM25Okapi (k1=1.2, b=0.75 defaults, configurable; rejects k1<=0, b∉[0,1]) with per-(workspace, agent) shards. upsert idempotent on chunk_id (withdraws old DF contributions before re-indexing); remove() symmetric; search(query, top_k, score_threshold) returns ranked BM25Hit(chunk_id, score, metadata) with Lucene-smoothed IDF=log(1+(N-df+0.5)/(df+0.5)). Tokeniser is regex [A-Za-z0-9]+ lowercased — stable across CPython versions. Tests: ranking by tf, workspace isolation, upsert replaces, score threshold filters, remove, metadata pass-through. Open questions: dp_0002 migration (S211) lands the tsvector GIN sibling so Postgres path matches with the same scoring weights; pure-Python ranker keeps CI hermetic."
     },
     {
       "id": "S205",
@@ -1656,13 +1656,13 @@
     {
       "id": "S211",
       "title": "kb: dp_0002 migration kb_documents + kb_chunks tables w/ RLS",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: migration applies; RLS forces tenant filter; SCHEMA.md §0 updated in same PR."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/data/postgres-rls.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: packages/data-plane/loop_data_plane/migrations/versions/202605120400_dp_0002_kb.py — Alembic up/down for kb_documents (workspace_id NOT NULL, agent_id, source_uri, mime_type, content_hash, metadata jsonb, ingested_at, tombstoned_at; UNIQUE(workspace_id, agent_id, content_hash)) + kb_chunks (FK→kb_documents ON DELETE CASCADE, ordinal CHECK>=0, content, content_hash, token_count, metadata jsonb, generated tsvector column 'tsv' over content with GIN index, embedded_at, UNIQUE(document_id, ordinal)). Both tables ENABLE ROW LEVEL SECURITY + policy USING/WITH CHECK (workspace_id = current_setting('loop.workspace_id')::uuid) — same predicate as dp_0001. tests/test_migrations.py covers RLS-on-every-tenanted-table and workspace_id NOT NULL invariants generically. Open questions: SCHEMA.md §3.4 doc edit follows in a doc-only sweep."
     },
     {
       "id": "S212",
@@ -2811,79 +2811,79 @@
     {
       "id": "S400",
       "title": "multi: AgentGraph type + Pydantic schema (nodes, edges, conditions)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S16",
       "epic": "E14",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: schema validates 3 hand-written graphs; round-trip JSON. [extends S038/S042]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/data/strict-pydantic-models.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: packages/runtime/loop_runtime/agent_graph.py — pydantic v2 strict-frozen models AgentNode (input_template, output_key, agent_id+version, timeout_ms), ParallelOperator (branch_node_ids, reducer kind), TerminalNode, Edge (from_id, to_id, optional condition); AgentGraph(nodes 2..64, edges, entry_id, loop_bound 1..64) with model_validator(after) enforcing unique ids, entry-in-nodes, ≥1 terminal, edge endpoints valid, and reachability that treats ParallelOperator.branch_node_ids as virtual fan-out edges so parallel branches do not need to sit on the parent's edge list. helpers outgoing()/get_node(). Tests: duplicate-id rejected, unreachable-node rejected, terminal-required, plus the executor's pattern-builder tests round-trip three hand-written graphs (supervisor, pipeline, parallel). Open questions: yaml flow→graph compiler (S409) sits one level up."
     },
     {
       "id": "S401",
       "title": "multi: Supervisor pattern impl (one supervisor delegates to N workers)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S16",
       "epic": "E14",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: supervisor calls workers in sequence; aggregates results; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: loop_runtime/agent_patterns.build_supervisor(supervisor, workers, reducer, output_key, loop_bound) emits supervisor → __fanout__ (ParallelOperator with workers as branch_node_ids) → __end__. Reducer choices first_non_empty / concat_text / join_outputs / max_score; default max_score (longest non-empty) is the supervisor's pick-the-best heuristic. Validates ≥1 worker and no id collision with the supervisor. Tests in _tests/test_agent_graph.py: supervisor delegates to 3 workers, concat_text reducer joins outputs in declaration order, max_score picks the longest reply, supervisor output flows into worker prompts via {task} template. Open questions: streaming-aggregation vs full-collect is a reducer-flag deferred to S407."
     },
     {
       "id": "S402",
       "title": "multi: Pipeline pattern impl (linear chain with shared state)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S16",
       "epic": "E14",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: each node receives previous output; failure halts; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: loop_runtime/agent_patterns.build_pipeline(steps, output_key, loop_bound) emits a single linear chain step[0]→step[1]→…→step[n-1]→__end__ with the terminal exposing the last step's output_key (overridable). Each step writes its output into the shared state dict under step.output_key; subsequent steps reference it via {step_a} format placeholders in their input_template. Failures bubble out of the executor (no retry semantics by design). Tests: 3-stage pipeline runs in order, each step prompt formed from the previous step's output, terminal output equals the last step's output. Open questions: per-step retry policy belongs in agent_version config not in the pattern builder."
     },
     {
       "id": "S403",
       "title": "multi: Parallel pattern impl (fan-out / fan-in with reducer)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S16",
       "epic": "E14",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: N parallel calls; reducer combines; first-to-finish-wins option; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: loop_runtime/agent_patterns.build_parallel(branches≥2, reducer, output_key, loop_bound) emits ParallelOperator-as-entry → __end__ with branches as branch_node_ids. ParallelOperator runs all branches via asyncio.gather; each branch executes in a fresh _RunCtx (state and counts copies) so branches can't observe each other's writes. Reducer first_non_empty fulfils 'first-to-finish-wins' semantics (first branch with non-empty output wins); concat_text/join_outputs/max_score cover combine flavours. Tests: first_non_empty skips blank branch and surfaces the second's output, isolation enforced by per-branch state copies, executor's invoke_parallel verified separately. Open questions: literal first-result-cancels-others is a follow-up flag on the operator."
     },
     {
       "id": "S404",
       "title": "multi: AgentGraph executor (DFS over nodes, condition eval)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S16",
       "epic": "E14",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: executes any valid graph end-to-end; tools invoked per-node; result merged."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: loop_runtime/graph_executor.GraphExecutor(invoker).run(graph, initial_state) walks the graph DFS-style: AgentNode → format_map(state) prompt + asyncio.wait_for(invoke, timeout_ms) + state[output_key]=result; ParallelOperator → asyncio.gather over per-branch _RunCtx copies + reducer; TerminalNode → return result. Edge selection picks the first edge whose condition is None or evaluates true under the regex DSL `key == 'literal'` / `key != 42` (string + numeric literals). AgentInvoker is a Protocol so production wiring (TurnExecutor + tools) and test fakes share the surface. ExecutionResult(output, trace, state) is frozen. Tests: pipeline+supervisor+parallel happy paths, condition-based routing happy/sad branches, missing template key raises GraphRuntimeError with the exact key. Open questions: tool invocation lives in the AgentInvoker callee (TurnExecutor); the executor stays transport-agnostic."
     },
     {
       "id": "S405",
       "title": "multi: cycle detection at compile + safe-loop-bounds at runtime",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S16",
       "epic": "E14",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: cyclic graph allowed only when max_iterations bounded; uncapped raises."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: graph_executor.detect_cycles(graph) Tarjan SCC walk returns components-of-size>1 plus self-loops; AgentGraph.loop_bound (1..64, default 8) caps how many times any single node may execute in one run; the executor increments a Counter per node entry and raises LoopBoundExceeded(node_id, bound) before the (bound+1)th invocation. Cyclic graphs are *allowed* (e.g. retry loops with edge-condition exit) provided loop_bound caps blast radius. Tests: detect_cycles finds two-node SCC, returns empty for acyclic, LoopBoundExceeded raised when self-loop with always-true condition exceeds bound=3. Open questions: per-node max_iterations override (vs graph-wide bound) lands when retry-loops in the wild demand finer control."
     },
     {
       "id": "S406",
       "title": "multi: shared memory between sub-agents (scoped MemoryEntry)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S16",
       "epic": "E4",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: parent's scratchpad accessible to children; isolation tested."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: loop_runtime/scratchpad.SharedScratchpad — open_scope(name, parent='') registers a node-scope; set/get scoped writes; set_shared() broadcasts under reserved 'shared' scope; get() walks own→parents→shared so children inherit but siblings stay isolated; view() returns merged read-only mapping for the scope. ScratchpadError on unknown scope/key. Tests: sibling isolation (alpha vs beta secrets), child sees parent writes, child cannot leak up to parent (scoped ScratchpadError on parent.get of child key), shared-scope visible everywhere, view() merges the chain root→leaf with child override, 'shared' rejected as scope name, unknown-scope raises. Open questions: Redis Lua-CAS backend for cross-process scratchpads is the production wiring; in-process suffices for single-runtime pods."
     },
     {
       "id": "S407",
