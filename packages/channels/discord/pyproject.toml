@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "loop-channels-discord"
+version = "0.1.0"
+description = "Loop Discord channel adapter: Interactions API webhook + followup."
+license = { text = "Apache-2.0" }
+requires-python = ">=3.12"
+dependencies = [
+    "loop-channels-core",
+    "pydantic>=2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["loop_channels_discord"]

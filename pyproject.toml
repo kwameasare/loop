@@ -18,8 +18,10 @@ requires-python = ">=3.12"
 #   packages/channels/whatsapp (S023)
 members = [
     "packages/channels/core",
+    "packages/channels/discord",
     "packages/channels/email",
     "packages/channels/slack",
+    "packages/channels/teams",
     "packages/channels/telegram",
     "packages/channels/web",
     "packages/channels/whatsapp",
@@ -39,8 +41,10 @@ members = [
 [tool.uv.sources]
 loop = { workspace = true }
 loop-channels-core = { workspace = true }
+loop-channels-discord = { workspace = true }
 loop-channels-email = { workspace = true }
 loop-channels-slack = { workspace = true }
+loop-channels-teams = { workspace = true }
 loop-channels-telegram = { workspace = true }
 loop-channels-web = { workspace = true }
 loop-channels-whatsapp = { workspace = true }
@@ -59,8 +63,10 @@ loop-voice = { workspace = true }
 dev = [
     "loop",
     "loop-channels-core",
+    "loop-channels-discord",
     "loop-channels-email",
     "loop-channels-slack",
+    "loop-channels-teams",
     "loop-channels-telegram",
     "loop-channels-web",
     "loop-channels-whatsapp",

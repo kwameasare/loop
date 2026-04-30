@@ -1459,26 +1459,32 @@ STORIES: list[Story] = [
         "E6",
         8,
         "P2",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s040-discord-teams. "
+            "**Done.** "
+            "Branch: copilot/s040-discord-teams (merged). "
+            "PR: local-merge (ff to main). "
             "Skill: skills/coding/implement-channel-adapter.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T21:50Z (GitHub Copilot). "
-            "Open questions: none -- adding "
-            "packages/channels/discord (loop-channels-discord; "
-            "Interactions API webhook -> InboundEvent + "
-            "OutboundFrame -> followup webhook body) and "
-            "packages/channels/teams (loop-channels-teams; "
-            "Bot Framework activity payload -> InboundEvent "
-            "+ OutboundFrame -> reply activity body). "
-            "Both reuse loop-channels-core ChannelDispatcher "
-            "+ frames; no Discord/Teams SDK dependency. "
-            "channel-id keyed conversation index for both. "
-            "Tests in _tests covering parser, message "
-            "translation, round-trip, requires-start. "
-            "Blockers: none. Commits: claim."
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T22:05Z (GitHub Copilot). "
+            "Open questions: none. "
+            "Shipped two channel packages mirroring the "
+            "S037 shape: loop-channels-discord parses "
+            "Interactions API webhooks (APPLICATION_COMMAND "
+            "+ MESSAGE_COMPONENT, drops PING) into "
+            "InboundEvent and emits followup-message "
+            "bodies (ephemeral flag on errors); "
+            "loop-channels-teams parses Bot Framework "
+            "message activities into InboundEvent and "
+            "emits reply Activity bodies with replyToId. "
+            "Channel-id keyed conversation index for "
+            "Discord, conversation-id keyed for Teams; "
+            "asyncio.Lock guarded. Tests cover parse, "
+            "frame translation, round-trip, "
+            "channel-id reuse, requires-start "
+            "(suite 265 -> 283; +18). Studio vitest "
+            "still 41/41. ruff clean. Blockers: none. "
+            "Commits: claim, channels (substance), close."
         ),
     ),
     Story(

@@ -6,8 +6,10 @@ requires-python = ">=3.12"
 members = [
     "loop",
     "loop-channels-core",
+    "loop-channels-discord",
     "loop-channels-email",
     "loop-channels-slack",
+    "loop-channels-teams",
     "loop-channels-telegram",
     "loop-channels-web",
     "loop-channels-whatsapp",
@@ -384,6 +386,21 @@ dependencies = [
 requires-dist = [{ name = "pydantic", specifier = ">=2" }]
 
 [[package]]
+name = "loop-channels-discord"
+version = "0.1.0"
+source = { editable = "packages/channels/discord" }
+dependencies = [
+    { name = "loop-channels-core" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "loop-channels-core", editable = "packages/channels/core" },
+    { name = "pydantic", specifier = ">=2" },
+]
+
+[[package]]
 name = "loop-channels-email"
 version = "0.1.0"
 source = { editable = "packages/channels/email" }
@@ -402,6 +419,21 @@ requires-dist = [
 name = "loop-channels-slack"
 version = "0.1.0"
 source = { editable = "packages/channels/slack" }
+dependencies = [
+    { name = "loop-channels-core" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "loop-channels-core", editable = "packages/channels/core" },
+    { name = "pydantic", specifier = ">=2" },
+]
+
+[[package]]
+name = "loop-channels-teams"
+version = "0.1.0"
+source = { editable = "packages/channels/teams" }
 dependencies = [
     { name = "loop-channels-core" },
     { name = "pydantic" },
@@ -610,8 +642,10 @@ dev = [
     { name = "alembic" },
     { name = "loop" },
     { name = "loop-channels-core" },
+    { name = "loop-channels-discord" },
     { name = "loop-channels-email" },
     { name = "loop-channels-slack" },
+    { name = "loop-channels-teams" },
     { name = "loop-channels-telegram" },
     { name = "loop-channels-web" },
     { name = "loop-channels-whatsapp" },
@@ -642,8 +676,10 @@ dev = [
     { name = "alembic", specifier = ">=1.13" },
     { name = "loop", editable = "packages/sdk-py" },
     { name = "loop-channels-core", editable = "packages/channels/core" },
+    { name = "loop-channels-discord", editable = "packages/channels/discord" },
     { name = "loop-channels-email", editable = "packages/channels/email" },
     { name = "loop-channels-slack", editable = "packages/channels/slack" },
+    { name = "loop-channels-teams", editable = "packages/channels/teams" },
     { name = "loop-channels-telegram", editable = "packages/channels/telegram" },
     { name = "loop-channels-web", editable = "packages/channels/web" },
     { name = "loop-channels-whatsapp", editable = "packages/channels/whatsapp" },
