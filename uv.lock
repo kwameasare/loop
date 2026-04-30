@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 members = [
     "loop",
     "loop-channels-core",
+    "loop-channels-slack",
     "loop-channels-web",
     "loop-control-plane",
     "loop-data-plane",
@@ -379,6 +380,21 @@ dependencies = [
 requires-dist = [{ name = "pydantic", specifier = ">=2" }]
 
 [[package]]
+name = "loop-channels-slack"
+version = "0.1.0"
+source = { editable = "packages/channels/slack" }
+dependencies = [
+    { name = "loop-channels-core" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "loop-channels-core", editable = "packages/channels/core" },
+    { name = "pydantic", specifier = ">=2" },
+]
+
+[[package]]
 name = "loop-channels-web"
 version = "0.1.0"
 source = { editable = "packages/channels/web" }
@@ -532,6 +548,7 @@ dev = [
     { name = "alembic" },
     { name = "loop" },
     { name = "loop-channels-core" },
+    { name = "loop-channels-slack" },
     { name = "loop-channels-web" },
     { name = "loop-control-plane" },
     { name = "loop-data-plane" },
@@ -559,6 +576,7 @@ dev = [
     { name = "alembic", specifier = ">=1.13" },
     { name = "loop", editable = "packages/sdk-py" },
     { name = "loop-channels-core", editable = "packages/channels/core" },
+    { name = "loop-channels-slack", editable = "packages/channels/slack" },
     { name = "loop-channels-web", editable = "packages/channels/web" },
     { name = "loop-control-plane", editable = "packages/control-plane" },
     { name = "loop-data-plane", editable = "packages/data-plane" },

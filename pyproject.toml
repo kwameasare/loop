@@ -18,6 +18,7 @@ requires-python = ">=3.12"
 #   packages/channels/whatsapp (S023)
 members = [
     "packages/channels/core",
+    "packages/channels/slack",
     "packages/channels/web",
     "packages/control-plane",
     "packages/data-plane",
@@ -34,6 +35,7 @@ members = [
 [tool.uv.sources]
 loop = { workspace = true }
 loop-channels-core = { workspace = true }
+loop-channels-slack = { workspace = true }
 loop-channels-web = { workspace = true }
 loop-runtime = { workspace = true }
 loop-control-plane = { workspace = true }
@@ -49,6 +51,7 @@ loop-voice = { workspace = true }
 dev = [
     "loop",
     "loop-channels-core",
+    "loop-channels-slack",
     "loop-channels-web",
     "loop-runtime",
     "loop-control-plane",
