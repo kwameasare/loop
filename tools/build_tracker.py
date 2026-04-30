@@ -346,13 +346,22 @@ STORIES: list[Story] = [
     Story(
         "S004",
         "Runtime package skeleton; AgentEvent/AgentResponse/Turn types",
-        "Eng #1",
+        "GitHub Copilot",
         "S0",
         "E1",
         5,
         "P0",
-        "Not started",
-        "Week 1",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s004-runtime-types. "
+            "Skill: skills/coding/implement-runtime-feature.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T01:00Z (GitHub Copilot). "
+            "Open questions: none — formalizing existing scaffold per ARCHITECTURE.md §3.3. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S005",

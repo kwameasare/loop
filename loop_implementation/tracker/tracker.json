@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T00:51:42.795753+00:00",
+    "generated_at": "2026-04-30T00:53:00.250542+00:00",
     "format_version": 2
   },
   "epics": [
@@ -204,13 +204,13 @@
     {
       "id": "S004",
       "title": "Runtime package skeleton; AgentEvent/AgentResponse/Turn types",
-      "owner": "Eng #1",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E1",
       "points": 5,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "Week 1"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s004-runtime-types. Skill: skills/coding/implement-runtime-feature.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T01:00Z (GitHub Copilot). Open questions: none — formalizing existing scaffold per ARCHITECTURE.md §3.3. Blockers: none. Commits: claim."
     },
     {
       "id": "S005",
