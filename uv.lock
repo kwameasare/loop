@@ -5,6 +5,8 @@ requires-python = ">=3.12"
 [manifest]
 members = [
     "loop",
+    "loop-channels-core",
+    "loop-channels-web",
     "loop-control-plane",
     "loop-data-plane",
     "loop-gateway",
@@ -366,6 +368,32 @@ requires-dist = [
 ]
 
 [[package]]
+name = "loop-channels-core"
+version = "0.1.0"
+source = { editable = "packages/channels/core" }
+dependencies = [
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pydantic", specifier = ">=2" }]
+
+[[package]]
+name = "loop-channels-web"
+version = "0.1.0"
+source = { editable = "packages/channels/web" }
+dependencies = [
+    { name = "loop-channels-core" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "loop-channels-core", editable = "packages/channels/core" },
+    { name = "pydantic", specifier = ">=2" },
+]
+
+[[package]]
 name = "loop-control-plane"
 version = "0.1.0"
 source = { editable = "packages/control-plane" }
@@ -503,6 +531,8 @@ source = { virtual = "." }
 dev = [
     { name = "alembic" },
     { name = "loop" },
+    { name = "loop-channels-core" },
+    { name = "loop-channels-web" },
     { name = "loop-control-plane" },
     { name = "loop-data-plane" },
     { name = "loop-gateway" },
@@ -528,6 +558,8 @@ dev = [
 dev = [
     { name = "alembic", specifier = ">=1.13" },
     { name = "loop", editable = "packages/sdk-py" },
+    { name = "loop-channels-core", editable = "packages/channels/core" },
+    { name = "loop-channels-web", editable = "packages/channels/web" },
     { name = "loop-control-plane", editable = "packages/control-plane" },
     { name = "loop-data-plane", editable = "packages/data-plane" },
     { name = "loop-gateway", editable = "packages/gateway" },
