@@ -414,13 +414,22 @@ STORIES: list[Story] = [
     Story(
         "S008",
         "TurnExecutor reasoning loop v0 (no tools yet)",
-        "Eng #1",
+        "GitHub Copilot",
         "S0",
         "E1",
         8,
         "P0",
-        "Not started",
-        "Week 2",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s008-turn-executor. "
+            "Skill: skills/coding/implement-runtime-feature.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T03:30Z (GitHub Copilot). "
+            "Open questions: none -- single-pass executor over the S007 gateway client. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S009",
