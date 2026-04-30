@@ -330,13 +330,21 @@ STORIES: list[Story] = [
     Story(
         "S003",
         "docker-compose: Postgres, Redis, Qdrant, NATS, MinIO, ClickHouse, OTel",
-        "Eng #2",
+        "GitHub Copilot",
         "S0",
         "E13",
         5,
         "P0",
-        "Not started",
-        "Week 1",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s003-docker-compose. "
+            "Skill: skills/_base/SKILL_ROUTER.md (no infra-stack-specific skill — HANDBOOK §1.3 governs). "
+            "Last step: 1/6 (claim). "
+            "Heartbeat: 2026-04-30T00:00Z (GitHub Copilot). "
+            "Open questions: none. Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S004",
