@@ -1,0 +1,19 @@
+Loop {{ .Chart.AppVersion }} self-host install -- release {{ .Release.Name }}.
+
+To access the API gateway from inside the cluster:
+
+  http://{{ include "loop.fullname" . }}-gateway:{{ .Values.gateway.service.port }}
+
+{{- if .Values.ingress.enabled }}
+Externally via ingress:
+
+  https://{{ .Values.ingress.host }}/v1/cp
+  https://{{ .Values.ingress.host }}/v1/runtime
+  https://{{ .Values.ingress.host }}/v1/llm
+{{- else }}
+
+Ingress is disabled. Run `kubectl port-forward svc/{{ include "loop.fullname" . }}-gateway {{ .Values.gateway.service.port }}` to reach the gateway from your laptop.
+{{- end }}
+
+Replace .Values.externals.* with managed-service URIs to make the
+install cloud-portable -- see CLOUD_PORTABILITY.md.

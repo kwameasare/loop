@@ -1,0 +1,87 @@
+# Loop self-host chart values.
+#
+# Every external service URI lives under `.externals` -- swap these
+# for managed equivalents (RDS, ElastiCache, MSK, etc.) per
+# loop_implementation/architecture/CLOUD_PORTABILITY.md. The default
+# values point at in-cluster fakes so `helm install loop ./infra/helm/loop`
+# brings up a usable single-node sandbox.
+
+global:
+  imageRegistry: ghcr.io/loop
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets: []
+
+controlPlane:
+  enabled: true
+  image:
+    repository: control-plane
+    tag: "0.1.0"
+  replicaCount: 2
+  service:
+    port: 8080
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  env: {}
+
+runtime:
+  enabled: true
+  image:
+    repository: runtime
+    tag: "0.1.0"
+  replicaCount: 3
+  service:
+    port: 8081
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+  env: {}
+
+gateway:
+  enabled: true
+  image:
+    repository: gateway
+    tag: "0.1.0"
+  replicaCount: 2
+  service:
+    port: 8082
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  env: {}
+
+externals:
+  postgresUrl: "postgresql://loop:loop@loop-postgres:5432/loop"
+  redisUrl: "redis://loop-redis:6379/0"
+  qdrantUrl: "http://loop-qdrant:6333"
+  natsUrl: "nats://loop-nats:4222"
+  s3Endpoint: "http://loop-minio:9000"
+  otelEndpoint: "http://loop-otel-collector:4318"
+
+secrets:
+  llmApiKey: ""
+  jwtSigningKey: ""
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  host: loop.local
+  tls: []
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}

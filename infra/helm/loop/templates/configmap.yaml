@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "loop.fullname" . }}-config
+  labels:
+    {{- include "loop.labels" . | nindent 4 }}
+data:
+  POSTGRES_URL: {{ .Values.externals.postgresUrl | quote }}
+  REDIS_URL: {{ .Values.externals.redisUrl | quote }}
+  QDRANT_URL: {{ .Values.externals.qdrantUrl | quote }}
+  NATS_URL: {{ .Values.externals.natsUrl | quote }}
+  S3_ENDPOINT: {{ .Values.externals.s3Endpoint | quote }}
+  OTELCOL_ENDPOINT: {{ .Values.externals.otelEndpoint | quote }}

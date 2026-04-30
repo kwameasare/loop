@@ -1,0 +1,19 @@
+apiVersion: v2
+name: loop
+description: |
+  Loop self-host chart -- control-plane, runtime, and LLM gateway,
+  feature-parity with the managed cloud offering.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.27.0-0"
+keywords:
+  - loop
+  - agent-platform
+  - llm
+home: https://example.invalid/loop
+sources:
+  - https://example.invalid/loop
+maintainers:
+  - name: Loop Engineering
+    email: eng@example.invalid
