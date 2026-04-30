@@ -8,6 +8,7 @@ members = [
     "loop-channels-core",
     "loop-channels-slack",
     "loop-channels-web",
+    "loop-channels-whatsapp",
     "loop-control-plane",
     "loop-data-plane",
     "loop-eval",
@@ -411,6 +412,21 @@ requires-dist = [
 ]
 
 [[package]]
+name = "loop-channels-whatsapp"
+version = "0.1.0"
+source = { editable = "packages/channels/whatsapp" }
+dependencies = [
+    { name = "loop-channels-core" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "loop-channels-core", editable = "packages/channels/core" },
+    { name = "pydantic", specifier = ">=2" },
+]
+
+[[package]]
 name = "loop-control-plane"
 version = "0.1.0"
 source = { editable = "packages/control-plane" }
@@ -564,6 +580,7 @@ dev = [
     { name = "loop-channels-core" },
     { name = "loop-channels-slack" },
     { name = "loop-channels-web" },
+    { name = "loop-channels-whatsapp" },
     { name = "loop-control-plane" },
     { name = "loop-data-plane" },
     { name = "loop-eval" },
@@ -593,6 +610,7 @@ dev = [
     { name = "loop-channels-core", editable = "packages/channels/core" },
     { name = "loop-channels-slack", editable = "packages/channels/slack" },
     { name = "loop-channels-web", editable = "packages/channels/web" },
+    { name = "loop-channels-whatsapp", editable = "packages/channels/whatsapp" },
     { name = "loop-control-plane", editable = "packages/control-plane" },
     { name = "loop-data-plane", editable = "packages/data-plane" },
     { name = "loop-eval", editable = "packages/eval-harness" },

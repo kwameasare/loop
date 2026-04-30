@@ -20,6 +20,7 @@ members = [
     "packages/channels/core",
     "packages/channels/slack",
     "packages/channels/web",
+    "packages/channels/whatsapp",
     "packages/control-plane",
     "packages/data-plane",
     "packages/eval-harness",
@@ -38,6 +39,7 @@ loop = { workspace = true }
 loop-channels-core = { workspace = true }
 loop-channels-slack = { workspace = true }
 loop-channels-web = { workspace = true }
+loop-channels-whatsapp = { workspace = true }
 loop-runtime = { workspace = true }
 loop-control-plane = { workspace = true }
 loop-eval = { workspace = true }
@@ -55,6 +57,7 @@ dev = [
     "loop-channels-core",
     "loop-channels-slack",
     "loop-channels-web",
+    "loop-channels-whatsapp",
     "loop-runtime",
     "loop-control-plane",
     "loop-data-plane",
