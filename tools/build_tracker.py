@@ -491,19 +491,23 @@ STORIES: list[Story] = [
         "E1",
         5,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s012-reasoning-loop. "
-            "Skill: skills/coding/implement-runtime-feature.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T05:30Z (GitHub Copilot). "
-            "Open questions: none -- extend TurnExecutor to dispatch tool_calls "
-            "in parallel via asyncio.gather against loop_mcp.ToolRegistry, then "
-            "reinvoke the gateway with tool_results until the model returns no "
-            "more tool calls or max_iterations is hit. "
-            "Blockers: none. "
-            "Commits: claim."
+            "Done. TurnExecutor now drives N reasoning iterations against the "
+            "gateway, dispatching every tool call the model emits in parallel "
+            "via asyncio.gather and re-streaming once tool messages are "
+            "appended. Cap = AgentConfig.budget.max_iterations (default 4); "
+            "cost + wall-clock budgets still enforced. Wire types extended "
+            "additively (ADR-022 compat): ToolCall, ToolSpec, "
+            "GatewayMessage tool fields + role='tool', "
+            "GatewayRequest.tools, GatewayDone.tool_calls. TurnEvent gains "
+            "'tool_call' and 'tool_result' frames. Tools are passed via "
+            "execute(..., tools=registry) so the runtime never imports "
+            "loop_mcp. Per-iteration request_id '<base>:i<n>' keeps retries "
+            "idempotent. Degrade reasons: tool_calls_without_registry, "
+            "max_iterations; tool exceptions surface as tool_result errors "
+            "without aborting siblings. 12 runtime tests, 67 workspace tests, "
+            "ruff + pyright clean."
         ),
     ),
     Story(
