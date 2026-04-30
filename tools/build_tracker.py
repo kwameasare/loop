@@ -396,13 +396,22 @@ STORIES: list[Story] = [
     Story(
         "S007",
         "LLM Gateway client: streaming OpenAI + Anthropic",
-        "Eng #1",
+        "GitHub Copilot",
         "S0",
         "E2",
         8,
         "P0",
-        "Not started",
-        "Week 2",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s007-llm-gateway. "
+            "Skill: skills/coding/implement-llm-gateway-change.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T03:00Z (GitHub Copilot). "
+            "Open questions: none -- streaming-first provider skeleton with cost.py + 5% markup. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S008",
