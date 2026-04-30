@@ -18,6 +18,8 @@ requires-python = ">=3.12"
 #   packages/channels/slack    (S018)
 #   packages/channels/whatsapp (S023)
 members = [
+    "packages/control-plane",
+    "packages/data-plane",
     "packages/runtime",
     "packages/sdk-py",
 ]
@@ -25,17 +27,24 @@ members = [
 [tool.uv.sources]
 loop = { workspace = true }
 loop-runtime = { workspace = true }
+loop-control-plane = { workspace = true }
+loop-data-plane = { workspace = true }
 
 [dependency-groups]
 dev = [
     "loop",
     "loop-runtime",
+    "loop-control-plane",
+    "loop-data-plane",
     "ruff>=0.6.0",
     "pyright>=1.1.380",
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
     "pytest-cov>=5.0",
     "pyyaml>=6.0",
+    "alembic>=1.13",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
 ]
 
 [tool.ruff]

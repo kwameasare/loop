@@ -1,0 +1,4 @@
+from loop_data_plane.migrations._runner import main
+
+if __name__ == "__main__":
+    main()
