@@ -23,6 +23,7 @@ from typing import Protocol
 from uuid import UUID, uuid4
 
 import structlog
+from loop.observability import tracer
 from loop.types import AgentEvent, AgentResponse, ContentPart, TurnEvent
 from loop_gateway import (
     GatewayDelta,
@@ -119,23 +120,45 @@ class TurnExecutor:
         cost_usd = 0.0
         degrade_reason: str | None = None
 
-        async for gw_event in self._gateway.stream(gw_request):
-            # Time-budget check at every event boundary.
-            if time.monotonic() - started >= agent.budget.max_runtime_seconds:
-                degrade_reason = "timeout"
-                break
+        # One LLM-kind span per turn; cost/latency/degrade attributes are
+        # set as we learn them. Dashboards rely on `loop.span.kind=llm`.
+        with tracer.span(
+            "turn.execute",
+            kind="llm",
+            attrs={
+                "workspace_id": str(event.workspace_id),
+                "conversation_id": str(event.conversation_id),
+                "turn_id": str(turn_id),
+                "agent_id": agent.name,
+                "model": agent.model,
+            },
+        ) as span:
+            async for gw_event in self._gateway.stream(gw_request):
+                # Time-budget check at every event boundary.
+                if time.monotonic() - started >= agent.budget.max_runtime_seconds:
+                    degrade_reason = "timeout"
+                    break
 
-            if isinstance(gw_event, GatewayDelta):
-                accumulated_text.append(gw_event.text)
-                yield TurnEvent(type="token", payload={"text": gw_event.text}, ts=_now())
-            elif isinstance(gw_event, GatewayDone):
-                cost_usd = gw_event.cost_usd
-                if cost_usd > agent.budget.max_cost_usd:
-                    degrade_reason = "budget"
-                break
-            elif isinstance(gw_event, GatewayError):
-                degrade_reason = f"gateway:{gw_event.code}"
-                break
+                if isinstance(gw_event, GatewayDelta):
+                    accumulated_text.append(gw_event.text)
+                    yield TurnEvent(
+                        type="token", payload={"text": gw_event.text}, ts=_now()
+                    )
+                elif isinstance(gw_event, GatewayDone):
+                    cost_usd = gw_event.cost_usd
+                    span.set_attr("input_tokens", gw_event.usage.input_tokens)
+                    span.set_attr("output_tokens", gw_event.usage.output_tokens)
+                    if cost_usd > agent.budget.max_cost_usd:
+                        degrade_reason = "budget"
+                    break
+                elif isinstance(gw_event, GatewayError):
+                    degrade_reason = f"gateway:{gw_event.code}"
+                    span.record_error_code(gw_event.code)
+                    break
+
+            span.set_attr("cost_usd", cost_usd)
+            if degrade_reason is not None:
+                span.set_attr("loop.turn.degrade_reason", degrade_reason)
 
         if degrade_reason is not None:
             yield TurnEvent(

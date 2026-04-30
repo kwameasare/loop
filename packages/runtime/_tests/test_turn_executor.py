@@ -146,3 +146,33 @@ async def test_gateway_error_emits_degrade_then_complete() -> None:
     types = [e.type for e in out]
     assert types == ["degrade", "complete"]
     assert out[0].payload["reason"].startswith("gateway:GW-PARSE")
+
+
+@pytest.mark.asyncio
+async def test_emits_otel_span_with_required_attrs() -> None:
+    from loop.observability import reset_for_test
+
+    exporter = reset_for_test()
+    gw = _FakeGateway(
+        [
+            GatewayDelta(text="hi"),
+            GatewayDone(usage=Usage(input_tokens=7, output_tokens=3), cost_usd=0.02),
+        ]
+    )
+    executor = TurnExecutor(gateway=gw)
+    event = _event()
+    [_ async for _ in executor.execute(_agent(), event)]
+
+    finished = exporter.get_finished_spans()
+    assert len(finished) == 1
+    span = finished[0]
+    assert span.name == "turn.execute"
+    attrs = dict(span.attributes or {})
+    assert attrs["loop.span.kind"] == "llm"
+    assert attrs["workspace_id"] == str(event.workspace_id)
+    assert attrs["conversation_id"] == str(event.conversation_id)
+    assert attrs["agent_id"] == "support"
+    assert attrs["model"] == "gpt-4o-mini"
+    assert attrs["input_tokens"] == 7
+    assert attrs["output_tokens"] == 3
+    assert attrs["cost_usd"] == pytest.approx(0.02)
