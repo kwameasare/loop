@@ -486,13 +486,25 @@ STORIES: list[Story] = [
     Story(
         "S012",
         "Multi-iteration reasoning loop with parallel tool dispatch",
-        "Eng #1",
+        "GitHub Copilot",
         "S0",
         "E1",
         5,
         "P0",
-        "Not started",
-        "Week 3",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s012-reasoning-loop. "
+            "Skill: skills/coding/implement-runtime-feature.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T05:30Z (GitHub Copilot). "
+            "Open questions: none -- extend TurnExecutor to dispatch tool_calls "
+            "in parallel via asyncio.gather against loop_mcp.ToolRegistry, then "
+            "reinvoke the gateway with tool_results until the model returns no "
+            "more tool calls or max_iterations is hit. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S013",
