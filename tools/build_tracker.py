@@ -977,21 +977,27 @@ STORIES: list[Story] = [
         "E8",
         5,
         "P1",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s026-eval-replay-capture. "
-            "Skill: skills/coding/implement-eval-scorer.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T15:00Z (GitHub Copilot). "
-            "Open questions: none -- adding loop_eval.replay module "
-            "with FailedTurn pydantic model, deterministic sampling "
-            "policy keyed on (workspace_id,request_id), "
-            "InMemoryReplaySink + Protocol, and to_samples() to feed "
-            "captured failures back into EvalRunner. PII redaction "
-            "hook left as injected callable. "
-            "Blockers: none. "
-            "Commits: claim."
+            "PR#S026. Branch: copilot/s026-eval-replay-capture "
+            "(merged). loop_eval.replay introduces FailedTurn "
+            "(pydantic v2 strict, frozen) describing one captured "
+            "prod failure (workspace_id, agent_id, request_id, "
+            "input/output_text, failure_reason, timestamp_ms, "
+            "metadata). ReplaySink Protocol + InMemoryReplaySink. "
+            "should_capture(workspace_id, request_id, sample_rate) "
+            "is deterministic via sha256-bucketed mapping so retries "
+            "of the same key make the same decision. capture() "
+            "helper applies sampling + optional Redactor (Callable) "
+            "before appending. to_samples() projects captures into "
+            "loop_eval.Sample rows feeding EvalRunner -- sample id "
+            "is replay-{request_id} so re-captures don't "
+            "double-count. Re-exported from loop_eval. 7 new tests "
+            "(determinism, distribution stays inside +/-5pp of "
+            "sample_rate over 1k draws, redactor wiring, sink "
+            "isolation). Full suite 177 passed (was 170). "
+            "ruff + pyright clean. Skill: skills/coding/"
+            "implement-eval-scorer.md."
         ),
     ),
     Story(

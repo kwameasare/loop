@@ -11,6 +11,14 @@ Public surface:
 """
 
 from loop_eval.models import EvalReport, Run, Sample, Score
+from loop_eval.replay import (
+    FailedTurn,
+    InMemoryReplaySink,
+    ReplaySink,
+    capture,
+    should_capture,
+    to_samples,
+)
 from loop_eval.runner import AgentFn, EvalRunner
 from loop_eval.scorers import (
     JudgeFn,
@@ -27,15 +35,21 @@ __all__ = [
     "AgentFn",
     "EvalReport",
     "EvalRunner",
+    "FailedTurn",
+    "InMemoryReplaySink",
     "JudgeFn",
+    "ReplaySink",
     "Run",
     "Sample",
     "Score",
     "Scorer",
+    "capture",
     "cost_scorer",
     "exact_match",
     "json_schema_scorer",
     "latency_scorer",
     "llm_judge",
     "regex_match",
+    "should_capture",
+    "to_samples",
 ]
