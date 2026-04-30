@@ -1358,27 +1358,29 @@ STORIES: list[Story] = [
         "E6",
         8,
         "P1",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s037-email-telegram. "
+            "**Done.** "
+            "Branch: copilot/s037-email-telegram (merged). "
             "Skill: skills/coding/implement-channel-adapter.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T20:30Z (GitHub Copilot). "
-            "Open questions: none -- adding two new "
-            "channel packages: packages/channels/email "
-            "(loop_channels_email; SES inbound MIME -> "
-            "InboundEvent + outbound frame -> SES SendEmail "
-            "request body; thread-id keyed conversation index) "
-            "and packages/channels/telegram "
-            "(loop_channels_telegram; Bot API webhook update "
-            "-> InboundEvent + outbound frame -> sendMessage "
-            "request body; chat-id keyed conversation index). "
-            "Both reuse the existing loop-channels-core "
-            "frames + ChannelDispatcher Protocol -- no SES / "
-            "Telegram SDK dependency, just the wire-shape "
-            "translation. Blockers: none. "
-            "Commits: claim."
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T20:55Z (GitHub Copilot). "
+            "Open questions: none. "
+            "Shipped two new channel packages: "
+            "packages/channels/email (loop-channels-email -- "
+            "SES inbound JSON -> InboundEvent with thread-id "
+            "indexing + quoted-reply stripping; OutboundFrame "
+            "-> SES SendEmail body with In-Reply-To/References "
+            "headers; streaming tokens dropped) and "
+            "packages/channels/telegram (loop-channels-telegram "
+            "-- Bot API webhook update -> InboundEvent with "
+            "chat-id indexing; OutboundFrame -> sendMessage "
+            "body with reply_to_message_id). Both reuse "
+            "loop-channels-core frames + ChannelDispatcher "
+            "Protocol; no SES / Telegram SDK dependency. "
+            "Tests: 9 (email) + 10 (telegram) = 19 new; "
+            "suite 231 -> 250. Blockers: none. "
+            "Commits: claim, channels (substance), close."
         ),
     ),
     Story(
