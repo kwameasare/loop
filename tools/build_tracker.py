@@ -1245,8 +1245,21 @@ STORIES: list[Story] = [
         "E17",
         3,
         "P0",
-        "Not started",
-        "Week 6",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s034-design-partners. "
+            "Skill: skills/meta/update-tracker.md. "
+            "Last step: 1/3 (claim). "
+            "Heartbeat: 2026-04-30T19:00Z (GitHub Copilot). "
+            "Open questions: none -- adding "
+            "loop_implementation/operations/DESIGN_PARTNERS.md "
+            "with the three pilot slots (placeholders P1/P2/P3 "
+            "with intake checklist), Friday weekly office-hour "
+            "cadence, and the feedback intake link convention. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S035",
