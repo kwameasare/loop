@@ -5,6 +5,19 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class ToolInvocation(BaseModel):
+    """One tool call observed during an agent run, or expected by a sample.
+
+    Args are kept as a JSON-encoded string so the model stays hashable and the
+    type signature remains ``frozen+strict`` without resorting to immutable
+    deep mappings. Scorers comparing arg sets parse the JSON on demand.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+    name: str = Field(min_length=1)
+    args_json: str = "{}"
+
+
 class Sample(BaseModel):
     """One row of an eval dataset."""
 
@@ -12,6 +25,7 @@ class Sample(BaseModel):
     id: str = Field(min_length=1)
     input: str
     expected: str | None = None
+    expected_tool_calls: tuple[ToolInvocation, ...] = ()
     metadata: dict[str, str] = Field(default_factory=dict)
 
 
@@ -23,6 +37,7 @@ class Run(BaseModel):
     output: str
     latency_ms: float = Field(ge=0)
     cost_usd: float = Field(ge=0)
+    tool_calls: tuple[ToolInvocation, ...] = ()
     metadata: dict[str, str] = Field(default_factory=dict)
 
 
@@ -49,4 +64,4 @@ class EvalReport(BaseModel):
     total_cost_usd: float = Field(ge=0)
 
 
-__all__ = ["EvalReport", "Run", "Sample", "Score"]
+__all__ = ["EvalReport", "Run", "Sample", "Score", "ToolInvocation"]

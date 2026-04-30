@@ -102,4 +102,105 @@ class SemanticChunker:
         ]
 
 
-__all__ = ["Chunker", "FixedSizeChunker", "SemanticChunker"]
+_HEADING_RE = re.compile(r"^(?P<hashes>#{1,6})\s+(?P<title>.+?)\s*#*\s*$")
+
+
+class HeadingChunker:
+    """Split a markdown document on its headings (S198).
+
+    Each top-level (``#``) heading starts a fresh chunk. Sub-headings
+    (``##``..``######``) stay inside their parent chunk, but their text is
+    captured into ``Chunk.metadata['context']`` as a ``"breadcrumb > path"``
+    so retrievers can present rich provenance.
+
+    Documents with no headings degrade gracefully to a single chunk
+    containing the original text. This keeps the chunker safe to wire in
+    front of any text source without a content guard.
+    """
+
+    def __init__(self, *, top_level: int = 1) -> None:
+        if not (1 <= top_level <= 6):
+            raise ValueError("top_level must be between 1 and 6")
+        self._top = top_level
+
+    def chunk(self, document: Document) -> list[Chunk]:
+        text = document.text
+        if not text.strip():
+            return []
+
+        lines = text.splitlines()
+        sections: list[tuple[str, list[str], list[str]]] = []
+        # (heading_title, breadcrumb_path, body_lines)
+        current_title = ""
+        current_path: list[str] = []
+        current_body: list[str] = []
+        # Track sub-headings encountered since the last top-level split so
+        # their context can be attached to the current section.
+        sub_path: list[tuple[int, str]] = []
+
+        def _flush() -> None:
+            if current_title or "\n".join(current_body).strip():
+                sections.append(
+                    (current_title, list(current_path), list(current_body))
+                )
+
+        seen_top = False
+        for raw in lines:
+            m = _HEADING_RE.match(raw)
+            if m is None:
+                current_body.append(raw)
+                continue
+            level = len(m.group("hashes"))
+            heading = m.group("title").strip()
+            if level == self._top:
+                if seen_top or current_body:
+                    _flush()
+                seen_top = True
+                current_title = heading
+                sub_path = []
+                current_path = [heading]
+                current_body = []
+            elif level > self._top:
+                # Drop deeper sub-headings off the path before pushing.
+                while sub_path and sub_path[-1][0] >= level:
+                    sub_path.pop()
+                sub_path.append((level, heading))
+                current_path = (
+                    [current_title] if current_title else []
+                ) + [h for _, h in sub_path]
+                current_body.append(raw)
+            else:
+                # Heading level shallower than top -- treat as plain text so
+                # we never silently drop content.
+                current_body.append(raw)
+        _flush()
+
+        chunks: list[Chunk] = []
+        for ordinal, (title, path, body) in enumerate(sections):
+            body_text = "\n".join(body).strip()
+            if not body_text and not title:
+                continue
+            text_blob = f"{('#' * self._top)} {title}\n\n{body_text}".strip() if title else body_text
+            metadata: dict[str, str] = {}
+            if path:
+                metadata["context"] = " > ".join(path)
+            if title:
+                metadata["heading"] = title
+            chunks.append(
+                Chunk(
+                    document_id=document.id,
+                    workspace_id=document.workspace_id,
+                    ordinal=ordinal,
+                    text=text_blob,
+                    metadata=metadata,
+                )
+            )
+        return chunks
+
+
+__all__ = [
+    "Chunker",
+    "FixedSizeChunker",
+    "HeadingChunker",
+    "SemanticChunker",
+]
