@@ -5,6 +5,12 @@ upstream response arrives -- buffering whole responses is forbidden (ADR-022).
 """
 
 from loop_gateway.cost import COST_TABLE, ModelRate, cost_for, with_markup
+from loop_gateway.preflight import (
+    BudgetCheck,
+    Verdict,
+    estimate_upper_bound_cost,
+    preflight_budget,
+)
 from loop_gateway.types import (
     GatewayDelta,
     GatewayDone,
@@ -21,6 +27,7 @@ from loop_gateway.types import (
 
 __all__ = [
     "COST_TABLE",
+    "BudgetCheck",
     "GatewayDelta",
     "GatewayDone",
     "GatewayError",
@@ -33,6 +40,9 @@ __all__ = [
     "ToolCall",
     "ToolSpec",
     "Usage",
+    "Verdict",
     "cost_for",
+    "estimate_upper_bound_cost",
+    "preflight_budget",
     "with_markup",
 ]

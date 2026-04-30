@@ -47,6 +47,7 @@ from loop_gateway import (
     GatewayRequest,
     ToolCall,
     ToolSpec,
+    preflight_budget,
 )
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -72,6 +73,14 @@ class TurnBudget(BaseModel):
     max_cost_usd: float = Field(default=0.50, gt=0)
     max_runtime_seconds: float = Field(default=30.0, gt=0)
     max_iterations: int = Field(default=4, ge=1)
+    # Pre-flight inputs (S029). Pessimistic upper bound for output tokens per
+    # iteration; used to estimate cost BEFORE we burn the upstream call.
+    max_output_tokens_per_iter: int = Field(default=2_048, gt=0)
+    # Optional cheaper model the executor may swap to when the primary's
+    # pre-flight estimate would breach the cap. Must be a model known to
+    # the gateway COST_TABLE; the executor emits a ``degrade`` event the
+    # first time a swap occurs so operators can see it.
+    fallback_model: str | None = None
 
 
 class AgentConfig(BaseModel):
@@ -158,6 +167,12 @@ class TurnExecutor:
         cost_usd = 0.0
         degrade_reason: str | None = None
         pending_tool_calls: tuple[ToolCall, ...] = ()
+        # S029: graceful-degrade state. ``current_model`` may be swapped to
+        # ``agent.budget.fallback_model`` after a budget pre-flight failure;
+        # ``swap_announced`` ensures we only emit the degrade event once per
+        # turn even if every subsequent iteration also pre-flight-swaps.
+        current_model = agent.model
+        swap_announced = False
 
         with tracer.span(
             "turn.execute",
@@ -185,10 +200,52 @@ class TurnExecutor:
                     degrade_reason = "budget"
                     break
 
+                # Budget pre-flight (S029). Estimate the worst-case cost of
+                # this iteration BEFORE we hit the gateway, so we can either
+                # swap to a cheaper fallback or degrade gracefully without
+                # racking up a charge we won't bill the customer for.
+                preflight_input_tokens = sum(
+                    max(1, len(m.content) // 4) for m in messages
+                )
+                check = preflight_budget(
+                    model=current_model,
+                    input_tokens=preflight_input_tokens,
+                    max_output_tokens=agent.budget.max_output_tokens_per_iter,
+                    remaining_usd=max(0.0, agent.budget.max_cost_usd - cost_usd),
+                    fallback_model=(
+                        agent.budget.fallback_model
+                        if agent.budget.fallback_model != current_model
+                        else None
+                    ),
+                )
+                if check.verdict == "deny":
+                    degrade_reason = "budget_preflight"
+                    span.set_attr(
+                        "loop.turn.preflight_estimate_usd",
+                        check.estimated_cost_usd,
+                    )
+                    break
+                if check.verdict == "swap":
+                    if not swap_announced:
+                        yield TurnEvent(
+                            type="degrade",
+                            payload={
+                                "reason": "budget_preflight_swap",
+                                "from_model": current_model,
+                                "to_model": check.model,
+                                "estimated_cost_usd": check.estimated_cost_usd,
+                                "remaining_usd": check.remaining_usd,
+                            },
+                            ts=_now(),
+                        )
+                        swap_announced = True
+                    current_model = check.model
+                    span.set_attr("loop.turn.fallback_model", check.model)
+
                 gw_request = GatewayRequest(
                     request_id=f"{base_request_id}:i{iteration}",
                     workspace_id=str(event.workspace_id),
-                    model=agent.model,
+                    model=current_model,
                     messages=tuple(messages),
                     tools=tool_specs,
                 )
