@@ -692,13 +692,25 @@ STORIES: list[Story] = [
     Story(
         "S016",
         "Voice pipeline PoC (LiveKit + Deepgram + ElevenLabs)",
-        "Eng #3",
+        "GitHub Copilot",
         "S0",
         "E7",
         5,
         "P1",
-        "Not started",
-        "Week 3",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s016-voice-pipeline. "
+            "Skill: skills/coding/implement-runtime-feature.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T08:30Z (GitHub Copilot). "
+            "Open questions: none -- ship loop-voice with VoiceSession "
+            "orchestrator, STT/TTS/RealtimeTransport Protocols, in-memory "
+            "test impls; LiveKit/Deepgram/ElevenLabs adapter shells deferred "
+            "to S016b once gateway voice route lands. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S017",
