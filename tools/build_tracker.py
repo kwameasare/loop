@@ -335,15 +335,12 @@ STORIES: list[Story] = [
         "E13",
         5,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s003-docker-compose. "
-            "Skill: skills/_base/SKILL_ROUTER.md (no infra-stack-specific skill — HANDBOOK §1.3 governs). "
-            "Last step: 1/6 (claim). "
-            "Heartbeat: 2026-04-30T00:00Z (GitHub Copilot). "
-            "Open questions: none. Blockers: none. "
-            "Commits: claim."
+            "Hardened compose: localhost binds, healthchecks across all 7 services, "
+            "fixed ClickHouse↔MinIO 9001 collision (CH native → host 19000), top-level "
+            "loop network, otel-collector.yaml config, .env.example, tools/infra_smoke.sh, "
+            "`make up` now uses --wait."
         ),
     ),
     Story(
