@@ -1451,7 +1451,36 @@ STORIES: list[Story] = [
             "Commits: claim, gen + ts file (substance), close."
         ),
     ),
-    Story("S040", "Discord + Teams channels", "Eng #7", "S1", "E6", 8, "P2", "Not started", "M8"),
+    Story(
+        "S040",
+        "Discord + Teams channels",
+        "Eng #7",
+        "S1",
+        "E6",
+        8,
+        "P2",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s040-discord-teams. "
+            "Skill: skills/coding/implement-channel-adapter.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T21:50Z (GitHub Copilot). "
+            "Open questions: none -- adding "
+            "packages/channels/discord (loop-channels-discord; "
+            "Interactions API webhook -> InboundEvent + "
+            "OutboundFrame -> followup webhook body) and "
+            "packages/channels/teams (loop-channels-teams; "
+            "Bot Framework activity payload -> InboundEvent "
+            "+ OutboundFrame -> reply activity body). "
+            "Both reuse loop-channels-core ChannelDispatcher "
+            "+ frames; no Discord/Teams SDK dependency. "
+            "channel-id keyed conversation index for both. "
+            "Tests in _tests covering parser, message "
+            "translation, round-trip, requires-start. "
+            "Blockers: none. Commits: claim."
+        ),
+    ),
     Story(
         "S041",
         "Replay/time-travel debugging in Studio",

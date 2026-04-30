@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T15:40:54.229654+00:00",
+    "generated_at": "2026-04-30T15:41:16.586374+00:00",
     "format_version": 2
   },
   "epics": [
@@ -605,8 +605,8 @@
       "epic": "E6",
       "points": 8,
       "priority": "P2",
-      "status": "Not started",
-      "notes": "M8"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s040-discord-teams. Skill: skills/coding/implement-channel-adapter.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T21:50Z (GitHub Copilot). Open questions: none -- adding packages/channels/discord (loop-channels-discord; Interactions API webhook -> InboundEvent + OutboundFrame -> followup webhook body) and packages/channels/teams (loop-channels-teams; Bot Framework activity payload -> InboundEvent + OutboundFrame -> reply activity body). Both reuse loop-channels-core ChannelDispatcher + frames; no Discord/Teams SDK dependency. channel-id keyed conversation index for both. Tests in _tests covering parser, message translation, round-trip, requires-start. Blockers: none. Commits: claim."
     },
     {
       "id": "S041",
