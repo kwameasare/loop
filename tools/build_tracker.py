@@ -918,22 +918,27 @@ STORIES: list[Story] = [
         "E1",
         3,
         "P1",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s024-sse-tool-events. "
-            "Skill: skills/coding/implement-runtime-feature.md. "
-            "Last step: 4/5 (substance staged). "
-            "Heartbeat: 2026-04-30T13:00Z (GitHub Copilot). "
-            "Open questions: none -- runtime turn_executor now "
-            "emits tool_call_start (pre-dispatch, with id+name+args) "
-            "and tool_call_end (post-result, with id+name+result+"
-            "error+latency_ms) replacing tool_call/tool_result; "
-            "TurnEvent literal extended; channels-core gains "
-            "from_turn_event() projection; SSE serializer wires "
-            "TOOL_CALL_START/END frames untouched. "
-            "Blockers: none. "
-            "Commits: claim, substance."
+            "PR#S024. Branch: copilot/s024-sse-tool-events "
+            "(merged). sdk-py loop/types.py: TurnEvent.type literal "
+            "gains tool_call_start/tool_call_end (existing tool_call/"
+            "tool_result kept for back-compat). runtime turn_executor: "
+            "captures time.monotonic() at dispatch, emits "
+            "tool_call_start (id+name+arguments) before each call and "
+            "tool_call_end (id+name+result+error+latency_ms) after "
+            "each result, replacing the prior bare tool_call/"
+            "tool_result emissions. channels-core/translate.py "
+            "exposes from_turn_event() projecting "
+            "{token,tool_call_start,tool_call_end,complete,degrade} "
+            "onto OutboundFrame; trace/retrieval drop to None. "
+            "Re-exported from loop_channels_core. SSE serialiser "
+            "untouched -- TOOL_CALL_START/END flow through as named "
+            "events. Tests: 6 new translate tests, 1 new SSE wire "
+            "test for tool_call_start/end, runtime test types list "
+            "updated; full suite 163 passed (was 156). ruff + "
+            "pyright clean. Skill: skills/coding/"
+            "implement-runtime-feature.md."
         ),
     ),
     Story(
