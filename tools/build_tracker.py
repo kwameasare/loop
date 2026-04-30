@@ -431,13 +431,22 @@ STORIES: list[Story] = [
     Story(
         "S009",
         "OTel collector wired; first span exported to ClickHouse",
-        "Eng #4",
+        "GitHub Copilot",
         "S0",
         "E9",
         5,
         "P0",
-        "Not started",
-        "Week 2",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s009-otel-spans. "
+            "Skill: skills/observability/add-otel-span.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T03:55Z (GitHub Copilot). "
+            "Open questions: none -- loop.observability.tracer + ClickHouse exporter wiring. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S010",
