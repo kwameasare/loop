@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T13:34:48.400359+00:00",
+    "generated_at": "2026-04-30T13:35:41.395462+00:00",
     "format_version": 2
   },
   "epics": [
@@ -325,13 +325,13 @@
     {
       "id": "S015",
       "title": "KB engine v0: PDF ingest, Qdrant write, hybrid retrieval",
-      "owner": "Eng #4",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E5",
       "points": 8,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "Week 3"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s015-kb-engine. Skill: skills/coding/implement-kb-feature.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T08:00Z (GitHub Copilot). Open questions: none -- ship loop-kb-engine package with Document/Chunk types, Chunker (fixed-size + semantic-boundary), EmbeddingService + VectorStore Protocols, InMemoryVectorStore, QdrantVectorStore stub, hybrid retrieval (BM25 + dense). Real PDF ingest (pypdf) deferred to S015b. Blockers: none. Commits: claim."
     },
     {
       "id": "S016",

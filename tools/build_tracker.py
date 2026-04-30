@@ -665,13 +665,26 @@ STORIES: list[Story] = [
     Story(
         "S015",
         "KB engine v0: PDF ingest, Qdrant write, hybrid retrieval",
-        "Eng #4",
+        "GitHub Copilot",
         "S0",
         "E5",
         8,
         "P0",
-        "Not started",
-        "Week 3",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s015-kb-engine. "
+            "Skill: skills/coding/implement-kb-feature.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T08:00Z (GitHub Copilot). "
+            "Open questions: none -- ship loop-kb-engine package with "
+            "Document/Chunk types, Chunker (fixed-size + semantic-boundary), "
+            "EmbeddingService + VectorStore Protocols, InMemoryVectorStore, "
+            "QdrantVectorStore stub, hybrid retrieval (BM25 + dense). "
+            "Real PDF ingest (pypdf) deferred to S015b. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S016",
