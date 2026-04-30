@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T15:00:52.318938+00:00",
+    "generated_at": "2026-04-30T15:01:21.477286+00:00",
     "format_version": 2
   },
   "epics": [
@@ -517,8 +517,8 @@
       "epic": "E15",
       "points": 8,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.** Branch: copilot/s032-studio-inbox. Skill: skills/coding/implement-studio-screen.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T18:00Z (GitHub Copilot). Open questions: none -- adding apps/studio/src/lib/inbox.ts (wire shape mirroring loop_control_plane.inbox_api with claim/release/resolve reducers + fixtures), components/inbox/inbox-screen.tsx (pending-queue list, takeover button driving claim, composer + resolve), and an App Router page at /inbox. Vitest-only, no live API calls. Blockers: none. Commits: claim."
+      "status": "Done",
+      "notes": "PR#S032. Branch: copilot/s032-studio-inbox (merged). apps/studio/src/lib/inbox.ts mirrors the wire shape of loop_control_plane.inbox_api (InboxItem, status literal) and ships pure reducers -- claimItem, releaseItem, resolveItem (each enforces the same transition guards as the Python InboxQueue and raises InboxStateError on illegal moves), plus listPending / listClaimedBy with the same sort orders and a small formatRelativeMs helper. components/inbox/inbox-screen.tsx is a client component with a Pending column (oldest first, Take-over button per row), a My-queue column (items already CLAIMED by the current operator), and a detail pane with transcript, composer textarea, Send (appends a reply locally; deferred to backend in S033), Release, and Resolve. The App Router page at apps/studio/src/app/inbox/page.tsx wires the deterministic FIXTURE_INBOX. 16 vitest cases added (10 reducer/listing/format tests + 6 component tests covering oldest-first ordering, claim opens composer, send appends + clears draft, release returns to Pending, resolve drops from queue + closes pane, my-queue filtering); studio vitest 25 -> 41 passed; next-lint clean; Python suite 210 untouched. Skill: skills/coding/implement-studio-screen.md."
     },
     {
       "id": "S033",
