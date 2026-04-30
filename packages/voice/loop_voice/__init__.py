@@ -13,6 +13,7 @@ The shipped `InMemory*` impls drive the unit tests and the studio dev
 runner; the real adapters land in S016b under loop_voice.adapters.
 """
 
+from loop_voice.echo import make_echo_agent
 from loop_voice.models import (
     AudioFrame,
     Transcript,
@@ -28,6 +29,15 @@ from loop_voice.protocols import (
     TextToSpeech,
 )
 from loop_voice.session import AgentResponder, VoiceSession
+from loop_voice.webrtc import (
+    SignalKind,
+    WebRTCError,
+    WebRTCSession,
+    WebRTCSessionRegistry,
+    WebRTCSessionState,
+    WebRTCSignal,
+    echo_answer_for,
+)
 
 __all__ = [
     "AgentResponder",
@@ -36,10 +46,18 @@ __all__ = [
     "InMemorySpeechToText",
     "InMemoryTextToSpeech",
     "RealtimeTransport",
+    "SignalKind",
     "SpeechToText",
     "TextToSpeech",
     "Transcript",
     "VoiceSession",
     "VoiceTurn",
     "VoiceTurnState",
+    "WebRTCError",
+    "WebRTCSession",
+    "WebRTCSessionRegistry",
+    "WebRTCSessionState",
+    "WebRTCSignal",
+    "echo_answer_for",
+    "make_echo_agent",
 ]
