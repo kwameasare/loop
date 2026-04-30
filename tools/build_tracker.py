@@ -1424,29 +1424,31 @@ STORIES: list[Story] = [
         "E11",
         8,
         "P1",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s039-ts-sdk-gen. "
+            "**Done.** "
+            "Branch: copilot/s039-ts-sdk-gen (merged). "
+            "PR: local-merge (ff to main). "
             "Skill: skills/api/update-openapi.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T21:30Z (GitHub Copilot). "
-            "Open questions: none -- adding "
-            "tools/gen_ts_sdk.py that walks the public "
-            "pydantic models in packages/sdk-py/loop/types.py "
-            "via __pydantic_core_schema__ + emits a "
-            "TypeScript declaration file at "
-            "apps/studio/src/lib/sdk-types.ts. Output is "
-            "deterministic (sorted by definition order). "
-            "Test snapshot in tests/test_gen_ts_sdk.py "
-            "asserts the generator matches the committed "
-            "TS file (drift-detection guard for CI). "
-            "Mappings: str->string, int/float->number, "
-            "bool->boolean, datetime->string (ISO), "
-            "UUID->string, Literal[...]->TS string union, "
-            "list[T]->T[], dict[str, V]->Record<string, V>, "
-            "Optional[T]->T|null, StrEnum->TS string union. "
-            "Blockers: none. Commits: claim."
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T21:45Z (GitHub Copilot). "
+            "Open questions: none. "
+            "Shipped tools/gen_ts_sdk.py: walks every public "
+            "symbol in packages/sdk-py/loop/types.py "
+            "__all__ via pydantic model_fields and Python's "
+            "typing module, emits "
+            "apps/studio/src/lib/sdk-types.ts as "
+            "TS interfaces + string-union enum type aliases. "
+            "Mappings: str/UUID/datetime->string, "
+            "int/float->number, bool->boolean, "
+            "Literal->TS string union, list[T]->T[], "
+            "dict[str, V]->Record<string, V>, "
+            "T|None->T|null, defaulted fields->optional. "
+            "Drift-detection: tests/test_gen_ts_sdk.py "
+            "asserts the committed TS file matches generator "
+            "output (5 tests; suite 260 -> 265). "
+            "Studio vitest still 41/41. Blockers: none. "
+            "Commits: claim, gen + ts file (substance), close."
         ),
     ),
     Story("S040", "Discord + Teams channels", "Eng #7", "S1", "E6", 8, "P2", "Not started", "M8"),
