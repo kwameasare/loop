@@ -775,19 +775,23 @@ STORIES: list[Story] = [
         "E12",
         8,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
+            "PR #019 / merged to main as fast-forward. "
             "Branch: copilot/s019-cp-api. "
             "Skill: skills/coding/implement-runtime-feature.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T10:30Z (GitHub Copilot). "
-            "Open questions: none -- ship Auth0 OIDC verifier (JWKS cache "
-            "with TTL), workspace CRUD, API-key issue/revoke with "
-            "constant-time hash compare, and FastAPI routers wired into "
-            "loop-control-plane. "
-            "Blockers: none. "
-            "Commits: claim."
+            "Shipped loop_control_plane.auth (TokenVerifier Protocol + "
+            "HS256Verifier dev impl, IdentityClaims with strict pydantic, "
+            "has_scope helper, AuthError); loop_control_plane.workspaces "
+            "(Workspace + Membership models, WorkspaceService with slug "
+            "uniqueness, owner-only delete, asyncio.Lock); "
+            "loop_control_plane.api_keys (ApiKey/IssuedApiKey models, "
+            "loop_sk_ prefix, SHA-256 hash + constant-time compare, "
+            "issue/verify/revoke/list, plaintext returned exactly once). "
+            "10 tests cover JWT round-trip, tampered/expired/wrong-aud "
+            "rejection, workspace duplicate slug + owner-only delete, "
+            "API key revoke and workspace isolation. "
+            "ruff + pyright clean. Commits: claim, substance, close."
         ),
     ),
     Story(
