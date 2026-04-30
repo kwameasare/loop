@@ -11,6 +11,15 @@ Public surface:
 """
 
 from loop_eval.models import EvalReport, Run, Sample, Score
+from loop_eval.registry import (
+    DuplicateSuiteError,
+    EvalRegistry,
+    EvalSuite,
+    InMemoryEvalRegistry,
+    SuiteNotFoundError,
+    builtin_suites,
+    default_registry,
+)
 from loop_eval.replay import (
     FailedTurn,
     InMemoryReplaySink,
@@ -33,9 +42,13 @@ from loop_eval.scorers import (
 
 __all__ = [
     "AgentFn",
+    "DuplicateSuiteError",
+    "EvalRegistry",
     "EvalReport",
     "EvalRunner",
+    "EvalSuite",
     "FailedTurn",
+    "InMemoryEvalRegistry",
     "InMemoryReplaySink",
     "JudgeFn",
     "ReplaySink",
@@ -43,8 +56,11 @@ __all__ = [
     "Sample",
     "Score",
     "Scorer",
+    "SuiteNotFoundError",
+    "builtin_suites",
     "capture",
     "cost_scorer",
+    "default_registry",
     "exact_match",
     "json_schema_scorer",
     "latency_scorer",

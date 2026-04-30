@@ -1575,8 +1575,34 @@ STORIES: list[Story] = [
         "E8",
         8,
         "P1",
-        "Not started",
-        "M9",
+        "Done",
+        (
+            "**Done.** "
+            "Branch: copilot/s043-eval-registry (merged). "
+            "PR: local-merge (ff to main). "
+            "Skill: skills/coding/implement-eval-scorer.md. "
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T23:00Z (GitHub Copilot). "
+            "Open questions: none. "
+            "Shipped packages/eval-harness/loop_eval/registry.py: "
+            "EvalSuite (frozen pydantic model with semver "
+            "version + lowercase-slug validation, scorer_ids, "
+            "tags, license, author, homepage), "
+            "EvalRegistry Protocol, InMemoryEvalRegistry "
+            "with register/get/list/slugs (latest semver "
+            "by default; explicit version supported; "
+            "tag filtering; deterministic sort), "
+            "DuplicateSuiteError + SuiteNotFoundError, "
+            "and two built-in starter suites "
+            "(customer-support-v1, faq-routing-v1) wired "
+            "via builtin_suites() / default_registry(). "
+            "Tests cover Protocol conformance, latest "
+            "lookup, version pinning, duplicate guard, "
+            "tag filter, sort order, slug+semver "
+            "validation, frozenness, builtins parity "
+            "(suite 294 -> 306; +12). ruff clean. "
+            "Blockers: none. Commits: substance, close."
+        ),
     ),
     Story(
         "S044",
