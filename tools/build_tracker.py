@@ -1281,8 +1281,27 @@ STORIES: list[Story] = [
         "E4",
         8,
         "P1",
-        "Not started",
-        "M7",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s035-episodic-memory. "
+            "Skill: skills/coding/implement-kb-feature.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T19:30Z (GitHub Copilot). "
+            "Open questions: none -- adding episodic memory "
+            "tier under loop_memory.episodic: EpisodicEntry "
+            "(workspace + agent + conversation scoped, summary "
+            "+ embedding tuple, salience 0-1, ts_ms), "
+            "Embedder Protocol with deterministic HashEmbedder "
+            "for tests, EpisodicStore Protocol with "
+            "InMemoryEpisodicStore using cosine similarity, "
+            "and auto_summarize() that compresses a message "
+            "list into a single salient summary line. Qdrant "
+            "adapter is intentionally deferred to S035b -- the "
+            "Protocol contract is what the runtime needs. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S036",
