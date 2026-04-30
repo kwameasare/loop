@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T21:38:33.458893+00:00",
+    "generated_at": "2026-04-30T22:09:34.490886+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1447,24 +1447,24 @@
     {
       "id": "S192",
       "title": "kb: PDF parser via pypdf with per-page text + metadata",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: parse(bytes) → Document with .pages[] each {text, page_no, source_uri}; corrupt-PDF raises typed error."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/text-chunking.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_kb_engine/parsers_pdf.py PdfBackend Protocol + parse_pdf returning Document with per-page text + metadata; corrupt PDF raises PdfParseError. Tests: parsers_pdf in test_parsers_and_heading_chunker.py. Open questions: none."
     },
     {
       "id": "S193",
       "title": "kb: HTML parser via BeautifulSoup w/ readability extraction",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: parses well-formed HTML, strips nav/footer; preserves headings; passes against 5-fixture suite."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/text-chunking.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_kb_engine/parsers_html.py readability-style extraction (drops nav/footer/script, preserves h1-h6) returning HtmlDocument(blocks). Tests: parsers_html cases in test_parsers_and_heading_chunker.py. Open questions: none."
     },
     {
       "id": "S194",
@@ -1480,13 +1480,13 @@
     {
       "id": "S195",
       "title": "kb: docx parser via python-docx with table preservation",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: tables extracted as markdown blocks; styled headings preserved as level."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/text-chunking.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_kb_engine/parsers_docx.py DocxBackend Protocol; parse_docx walks paragraphs+tables emitting heading-level + markdown table blocks. Tests: parsers_docx cases in test_parsers_and_heading_chunker.py. Open questions: none."
     },
     {
       "id": "S196",
@@ -1535,24 +1535,24 @@
     {
       "id": "S200",
       "title": "kb: embedding adapter Voyage (voyage-3)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: same Protocol; integration test with sandbox key."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/vector-store.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_kb_engine/embeddings_voyage.py VoyageEmbedder satisfying Embedder Protocol against voyage-3 model with batch helper + typed errors. Tests: embeddings_voyage cases in test_kb_pass9.py. Open questions: none."
     },
     {
       "id": "S201",
       "title": "kb: embedding adapter BGE-large local (sentence-transformers)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: works without network; CI runs against a tiny model variant."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/vector-store.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_kb_engine/embeddings_bge.py BgeEmbedder with injectable LocalSentenceModel Protocol so CI runs against tiny dummy variant offline. Tests: embeddings_bge cases in test_kb_pass9.py. Open questions: none."
     },
     {
       "id": "S202",
@@ -1601,13 +1601,13 @@
     {
       "id": "S206",
       "title": "kb: reranker via Cohere rerank-3",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: rerank(query, hits) reorders; latency p95 <400ms; opt-in flag in agent config."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/hybrid-retrieval.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_kb_engine/reranker.py CohereReranker satisfying Reranker Protocol; reorders hits by relevance with opt-in agent flag. Tests: reranker cases in test_kb_pass9.py. Open questions: none."
     },
     {
       "id": "S207",
@@ -2382,13 +2382,13 @@
     {
       "id": "S325",
       "title": "billing: nightly usage push from ClickHouse → Stripe metered",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S12",
       "epic": "E19",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: scheduled job reads usage_events deltas, calls stripe.UsageRecord.create; idempotent on retry."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/event-streaming.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_control_plane/billing_export.py UsageWindow validators + UsageQuantity + idempotency_key(workspace,metric,window) + StripeMeteredClient/UsageAggregator Protocols + yesterday_window_utc 24h midnight-aligned + DEFAULT_METRIC_NAMES. Tests: test_billing_export_pass10.py. Open questions: none."
     },
     {
       "id": "S326",
@@ -2448,13 +2448,13 @@
     {
       "id": "S331",
       "title": "billing: trial → paid conversion email + 7-day-left + 1-day-left nudges",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S12",
       "epic": "E19",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: scheduled task sends emails via EmailSender; opt-out honoured."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/strict-pydantic-models.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_control_plane/billing_nudges.py plan_trial_nudges(now, trial_end_at, sent_kinds) emits 7d/1d/expired nudge plans honouring opt-out. Tests: billing_nudges cases in test_cp_pass9.py. Open questions: none."
     },
     {
       "id": "S340",
@@ -2503,13 +2503,13 @@
     {
       "id": "S344",
       "title": "wa: media download + temporary object-store cache",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S13",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: incoming image/audio downloaded; cached in object-store; reference in turns.content_json."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/platforms/whatsapp.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_whatsapp/media.py WaMediaDownloader.download with cache hit short-circuit, oversize/missing-url/missing-mime/short-ttl/small-max-bytes/missing-id+token rejects + InMemoryMediaCache LRU eviction. Tests: media cases in test_wa_pass10.py. Open questions: none."
     },
     {
       "id": "S345",
@@ -2525,24 +2525,24 @@
     {
       "id": "S346",
       "title": "wa: template-message support + studio template browser",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S13",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: list approved templates from WA API; send-template tool exposed."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/platforms/whatsapp.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_whatsapp/templates.py WaTemplate frozen model + render_template() with named-component param substitution honouring WA Cloud API v18 contract. Tests: test_wa_templates_pass9.py. Open questions: none."
     },
     {
       "id": "S347",
       "title": "wa: interactive elements (lists, reply buttons)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S13",
       "epic": "E6",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: AgentResponse hints render as WA interactive; user response → tool_result."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/platforms/whatsapp.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_whatsapp/interactive.py ButtonReplyMessage (max3, dup-id reject, header/footer) + ListMessage (max-rows, dup-row-id global reject) rendering WA Cloud API interactive payload. Tests: interactive cases in test_wa_pass10.py. Open questions: none."
     },
     {
       "id": "S348",
@@ -2580,57 +2580,57 @@
     {
       "id": "S361",
       "title": "voice: ASR adapter Deepgram (streaming WS)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S14",
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: stream PCM in, partial+final transcripts out; auto-reconnect; integration test against sandbox key."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/platforms/voice-pstn.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/asr_deepgram.py DeepgramSpeechToText with AsyncWebSocket transport Protocol, parse_deepgram_message handling partials/is_final/speech_final, deepgram_url query-param mapping (lang/model/punct/diarize), typed errors. Tests: deepgram cases in test_voice_pass10.py. Open questions: none."
     },
     {
       "id": "S362",
       "title": "voice: ASR adapter Whisper.cpp local fallback",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S14",
       "epic": "E7",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: works without network; CI uses tiny.en model."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/architecture/failover.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/asr_whisper.py WhisperLocalSpeechToText buffering PCM with silence VAD + utterance-cap flush, runner-error wrap, WhisperConfig validators. Tests: whisper cases in test_voice_pass10.py. Open questions: none."
     },
     {
       "id": "S363",
       "title": "voice: TTS adapter ElevenLabs streaming",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S14",
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: stream text → PCM chunks; sentence-boundary streaming; latency to first byte <300ms."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/platforms/voice-pstn.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/tts_elevenlabs.py ElevenLabsTextToSpeech with sentence-boundary streaming, sequenced AudioFrames, ElevenLabsConfig validators + elevenlabs_url. Tests: elevenlabs cases in test_voice_pass10.py. Open questions: none."
     },
     {
       "id": "S364",
       "title": "voice: TTS adapter Cartesia (Sonic) streaming",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S14",
       "epic": "E7",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: same Protocol; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/architecture/cloud-portable-protocol.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/tts_cartesia.py CartesiaTextToSpeech satisfying TextToSpeech Protocol; build_cartesia_request shape + chunk/done/error frame dispatch over WS Protocol. Tests: cartesia cases in test_voice_pass10.py. Open questions: none."
     },
     {
       "id": "S365",
       "title": "voice: TTS adapter Piper local",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S14",
       "epic": "E7",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: deterministic; CI fixture audio file diff."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/architecture/cloud-portable-protocol.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/tts_piper.py PiperTextToSpeech with chunk_pcm helper, PiperConfig validators (sample_rate/voice/chunk_ms), deterministic offline synthesis. Tests: piper cases in test_voice_pass10.py. Open questions: none."
     },
     {
       "id": "S366",
@@ -2657,24 +2657,24 @@
     {
       "id": "S368",
       "title": "voice: LiveKit room manager (create/join/teardown)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S14",
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: agent joins on demand; room cleaned up on disconnect; integration with sandbox key."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/platforms/voice-pstn.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/livekit_room.py RoomManager.create_room/mint_token/teardown with LiveKitClient Protocol + RoomNotFound typed error. Tests: livekit_room cases in test_voice_pass10.py. Open questions: none."
     },
     {
       "id": "S369",
       "title": "voice: LiveKit room → Loop turn bridge (audio frames → AgentEvent)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S14",
       "epic": "E7",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: room audio in → ASR partials → AgentEvent on final → TTS plays back."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/event-streaming.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/livekit_bridge.py LiveKitBridge concurrent inbound (track → ASR → AgentEvent) and outbound (TTS → track) pumps with FakeTrack-driven tests. Tests: livekit_bridge cases in test_voice_pass10.py. Open questions: none."
     },
     {
       "id": "S370",
@@ -2701,46 +2701,46 @@
     {
       "id": "S380",
       "title": "voice: incoming-call SIP gateway via Twilio Voice (TwiML)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S15",
       "epic": "E7",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: incoming call → bridges to LiveKit room → agent answers within 1s."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/platforms/voice-pstn.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/sip_twilio.py build_twiml() emits <Connect><Stream> TwiML for inbound call → LiveKit bridge; parse_twilio_form + StreamConfig (rejects http URLs). Tests: sip_twilio cases in test_voice_pass10.py. Open questions: none."
     },
     {
       "id": "S381",
       "title": "voice: outbound-call API POST /v1/voice/calls",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S15",
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: places call to E.164 number; agent talks first; events streamed."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/platforms/voice-pstn.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/outbound_call.py OutboundCallRequest validates E.164 + idempotency; OutboundCallService dispatches via PstnDialer Protocol returning CallHandle. Tests: outbound_call cases in test_voice_pass9.py. Open questions: none."
     },
     {
       "id": "S382",
       "title": "voice: phone-number provisioning (Twilio bring-your-own)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S15",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: agent_phone_numbers table + cp-api endpoints to claim/release. [extends S049]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/platforms/voice-pstn.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/phone_provisioning.py BYO Twilio claim/release flow with TwilioBYOClient Protocol + agent_phone_numbers row state machine. Tests: phone_provisioning cases in test_voice_pass9.py. Open questions: none."
     },
     {
       "id": "S383",
       "title": "voice: voicemail / callback handling (no-answer fallback)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S15",
       "epic": "E7",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: 30s no-answer → leave voicemail; callback request creates outbound job."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/architecture/failover.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/voicemail_fallback.py plan_fallback(disposition, attempt) maps CallDisposition×attempt → leave-voicemail / schedule-callback / give-up actions. Tests: voicemail_fallback cases in test_voice_pass10.py. Open questions: none."
     },
     {
       "id": "S384",
@@ -3471,46 +3471,46 @@
     {
       "id": "S490",
       "title": "episodic: Qdrant collection design per agent (separate from KB)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S21",
       "epic": "E4",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: collection name + schema documented in SCHEMA.md. [extends S035]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/vector-store.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_memory/episodic_collection.py episodic_collection_name(workspace_id, agent_id) + EpisodicCollectionSpec schema (vector dim/distance/index params) documented in SCHEMA.md. Tests: episodic_collection cases in test_memory_pass9.py. Open questions: none."
     },
     {
       "id": "S491",
       "title": "episodic: auto-summarize on conversation close",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S21",
       "epic": "E4",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: closed conversations summarized → embedded → upserted; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/strict-pydantic-models.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_memory/auto_summarize.py SummarizeOnClose pipeline: conversation transcript → Summarizer Protocol → Embedder → EpisodicStore.upsert. Tests: auto_summarize cases in test_memory_pass9.py. Open questions: none."
     },
     {
       "id": "S492",
       "title": "episodic: retrieval at turn-start (top-k recent + relevant)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S21",
       "epic": "E4",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: turn input enriched with N memories; configurable per agent."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/hybrid-retrieval.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_kb_engine/episodic_retrieve.py RetrievalPolicy weights-must-sum-to-1 + recency_score(half_life) + normalise_similarity edges + EpisodicReader Protocol with similarity/recency blend + max_age filter. Tests: episodic_retrieve cases in test_kb_pass10.py. Open questions: none."
     },
     {
       "id": "S493",
       "title": "episodic: TTL-based decay + soft-delete after 90d (configurable)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S21",
       "epic": "E4",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: scheduled task expires; metric emitted."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/soft-delete.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_kb_engine/episodic_ttl.py TtlPolicy + effective_ttl_ms(salience) + plan_prune classifying fresh/expired/grace/grace_done; soft_delete=False forces hard; execute_prune via EpisodicWriter. Tests: episodic_ttl cases in test_kb_pass10.py. Open questions: none."
     },
     {
       "id": "S494",
@@ -3592,68 +3592,68 @@
     {
       "id": "S513",
       "title": "email: SES inbound adapter (S3 trigger → parse RFC822 → AgentEvent)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E6",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: incoming email → conversation thread by Message-Id; attachments to object-store. [extends S037]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/event-streaming.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_email/ses_inbound.py parse_s3_event + parse_rfc822 (headers/threading/rejects empty/missing-from) + SesInboundIngester with injectable S3Fetcher Protocol. Tests: ses_inbound cases in test_email_pass10.py. Open questions: none."
     },
     {
       "id": "S514",
       "title": "email: SES outbound adapter w/ DKIM signing",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: AgentResponse → SES SendEmail; DKIM-signed; bounce/complaint handled."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_email/ses_outbound.py canonicalise_header_relaxed/body_relaxed + body_hash + build_signature_header DKIM tags via Signer Protocol; DkimConfig dot-validated domain. Tests: ses_outbound cases in test_email_pass10.py. Open questions: none."
     },
     {
       "id": "S515",
       "title": "email: thread correlation via References + In-Reply-To",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: replying-to-thread routes to same conversation; unit-tested."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/strict-pydantic-models.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_email/thread_correlate.py correlate_thread() walks References+In-Reply-To headers to recover conversation_id, falling back to subject normalisation. Tests: thread_correlate cases in test_email_pass9.py. Open questions: none."
     },
     {
       "id": "S516",
       "title": "email: studio domain connect (SPF + DKIM verification)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: tab shows domain status; pending records display until verified."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/security/webhook-signature-verification.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_email/dkim_verify.py verify_spf (PASS/SOFTFAIL/FAIL/NONE) + verify_dkim (PASS/FAIL/NONE) over injectable DnsLookup Protocol. Tests: dkim_verify cases in test_email_pass10.py. Open questions: none."
     },
     {
       "id": "S517",
       "title": "telegram: Bot API adapter (long-poll mode)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E6",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: messages routed; integration with sandbox bot."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/event-streaming.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_telegram/longpoll.py TelegramLongPoll(bot_client, on_event) drives getUpdates with offset bookkeeping + idle backoff + typed errors. Tests: longpoll cases in test_telegram_pass9.py. Open questions: none."
     },
     {
       "id": "S518",
       "title": "telegram: webhook mode for production",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E6",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: webhook over HTTPS; signature verified; throughput tested."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/security/webhook-signature-verification.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_telegram/webhook.py verify_secret_token constant-time compare + parse_webhook_body + TelegramWebhookHandler.handle dispatching valid updates via on_event. Tests: test_telegram_webhook_pass10.py. Open questions: none."
     },
     {
       "id": "S519",
@@ -4604,24 +4604,24 @@
     {
       "id": "S707",
       "title": "gateway: semantic cache (Redis) — embed query + cosine match against prior responses",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: cache-hit returns within 50ms; threshold 0.97 default; per-workspace TTL; ablation eval. [extends S029]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/hybrid-retrieval.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_gateway/semantic_cache.py SemanticCache lookup/store with cosine threshold (default 0.97) + per-workspace TTL backed by RedisCacheBackend Protocol. Tests: semantic_cache cases in test_gateway_pass9.py. Open questions: none."
     },
     {
       "id": "S708",
       "title": "gateway: BYO-key support — workspace_keys table + per-call key resolution",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: workspace can register provider keys via cp-api; per-call resolution honours them; encrypted at rest via KMS Protocol."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_gateway/byo_keys.py WorkspaceKey model + resolve_key(workspace_id, provider) with KmsClient Protocol envelope-encryption. Tests: byo_keys cases in test_gateway_pass9.py. Open questions: none."
     },
     {
       "id": "S709",
@@ -4670,13 +4670,13 @@
     {
       "id": "S713",
       "title": "gateway: cost precision — Decimal-based math + per-token rounding rules",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: cost.py switches from float to Decimal; round-trip exact within 7 decimals; existing tests stay green; ADR-028 updated."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/strict-pydantic-models.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_gateway/cost_decimal.py compute_cost_decimal() with Decimal arithmetic, ROUND_HALF_EVEN, 7-decimal stable round-trip. Tests: cost_decimal cases in test_gateway_pass9.py. Open questions: none."
     },
     {
       "id": "S714",
@@ -4714,24 +4714,24 @@
     {
       "id": "S722",
       "title": "mcp: tool-call rate limit per agent + per workspace",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: per-tool cap configurable; exceeding → LOOP-TH-301; tested at 100 concurrent."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/api/rate-limit.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_tool_host/rate_limit.py token-bucket per-agent + per-workspace caps; exceeding raises ToolRateLimitExceeded mapped to LOOP-TH-301. Tests: rate_limit cases in test_tool_host_pass9.py. Open questions: none."
     },
     {
       "id": "S723",
       "title": "mcp: argument schema validation + result schema validation",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: bad args → LOOP-TH-002 before dispatch; non-conforming result → LOOP-TH-002 in result frame."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/api/error-shapes.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_tool_host/schema_validate.py validate_args/validate_result against JSON-Schema; violations raise ToolSchemaError mapped to LOOP-TH-002. Tests: schema_validate cases in test_tool_host_pass9.py. Open questions: none."
     },
     {
       "id": "S724",
@@ -4846,13 +4846,13 @@
     {
       "id": "S734",
       "title": "mcp: tool-result caching (idempotent calls only, opt-in per tool)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: GET-shaped tools cache; cache key includes args+context; per-tool TTL."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/hybrid-retrieval.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_tool_host/result_cache.py opt-in idempotent-tool cache; cache key = sha256(tool_name|args|context_subset); per-tool TTL. Tests: result_cache cases in test_tool_host_pass9.py. Open questions: none."
     },
     {
       "id": "S735",
@@ -5143,13 +5143,13 @@
     {
       "id": "S779",
       "title": "portability: EmailSender Protocol parity tests across SES/Resend/SMTP",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S34",
       "epic": "E12",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: send + bounce + complaint handlers identical; integration tests."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/architecture/cloud-portable-protocol.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_email/parity.py run_parity(impl, reference=InMemoryEmailSender) drives identical send-cases through both, asserts shape + flags ParityFailure on lax sender. Tests: parity cases in test_email_pass10.py. Open questions: none."
     },
     {
       "id": "S780",
@@ -5286,13 +5286,13 @@
     {
       "id": "S820",
       "title": "memory: Mem0 adapter (drop-in EpisodicMemoryStore via Protocol)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S36",
       "epic": "E4",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: configurable; integration test against Mem0 sandbox; per-workspace toggle."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/architecture/cloud-portable-protocol.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_memory/mem0_adapter.py Mem0Store satisfying EpisodicStore Protocol (upsert/query/list_recent) using HashEmbedder, min_score filter, ts_ms desc list, Mem0Error wrap on bad-dim/RuntimeError. Tests: test_memory_pass10.py. Open questions: none."
     },
     {
       "id": "S821",
