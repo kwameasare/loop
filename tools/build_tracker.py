@@ -1096,20 +1096,29 @@ STORIES: list[Story] = [
         "E15",
         5,
         "P1",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s030-hitl-takeover. "
-            "Skill: skills/api/add-rest-endpoint.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T17:00Z (GitHub Copilot). "
-            "Open questions: none -- adding loop_control_plane.inbox "
-            "with InboxQueue domain (escalate -> claim -> release/"
-            "resolve state machine, single-claim invariant per "
-            "conversation), InboxItem pydantic model, InboxError, "
-            "and an in-memory store. "
-            "Blockers: none. "
-            "Commits: claim."
+            "PR#S030. Branch: copilot/s030-hitl-takeover (merged). "
+            "loop_control_plane.inbox introduces InboxItem (frozen "
+            "pydantic, status: pending|claimed|resolved) and "
+            "InboxQueue with the full state machine: escalate -> "
+            "claim -> {release back to pending | resolve terminal}. "
+            "Single-claim invariant per item is enforced (second "
+            "concurrent claim raises InboxError); single-open-item "
+            "invariant per conversation is enforced too -- "
+            "escalate refuses while an open item exists, but a "
+            "fresh escalation is allowed once the previous one is "
+            "resolved. list_pending(ws) sorts oldest-first, "
+            "list_claimed_by(operator_id) is also indexed. "
+            "loop_control_plane.inbox_api.InboxAPI is a "
+            "framework-agnostic facade (dict in / dict out) "
+            "matching the eventual REST routes "
+            "(escalate/list/claim/release/resolve), with explicit "
+            "input validation that maps to InboxError -> 400 and "
+            "transition violations to InboxError -> 409. 10 tests "
+            "covering happy path, every illegal transition, and "
+            "API validation; suite 194 -> 204 passed; ruff clean. "
+            "Skill: skills/api/add-rest-endpoint.md."
         ),
     ),
     Story(

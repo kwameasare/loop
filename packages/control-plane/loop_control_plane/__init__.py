@@ -43,6 +43,13 @@ from loop_control_plane.deploy import (
     InMemoryKubeClient,
     KubeClient,
 )
+from loop_control_plane.inbox import (
+    InboxError,
+    InboxItem,
+    InboxQueue,
+    InboxStatus,
+)
+from loop_control_plane.inbox_api import InboxAPI
 from loop_control_plane.usage import (
     DAY_MS,
     UsageEvent,
@@ -80,6 +87,11 @@ __all__ = [
     "InMemoryImageRegistry",
     "InMemoryKubeClient",
     "InMemoryStripe",
+    "InboxAPI",
+    "InboxError",
+    "InboxItem",
+    "InboxQueue",
+    "InboxStatus",
     "IssuedApiKey",
     "KubeClient",
     "Membership",
