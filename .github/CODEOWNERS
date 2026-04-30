@@ -1,0 +1,95 @@
+# CODEOWNERS — Loop
+#
+# Each path is automatically reviewed by the owners listed. Lines further
+# down win; later patterns override earlier ones (GitHub semantics).
+#
+# Owner mappings derive from architecture/ARCHITECTURE.md §15 (service
+# ownership matrix) + engineering/HANDBOOK.md §3.4. Roles are placeholder
+# GitHub team handles inside the @loop-ai org. They MUST be created (with
+# at least one human member each) before branch protection is turned on,
+# otherwise required reviews cannot be satisfied.
+#
+# See docs/branch-protection.md for the GitHub admin checklist.
+
+# -----------------------------------------------------------------------------
+# Default owner: CTO (catch-all)
+# -----------------------------------------------------------------------------
+*                                                   @loop-ai/cto
+
+# -----------------------------------------------------------------------------
+# Repo-wide tooling, governance, top-level docs
+# -----------------------------------------------------------------------------
+/AGENTS.md                                          @loop-ai/cto
+/README.md                                          @loop-ai/cto
+/LICENSE                                            @loop-ai/cto
+/.github/                                           @loop-ai/infra @loop-ai/cto
+/.github/workflows/release.yml                      @loop-ai/cto @loop-ai/security
+/Makefile                                           @loop-ai/infra
+/pyproject.toml                                     @loop-ai/runtime @loop-ai/infra
+/tools/                                             @loop-ai/infra
+/scripts/                                           @loop-ai/infra
+/docs/                                              @loop-ai/cto
+
+# -----------------------------------------------------------------------------
+# Tracker (source of truth + outputs)
+# -----------------------------------------------------------------------------
+/tools/build_tracker.py                             @loop-ai/cto
+/loop_implementation/tracker/                       @loop-ai/cto
+
+# -----------------------------------------------------------------------------
+# Runtime + Gateway (hot path)
+# -----------------------------------------------------------------------------
+/packages/runtime/                                  @loop-ai/runtime
+/packages/gateway/                                  @loop-ai/runtime @loop-ai/infra
+/packages/mcp-client/                               @loop-ai/runtime
+/packages/kb-engine/                                @loop-ai/runtime
+
+# -----------------------------------------------------------------------------
+# SDK (public API surface — extra scrutiny)
+# -----------------------------------------------------------------------------
+/packages/sdk-py/                                   @loop-ai/runtime @loop-ai/devrel
+
+# -----------------------------------------------------------------------------
+# Channels
+# -----------------------------------------------------------------------------
+/packages/channels/                                  @loop-ai/channels
+/packages/channels/voice/                            @loop-ai/voice @loop-ai/runtime
+
+# -----------------------------------------------------------------------------
+# Eval + Observability
+# -----------------------------------------------------------------------------
+/packages/eval-harness/                              @loop-ai/observability
+/packages/observability/                             @loop-ai/observability
+
+# -----------------------------------------------------------------------------
+# Studio (frontend) + Control plane
+# -----------------------------------------------------------------------------
+/apps/studio/                                        @loop-ai/studio
+/apps/control-plane/                                 @loop-ai/infra
+
+# -----------------------------------------------------------------------------
+# Infra, deployment, IaC
+# -----------------------------------------------------------------------------
+/infra/                                              @loop-ai/infra
+/infra/terraform/modules/kms/                        @loop-ai/infra @loop-ai/security
+/infra/helm/                                         @loop-ai/infra
+
+# -----------------------------------------------------------------------------
+# High-risk areas — security review required
+# (HANDBOOK §3.2 "don't merge alone" list)
+# -----------------------------------------------------------------------------
+/packages/gateway/auth.py                            @loop-ai/security @loop-ai/runtime
+/packages/runtime/secrets.py                         @loop-ai/security @loop-ai/runtime
+/packages/runtime/rls.py                             @loop-ai/security @loop-ai/runtime
+**/sql/**                                            @loop-ai/infra @loop-ai/security
+
+# -----------------------------------------------------------------------------
+# Specs / docs (writers also need eng review for accuracy)
+# -----------------------------------------------------------------------------
+/loop_implementation/architecture/                   @loop-ai/cto @loop-ai/runtime @loop-ai/infra
+/loop_implementation/api/                            @loop-ai/runtime @loop-ai/devrel
+/loop_implementation/data/                           @loop-ai/infra @loop-ai/runtime
+/loop_implementation/engineering/SECURITY.md         @loop-ai/security @loop-ai/cto
+/loop_implementation/skills/                         @loop-ai/cto
+/loop_implementation/ux/                             @loop-ai/studio
+/loop_implementation/adrs/                           @loop-ai/cto

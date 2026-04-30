@@ -37,8 +37,8 @@ class Agent(ABC):
     model: ClassVar[str]
     instructions: ClassVar[str]
 
-    tools: ClassVar[list["Tool"]] = []
-    memory: ClassVar["Memory | None"] = None
+    tools: ClassVar[list[Tool]] = []
+    memory: ClassVar[Memory | None] = None
 
     max_iterations: ClassVar[int] = 10
     max_cost_usd: ClassVar[float] = 0.50
@@ -46,9 +46,9 @@ class Agent(ABC):
     max_tool_calls_per_turn: ClassVar[int] = 20
 
     @abstractmethod
-    async def on_message(self, event: AgentEvent, ctx: "Context") -> AgentResponse: ...
+    async def on_message(self, event: AgentEvent, ctx: Context) -> AgentResponse: ...
 
-    async def act(self, event: AgentEvent, ctx: "Context") -> AgentResponse:
+    async def act(self, event: AgentEvent, ctx: Context) -> AgentResponse:
         """Run the standard reasoning loop until termination.
 
         Streams `TurnEvent`s through `ctx.emit(...)`; returns the final response.

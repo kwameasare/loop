@@ -6,14 +6,14 @@ Every breaking change here requires a major SDK version bump.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 
-class ChannelType(str, Enum):
+class ChannelType(StrEnum):
     WEB = "web"
     WHATSAPP = "whatsapp"
     SLACK = "slack"
@@ -72,7 +72,7 @@ class TurnEvent(BaseModel):
 
 class Trace(BaseModel):
     turn_id: UUID
-    spans: list["Span"]
+    spans: list[Span]
     total_cost_usd: float = 0.0
     total_latency_ms: int = 0
     iteration_count: int = 0

@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Sprint 0 CI policy:
+# - Required-on-main jobs (must pass to merge): lint, unit, tracker-clean, security.
+# - Conditionally-required jobs (gated by hashFiles on the relevant artefact):
+#   integration (when infra tests exist), studio (when apps/studio exists),
+#   cli (when cli/ exists), evals (when tests/evals/ exists).
+# Update docs/branch-protection.md whenever the required-checks list changes.
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-packages
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pyright
+
+  unit:
+    name: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-packages
+      # Hermetic: no integration/e2e markers selected.
+      - run: uv run pytest -q -m "not integration and not e2e"
+
+  tracker-clean:
+    name: tracker-clean
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # build_tracker.py is stdlib-only, no uv sync needed.
+      - name: Tracker outputs are up to date
+        run: python tools/build_tracker.py --check
+
+  security:
+    name: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-packages
+      - name: Python dep audit (pip-audit)
+        # Sprint 0: surface findings without blocking the merge while the
+        # dependency surface is still small. Flip to blocking once S046
+        # (SOC2 kickoff) starts.
+        run: uv tool run --from pip-audit pip-audit || echo "pip-audit reported findings (non-blocking during Sprint 0)."
+      - name: Filesystem vuln scan (trivy)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    # Skip until S003 lands the full docker-compose stack and there are
+    # tests carrying the `integration` marker.
+    if: hashFiles('tests/integration/**', 'packages/**/*integration*.py') != ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - run: docker compose -f infra/docker-compose.yml up -d
+      - run: uv sync --all-packages
+      - run: uv run pytest -q -m integration
+      - if: always()
+        run: docker compose -f infra/docker-compose.yml logs
+
+  studio:
+    name: studio
+    runs-on: ubuntu-latest
+    if: hashFiles('apps/studio/package.json') != ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm -C apps/studio install --frozen-lockfile
+      - run: pnpm -C apps/studio lint
+      - run: pnpm -C apps/studio test
+      - run: pnpm -C apps/studio build
+
+  cli:
+    name: cli
+    runs-on: ubuntu-latest
+    if: hashFiles('cli/go.mod') != ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - run: cd cli && go test ./...
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: cli
+
+  evals:
+    name: evals
+    runs-on: ubuntu-latest
+    # Activates once S021 lands the eval harness + suites.
+    if: hashFiles('tests/evals/runtime/**') != ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-packages
+      - run: docker compose -f infra/docker-compose.yml up -d
+      - run: uv run loop eval run tests/evals/runtime --fail-on "regression>5%"
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_TEST_KEY }}

@@ -6,9 +6,9 @@ Companion: architecture/ARCHITECTURE.md §3.
 
 from __future__ import annotations
 
-import asyncio
 import time
-from typing import TYPE_CHECKING, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import structlog
@@ -40,14 +40,14 @@ class TurnExecutor:
       - Observable: every step emits an OTel span with cost + latency attrs.
     """
 
-    def __init__(self, ctx: "RuntimeContext") -> None:
+    def __init__(self, ctx: RuntimeContext) -> None:
         self.ctx = ctx
 
     async def execute(
         self,
-        agent: "Agent",
+        agent: Agent,
         event: AgentEvent,
-        ctx: "RuntimeContext",
+        ctx: RuntimeContext,
     ) -> AsyncIterator[TurnEvent]:
         turn_id = uuid4()
         started = time.monotonic()
@@ -87,7 +87,11 @@ class TurnExecutor:
                 cost_usd += result.cost_usd
                 yield TurnEvent(
                     type="tool_call",
-                    payload={"name": chunk.tool_call.name, "phase": "end", "ok": result.error is None},
+                    payload={
+                        "name": chunk.tool_call.name,
+                        "phase": "end",
+                        "ok": result.error is None,
+                    },
                     ts=ctx.clock.now(),
                 )
                 ctx.gateway.feed_tool_result(chunk.tool_call.name, result)
@@ -113,17 +117,16 @@ class TurnExecutor:
 
         yield TurnEvent(
             type="complete",
-            payload=(final_response or AgentResponse(
-                conversation_id=event.conversation_id, content=[], end_turn=True
-            )).model_dump(mode="json"),
+            payload=(
+                final_response
+                or AgentResponse(conversation_id=event.conversation_id, content=[], end_turn=True)
+            ).model_dump(mode="json"),
             ts=ctx.clock.now(),
         )
 
-    def _over_budget(self, agent: "Agent", cost_usd: float, started: float, iteration: int) -> bool:
+    def _over_budget(self, agent: Agent, cost_usd: float, started: float, iteration: int) -> bool:
         if cost_usd >= agent.max_cost_usd:
             return True
         if iteration >= agent.max_iterations:
             return True
-        if (time.monotonic() - started) >= agent.max_runtime_seconds:
-            return True
-        return False
+        return time.monotonic() - started >= agent.max_runtime_seconds

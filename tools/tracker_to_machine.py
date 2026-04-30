@@ -14,6 +14,7 @@ working in CI and skill instructions.
 
 When the xlsx work is picked up, replace this body with the real renderer.
 """
+
 from __future__ import annotations
 
 import sys

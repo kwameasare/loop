@@ -9,6 +9,7 @@ pass. Deferred per S001 PR; this stub is a placeholder so existing skill text
 
 Replace with the real implementation when the xlsx companion is reactivated.
 """
+
 from __future__ import annotations
 
 import sys
