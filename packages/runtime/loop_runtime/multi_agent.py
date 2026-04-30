@@ -1,4 +1,4 @@
-"""Multi-agent v0: Supervisor + Pipeline patterns.
+"""Multi-agent v0 + GA: Supervisor + Pipeline + Parallel + AgentGraph.
 
 This module intentionally sits *above* :mod:`turn_executor` rather
 than inside it. A "sub-agent" is anything that satisfies the
@@ -7,22 +7,27 @@ text request to a text response. In production a runner is usually
 backed by a :class:`TurnExecutor`, but tests can pass plain
 in-process functions, which is what every test in this module does.
 
-Two composition primitives are shipped here:
+Composition primitives:
 
 * :class:`Supervisor` -- given a *router* callable, picks exactly
   one sub-agent per request and forwards the request to it.
 * :class:`Pipeline` -- chains N sub-agents in order; the output
   of step *i* is the input of step *i+1*.
+* :class:`Parallel` -- fans out a request to N sub-agents
+  concurrently and merges their responses with a user-supplied
+  ``merger`` callable.
+* :class:`AgentGraph` -- arbitrary directed (possibly cyclic) graph
+  of agents with a ``Selector`` that drives the next hop based on
+  the running state. A safety bound on iterations stops runaway
+  cycles.
 
-Both record a structured :class:`HandoffTrail` so callers can show
-"who did what" in the Studio replay UI later.
-
-Cycles, parallel fan-out and the ``AgentGraph`` primitive land in
-S042; this module is deliberately small and stateless.
+Both v0 and GA primitives record a structured :class:`HandoffTrail`
+so callers can show "who did what" in the Studio replay UI.
 """
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Awaitable, Callable, Iterable, Sequence
 from typing import Protocol, runtime_checkable
 
@@ -198,14 +203,166 @@ class Pipeline:
 
 
 __all__ = [
+    "AgentGraph",
     "AgentRunner",
     "AgentSpec",
     "CallableRunner",
     "HandoffStep",
     "HandoffTrail",
+    "Merger",
     "MultiAgentError",
     "MultiAgentResult",
+    "Parallel",
     "Pipeline",
     "Router",
+    "Selector",
     "Supervisor",
 ]
+
+
+# -------------------------------------------------------------------- Parallel
+
+
+Merger = Callable[[Sequence[tuple[str, str]]], Awaitable[str]]
+"""Reduce ``[(agent_name, response), ...]`` into a single string."""
+
+
+class Parallel:
+    """Fans out one request to N sub-agents concurrently.
+
+    All runners receive the same input. Their responses are merged
+    by the user-supplied :data:`Merger` (e.g. concatenate, vote,
+    pick-best). The :class:`HandoffTrail` records each runner's
+    response in spec order regardless of completion order, so the
+    trail is deterministic for replay.
+    """
+
+    def __init__(
+        self,
+        *,
+        specs: Sequence[AgentSpec],
+        runners: dict[str, AgentRunner],
+        merger: Merger,
+    ) -> None:
+        if not specs:
+            raise MultiAgentError("Parallel requires at least one AgentSpec")
+        seen: set[str] = set()
+        for spec in specs:
+            if spec.name in seen:
+                raise MultiAgentError(f"duplicate AgentSpec name: {spec.name!r}")
+            seen.add(spec.name)
+            if spec.name not in runners:
+                raise MultiAgentError(
+                    f"AgentSpec {spec.name!r} has no runner in the runners map"
+                )
+        self._specs = tuple(specs)
+        self._runners = dict(runners)
+        self._merger = merger
+
+    @property
+    def specs(self) -> tuple[AgentSpec, ...]:
+        return self._specs
+
+    async def run(self, request: str) -> MultiAgentResult:
+        responses = await asyncio.gather(
+            *(self._runners[spec.name].run(request) for spec in self._specs)
+        )
+        trail = HandoffTrail()
+        pairs: list[tuple[str, str]] = []
+        for spec, response in zip(self._specs, responses, strict=True):
+            trail = trail.with_step(
+                HandoffStep(agent=spec.name, request=request, response=response)
+            )
+            pairs.append((spec.name, response))
+        merged = await self._merger(pairs)
+        return MultiAgentResult(output=merged, trail=trail)
+
+
+# ------------------------------------------------------------------ AgentGraph
+
+
+Selector = Callable[[str, str, HandoffTrail], Awaitable[str | None]]
+"""Pick the next agent given ``(last_agent, last_response, trail)``.
+
+Returning ``None`` ends the graph traversal.
+"""
+
+
+class AgentGraph:
+    """Directed graph of agents with a Selector-driven traversal.
+
+    Construction takes a ``start`` agent name and a ``selector``
+    coroutine. On each step the selector inspects the most recent
+    response (and the full trail) and returns the next agent name,
+    or ``None`` to terminate. Cycles are allowed; runaway cycles
+    are bounded by ``max_steps`` (default 16) which raises
+    :class:`MultiAgentError` if exceeded.
+
+    The graph topology is implicit in the selector -- callers
+    enforce edge constraints inside their selector function.
+    """
+
+    DEFAULT_MAX_STEPS = 16
+
+    def __init__(
+        self,
+        *,
+        specs: Iterable[AgentSpec],
+        runners: dict[str, AgentRunner],
+        selector: Selector,
+        start: str,
+        max_steps: int = DEFAULT_MAX_STEPS,
+    ) -> None:
+        self._specs = tuple(specs)
+        if not self._specs:
+            raise MultiAgentError("AgentGraph requires at least one AgentSpec")
+        seen: set[str] = set()
+        for spec in self._specs:
+            if spec.name in seen:
+                raise MultiAgentError(f"duplicate AgentSpec name: {spec.name!r}")
+            seen.add(spec.name)
+            if spec.name not in runners:
+                raise MultiAgentError(
+                    f"AgentSpec {spec.name!r} has no runner in the runners map"
+                )
+        if start not in seen:
+            raise MultiAgentError(f"start agent {start!r} not in specs")
+        if max_steps < 1:
+            raise MultiAgentError("max_steps must be >= 1")
+        self._runners = dict(runners)
+        self._selector = selector
+        self._start = start
+        self._max_steps = max_steps
+
+    @property
+    def specs(self) -> tuple[AgentSpec, ...]:
+        return self._specs
+
+    async def run(self, request: str) -> MultiAgentResult:
+        trail = HandoffTrail()
+        current_agent: str | None = self._start
+        current_input = request
+        last_response = ""
+        step_count = 0
+        while current_agent is not None:
+            step_count += 1
+            if step_count > self._max_steps:
+                raise MultiAgentError(
+                    f"AgentGraph exceeded max_steps={self._max_steps}"
+                )
+            if current_agent not in self._runners:
+                raise MultiAgentError(
+                    f"selector returned unknown agent {current_agent!r}"
+                )
+            response = await self._runners[current_agent].run(current_input)
+            trail = trail.with_step(
+                HandoffStep(
+                    agent=current_agent,
+                    request=current_input,
+                    response=response,
+                )
+            )
+            last_response = response
+            current_input = response
+            current_agent = await self._selector(current_agent, response, trail)
+        return MultiAgentResult(output=last_response, trail=trail)

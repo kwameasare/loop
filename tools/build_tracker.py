@@ -1536,8 +1536,36 @@ STORIES: list[Story] = [
         "E14",
         13,
         "P0",
-        "Not started",
-        "M9",
+        "Done",
+        (
+            "**Done.** "
+            "Branch: copilot/s042-parallel-agentgraph (merged). "
+            "PR: local-merge (ff to main). "
+            "Skill: skills/coding/implement-multi-agent-pattern.md. "
+            "Last step: 5/5 (merge). "
+            "Heartbeat: 2026-04-30T22:45Z (GitHub Copilot). "
+            "Open questions: none. "
+            "Extended packages/runtime/loop_runtime/multi_agent.py "
+            "with two GA primitives. Parallel: fans out one "
+            "request to N runners via asyncio.gather; "
+            "responses are merged by user-supplied "
+            "Merger callable (e.g. concat, vote, "
+            "pick-best); HandoffTrail records every step "
+            "in spec order regardless of completion order "
+            "for deterministic replay. AgentGraph: "
+            "directed (possibly cyclic) graph driven by "
+            "a Selector(last_agent, last_response, trail) "
+            "-> next_agent | None coroutine; bounded by "
+            "max_steps (default 16) which raises "
+            "MultiAgentError on runaway. Validates start "
+            "agent presence, missing/duplicate runners, "
+            "max_steps >= 1, selector-returned unknown "
+            "names. Tests cover concurrency (timing "
+            "assertion), trail ordering, cycles, "
+            "max_steps bound, validation errors "
+            "(suite 283 -> 294; +11). ruff clean. "
+            "Blockers: none. Commits: substance, close."
+        ),
     ),
     Story(
         "S043",
