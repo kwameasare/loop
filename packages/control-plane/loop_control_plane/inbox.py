@@ -190,6 +190,29 @@ class InboxQueue:
             key=lambda i: (i.claimed_at_ms or 0),
         )
 
+    def auto_release_idle(self, *, idle_after_ms: int, now_ms: int) -> list[InboxItem]:
+        """Release any CLAIMED items that haven't been touched since
+        ``now_ms - idle_after_ms``.
+
+        S305 idle-handback timer: a scheduled task calls this every
+        60s; default policy is 15-minute idle (caller passes
+        ``idle_after_ms=15 * 60 * 1000``). Returns the items that were
+        released so the caller can publish ``InboxEvent``s for each.
+        """
+
+        if idle_after_ms <= 0:
+            raise InboxError("idle_after_ms must be > 0")
+        cutoff = now_ms - idle_after_ms
+        released: list[InboxItem] = []
+        for item_id, item in list(self._items.items()):
+            if item.status != "claimed":
+                continue
+            claimed_at = item.claimed_at_ms or 0
+            if claimed_at <= cutoff:
+                self._items[item_id] = item.with_release()
+                released.append(self._items[item_id])
+        return released
+
 
 __all__ = [
     "InboxError",

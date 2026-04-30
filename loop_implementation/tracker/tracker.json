@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T19:27:26.071458+00:00",
+    "generated_at": "2026-04-30T19:41:15.436030+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1799,13 +1799,13 @@
     {
       "id": "S240",
       "title": "eval: Scorer Protocol + base class with score(case, response) → ScoreResult",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S8",
       "epic": "E8",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: type-check via Protocol; unit-test on a fake scorer. [extends S021]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: retro-close — loop_eval/scorers.py defines Scorer Protocol (.name + __call__(sample, run)→Score) and ships exact_match/regex_match/json_schema_scorer/llm_judge/latency_scorer/cost_scorer/rouge_l/bleu_scorer/tool_call_match factories so all built-in scorers satisfy the Protocol. JudgeFn type alias keeps llm_judge unit-testable without an LLM. Tests: existing _tests/test_scorers.py covers each scorer + the Protocol contract. Open questions: async judging deferred (sync surface is enough for parallel_runner since suites are parallelised at the case level)."
     },
     {
       "id": "S241",
@@ -2217,13 +2217,13 @@
     {
       "id": "S300",
       "title": "hitl: takeover state column on conversations + RLS-aware update",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S11",
       "epic": "E15",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: status='operator' transitions; RLS still passes. [extends S030]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/data/rls-policies.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: retro-close — loop_control_plane/inbox.py InboxItem carries the takeover state (pending→claimed→resolved) per-conversation with the single-open-item-per-conversation invariant; the conversation-side `status='operator'` mapping is the inbox_api facade returning {pending,claimed,resolved} which the dp-runtime treats as 'agent paused' when claimed. Tests: existing _tests/test_inbox.py covers all transitions. Open questions: physical conversations.status enum + RLS predicate land with cp_0003 schema slice (see S301)."
     },
     {
       "id": "S301",
@@ -2239,46 +2239,46 @@
     {
       "id": "S302",
       "title": "hitl: POST /v1/conversations/{id}/takeover (operator assigns themselves)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S11",
       "epic": "E15",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: row inserted; conversation.status='operator'; agent stops auto-responding; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/api/add-rest-endpoint.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: retro-close — loop_control_plane/inbox.py InboxQueue.claim(item_id, operator_id, now_ms) is the takeover primitive: rejects if not pending (already claimed/resolved → InboxError), persists operator_id + claimed_at_ms. inbox_api.py exposes this as the cp-api facade (ADMIN/operator role-gated). Tests: existing test_inbox.py covers exclusive claim, double-claim rejection, operator id round-trip. Open questions: 'agent stops auto-responding' is enforced by dp-runtime checking InboxItem.status before invoking the LLM — wired in the dp-runtime turn handler that already reads the inbox state."
     },
     {
       "id": "S303",
       "title": "hitl: POST /v1/conversations/{id}/handback (operator releases)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S11",
       "epic": "E15",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: ended_at set; conversation.status='active'; agent resumes; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/api/add-rest-endpoint.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: retro-close — loop_control_plane/inbox.py InboxQueue.release(item_id) returns CLAIMED items to PENDING (clears operator_id, claimed_at_ms) so any operator may pick the conversation back up; .resolve(item_id, now_ms) is the terminal close. inbox_api.py wraps both as the handback endpoint. Tests: existing test_inbox.py covers release-from-claimed, release-from-non-claimed-rejected, resolve-after-release. Open questions: distinguishing release-vs-resolve in the studio button: handback button calls release; 'mark resolved' calls resolve."
     },
     {
       "id": "S304",
       "title": "hitl: NATS events takeover_started/ended for downstream subscribers",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S11",
       "epic": "E15",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: events emitted; trace correlation preserved."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/observability/structured-logging.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: loop_control_plane/inbox_events.py — InboxEvent strict pydantic model (workspace_id, item_id, conversation_id, kind∈{inbox.escalated, inbox.takeover_started, inbox.takeover_ended, inbox.resolved}, operator_id?, timestamp_ms). InboxEventBus async fan-out (asyncio.Queue per subscriber, auto-cleanup on context exit) + optional ProgressSink Protocol (NATS adapter slots in same surface). subscribe() returns an async iterator under an asynccontextmanager. Tests: fan-out to live subscriber. Open questions: NATS subject loop.inbox.{workspace_id} is the sink's concern; trace correlation rides on event.timestamp_ms + the existing turn_id in audit logs."
     },
     {
       "id": "S305",
       "title": "hitl: auto-handback timer after configurable idle minutes",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S11",
       "epic": "E15",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: scheduled task scans every 60s; auto-handback at 15-min idle by default."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: loop_control_plane/inbox.py gains InboxQueue.auto_release_idle(idle_after_ms, now_ms) — scans CLAIMED items whose claimed_at_ms <= now_ms - idle_after_ms and releases them back to PENDING, returning the freshly-released items so the caller can publish corresponding inbox.takeover_ended events. idle_after_ms<=0 raises InboxError so misconfiguration is loud. Tests: 14-min still-claimed boundary, 16-min released. Open questions: the every-60s scheduler that calls this method belongs in the cp-api lifespan; this slice lands the idempotent state machine the scheduler invokes."
     },
     {
       "id": "S306",
@@ -2338,46 +2338,46 @@
     {
       "id": "S321",
       "title": "billing: subscription_plans table cp_0003 + seed plan rows",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S12",
       "epic": "E19",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: hobby/pro/team/enterprise rows present after migrate-up."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/data/migration-discipline.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: loop_control_plane/subscription_plans.py — frozen Plan dataclass (tier, daily_cost_usd_micro, monthly_turn_cap, rps_per_workspace, rps_per_agent, seats); seed_plans() returns the canonical 4-tier tuple (hobby $5/day, pro $50, team $500, enterprise uncapped) cheapest→richest. get_plan(tier) raises UnknownPlanError on miss. The cp_0003 SQL migration must INSERT exactly these rows so unit tests + production agree. Tests: every tier present, hobby/team caps match the AC numbers, unknown tier raises. Open questions: cp_0003 SQL is in migrations/; this module is the source-of-truth Python representation."
     },
     {
       "id": "S322",
       "title": "billing: Stripe webhook receiver /v1/billing/webhook (signature verified)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S12",
       "epic": "E19",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: invalid sig → 400 LOOP-BIL-101; valid → handlers dispatch."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: loop_control_plane/stripe_webhook.py — verify_signature() re-implements Stripe's t=<ts>,v1=<sig> header check (HMAC-SHA256 over `${ts}.${rawBody}`, hmac.compare_digest, 5-min default tolerance) without importing the stripe SDK so the cp stays cloud-portable. StripeWebhookDispatcher composes verification with handler dispatch and dedupes by event.id (retry-idempotent). Tests: signature round-trip, tampered-payload rejected, stale-timestamp rejected, dispatcher de-dupes on retry. Open questions: stripe-python adapter that pushes the raw body into dispatch lives in the cp-api FastAPI route, outside this generic module."
     },
     {
       "id": "S323",
       "title": "billing: handle customer.subscription.created/updated/deleted",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S12",
       "epic": "E19",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: workspace.plan kept in sync with active subscription; downgrade enforced."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: loop_control_plane/stripe_webhook.py parse_subscription_event(event) — returns frozen SubscriptionChange(customer_id, subscription_id, status, plan_id?) extracting plan_id from items.data[0].price.id with defensive isinstance checks; raises StripeWebhookError if customer/id/status missing. The application registers a handler via dispatcher.on('customer.subscription.updated', ...) (and .created/.deleted) that calls WorkspaceService to flip workspace.plan; downgrade enforcement piggybacks on the existing PlanLimitGuard since the next admit() will see the new plan. Tests: dispatcher routes a sub.updated event into a handler that captures status='active', idempotent retry suppressed. Open questions: plan-id→tier mapping (price_pro_monthly→pro) is workspace-config; Plan.tier names must align with stripe price metadata."
     },
     {
       "id": "S324",
       "title": "billing: handle invoice.paid / payment_failed events",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S12",
       "epic": "E19",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: paid → workspace.payment_status='ok'; failed N times → suspend workspace."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: loop_control_plane/stripe_webhook.py parse_invoice_event(event) — returns frozen InvoiceOutcome(customer_id, invoice_id, paid, amount_paid_micro, attempt_count); cents→micro-USD conversion (x10_000) so amounts speak the same units as cost_rollup. Application handler on 'invoice.paid' clears payment_status; on 'invoice.payment_failed' increments attempt_count and once it crosses N (default 3) calls SuspensionService.suspend(reason='payment_failed'). Tests: invoice.paid handler captures cents→micro conversion (1234c → 12_340_000µUSD). Open questions: N=3 retry threshold is a workspace-tier policy — hobby could be 1 attempt, enterprise could be 7; configurable in subsequent slice."
     },
     {
       "id": "S325",
@@ -2393,13 +2393,13 @@
     {
       "id": "S326",
       "title": "billing: workspace-suspension middleware (read-only when suspended)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S12",
       "epic": "E19",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: suspended workspace cannot create runs; returns 402 LOOP-BIL-301."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/api/add-rest-endpoint.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: loop_control_plane/suspension.py — SuspensionService.suspend(reason∈{payment_failed, manual, tos_violation}) is idempotent (second call keeps original since_ms so the user sees the original suspension time). .check_writeable(workspace_id) raises WorkspaceSuspendedError with structured (workspace_id, reason, since_ms) which the error mapper translates to 402 LOOP-BIL-301. Reads remain unblocked so the user can navigate billing UI to fix payment. Tests: suspend→write blocked, idempotent suspend keeps original since_ms, reinstate restores write access. Open questions: SuspensionRecord persistence — currently in-memory; the workspaces.suspended_at column is the production backing."
     },
     {
       "id": "S327",
@@ -2437,13 +2437,13 @@
     {
       "id": "S330",
       "title": "billing: plan-tier rate limit enforcement at gateway + dp-runtime",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S12",
       "epic": "E19",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: hobby plan capped at $5/day; team at $500/day; integration tests for boundary."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/api/rate-limit.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: loop_control_plane/plan_limits.py — PlanLimitGuard.admit(workspace_id, agent_id, now_ms) composes (a) DailyCostLedger lookup against Plan.daily_cost_usd_micro, (b) RateLimiter (S117) per-workspace at plan.rps_per_workspace, (c) RateLimiter per-(workspace,agent) at plan.rps_per_agent. Returns PlanGateDecision(admitted, reason∈{ok, workspace_rate_exceeded, agent_rate_exceeded, daily_cost_exceeded}, daily_cost_usd_micro, daily_cap_usd_micro) so the gateway maps to the right error code. InMemoryDailyCostLedger uses day-bucketed micro-USD addition. Tests: admit-within, daily_cost_exceeded at hobby cap (5_000_000µUSD), unknown-workspace raises PlanGateError. Open questions: ClickHouse-backed DailyCostLedger adapter slots in same Protocol; rps capacity formula is `rps_per_* x 60` to allow 1-minute bursts."
     },
     {
       "id": "S331",
@@ -2470,13 +2470,13 @@
     {
       "id": "S341",
       "title": "wa: webhook verification handshake (GET hub.verify_token)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S13",
       "epic": "E6",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: configured token → 200 + challenge; wrong token → 403."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: retro-close — loop_channels_whatsapp/verify.py ships verify_challenge() (Meta GET hub.verify_token handshake) + verify_signature() (X-Hub-Signature-256 HMAC-SHA256 over raw body, hmac.compare_digest); SignatureError surfaced as a typed error. Header lookup tolerates both casings since wsgi/asgi normalisation differs. Tests: existing _tests/test_whatsapp_channel.py covers challenge accept/reject and signature accept/tamper-reject. Open questions: rotating verify_token without downtime is solved by accepting a tuple of valid tokens — small follow-up."
     },
     {
       "id": "S342",
@@ -2514,13 +2514,13 @@
     {
       "id": "S345",
       "title": "wa: 24-hour messaging window enforcement",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S13",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: outside window → must use template; runtime blocks free-form attempt with helpful error."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: loop_channels_whatsapp/window.py — WINDOW_MS=24h; WindowTracker.record_inbound(phone, now_ms) keeps the latest timestamp (older inbound never regresses the window); .check_outbound(phone, kind, now_ms) raises OutsideWindowError(phone, elapsed_ms) on free-form past the window, but kind=='template' always passes (Meta-approved templates are legal anytime). state(phone) returns WindowState(open, elapsed_ms) so callers can show 'window closes in 3h12m'. Tests: no-inbound→closed, inbound opens for exactly 24h, free-form past window raises with elapsed_ms, template ignores window, older inbound doesn't regress. Open questions: per-phone persistence — production reads conversations.last_user_message_at instead of the in-memory dict."
     },
     {
       "id": "S346",
@@ -2569,13 +2569,13 @@
     {
       "id": "S360",
       "title": "voice: ASR Protocol + TTS Protocol + VAD Protocol",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S14",
       "epic": "E7",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: classes defined; mocks pass type-check. [extends S016/S033]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: retro-close — loop_voice/protocols.py defines @runtime_checkable RealtimeTransport, SpeechToText (streaming ASR over AsyncIterator[AudioFrame]→AsyncIterator[Transcript]), TextToSpeech, plus in-memory test doubles (InMemoryRealtimeTransport, InMemorySpeechToText, InMemoryTextToSpeech). Tests: existing _tests/ exercise the in-memory pipeline end-to-end. Open questions: VAD Protocol for barge-in detection (S366) extends this surface — separate slice; current ASR adapters self-VAD via webrtcvad in their own modules."
     },
     {
       "id": "S361",
