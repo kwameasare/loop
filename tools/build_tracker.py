@@ -351,16 +351,11 @@ STORIES: list[Story] = [
         "E1",
         5,
         "P0",
-        "In progress",
+        "Done",
         (
-            "**Active.** "
-            "Branch: copilot/s004-runtime-types. "
-            "Skill: skills/coding/implement-runtime-feature.md. "
-            "Last step: 1/5 (claim). "
-            "Heartbeat: 2026-04-30T01:00Z (GitHub Copilot). "
-            "Open questions: none — formalizing existing scaffold per ARCHITECTURE.md §3.3. "
-            "Blockers: none. "
-            "Commits: claim."
+            "Formalized SDK public wire types (AgentEvent, AgentResponse, ContentPart, ToolCall, "
+            "TurnEvent, Span, Trace, Turn, TurnStatus). Strict (extra=forbid) base, exported from "
+            "loop package, 9 round-trip tests. Aligns with ARCHITECTURE.md §3.3."
         ),
     ),
     Story(
