@@ -468,12 +468,14 @@ version = "0.1.0"
 source = { editable = "packages/channels/web" }
 dependencies = [
     { name = "loop-channels-core" },
+    { name = "loop-control-plane" },
     { name = "pydantic" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "loop-channels-core", editable = "packages/channels/core" },
+    { name = "loop-control-plane", editable = "packages/control-plane" },
     { name = "pydantic", specifier = ">=2" },
 ]
 
@@ -639,6 +641,7 @@ version = "0.1.0"
 source = { editable = "packages/runtime" }
 dependencies = [
     { name = "loop" },
+    { name = "loop-control-plane" },
     { name = "loop-gateway" },
     { name = "pydantic" },
     { name = "structlog" },
@@ -647,6 +650,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "loop", editable = "packages/sdk-py" },
+    { name = "loop-control-plane", editable = "packages/control-plane" },
     { name = "loop-gateway", editable = "packages/gateway" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "structlog", specifier = ">=24.1.0" },

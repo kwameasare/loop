@@ -79,6 +79,16 @@ class KnowledgeBase:
             del bucket[k]
         return removed
 
+    async def list_documents(self, *, workspace_id: UUID) -> tuple[UUID, ...]:
+        """Return the distinct document_ids currently indexed for the workspace.
+
+        Backs the cp-api ``GET /v1/kb/{workspace}/documents`` endpoint
+        (S207) without leaking chunk-level state.
+        """
+
+        bucket = self._lex.get(workspace_id, {})
+        return tuple(sorted({c.document_id for c in bucket.values()}, key=str))
+
     # ------------------------------------------------------------ retrieval
 
     async def retrieve(
