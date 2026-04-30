@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T14:57:24.257124+00:00",
+    "generated_at": "2026-04-30T14:58:37.784989+00:00",
     "format_version": 2
   },
   "epics": [
@@ -512,13 +512,13 @@
     {
       "id": "S032",
       "title": "Studio: operator inbox MVP (queue + takeover + composer)",
-      "owner": "Eng #5",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E15",
       "points": 8,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "Week 6"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s032-studio-inbox. Skill: skills/coding/implement-studio-screen.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T18:00Z (GitHub Copilot). Open questions: none -- adding apps/studio/src/lib/inbox.ts (wire shape mirroring loop_control_plane.inbox_api with claim/release/resolve reducers + fixtures), components/inbox/inbox-screen.tsx (pending-queue list, takeover button driving claim, composer + resolve), and an App Router page at /inbox. Vitest-only, no live API calls. Blockers: none. Commits: claim."
     },
     {
       "id": "S033",

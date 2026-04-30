@@ -1162,13 +1162,29 @@ STORIES: list[Story] = [
     Story(
         "S032",
         "Studio: operator inbox MVP (queue + takeover + composer)",
-        "Eng #5",
+        "GitHub Copilot",
         "S0",
         "E15",
         8,
         "P1",
-        "Not started",
-        "Week 6",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s032-studio-inbox. "
+            "Skill: skills/coding/implement-studio-screen.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T18:00Z (GitHub Copilot). "
+            "Open questions: none -- adding apps/studio/src/lib/"
+            "inbox.ts (wire shape mirroring "
+            "loop_control_plane.inbox_api with claim/release/"
+            "resolve reducers + fixtures), components/inbox/"
+            "inbox-screen.tsx (pending-queue list, takeover "
+            "button driving claim, composer + resolve), and an "
+            "App Router page at /inbox. Vitest-only, no live API "
+            "calls. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S033",
