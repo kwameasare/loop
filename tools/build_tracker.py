@@ -878,13 +878,28 @@ STORIES: list[Story] = [
     Story(
         "S023",
         "WhatsApp channel adapter (Cloud API direct)",
-        "Eng #1",
+        "GitHub Copilot",
         "S0",
         "E6",
         8,
         "P0",
-        "Not started",
-        "Week 5",
+        "In progress",
+        (
+            "**Active.** "
+            "Branch: copilot/s023-whatsapp-channel. "
+            "Skill: skills/coding/implement-channel-adapter.md. "
+            "Last step: 1/5 (claim). "
+            "Heartbeat: 2026-04-30T12:30Z (GitHub Copilot). "
+            "Open questions: none -- new packages/channels/whatsapp/ "
+            "(loop-channels-whatsapp v0.1.0) modeled on the Slack "
+            "adapter. Webhook hub.challenge GET verification, "
+            "X-Hub-Signature-256 HMAC verify, parse_event filtering "
+            "to text + media messages, to_messages() projection of "
+            "OutboundFrame -> Cloud API request bodies, and "
+            "WhatsAppChannel start/stop/handle_event. "
+            "Blockers: none. "
+            "Commits: claim."
+        ),
     ),
     Story(
         "S024",

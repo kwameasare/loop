@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T14:00:00.554477+00:00",
+    "generated_at": "2026-04-30T14:00:24.399190+00:00",
     "format_version": 2
   },
   "epics": [
@@ -413,13 +413,13 @@
     {
       "id": "S023",
       "title": "WhatsApp channel adapter (Cloud API direct)",
-      "owner": "Eng #1",
+      "owner": "GitHub Copilot",
       "sprint": "S0",
       "epic": "E6",
       "points": 8,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "Week 5"
+      "status": "In progress",
+      "notes": "**Active.** Branch: copilot/s023-whatsapp-channel. Skill: skills/coding/implement-channel-adapter.md. Last step: 1/5 (claim). Heartbeat: 2026-04-30T12:30Z (GitHub Copilot). Open questions: none -- new packages/channels/whatsapp/ (loop-channels-whatsapp v0.1.0) modeled on the Slack adapter. Webhook hub.challenge GET verification, X-Hub-Signature-256 HMAC verify, parse_event filtering to text + media messages, to_messages() projection of OutboundFrame -> Cloud API request bodies, and WhatsAppChannel start/stop/handle_event. Blockers: none. Commits: claim."
     },
     {
       "id": "S024",
