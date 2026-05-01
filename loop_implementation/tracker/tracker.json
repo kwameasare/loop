@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:34:20.196370+00:00",
+    "generated_at": "2026-05-01T23:35:37.023041+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4285,13 +4285,13 @@
     {
       "id": "S639",
       "title": "ent: on-prem parity matrix verification (cloud-vs-onprem feature gates)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S28",
       "epic": "E13",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: PARITY.md matrix; every gap fixed or explicitly accepted; checked-in evidence."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s639-ent-on-prem-parity-matrix-verifi\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T23:35:36Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S650",
