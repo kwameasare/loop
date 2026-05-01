@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:25:44.041337+00:00",
+    "generated_at": "2026-05-01T22:25:47.813366+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2695,8 +2695,8 @@
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s371-voice-web-rtc-echo-agent-end-to\nSkill: skills/coding/implement-channel-adapter.md\nLast step: 4/5\nHeartbeat: 2026-05-01T22:24:18Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: focused script lint pyright pytest and tracker gates green\nLatest checkpoint: voice echo script and regression tests landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s371-voice-web-rtc-echo-agent-end-to (merged + deletable)\nSkill: skills/coding/implement-channel-adapter.md\nFinal heartbeat: 2026-05-01T22:24:38Z (codex-vega)\nTests: uv run python scripts/voice_echo_test.py; uv run pytest packages/voice/_tests/test_voice_echo_script.py packages/voice/_tests/test_voice_echo_e2e.py; uv run ruff check/format --check targeted files; uv run pyright targeted files; tracker/docs gates passed; full close gate blocked by existing repo-wide ruff baseline in tools\nDocs touched: none\nFollow-ups: none"
     },
     {
       "id": "S380",
