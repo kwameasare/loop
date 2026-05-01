@@ -1,0 +1,90 @@
+name: eu-smoke
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/eu-smoke.yml"
+      - "infra/helm/loop/**"
+      - "scripts/eu_smoke.*"
+      - "scripts/helm_e2e_smoke_server.py"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/eu-smoke.yml"
+      - "infra/helm/loop/**"
+      - "scripts/eu_smoke.*"
+      - "scripts/helm_e2e_smoke_server.py"
+  workflow_dispatch:
+  schedule:
+    - cron: "31 4 * * *"
+
+jobs:
+  eu-smoke:
+    name: eu-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    env:
+      LOOP_NAMESPACE: loop-eu-west
+      LOOP_RELEASE: loop
+      EU_SMOKE_REGION: eu-west
+      EU_SMOKE_BASE_URL: http://127.0.0.1:18081
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: loop-eu-smoke
+          wait: 60s
+      - name: Build and load smoke image
+        run: |
+          cat > /tmp/loop-helm-smoke.Dockerfile <<'DOCKER'
+          FROM python:3.12-alpine
+          COPY scripts/helm_e2e_smoke_server.py /server.py
+          ENV HELM_SMOKE_PORTS=8080,8081,8082,8003
+          CMD ["python", "/server.py"]
+          DOCKER
+          docker build -f /tmp/loop-helm-smoke.Dockerfile -t loop/helm-smoke:ci .
+          kind load docker-image loop/helm-smoke:ci --name loop-eu-smoke
+      - name: Install EU-west Loop chart
+        run: |
+          helm dependency build infra/helm/loop
+          helm upgrade --install "$LOOP_RELEASE" infra/helm/loop \
+            --namespace "$LOOP_NAMESPACE" --create-namespace \
+            -f infra/helm/loop/values-eu-west.yaml \
+            --wait --timeout 8m \
+            --set global.imageRegistry=loop \
+            --set global.imagePullPolicy=IfNotPresent \
+            --set controlPlane.image.repository=helm-smoke \
+            --set controlPlane.image.tag=ci \
+            --set controlPlane.replicaCount=1 \
+            --set runtime.image.repository=helm-smoke \
+            --set runtime.image.tag=ci \
+            --set runtime.replicaCount=1 \
+            --set gateway.image.repository=helm-smoke \
+            --set gateway.image.tag=ci \
+            --set gateway.replicaCount=1 \
+            --set kbEngine.image.repository=helm-smoke \
+            --set kbEngine.image.tag=ci \
+            --set kbEngine.replicaCount=1 \
+            --set toolHost.enabled=false \
+            --set postgresql.enabled=false \
+            --set redis.enabled=false \
+            --set qdrant.enabled=false \
+            --set nats.enabled=false \
+            --set minio.enabled=false \
+            --set clickhouse.enabled=false
+      - name: Run EU-west full-turn smoke
+        run: |
+          kubectl -n "$LOOP_NAMESPACE" rollout status deploy/loop-loop-runtime --timeout=90s
+          kubectl -n "$LOOP_NAMESPACE" port-forward svc/loop-loop-runtime 18081:8081 \
+            >/tmp/loop-eu-runtime.log 2>&1 &
+          pf_pid=$!
+          trap 'kill "$pf_pid"' EXIT
+          scripts/eu_smoke.sh
+      - name: Dump cluster diagnostics
+        if: failure()
+        run: |
+          kubectl -n "$LOOP_NAMESPACE" get all
+          kubectl -n "$LOOP_NAMESPACE" describe pods
+          kubectl -n "$LOOP_NAMESPACE" logs -l app.kubernetes.io/instance=loop \
+            --all-containers --tail=120
