@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:32:40.916077+00:00",
+    "generated_at": "2026-05-01T19:32:55.354129+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3108,13 +3108,13 @@
     {
       "id": "S442",
       "title": "helm: dp-runtime subchart",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S18",
       "epic": "E13",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: same as S441 for dp-runtime."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s442-helm-dp-runtime-subchart\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-01T19:32:55Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S443",
