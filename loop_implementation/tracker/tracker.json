@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T21:56:14.217232+00:00",
+    "generated_at": "2026-05-01T21:56:22.292656+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1243,8 +1243,8 @@
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s160-studio-agent-versions-tab-lists\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T21:56:14Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s160-studio-agent-versions-tab-lists (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-01T21:56:22Z (copilot-thor)\nTests: vitest run (105 passed) covering pagination, diff modal open/close, initial-version case, and diffLines algorithm\nDocs touched: apps/studio/src/app/agents/[agent_id]/versions/page.tsx\nFollow-ups: none"
     },
     {
       "id": "S161",
