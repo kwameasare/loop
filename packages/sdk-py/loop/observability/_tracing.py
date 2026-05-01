@@ -14,13 +14,11 @@ The wrapper is deliberately small. Its job is **policy**, not abstraction:
     in the same file so the lifecycle is obvious.
 
 Exporter selection:
-  * If ``LOOP_OTEL_EXPORTER`` is unset or ``otlp``, install the OTLP/HTTP
-    exporter pointed at ``LOOP_OTEL_ENDPOINT`` (default
-    ``http://localhost:4318/v1/traces``). The local-dev collector
-    (``infra/otel-collector.yaml``) terminates this endpoint and forwards
-    to ClickHouse.
-  * If set to ``memory``, install ``InMemorySpanExporter`` -- this is the
-    fixture used by tests via :func:`reset_for_test`.
+  * If ``LOOP_OTEL_EXPORTER=clickhouse`` (or unset in prod), write directly to
+    ClickHouse ``otel_traces`` via HTTP.
+  * If unset in non-prod or ``otlp``, install the OTLP/HTTP exporter pointed at
+    ``LOOP_OTEL_ENDPOINT``.
+  * If set to ``memory``/``inmemory``, install ``InMemorySpanExporter``.
   * If set to ``none``, register no exporter (spans are dropped). Used in
     CI hot paths where we only want to assert API shape.
 """
@@ -45,10 +43,13 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
 from opentelemetry.trace import Span as OtelSpan
 from opentelemetry.trace import StatusCode
 
+from loop.observability.clickhouse_exporter import ClickHouseSpanExporter
+
 SpanKind = Literal["llm", "tool", "retrieval", "memory", "channel"]
 _VALID_KINDS: frozenset[str] = frozenset(("llm", "tool", "retrieval", "memory", "channel"))
 
 _DEFAULT_ENDPOINT = "http://localhost:4318/v1/traces"
+_DEFAULT_CLICKHOUSE_ENDPOINT = "http://localhost:8123"
 _DEFAULT_SERVICE = "loop-runtime"
 
 # Module-level state. Initialized lazily on first ``init_tracing()`` or
@@ -58,11 +59,16 @@ _memory_exporter: InMemorySpanExporter | None = None
 
 
 def _build_exporter() -> SpanExporter | None:
-    mode = os.getenv("LOOP_OTEL_EXPORTER", "otlp").lower()
-    if mode == "memory":
+    mode = os.getenv("LOOP_OTEL_EXPORTER", _default_exporter_mode()).lower()
+    if mode in {"memory", "inmemory"}:
         return InMemorySpanExporter()
     if mode == "none":
         return None
+    if mode == "clickhouse":
+        endpoint = os.getenv("LOOP_OTEL_ENDPOINT", _DEFAULT_CLICKHOUSE_ENDPOINT)
+        return ClickHouseSpanExporter(endpoint=endpoint)
+    if mode != "otlp":
+        raise ValueError(f"Unsupported LOOP_OTEL_EXPORTER={mode!r}")
     # Default: OTLP/HTTP. Imported lazily because it pulls in protobuf
     # bindings and we don't want every test boot paying for it.
     from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
@@ -71,6 +77,12 @@ def _build_exporter() -> SpanExporter | None:
 
     endpoint = os.getenv("LOOP_OTEL_ENDPOINT", _DEFAULT_ENDPOINT)
     return OTLPSpanExporter(endpoint=endpoint)
+
+
+def _default_exporter_mode() -> str:
+    return (
+        "clickhouse" if os.getenv("LOOP_ENV", "dev").lower() in {"prod", "production"} else "otlp"
+    )
 
 
 def init_tracing(

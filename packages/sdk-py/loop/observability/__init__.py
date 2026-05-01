@@ -22,5 +22,13 @@ from loop.observability._tracing import (
     reset_for_test,
     tracer,
 )
+from loop.observability.clickhouse_exporter import ClickHouseSpanExporter
 
-__all__ = ["SpanKind", "Tracer", "init_tracing", "reset_for_test", "tracer"]
+__all__ = [
+    "ClickHouseSpanExporter",
+    "SpanKind",
+    "Tracer",
+    "init_tracing",
+    "reset_for_test",
+    "tracer",
+]
