@@ -1,6 +1,6 @@
 # Series A — Fundraise Narrative & Data Room
 
-> Status: **draft v0.1**, owned by the CEO. Reviewers: CFO,
+> Status: **draft v0.2**, owned by the CEO. Reviewers: CFO,
 > founding GTM, founding eng. Target close: Q2.
 > Source of truth for every external deck, AMA, and DD memo.
 > If you change the story here, every downstream artefact (deck,
@@ -81,10 +81,14 @@ This index is mirrored to a Drive folder; permissions are
 read-only for diligence partners under NDA. Each entry below
 must have a stable owner and a last-reviewed date.
 
+S674 committed the current shareable data-room folder at
+`loop_implementation/operations/data-room/`. After merge, the folder link is:
+`https://github.com/kwameasare/loop/tree/main/loop_implementation/operations/data-room`.
+
 ```
 data-room/
 ├── 00_one_pager.pdf
-├── 01_deck_v1.pdf
+├── 01_narrative_deck_v2.pptx      (CEO, before partner meetings)
 ├── 02_demo_video_5min.mp4
 ├── 10_traction/
 │   ├── arr_bookings.xlsx           (CFO, monthly)
@@ -100,7 +104,7 @@ data-room/
 │   ├── leadership_bios.md
 │   └── hiring_plan_24mo.xlsx
 ├── 40_financials/
-│   ├── model_v3.xlsx               (CFO)
+│   ├── 40_financials_model_v3.xlsx (CFO, monthly)
 │   ├── unit_economics.md
 │   ├── cohort_retention.csv
 │   └── cap_table_pre_a.xlsx
@@ -167,4 +171,5 @@ competitive landscape, eval reproducibility, founder commitment**.]
 
 | Date       | Author       | Change                                                |
 | ---------- | ------------ | ----------------------------------------------------- |
+| 2026-05-01 | codex-orion (S674) | Refreshed data-room link, committed narrative deck v2, and committed financial model v3. |
 | 2026-04-30 | GitHub Copilot (S044) | Initial draft (narrative spine, anti-pitch, data room index, KPIs, process). |
