@@ -226,14 +226,14 @@ Final heartbeat: 2026-05-01T22:07:02Z (copilot-thor)
 Tests: vitest run covering token streaming, tool-call status, error tile
 Docs touched: apps/studio/src/components/agents/emulator-panel.tsx
 Follow-ups: none"
-S164,studio: error boundary + toast system (sonner) for failed fetches,copilot-thor,S4,E10,1,P0,In progress,"**Active.**
-Branch: copilot-thor/s164-studio-error-boundary-toast-syst
+S164,studio: error boundary + toast system (sonner) for failed fetches,copilot-thor,S4,E10,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s164-studio-error-boundary-toast-syst (merged + deletable)
 Skill: skills/ux/component-design.md
-Last step: 0/3 (just claimed)
-Heartbeat: 2026-05-01T22:07:28Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-01T22:10:33Z (copilot-thor)
+Tests: vitest run covers toast tones, dismiss, error boundary recovery
+Docs touched: apps/studio/src/lib/toast.tsx,apps/studio/src/components/error-boundary.tsx
+Follow-ups: none"
 S170,web-channel: package skeleton (loop_channel_web),GitHub Copilot,S5,E6,1,P0,Done,"Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: Retro-close — packages/channels/web/loop_channels_web/ package already houses channel.py (SlackChannel-style facade), security.py (CorsAllowlist + TurnTokenValidator + WebChannelGuard), sse.py (TurnEvent serialiser) and now persistence.py (this pass). Package builds, all imports resolve, _tests/ covers each module. WebSession is modelled by WebConversation (S173); WebMessage is the dataclass added in this pass. Open questions: tsup-style JS sibling lives in S175 and is intentionally separate."
 S171,web-channel: signed conversation token (PASETO; 24h TTL),GitHub Copilot,S5,E6,2,P0,Done,"Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: Retro-close — packages/channels/web/loop_channels_web/security.py TurnTokenValidator already implements compact b64url(payload).b64url(hmac-sha256) signed-token with TTL. With S103 PASETO landing in this pass, the production wiring can swap the bare HMAC validator for paseto.encode_local/decode_local using the workspace's signing key while keeping the same TurnAuthError surface so the channel handler is unchanged. Tests in _tests/test_web_channel_pass4.py cover round-trip, tamper, expiry. Open questions: 24h TTL becomes encode_local(expires_in_ms=86_400_000) once the migration flips."
 S172,web-channel: POST /v1/web/turns with conversation token + CORS allowlist,GitHub Copilot,S5,E6,2,P0,Done,"Done. Branch: copilot/s-pass4 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-12T03:00:00Z. Substance: loop_channels_web/security.py — CorsAllowlist.of(origins) rejects empty/wildcard at construction, normalises trailing slash, exact-match-only is_allowed (no subdomain wildcards on a credentialed SSE endpoint). TurnTokenValidator: compact b64url(payload).b64url(hmac-sha256) — intentionally not a full JWT (no alg downgrade attack surface); secret>=32 bytes enforced; verify() rejects malformed/tampered/expired with TurnAuthError. Tests: round-trip, tampered signature, expiry, wildcard refusal at construction, exact-match enforcement. Open questions: per-agent allowed_origins resolution against agent_version.config_json belongs in the route handler that calls CorsAllowlist.of(...) per request."
