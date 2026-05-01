@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:11:09.725875+00:00",
+    "generated_at": "2026-05-01T22:13:06.567035+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1353,8 +1353,8 @@
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s175-web-channel-js-npm-package-skele\nSkill: skills/api/sdk-publish.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-01T22:11:09Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s175-web-channel-js-npm-package-skele (merged + deletable)\nSkill: skills/api/sdk-publish.md\nFinal heartbeat: 2026-05-01T22:13:06Z (copilot-thor)\nTests: vitest run on parseSseEvents and WebChannelClient.send; tsup build emits ESM+CJS+.d.ts; npm pack --dry-run lists all 6 files\nDocs touched: packages/channels/web-js/README.md\nFollow-ups: none"
     },
     {
       "id": "S176",
