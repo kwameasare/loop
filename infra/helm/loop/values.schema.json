@@ -9,6 +9,7 @@
     "controlPlane",
     "runtime",
     "gateway",
+    "kbEngine",
     "toolHost",
     "externals",
     "secrets",
@@ -149,6 +150,7 @@
     "controlPlane": { "$ref": "#/definitions/componentBlock" },
     "runtime": { "$ref": "#/definitions/componentBlock" },
     "gateway": { "$ref": "#/definitions/componentBlock" },
+    "kbEngine": { "$ref": "#/definitions/componentBlock" },
     "toolHost": { "$ref": "#/definitions/toolHostBlock" },
     "externals": {
       "type": "object",
