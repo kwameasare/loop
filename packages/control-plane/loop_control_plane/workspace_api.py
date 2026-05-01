@@ -31,6 +31,7 @@ from loop_control_plane.authorize import (
     AuthorisationError,
     authorize_workspace_access,
 )
+from loop_control_plane.data_exports import DataExportStore
 from loop_control_plane.region_routing import DataPlaneTransport, RegionRouter
 from loop_control_plane.regions import RegionError
 from loop_control_plane.workspaces import (
@@ -177,6 +178,38 @@ class WorkspaceAPI:
             "url": result.url,
             "latency_ms": result.latency_ms,
         }
+
+    async def load_data_export(
+        self,
+        *,
+        caller_sub: str,
+        workspace_id: UUID,
+        export_id: str,
+        export_region: str,
+        store: DataExportStore,
+        request_region: str | None = None,
+    ) -> dict[str, Any]:
+        """Load export metadata only from the workspace's pinned region."""
+        ws, _ = await authorize_workspace_access(
+            workspaces=self.workspaces,
+            workspace_id=workspace_id,
+            user_sub=caller_sub,
+            required_role=Role.OWNER,
+        )
+        self._require_request_region(workspace=ws, request_region=request_region)
+        try:
+            self.workspaces.require_same_region(
+                workspace_region=ws.region,
+                request_region=export_region,
+            )
+        except RegionError as exc:
+            raise AuthorisationError("cross-region data export denied") from exc
+        record = await store.load_workspace_export(
+            workspace_id=workspace_id,
+            export_id=export_id,
+            region=ws.region,
+        )
+        return dict(record)
 
     async def patch(
         self,
