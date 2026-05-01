@@ -60,9 +60,6 @@ jobs:
   docs-with-code:
     name: docs-with-code
     runs-on: ubuntu-latest
-    # Skip on push-to-main (we only enforce on PRs against main, where the
-    # diff is well-defined).
-    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -71,15 +68,19 @@ jobs:
         with:
           python-version: "3.12"
       - name: Code touching schemas/types/errors/env-vars must update docs
+        # PR: diff base..head. Push-to-main: diff previous-commit..HEAD so
+        # direct pushes (which bypass PR review) still get audited.
         run: |
-          python tools/check_docs_with_code.py \
-            --base "origin/${{ github.base_ref }}" \
-            --head HEAD
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="origin/${{ github.base_ref }}"
+          else
+            BASE="HEAD~1"
+          fi
+          python tools/check_docs_with_code.py --base "$BASE" --head HEAD
 
   checkpoint-discipline:
     name: checkpoint-discipline
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -88,10 +89,67 @@ jobs:
         with:
           python-version: "3.12"
       - name: Long feature commits must be preceded by a checkpoint
+        # Same dual-mode logic as docs-with-code: enforce on push-to-main
+        # too so a direct-push agent can't bypass the rule.
         run: |
-          python tools/check_checkpoint_discipline.py \
-            --base "origin/${{ github.base_ref }}" \
-            --head HEAD
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="origin/${{ github.base_ref }}"
+          else
+            BASE="HEAD~1"
+          fi
+          python tools/check_checkpoint_discipline.py --base "$BASE" --head HEAD
+
+  no-bulk-close:
+    name: no-bulk-close
+    runs-on: ubuntu-latest
+    # Multi-agent rule (SKILL_ROUTER §16): fail if any commit closes more
+    # than one story. Runs on every push and every PR.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Reject bulk-close commits
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="origin/${{ github.base_ref }}"
+          else
+            BASE="HEAD~1"
+          fi
+          python tools/check_no_bulk_close.py --base "$BASE" --head HEAD
+
+  direct-push-alarm:
+    name: direct-push-alarm
+    runs-on: ubuntu-latest
+    # SKILL_ROUTER §17: All work goes through PR. This workflow loudly
+    # fails on any push-to-main that isn't a squash-merge of a PR. It
+    # cannot prevent the push (only branch protection can), but it makes
+    # bypass attempts visible. Once branch protection is applied the
+    # condition below should never fire in practice.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+      - name: Confirm HEAD is a squash-merge of a PR
+        run: |
+          # Squash-merge commits land on main with a single parent and a
+          # subject containing "(#NNN)" (the PR number). Anything else is
+          # a direct push.
+          subj=$(git log -1 --format='%s' HEAD)
+          parents=$(git log -1 --format='%P' HEAD | wc -w)
+          if [ "$parents" -gt 1 ]; then
+            echo "::error::HEAD is a non-squash merge ($parents parents). Configure 'Squash and merge' as the only allowed strategy in repo settings."
+            exit 1
+          fi
+          if ! echo "$subj" | grep -qE '\(#[0-9]+\)$'; then
+            echo "::error::HEAD looks like a DIRECT PUSH to main (subject does not end in PR number). All work must go through PR. Apply branch protection per docs/branch-protection.md immediately."
+            echo "Offending subject: $subj"
+            exit 1
+          fi
+          echo "direct-push-alarm: HEAD is a clean squash-merge (subject ends in PR number)."
 
   security:
     name: security

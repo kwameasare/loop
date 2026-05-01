@@ -36,7 +36,9 @@ import csv
 import json
 import sys
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+
+UTC = timezone.utc  # python<=3.10 compat (datetime.UTC arrived in 3.11)
 
 UTC = UTC  # python<=3.10 compat (datetime.UTC arrived in 3.11)
 from pathlib import Path
