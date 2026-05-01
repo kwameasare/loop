@@ -29,6 +29,12 @@ Naming convention: `LOOP_<DOMAIN>_<NAME>` (e.g. `LOOP_RUNTIME_PORT`). Avoid `_` 
 | `LOOP_DEV_BIND` | `infra/docker-compose.yml` — host bind address for service ports (default `127.0.0.1`) | S003 |
 | `LOOP_EGRESS_ALLOWLIST` | `infra/k8s/sandbox/pod-template.yaml` — comma-separated CIDR list mounted into Firecracker pods | S014 |
 | `LOOP_CP_API_BASE_URL` | `apps/studio/src/lib/cp-api.ts` — runtime CP API URL (server-side; complements `NEXT_PUBLIC_LOOP_API_URL` for browser-side fetches) | S010 |
+| `LOOP_DEMO_URL` | `scripts/e2e_web_smoke.py` / `.github/workflows/e2e-web-smoke.yml` — published demo base URL for nightly first-chat smoke | S181 |
+| `LOOP_DEMO_CHAT_ENDPOINT` | `scripts/e2e_web_smoke.py` — optional absolute chat endpoint override; defaults to `${LOOP_DEMO_URL}/api/chat` | S181 |
+| `LOOP_DEMO_QUESTION` | `scripts/e2e_web_smoke.py` — visitor question posted by the nightly demo smoke (default `"What is Loop?"`) | S181 |
+| `LOOP_DEMO_EXPECTED_ANSWER` | `scripts/e2e_web_smoke.py` — required golden answer fragment asserted in the demo response | S181 |
+| `LOOP_DEMO_TIMEOUT_SECONDS` | `scripts/e2e_web_smoke.py` — HTTP timeout for the published demo smoke (default `20`) | S181 |
+| `LOOP_DEMO_TOKEN` | `scripts/e2e_web_smoke.py` — optional bearer token for protected demo environments | S181 |
 
 > Note — **`LOOP_WORKSPACE_ID` is not an env var.** It is a Postgres
 > session-scoped setting (`SET LOCAL loop.workspace_id = '<uuid>'`) used by
@@ -192,6 +198,17 @@ LiveKit (voice):
 | `NEXT_PUBLIC_LOOP_OAUTH_CLIENT_ID` | (Auth0) | Public OIDC client ID. |
 | `NEXT_PUBLIC_LOOP_DEFAULT_REGION` | `na-east` | |
 | `LOOP_STUDIO_SESSION_SECRET` | (required, ≥32B) | Cookie signing. |
+
+### 10.1 Published demo smoke (`scripts/e2e_web_smoke.py`)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOOP_DEMO_URL` | (required) | Published demo base URL hit by the nightly first-chat smoke. |
+| `LOOP_DEMO_CHAT_ENDPOINT` | `${LOOP_DEMO_URL}/api/chat` | Absolute endpoint override if the demo chat route differs. |
+| `LOOP_DEMO_QUESTION` | `What is Loop?` | Visitor question sent to the demo chat endpoint. |
+| `LOOP_DEMO_EXPECTED_ANSWER` | (required) | Case-insensitive answer fragment the response must include. |
+| `LOOP_DEMO_TIMEOUT_SECONDS` | `20` | HTTP timeout for the smoke request. |
+| `LOOP_DEMO_TOKEN` | (none) | Optional bearer token when the published demo is protected. |
 
 ## 11. CLI (`loop`)
 
