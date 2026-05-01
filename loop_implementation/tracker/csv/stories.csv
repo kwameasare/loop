@@ -711,19 +711,14 @@ Tests: Focused ruff/pyright on tests/test_regional_image_promotion_workflow.py; 
 Docs touched: .github/workflows/promote-regional-images.yml, loop_implementation/engineering/REGIONAL_DEPLOYS.md
 Follow-ups: none"
 S596,region: metadata-only telemetry (no PII) leaving region,tbd,S26,E16,1,P0,Not started,AC: telemetry pipeline filters PII before cross-region; tested with synthetic PII.
-S597,region: smoke test against EU stack (full turn),codex-orion,S26,E12,2,P0,In progress,"**Active.**
-Branch: codex-orion/s597-region-smoke-test-against-eu-sta
+S597,region: smoke test against EU stack (full turn),codex-orion,S26,E12,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-orion/s597-region-smoke-test-against-eu-sta (merged + deletable)
 Skill: skills/testing/write-e2e-test.md
-Last step: 5/5
-Heartbeat: 2026-05-01T23:34:03Z (codex-orion)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)
-Latest checkpoint: broad pytest and tracker docs gates passed
-Latest checkpoint: focused EU smoke verification passed
-Latest checkpoint: regional deploy docs describe EU smoke workflow
-Latest checkpoint: EU smoke workflow and focused tests landed
-Latest checkpoint: EU smoke client and entrypoint landed"
+Final heartbeat: 2026-05-01T23:34:20Z (codex-orion)
+Tests: scripts/eu_smoke.sh against local helm smoke server; uv run ruff check scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run ruff format --check scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run pyright scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run pytest -q tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py tests/test_helm_e2e_workflow.py; uv run pytest -q -m 'not integration and not e2e' (1228 passed, 3 skipped, 4 deselected); python3 tools/build_tracker.py; python3 tools/check_tracker_notes.py; python3 tools/check_docs_with_code.py; python3 tools/check_checkpoint_discipline.py; full repo ruff/format/pyright remain baseline-red in unrelated files
+Docs touched: loop_implementation/engineering/REGIONAL_DEPLOYS.md
+Follow-ups: none"
 S610,sso: SAML SP impl via PySAML2,tbd,S27,E20,3,P0,Not started,AC: ACS endpoint validates assertion; cert-rotation supported. [extends S050]
 S611,sso: SCIM provisioning endpoint (RFC 7644),tbd,S27,E20,3,P0,Not started,AC: Users + Groups create/update/delete from IdP; Postmen schemathesis test.
 S612,sso: Okta integration recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: sample IdP metadata in fixtures/; full SP↔IdP loop in integration.

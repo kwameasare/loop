@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:34:04.035456+00:00",
+    "generated_at": "2026-05-01T23:34:20.196370+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4081,8 +4081,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s597-region-smoke-test-against-eu-sta\nSkill: skills/testing/write-e2e-test.md\nLast step: 5/5\nHeartbeat: 2026-05-01T23:34:03Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: broad pytest and tracker docs gates passed\nLatest checkpoint: focused EU smoke verification passed\nLatest checkpoint: regional deploy docs describe EU smoke workflow\nLatest checkpoint: EU smoke workflow and focused tests landed\nLatest checkpoint: EU smoke client and entrypoint landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s597-region-smoke-test-against-eu-sta (merged + deletable)\nSkill: skills/testing/write-e2e-test.md\nFinal heartbeat: 2026-05-01T23:34:20Z (codex-orion)\nTests: scripts/eu_smoke.sh against local helm smoke server; uv run ruff check scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run ruff format --check scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run pyright scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run pytest -q tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py tests/test_helm_e2e_workflow.py; uv run pytest -q -m 'not integration and not e2e' (1228 passed, 3 skipped, 4 deselected); python3 tools/build_tracker.py; python3 tools/check_tracker_notes.py; python3 tools/check_docs_with_code.py; python3 tools/check_checkpoint_discipline.py; full repo ruff/format/pyright remain baseline-red in unrelated files\nDocs touched: loop_implementation/engineering/REGIONAL_DEPLOYS.md\nFollow-ups: none"
     },
     {
       "id": "S610",
