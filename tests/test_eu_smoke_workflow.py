@@ -39,8 +39,8 @@ def test_eu_smoke_workflow_installs_eu_overlay_and_runs_smoke() -> None:
     assert env["LOOP_NAMESPACE"] == "loop-eu-west"
     assert env["EU_SMOKE_REGION"] == "eu-west"
     assert "-f infra/helm/loop/values-eu-west.yaml" in runs
-    assert "--namespace \"$LOOP_NAMESPACE\" --create-namespace" in runs
+    assert '--namespace "$LOOP_NAMESPACE" --create-namespace' in runs
     assert "kind load docker-image loop/helm-smoke:ci --name loop-eu-smoke" in runs
-    assert "kubectl -n \"$LOOP_NAMESPACE\" port-forward svc/loop-loop-runtime 18081:8081" in runs
+    assert 'kubectl -n "$LOOP_NAMESPACE" port-forward svc/loop-loop-runtime 18081:8081' in runs
     assert "scripts/eu_smoke.sh" in runs
-    assert "kubectl -n \"$LOOP_NAMESPACE\" logs" in runs
+    assert 'kubectl -n "$LOOP_NAMESPACE" logs' in runs
