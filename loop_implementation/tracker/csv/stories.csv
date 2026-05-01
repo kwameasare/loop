@@ -258,11 +258,12 @@ S212,"studio: KB management UI (list, upload modal, delete confirm)",tbd,S6,E10,
 S213,kb: integration test — upload PDF → ask question → answer cites doc,codex-vega,S6,E5,2,P0,In progress,"**Active.**
 Branch: codex-vega/s213-kb-integration-test-upload-pdf-a
 Skill: skills/coding/implement-kb-feature.md
-Last step: 1/5
-Heartbeat: 2026-05-01T21:52:23Z (codex-vega)
+Last step: 2/5
+Heartbeat: 2026-05-01T21:57:41Z (codex-vega)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: qdrant postgres pdf citation integration covered
 Latest checkpoint: chunk citation metadata landed"
 S220,slack: Bolt SDK pin + package skeleton,GitHub Copilot,S7,E6,1,P0,Done,"Done. Branch: copilot/s-pass7 (merged). PR: local-merge (ff to main). Skill: skills/platforms/slack-channel.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: retro-close — packages/channels/slack/loop_channels_slack/{channel,parser,verify,blocks}.py already ship a working SlackChannel with start/stop dispatcher, parse_event/parse_command, ThreadIndex, and to_blocks renderer. Crucially the package is *Bolt-free* — we deliberately avoided pinning slack-bolt-python because cloud-portability rules forbid SDK lock-in; instead we accept already-parsed JSON and emit chat.postMessage payloads, so the cp-api/dp-runtime HTTP layer owns transport. Tests: existing test_slack_channel.py validates import + roundtrip. Open questions: if the customer ask explicitly named Bolt, future work can add an optional adapter — current design is strictly stronger because it is HTTP-runtime-agnostic."
 S221,slack: signing-secret verification middleware (request body raw),GitHub Copilot,S7,E6,2,P0,Done,"Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/security/webhook-signature-verification.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: packages/channels/slack/loop_channels_slack/verify.py — verify_request(signing_secret, body, timestamp, signature) using HMAC-SHA256 over 'v0:{ts}:{body}' with hmac.compare_digest constant-time match; SignatureError(ValueError) on tampered/replay. Tests: _tests/test_slack_channel.py covers tampered signature, stale timestamp, valid happy-path. Open questions: replay-window default 5 min matches Slack docs; configurable per-channel."
