@@ -1,6 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { listAgentVersions, priorVersion } from "./agent-versions";
+import {
+  listAgentVersions,
+  priorVersion,
+  promoteAgentVersion,
+} from "./agent-versions";
 
 describe("listAgentVersions", () => {
   it("paginates the fixture with the requested page size", async () => {
@@ -42,5 +46,52 @@ describe("priorVersion", () => {
     const { items } = await listAgentVersions("agt_1", { pageSize: 100 });
     const v1 = items.find((v) => v.version === 1)!;
     expect(priorVersion(items, v1)).toBeNull();
+  });
+});
+
+describe("promoteAgentVersion", () => {
+  it("POSTs to /v1/agent-versions/{id}/promote with the stage", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          versionId: "ver_42",
+          promoted_to: "production",
+          promoted_at: "2026-05-01T00:00:00Z",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const result = await promoteAgentVersion(
+      { versionId: "ver_42" },
+      {
+        fetcher: fetcher as unknown as typeof fetch,
+        baseUrl: "https://cp.example.com",
+        token: "tok-123",
+      },
+    );
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    const [url, init] = fetcher.mock.calls[0];
+    expect(url).toBe(
+      "https://cp.example.com/v1/agent-versions/ver_42/promote",
+    );
+    expect(init.method).toBe("POST");
+    expect(init.headers.authorization).toBe("Bearer tok-123");
+    expect(JSON.parse(init.body)).toEqual({ stage: "production" });
+    expect(result.promoted_to).toBe("production");
+  });
+
+  it("throws on non-2xx so the caller can render an error toast", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(new Response("nope", { status: 404 }));
+    await expect(
+      promoteAgentVersion(
+        { versionId: "ver_x" },
+        {
+          fetcher: fetcher as unknown as typeof fetch,
+          baseUrl: "https://cp.example.com",
+        },
+      ),
+    ).rejects.toThrow(/404/);
   });
 });

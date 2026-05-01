@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 
 import { AgentVersionsList } from "./agent-versions-list";
 import type { AgentVersionDetail } from "@/lib/agent-versions";
@@ -72,5 +72,75 @@ describe("AgentVersionsList", () => {
     render(<AgentVersionsList versions={[]} />);
     expect(screen.getByTestId("agent-versions-empty")).toBeInTheDocument();
     expect(screen.queryByTestId("agent-versions-list")).not.toBeInTheDocument();
+  });
+
+  it("promotes a version on confirm and updates the row + toast", async () => {
+    const promote = vi.fn().mockResolvedValue({
+      versionId: "ver_2",
+      promoted_to: "production",
+      promoted_at: "2026-05-01T00:00:00Z",
+    });
+    render(
+      <AgentVersionsList
+        versions={makeVersions(3)}
+        pageSize={5}
+        promote={promote}
+        confirmFn={() => true}
+      />,
+    );
+    expect(screen.getByTestId("agent-version-promoted-2")).toHaveTextContent(
+      "—",
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("agent-version-promote-2"));
+    });
+    expect(promote).toHaveBeenCalledWith({
+      versionId: "ver_2",
+      stage: "production",
+    });
+    expect(screen.getByTestId("agent-version-promoted-2")).toHaveTextContent(
+      "production",
+    );
+    expect(screen.getByTestId("promote-toast-success")).toHaveTextContent(
+      /v2 promoted to production/i,
+    );
+  });
+
+  it("skips the request when the user cancels the confirm dialog", () => {
+    const promote = vi.fn();
+    render(
+      <AgentVersionsList
+        versions={makeVersions(3)}
+        pageSize={5}
+        promote={promote}
+        confirmFn={() => false}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("agent-version-promote-2"));
+    expect(promote).not.toHaveBeenCalled();
+  });
+
+  it("shows an error toast when promote fails", async () => {
+    const promote = vi
+      .fn()
+      .mockRejectedValue(new Error("cp-api -> 500"));
+    render(
+      <AgentVersionsList
+        versions={makeVersions(3)}
+        pageSize={5}
+        promote={promote}
+        confirmFn={() => true}
+      />,
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("agent-version-promote-2"));
+    });
+    expect(screen.getByTestId("promote-toast-error")).toHaveTextContent(
+      /Promote failed: cp-api -> 500/,
+    );
+    // promoted_to stays at em-dash because the call failed
+    expect(screen.getByTestId("agent-version-promoted-2")).toHaveTextContent(
+      "—",
+    );
   });
 });

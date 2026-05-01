@@ -32,6 +32,11 @@ export interface AgentVersionDetail {
   eval_status: EvalStatus;
   /** Frozen JSON5/JSON config snapshot. Pretty-printed (2-space indent). */
   config_json: string;
+  /**
+   * Stage this version is currently promoted into (e.g. "canary",
+   * "production"). ``null`` until the operator runs Promote.
+   */
+  promoted_to?: string | null;
 }
 
 export interface ListAgentVersionsResponse {
@@ -105,6 +110,67 @@ function fixtureVersions(agentId: string): AgentVersionDetail[] {
         version === 12 ? "2026-04-30T12:00:00Z" : "2026-04-29T12:00:00Z",
       eval_status: version === 12 ? "passed" : "skipped",
       config_json: base(version),
+      promoted_to: version === 12 ? "production" : null,
     } satisfies AgentVersionDetail;
   });
+}
+
+export interface PromoteAgentVersionInput {
+  versionId: string;
+  /** Stage to promote into. Defaults to "production". */
+  stage?: string;
+}
+
+export interface PromoteAgentVersionResult {
+  versionId: string;
+  promoted_to: string;
+  promoted_at: string;
+}
+
+export interface PromoteAgentVersionOptions {
+  fetcher?: typeof fetch;
+  baseUrl?: string;
+  token?: string;
+}
+
+/**
+ * POST to cp-api ``/v1/agent-versions/{id}/promote``. The endpoint is
+ * tracked under follow-up S560 — until it lands the call will surface
+ * a 404 to the toast layer, which is the failure UX we want anyway.
+ */
+export async function promoteAgentVersion(
+  input: PromoteAgentVersionInput,
+  opts: PromoteAgentVersionOptions = {},
+): Promise<PromoteAgentVersionResult> {
+  const stage = input.stage ?? "production";
+  const baseRaw =
+    opts.baseUrl ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!baseRaw) {
+    throw new Error("LOOP_CP_API_BASE_URL is required to promote a version");
+  }
+  const trimmed = baseRaw.replace(/\/$/, "");
+  const base = trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+  const f = opts.fetcher ?? fetch;
+  const headers: Record<string, string> = {
+    accept: "application/json",
+    "content-type": "application/json",
+  };
+  if (opts.token) headers.authorization = `Bearer ${opts.token}`;
+  const response = await f(
+    `${base}/agent-versions/${encodeURIComponent(input.versionId)}/promote`,
+    { method: "POST", headers, body: JSON.stringify({ stage }) },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `cp-api POST /agent-versions/${input.versionId}/promote -> ${response.status}`,
+    );
+  }
+  const body = (await response.json()) as Partial<PromoteAgentVersionResult>;
+  return {
+    versionId: body.versionId ?? input.versionId,
+    promoted_to: body.promoted_to ?? stage,
+    promoted_at: body.promoted_at ?? new Date().toISOString(),
+  };
 }
