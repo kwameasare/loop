@@ -12,10 +12,18 @@ from loop_voice.asr_deepgram import DeepgramConfig, DeepgramSpeechToText
 from loop_voice.models import AudioFrame
 
 
+def _bytes_list() -> list[bytes]:
+    return []
+
+
+def _str_list() -> list[str]:
+    return []
+
+
 @dataclass
 class FirstTokenLatencyWS:
-    sent_bytes: list[bytes] = field(default_factory=list)
-    sent_text: list[str] = field(default_factory=list)
+    sent_bytes: list[bytes] = field(default_factory=_bytes_list)
+    sent_text: list[str] = field(default_factory=_str_list)
     closed: bool = False
     first_token_virtual_ms: int | None = None
     _first_audio: asyncio.Event = field(default_factory=asyncio.Event)

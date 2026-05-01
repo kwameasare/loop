@@ -17,7 +17,7 @@ import contextlib
 import json
 from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass, field
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Protocol, cast, runtime_checkable
 
 from loop_voice.models import AudioFrame, Transcript
 
@@ -94,23 +94,36 @@ def deepgram_url(config: DeepgramConfig, *, base: str = "wss://api.deepgram.com"
 def parse_deepgram_message(raw: str) -> Transcript | None:
     """Map a Deepgram JSON message to a ``Transcript`` (or None for keepalives)."""
     try:
-        msg = json.loads(raw)
+        parsed = json.loads(raw)
     except json.JSONDecodeError as exc:
         raise DeepgramError(f"non-json message: {exc}") from exc
+    if not isinstance(parsed, dict):
+        raise DeepgramError("message is not a json object")
+    msg = cast(dict[str, Any], parsed)
     if msg.get("type") in ("Metadata", "SpeechStarted", "UtteranceEnd"):
         return None  # housekeeping, not a transcript
-    channel = msg.get("channel") or {}
-    alternatives = channel.get("alternatives") or []
-    if not alternatives:
+    channel = msg.get("channel")
+    if not isinstance(channel, dict):
         return None
+    channel = cast(dict[str, Any], channel)
+    alternatives_obj = channel.get("alternatives")
+    if not isinstance(alternatives_obj, list) or not alternatives_obj:
+        return None
+    alternatives = cast(list[Any], alternatives_obj)
     alt = alternatives[0]
-    text = alt.get("transcript", "")
-    if not text:
+    if not isinstance(alt, dict):
         return None
+    alt = cast(dict[str, Any], alt)
+    text = alt.get("transcript", "")
+    if not isinstance(text, str) or not text:
+        return None
+    confidence = alt.get("confidence", 0.0)
+    if not isinstance(confidence, int | float):
+        confidence = 0.0
     return Transcript(
         text=text,
         is_final=bool(msg.get("is_final", False)),
-        confidence=float(alt.get("confidence", 0.0)),
+        confidence=float(confidence),
     )
 
 
