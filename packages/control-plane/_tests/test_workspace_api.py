@@ -47,9 +47,7 @@ async def test_authorize_rejects_non_member(api: WorkspaceAPI, svc: WorkspaceSer
     body = await api.create(caller_sub="owner", body={"name": "Acme", "slug": "acme"})
     ws_id = UUID(body["id"])
     with pytest.raises(AuthorisationError):
-        await authorize_workspace_access(
-            workspaces=svc, workspace_id=ws_id, user_sub="stranger"
-        )
+        await authorize_workspace_access(workspaces=svc, workspace_id=ws_id, user_sub="stranger")
 
 
 @pytest.mark.asyncio
@@ -57,9 +55,7 @@ async def test_authorize_unknown_workspace_raises_workspace_error(
     svc: WorkspaceService,
 ) -> None:
     with pytest.raises(WorkspaceError):
-        await authorize_workspace_access(
-            workspaces=svc, workspace_id=uuid4(), user_sub="anyone"
-        )
+        await authorize_workspace_access(workspaces=svc, workspace_id=uuid4(), user_sub="anyone")
 
 
 @pytest.mark.asyncio
@@ -87,6 +83,7 @@ async def test_create_returns_serialised_workspace(api: WorkspaceAPI) -> None:
     body = await api.create(caller_sub="u-1", body={"name": "Acme", "slug": "acme"})
     assert body["name"] == "Acme"
     assert body["slug"] == "acme"
+    assert body["region"] == "na-east"
     assert UUID(body["id"])  # raises if not a uuid
     assert body["created_by"] == "u-1"
 
@@ -141,15 +138,11 @@ async def test_patch_owner_only_changes_name(api: WorkspaceAPI, svc: WorkspaceSe
     ws_id = UUID(body["id"])
     await svc.add_member(workspace_id=ws_id, user_sub="member", role=Role.MEMBER)
 
-    updated = await api.patch(
-        caller_sub="owner", workspace_id=ws_id, body={"name": "New"}
-    )
+    updated = await api.patch(caller_sub="owner", workspace_id=ws_id, body={"name": "New"})
     assert updated["name"] == "New"
 
     with pytest.raises(AuthorisationError):
-        await api.patch(
-            caller_sub="member", workspace_id=ws_id, body={"name": "Hacked"}
-        )
+        await api.patch(caller_sub="member", workspace_id=ws_id, body={"name": "Hacked"})
 
 
 # --------------------------------------------------------------------------- #
@@ -180,9 +173,7 @@ async def test_member_lifecycle(api: WorkspaceAPI) -> None:
     )
     assert promoted["role"] == "owner"
 
-    removed = await api.remove_member(
-        caller_sub="owner", workspace_id=ws_id, user_sub="alice"
-    )
+    removed = await api.remove_member(caller_sub="owner", workspace_id=ws_id, user_sub="alice")
     assert removed["removed"] is True
 
 
@@ -191,9 +182,7 @@ async def test_cannot_remove_last_owner(api: WorkspaceAPI) -> None:
     body = await api.create(caller_sub="owner", body={"name": "Acme", "slug": "acme"})
     ws_id = UUID(body["id"])
     with pytest.raises(WorkspaceError):
-        await api.remove_member(
-            caller_sub="owner", workspace_id=ws_id, user_sub="owner"
-        )
+        await api.remove_member(caller_sub="owner", workspace_id=ws_id, user_sub="owner")
 
 
 @pytest.mark.asyncio
@@ -227,9 +216,7 @@ async def test_member_endpoints_require_owner(api: WorkspaceAPI, svc: WorkspaceS
             body={"user_sub": "x", "role": "member"},
         )
     with pytest.raises(AuthorisationError):
-        await api.remove_member(
-            caller_sub="member", workspace_id=ws_id, user_sub="member"
-        )
+        await api.remove_member(caller_sub="member", workspace_id=ws_id, user_sub="member")
     with pytest.raises(AuthorisationError):
         await api.update_member_role(
             caller_sub="member",
