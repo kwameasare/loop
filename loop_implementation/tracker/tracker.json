@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T21:56:46.054215+00:00",
+    "generated_at": "2026-05-01T21:57:55.110230+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3955,13 +3955,13 @@
     {
       "id": "S579",
       "title": "soc2: dependency-scanning gate (trivy + snyk)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S25",
       "epic": "E16",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: PRs with new HIGH+ vuln blocked; allowlist mechanism for false-positives."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s579-soc2-dependency-scanning-gate-tr\nSkill: skills/security/secrets-kms-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T21:57:55Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S580",
