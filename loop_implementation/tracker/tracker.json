@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:58:24.867368+00:00",
+    "generated_at": "2026-05-01T23:00:55.209805+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4004,8 +4004,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s590-region-regions-yaml-registry-per\nSkill: skills/api/add-rest-endpoint.md\nLast step: 3/5\nHeartbeat: 2026-05-01T22:58:24Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: regions registry, workspace pinning, API enforcement, docs, and focused tests landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: https://github.com/kwameasare/loop/pull/11\nBranch: codex-orion/s590-region-regions-yaml-registry-per (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-01T23:00:55Z (codex-orion)\nTests: Focused ruff/pyright on touched control-plane files; uv run pytest -q packages/control-plane/_tests/test_workspace_api.py packages/control-plane/_tests/test_workspace_region_pinning.py; uv run pytest -q -m 'not integration and not e2e' (1212 passed, 3 skipped, 4 deselected); OpenAPI TS generators --check; tracker/docs gates pass. Full repo ruff/format/pyright remain baseline-red in unrelated files.\nDocs touched: infra/terraform/regions.yaml, loop_implementation/api/openapi.yaml, loop_implementation/data/SCHEMA.md, loop_implementation/architecture/CLOUD_PORTABILITY.md, apps/studio/src/lib/cp-api/generated.ts, apps/studio/src/lib/openapi-types.ts\nFollow-ups: none"
     },
     {
       "id": "S591",
