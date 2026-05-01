@@ -82,7 +82,7 @@ CREATE TABLE workspaces (
     slug            TEXT NOT NULL UNIQUE,
     plan            TEXT NOT NULL DEFAULT 'hobby'
                       CHECK (plan IN ('hobby','pro','team','enterprise')),
-    region          TEXT NOT NULL DEFAULT 'na-east',  -- abstract region; mapped to concrete cloud region by the deploy controller
+    region          TEXT NOT NULL DEFAULT 'na-east',  -- immutable abstract region from infra/terraform/regions.yaml
     tenant_kms_key_id TEXT,                            -- workspace-specific KMS data key ID (Vault path or cloud-native)
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at      TIMESTAMPTZ

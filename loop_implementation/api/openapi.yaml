@@ -60,18 +60,58 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Workspace" }
+    post:
+      tags: [Workspaces]
+      summary: Create workspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WorkspaceCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Workspace" }
 
   /workspaces/{workspace_id}:
     get:
       tags: [Workspaces]
       summary: Get workspace
-      parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { $ref: "#/components/parameters/RequestRegion" }
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Workspace" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Workspaces]
+      summary: Update workspace metadata
+      description: Workspace `region` is immutable after creation.
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { $ref: "#/components/parameters/RequestRegion" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WorkspacePatch" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Workspace" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -825,6 +865,12 @@ components:
       name: workspace_id
       required: true
       schema: { type: string, format: uuid }
+    RequestRegion:
+      in: header
+      name: X-Loop-Region
+      required: false
+      description: Abstract region serving the request; mismatches with workspace.region return 403.
+      schema: { $ref: "#/components/schemas/RegionName" }
     AgentId:
       in: path
       name: agent_id
@@ -877,8 +923,30 @@ components:
         name: { type: string }
         slug: { type: string }
         plan: { type: string, enum: [hobby, pro, team, enterprise] }
-        region: { type: string }
+        region: { $ref: "#/components/schemas/RegionName" }
         created_at: { type: string, format: date-time }
+
+    WorkspaceCreate:
+      type: object
+      required: [name, slug]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+        slug: { type: string, pattern: "^[a-z0-9][a-z0-9-]*$" }
+        region:
+          allOf: [{ $ref: "#/components/schemas/RegionName" }]
+          default: na-east
+          description: Immutable workspace region pin selected at creation.
+
+    WorkspacePatch:
+      type: object
+      description: Mutable workspace metadata. Region changes are rejected.
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+
+    RegionName:
+      type: string
+      enum: [na-east, eu-west]
+      description: Abstract Loop region from infra/terraform/regions.yaml.
 
     Agent:
       type: object
