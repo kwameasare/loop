@@ -464,15 +464,14 @@ Final heartbeat: 2026-05-01T19:35:42Z (copilot-titan)
 Tests: uv run pytest tests/test_helm_dp_gateway_hpa_pdb.py tests/test_helm_dp_runtime_hpa_pdb.py tests/test_helm_cp_api_hpa_pdb.py tests/test_helm_chart.py tests/test_helm_values_schema.py -q (21 passed)
 Docs touched: infra/helm/loop/README.md
 Follow-ups: none"
-S444,helm: dp-tool-host subchart with kata-runtime requirement docs,codex-orion,S18,E13,2,P0,In progress,"**Active.**
-Branch: codex-orion/s444-helm-dp-tool-host-subchart-with
+S444,helm: dp-tool-host subchart with kata-runtime requirement docs,codex-orion,S18,E13,2,P0,Done,"**Done.**
+PR: https://github.com/kwameasare/loop/pull/8
+Branch: codex-orion/s444-helm-dp-tool-host-subchart-with (merged + deletable)
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 3/5
-Heartbeat: 2026-05-01T22:29:23Z (codex-orion)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)
-Latest checkpoint: dp-tool-host subchart, Kata pre-install hook, schema docs, and focused tests landed"
+Final heartbeat: 2026-05-01T22:30:49Z (codex-orion)
+Tests: uv run pytest -q -m 'not integration and not e2e' (1191 passed, 3 skipped, 4 deselected); focused ruff/format/pyright for S444 files; helm chart + tracker/docs gates passed; full ruff/format/pyright baseline-red outside S444
+Docs touched: infra/helm/loop/README.md
+Follow-ups: none"
 S445,helm: dp-kb-engine subchart,tbd,S18,E13,1,P0,Not started,AC: same.
 S446,helm: postgres dependency (Bitnami subchart pinned),copilot-titan,S18,E13,1,P0,Done,"**Done.**
 PR: (opened by squash-merge)
