@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createAgent, listAgents } from "./cp-api";
+import { createAgent, listAgents, listAgentVersions } from "./cp-api";
 
 const ORIGINAL = process.env.LOOP_CP_API_BASE_URL;
 const ORIGINAL_TOKEN = process.env.LOOP_TOKEN;
@@ -67,9 +67,7 @@ describe("listAgents", () => {
       .fn()
       .mockResolvedValue({ ok: false, status: 503, json: async () => ({}) });
 
-    await expect(listAgents({ fetcher: fetchMock })).rejects.toThrow(
-      /503/,
-    );
+    await expect(listAgents({ fetcher: fetchMock })).rejects.toThrow(/503/);
   });
 });
 
@@ -130,10 +128,83 @@ describe("createAgent", () => {
       .mockResolvedValue({ ok: false, status: 409, json: async () => ({}) });
 
     await expect(
-      createAgent(
-        { name: "Dup", slug: "dup" },
-        { fetcher: fetchMock },
-      ),
+      createAgent({ name: "Dup", slug: "dup" }, { fetcher: fetchMock }),
     ).rejects.toThrow(/409/);
+  });
+});
+
+describe("listAgentVersions", () => {
+  beforeEach(() => {
+    delete process.env.LOOP_CP_API_BASE_URL;
+    delete process.env.LOOP_TOKEN;
+  });
+
+  afterEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = ORIGINAL;
+    process.env.LOOP_TOKEN = ORIGINAL_TOKEN;
+    vi.restoreAllMocks();
+  });
+
+  it("loads a cursor page of versions with config_json for diffs", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        items: [
+          {
+            id: "ver_3",
+            agent_id: "agt_42",
+            version: 3,
+            deploy_state: "active",
+            eval_status: "passed",
+            deployed_at: "2026-05-01T10:00:00Z",
+            created_at: "2026-05-01T09:55:00Z",
+            code_hash: "abcdef123456",
+            config_json: { model: "gpt-4.1-mini" },
+          },
+        ],
+        next_cursor: "cur_2",
+      }),
+    });
+
+    const page = await listAgentVersions("agt_42", {
+      cursor: "cur_3",
+      fetcher: fetchMock,
+      limit: 5,
+      token: "tkn",
+    });
+
+    expect(page).toMatchObject({
+      next_cursor: "cur_2",
+      versions: [
+        {
+          id: "ver_3",
+          version: 3,
+          config_json: { model: "gpt-4.1-mini" },
+        },
+      ],
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agt_42/versions?cursor=cur_3&limit=5",
+      expect.objectContaining({
+        cache: "no-store",
+        headers: expect.objectContaining({
+          authorization: "Bearer tkn",
+        }),
+        method: "GET",
+      }),
+    );
+  });
+
+  it("propagates non-2xx version list responses", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
+
+    await expect(
+      listAgentVersions("missing", { fetcher: fetchMock }),
+    ).rejects.toThrow(/404/);
   });
 });
