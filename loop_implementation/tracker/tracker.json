@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:40:53.923222+00:00",
+    "generated_at": "2026-05-01T19:40:54.354286+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3180,7 +3180,7 @@
       "points": 1,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s448-helm-qdrant-dependency-official\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-01T19:40:04Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: copilot-titan/s448-helm-qdrant-dependency-official\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1\nHeartbeat: 2026-05-01T19:40:45Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: qdrant official chart pinned + condition + bypass docs; 18 helm tests pass"
     },
     {
       "id": "S449",
