@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:04:30.193224+00:00",
+    "generated_at": "2026-05-01T22:05:39.161803+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1678,13 +1678,13 @@
     {
       "id": "S213",
       "title": "kb: integration test — upload PDF → ask question → answer cites doc",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S6",
       "epic": "E5",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: pytest with real Qdrant + Postgres; assertion: answer contains expected fact + cites source URI."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s213-kb-integration-test-upload-pdf-a\nSkill: skills/coding/implement-kb-feature.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T21:47:48Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S220",
