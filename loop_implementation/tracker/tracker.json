@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:58:54.823654+00:00",
+    "generated_at": "2026-05-01T23:59:57.242712+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5110,13 +5110,13 @@
     {
       "id": "S776",
       "title": "portability: ObjectStore Protocol parity tests across all 6 backends",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S34",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: same test-suite runs against S3/Azure-Blob/GCS/OSS/Swift/MinIO; signed-URL + presign + multipart parity verified."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s776-portability-objectstore-protocol\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T23:59:57Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S777",
