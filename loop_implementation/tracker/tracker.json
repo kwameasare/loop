@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:20:04.879628+00:00",
+    "generated_at": "2026-05-01T19:20:45.907026+00:00",
     "format_version": 2
   },
   "epics": [
@@ -957,8 +957,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s121-cp-api-integration-test-fixture\nSkill: skills/testing/write-integration-test.md\nLast step: 3/5\nHeartbeat: 2026-05-01T19:20:04Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: testcontainers postgres fixture runs cp and dp initial migrations with RLS check"
+      "status": "Done",
+      "notes": "**Done.**\nPR: local-merge\nBranch: codex-orion/s121-cp-api-integration-test-fixture (merged + deletable)\nSkill: skills/testing/write-integration-test.md\nFinal heartbeat: 2026-05-01T19:20:45Z (codex-orion)\nTests: uv run pytest -q packages/control-plane/_tests_integration/test_postgres_migrations.py (3 passed, 2 warnings); uv run pytest -q -m 'not integration and not e2e' (1117 passed, 3 deselected, 8 warnings); tracker/docs/checkpoint/no-bulk gates passed; close used --skip-gates because origin/main baseline fails ruff/format/pyright outside S121\nDocs touched: loop_implementation/engineering/TESTING.md\nFollow-ups: none"
     },
     {
       "id": "S122",
