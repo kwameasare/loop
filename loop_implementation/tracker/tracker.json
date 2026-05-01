@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:04:29.080233+00:00",
+    "generated_at": "2026-05-01T22:04:29.683065+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3873,7 +3873,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s571-soc2-control-mapping-cc1-cc9-evi\nSkill: skills/security/secrets-kms-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:00:38Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: copilot-titan/s571-soc2-control-mapping-cc1-cc9-evi\nSkill: skills/security/secrets-kms-check.md\nLast step: 1\nHeartbeat: 2026-05-01T22:03:40Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: Heartbeat: 2026-05-01T23:15Z copilot-titan — Evidence sources index added; CC7.1 done; CC8.2 concrete; 6 tests pass"
     },
     {
       "id": "S572",
