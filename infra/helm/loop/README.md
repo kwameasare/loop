@@ -53,6 +53,7 @@ the chart bundles vetted upstream charts as Helm dependencies:
 | Redis | `bitnami/redis` | 20.3.0 | `redis.enabled` |
 | Qdrant | `qdrant/qdrant` | 1.13.6 | `qdrant.enabled` |
 | NATS (JetStream) | `nats-io/nats` | 1.2.2 | `nats.enabled` |
+| MinIO (S3-compat) | `bitnami/minio` | 14.10.5 | `minio.enabled` |
 
 To use an existing managed Postgres (RDS, Cloud SQL, etc.) set
 `postgresql.enabled=false` and override `externals.postgresUrl`. Same

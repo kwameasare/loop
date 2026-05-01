@@ -164,3 +164,17 @@ nats:
         pvc:
           size: 10Gi
   fullnameOverride: loop-nats
+
+# Bundled MinIO (Bitnami subchart) for S3-compatible object storage.
+# For production on a hyperscaler, set minio.enabled=false and override
+# externals.s3Endpoint + provide credentials via secrets.
+minio:
+  enabled: true
+  mode: standalone
+  auth:
+    rootUser: loop
+    rootPassword: loop-minio-changeme
+  persistence:
+    enabled: true
+    size: 20Gi
+  fullnameOverride: loop-minio

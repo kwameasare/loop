@@ -44,3 +44,10 @@ dependencies:
     version: 1.2.2
     repository: https://nats-io.github.io/k8s/helm/charts/
     condition: nats.enabled
+  # Bitnami MinIO pinned for S3-compatible object storage. Bypass via
+  # externals.s3Endpoint + minio.enabled=false to point at AWS S3,
+  # GCS via the S3 gateway, or any other managed object store.
+  - name: minio
+    version: 14.10.5
+    repository: https://charts.bitnami.com/bitnami
+    condition: minio.enabled
