@@ -10,7 +10,8 @@ import argparse
 import json
 import os
 import sys
-from typing import Any
+from collections.abc import Mapping
+from typing import cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
@@ -39,17 +40,18 @@ def _validate_http_url(url: str) -> None:
         raise SmokeError(f"demo endpoint must be http(s): {url!r}")
 
 
-def _strings(value: Any) -> list[str]:
+def _strings(value: object) -> list[str]:
     if isinstance(value, str):
         return [value]
-    if isinstance(value, dict):
+    if isinstance(value, Mapping):
+        mapping = cast(Mapping[object, object], value)
         found: list[str] = []
-        for item in value.values():
+        for item in mapping.values():
             found.extend(_strings(item))
         return found
     if isinstance(value, list):
         found = []
-        for item in value:
+        for item in cast(list[object], value):
             found.extend(_strings(item))
         return found
     return []
