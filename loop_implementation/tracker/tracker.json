@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T18:16:40.844205+00:00",
+    "generated_at": "2026-05-01T18:27:29.303042+00:00",
     "format_version": 2
   },
   "epics": [
@@ -930,13 +930,13 @@
     {
       "id": "S119",
       "title": "cp-api: openapi.yaml round-trip via schemathesis property test",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S2",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: schemathesis run --hypothesis-deadline 5s --checks all green against in-process app."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s119-cp-api-openapi-yaml-round-trip-v\nSkill: skills/testing/write-integration-test.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T18:27:29Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S120",
