@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:17:42.645890+00:00",
+    "generated_at": "2026-05-01T22:19:32.024513+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1370,13 +1370,13 @@
     {
       "id": "S177",
       "title": "web-channel-js: SSE parser + auto-reconnect with exponential backoff",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S5",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: drops mid-stream → reconnect with Last-Event-Id; jitter + cap; integration test in jsdom."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s177-web-channel-js-sse-parser-auto-r\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:19:31Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S178",
