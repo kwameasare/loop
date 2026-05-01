@@ -1,0 +1,20 @@
+{{- if and .Values.kbEngine.enabled .Values.kbEngine.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "loop.fullname" . }}-kb-engine
+  labels:
+    {{- include "loop.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kb-engine
+spec:
+  {{- if .Values.kbEngine.pdb.minAvailable }}
+  minAvailable: {{ .Values.kbEngine.pdb.minAvailable }}
+  {{- else if .Values.kbEngine.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.kbEngine.pdb.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "loop.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: kb-engine
+{{- end }}
