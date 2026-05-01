@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:14:24.764776+00:00",
+    "generated_at": "2026-05-01T22:14:30.529197+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2157,7 +2157,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s286-obs-trace-export-to-clickhouse-r\nSkill: skills/observability/add-otel-span.md\nLast step: 1/5\nHeartbeat: 2026-05-01T22:11:21Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: clickhouse exporter selection landed"
+      "notes": "**Active.**\nBranch: codex-vega/s286-obs-trace-export-to-clickhouse-r\nSkill: skills/observability/add-otel-span.md\nLast step: 2/5\nHeartbeat: 2026-05-01T22:13:18Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: exporter tests and docs landed\nLatest checkpoint: clickhouse exporter selection landed"
     },
     {
       "id": "S287",
