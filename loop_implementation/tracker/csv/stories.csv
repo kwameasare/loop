@@ -740,11 +740,12 @@ S638,ent: dedicated single-tenant deploy mode (one helm-install per customer),tb
 S639,ent: on-prem parity matrix verification (cloud-vs-onprem feature gates),codex-orion,S28,E13,2,P0,In progress,"**Active.**
 Branch: codex-orion/s639-ent-on-prem-parity-matrix-verifi
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-01T23:35:36Z (codex-orion)
+Last step: 1/5
+Heartbeat: 2026-05-01T23:39:12Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: on-prem parity matrix evidence and guard test landed"
 S650,voice-perf: ASR streaming optimization (frame-level dispatch),codex-vega,S29,E7,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-vega/s650-voice-perf-asr-streaming-optimiz (merged + deletable)
