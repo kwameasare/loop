@@ -567,11 +567,12 @@ Follow-ups: none"
 S453,"helm: smoke test workflow (kind cluster, install chart, send a turn)",codex-orion,S18,E13,2,P0,In progress,"**Active.**
 Branch: codex-orion/s453-helm-smoke-test-workflow-kind-cl
 Skill: skills/testing/write-e2e-test.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-01T22:40:07Z (codex-orion)
+Last step: 3/5
+Heartbeat: 2026-05-01T22:43:38Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: kind helm e2e workflow, smoke server, workflow tests, and docs landed"
 S460,flow: studio React-Flow canvas in /agents/{id}/flow,tbd,S19,E10,2,P0,Not started,AC: blank canvas with pan/zoom; toolbar exists; placeholder until S461.
 S461,flow: node palette w/ types start/message/condition/ai-task/http/code/end,tbd,S19,E10,3,P0,Not started,AC: drag-and-drop creates node; each type renders distinct icon.
 S462,flow: node config sidebar (per-type form),tbd,S19,E10,3,P0,Not started,AC: clicking a node opens sidebar; form fields persist on blur; validation surfaces.
