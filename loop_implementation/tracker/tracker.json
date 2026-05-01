@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:29:01.826005+00:00",
+    "generated_at": "2026-05-01T19:29:15.975810+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1117,13 +1117,13 @@
     {
       "id": "S143",
       "title": "dp-runtime: end-to-end smoke `scripts/runtime_smoke.sh` against deployed env",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S3",
       "epic": "E1",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: smoke script exits 0; CI runs it after deploy."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s143-dp-runtime-end-to-end-smoke-scri\nSkill: testing/integration-fixtures\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T19:29:15Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S150",

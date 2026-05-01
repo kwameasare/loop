@@ -120,7 +120,14 @@ Docs touched: docs/branch-protection.md adds CI / dp-runtime-image to required c
 Follow-ups: none"
 S141,"dp-runtime: integration test posts a turn, asserts full SSE frame sequence",GitHub Copilot,S3,E1,2,P0,Done,"Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/testing/replay-fixtures.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: rides on SseEncoder from S135 — tests assert the full frame sequence (TURN_EVENT[token]+, TURN_EVENT[tool_call_start], TURN_EVENT[tool_call_end], TURN_EVENT[done], DONE) is byte-identical across two encoder instances given the same input — the property the integration test depends on for replay parity. Tests: encode-twice-same-bytes invariant, id counter monotonicity across mixed event kinds. Open questions: live cp-api+dp-runtime+pg+redis docker-compose harness deferred until S130/S134 wire DP postgres + redis pools end-to-end."
 S142,"dp-runtime: k6 baseline load test 100 turns/min for 5 min, p95 latency report",tbd,S3,E1,2,P1,Not started,AC: docs/perf/runtime-baseline.md committed with p50/p95/p99/error-rate at 100 rpm.
-S143,dp-runtime: end-to-end smoke `scripts/runtime_smoke.sh` against deployed env,tbd,S3,E1,2,P0,Not started,AC: smoke script exits 0; CI runs it after deploy.
+S143,dp-runtime: end-to-end smoke `scripts/runtime_smoke.sh` against deployed env,copilot-thor,S3,E1,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s143-dp-runtime-end-to-end-smoke-scri
+Skill: testing/integration-fixtures
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-01T19:29:15Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S150,studio: Auth0 SDK frontend integration with PKCE,tbd,S4,E10,2,P0,Not started,"AC: clicking Sign In redirects to Auth0; on return, useUser() returns identity. [extends S005/S010]"
 S151,studio: protected-route HOC + login redirect with returnTo,tbd,S4,E10,1,P0,Not started,AC: unauthenticated user hitting /agents redirects to /login?returnTo=/agents; post-login lands back.
 S152,studio: auto-generated cp-api client (openapi → ts-fetch),tbd,S4,E10,2,P0,Not started,AC: pnpm run gen:cp-api writes apps/studio/src/lib/cp-api/generated.ts; types match openapi.yaml.
