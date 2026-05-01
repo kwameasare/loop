@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
-from typing import Any
+from typing import cast
 
 import yaml
 
@@ -71,6 +71,18 @@ REQUIRED_VALUE_PATHS: tuple[tuple[str, ...], ...] = (
     ("gateway", "autoscaling", "maxReplicas"),
     ("gateway", "autoscaling", "targetCPUUtilizationPercentage"),
     ("gateway", "pdb", "enabled"),
+    ("toolHost", "enabled"),
+    ("toolHost", "image", "repository"),
+    ("toolHost", "image", "tag"),
+    ("toolHost", "replicaCount"),
+    ("toolHost", "service", "port"),
+    ("toolHost", "sandboxRuntimeClassName"),
+    ("toolHost", "kata", "required"),
+    ("toolHost", "kata", "runtimeClassHandler"),
+    ("toolHost", "preInstallCheck", "enabled"),
+    ("toolHost", "preInstallCheck", "image"),
+    ("toolHost", "preInstallCheck", "pullPolicy"),
+    ("toolHost", "serviceAccount", "create"),
     ("externals", "postgresUrl"),
     ("externals", "redisUrl"),
     ("externals", "qdrantUrl"),
@@ -96,12 +108,15 @@ class HelmChartError(RuntimeError):
     """Raised on structural problems."""
 
 
-def _resolve(d: Any, path: tuple[str, ...]) -> Any:
-    cur: Any = d
+def _resolve(d: object, path: tuple[str, ...]) -> object:
+    cur: object = d
     for key in path:
-        if not isinstance(cur, dict) or key not in cur:
+        if not isinstance(cur, dict):
             raise HelmChartError(f"missing values key: {'.'.join(path)}")
-        cur = cur[key]
+        cur_map = cast(dict[str, object], cur)
+        if key not in cur_map:
+            raise HelmChartError(f"missing values key: {'.'.join(path)}")
+        cur = cur_map[key]
     return cur
 
 
@@ -129,48 +144,54 @@ def check_chart(chart_dir: Path = CHART_DIR) -> list[str]:
         return errors
 
     try:
-        chart = yaml.safe_load(chart_yaml.read_text())
+        chart_obj: object = yaml.safe_load(chart_yaml.read_text())
     except yaml.YAMLError as exc:
         errors.append(f"Chart.yaml not valid yaml: {exc}")
         return errors
-    if not isinstance(chart, dict):
+    if not isinstance(chart_obj, dict):
         errors.append("Chart.yaml must be a mapping")
         return errors
+    chart = cast(dict[str, object], chart_obj)
     for key in REQUIRED_CHART_KEYS:
         if key not in chart:
             errors.append(f"Chart.yaml missing key: {key}")
 
     # Bundled dependencies must be pinned to exact semver and have a
     # condition flag so operators can swap in managed services.
-    raw_deps = chart.get("dependencies", []) if isinstance(chart, dict) else []
-    if not isinstance(raw_deps, list):
+    raw_deps_obj = chart.get("dependencies", [])
+    if not isinstance(raw_deps_obj, list):
         errors.append("Chart.yaml dependencies must be a list")
-        raw_deps = []
-    for entry in raw_deps:  # type: ignore[reportUnknownVariableType]
+        raw_deps_obj = []
+    raw_deps = cast(list[object], raw_deps_obj)
+    for entry in raw_deps:
         if not isinstance(entry, dict):
             errors.append("Chart.yaml dependency entries must be mappings")
             continue
-        dep_any: Any = entry
-        name_any: Any = dep_any.get("name", "<unnamed>")
-        version_any: Any = dep_any.get("version")
+        dep = cast(dict[str, object], entry)
+        name_any = dep.get("name", "<unnamed>")
+        version_any = dep.get("version")
         name = str(name_any) if not isinstance(name_any, str) else name_any
         if not isinstance(version_any, str) or not re.match(r"^\d+\.\d+\.\d+$", version_any):
-            errors.append(
-                f"dependency {name}: version must be exact semver (got {version_any!r})"
-            )
-        if "condition" not in dep_any:
+            errors.append(f"dependency {name}: version must be exact semver (got {version_any!r})")
+        if "condition" not in dep:
             errors.append(f"dependency {name}: must declare a condition flag")
-        if "repository" not in dep_any:
+        if "repository" not in dep:
             errors.append(f"dependency {name}: must declare a repository URL")
+        repo_any = dep.get("repository")
+        if isinstance(repo_any, str) and repo_any.startswith("file://"):
+            local_chart = chart_dir / repo_any.removeprefix("file://")
+            if not (local_chart / "Chart.yaml").is_file():
+                errors.append(f"dependency {name}: missing local chart at {repo_any}")
 
     try:
-        values = yaml.safe_load(values_yaml.read_text())
+        values_obj: object = yaml.safe_load(values_yaml.read_text())
     except yaml.YAMLError as exc:
         errors.append(f"values.yaml not valid yaml: {exc}")
         return errors
-    if not isinstance(values, dict):
+    if not isinstance(values_obj, dict):
         errors.append("values.yaml must be a mapping")
         return errors
+    values = cast(dict[str, object], values_obj)
     for path in REQUIRED_VALUE_PATHS:
         try:
             _resolve(values, path)
