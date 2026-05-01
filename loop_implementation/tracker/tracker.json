@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:53:24.359829+00:00",
+    "generated_at": "2026-05-01T23:54:40.532585+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5044,13 +5044,13 @@
     {
       "id": "S770",
       "title": "infra: terraform module — AWS (EKS + RDS + ElastiCache + S3 + KMS + Cloudfront)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S34",
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: terraform plan green; apply creates fully-functional Loop stack on AWS; smoke test runs against it."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s770-infra-terraform-module-aws-eks-r\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/1 (just claimed)\nHeartbeat: 2026-05-01T23:54:40Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S771",

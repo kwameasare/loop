@@ -660,7 +660,7 @@ NEW_STORIES: list[StoryV2] = [
     # documented. This sprint adds Terraform per cloud + cross-cloud CI matrix
     # + provider-abstraction parity tests.
     # =====================================================================
-    StoryV2("S770", "infra: terraform module — AWS (EKS + RDS + ElastiCache + S3 + KMS + Cloudfront)", "S34", "E12", 3, "P0", "AC: terraform plan green; apply creates fully-functional Loop stack on AWS; smoke test runs against it."),
+    StoryV2("S770", "infra: terraform module — AWS (EKS + RDS + ElastiCache + S3 + KMS + Cloudfront)", "S34", "E12", 3, "P0", "AC: terraform plan green; apply creates fully-functional Loop stack on AWS; smoke test runs against it.", owner="codex-orion", status="In progress", notes_override="**Active.**\nBranch: codex-orion/s770-infra-terraform-module-aws-eks-r\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/1 (just claimed)\nHeartbeat: 2026-05-01T23:54:40Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"),
     StoryV2("S771", "infra: terraform module — Azure (AKS + Postgres Flexible + Redis + Blob + Key Vault + Front Door)", "S34", "E12", 3, "P0", "AC: same as S770 against Azure."),
     StoryV2("S772", "infra: terraform module — GCP (GKE + CloudSQL + Memorystore + GCS + KMS + Cloud CDN)", "S34", "E12", 3, "P0", "AC: same against GCP."),
     StoryV2("S773", "infra: terraform module — Alibaba Cloud (ACK + RDS + Redis + OSS + KMS + DCDN)", "S34", "E12", 3, "P1", "AC: same against Alibaba Cloud (China region)."),
