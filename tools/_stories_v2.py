@@ -495,7 +495,7 @@ NEW_STORIES: list[StoryV2] = [
     # Sprint S25 — SOC2 Type 1 prep (≈13 stories)
     # =====================================================================
     StoryV2("S570", "soc2: vanta integration auth + organization sync", "S25", "E16", 1, "P0", "AC: OAuth complete; vanta-side organization linked. [extends S046]"),
-    StoryV2("S571", "soc2: control mapping (CC1-CC9) → evidence sources doc", "S25", "E16", 2, "P0", "AC: SOC2_CONTROLS.md maps each CC to evidence (CI badge / audit log / runbook)."),
+    StoryV2("S571", "soc2: control mapping (CC1-CC9) → evidence sources doc", "S25", "E16", 2, "P0", "AC: SOC2_CONTROLS.md maps each CC to evidence (CI badge / audit log / runbook).", owner="copilot-titan", status="In progress", notes_override="**Active.**\nBranch: copilot-titan/s571-soc2-control-mapping-cc1-cc9-evi\nSkill: skills/security/secrets-kms-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:00:38Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"),
     StoryV2("S572", "soc2: backup automation postgres (point-in-time recovery)", "S25", "E16", 2, "P0", "AC: WAL archived to object-store; restore drill in DR runbook proves <1h RTO."),
     StoryV2("S573", "soc2: backup automation clickhouse", "S25", "E16", 2, "P0", "AC: scheduled exports to object-store; restore drill verified."),
     StoryV2("S574", "soc2: backup automation minio (cross-region replication)", "S25", "E16", 1, "P0", "AC: bucket replicated; integrity verified daily."),

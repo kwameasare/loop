@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:04:14.310618+00:00",
+    "generated_at": "2026-05-01T22:04:29.080233+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3867,13 +3867,13 @@
     {
       "id": "S571",
       "title": "soc2: control mapping (CC1-CC9) → evidence sources doc",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S25",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: SOC2_CONTROLS.md maps each CC to evidence (CI badge / audit log / runbook)."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s571-soc2-control-mapping-cc1-cc9-evi\nSkill: skills/security/secrets-kms-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:00:38Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S572",
