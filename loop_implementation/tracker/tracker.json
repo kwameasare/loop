@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:44:37.377902+00:00",
+    "generated_at": "2026-05-01T19:44:47.173030+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3218,13 +3218,13 @@
     {
       "id": "S452",
       "title": "helm: ingress + cert-manager + sane defaults for nginx and traefik",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S18",
       "epic": "E13",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: helm install w/ ingress=true creates TLS-terminated routes; verified on kind."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s452-helm-ingress-cert-manager-sane-d\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-01T19:44:47Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S453",
