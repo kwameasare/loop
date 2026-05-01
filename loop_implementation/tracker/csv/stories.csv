@@ -520,11 +520,12 @@ S577,soc2: pen-test fix queue tracked as P0 stories,tbd,S25,E16,2,P0,Not started
 S578,soc2: SBOM generation in CI (cyclonedx),copilot-titan,S25,E16,1,P0,In progress,"**Active.**
 Branch: copilot-titan/s578-soc2-sbom-generation-in-ci-cyclo
 Skill: skills/security/secrets-kms-check.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-01T21:54:12Z (copilot-titan)
+Last step: 1
+Heartbeat: 2026-05-01T21:55:50Z (copilot-titan)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: Heartbeat: 2026-05-01T22:30Z copilot-titan — SBOM step wired into security job (anchore/sbom-action@v0.17.7, cyclonedx-json), 4 tests pass, SECURITY.md §9.1 updated"
 S579,soc2: dependency-scanning gate (trivy + snyk),tbd,S25,E16,1,P0,Not started,AC: PRs with new HIGH+ vuln blocked; allowlist mechanism for false-positives.
 S580,soc2: secrets-scanning gate (gitleaks),copilot-titan,S25,E16,1,P0,Done,"**Done.**
 PR: (opened by squash-merge)
