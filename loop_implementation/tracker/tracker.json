@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:39:51.408111+00:00",
+    "generated_at": "2026-05-01T19:40:14.923505+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1150,13 +1150,13 @@
     {
       "id": "S152",
       "title": "studio: auto-generated cp-api client (openapi → ts-fetch)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S4",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: pnpm run gen:cp-api writes apps/studio/src/lib/cp-api/generated.ts; types match openapi.yaml."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s152-studio-auto-generated-cp-api-cli\nSkill: ux/codegen\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T19:40:14Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S153",
