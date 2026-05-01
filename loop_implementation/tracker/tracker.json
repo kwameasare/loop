@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:33:18.291931+00:00",
+    "generated_at": "2026-05-01T23:34:04.035456+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4082,7 +4082,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s597-region-smoke-test-against-eu-sta\nSkill: skills/testing/write-e2e-test.md\nLast step: 4/5\nHeartbeat: 2026-05-01T23:33:18Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: focused EU smoke verification passed\nLatest checkpoint: regional deploy docs describe EU smoke workflow\nLatest checkpoint: EU smoke workflow and focused tests landed\nLatest checkpoint: EU smoke client and entrypoint landed"
+      "notes": "**Active.**\nBranch: codex-orion/s597-region-smoke-test-against-eu-sta\nSkill: skills/testing/write-e2e-test.md\nLast step: 5/5\nHeartbeat: 2026-05-01T23:34:03Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: broad pytest and tracker docs gates passed\nLatest checkpoint: focused EU smoke verification passed\nLatest checkpoint: regional deploy docs describe EU smoke workflow\nLatest checkpoint: EU smoke workflow and focused tests landed\nLatest checkpoint: EU smoke client and entrypoint landed"
     },
     {
       "id": "S610",
