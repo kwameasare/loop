@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:31:41.060212+00:00",
+    "generated_at": "2026-05-01T22:31:56.899345+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3136,7 +3136,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s444-helm-dp-tool-host-subchart-with\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:19:04Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: codex-orion/s444-helm-dp-tool-host-subchart-with\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 3/5\nHeartbeat: 2026-05-01T22:29:23Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: dp-tool-host subchart, Kata pre-install hook, schema docs, and focused tests landed"
     },
     {
       "id": "S445",

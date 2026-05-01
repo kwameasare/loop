@@ -495,11 +495,12 @@ Follow-ups: none"
 S444,helm: dp-tool-host subchart with kata-runtime requirement docs,codex-orion,S18,E13,2,P0,In progress,"**Active.**
 Branch: codex-orion/s444-helm-dp-tool-host-subchart-with
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-01T22:19:04Z (codex-orion)
+Last step: 3/5
+Heartbeat: 2026-05-01T22:29:23Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: dp-tool-host subchart, Kata pre-install hook, schema docs, and focused tests landed"
 S445,helm: dp-kb-engine subchart,tbd,S18,E13,1,P0,Not started,AC: same.
 S446,helm: postgres dependency (Bitnami subchart pinned),copilot-titan,S18,E13,1,P0,Done,"**Done.**
 PR: (opened by squash-merge)
