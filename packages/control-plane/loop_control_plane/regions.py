@@ -21,6 +21,7 @@ class Region:
     slug: str
     display_name: str
     residency: str
+    data_plane_url: str
     concrete: dict[str, str]
     primary: bool = False
 
@@ -73,6 +74,9 @@ def load_region_registry(path: Path = DEFAULT_REGIONS_PATH) -> RegionRegistry:
             slug=region_slug,
             display_name=_require_str(region_data.get("display_name"), name=f"{slug}.display_name"),
             residency=_require_str(region_data.get("residency"), name=f"{slug}.residency"),
+            data_plane_url=_require_str(
+                region_data.get("data_plane_url"), name=f"{slug}.data_plane_url"
+            ),
             primary=bool(region_data.get("primary", False)),
             concrete={
                 str(cloud): _require_str(region, name=f"{slug}.{cloud}")
