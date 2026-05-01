@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:36:54.970849+00:00",
+    "generated_at": "2026-05-01T19:38:40.232160+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3152,13 +3152,13 @@
     {
       "id": "S446",
       "title": "helm: postgres dependency (Bitnami subchart pinned)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S18",
       "epic": "E13",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: pinned version; bypass-able via existingDatabase value."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s446-helm-postgres-dependency-bitnami\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-01T19:36:09Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S447",
