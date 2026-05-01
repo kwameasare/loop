@@ -172,11 +172,12 @@ S155,"studio: settings drawer (profile, region, theme)",tbd,S4,E10,2,P1,Not star
 S156,studio: agents-list page reads real /v1/workspaces/{id}/agents,codex-vega,S4,E10,2,P0,In progress,"**Active.**
 Branch: codex-vega/s156-studio-agents-list-page-reads-re
 Skill: skills/coding/implement-studio-screen.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-01T19:42:12Z (codex-vega)
+Last step: 3/5
+Heartbeat: 2026-05-01T19:47:21Z (codex-vega)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: agents page uses generated cp-api client with loading empty error coverage"
 S157,studio: 'New agent' modal posts to cp-api + redirects to detail,tbd,S4,E10,2,P0,Not started,AC: form validates slug uniqueness; submit creates agent; successful create navigates to /agents/{id}.
 S158,"studio: agent detail page shell with tabs (overview, versions, channels, tools, secrets)",tbd,S4,E10,2,P0,Not started,AC: tab nav routed (e.g. /agents/abc/versions); tab content lazy-loaded.
 S159,"studio: agent overview tab shows description, model, last-deploy",tbd,S4,E10,1,P1,Not started,AC: tab renders agent metadata + 'last deploy' summary; edit-description modal works.
