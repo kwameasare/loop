@@ -99,3 +99,31 @@ export async function createAgent(
   const created = await api.PostAgents({ body: payload });
   return toAgentSummary(created);
 }
+
+export interface GetAgentOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+/**
+ * Fetch a single agent by id. Used by the agent detail page shell so
+ * each tab segment can render the agent's name and slug without
+ * hitting the wire itself (the layout caches the agent for its
+ * children).
+ */
+export async function getAgent(
+  agentId: string,
+  opts: GetAgentOptions = {},
+): Promise<AgentSummary> {
+  const api = createCpApi({
+    baseUrl: opts.baseUrl ?? cpApiBaseUrl(),
+    fetch: noStoreFetch(opts.fetcher ?? fetch),
+    token: opts.token ?? process.env.LOOP_TOKEN,
+  });
+  const agent = await api.GetAgentsByAgentId({
+    agent_id: agentId,
+    body: undefined,
+  });
+  return toAgentSummary(agent);
+}
