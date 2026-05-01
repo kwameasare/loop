@@ -47,18 +47,47 @@ runtime:
 externals:
   postgresUrl: "postgresql://loop@postgres.eu-west.svc:5432/loop"
   redisUrl: "redis://redis.eu-west.svc:6379/0"
-  objectStore:
-    endpoint: "https://objects.eu-west.loop.local"
-    bucket: "loop-eu-west"
-    region: "eu-west"
-  kafka:
-    brokers: "kafka.eu-west.svc:9092"
-  kms:
-    provider: "byok"          # bring-your-own-key; no provider lock-in
-    keyArn: "REPLACE_ME_EU_WEST_KMS_KEY"
-    region: "eu-west"
-  otel:
-    endpoint: "https://otel-collector.eu-west.loop.local:4318"
+  qdrantUrl: "http://qdrant.eu-west.svc:6333"
+  natsUrl: "nats://nats.eu-west.svc:4222"
+  clickhouseUrl: "http://clickhouse.eu-west.svc:8123"
+  s3Endpoint: "https://objects.eu-west.loop.local"
+  otelEndpoint: "https://otel-collector.eu-west.loop.local:4318"
+
+postgresql:
+  enabled: true
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: eu-west-retain
+
+qdrant:
+  enabled: true
+  persistence:
+    size: 100Gi
+    storageClassName: eu-west-retain
+
+nats:
+  enabled: true
+  config:
+    jetstream:
+      enabled: true
+      fileStore:
+        enabled: true
+        pvc:
+          size: 100Gi
+          storageClassName: eu-west-retain
+
+clickhouse:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 200Gi
+    storageClass: eu-west-retain
+  backup:
+    enabled: true
+    schedule: "15 1 * * *"
+    retentionDays: 35
 
 # Network-policy guardrails. The chart's NetworkPolicy templates
 # read these to forbid traffic to/from anything not labelled

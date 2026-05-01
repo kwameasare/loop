@@ -153,6 +153,7 @@ externals:
   redisUrl: "redis://loop-redis:6379/0"
   qdrantUrl: "http://loop-qdrant:6333"
   natsUrl: "nats://loop-nats:4222"
+  clickhouseUrl: "http://loop-clickhouse:8123"
   s3Endpoint: "http://loop-minio:9000"
   otelEndpoint: "http://loop-otel-collector:4318"
 

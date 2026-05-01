@@ -9,6 +9,7 @@ data:
   REDIS_URL: {{ .Values.externals.redisUrl | quote }}
   QDRANT_URL: {{ .Values.externals.qdrantUrl | quote }}
   NATS_URL: {{ .Values.externals.natsUrl | quote }}
+  CLICKHOUSE_URL: {{ .Values.externals.clickhouseUrl | quote }}
   S3_ENDPOINT: {{ .Values.externals.s3Endpoint | quote }}
   OTELCOL_ENDPOINT: {{ .Values.externals.otelEndpoint | quote }}
   LOOP_RUNTIME_KB_URL: {{ printf "http://%s-kb-engine:%v" (include "loop.fullname" .) .Values.kbEngine.service.port | quote }}

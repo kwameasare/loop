@@ -154,11 +154,21 @@
     "toolHost": { "$ref": "#/definitions/toolHostBlock" },
     "externals": {
       "type": "object",
+      "required": [
+        "postgresUrl",
+        "redisUrl",
+        "qdrantUrl",
+        "natsUrl",
+        "clickhouseUrl",
+        "s3Endpoint",
+        "otelEndpoint"
+      ],
       "properties": {
         "postgresUrl": { "type": "string", "minLength": 1 },
         "redisUrl": { "type": "string", "minLength": 1 },
         "qdrantUrl": { "type": "string", "minLength": 1 },
         "natsUrl": { "type": "string", "minLength": 1 },
+        "clickhouseUrl": { "type": "string", "minLength": 1 },
         "s3Endpoint": { "type": "string", "minLength": 1 },
         "otelEndpoint": { "type": "string", "minLength": 1 }
       }

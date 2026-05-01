@@ -101,6 +101,7 @@ REQUIRED_VALUE_PATHS: tuple[tuple[str, ...], ...] = (
     ("externals", "redisUrl"),
     ("externals", "qdrantUrl"),
     ("externals", "natsUrl"),
+    ("externals", "clickhouseUrl"),
     ("externals", "s3Endpoint"),
     ("externals", "otelEndpoint"),
     ("secrets", "llmApiKey"),
