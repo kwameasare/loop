@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:19:57.405645+00:00",
+    "generated_at": "2026-05-01T23:21:02.552664+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4054,13 +4054,13 @@
     {
       "id": "S595",
       "title": "region: signed pipeline that promotes images to all regions",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S26",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: same image hash deployed in NA + EU; verified daily."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s595-region-signed-pipeline-that-prom\nSkill: skills/ops/deploy-agent-version.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T23:21:02Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S596",
