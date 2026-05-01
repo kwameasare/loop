@@ -128,7 +128,14 @@ Final heartbeat: 2026-05-01T19:30:25Z (copilot-thor)
 Tests: scripts/runtime_smoke.sh exits 0; tests/test_runtime_smoke.py runs the wrapper as subprocess
 Docs touched: docs/branch-protection.md adds CI / runtime-smoke; runtime_smoke.py module docstring documents the flow
 Follow-ups: none"
-S150,studio: Auth0 SDK frontend integration with PKCE,tbd,S4,E10,2,P0,Not started,"AC: clicking Sign In redirects to Auth0; on return, useUser() returns identity. [extends S005/S010]"
+S150,studio: Auth0 SDK frontend integration with PKCE,copilot-thor,S4,E10,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s150-studio-auth0-sdk-frontend-integr
+Skill: ux/auth0-pkce
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-01T19:34:13Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S151,studio: protected-route HOC + login redirect with returnTo,tbd,S4,E10,1,P0,Not started,AC: unauthenticated user hitting /agents redirects to /login?returnTo=/agents; post-login lands back.
 S152,studio: auto-generated cp-api client (openapi → ts-fetch),tbd,S4,E10,2,P0,Not started,AC: pnpm run gen:cp-api writes apps/studio/src/lib/cp-api/generated.ts; types match openapi.yaml.
 S153,studio: layout shell — sidebar nav + topbar + user menu,tbd,S4,E10,2,P0,Not started,AC: every authed page has consistent shell; nav highlights current route; signed-in user avatar visible.

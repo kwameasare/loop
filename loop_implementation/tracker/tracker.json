@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:34:10.510017+00:00",
+    "generated_at": "2026-05-01T19:34:13.303008+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1128,13 +1128,13 @@
     {
       "id": "S150",
       "title": "studio: Auth0 SDK frontend integration with PKCE",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S4",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: clicking Sign In redirects to Auth0; on return, useUser() returns identity. [extends S005/S010]"
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s150-studio-auth0-sdk-frontend-integr\nSkill: ux/auth0-pkce\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T19:34:13Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S151",
