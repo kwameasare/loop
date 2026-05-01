@@ -5,9 +5,8 @@ Public surface:
 * `Document` / `Chunk` -- pydantic v2 strict frozen models.
 * `Chunker` -- fixed-size + semantic-boundary chunkers.
 * `EmbeddingService` Protocol + `DeterministicEmbeddingService` test stub.
-* `VectorStore` Protocol; `InMemoryVectorStore` for tests; the real
-  Qdrant adapter (requires the qdrant-client extra) lives in
-  `loop_kb_engine.qdrant_store` and lands with S015b.
+* `VectorStore` Protocol; `InMemoryVectorStore` for fast tests;
+  `QdrantRestVectorStore` for dependency-light integration and prod wiring.
 * `KnowledgeBase` -- ties chunker + embedder + store + BM25 lexical
   index together to provide hybrid retrieval (alpha-weighted).
 """

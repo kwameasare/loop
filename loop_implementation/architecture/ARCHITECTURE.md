@@ -379,6 +379,9 @@ End user        Channel-Web   NATS         Runtime        Gateway      Database
 - **Vector dim:** default 3072 (OpenAI text-embedding-3-large), configurable per workspace.
 - **Quantization:** binary on collections > 5M points.
 - **Replicas:** 2 in Cloud; 1 OK for self-host.
+- <!-- S213 --> **KB integration path:** `loop_kb_engine.QdrantRestVectorStore`
+  uses Qdrant REST with `kb_<workspace_id_short>_<kb_id_short>` collection
+  names; S213 covers PDF ingest → Qdrant retrieval → Postgres metadata citation.
 
 ### 5.4 ClickHouse
 
