@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:16:51.387454+00:00",
+    "generated_at": "2026-05-01T22:16:53.836026+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1364,8 +1364,8 @@
       "epic": "E6",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s176-web-channel-js-chatwidget-react\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:16:51Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s176-web-channel-js-chatwidget-react (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-01T22:16:53Z (copilot-thor)\nTests: vitest run covers empty state, streaming bubble, error banner\nDocs touched: packages/channels/web-js/src/widget.tsx\nFollow-ups: none"
     },
     {
       "id": "S177",
