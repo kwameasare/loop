@@ -142,3 +142,12 @@ redis:
       enabled: true
       size: 2Gi
   fullnameOverride: loop-redis
+
+# Bundled Qdrant (official chart). Disable to use managed Qdrant Cloud --
+# override externals.qdrantUrl + secrets to point at it.
+qdrant:
+  enabled: true
+  replicaCount: 1
+  persistence:
+    size: 10Gi
+  fullnameOverride: loop-qdrant
