@@ -1,8 +1,8 @@
 # Loop self-host Helm chart
 
 Single chart that brings up Loop's control-plane, data-plane runtime,
-gateway, and optional **dp-tool-host** sandbox tier on Kubernetes >= 1.27.
-Goal: feature parity with the managed cloud offering.
+gateway, **dp-kb-engine**, and optional **dp-tool-host** sandbox tier on
+Kubernetes >= 1.27. Goal: feature parity with the managed cloud offering.
 
 ## Install
 
@@ -33,6 +33,9 @@ helm install loop ./infra/helm/loop \
 | `templates/gateway.yaml` | Deployment + Service for gateway |
 | `templates/gateway-hpa.yaml` | HPA (autoscaling/v2) for gateway (gated on `gateway.autoscaling.enabled`) |
 | `templates/gateway-pdb.yaml` | PodDisruptionBudget for gateway (gated on `gateway.pdb.enabled`) |
+| `templates/kb-engine.yaml` | Deployment + Service for dp-kb-engine |
+| `templates/kb-engine-hpa.yaml` | HPA (autoscaling/v2) for dp-kb-engine (gated on `kbEngine.autoscaling.enabled`) |
+| `templates/kb-engine-pdb.yaml` | PodDisruptionBudget for dp-kb-engine (gated on `kbEngine.pdb.enabled`) |
 | `templates/ingress.yaml` | optional ingress (`/v1/cp`, `/v1/runtime`, `/v1/llm`) |
 | `templates/NOTES.txt` | post-install notes |
 | `charts/dp-tool-host/` | local subchart for the tool-host Deployment, Service, service account, and Kata pre-install hook |
@@ -66,6 +69,14 @@ with `cert-manager.io/cluster-issuer` and a TLS section is rendered
 using `ingress.certManager.tlsSecretName`, so a fresh
 `helm install --set ingress.enabled=true --set ingress.certManager.enabled=true`
 produces TLS-terminated routes (verified on kind).
+
+### dp-kb-engine
+
+`kbEngine.enabled=true` installs the KB retrieval service as an internal
+ClusterIP service on port `8003`. The chart publishes
+`LOOP_RUNTIME_KB_URL` for `dp-runtime` and `LOOP_KB_QDRANT_URL` for the
+KB engine through the shared config map, so production installs can move
+Qdrant by changing `externals.qdrantUrl`.
 
 ### dp-tool-host + Kata
 
