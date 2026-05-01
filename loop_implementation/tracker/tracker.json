@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:53:09.580289+00:00",
+    "generated_at": "2026-05-01T23:53:24.359829+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4455,8 +4455,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s674-launch-series-a-data-room-update\nSkill: skills/devrel/write-docs-page.md\nLast step: 5/5\nHeartbeat: 2026-05-01T23:53:09Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: S674 ready to close with data-room artifacts verified\nLatest checkpoint: deck layout QA and workbook render verified\nLatest checkpoint: broad pytest and tracker docs gates passed\nLatest checkpoint: committed data-room artifact verification passed\nLatest checkpoint: Series A deck model data-room link and tests landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s674-launch-series-a-data-room-update (merged + deletable)\nSkill: skills/devrel/write-docs-page.md\nFinal heartbeat: 2026-05-01T23:53:24Z (codex-orion)\nTests: Presentation artifact-tool build exported 6-slide PPTX and check_layout_quality reported 0 errors/0 warnings; spreadsheet artifact-tool build exported XLSX and formula scan matched 0 error cells; uv run ruff check tests/test_series_a_data_room.py; uv run ruff format --check tests/test_series_a_data_room.py; uv run pyright tests/test_series_a_data_room.py; uv run pytest -q tests/test_series_a_data_room.py; Office ZIP sanity check for deck/model passed; uv run pytest -q -m 'not integration and not e2e' (1234 passed, 3 skipped, 4 deselected); python3 tools/build_tracker.py; python3 tools/check_tracker_notes.py; python3 tools/check_docs_with_code.py; python3 tools/check_checkpoint_discipline.py; full repo ruff/format/pyright remain baseline-red in unrelated files\nDocs touched: loop_implementation/operations/SERIES_A.md,loop_implementation/operations/data-room/README.md,loop_implementation/operations/data-room/01_narrative_deck_v2.pptx,loop_implementation/operations/data-room/40_financials_model_v3.xlsx\nFollow-ups: none"
     },
     {
       "id": "S540",
