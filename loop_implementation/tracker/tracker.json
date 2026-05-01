@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:25:05.576300+00:00",
+    "generated_at": "2026-05-01T23:26:07.706575+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4076,13 +4076,13 @@
     {
       "id": "S597",
       "title": "region: smoke test against EU stack (full turn)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S26",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: scripts/eu_smoke.sh against eu-west passes; CI nightly."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s597-region-smoke-test-against-eu-sta\nSkill: skills/testing/write-e2e-test.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T23:26:07Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S610",
