@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T21:53:02.436096+00:00",
+    "generated_at": "2026-05-01T21:53:02.882242+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3972,7 +3972,7 @@
       "points": 1,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s580-soc2-secrets-scanning-gate-gitle\nSkill: skills/security/secrets-kms-check.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-01T21:46:21Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: copilot-titan/s580-soc2-secrets-scanning-gate-gitle\nSkill: skills/security/secrets-kms-check.md\nLast step: 1\nHeartbeat: 2026-05-01T21:49:11Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: gitleaks step + .gitleaks.toml + 4 tests (1 invokes CLI when present); SECURITY.md updated"
     },
     {
       "id": "S581",
