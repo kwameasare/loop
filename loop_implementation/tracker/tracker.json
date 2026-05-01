@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:40:54.354286+00:00",
+    "generated_at": "2026-05-01T19:40:54.781305+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3179,8 +3179,8 @@
       "epic": "E13",
       "points": 1,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s448-helm-qdrant-dependency-official\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1\nHeartbeat: 2026-05-01T19:40:45Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: qdrant official chart pinned + condition + bypass docs; 18 helm tests pass"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s448-helm-qdrant-dependency-official (merged + deletable)\nSkill: (unspecified)\nFinal heartbeat: 2026-05-01T19:40:46Z (copilot-titan)\nTests: uv run pytest tests/test_helm_qdrant_dependency.py tests/test_helm_redis_dependency.py tests/test_helm_postgres_dependency.py tests/test_helm_chart.py tests/test_helm_values_schema.py -q (18 passed)\nDocs touched: infra/helm/loop/README.md\nFollow-ups: none"
     },
     {
       "id": "S449",
