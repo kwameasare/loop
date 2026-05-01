@@ -185,7 +185,14 @@ Final heartbeat: 2026-05-01T21:48:54Z (copilot-thor)
 Tests: vitest run (88 passed) covering happy path, slug collision, slug format, and server error
 Docs touched: apps/studio/src/app/agents/page.tsx
 Follow-ups: none"
-S158,"studio: agent detail page shell with tabs (overview, versions, channels, tools, secrets)",tbd,S4,E10,2,P0,Not started,AC: tab nav routed (e.g. /agents/abc/versions); tab content lazy-loaded.
+S158,"studio: agent detail page shell with tabs (overview, versions, channels, tools, secrets)",copilot-thor,S4,E10,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s158-studio-agent-detail-page-shell-w
+Skill: skills/ux/component-design.md
+Last step: 0/3 (just claimed)
+Heartbeat: 2026-05-01T21:49:37Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S159,"studio: agent overview tab shows description, model, last-deploy",tbd,S4,E10,1,P1,Not started,AC: tab renders agent metadata + 'last deploy' summary; edit-description modal works.
 S160,studio: agent-versions tab lists versions with diff-viewer modal,tbd,S4,E10,3,P0,Not started,AC: version list paginates; clicking a version opens modal with config_json diff vs prior version.
 S161,studio: 'Promote' button on a version row triggers cp-api /promote,tbd,S4,E10,1,P0,Not started,AC: click → confirms → POST /promote; row updates promoted_to inline; toast on success/failure.
