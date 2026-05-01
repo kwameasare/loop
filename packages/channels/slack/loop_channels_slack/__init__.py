@@ -14,6 +14,12 @@ Surface APIs:
 
 from loop_channels_slack.blocks import to_blocks
 from loop_channels_slack.channel import SlackChannel, ThreadIndex
+from loop_channels_slack.connect import (
+    SlackConnectFlow,
+    SlackConnectRequest,
+    SlackConnectResult,
+    SlackInstallResult,
+)
 from loop_channels_slack.parser import parse_command, parse_event
 from loop_channels_slack.verify import (
     REPLAY_WINDOW_SECONDS,
@@ -25,6 +31,10 @@ __all__ = [
     "REPLAY_WINDOW_SECONDS",
     "SignatureError",
     "SlackChannel",
+    "SlackConnectFlow",
+    "SlackConnectRequest",
+    "SlackConnectResult",
+    "SlackInstallResult",
     "ThreadIndex",
     "parse_command",
     "parse_event",

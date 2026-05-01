@@ -10,6 +10,12 @@ Concrete channels live in sibling packages
 (`loop_channels_web`, `loop_channels_slack`, `loop_channels_whatsapp`).
 """
 
+from loop_channels_core.feature_matrix import (
+    AgentChannelMatrix,
+    ChannelCapability,
+    ChannelFeatureProfile,
+    default_channel_profiles,
+)
 from loop_channels_core.frames import (
     InboundEvent,
     InboundEventKind,
@@ -27,13 +33,17 @@ from loop_channels_core.protocol import (
 from loop_channels_core.translate import from_turn_event
 
 __all__ = [
+    "AgentChannelMatrix",
     "Channel",
+    "ChannelCapability",
     "ChannelDispatcher",
+    "ChannelFeatureProfile",
     "DispatcherFn",
     "InboundEvent",
     "InboundEventKind",
     "OutboundFrame",
     "OutboundFrameKind",
+    "default_channel_profiles",
     "from_async_generator",
     "from_list_factory",
     "from_turn_event",

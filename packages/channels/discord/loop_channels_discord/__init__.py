@@ -18,12 +18,24 @@ from loop_channels_discord.channel import (
     DiscordChannel,
     DiscordConversationIndex,
 )
+from loop_channels_discord.gateway import (
+    DiscordBotProfile,
+    DiscordConnectFlow,
+    DiscordConnectRequest,
+    DiscordConnectResult,
+    DiscordGatewayMessageParser,
+)
 from loop_channels_discord.messages import to_followup_body
 from loop_channels_discord.parser import parse_interaction
 
 __all__ = [
+    "DiscordBotProfile",
     "DiscordChannel",
+    "DiscordConnectFlow",
+    "DiscordConnectRequest",
+    "DiscordConnectResult",
     "DiscordConversationIndex",
+    "DiscordGatewayMessageParser",
     "parse_interaction",
     "to_followup_body",
 ]

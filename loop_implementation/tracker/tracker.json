@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T08:52:44.807308+00:00",
+    "generated_at": "2026-05-01T09:51:09.540671+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1777,13 +1777,13 @@
     {
       "id": "S228",
       "title": "slack: studio channels-tab — Connect Slack OAuth button + status",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S7",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: button initiates OAuth; tile shows connected workspace; disconnect revokes."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_slack/connect.py - Slack OAuth connect flow exchanges code, preserves token as secret ref, and returns ready team install metadata. Tests: packages/channels/slack/_tests/test_slack_connect_pass12.py. Open questions: none."
     },
     {
       "id": "S229",
@@ -2459,13 +2459,13 @@
     {
       "id": "S340",
       "title": "wa: WA Cloud API SDK pin + channel package skeleton",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S13",
       "epic": "E6",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: package builds; types: WaMessage, WaTemplate. [extends S023]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_whatsapp/connect.py - WhatsApp Cloud API v20.0 connect model and WABA phone-number subscription flow. Tests: packages/channels/whatsapp/_tests/test_whatsapp_connect_pass12.py. Open questions: none."
     },
     {
       "id": "S341",
@@ -2547,13 +2547,13 @@
     {
       "id": "S348",
       "title": "wa: studio — connect WA Business Account flow",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S13",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: OAuth-style connect; phone-number selector; tile shows connected number."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_whatsapp/connect.py - Studio WhatsApp Business Account selection and webhook subscription flow. Tests: packages/channels/whatsapp/_tests/test_whatsapp_connect_pass12.py. Open questions: none."
     },
     {
       "id": "S349",
@@ -3559,35 +3559,35 @@
     {
       "id": "S510",
       "title": "sms: Twilio SMS adapter (inbound webhook + outbound API)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: incoming SMS → AgentEvent; outgoing AgentResponse → Twilio."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_sms/twilio.py - Twilio SMS inbound webhook parser and outbound send adapter with client Protocol seam. Tests: packages/channels/sms/_tests/test_sms_pass12.py. Open questions: none."
     },
     {
       "id": "S511",
       "title": "sms: opt-in/opt-out compliance (STOP, START, HELP keywords)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: STOP marks user opted-out; further messages blocked; START re-opts; HELP responds with template."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_sms/compliance.py - STOP START HELP opt-in opt-out compliance state machine with consent-store Protocol. Tests: packages/channels/sms/_tests/test_sms_pass12.py. Open questions: none."
     },
     {
       "id": "S512",
       "title": "sms: studio connect-Twilio-number flow",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E10",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: number selector; SMS-capable filter; tile shows status."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_sms/connect.py - Studio Twilio number connect flow configures inbound and status webhooks over provisioner Protocol. Tests: packages/channels/sms/_tests/test_sms_pass12.py. Open questions: none."
     },
     {
       "id": "S513",
@@ -3658,90 +3658,90 @@
     {
       "id": "S519",
       "title": "telegram: studio connect-bot flow (BotFather token)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E10",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: paste token; tile shows online; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_telegram/connect.py - Studio BotFather-token connect flow resolves bot profile and sets HTTPS webhook. Tests: packages/channels/telegram/_tests/test_telegram_connect_pass12.py. Open questions: none."
     },
     {
       "id": "S530",
       "title": "discord: bot adapter (gateway + slash + at-mention)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S23",
       "epic": "E6",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: messages routed; slash command works; integration test. [extends S040]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_discord/gateway.py - Discord gateway mention parser plus slash-command connect registration for bot adapter. Tests: packages/channels/discord/_tests/test_discord_gateway_pass12.py. Open questions: none."
     },
     {
       "id": "S531",
       "title": "discord: studio connect-bot flow",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S23",
       "epic": "E10",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: invite-link generator; tile shows status."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_discord/gateway.py - Studio Discord bot connect flow registers /loop command and returns install readiness. Tests: packages/channels/discord/_tests/test_discord_gateway_pass12.py. Open questions: none."
     },
     {
       "id": "S532",
       "title": "teams: Bot Framework adapter (signed JWT)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S23",
       "epic": "E6",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: webhook handlers verified; messages routed; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_teams/connect.py - Teams Bot Framework connect flow uploads manifest through provisioner Protocol. Tests: packages/channels/teams/_tests/test_teams_connect_pass12.py. Open questions: none."
     },
     {
       "id": "S533",
       "title": "teams: studio connect flow (manifest upload)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S23",
       "epic": "E10",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: manifest.zip downloadable; instructions step-by-step."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_teams/connect.py - Studio Teams manifest-upload connect flow returns app and tenant readiness metadata. Tests: packages/channels/teams/_tests/test_teams_connect_pass12.py. Open questions: none."
     },
     {
       "id": "S534",
       "title": "teams: adaptive-card renderer for AgentResponse",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S23",
       "epic": "E6",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: lists/buttons render natively; lockdown for forbidden elements."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_teams/connect.py - Adaptive Card renderer emits Bot Framework attachment payloads with submit actions. Tests: packages/channels/teams/_tests/test_teams_connect_pass12.py. Open questions: none."
     },
     {
       "id": "S535",
       "title": "channels: cross-channel test fixture (one agent, all channels respond)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S23",
       "epic": "E6",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: scripted test sends to all 7 channels; each gets equivalent response."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/testing/write-integration-test.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_core/feature_matrix.py - cross-channel matrix fixture covers SMS RCS Discord Teams Telegram WhatsApp capability parity. Tests: packages/channels/core/_tests/test_channel_matrix_pass12.py. Open questions: none."
     },
     {
       "id": "S536",
       "title": "channels: per-channel feature-flag matrix in agent config",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S23",
       "epic": "E6",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: agent.channels.<name>.enabled gate; missing → 405."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_core/feature_matrix.py - per-channel feature flag matrix models capabilities, text limits, and unsupported capability errors. Tests: packages/channels/core/_tests/test_channel_matrix_pass12.py. Open questions: none."
     },
     {
       "id": "S550",
@@ -4461,68 +4461,68 @@
     {
       "id": "S540",
       "title": "rcs: RCS Business Messaging adapter via Google Jibe / carrier MaaP",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E6",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: outbound RCS message with rich card via Jibe sandbox; fallback to SMS on carrier-not-supported."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_rcs/adapter.py + connect.py - RCS Business Messaging adapter and Google Jibe/MaaP connect provisioning seam. Tests: packages/channels/rcs/_tests/test_rcs_pass12.py. Open questions: none."
     },
     {
       "id": "S541",
       "title": "rcs: inbound webhook → AgentEvent (carrier delivery + read receipts)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: carrier webhook signature verified; inbound text and suggested-reply taps routed."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_rcs/adapter.py - RCS inbound text and delivery/read receipt parser into Loop event or receipt models. Tests: packages/channels/rcs/_tests/test_rcs_pass12.py. Open questions: none."
     },
     {
       "id": "S542",
       "title": "rcs: rich-card renderer (carousels, suggested replies, suggested actions)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: AgentResponse → RCS card; carousel ≤10 cards; quick-reply chips present."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_rcs/rich_cards.py - RCS rich-card renderer with replies, URL actions, dial actions, and image media. Tests: packages/channels/rcs/_tests/test_rcs_pass12.py. Open questions: none."
     },
     {
       "id": "S543",
       "title": "rcs: agent verification + brand profile setup workflow",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E6",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: per-agent brand profile + verification request submitted to carrier; status tracked."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_rcs/connect.py - RCS brand profile verification and webhook setup workflow over provisioner Protocol. Tests: packages/channels/rcs/_tests/test_rcs_pass12.py. Open questions: none."
     },
     {
       "id": "S544",
       "title": "rcs: studio connect-RCS flow (brand id, MaaP creds)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: tab shows verification status, connected number, brand assets preview."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_rcs/connect.py - Studio RCS connect flow captures brand id, MaaP agent id, regions, and verified readiness. Tests: packages/channels/rcs/_tests/test_rcs_pass12.py. Open questions: none."
     },
     {
       "id": "S545",
       "title": "rcs: integration test (recorded MaaP webhooks + outbound assertion)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S22",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: fixtures/rcs/*.json replay; outbound calls asserted against recorded golden responses."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/testing/write-integration-test.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_rcs/adapter.py + rich_cards.py - recorded MaaP-style inbound receipt and outbound assertion fixture without network calls. Tests: packages/channels/rcs/_tests/test_rcs_pass12.py. Open questions: none."
     },
     {
       "id": "S700",

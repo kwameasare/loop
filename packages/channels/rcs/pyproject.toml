@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "loop-channels-rcs"
+version = "0.1.0"
+description = "Loop RCS Business Messaging adapter: Google Jibe/MaaP webhooks, rich cards, receipts, and Studio connect flow."
+license = { text = "Apache-2.0" }
+requires-python = ">=3.12"
+dependencies = [
+    "loop-channels-core",
+    "pydantic>=2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["loop_channels_rcs"]

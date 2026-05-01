@@ -8,7 +8,9 @@ members = [
     "loop-channels-core",
     "loop-channels-discord",
     "loop-channels-email",
+    "loop-channels-rcs",
     "loop-channels-slack",
+    "loop-channels-sms",
     "loop-channels-teams",
     "loop-channels-telegram",
     "loop-channels-web",
@@ -418,9 +420,39 @@ requires-dist = [
 ]
 
 [[package]]
+name = "loop-channels-rcs"
+version = "0.1.0"
+source = { editable = "packages/channels/rcs" }
+dependencies = [
+    { name = "loop-channels-core" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "loop-channels-core", editable = "packages/channels/core" },
+    { name = "pydantic", specifier = ">=2" },
+]
+
+[[package]]
 name = "loop-channels-slack"
 version = "0.1.0"
 source = { editable = "packages/channels/slack" }
+dependencies = [
+    { name = "loop-channels-core" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "loop-channels-core", editable = "packages/channels/core" },
+    { name = "pydantic", specifier = ">=2" },
+]
+
+[[package]]
+name = "loop-channels-sms"
+version = "0.1.0"
+source = { editable = "packages/channels/sms" }
 dependencies = [
     { name = "loop-channels-core" },
     { name = "pydantic" },
@@ -690,7 +722,9 @@ dev = [
     { name = "loop-channels-core" },
     { name = "loop-channels-discord" },
     { name = "loop-channels-email" },
+    { name = "loop-channels-rcs" },
     { name = "loop-channels-slack" },
+    { name = "loop-channels-sms" },
     { name = "loop-channels-teams" },
     { name = "loop-channels-telegram" },
     { name = "loop-channels-web" },
@@ -726,7 +760,9 @@ dev = [
     { name = "loop-channels-core", editable = "packages/channels/core" },
     { name = "loop-channels-discord", editable = "packages/channels/discord" },
     { name = "loop-channels-email", editable = "packages/channels/email" },
+    { name = "loop-channels-rcs", editable = "packages/channels/rcs" },
     { name = "loop-channels-slack", editable = "packages/channels/slack" },
+    { name = "loop-channels-sms", editable = "packages/channels/sms" },
     { name = "loop-channels-teams", editable = "packages/channels/teams" },
     { name = "loop-channels-telegram", editable = "packages/channels/telegram" },
     { name = "loop-channels-web", editable = "packages/channels/web" },

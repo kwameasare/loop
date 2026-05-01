@@ -21,10 +21,12 @@ members = [
     "packages/channels/discord",
     "packages/channels/email",
     "packages/channels/slack",
+    "packages/channels/sms",
     "packages/channels/teams",
     "packages/channels/telegram",
     "packages/channels/web",
     "packages/channels/whatsapp",
+    "packages/channels/rcs",
     "packages/control-plane",
     "packages/data-plane",
     "packages/eval-harness",
@@ -46,10 +48,12 @@ loop-channels-core = { workspace = true }
 loop-channels-discord = { workspace = true }
 loop-channels-email = { workspace = true }
 loop-channels-slack = { workspace = true }
+loop-channels-sms = { workspace = true }
 loop-channels-teams = { workspace = true }
 loop-channels-telegram = { workspace = true }
 loop-channels-web = { workspace = true }
 loop-channels-whatsapp = { workspace = true }
+loop-channels-rcs = { workspace = true }
 loop-runtime = { workspace = true }
 loop-control-plane = { workspace = true }
 loop-eval = { workspace = true }
@@ -70,10 +74,12 @@ dev = [
     "loop-channels-discord",
     "loop-channels-email",
     "loop-channels-slack",
+    "loop-channels-sms",
     "loop-channels-teams",
     "loop-channels-telegram",
     "loop-channels-web",
     "loop-channels-whatsapp",
+    "loop-channels-rcs",
     "loop-runtime",
     "loop-control-plane",
     "loop-data-plane",

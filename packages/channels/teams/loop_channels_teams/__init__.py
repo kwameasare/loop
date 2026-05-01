@@ -12,12 +12,24 @@ from loop_channels_teams.channel import (
     TeamsChannel,
     TeamsConversationIndex,
 )
+from loop_channels_teams.connect import (
+    TeamsAppManifest,
+    TeamsConnectFlow,
+    TeamsConnectRequest,
+    TeamsConnectResult,
+    render_adaptive_card,
+)
 from loop_channels_teams.messages import to_reply_activity
 from loop_channels_teams.parser import parse_activity
 
 __all__ = [
+    "TeamsAppManifest",
     "TeamsChannel",
+    "TeamsConnectFlow",
+    "TeamsConnectRequest",
+    "TeamsConnectResult",
     "TeamsConversationIndex",
     "parse_activity",
+    "render_adaptive_card",
     "to_reply_activity",
 ]
