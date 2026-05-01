@@ -32,6 +32,7 @@ from loop_kb_engine.parsers import (
     UnsupportedDocumentType,
     default_registry,
 )
+from loop_kb_engine.qdrant_store import QdrantRestVectorStore, qdrant_collection_name
 from loop_kb_engine.retrieval import (
     ChunkDiff,
     TombstoneRegistry,
@@ -56,6 +57,7 @@ __all__ = [
     "KnowledgeBase",
     "Parser",
     "ParserRegistry",
+    "QdrantRestVectorStore",
     "RetrievalResult",
     "SemanticChunker",
     "TextParser",
@@ -65,5 +67,6 @@ __all__ = [
     "chunk_content_hash",
     "default_registry",
     "diff_chunks",
+    "qdrant_collection_name",
     "rrf_combine",
 ]
