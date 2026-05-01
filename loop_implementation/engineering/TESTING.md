@@ -59,6 +59,10 @@ Coverage targets and gates are listed in `engineering/HANDBOOK.md` §4. This doc
 Cover every public API path. Tests spin up real Postgres + Redis + Qdrant + NATS via docker-compose (the same `make up` developers run locally).
 
 - **Framework:** pytest with a `pytest_plugin` that boots the stack.
+- **API contract fuzzing:** Schemathesis exercises `api/openapi.yaml` against
+  an in-process ASGI contract app with all response checks enabled and a 5 s
+  Hypothesis deadline. This keeps the public REST spec loadable, routable, and
+  response-schema-valid before the full `cp-api` server exists.
 - **Fixtures:**
   - `workspace_factory` — creates a fresh tenant.
   - `agent_factory` — deploys a no-op agent.

@@ -101,6 +101,7 @@ dev = [
     "alembic>=1.13",
     "sqlalchemy>=2.0",
     "psycopg[binary]>=3.2",
+    "schemathesis>=4.0",
 ]
 
 [tool.ruff]
