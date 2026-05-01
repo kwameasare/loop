@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:48:15.451142+00:00",
+    "generated_at": "2026-05-01T19:49:16.614744+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1199,8 +1199,8 @@
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s156-studio-agents-list-page-reads-re\nSkill: skills/coding/implement-studio-screen.md\nLast step: 3/5\nHeartbeat: 2026-05-01T19:47:21Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: agents page uses generated cp-api client with loading empty error coverage"
+      "status": "Done",
+      "notes": "**Done.**\nPR: local-only: codex-vega/s156-studio-agents-list-page-reads-re\nBranch: codex-vega/s156-studio-agents-list-page-reads-re (merged + deletable)\nSkill: skills/coding/implement-studio-screen.md\nFinal heartbeat: 2026-05-01T19:49:16Z (codex-vega)\nTests: pnpm --dir apps/studio test (82 passed); pnpm --dir apps/studio exec tsc --noEmit; pnpm --dir apps/studio lint clean; pnpm --dir apps/studio build clean; tracker/docs/checkpoint/no-bulk gates passed; canonical close gate blocked by pre-existing repo-wide ruff baseline in tools/_stories_v2.py, tools/agent_lifecycle.py, tools/build_tracker.py, tools/check_no_bulk_close.py, tools/gen_cp_api_client.py\nDocs touched: none\nFollow-ups: none"
     },
     {
       "id": "S157",

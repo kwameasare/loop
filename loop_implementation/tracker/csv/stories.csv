@@ -169,15 +169,14 @@ Tests: pnpm test 80 passed; pnpm lint clean; pnpm build clean
 Docs touched: workspaces.ts, use-active-workspace.ts, workspace-switcher.tsx module docstrings document the source-of-truth + persistence rules
 Follow-ups: none"
 S155,"studio: settings drawer (profile, region, theme)",tbd,S4,E10,2,P1,Not started,AC: profile name editable; region read-only display; theme persists to localStorage.
-S156,studio: agents-list page reads real /v1/workspaces/{id}/agents,codex-vega,S4,E10,2,P0,In progress,"**Active.**
-Branch: codex-vega/s156-studio-agents-list-page-reads-re
+S156,studio: agents-list page reads real /v1/workspaces/{id}/agents,codex-vega,S4,E10,2,P0,Done,"**Done.**
+PR: local-only: codex-vega/s156-studio-agents-list-page-reads-re
+Branch: codex-vega/s156-studio-agents-list-page-reads-re (merged + deletable)
 Skill: skills/coding/implement-studio-screen.md
-Last step: 3/5
-Heartbeat: 2026-05-01T19:47:21Z (codex-vega)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)
-Latest checkpoint: agents page uses generated cp-api client with loading empty error coverage"
+Final heartbeat: 2026-05-01T19:49:16Z (codex-vega)
+Tests: pnpm --dir apps/studio test (82 passed); pnpm --dir apps/studio exec tsc --noEmit; pnpm --dir apps/studio lint clean; pnpm --dir apps/studio build clean; tracker/docs/checkpoint/no-bulk gates passed; canonical close gate blocked by pre-existing repo-wide ruff baseline in tools/_stories_v2.py, tools/agent_lifecycle.py, tools/build_tracker.py, tools/check_no_bulk_close.py, tools/gen_cp_api_client.py
+Docs touched: none
+Follow-ups: none"
 S157,studio: 'New agent' modal posts to cp-api + redirects to detail,tbd,S4,E10,2,P0,Not started,AC: form validates slug uniqueness; submit creates agent; successful create navigates to /agents/{id}.
 S158,"studio: agent detail page shell with tabs (overview, versions, channels, tools, secrets)",tbd,S4,E10,2,P0,Not started,AC: tab nav routed (e.g. /agents/abc/versions); tab content lazy-loaded.
 S159,"studio: agent overview tab shows description, model, last-deploy",tbd,S4,E10,1,P1,Not started,AC: tab renders agent metadata + 'last deploy' summary; edit-description modal works.
