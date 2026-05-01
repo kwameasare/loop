@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:17:23.639617+00:00",
+    "generated_at": "2026-05-01T22:17:28.267096+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1420,7 +1420,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s181-first-end-to-end-smoke-visitor-o\nSkill: skills/testing/write-e2e-test.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:06:38Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: codex-orion/s181-first-end-to-end-smoke-visitor-o\nSkill: skills/testing/write-e2e-test.md\nLast step: 1/5\nHeartbeat: 2026-05-01T22:08:18Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: verified Orion assignment and mapped the web smoke script workflow"
     },
     {
       "id": "S190",
