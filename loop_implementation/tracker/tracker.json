@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T21:45:30.542191+00:00",
+    "generated_at": "2026-05-01T21:48:54.584343+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1210,8 +1210,8 @@
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s157-studio-new-agent-modal-posts-to\nSkill: skills/ux/component-design.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-01T21:45:30Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s157-studio-new-agent-modal-posts-to (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-01T21:48:54Z (copilot-thor)\nTests: vitest run (88 passed) covering happy path, slug collision, slug format, and server error\nDocs touched: apps/studio/src/app/agents/page.tsx\nFollow-ups: none"
     },
     {
       "id": "S158",
