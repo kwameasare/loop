@@ -22,7 +22,8 @@ Errors map to LOOP-API codes via :func:`map_to_loop_api_error` (S118).
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from typing import Any
 from uuid import UUID
 
@@ -30,6 +31,7 @@ from loop_control_plane.authorize import (
     AuthorisationError,
     authorize_workspace_access,
 )
+from loop_control_plane.region_routing import DataPlaneTransport, RegionRouter
 from loop_control_plane.regions import RegionError
 from loop_control_plane.workspaces import (
     Membership,
@@ -72,6 +74,7 @@ class WorkspaceAPI:
     """
 
     workspaces: WorkspaceService
+    region_router: RegionRouter = field(default_factory=RegionRouter)
 
     def _require_request_region(self, *, workspace: Workspace, request_region: str | None) -> None:
         if request_region is None:
@@ -140,6 +143,40 @@ class WorkspaceAPI:
         )
         self._require_request_region(workspace=ws, request_region=request_region)
         return _serialise_ws(ws)
+
+    async def forward_data_plane_call(
+        self,
+        *,
+        caller_sub: str,
+        workspace_id: UUID,
+        method: str,
+        path: str,
+        transport: DataPlaneTransport,
+        body: Mapping[str, Any] | None = None,
+        request_region: str | None = None,
+    ) -> dict[str, Any]:
+        """Forward a workspace-scoped data-plane call to its pinned region."""
+        ws, _ = await authorize_workspace_access(
+            workspaces=self.workspaces,
+            workspace_id=workspace_id,
+            user_sub=caller_sub,
+        )
+        self._require_request_region(workspace=ws, request_region=request_region)
+        result = await self.region_router.forward(
+            workspace=ws,
+            method=method,
+            path=path,
+            transport=transport,
+            json_body=body,
+        )
+        return {
+            "status_code": result.status_code,
+            "body": result.body,
+            "headers": result.headers,
+            "region": result.region,
+            "url": result.url,
+            "latency_ms": result.latency_ms,
+        }
 
     async def patch(
         self,
