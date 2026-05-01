@@ -160,14 +160,14 @@ Final heartbeat: 2026-05-01T19:42:39Z (copilot-thor)
 Tests: pnpm test 78 passed; pnpm lint clean; pnpm build clean
 Docs touched: app-shell.tsx, sidebar-nav.tsx, topbar.tsx, user-menu.tsx module docstrings document the shell
 Follow-ups: none"
-S154,studio: workspace switcher dropdown in topbar,copilot-thor,S4,E10,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s154-studio-workspace-switcher-dropdo
+S154,studio: workspace switcher dropdown in topbar,copilot-thor,S4,E10,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s154-studio-workspace-switcher-dropdo (merged + deletable)
 Skill: ux/workspace-switcher
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-01T19:44:35Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-01T19:44:37Z (copilot-thor)
+Tests: pnpm test 80 passed; pnpm lint clean; pnpm build clean
+Docs touched: workspaces.ts, use-active-workspace.ts, workspace-switcher.tsx module docstrings document the source-of-truth + persistence rules
+Follow-ups: none"
 S155,"studio: settings drawer (profile, region, theme)",tbd,S4,E10,2,P1,Not started,AC: profile name editable; region read-only display; theme persists to localStorage.
 S156,studio: agents-list page reads real /v1/workspaces/{id}/agents,tbd,S4,E10,2,P0,Not started,AC: replace fixture with real fetch; loading + empty + error states each rendered.
 S157,studio: 'New agent' modal posts to cp-api + redirects to detail,tbd,S4,E10,2,P0,Not started,AC: form validates slug uniqueness; submit creates agent; successful create navigates to /agents/{id}.
