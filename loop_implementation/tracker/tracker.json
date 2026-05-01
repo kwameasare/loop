@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:14:30.529197+00:00",
+    "generated_at": "2026-05-01T22:14:34.974959+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2156,8 +2156,8 @@
       "epic": "E9",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s286-obs-trace-export-to-clickhouse-r\nSkill: skills/observability/add-otel-span.md\nLast step: 2/5\nHeartbeat: 2026-05-01T22:13:18Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: exporter tests and docs landed\nLatest checkpoint: clickhouse exporter selection landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s286-obs-trace-export-to-clickhouse-r (merged + deletable)\nSkill: skills/observability/add-otel-span.md\nFinal heartbeat: 2026-05-01T22:13:59Z (codex-vega)\nTests: uv run pytest packages/sdk-py/_tests/test_observability.py packages/runtime/_tests/test_turn_executor.py (19 passed); focused ruff/format passed; tracker/docs/checkpoint/no-bulk gates passed; full repo ruff/pyright blocked by pre-existing tools/tests baseline\nDocs touched: loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/data/SCHEMA.md,loop_implementation/architecture/ARCHITECTURE.md\nFollow-ups: none"
     },
     {
       "id": "S287",
