@@ -354,15 +354,14 @@ Docs touched: infra/helm/loop/README.md
 Follow-ups: none"
 S444,helm: dp-tool-host subchart with kata-runtime requirement docs,tbd,S18,E13,2,P0,Not started,AC: chart conditional on cluster having kata; pre-install hook checks; clear error message otherwise.
 S445,helm: dp-kb-engine subchart,tbd,S18,E13,1,P0,Not started,AC: same.
-S446,helm: postgres dependency (Bitnami subchart pinned),copilot-titan,S18,E13,1,P0,In progress,"**Active.**
-Branch: copilot-titan/s446-helm-postgres-dependency-bitnami
-Skill: skills/architecture/cloud-portability-check.md
-Last step: 1
-Heartbeat: 2026-05-01T19:38:07Z (copilot-titan)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)
-Latest checkpoint: postgres bitnami dep pinned + condition + bypass docs; 14 helm tests pass"
+S446,helm: postgres dependency (Bitnami subchart pinned),copilot-titan,S18,E13,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s446-helm-postgres-dependency-bitnami (merged + deletable)
+Skill: (unspecified)
+Final heartbeat: 2026-05-01T19:38:08Z (copilot-titan)
+Tests: uv run pytest tests/test_helm_postgres_dependency.py tests/test_helm_chart.py tests/test_helm_values_schema.py -q (14 passed)
+Docs touched: infra/helm/loop/README.md
+Follow-ups: none"
 S447,helm: redis dependency (Bitnami subchart pinned),tbd,S18,E13,1,P0,Not started,AC: same.
 S448,helm: qdrant dependency (official chart pinned),tbd,S18,E13,1,P0,Not started,AC: same.
 S449,helm: nats dependency (jetstream-on),tbd,S18,E13,1,P0,Not started,AC: same.

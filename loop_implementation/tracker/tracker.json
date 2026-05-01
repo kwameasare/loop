@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:38:47.648345+00:00",
+    "generated_at": "2026-05-01T19:38:53.931365+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3157,8 +3157,8 @@
       "epic": "E13",
       "points": 1,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s446-helm-postgres-dependency-bitnami\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1\nHeartbeat: 2026-05-01T19:38:07Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: postgres bitnami dep pinned + condition + bypass docs; 14 helm tests pass"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s446-helm-postgres-dependency-bitnami (merged + deletable)\nSkill: (unspecified)\nFinal heartbeat: 2026-05-01T19:38:08Z (copilot-titan)\nTests: uv run pytest tests/test_helm_postgres_dependency.py tests/test_helm_chart.py tests/test_helm_values_schema.py -q (14 passed)\nDocs touched: infra/helm/loop/README.md\nFollow-ups: none"
     },
     {
       "id": "S447",
