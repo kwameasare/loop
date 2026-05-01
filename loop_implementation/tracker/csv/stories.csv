@@ -827,14 +827,14 @@ S762,marketplace: first-party server — Slack write (post message + DM),Codex,S
 S763,marketplace: first-party server — HubSpot write (contacts + deals),Codex,S33,E18,2,P1,Done,"Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party HubSpot write with create_contact, update_deal, and OAuth2 write scopes. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
 S764,marketplace: first-party server — generic web search (Tavily + Brave),Codex,S33,E18,2,P0,Done,"Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party web search with tavily_search, brave_search, and cost/latency descriptions. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
 S765,"marketplace: 25-server MVP acceptance test (every server shows quality score, install works, integration test green)",Codex,S33,E18,2,P0,Done,Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/testing/write-integration-test.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py and scripts/marketplace_acceptance.sh enforce at least 25 active installable servers with quality scores and green integration-test flags. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none.
-S770,infra: terraform module — AWS (EKS + RDS + ElastiCache + S3 + KMS + Cloudfront),codex-orion,S34,E12,3,P0,In progress,"**Active.**
+S770,infra: terraform module — AWS (EKS + RDS + ElastiCache + S3 + KMS + Cloudfront),codex-orion,S34,E12,3,P0,Blocked,"**Blocked.**
 Branch: codex-orion/s770-infra-terraform-module-aws-eks-r
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 0/1 (just claimed)
-Heartbeat: 2026-05-01T23:54:40Z (codex-orion)
+Last step: 0/1 (blocked before implementation)
+Heartbeat: 2026-05-01T23:54:59Z (codex-orion)
 Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Blockers: terraform CLI is not installed in this worktree and no AWS credentials/account context are present; the AC requires a real AWS apply plus smoke test, so completing it would require operator-provided AWS access and Terraform runtime.
+Commits: e52d8f2 claim; pending blocked tracker update"
 S771,infra: terraform module — Azure (AKS + Postgres Flexible + Redis + Blob + Key Vault + Front Door),tbd,S34,E12,3,P0,Not started,AC: same as S770 against Azure.
 S772,infra: terraform module — GCP (GKE + CloudSQL + Memorystore + GCS + KMS + Cloud CDN),tbd,S34,E12,3,P0,Not started,AC: same against GCP.
 S773,infra: terraform module — Alibaba Cloud (ACK + RDS + Redis + OSS + KMS + DCDN),tbd,S34,E12,3,P1,Not started,AC: same against Alibaba Cloud (China region).

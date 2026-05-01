@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:54:40.532585+00:00",
+    "generated_at": "2026-05-01T23:55:22.337917+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5049,8 +5049,8 @@
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s770-infra-terraform-module-aws-eks-r\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/1 (just claimed)\nHeartbeat: 2026-05-01T23:54:40Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Blocked",
+      "notes": "**Blocked.**\nBranch: codex-orion/s770-infra-terraform-module-aws-eks-r\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/1 (blocked before implementation)\nHeartbeat: 2026-05-01T23:54:59Z (codex-orion)\nOpen questions: none\nBlockers: terraform CLI is not installed in this worktree and no AWS credentials/account context are present; the AC requires a real AWS apply plus smoke test, so completing it would require operator-provided AWS access and Terraform runtime.\nCommits: e52d8f2 claim; pending blocked tracker update"
     },
     {
       "id": "S771",
