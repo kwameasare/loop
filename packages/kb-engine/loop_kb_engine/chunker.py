@@ -153,9 +153,7 @@ class HeadingChunker:
 
         def _flush() -> None:
             if current_title or "\n".join(current_body).strip():
-                sections.append(
-                    (current_title, list(current_path), list(current_body))
-                )
+                sections.append((current_title, list(current_path), list(current_body)))
 
         seen_top = False
         for raw in lines:
@@ -178,9 +176,7 @@ class HeadingChunker:
                 while sub_path and sub_path[-1][0] >= level:
                     sub_path.pop()
                 sub_path.append((level, heading))
-                current_path = (
-                    [current_title] if current_title else []
-                ) + [h for _, h in sub_path]
+                current_path = ([current_title] if current_title else []) + [h for _, h in sub_path]
                 current_body.append(raw)
             else:
                 # Heading level shallower than top -- treat as plain text so
@@ -193,7 +189,9 @@ class HeadingChunker:
             body_text = "\n".join(body).strip()
             if not body_text and not title:
                 continue
-            text_blob = f"{('#' * self._top)} {title}\n\n{body_text}".strip() if title else body_text
+            text_blob = (
+                f"{('#' * self._top)} {title}\n\n{body_text}".strip() if title else body_text
+            )
             metadata: dict[str, str] = {}
             if path:
                 metadata["context"] = " > ".join(path)

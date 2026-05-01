@@ -140,9 +140,7 @@ def qdrant_collection_name(*, workspace_id: UUID, kb_id: UUID) -> str:
 
 
 def _filter(*, workspace_id: UUID, document_id: UUID | None = None) -> dict[str, Any]:
-    must: list[dict[str, Any]] = [
-        {"key": "workspace_id", "match": {"value": str(workspace_id)}}
-    ]
+    must: list[dict[str, Any]] = [{"key": "workspace_id", "match": {"value": str(workspace_id)}}]
     if document_id is not None:
         must.append({"key": "document_id", "match": {"value": str(document_id)}})
     return {"must": must}
