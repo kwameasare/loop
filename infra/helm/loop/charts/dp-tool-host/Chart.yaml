@@ -1,0 +1,7 @@
+apiVersion: v2
+name: dp-tool-host
+description: Loop data-plane tool host for Kata/Firecracker sandbox orchestration.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.27.0-0"
