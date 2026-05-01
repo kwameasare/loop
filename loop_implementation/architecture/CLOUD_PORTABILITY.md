@@ -214,6 +214,9 @@ Loop is **dual-stack IPv6/IPv4 ready** at the platform level:
 - cp-api dispatch resolves the workspace region through `infra/terraform/regions.yaml`
   and forwards data-plane calls to that region's `data_plane_url`, recording
   per-call latency for routing SLOs.
+- Data export loaders are deny-by-default across regions: cp-api checks the
+  requested export region against the workspace pin before any export store is
+  allowed to load metadata or bytes.
 
 **EU / GDPR:**
 - Workspaces created in `eu-west` abstract region map to a concrete cloud region in Europe (e.g., `eu-central-1` on AWS, `westeurope` on Azure).
