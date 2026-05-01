@@ -550,7 +550,7 @@ NEW_STORIES: list[StoryV2] = [
     # =====================================================================
     # Sprint S29 — Voice latency push + GA polish (≈10 stories)
     # =====================================================================
-    StoryV2("S650", "voice-perf: ASR streaming optimization (frame-level dispatch)", "S29", "E7", 2, "P0", "AC: 50ms-frame dispatch; integration test shows reduced first-token latency. [extends S048]"),
+    StoryV2("S650", "voice-perf: ASR streaming optimization (frame-level dispatch)", "S29", "E7", 2, "P0", "AC: 50ms-frame dispatch; integration test shows reduced first-token latency. [extends S048]", owner="codex-vega", status="In progress", notes_override="**Active.**\nBranch: codex-vega/s650-voice-perf-asr-streaming-optimiz\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:31:20Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"),
     StoryV2("S651", "voice-perf: TTS pre-warm + sentence-boundary streaming", "S29", "E7", 2, "P0", "AC: TTS speaks before LLM finishes; measurable p50 cut."),
     StoryV2("S652", "voice-perf: model warm-up + connection-pooling for ASR/TTS providers", "S29", "E7", 2, "P0", "AC: keep-alive; pre-handshake; idle teardown after N min."),
     StoryV2("S653", "voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS", "S29", "E7", 2, "P0", "AC: nearest-region selector; latency map committed."),

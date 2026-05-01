@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:32:11.874584+00:00",
+    "generated_at": "2026-05-01T22:36:41.480379+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4296,13 +4296,13 @@
     {
       "id": "S650",
       "title": "voice-perf: ASR streaming optimization (frame-level dispatch)",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S29",
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: 50ms-frame dispatch; integration test shows reduced first-token latency. [extends S048]"
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s650-voice-perf-asr-streaming-optimiz\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:31:20Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S651",
