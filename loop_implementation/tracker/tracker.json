@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:06:56.179400+00:00",
+    "generated_at": "2026-05-01T23:08:39.304758+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4015,8 +4015,8 @@
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s591-region-data-plane-eu-stack-postg\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 3/5\nHeartbeat: 2026-05-01T23:06:56Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: EU Terraform Helm env, data-plane externals, docs, and schema parity tests landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: https://github.com/kwameasare/loop/pull/12\nBranch: codex-orion/s591-region-data-plane-eu-stack-postg (merged + deletable)\nSkill: skills/architecture/cloud-portability-check.md\nFinal heartbeat: 2026-05-01T23:08:39Z (codex-orion)\nTests: Focused ruff/pyright on tests/test_helm_eu_region_stack.py and tools/check_helm_chart.py; uv run pytest -q tests/test_helm_eu_region_stack.py tests/test_helm_values_schema.py tests/test_helm_chart.py tests/test_helm_clickhouse_dependency.py tests/test_helm_qdrant_dependency.py tests/test_helm_nats_dependency.py (20 passed); uv run python tools/check_helm_chart.py; cloud SDK portability grep passed; uv run pytest -q -m 'not integration and not e2e' (1216 passed, 3 skipped, 4 deselected); tracker/docs gates pass. Full repo ruff/format/pyright remain baseline-red in unrelated files.\nDocs touched: infra/terraform/envs/prod-eu-west/main.tf, infra/helm/loop/values-eu-west.yaml, infra/helm/loop/values.yaml, infra/helm/loop/values.schema.json, infra/helm/loop/templates/configmap.yaml, infra/helm/loop/README.md, loop_implementation/engineering/REGIONAL_DEPLOYS.md\nFollow-ups: none"
     },
     {
       "id": "S592",
