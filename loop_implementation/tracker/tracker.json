@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:00:28.482544+00:00",
+    "generated_at": "2026-05-01T22:00:39.280055+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1254,8 +1254,8 @@
       "epic": "E10",
       "points": 1,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s161-studio-promote-button-on-a-versi\nSkill: skills/ux/component-design.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-01T22:00:27Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s161-studio-promote-button-on-a-versi (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-01T22:00:38Z (copilot-thor)\nTests: vitest run (110 passed) covering promote happy-path, cancel, error toast, and cp-api request shape\nDocs touched: apps/studio/src/components/agents/agent-versions-list.tsx\nFollow-ups: none"
     },
     {
       "id": "S162",

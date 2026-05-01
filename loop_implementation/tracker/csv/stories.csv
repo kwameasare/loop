@@ -202,14 +202,14 @@ Final heartbeat: 2026-05-01T21:56:22Z (copilot-thor)
 Tests: vitest run (105 passed) covering pagination, diff modal open/close, initial-version case, and diffLines algorithm
 Docs touched: apps/studio/src/app/agents/[agent_id]/versions/page.tsx
 Follow-ups: none"
-S161,studio: 'Promote' button on a version row triggers cp-api /promote,copilot-thor,S4,E10,1,P0,In progress,"**Active.**
-Branch: copilot-thor/s161-studio-promote-button-on-a-versi
+S161,studio: 'Promote' button on a version row triggers cp-api /promote,copilot-thor,S4,E10,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s161-studio-promote-button-on-a-versi (merged + deletable)
 Skill: skills/ux/component-design.md
-Last step: 0/3 (just claimed)
-Heartbeat: 2026-05-01T22:00:27Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-01T22:00:38Z (copilot-thor)
+Tests: vitest run (110 passed) covering promote happy-path, cancel, error toast, and cp-api request shape
+Docs touched: apps/studio/src/components/agents/agent-versions-list.tsx
+Follow-ups: none"
 S162,studio: secrets tab list + add/rotate flow,tbd,S4,E10,2,P0,Not started,AC: list shows name+ref+rotated_at; 'Rotate' bumps rotated_at via cp-api; cannot reveal secret value.
 S163,studio: emulator panel (right rail on agent detail) — POST turn + render SSE,tbd,S4,E10,3,P0,Not started,AC: text input → POST /v1/turns to dp-runtime → stream renders token-by-token + tool calls + final answer.
 S164,studio: error boundary + toast system (sonner) for failed fetches,tbd,S4,E10,1,P0,Not started,AC: any unhandled error shows red toast with code + request_id; production sourcemap-stripped.
