@@ -413,11 +413,12 @@ S370,voice: tracing across ASR->LLM->TTS pipeline (per-stage spans),GitHub Copil
 S371,voice: web-RTC echo agent end-to-end happy path,codex-vega,S14,E7,2,P0,In progress,"**Active.**
 Branch: codex-vega/s371-voice-web-rtc-echo-agent-end-to
 Skill: skills/coding/implement-channel-adapter.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-01T22:16:44Z (codex-vega)
+Last step: 3/5
+Heartbeat: 2026-05-01T22:23:39Z (codex-vega)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: voice echo script and regression tests landed"
 S380,voice: incoming-call SIP gateway via Twilio Voice (TwiML),GitHub Copilot,S15,E7,3,P0,Done,Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/platforms/voice-pstn.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/sip_twilio.py build_twiml() emits <Connect><Stream> TwiML for inbound call → LiveKit bridge; parse_twilio_form + StreamConfig (rejects http URLs). Tests: sip_twilio cases in test_voice_pass10.py. Open questions: none.
 S381,voice: outbound-call API POST /v1/voice/calls,GitHub Copilot,S15,E7,2,P0,Done,Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/platforms/voice-pstn.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/outbound_call.py OutboundCallRequest validates E.164 + idempotency; OutboundCallService dispatches via PstnDialer Protocol returning CallHandle. Tests: outbound_call cases in test_voice_pass9.py. Open questions: none.
 S382,voice: phone-number provisioning (Twilio bring-your-own),GitHub Copilot,S15,E12,2,P0,Done,Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/platforms/voice-pstn.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/phone_provisioning.py BYO Twilio claim/release flow with TwilioBYOClient Protocol + agent_phone_numbers row state machine. Tests: phone_provisioning cases in test_voice_pass9.py. Open questions: none.
