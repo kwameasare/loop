@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:29:15.975810+00:00",
+    "generated_at": "2026-05-01T19:30:25.651895+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1122,8 +1122,8 @@
       "epic": "E1",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s143-dp-runtime-end-to-end-smoke-scri\nSkill: testing/integration-fixtures\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T19:29:15Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s143-dp-runtime-end-to-end-smoke-scri (merged + deletable)\nSkill: testing/integration-fixtures\nFinal heartbeat: 2026-05-01T19:30:25Z (copilot-thor)\nTests: scripts/runtime_smoke.sh exits 0; tests/test_runtime_smoke.py runs the wrapper as subprocess\nDocs touched: docs/branch-protection.md adds CI / runtime-smoke; runtime_smoke.py module docstring documents the flow\nFollow-ups: none"
     },
     {
       "id": "S150",
