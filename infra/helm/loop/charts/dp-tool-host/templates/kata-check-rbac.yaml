@@ -1,0 +1,46 @@
+{{- if and .Values.enabled .Values.preInstallCheck.enabled .Values.kata.required }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "dp-tool-host.kataCheckName" . }}
+  labels:
+    {{- include "dp-tool-host.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-3"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "dp-tool-host.kataCheckName" . }}
+  labels:
+    {{- include "dp-tool-host.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-2"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+rules:
+  - apiGroups: ["node.k8s.io"]
+    resources: ["runtimeclasses"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "dp-tool-host.kataCheckName" . }}
+  labels:
+    {{- include "dp-tool-host.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "dp-tool-host.kataCheckName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "dp-tool-host.kataCheckName" . }}
+{{- end }}
