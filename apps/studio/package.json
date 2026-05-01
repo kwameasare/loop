@@ -9,7 +9,9 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "gen:cp-api": "cd ../.. && uv run python tools/gen_cp_api_client.py",
+    "gen:cp-api:check": "cd ../.. && uv run python tools/gen_cp_api_client.py --check"
   },
   "dependencies": {
     "@auth0/auth0-react": "2.2.4",
