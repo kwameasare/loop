@@ -372,7 +372,12 @@ For enterprise customers in healthcare:
   - Snyk (or osv.dev for open-source) for SCA + copyleft license detection.
   - Static analysis: `bandit` (Python), `gosec` (Go), CodeQL (all languages).
 - **SBOM (Software Bill of Materials) + attestation:**
-  - Every release generates an SBOM in CycloneDX format (via `syft`).
+  - Every CI run on a PR or push to `main` generates a CycloneDX 1.5
+    JSON SBOM via `anchore/sbom-action` (which wraps `syft`) inside the
+    required `security` job and uploads it as a `sbom-cyclonedx`
+    workflow artifact. The SOC2 evidence collector pulls the artifact
+    from each green run. See `.github/workflows/ci.yml` (S578).
+  - Every release additionally re-generates an SBOM at tag time.
   - Every binary + container signed with Sigstore (cosign); attestations include SLSA provenance.
   - Signatures verified at deployment via policy (Kyverno in k8s).
 - **In-toto link attestations:** Each CI step (build, test, scan, sign) generates a link; chains are verified pre-deployment.
