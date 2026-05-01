@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:10:33.606667+00:00",
+    "generated_at": "2026-05-01T22:11:09.725875+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1348,13 +1348,13 @@
     {
       "id": "S175",
       "title": "web-channel-js: NPM package skeleton + tsup build",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S5",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: npm publish --dry-run shows ESM + CJS bundles; types.d.ts emitted."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s175-web-channel-js-npm-package-skele\nSkill: skills/api/sdk-publish.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-01T22:11:09Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S176",
