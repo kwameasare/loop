@@ -288,11 +288,12 @@ S433,"cli: tarball release pipeline (multi-arch, GitHub Releases)",Codex,S17,E11
 S440,helm: umbrella chart skeleton + Chart.yaml + values.schema.json,copilot-titan,S18,E13,1,P0,In progress,"**Active.**
 Branch: copilot-titan/s440-helm-umbrella-chart-skeleton-cha
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-01T19:22:33Z (copilot-titan)
+Last step: 1
+Heartbeat: 2026-05-01T19:25:58Z (copilot-titan)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: values.schema.json (Draft 2020-12) + 7 jsonschema tests pass; README updated; helm-chart structural test still green"
 S441,helm: cp-api subchart (Deployment + Service + HPA + PDB),tbd,S18,E13,2,P0,Not started,AC: helm template renders; kubeval clean; helm install on kind passes.
 S442,helm: dp-runtime subchart,tbd,S18,E13,2,P0,Not started,AC: same as S441 for dp-runtime.
 S443,helm: dp-gateway subchart,tbd,S18,E13,1,P0,Not started,AC: same.
