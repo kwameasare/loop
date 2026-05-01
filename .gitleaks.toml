@@ -1,0 +1,36 @@
+# Gitleaks configuration for Loop (S580).
+#
+# Scans for committed secrets on every PR + push to main as part of the
+# `security` required CI job. Findings fail the job and block merge.
+#
+# Allowlist scope is intentionally narrow: only known fixtures /
+# placeholder tokens that are safe by construction. New entries require
+# justification in the PR description.
+
+title = "Loop gitleaks config"
+
+[extend]
+# Inherit gitleaks' built-in default ruleset (AWS keys, GitHub PATs,
+# Stripe live keys, Slack tokens, JWTs, RSA private keys, etc.).
+useDefault = true
+
+[allowlist]
+description = "Allowed test fixtures and obvious placeholders"
+# Fixture / docs / lockfile noise that the default rules false-positive
+# on. Keep this list tight; prefer fixing the source over allowlisting.
+paths = [
+    '''(.*\.lock|.*\.lockb|pnpm-lock\.yaml|poetry\.lock|uv\.lock)$''',
+    '''.*\.snap$''',
+    '''(^|/)fixtures/.*''',
+    '''(^|/)tests/.*\.golden$''',
+    '''(^|/)docs/.*\.md$''',
+    '''(^|/)loop_implementation/.*\.md$''',
+]
+# Obvious placeholder tokens used in examples + values.yaml defaults.
+# Real credentials must NEVER appear here.
+regexes = [
+    '''(?i)(loop[-_]?(minio|clickhouse|postgres|redis)[-_]changeme)''',
+    '''(?i)(your[-_](api|secret|token|key)[-_]here)''',
+    '''(?i)example\.com''',
+    '''(?i)changeme''',
+]

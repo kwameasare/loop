@@ -117,7 +117,9 @@ We classify every secret.
 
 - **Never** in Postgres (except hashed API keys).
 - **Never** in environment variables in containers (use Vault sidecar / Secrets Manager-injected files).
-- **Never** in source code or IaC (pre-commit detect-secrets scan).
+- **Never** in source code or IaC (pre-commit detect-secrets scan;
+  CI-side gate via `gitleaks` in the required `security` job — see
+  `.gitleaks.toml` and `.github/workflows/ci.yml`. S580.).
 - **Never** in logs (structured logging redaction; secret patterns auto-masked).
 
 ### 3.3 Lifecycle

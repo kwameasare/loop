@@ -270,6 +270,18 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: '1'
+      # S580 — secrets-scanning gate. Fails the security job (which is
+      # required-on-main) on any committed credential / API key. Config
+      # in .gitleaks.toml at the repo root tunes allowlists for known
+      # fixtures + test secrets.
+      - name: Secrets scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "true"
+          GITLEAKS_VERSION: "8.21.2"
 
   integration:
     name: integration
