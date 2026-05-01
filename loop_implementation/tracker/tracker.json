@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:32:55.354129+00:00",
+    "generated_at": "2026-05-01T19:34:09.847522+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3114,7 +3114,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s442-helm-dp-runtime-subchart\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-01T19:32:55Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: copilot-titan/s442-helm-dp-runtime-subchart\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1\nHeartbeat: 2026-05-01T19:34:09Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: runtime HPA+PDB templates + values + schema; 17 helm tests pass"
     },
     {
       "id": "S443",
