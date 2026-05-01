@@ -1,0 +1,20 @@
+{{- if and .Values.runtime.enabled .Values.runtime.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "loop.fullname" . }}-runtime
+  labels:
+    {{- include "loop.labels" . | nindent 4 }}
+    app.kubernetes.io/component: runtime
+spec:
+  {{- if .Values.runtime.pdb.minAvailable }}
+  minAvailable: {{ .Values.runtime.pdb.minAvailable }}
+  {{- else if .Values.runtime.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.runtime.pdb.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "loop.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: runtime
+{{- end }}

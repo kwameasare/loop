@@ -28,6 +28,8 @@ helm install loop ./infra/helm/loop \
 | `templates/control-plane-hpa.yaml` | HPA (autoscaling/v2) for control-plane (gated on `controlPlane.autoscaling.enabled`) |
 | `templates/control-plane-pdb.yaml` | PodDisruptionBudget for control-plane (gated on `controlPlane.pdb.enabled`) |
 | `templates/runtime.yaml` | Deployment + Service for runtime |
+| `templates/runtime-hpa.yaml` | HPA (autoscaling/v2) for runtime (gated on `runtime.autoscaling.enabled`) |
+| `templates/runtime-pdb.yaml` | PodDisruptionBudget for runtime (gated on `runtime.pdb.enabled`) |
 | `templates/gateway.yaml` | Deployment + Service for gateway |
 | `templates/ingress.yaml` | optional ingress (`/v1/cp`, `/v1/runtime`, `/v1/llm`) |
 | `templates/NOTES.txt` | post-install notes |
