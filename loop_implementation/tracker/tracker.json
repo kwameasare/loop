@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:38:53.931365+00:00",
+    "generated_at": "2026-05-01T19:39:05.970504+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3163,13 +3163,13 @@
     {
       "id": "S447",
       "title": "helm: redis dependency (Bitnami subchart pinned)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S18",
       "epic": "E13",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: same."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s447-helm-redis-dependency-bitnami-su\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-01T19:39:05Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S448",
