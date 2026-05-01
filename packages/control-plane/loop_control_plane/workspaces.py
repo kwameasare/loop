@@ -9,6 +9,12 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from loop_control_plane.regions import (
+    RegionError,
+    RegionRegistry,
+    default_region_registry,
+)
+
 
 class Role(StrEnum):
     OWNER = "owner"
@@ -22,6 +28,7 @@ class Workspace(BaseModel):
     id: UUID
     name: str = Field(min_length=1, max_length=64)
     slug: str = Field(min_length=1, max_length=64, pattern=r"^[a-z0-9][a-z0-9-]*$")
+    region: str = Field(default="na-east", min_length=1)
     created_at: datetime
     created_by: str = Field(min_length=1)
 
@@ -40,20 +47,40 @@ class WorkspaceError(ValueError):
 class WorkspaceService:
     """Async, in-memory workspace store. Real impl swaps in postgres."""
 
-    def __init__(self) -> None:
+    def __init__(self, regions: RegionRegistry | None = None) -> None:
         self._workspaces: dict[UUID, Workspace] = {}
         self._slugs: dict[str, UUID] = {}
         self._memberships: dict[tuple[UUID, str], Membership] = {}
+        self._regions = regions or default_region_registry()
         self._lock = asyncio.Lock()
 
-    async def create(self, *, name: str, slug: str, owner_sub: str) -> Workspace:
+    def require_same_region(self, *, workspace_region: str, request_region: str) -> None:
+        self._regions.require_same(
+            workspace_region=workspace_region,
+            request_region=request_region,
+        )
+
+    async def create(
+        self,
+        *,
+        name: str,
+        slug: str,
+        owner_sub: str,
+        region: str | None = None,
+    ) -> Workspace:
         async with self._lock:
             if slug in self._slugs:
                 raise WorkspaceError(f"slug already taken: {slug}")
+            region_slug = region or self._regions.default_region
+            try:
+                self._regions.require(region_slug)
+            except RegionError as exc:
+                raise WorkspaceError(str(exc)) from exc
             ws = Workspace(
                 id=uuid4(),
                 name=name,
                 slug=slug,
+                region=region_slug,
                 created_at=datetime.now(UTC),
                 created_by=owner_sub,
             )
@@ -95,9 +122,7 @@ class WorkspaceService:
                 raise WorkspaceError(f"unknown workspace: {workspace_id}")
             return [m for (ws, _), m in self._memberships.items() if ws == workspace_id]
 
-    async def remove_member(
-        self, *, workspace_id: UUID, user_sub: str, actor_sub: str
-    ) -> None:
+    async def remove_member(self, *, workspace_id: UUID, user_sub: str, actor_sub: str) -> None:
         """Remove a membership.
 
         Refuses to remove the last owner of a workspace -- the workspace
@@ -161,8 +186,9 @@ class WorkspaceService:
         workspace_id: UUID,
         actor_sub: str,
         name: str | None = None,
+        region: str | None = None,
     ) -> Workspace:
-        """Mutate workspace fields (name only for now). Actor must be a member.
+        """Mutate workspace fields. Actor must be a member.
 
         Owner-only enforcement happens in the API layer via
         :func:`authorize_workspace_access`.
@@ -173,6 +199,8 @@ class WorkspaceService:
                 raise WorkspaceError(f"unknown workspace: {workspace_id}")
             if (workspace_id, actor_sub) not in self._memberships:
                 raise WorkspaceError(f"actor {actor_sub} is not a member")
+            if region is not None:
+                raise WorkspaceError("workspace.region is immutable after create")
             updates: dict[str, str] = {}
             if name is not None:
                 if not name or len(name) > 64:
