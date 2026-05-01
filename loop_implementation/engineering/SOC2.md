@@ -58,6 +58,35 @@ See also:
 | Vulnerability scanner  | ☐ pending   | Vanta-bundled or Snyk                |
 | Vendor-risk module     | ☐ pending   | Inventory of subprocessors           |
 
+## Evidence sources index
+
+Every control row in §"Control families" lists where the evidence
+lives. This index is the inverse map: each engineering-managed
+evidence source → where it is produced, where it is stored, which
+controls it satisfies, and how the auditor (or Vanta) pulls it.
+
+The auditor pull pattern is uniform: download the latest green CI
+artifact / read the file at the listed path on `main`. Production
+control evidence (cloud / IdP / MDM) is collected by the Vanta agents
+listed in the previous section and lives outside this repo.
+
+| Evidence source                              | Produced by                                                 | Repo path / artifact name                                     | Controls satisfied | Auditor pull                                                                |
+| -------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------- |
+| Branch protection + CODEOWNERS               | GitHub repo settings                                        | `docs/branch-protection.md` + GitHub UI                       | CC5.1, CC5.3, CC8.1 | GH org settings export                                                      |
+| CI green-status history                      | GitHub Actions                                              | `.github/workflows/ci.yml`; Actions runs                      | CC8.1, CC8.2        | GH Actions API: list runs on `main` per quarter                             |
+| Filesystem vuln scan (trivy, blocking HIGH+) | `security` job, `aquasecurity/trivy-action`                 | `.github/workflows/ci.yml` (S579)                             | CC7.1               | CI run logs → "Filesystem vuln scan (trivy)" step                           |
+| SCA gate (snyk, threshold=high)              | `security` job, `snyk/actions/python` (token-gated)         | `.github/workflows/ci.yml` (S579)                             | CC7.1, CC7.2        | CI run logs → "Snyk dependency scan" step + Snyk dashboard                  |
+| Secrets-scanning gate (gitleaks)             | `security` job, `gitleaks/gitleaks-action`                  | `.github/workflows/ci.yml` + `.gitleaks.toml` (S580)          | CC6.1, CC7.1        | CI run logs → "Secrets scan (gitleaks)" step + uploaded gitleaks artifact   |
+| SBOM (CycloneDX 1.5 JSON)                    | `security` job, `anchore/sbom-action`                       | artifact `sbom-cyclonedx`, file `sbom.cdx.json` (S578)        | CC7.1, CC7.2, CC9.1 | Download `sbom-cyclonedx` artifact from each green CI run                   |
+| Threat model + security policy               | Engineering                                                 | `loop_implementation/engineering/SECURITY.md`                 | CC2.1, CC3.2        | git log of SECURITY.md (review cadence verified by commit history)         |
+| Incident-response runbook                    | Engineering                                                 | `loop_implementation/engineering/RUNBOOKS.md`                 | CC2.2, CC7.4        | Read file on `main`                                                         |
+| DR runbook + drill log                       | Engineering (S575)                                          | `loop_implementation/engineering/DR.md`                       | CC7.5               | Read file on `main` + last-drill timestamp in change log                    |
+| Migration discipline (reversible/flagged)    | Alembic templates                                           | `data/SCHEMA.md` + migration files                            | CC8.3               | Inspect migration files for `downgrade()` body                              |
+| Tenant data segregation (RLS)                | Postgres policies + integration tests                       | `data/SCHEMA.md` §RLS + `_tests_integration/test_postgres_*`  | CC6.7               | Read schema + green test runs                                               |
+| Encryption at rest + in transit              | Helm values + cloud KMS                                     | `infra/helm/loop/values.yaml` + cloud-provider key inventory  | CC6.6               | Helm values diff + cloud KMS export                                         |
+| Audit-trail completeness                     | `audit_log` table + emit-on-state-change discipline (S581)  | `data/SCHEMA.md` §audit + `loop_control_plane/audit/`         | CC4.1, CC6.x        | SQL: `SELECT count(*) … per state-change type per day`                      |
+| SOC2 Type 1 attestation                      | External auditor (S582)                                     | Signed PDF (delivered out-of-band)                            | All families        | Auditor portal                                                              |
+
 ## Control families
 
 Each row owns its evidence path, refresh cadence, and Vanta test ID.
@@ -120,7 +149,7 @@ Each row owns its evidence path, refresh cadence, and Vanta test ID.
 
 | ID    | Control                                            | Owner       | Evidence                                       | Status |
 | ----- | -------------------------------------------------- | ----------- | ---------------------------------------------- | ------ |
-| CC7.1 | Vulnerability scanning on every PR                 | Eng         | CI logs                                        | partial |
+| CC7.1 | Vulnerability scanning on every PR                 | Eng         | `.github/workflows/ci.yml` `security` job: trivy fs (S579), snyk (S579), gitleaks (S580), SBOM (S578) | done — see Evidence sources index |
 | CC7.2 | Critical CVEs remediated within SLA                | Eng         | Vanta vuln tracker                             | ☐      |
 | CC7.3 | 24/7 on-call rotation                              | Eng         | PagerDuty schedule                             | partial |
 | CC7.4 | Incident post-mortems, blameless                   | Eng         | RUNBOOKS.md template                           | partial |
@@ -131,7 +160,7 @@ Each row owns its evidence path, refresh cadence, and Vanta test ID.
 | ID    | Control                                            | Owner       | Evidence                                       | Status |
 | ----- | -------------------------------------------------- | ----------- | ---------------------------------------------- | ------ |
 | CC8.1 | All code changes via PR with peer review           | Eng         | GitHub PR history                              | done   |
-| CC8.2 | Automated tests pass before merge                  | Eng         | CI status checks                               | done   |
+| CC8.2 | Automated tests pass before merge                  | Eng         | GitHub branch protection requires `lint` + `unit` + `tracker-clean` + `security` jobs in `.github/workflows/ci.yml`; see `docs/branch-protection.md` | done   |
 | CC8.3 | Production migrations reversible or feature-flagged| Eng         | Migration template in data/                    | partial |
 
 ### CC9 — Risk mitigation (vendors)
@@ -178,3 +207,4 @@ Each row owns its evidence path, refresh cadence, and Vanta test ID.
 | Date       | Author       | Change                                         |
 | ---------- | ------------ | ---------------------------------------------- |
 | 2026-04-30 | GitHub Copilot (S046) | Initial kickoff tracker for Type 1.   |
+| 2026-05-01 | copilot-titan (S571) | Added "Evidence sources index" mapping each CI gate / repo file → controls satisfied → auditor pull pattern; flipped CC7.1 to done; CC8.2 evidence pointer made concrete. |
