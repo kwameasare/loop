@@ -8,18 +8,20 @@ const fixture: AgentSummary[] = [
   {
     id: "agt_support",
     name: "Support",
-    model: "gpt-4o-mini",
+    slug: "support",
     description: "Customer-support agent with KB grounding.",
-    status: "active",
+    active_version: 3,
     updated_at: "2026-04-29T12:00:00Z",
+    workspace_id: "ws_1",
   },
   {
     id: "agt_qa",
     name: "QA Bot",
-    model: "claude-3-5-haiku",
+    slug: "qa-bot",
     description: "Internal Q&A over the engineering handbook.",
-    status: "draft",
+    active_version: null,
     updated_at: "2026-04-28T09:30:00Z",
+    workspace_id: "ws_1",
   },
 ];
 
@@ -29,9 +31,9 @@ describe("AgentsList", () => {
     const rows = screen.getAllByTestId("agents-item");
     expect(rows).toHaveLength(2);
     expect(screen.getByRole("heading", { name: "Support" })).toBeInTheDocument();
-    expect(screen.getByText(/model: gpt-4o-mini/)).toBeInTheDocument();
-    expect(screen.getByText("active")).toBeInTheDocument();
-    expect(screen.getByText("draft")).toBeInTheDocument();
+    expect(screen.getByText(/slug: support/)).toBeInTheDocument();
+    expect(screen.getByText("v3")).toBeInTheDocument();
+    expect(screen.getByText("vdraft")).toBeInTheDocument();
   });
 
   it("renders an empty-state when no agents exist", () => {
