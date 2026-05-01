@@ -14,7 +14,7 @@
  * anonymous shape (`isAuthenticated: false`).
  */
 
-import { Auth0Provider } from "@auth0/auth0-react";
+import { Auth0Provider, type AppState } from "@auth0/auth0-react";
 import type { ReactNode } from "react";
 
 export interface AuthProviderProps {
@@ -61,6 +61,15 @@ export function AuthProvider({ children, config }: AuthProviderProps) {
       }}
       useRefreshTokens
       cacheLocation="memory"
+      // S151: route the user back to ``appState.returnTo`` (set by
+      // /login) after the post-callback round-trip.
+      onRedirectCallback={(appState?: AppState) => {
+        if (typeof window === "undefined") return;
+        const target = appState?.returnTo;
+        if (typeof target === "string" && target.startsWith("/")) {
+          window.history.replaceState({}, document.title, target);
+        }
+      }}
     >
       {children}
     </Auth0Provider>
