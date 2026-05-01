@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:05:39.161803+00:00",
+    "generated_at": "2026-05-01T22:05:43.765590+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1684,7 +1684,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s213-kb-integration-test-upload-pdf-a\nSkill: skills/coding/implement-kb-feature.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T21:47:48Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: codex-vega/s213-kb-integration-test-upload-pdf-a\nSkill: skills/coding/implement-kb-feature.md\nLast step: 1/5\nHeartbeat: 2026-05-01T21:52:23Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: chunk citation metadata landed"
     },
     {
       "id": "S220",
