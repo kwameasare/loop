@@ -270,6 +270,19 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: '1'
+      # S579 — Snyk SCA gate. Active when the SNYK_TOKEN repo secret is
+      # configured (production). When configured the step is a hard
+      # gate on HIGH+ vulnerabilities. The conditional keeps the gate
+      # off in fork PRs / cold-clone CI where the token is not
+      # available, matching the SOC2 dependency-scanning policy in
+      # SECURITY.md §9.1.
+      - name: Snyk dependency scan
+        if: env.SNYK_TOKEN != ''
+        uses: snyk/actions/python@0.4.0
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --all-projects
       # S580 — secrets-scanning gate. Fails the security job (which is
       # required-on-main) on any committed credential / API key. Config
       # in .gitleaks.toml at the repo root tunes allowlists for known
