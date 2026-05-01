@@ -42,6 +42,20 @@ Every external dependency URI is exposed under `.Values.externals` so a
 production install can point at managed services (RDS, ElastiCache, MSK,
 etc.) -- see [CLOUD_PORTABILITY.md](../../../loop_implementation/architecture/CLOUD_PORTABILITY.md).
 
+### Bundled dependencies
+
+For a "batteries-included" install (e.g. dev, demo, single-tenant SaaS)
+the chart bundles vetted upstream charts as Helm dependencies:
+
+| Dependency | Subchart | Version | Toggle |
+| ---------- | -------- | ------- | ------ |
+| PostgreSQL | `bitnami/postgresql` | 15.5.38 | `postgresql.enabled` |
+
+To use an existing managed Postgres (RDS, Cloud SQL, etc.) set
+`postgresql.enabled=false` and override `externals.postgresUrl`. Run
+`helm dependency update infra/helm/loop` once before `helm install`
+to pull the pinned subcharts into `infra/helm/loop/charts/`.
+
 ## Validation
 
 `tools/check_helm_chart.py` runs a structural check against the chart

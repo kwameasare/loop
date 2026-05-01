@@ -17,3 +17,11 @@ sources:
 maintainers:
   - name: Loop Engineering
     email: eng@example.invalid
+dependencies:
+  # Bitnami PostgreSQL pinned for reproducible deploys; bypass via
+  # externals.postgresUrl + postgresql.enabled=false to point at an
+  # existing managed Postgres (e.g. RDS, Cloud SQL).
+  - name: postgresql
+    version: 15.5.38
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled

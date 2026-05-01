@@ -140,6 +140,29 @@ def check_chart(chart_dir: Path = CHART_DIR) -> list[str]:
         if key not in chart:
             errors.append(f"Chart.yaml missing key: {key}")
 
+    # Bundled dependencies must be pinned to exact semver and have a
+    # condition flag so operators can swap in managed services.
+    raw_deps = chart.get("dependencies", []) if isinstance(chart, dict) else []
+    if not isinstance(raw_deps, list):
+        errors.append("Chart.yaml dependencies must be a list")
+        raw_deps = []
+    for entry in raw_deps:  # type: ignore[reportUnknownVariableType]
+        if not isinstance(entry, dict):
+            errors.append("Chart.yaml dependency entries must be mappings")
+            continue
+        dep_any: Any = entry
+        name_any: Any = dep_any.get("name", "<unnamed>")
+        version_any: Any = dep_any.get("version")
+        name = str(name_any) if not isinstance(name_any, str) else name_any
+        if not isinstance(version_any, str) or not re.match(r"^\d+\.\d+\.\d+$", version_any):
+            errors.append(
+                f"dependency {name}: version must be exact semver (got {version_any!r})"
+            )
+        if "condition" not in dep_any:
+            errors.append(f"dependency {name}: must declare a condition flag")
+        if "repository" not in dep_any:
+            errors.append(f"dependency {name}: must declare a repository URL")
+
     try:
         values = yaml.safe_load(values_yaml.read_text())
     except yaml.YAMLError as exc:

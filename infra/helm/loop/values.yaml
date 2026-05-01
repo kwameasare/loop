@@ -115,3 +115,17 @@ serviceAccount:
   create: true
   name: ""
   annotations: {}
+
+# Bundled PostgreSQL (Bitnami subchart). Disable to bring your own
+# database -- override externals.postgresUrl to point at it.
+postgresql:
+  enabled: true
+  auth:
+    username: loop
+    password: loop
+    database: loop
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+  fullnameOverride: loop-postgres
