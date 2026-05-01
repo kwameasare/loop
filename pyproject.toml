@@ -103,6 +103,7 @@ dev = [
     "psycopg[binary]>=3.2",
     "schemathesis>=4.0",
     "testcontainers[postgres]>=4.10",
+    "jsonschema>=4.20",
 ]
 
 [tool.ruff]

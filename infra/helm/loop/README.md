@@ -19,6 +19,7 @@ helm install loop ./infra/helm/loop \
 | ---- | ------- |
 | `Chart.yaml` | chart metadata |
 | `values.yaml` | tuneables -- replicas, resources, image refs, externals, secrets, ingress |
+| `values.schema.json` | JSON Schema (Draft 2020-12) helm validates `-f` overrides against |
 | `templates/_helpers.tpl` | name / label / image helpers |
 | `templates/configmap.yaml` | non-secret externals (`POSTGRES_URL`, etc.) |
 | `templates/secret.yaml` | LLM API key + JWT signing key |
@@ -46,3 +47,9 @@ and asserts that:
   templates reference.
 * Every template under `templates/` is parseable YAML (after stripping
   helm template directives).
+
+`tests/test_helm_values_schema.py` validates `values.yaml` against
+`values.schema.json` (helm itself runs the same schema on every
+`helm install` / `helm upgrade`). The schema permits regional overlays
+to add governance sections (`audit`, `networkPolicy`, `telemetry`); see
+[CLOUD_PORTABILITY.md](../../../loop_implementation/architecture/CLOUD_PORTABILITY.md).

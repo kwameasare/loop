@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://loop.example/charts/loop/values.schema.json",
+  "title": "Loop self-host Helm values",
+  "description": "JSON Schema for infra/helm/loop/values.yaml. Validated by helm install (>=1.14) and by tests/test_helm_values_schema.py via the Python jsonschema package. Regional overlays (e.g. values-eu-west.yaml) extend the base by adding keys; unknown top-level sections are allowed so governance overlays (audit/networkPolicy/telemetry) compose cleanly. Extends story S036; introduced by S440.",
+  "type": "object",
+  "required": [
+    "global",
+    "controlPlane",
+    "runtime",
+    "gateway",
+    "externals",
+    "secrets",
+    "ingress",
+    "serviceAccount"
+  ],
+  "definitions": {
+    "image": {
+      "type": "object",
+      "required": ["repository"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string", "minLength": 1 }
+      }
+    },
+    "service": {
+      "type": "object",
+      "required": ["port"],
+      "properties": {
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+      }
+    },
+    "resourceQty": { "type": "string", "pattern": "^\\d+(\\.\\d+)?(m|Mi|Gi|Ki|G|M|K)?$" },
+    "resourceBlock": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/resourceQty" }
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/resourceQty" }
+        }
+      }
+    },
+    "componentBlock": {
+      "type": "object",
+      "required": ["enabled", "image", "replicaCount", "service"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "image": { "$ref": "#/definitions/image" },
+        "replicaCount": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "service": { "$ref": "#/definitions/service" },
+        "resources": { "$ref": "#/definitions/resourceBlock" },
+        "env": { "type": "object" }
+      }
+    }
+  },
+  "properties": {
+    "global": {
+      "type": "object",
+      "required": ["imageRegistry", "imagePullPolicy"],
+      "properties": {
+        "imageRegistry": { "type": "string", "minLength": 1 },
+        "imagePullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      }
+    },
+    "controlPlane": { "$ref": "#/definitions/componentBlock" },
+    "runtime": { "$ref": "#/definitions/componentBlock" },
+    "gateway": { "$ref": "#/definitions/componentBlock" },
+    "externals": {
+      "type": "object",
+      "properties": {
+        "postgresUrl": { "type": "string", "minLength": 1 },
+        "redisUrl": { "type": "string", "minLength": 1 },
+        "qdrantUrl": { "type": "string", "minLength": 1 },
+        "natsUrl": { "type": "string", "minLength": 1 },
+        "s3Endpoint": { "type": "string", "minLength": 1 },
+        "otelEndpoint": { "type": "string", "minLength": 1 }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "required": ["llmApiKey", "jwtSigningKey"],
+      "properties": {
+        "llmApiKey": { "type": "string" },
+        "jwtSigningKey": { "type": "string" }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "className": { "type": "string" },
+        "annotations": { "type": "object" },
+        "host": { "type": "string" },
+        "tls": { "type": "array" }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "required": ["create"],
+      "properties": {
+        "create": { "type": "boolean" },
+        "name": { "type": "string" },
+        "annotations": { "type": "object" }
+      }
+    }
+  }
+}
