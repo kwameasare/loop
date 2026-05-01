@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:39:29.820571+00:00",
+    "generated_at": "2026-05-01T23:39:52.772218+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4291,7 +4291,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s639-ent-on-prem-parity-matrix-verifi\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 2/5\nHeartbeat: 2026-05-01T23:39:29Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: cloud portability docs reviewed and forbidden SDK scan passed\nLatest checkpoint: on-prem parity matrix evidence and guard test landed"
+      "notes": "**Active.**\nBranch: codex-orion/s639-ent-on-prem-parity-matrix-verifi\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 3/5\nHeartbeat: 2026-05-01T23:39:52Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: parity evidence and referenced helm tests passed\nLatest checkpoint: cloud portability docs reviewed and forbidden SDK scan passed\nLatest checkpoint: on-prem parity matrix evidence and guard test landed"
     },
     {
       "id": "S650",
