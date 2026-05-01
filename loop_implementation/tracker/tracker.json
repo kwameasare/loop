@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:44:19.091837+00:00",
+    "generated_at": "2026-05-01T19:44:19.782925+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3201,8 +3201,8 @@
       "epic": "E13",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s450-helm-clickhouse-dependency-altin\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1\nHeartbeat: 2026-05-01T19:44:18Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: clickhouse bitnami subchart + storageClass param + backup CronJob config"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s450-helm-clickhouse-dependency-altin (merged + deletable)\nSkill: (unspecified)\nFinal heartbeat: 2026-05-01T19:44:19Z (copilot-titan)\nTests: uv run pytest tests/test_helm_clickhouse_dependency.py tests/test_helm_minio_dependency.py tests/test_helm_chart.py tests/test_helm_values_schema.py -q (15 passed)\nDocs touched: infra/helm/loop/README.md\nFollow-ups: none"
     },
     {
       "id": "S451",
