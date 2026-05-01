@@ -147,6 +147,7 @@ We use **Terraform** (with the `terraform-provider-loop` umbrella module) and **
 
 ```
 infra/terraform/
+├── regions.yaml           # abstract Loop region registry + concrete cloud mapping
 ├── modules/
 │   ├── data-plane/        # cloud-agnostic; takes provider creds + region
 │   ├── control-plane/
