@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T21:52:14.802313+00:00",
+    "generated_at": "2026-05-01T21:53:02.436096+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3966,13 +3966,13 @@
     {
       "id": "S580",
       "title": "soc2: secrets-scanning gate (gitleaks)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S25",
       "epic": "E16",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: pre-commit + CI; historical sweep done; rotation runbook for hits."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s580-soc2-secrets-scanning-gate-gitle\nSkill: skills/security/secrets-kms-check.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-01T21:46:21Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S581",

@@ -379,7 +379,7 @@ Source of truth: `tools/build_tracker.py`. xlsx companion regenerated separately
 | S577 | soc2: pen-test fix queue tracked as P0 stories | tbd | S25 | E16 | 2 | P0 | Not started | AC: each finding has tracker entry, severity, owner, fix-deadline. |
 | S578 | soc2: SBOM generation in CI (cyclonedx) | tbd | S25 | E16 | 1 | P0 | Not started | AC: every release artifact ships SBOM; checked-in workflow output. |
 | S579 | soc2: dependency-scanning gate (trivy + snyk) | tbd | S25 | E16 | 1 | P0 | Not started | AC: PRs with new HIGH+ vuln blocked; allowlist mechanism for false-positives. |
-| S580 | soc2: secrets-scanning gate (gitleaks) | tbd | S25 | E16 | 1 | P0 | Not started | AC: pre-commit + CI; historical sweep done; rotation runbook for hits. |
+| S580 | soc2: secrets-scanning gate (gitleaks) | copilot-titan | S25 | E16 | 1 | P0 | In progress | **Active.**<br>Branch: copilot-titan/s580-soc2-secrets-scanning-gate-gitle<br>Skill: skills/security/secrets-kms-check.md<br>Last step: 0/2 (just claimed)<br>Heartbeat: 2026-05-01T21:46:21Z (copilot-titan)<br>Open questions: none<br>Blockers: none<br>Commits: (will accumulate) |
 | S581 | soc2: audit-trail completeness review (every state change is logged) | tbd | S25 | E16 | 2 | P0 | Not started | AC: matrix of write endpoints → audit-event coverage; gaps fixed. |
 | S582 | soc2: SOC2 Type 1 attestation kickoff with auditor | tbd | S25 | E16 | 2 | P0 | Not started | AC: kickoff meeting held; evidence list + window dates committed. |
 | S590 | region: regions.yaml registry + per-workspace region pinning enforced in cp-api | tbd | S26 | E12 | 2 | P0 | Not started | AC: workspace.region immutable post-create; cross-region API call rejects 403. [extends S045] |
