@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:13:06.567035+00:00",
+    "generated_at": "2026-05-01T22:14:19.281069+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2151,13 +2151,13 @@
     {
       "id": "S286",
       "title": "obs: trace export to ClickHouse (replace InMemory in non-test env)",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S10",
       "epic": "E9",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: prod env emits to ClickHouse otel_traces; in-memory remains for tests; switch via LOOP_OTEL_EXPORTER. [extends S009]"
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s286-obs-trace-export-to-clickhouse-r\nSkill: skills/observability/add-otel-span.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:07:23Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S287",
