@@ -1,11 +1,13 @@
 import { AgentsList } from "@/components/agents/agents-list";
 import { listAgents } from "@/lib/cp-api";
 
+export const dynamic = "force-dynamic";
+
 /**
  * /agents -- read-only landing page for the agent registry.
  *
- * Server component: the cp-api call happens at request time so studio
- * can stay stateless. Mutations land in S025+ (epic E10).
+ * Server component: the generated cp-api client calls GET /v1/agents
+ * at request time so the page reflects the caller's active workspace.
  */
 export default async function AgentsPage() {
   const { agents } = await listAgents();

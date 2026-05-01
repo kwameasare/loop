@@ -1,11 +1,5 @@
 import type { AgentSummary } from "@/lib/cp-api";
 
-const STATUS_STYLES: Record<AgentSummary["status"], string> = {
-  active: "bg-emerald-100 text-emerald-800",
-  draft: "bg-amber-100 text-amber-800",
-  archived: "bg-zinc-100 text-zinc-700",
-};
-
 /**
  * Pure presentational list. Splitting the rendering away from the page's
  * data fetch keeps Vitest tests simple -- the test mounts AgentsList
@@ -34,15 +28,15 @@ export function AgentsList({ agents }: { agents: AgentSummary[] }) {
             <div className="flex items-center gap-2">
               <h3 className="text-base font-medium">{agent.name}</h3>
               <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[agent.status]}`}
+                className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
               >
-                {agent.status}
+                v{agent.active_version ?? "draft"}
               </span>
             </div>
             <p className="text-muted-foreground mt-1 text-sm">
-              {agent.description}
+              {agent.description || "No description yet."}
             </p>
-            <p className="mt-1 text-xs text-zinc-500">model: {agent.model}</p>
+            <p className="mt-1 text-xs text-zinc-500">slug: {agent.slug}</p>
           </div>
         </li>
       ))}

@@ -1,66 +1,65 @@
-/**
- * cp-api -- thin client for the Loop control-plane HTTP API.
- *
- * S0 ships a stub: the studio renders against an in-memory fixture so we
- * can iterate on UI before the live API stabilises. Once cp-api goes RC
- * (E5/S023) flip `LOOP_CP_API_BASE_URL` and the same call signatures
- * carry over.
- *
- * Wire shapes mirror packages/control-plane response payloads. They are
- * intentionally narrow -- studio pages should not depend on internal
- * fields.
- */
+import { type Agent, createCpApi } from "@/lib/cp-api/generated";
 
 export type AgentSummary = {
   id: string;
   name: string;
-  model: string;
   description: string;
-  status: "active" | "draft" | "archived";
+  slug: string;
+  active_version: number | null;
   updated_at: string; // ISO 8601
+  workspace_id: string;
 };
 
 export type ListAgentsResponse = {
   agents: AgentSummary[];
 };
 
-const FIXTURE: AgentSummary[] = [
-  {
-    id: "agt_support",
-    name: "Support",
-    model: "gpt-4o-mini",
-    description: "Customer-support agent with KB grounding.",
-    status: "active",
-    updated_at: "2026-04-29T12:00:00Z",
-  },
-  {
-    id: "agt_qa",
-    name: "QA Bot",
-    model: "claude-3-5-haiku",
-    description: "Internal Q&A over the engineering handbook.",
-    status: "draft",
-    updated_at: "2026-04-28T09:30:00Z",
-  },
-];
+export interface ListAgentsOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+}
+
+function cpApiBaseUrl(): string {
+  const raw =
+    process.env.LOOP_CP_API_BASE_URL ?? process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) {
+    throw new Error("LOOP_CP_API_BASE_URL is required to list agents");
+  }
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+function toAgentSummary(agent: Agent): AgentSummary {
+  return {
+    id: agent.id ?? "",
+    name: agent.name ?? "Untitled agent",
+    description: agent.description ?? "",
+    slug: agent.slug ?? "",
+    active_version: agent.active_version ?? null,
+    updated_at: agent.created_at ?? "",
+    workspace_id: agent.workspace_id ?? "",
+  };
+}
+
+function noStoreFetch(fetcher: typeof fetch): typeof fetch {
+  return (input, init) => fetcher(input, { ...init, cache: "no-store" });
+}
 
 /**
  * Returns the agents visible to the current workspace.
  *
- * In production this issues GET /v1/agents against cp-api with the
- * caller's session cookie attached. The stub just resolves the fixture
- * so studio routing/rendering can be exercised offline.
+ * Studio calls the generated cp-api client rather than a fixture. The
+ * control plane scopes GET /v1/agents to the active workspace derived
+ * from the caller's auth context.
  */
-export async function listAgents(): Promise<ListAgentsResponse> {
-  const baseUrl = process.env.LOOP_CP_API_BASE_URL;
-  if (!baseUrl) {
-    return { agents: FIXTURE };
-  }
-  const res = await fetch(`${baseUrl}/v1/agents`, {
-    cache: "no-store",
-    headers: { accept: "application/json" },
+export async function listAgents(
+  opts: ListAgentsOptions = {},
+): Promise<ListAgentsResponse> {
+  const api = createCpApi({
+    baseUrl: cpApiBaseUrl(),
+    fetch: noStoreFetch(opts.fetcher ?? fetch),
+    token: opts.token ?? process.env.LOOP_TOKEN,
   });
-  if (!res.ok) {
-    throw new Error(`cp-api list agents failed: ${res.status}`);
-  }
-  return (await res.json()) as ListAgentsResponse;
+  const agents = await api.GetAgents({ body: undefined });
+  return { agents: agents.map(toAgentSummary) };
 }
