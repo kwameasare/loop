@@ -1,12 +1,19 @@
-export default function AgentSecretsPage() {
+import { SecretsList } from "@/components/agents/secrets-list";
+import { listAgentSecrets } from "@/lib/agent-secrets";
+
+export const dynamic = "force-dynamic";
+
+interface AgentSecretsPageProps {
+  params: { agent_id: string };
+}
+
+export default async function AgentSecretsPage({
+  params,
+}: AgentSecretsPageProps) {
+  const { items } = await listAgentSecrets(params.agent_id);
   return (
-    <div className="flex flex-col gap-2" data-testid="agent-secrets">
-      <h2 className="text-lg font-medium">Secrets</h2>
-      <p className="text-sm text-muted-foreground">
-        Per-agent secret references (provider keys, webhook signing
-        secrets) appear here. Workspace-scoped secrets are managed under
-        Settings.
-      </p>
+    <div data-testid="agent-secrets">
+      <SecretsList agentId={params.agent_id} initialSecrets={items} />
     </div>
   );
 }
