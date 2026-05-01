@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:15:22.698969+00:00",
+    "generated_at": "2026-05-01T19:15:54.752372+00:00",
     "format_version": 2
   },
   "epics": [
@@ -952,13 +952,13 @@
     {
       "id": "S121",
       "title": "cp-api: integration test fixture spinning real Postgres via testcontainers",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S2",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: pytest fixture starts pg, runs cp_0001 + dp_0001, yields engine; tests in _tests_integration/ green."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s121-cp-api-integration-test-fixture\nSkill: skills/testing/write-integration-test.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T19:15:54Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S122",
