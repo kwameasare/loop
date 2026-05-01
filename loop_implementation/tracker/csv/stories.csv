@@ -247,7 +247,14 @@ Final heartbeat: 2026-05-01T22:13:06Z (copilot-thor)
 Tests: vitest run on parseSseEvents and WebChannelClient.send; tsup build emits ESM+CJS+.d.ts; npm pack --dry-run lists all 6 files
 Docs touched: packages/channels/web-js/README.md
 Follow-ups: none"
-S176,web-channel-js: ChatWidget React component with message list + input,tbd,S5,E6,3,P0,Not started,AC: renders messages; submitting input streams response; Storybook stories for empty/error/streaming.
+S176,web-channel-js: ChatWidget React component with message list + input,copilot-thor,S5,E6,3,P0,In progress,"**Active.**
+Branch: copilot-thor/s176-web-channel-js-chatwidget-react
+Skill: skills/ux/component-design.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-01T22:16:51Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S177,web-channel-js: SSE parser + auto-reconnect with exponential backoff,tbd,S5,E6,2,P0,Not started,AC: drops mid-stream → reconnect with Last-Event-Id; jitter + cap; integration test in jsdom.
 S178,web-channel-js: typing indicator + history persistence (sessionStorage),tbd,S5,E6,1,P1,Not started,AC: typing dot animates while server sending; refresh restores last 30 messages.
 S179,studio: agent channels-tab — configure web channel + copy-snippet,tbd,S5,E6,2,P0,Not started,AC: enabling web channel mints token; UI shows <script> snippet; pasting in fixture page works.
