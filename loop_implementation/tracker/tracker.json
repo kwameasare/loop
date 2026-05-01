@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:51:49.982198+00:00",
+    "generated_at": "2026-05-01T23:52:13.494307+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4456,7 +4456,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s674-launch-series-a-data-room-update\nSkill: skills/devrel/write-docs-page.md\nLast step: 1/5\nHeartbeat: 2026-05-01T23:51:49Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: Series A deck model data-room link and tests landed"
+      "notes": "**Active.**\nBranch: codex-orion/s674-launch-series-a-data-room-update\nSkill: skills/devrel/write-docs-page.md\nLast step: 2/5\nHeartbeat: 2026-05-01T23:52:13Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: committed data-room artifact verification passed\nLatest checkpoint: Series A deck model data-room link and tests landed"
     },
     {
       "id": "S540",
