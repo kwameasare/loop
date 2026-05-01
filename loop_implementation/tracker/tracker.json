@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:19:51.216074+00:00",
+    "generated_at": "2026-05-01T22:23:06.452182+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1397,8 +1397,8 @@
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s179-studio-agent-channels-tab-config\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:19:51Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s179-studio-agent-channels-tab-config (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-01T22:23:06Z (copilot-thor)\nTests: vitest covers fixture+cp-api modes for enable/disable, snippet escape, card states, copy flow\nDocs touched: apps/studio/src/app/agents/[agent_id]/channels/page.tsx,apps/studio/public/web-channel-fixture.html\nFollow-ups: none"
     },
     {
       "id": "S180",
