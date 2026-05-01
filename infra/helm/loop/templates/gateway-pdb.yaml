@@ -1,0 +1,20 @@
+{{- if and .Values.gateway.enabled .Values.gateway.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "loop.fullname" . }}-gateway
+  labels:
+    {{- include "loop.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+spec:
+  {{- if .Values.gateway.pdb.minAvailable }}
+  minAvailable: {{ .Values.gateway.pdb.minAvailable }}
+  {{- else if .Values.gateway.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.gateway.pdb.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "loop.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: gateway
+{{- end }}
