@@ -21,8 +21,8 @@ Naming convention: `LOOP_<DOMAIN>_<NAME>` (e.g. `LOOP_RUNTIME_PORT`). Avoid `_` 
 | `LOOP_ENV` | `packages/observability/loop_observability/config.py` (deployment label) | S009 |
 | `LOOP_SERVICE_NAME` | observability `Settings` — OTel `service.name` resource attribute (no default; required) | S009 |
 | `LOOP_SERVICE_VERSION` | observability `Settings` — OTel `service.version` resource attribute (default `"0.0.0"`) | S009 |
-| `LOOP_OTEL_ENDPOINT` | observability `Settings` — OTLP endpoint (defaults to `http://otel-collector:4317`); identical to §1 | S009 |
-| `LOOP_OTEL_EXPORTER` | observability `Settings` — exporter selector (`"otlp"` / `"inmemory"` / `"none"`); used by tests | S009 |
+| `LOOP_OTEL_ENDPOINT` | observability `Settings` — OTLP HTTP endpoint when `LOOP_OTEL_EXPORTER=otlp`; ClickHouse HTTP base URL when `LOOP_OTEL_EXPORTER=clickhouse` | S009, S286 |
+| `LOOP_OTEL_EXPORTER` | observability `Settings` — exporter selector (`"otlp"` / `"clickhouse"` / `"inmemory"` / `"memory"` / `"none"`); prod defaults to ClickHouse, tests use in-memory | S009, S286 |
 | `LOOP_CP_DB_URL` | `packages/control-plane` Alembic `env.py` and `cp-api` settings | S006, S019 |
 | `LOOP_RUNTIME_DB_URL` | `packages/data-plane` Alembic `env.py` and runtime settings | S006, S008 |
 | `LOOP_GATEWAY_REQUEST_ID_TTL_SECONDS` | `packages/gateway` idempotency cache | S007 |

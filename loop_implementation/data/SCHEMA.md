@@ -653,7 +653,7 @@ All keys are prefixed `loop:`. TTL conventions:
 ### 6.1 Traces
 
 ```sql
-CREATE TABLE traces ON CLUSTER loop_ch (
+CREATE TABLE otel_traces ON CLUSTER loop_ch (
     workspace_id    UUID,
     conversation_id UUID,
     turn_id         UUID,
@@ -687,7 +687,7 @@ AS SELECT
     toDate(started_at) AS date,
     sum(cost_usd) AS total_usd,
     count() AS span_count
-FROM traces
+FROM otel_traces
 GROUP BY workspace_id, agent_id, date;
 ```
 

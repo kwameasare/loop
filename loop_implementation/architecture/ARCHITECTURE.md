@@ -385,7 +385,7 @@ End user        Channel-Web   NATS         Runtime        Gateway      Database
 
 ### 5.4 ClickHouse
 
-- **Tables:** see `data/SCHEMA.md` (`traces`, `costs_daily`, `eval_results`).
+- **Tables:** see `data/SCHEMA.md` (`otel_traces`, `costs_daily`, `eval_results`).
 - **Retention:** 90 days hot, then S3-compatible object-storage archive.
 - **Partition:** by `(workspace_id, toDate(ts))` for fast workspace-scoped scans.
 - **Hosting:** ClickHouse statefulset on k8s in every cloud (managed offerings exist on each — Altinity on AWS, ClickHouse Cloud, Aiven, etc. — but we self-host on k8s for portability).
