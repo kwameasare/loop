@@ -152,7 +152,14 @@ Final heartbeat: 2026-05-01T19:40:15Z (copilot-thor)
 Tests: pytest tests/test_gen_cp_api_client.py 3 passed; pnpm test 74 passed; pnpm lint clean; pnpm build clean
 Docs touched: tools/gen_cp_api_client.py module docstring documents the generator
 Follow-ups: none"
-S153,studio: layout shell — sidebar nav + topbar + user menu,tbd,S4,E10,2,P0,Not started,AC: every authed page has consistent shell; nav highlights current route; signed-in user avatar visible.
+S153,studio: layout shell — sidebar nav + topbar + user menu,copilot-thor,S4,E10,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s153-studio-layout-shell-sidebar-nav
+Skill: ux/layout-shell
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-01T19:42:38Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S154,studio: workspace switcher dropdown in topbar,tbd,S4,E10,2,P0,Not started,AC: dropdown lists user's workspaces from /v1/workspaces; selection updates active context + URL.
 S155,"studio: settings drawer (profile, region, theme)",tbd,S4,E10,2,P1,Not started,AC: profile name editable; region read-only display; theme persists to localStorage.
 S156,studio: agents-list page reads real /v1/workspaces/{id}/agents,tbd,S4,E10,2,P0,Not started,AC: replace fixture with real fetch; loading + empty + error states each rendered.
