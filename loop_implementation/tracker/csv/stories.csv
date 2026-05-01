@@ -365,11 +365,12 @@ Follow-ups: none"
 S447,helm: redis dependency (Bitnami subchart pinned),copilot-titan,S18,E13,1,P0,In progress,"**Active.**
 Branch: copilot-titan/s447-helm-redis-dependency-bitnami-su
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 0/2 (just claimed)
-Heartbeat: 2026-05-01T19:39:05Z (copilot-titan)
+Last step: 1
+Heartbeat: 2026-05-01T19:39:50Z (copilot-titan)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: redis bitnami dep pinned + condition + bypass docs; 16 helm tests pass"
 S448,helm: qdrant dependency (official chart pinned),tbd,S18,E13,1,P0,Not started,AC: same.
 S449,helm: nats dependency (jetstream-on),tbd,S18,E13,1,P0,Not started,AC: same.
 S450,helm: clickhouse dependency (Altinity operator or bitnami),tbd,S18,E13,2,P0,Not started,AC: storage class param; backup config.
