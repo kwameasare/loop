@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:40:14.923505+00:00",
+    "generated_at": "2026-05-01T19:40:15.663652+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1155,8 +1155,8 @@
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s152-studio-auto-generated-cp-api-cli\nSkill: ux/codegen\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T19:40:14Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s152-studio-auto-generated-cp-api-cli (merged + deletable)\nSkill: ux/codegen\nFinal heartbeat: 2026-05-01T19:40:15Z (copilot-thor)\nTests: pytest tests/test_gen_cp_api_client.py 3 passed; pnpm test 74 passed; pnpm lint clean; pnpm build clean\nDocs touched: tools/gen_cp_api_client.py module docstring documents the generator\nFollow-ups: none"
     },
     {
       "id": "S153",

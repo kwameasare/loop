@@ -144,14 +144,14 @@ Final heartbeat: 2026-05-01T19:36:54Z (copilot-thor)
 Tests: pnpm test 74 passed; pnpm lint clean; pnpm build clean
 Docs touched: require-auth.tsx, /login/page.tsx, /agents/layout.tsx module docstrings document the returnTo flow
 Follow-ups: none"
-S152,studio: auto-generated cp-api client (openapi → ts-fetch),copilot-thor,S4,E10,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s152-studio-auto-generated-cp-api-cli
+S152,studio: auto-generated cp-api client (openapi → ts-fetch),copilot-thor,S4,E10,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s152-studio-auto-generated-cp-api-cli (merged + deletable)
 Skill: ux/codegen
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-01T19:40:14Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-01T19:40:15Z (copilot-thor)
+Tests: pytest tests/test_gen_cp_api_client.py 3 passed; pnpm test 74 passed; pnpm lint clean; pnpm build clean
+Docs touched: tools/gen_cp_api_client.py module docstring documents the generator
+Follow-ups: none"
 S153,studio: layout shell — sidebar nav + topbar + user menu,tbd,S4,E10,2,P0,Not started,AC: every authed page has consistent shell; nav highlights current route; signed-in user avatar visible.
 S154,studio: workspace switcher dropdown in topbar,tbd,S4,E10,2,P0,Not started,AC: dropdown lists user's workspaces from /v1/workspaces; selection updates active context + URL.
 S155,"studio: settings drawer (profile, region, theme)",tbd,S4,E10,2,P1,Not started,AC: profile name editable; region read-only display; theme persists to localStorage.
