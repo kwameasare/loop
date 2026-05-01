@@ -75,7 +75,7 @@ A "container" here means an independently deployable runtime: a process, a manag
 
 | Container | Tech | Responsibility |
 |-----------|------|----------------|
-| `cp-api` | Python (FastAPI) | Public REST API, auth, workspace mgmt, deploy ingest |
+| `cp-api` | Python (FastAPI), distroless OCI image `ghcr.io/loop-ai/cp-api` | Public REST API, auth, workspace mgmt, deploy ingest |
 | `cp-billing` | Python | Stripe webhooks, usage rollup, invoice generation |
 | `cp-eval-orchestrator` | Python | Schedules and shards eval runs across agent versions |
 | `cp-mcp-registry` | Python + S3 | Catalog of installable MCP servers, versions, signatures |

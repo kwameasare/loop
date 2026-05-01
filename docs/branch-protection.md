@@ -23,6 +23,7 @@ pattern `main`:
   - Required checks (must match the job names in `.github/workflows/ci.yml`):
     - `CI / lint`
     - `CI / unit`
+    - `CI / cp-api-image`
     - `CI / tracker-clean`
     - `CI / security`
     - `CI / docs-with-code`
@@ -92,3 +93,4 @@ Record the verification date here: `____-__-__` (initial: pending).
 |------|--------|--------|
 | 2026-04-29 | Initial settings drafted (S001). Awaiting GitHub admin to apply. | GitHub Copilot |
 | 2026-04-30 | Added `docs-with-code` and `checkpoint-discipline` to required-checks. Tightened `tracker-clean` to also lint structured Notes-cell format. | Audit follow-up |
+| 2026-05-01 | Added `cp-api-image` as a required image build, size, and Trivy scan check for the control-plane API image. | codex-orion |
