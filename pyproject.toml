@@ -102,6 +102,7 @@ dev = [
     "sqlalchemy>=2.0",
     "psycopg[binary]>=3.2",
     "schemathesis>=4.0",
+    "testcontainers[postgres]>=4.10",
 ]
 
 [tool.ruff]

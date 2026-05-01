@@ -28,6 +28,7 @@ if _dsn:
 # written DDL, mirroring data/SCHEMA.md. Set target_metadata=None and rely on
 # the explicit op.* calls in each revision.
 target_metadata = None
+version_table = config.get_main_option("version_table", "alembic_version")
 
 
 def run_migrations_offline() -> None:
@@ -38,6 +39,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        version_table=version_table,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -50,7 +52,11 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            version_table=version_table,
+        )
         with context.begin_transaction():
             context.run_migrations()
 

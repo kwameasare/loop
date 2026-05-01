@@ -63,6 +63,10 @@ Cover every public API path. Tests spin up real Postgres + Redis + Qdrant + NATS
   an in-process ASGI contract app with all response checks enabled and a 5 s
   Hypothesis deadline. This keeps the public REST spec loadable, routable, and
   response-schema-valid before the full `cp-api` server exists.
+- **Postgres migration round-trips:** cp-api integration tests use
+  testcontainers to start Postgres 16, apply `cp_0001_initial` and
+  `dp_0001_initial` with separate Alembic version tables, and yield a
+  SQLAlchemy engine for storage-layer assertions.
 - **Fixtures:**
   - `workspace_factory` — creates a fresh tenant.
   - `agent_factory` — deploys a no-op agent.
