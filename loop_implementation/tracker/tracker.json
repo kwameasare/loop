@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:19:32.024513+00:00",
+    "generated_at": "2026-05-01T22:19:34.524155+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1375,8 +1375,8 @@
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s177-web-channel-js-sse-parser-auto-r\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:19:31Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s177-web-channel-js-sse-parser-auto-r (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-01T22:19:34Z (copilot-thor)\nTests: vitest jsdom mid-stream drop reconnects with Last-Event-Id\nDocs touched: packages/channels/web-js/src/index.ts\nFollow-ups: none"
     },
     {
       "id": "S178",
