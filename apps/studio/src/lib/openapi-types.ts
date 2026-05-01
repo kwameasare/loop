@@ -176,6 +176,8 @@ export interface ProblemDetail {
   type: string;
 }
 
+export type RegionName = "na-east" | "eu-west";
+
 export interface RetrievalChunk {
   byte_range?: number[];
   chunk_id?: string;
@@ -237,8 +239,14 @@ export interface Workspace {
   id?: string;
   name?: string;
   plan?: "hobby" | "pro" | "team" | "enterprise";
-  region?: string;
+  region?: RegionName;
   slug?: string;
+}
+
+export interface WorkspaceCreate {
+  name: string;
+  region?: RegionName;
+  slug: string;
 }
 
 export interface WorkspaceMember {
@@ -248,6 +256,10 @@ export interface WorkspaceMember {
   joined_at?: string | null;
   role?: "owner" | "admin" | "editor" | "operator" | "viewer";
   user_id?: string;
+}
+
+export interface WorkspacePatch {
+  name?: string;
 }
 
 /* Operation map */
@@ -445,10 +457,22 @@ export interface Operations {
     request: unknown;
     response: Workspace[];
   };
+  PostWorkspaces: {
+    method: "POST";
+    path: "/workspaces";
+    request: WorkspaceCreate;
+    response: Workspace;
+  };
   GetWorkspacesByWorkspaceId: {
     method: "GET";
     path: "/workspaces/{workspace_id}";
     request: unknown;
+    response: Workspace;
+  };
+  PatchWorkspacesByWorkspaceId: {
+    method: "PATCH";
+    path: "/workspaces/{workspace_id}";
+    request: WorkspacePatch;
     response: Workspace;
   };
   GetWorkspacesByWorkspaceIdApiKeys: {

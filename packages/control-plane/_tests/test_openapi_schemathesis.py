@@ -251,4 +251,4 @@ def test_contract_app_returns_405_with_allow_header_for_unsupported_method() -> 
         headers=[(b"authorization", VALID_AUTH.encode())],
     )
     assert response["status"] == 405
-    assert (b"allow", b"GET") in response["headers"]
+    assert (b"allow", b"GET, POST") in response["headers"]
