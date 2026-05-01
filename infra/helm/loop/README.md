@@ -25,6 +25,8 @@ helm install loop ./infra/helm/loop \
 | `templates/secret.yaml` | LLM API key + JWT signing key |
 | `templates/serviceaccount.yaml` | RBAC subject |
 | `templates/control-plane.yaml` | Deployment + Service for control-plane |
+| `templates/control-plane-hpa.yaml` | HPA (autoscaling/v2) for control-plane (gated on `controlPlane.autoscaling.enabled`) |
+| `templates/control-plane-pdb.yaml` | PodDisruptionBudget for control-plane (gated on `controlPlane.pdb.enabled`) |
 | `templates/runtime.yaml` | Deployment + Service for runtime |
 | `templates/gateway.yaml` | Deployment + Service for gateway |
 | `templates/ingress.yaml` | optional ingress (`/v1/cp`, `/v1/runtime`, `/v1/llm`) |

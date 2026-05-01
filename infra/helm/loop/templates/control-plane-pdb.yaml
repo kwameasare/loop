@@ -1,0 +1,20 @@
+{{- if and .Values.controlPlane.enabled .Values.controlPlane.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "loop.fullname" . }}-control-plane
+  labels:
+    {{- include "loop.labels" . | nindent 4 }}
+    app.kubernetes.io/component: control-plane
+spec:
+  {{- if .Values.controlPlane.pdb.minAvailable }}
+  minAvailable: {{ .Values.controlPlane.pdb.minAvailable }}
+  {{- else if .Values.controlPlane.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.controlPlane.pdb.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "loop.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: control-plane
+{{- end }}

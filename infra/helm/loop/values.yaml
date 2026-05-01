@@ -27,6 +27,16 @@ controlPlane:
       cpu: "500m"
       memory: "512Mi"
   env: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 75
+    targetMemoryUtilizationPercentage: null
+  pdb:
+    enabled: true
+    minAvailable: 1
+    maxUnavailable: null
 
 runtime:
   enabled: true
