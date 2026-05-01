@@ -500,15 +500,14 @@ Final heartbeat: 2026-05-01T22:30:49Z (codex-orion)
 Tests: uv run pytest -q -m 'not integration and not e2e' (1191 passed, 3 skipped, 4 deselected); focused ruff/format/pyright for S444 files; helm chart + tracker/docs gates passed; full ruff/format/pyright baseline-red outside S444
 Docs touched: infra/helm/loop/README.md
 Follow-ups: none"
-S445,helm: dp-kb-engine subchart,codex-orion,S18,E13,1,P0,In progress,"**Active.**
-Branch: codex-orion/s445-helm-dp-kb-engine-subchart
+S445,helm: dp-kb-engine subchart,codex-orion,S18,E13,1,P0,Done,"**Done.**
+PR: https://github.com/kwameasare/loop/pull/9
+Branch: codex-orion/s445-helm-dp-kb-engine-subchart (merged + deletable)
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 2/4
-Heartbeat: 2026-05-01T22:37:04Z (codex-orion)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)
-Latest checkpoint: dp-kb-engine values, service, HPA/PDB, docs, and focused tests landed"
+Final heartbeat: 2026-05-01T22:38:10Z (codex-orion)
+Tests: uv run pytest -q -m 'not integration and not e2e' (1199 passed, 3 skipped, 4 deselected); focused ruff/format/pyright for S445 files; helm chart + tracker/docs gates passed; full ruff/format/pyright baseline-red outside S445
+Docs touched: infra/helm/loop/README.md
+Follow-ups: none"
 S446,helm: postgres dependency (Bitnami subchart pinned),copilot-titan,S18,E13,1,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-titan/s446-helm-postgres-dependency-bitnami (merged + deletable)
