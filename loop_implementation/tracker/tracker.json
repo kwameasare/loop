@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:15:50.360250+00:00",
+    "generated_at": "2026-05-01T23:16:50.544369+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4032,13 +4032,13 @@
     {
       "id": "S593",
       "title": "region: cross-region data export blocker (deny-by-default)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S26",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: any code path that loads cross-region data → 403; integration test."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s593-region-cross-region-data-export\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T23:16:50Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S594",
