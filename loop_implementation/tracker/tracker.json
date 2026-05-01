@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:40:15.663652+00:00",
+    "generated_at": "2026-05-01T19:40:53.923222+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3174,13 +3174,13 @@
     {
       "id": "S448",
       "title": "helm: qdrant dependency (official chart pinned)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S18",
       "epic": "E13",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: same."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s448-helm-qdrant-dependency-official\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-01T19:40:04Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S449",

@@ -377,7 +377,14 @@ Final heartbeat: 2026-05-01T19:39:51Z (copilot-titan)
 Tests: uv run pytest tests/test_helm_redis_dependency.py tests/test_helm_postgres_dependency.py tests/test_helm_chart.py tests/test_helm_values_schema.py -q (16 passed)
 Docs touched: infra/helm/loop/README.md
 Follow-ups: none"
-S448,helm: qdrant dependency (official chart pinned),tbd,S18,E13,1,P0,Not started,AC: same.
+S448,helm: qdrant dependency (official chart pinned),copilot-titan,S18,E13,1,P0,In progress,"**Active.**
+Branch: copilot-titan/s448-helm-qdrant-dependency-official
+Skill: skills/architecture/cloud-portability-check.md
+Last step: 0/2 (just claimed)
+Heartbeat: 2026-05-01T19:40:04Z (copilot-titan)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S449,helm: nats dependency (jetstream-on),tbd,S18,E13,1,P0,Not started,AC: same.
 S450,helm: clickhouse dependency (Altinity operator or bitnami),tbd,S18,E13,2,P0,Not started,AC: storage class param; backup config.
 S451,helm: minio dependency (with externalS3 alternative),tbd,S18,E13,1,P0,Not started,AC: pick-your-storage; tests for both.
