@@ -503,11 +503,12 @@ Follow-ups: none"
 S445,helm: dp-kb-engine subchart,codex-orion,S18,E13,1,P0,In progress,"**Active.**
 Branch: codex-orion/s445-helm-dp-kb-engine-subchart
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-01T22:34:09Z (codex-orion)
+Last step: 2/4
+Heartbeat: 2026-05-01T22:37:04Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: dp-kb-engine values, service, HPA/PDB, docs, and focused tests landed"
 S446,helm: postgres dependency (Bitnami subchart pinned),copilot-titan,S18,E13,1,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-titan/s446-helm-postgres-dependency-bitnami (merged + deletable)

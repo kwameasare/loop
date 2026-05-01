@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:38:26.216173+00:00",
+    "generated_at": "2026-05-01T22:38:31.428290+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3147,7 +3147,7 @@
       "points": 1,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s445-helm-dp-kb-engine-subchart\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-01T22:34:09Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: codex-orion/s445-helm-dp-kb-engine-subchart\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 2/4\nHeartbeat: 2026-05-01T22:37:04Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: dp-kb-engine values, service, HPA/PDB, docs, and focused tests landed"
     },
     {
       "id": "S446",
