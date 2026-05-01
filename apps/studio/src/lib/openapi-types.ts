@@ -45,11 +45,20 @@ export interface AgentResponse {
 
 export interface AgentVersion {
   agent_id?: string;
+  code_hash?: string;
+  config_json?: Record<string, unknown>;
+  created_at?: string;
+  created_by?: string | null;
   deploy_state?: "inactive" | "canary" | "active" | "rolled_back";
   deployed_at?: string | null;
   eval_status?: "pending" | "running" | "passed" | "failed" | "skipped";
   id?: string;
   version?: number;
+}
+
+export interface AgentVersionList {
+  items?: AgentVersion[];
+  next_cursor?: string | null;
 }
 
 export interface AuditLogEntry {
@@ -288,6 +297,12 @@ export interface Operations {
     path: "/agents/{agent_id}/invoke";
     request: InvokeRequest;
     response: AgentResponse;
+  };
+  GetAgentsByAgentIdVersions: {
+    method: "GET";
+    path: "/agents/{agent_id}/versions";
+    request: unknown;
+    response: AgentVersionList;
   };
   PostAgentsByAgentIdVersions: {
     method: "POST";

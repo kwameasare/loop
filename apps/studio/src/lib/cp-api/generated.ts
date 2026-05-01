@@ -46,11 +46,20 @@ export interface AgentResponse {
 
 export interface AgentVersion {
   agent_id?: string;
+  code_hash?: string;
+  config_json?: Record<string, unknown>;
+  created_at?: string;
+  created_by?: string | null;
   deploy_state?: "inactive" | "canary" | "active" | "rolled_back";
   deployed_at?: string | null;
   eval_status?: "pending" | "running" | "passed" | "failed" | "skipped";
   id?: string;
   version?: number;
+}
+
+export interface AgentVersionList {
+  items?: AgentVersion[];
+  next_cursor?: string | null;
 }
 
 export interface AuditLogEntry {
@@ -330,6 +339,12 @@ export interface CpApiOperations {
     request: InvokeRequest;
     response: AgentResponse;
   };
+  GetAgentsByAgentIdVersions: {
+    method: "GET";
+    path: "/agents/{agent_id}/versions";
+    request: unknown;
+    response: AgentVersionList;
+  };
   PostAgentsByAgentIdVersions: {
     method: "POST";
     path: "/agents/{agent_id}/versions";
@@ -533,6 +548,7 @@ export interface CpApi {
   DeleteAgentsByAgentId(args: { agent_id: string; body: unknown }): Promise<unknown>;
   GetAgentsByAgentIdConversations(args: { agent_id: string; body: unknown }): Promise<{ "items"?: Conversation[]; "next_cursor"?: string | null }>;
   PostAgentsByAgentIdInvoke(args: { agent_id: string; body: InvokeRequest }): Promise<AgentResponse>;
+  GetAgentsByAgentIdVersions(args: { agent_id: string; body: unknown }): Promise<AgentVersionList>;
   PostAgentsByAgentIdVersions(args: { agent_id: string; body: unknown }): Promise<AgentVersion>;
   GetAuditEvents(args: { body: unknown }): Promise<AuditLogEntry[]>;
   GetBudgets(args: { body: unknown }): Promise<Budget[]>;
@@ -576,6 +592,7 @@ export function createCpApi(opts: CpApiClientOptions): CpApi {
     DeleteAgentsByAgentId: (args) => fetcher<unknown>("DELETE", `/agents/${encodeURIComponent(args.agent_id)}`, args.body),
     GetAgentsByAgentIdConversations: (args) => fetcher<{ "items"?: Conversation[]; "next_cursor"?: string | null }>("GET", `/agents/${encodeURIComponent(args.agent_id)}/conversations`, args.body),
     PostAgentsByAgentIdInvoke: (args) => fetcher<AgentResponse>("POST", `/agents/${encodeURIComponent(args.agent_id)}/invoke`, args.body),
+    GetAgentsByAgentIdVersions: (args) => fetcher<AgentVersionList>("GET", `/agents/${encodeURIComponent(args.agent_id)}/versions`, args.body),
     PostAgentsByAgentIdVersions: (args) => fetcher<AgentVersion>("POST", `/agents/${encodeURIComponent(args.agent_id)}/versions`, args.body),
     GetAuditEvents: (args) => fetcher<AuditLogEntry[]>("GET", `/audit-events`, args.body),
     GetBudgets: (args) => fetcher<Budget[]>("GET", `/budgets`, args.body),
