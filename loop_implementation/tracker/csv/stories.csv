@@ -685,11 +685,12 @@ S639,ent: on-prem parity matrix verification (cloud-vs-onprem feature gates),tbd
 S650,voice-perf: ASR streaming optimization (frame-level dispatch),codex-vega,S29,E7,2,P0,In progress,"**Active.**
 Branch: codex-vega/s650-voice-perf-asr-streaming-optimiz
 Skill: skills/testing/perf-check.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-01T22:31:20Z (codex-vega)
+Last step: 3/5
+Heartbeat: 2026-05-01T22:34:06Z (codex-vega)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: Deepgram 50ms dispatch and latency regression test landed"
 S651,voice-perf: TTS pre-warm + sentence-boundary streaming,tbd,S29,E7,2,P0,Not started,AC: TTS speaks before LLM finishes; measurable p50 cut.
 S652,voice-perf: model warm-up + connection-pooling for ASR/TTS providers,tbd,S29,E7,2,P0,Not started,AC: keep-alive; pre-handshake; idle teardown after N min.
 S653,"voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS",tbd,S29,E7,2,P0,Not started,AC: nearest-region selector; latency map committed.
