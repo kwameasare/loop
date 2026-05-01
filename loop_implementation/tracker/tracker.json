@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:02:18.265496+00:00",
+    "generated_at": "2026-05-01T23:06:56.179400+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4016,7 +4016,7 @@
       "points": 3,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s591-region-data-plane-eu-stack-postg\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T23:02:18Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: codex-orion/s591-region-data-plane-eu-stack-postg\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 3/5\nHeartbeat: 2026-05-01T23:06:56Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: EU Terraform Helm env, data-plane externals, docs, and schema parity tests landed"
     },
     {
       "id": "S592",
