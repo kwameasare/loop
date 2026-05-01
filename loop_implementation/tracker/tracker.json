@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:29:40.772859+00:00",
+    "generated_at": "2026-05-01T22:31:41.060212+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3130,13 +3130,13 @@
     {
       "id": "S444",
       "title": "helm: dp-tool-host subchart with kata-runtime requirement docs",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S18",
       "epic": "E13",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: chart conditional on cluster having kata; pre-install hook checks; clear error message otherwise."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s444-helm-dp-tool-host-subchart-with\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:19:04Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S445",
