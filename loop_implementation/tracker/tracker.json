@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:27:04.015932+00:00",
+    "generated_at": "2026-05-01T19:27:16.106091+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1084,13 +1084,13 @@
     {
       "id": "S140",
       "title": "dp-runtime: Dockerfile (distroless) + image-scan + CI image push",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S3",
       "epic": "E1",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: docker build <150 MB; trivy zero HIGH+; CI publishes to ghcr."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s140-dp-runtime-dockerfile-distroless\nSkill: platform/docker-image\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T19:27:16Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S141",
