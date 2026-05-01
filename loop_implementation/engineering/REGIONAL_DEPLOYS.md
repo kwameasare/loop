@@ -80,6 +80,14 @@ Expected output: `region=eu-west residency=eu external_endpoints=ok`.
 A non-zero exit code aborts CI and pages the on-call per
 [RUNBOOKS.md](RUNBOOKS.md).
 
+### Nightly EU smoke
+
+`scripts/eu_smoke.sh` exercises a full `/v1/turns` request through the
+EU-west runtime endpoint and fails unless the response confirms the
+`eu-west` payload path. `.github/workflows/eu-smoke.yml` installs the
+EU overlay into kind every night, port-forwards the runtime Service, and
+runs the same script with `EU_SMOKE_REGION=eu-west`.
+
 ### Failure modes
 
 * **Cross-region egress detected.** NetworkPolicy alert fires; the
@@ -110,5 +118,6 @@ migrations. Schema migrations are gated on the migration job
 
 | Date       | Author       | Change                                            |
 | ---------- | ------------ | ------------------------------------------------- |
+| 2026-05-01 | codex-orion (S597) | Add nightly EU full-turn smoke workflow and `scripts/eu_smoke.sh`. |
 | 2026-05-01 | codex-orion (S595) | Add signed regional image promotion workflow; daily verification keeps NA/EU tags on one digest. |
 | 2026-04-30 | GitHub Copilot (S045) | Add EU-west overlay + regional deploy doc. |
