@@ -88,7 +88,8 @@ describe("WebChannelClient", () => {
         }),
       }),
     );
-    const init = (fetcher.mock.calls[0]![1] as RequestInit) ?? {};
+    const init = ((fetcher.mock.calls[0] as unknown as unknown[])?.[1] ??
+      {}) as RequestInit;
     const body = JSON.parse(String(init.body));
     expect(body).toMatchObject({
       conversation_id: "conv_x",

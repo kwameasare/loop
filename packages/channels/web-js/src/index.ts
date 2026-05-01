@@ -164,3 +164,10 @@ function mapServerEvent(obj: Record<string, unknown>): WebChannelEvent | null {
 
 /** Re-export so callers can opt into manual reconnect handling later. */
 export const RETRY_MS = DEFAULT_RETRY_MS;
+
+export { ChatWidget } from "./widget";
+export type {
+  ChatMessage,
+  ChatWidgetProps,
+  StreamFn,
+} from "./widget";

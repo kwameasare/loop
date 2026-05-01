@@ -9,6 +9,7 @@ export default defineConfig({
   treeshake: true,
   splitting: false,
   target: "es2020",
+  external: ["react", "react-dom", "react/jsx-runtime"],
   outExtension: ({ format }) => ({
     js: format === "cjs" ? ".cjs" : ".js",
   }),
