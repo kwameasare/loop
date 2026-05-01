@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:18:53.704583+00:00",
+    "generated_at": "2026-05-01T23:19:57.405645+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4037,8 +4037,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s593-region-cross-region-data-export\nSkill: skills/api/add-rest-endpoint.md\nLast step: 3/5\nHeartbeat: 2026-05-01T23:18:53Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: cross-region export guard, docs, and tests landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: https://github.com/kwameasare/loop/pull/14\nBranch: codex-orion/s593-region-cross-region-data-export (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-01T23:19:57Z (codex-orion)\nTests: Focused ruff/pyright on data_exports.py, workspace_api.py, and test_data_export_region_guard.py; uv run pytest -q packages/control-plane/_tests/test_data_export_region_guard.py packages/control-plane/_tests/test_region_routing.py packages/control-plane/_tests/test_workspace_region_pinning.py packages/control-plane/_tests/test_workspace_api.py (24 passed); uv run pytest -q -m 'not integration and not e2e' (1220 passed, 3 skipped, 4 deselected); tracker/docs gates pass. Full repo ruff/format/pyright remain baseline-red in unrelated files.\nDocs touched: loop_implementation/architecture/CLOUD_PORTABILITY.md\nFollow-ups: none"
     },
     {
       "id": "S594",
