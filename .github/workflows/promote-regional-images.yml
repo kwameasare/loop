@@ -1,0 +1,63 @@
+name: promote-regional-images
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Source image tag to promote
+        required: false
+        default: main
+  schedule:
+    - cron: "17 4 * * *"
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+concurrency:
+  group: promote-regional-images-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGIONS: "na-east eu-west"
+  SERVICES: "cp-api dp-runtime"
+  SOURCE_TAG: ${{ inputs.image_tag || 'main' }}
+
+jobs:
+  promote:
+    name: sign and verify regional image digests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: sigstore/cosign-installer@v3
+      - uses: imjasonh/setup-crane@v0.4
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Promote one signed digest to every region
+        run: |
+          set -euo pipefail
+          : > regional-image-digests.txt
+          for service in $SERVICES; do
+            base="ghcr.io/loop-ai/${service}"
+            digest="$(crane digest "${base}:${SOURCE_TAG}")"
+            source_ref="${base}@${digest}"
+            cosign sign --yes "${source_ref}"
+            cosign verify "${source_ref}" \
+              --certificate-identity-regexp "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/.*@refs/heads/main" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" >/dev/null
+            for region in $REGIONS; do
+              crane copy "${source_ref}" "${base}:${region}-${SOURCE_TAG}"
+              promoted="$(crane digest "${base}:${region}-${SOURCE_TAG}")"
+              test "${promoted}" = "${digest}"
+              printf "%s %s %s\n" "${service}" "${region}" "${digest}" >> regional-image-digests.txt
+            done
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: regional-image-digests
+          path: regional-image-digests.txt
