@@ -682,16 +682,14 @@ S636,ent: customer-managed KMS key (CMK) per workspace,tbd,S28,E20,3,P0,Not star
 S637,"ent: BYO Vault integration (existing tenant Vault, not Loop's)",tbd,S28,E20,2,P0,Not started,AC: vault_address + role configurable per workspace; secrets-rotation runbook updated.
 S638,ent: dedicated single-tenant deploy mode (one helm-install per customer),tbd,S28,E20,3,P1,Not started,AC: 'enterprise' values produce isolated stack; smoke test.
 S639,ent: on-prem parity matrix verification (cloud-vs-onprem feature gates),tbd,S28,E13,2,P0,Not started,AC: PARITY.md matrix; every gap fixed or explicitly accepted; checked-in evidence.
-S650,voice-perf: ASR streaming optimization (frame-level dispatch),codex-vega,S29,E7,2,P0,In progress,"**Active.**
-Branch: codex-vega/s650-voice-perf-asr-streaming-optimiz
+S650,voice-perf: ASR streaming optimization (frame-level dispatch),codex-vega,S29,E7,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-vega/s650-voice-perf-asr-streaming-optimiz (merged + deletable)
 Skill: skills/testing/perf-check.md
-Last step: 4/5
-Heartbeat: 2026-05-01T22:35:56Z (codex-vega)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)
-Latest checkpoint: focused voice tests ruff pyright and tracker gates green
-Latest checkpoint: Deepgram 50ms dispatch and latency regression test landed"
+Final heartbeat: 2026-05-01T22:36:18Z (codex-vega)
+Tests: uv run pytest packages/voice/_tests/test_deepgram_dispatch.py packages/voice/_tests/test_voice_pass10.py packages/voice/_tests/test_voice_echo_e2e.py; uv run ruff check/format --check targeted files; uv run pyright packages/voice/loop_voice/asr_deepgram.py packages/voice/_tests/test_deepgram_dispatch.py; tracker/docs gates passed; full close gate blocked by existing repo-wide ruff baseline in tools
+Docs touched: none
+Follow-ups: none"
 S651,voice-perf: TTS pre-warm + sentence-boundary streaming,tbd,S29,E7,2,P0,Not started,AC: TTS speaks before LLM finishes; measurable p50 cut.
 S652,voice-perf: model warm-up + connection-pooling for ASR/TTS providers,tbd,S29,E7,2,P0,Not started,AC: keep-alive; pre-handshake; idle teardown after N min.
 S653,"voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS",tbd,S29,E7,2,P0,Not started,AC: nearest-region selector; latency map committed.
