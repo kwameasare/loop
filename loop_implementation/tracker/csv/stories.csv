@@ -835,14 +835,14 @@ Heartbeat: 2026-05-01T23:54:59Z (codex-orion)
 Open questions: none
 Blockers: terraform CLI is not installed in this worktree and no AWS credentials/account context are present; the AC requires a real AWS apply plus smoke test, so completing it would require operator-provided AWS access and Terraform runtime.
 Commits: e52d8f2 claim; pending blocked tracker update"
-S771,infra: terraform module — Azure (AKS + Postgres Flexible + Redis + Blob + Key Vault + Front Door),codex-orion,S34,E12,3,P0,In progress,"**Active.**
+S771,infra: terraform module — Azure (AKS + Postgres Flexible + Redis + Blob + Key Vault + Front Door),codex-orion,S34,E12,3,P0,Blocked,"**Blocked.**
 Branch: codex-orion/s771-infra-terraform-module-azure-aks
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 0/1 (just claimed)
-Heartbeat: 2026-05-01T23:56:33Z (codex-orion)
+Last step: 0/1 (blocked before implementation)
+Heartbeat: 2026-05-01T23:56:46Z (codex-orion)
 Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Blockers: terraform CLI is not installed in this worktree and no Azure credentials/subscription context are present; the AC inherits S770's live terraform plan/apply plus deployed smoke test requirement, so completing it requires operator-provided Azure access and Terraform runtime.
+Commits: ff21f22 claim; pending blocked tracker update"
 S772,infra: terraform module — GCP (GKE + CloudSQL + Memorystore + GCS + KMS + Cloud CDN),tbd,S34,E12,3,P0,Not started,AC: same against GCP.
 S773,infra: terraform module — Alibaba Cloud (ACK + RDS + Redis + OSS + KMS + DCDN),tbd,S34,E12,3,P1,Not started,AC: same against Alibaba Cloud (China region).
 S774,infra: terraform module — OVHcloud (managed K8s + Postgres + Redis + S3-compat + KMS via Vault),tbd,S34,E12,2,P1,Not started,AC: same against OVH; sovereign-EU region option.

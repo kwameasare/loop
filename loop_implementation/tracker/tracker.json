@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:56:33.518909+00:00",
+    "generated_at": "2026-05-01T23:57:07.403581+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5060,8 +5060,8 @@
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s771-infra-terraform-module-azure-aks\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/1 (just claimed)\nHeartbeat: 2026-05-01T23:56:33Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Blocked",
+      "notes": "**Blocked.**\nBranch: codex-orion/s771-infra-terraform-module-azure-aks\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/1 (blocked before implementation)\nHeartbeat: 2026-05-01T23:56:46Z (codex-orion)\nOpen questions: none\nBlockers: terraform CLI is not installed in this worktree and no Azure credentials/subscription context are present; the AC inherits S770's live terraform plan/apply plus deployed smoke test requirement, so completing it requires operator-provided Azure access and Terraform runtime.\nCommits: ff21f22 claim; pending blocked tracker update"
     },
     {
       "id": "S772",
