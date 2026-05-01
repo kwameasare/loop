@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:00:55.209805+00:00",
+    "generated_at": "2026-05-01T23:02:18.265496+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4010,13 +4010,13 @@
     {
       "id": "S591",
       "title": "region: data-plane EU stack (Postgres + Qdrant + ClickHouse + NATS)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S26",
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: terraform/helm to a EU cluster; schema parity verified."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s591-region-data-plane-eu-stack-postg\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T23:02:18Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S592",
