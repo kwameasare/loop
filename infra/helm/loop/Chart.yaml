@@ -51,3 +51,11 @@ dependencies:
     version: 14.10.5
     repository: https://charts.bitnami.com/bitnami
     condition: minio.enabled
+  # Bitnami ClickHouse pinned for analytics/event store. Storage class
+  # is parameterised via clickhouse.persistence.storageClass, and a
+  # backup CronJob can be enabled via clickhouse.backup.enabled per AC.
+  # Bypass with clickhouse.enabled=false to use ClickHouse Cloud.
+  - name: clickhouse
+    version: 6.2.18
+    repository: https://charts.bitnami.com/bitnami
+    condition: clickhouse.enabled

@@ -178,3 +178,25 @@ minio:
     enabled: true
     size: 20Gi
   fullnameOverride: loop-minio
+
+# Bundled ClickHouse (Bitnami subchart) for analytics + event store.
+# storageClass parameterised per S450 AC; backup config exposed at
+# clickhouse.backup.enabled with a configurable schedule + retention.
+# Set clickhouse.enabled=false to use ClickHouse Cloud (override
+# externals.clickhouseUrl + secrets).
+clickhouse:
+  enabled: true
+  shards: 1
+  replicaCount: 1
+  auth:
+    username: loop
+    password: loop-clickhouse-changeme
+  persistence:
+    enabled: true
+    size: 50Gi
+    storageClass: ""
+  backup:
+    enabled: false
+    schedule: "0 2 * * *"
+    retentionDays: 7
+  fullnameOverride: loop-clickhouse
