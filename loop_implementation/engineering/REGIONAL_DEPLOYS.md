@@ -14,6 +14,8 @@ See also:
 * [SECURITY.md](SECURITY.md) — KMS, audit, and data-residency
   requirements.
 * `infra/helm/loop/values.yaml` — the base chart defaults.
+* `infra/terraform/envs/prod-eu-west/` — Terraform Helm release for
+  installing the EU overlay into a pre-provisioned EU Kubernetes cluster.
 
 ## Available regions
 
@@ -59,10 +61,11 @@ follows:
 | -------------- | ------------------------ | -------------------- | ------------------------ | -------------------- |
 | postgresUrl    | RDS Postgres             | Cloud SQL            | Azure DB for Postgres    | Self-hosted Patroni  |
 | redisUrl       | ElastiCache              | Memorystore          | Azure Cache for Redis    | Bitnami Redis chart  |
-| objectStore    | S3 (eu-west-1 only)      | GCS (europe-west1)   | Blob (westeurope)        | MinIO                |
-| kafka.brokers  | MSK                      | Pub/Sub via mirror   | Event Hubs (Kafka API)   | Strimzi Kafka        |
-| kms            | KMS (multi-region OFF)   | Cloud KMS            | Key Vault                | Vault Transit        |
-| otel.endpoint  | Managed Grafana Cloud EU | Cloud Trace europe   | App Insights westeurope  | Self-hosted otelcol  |
+| qdrantUrl      | Qdrant in EKS/VPC        | Qdrant in GKE/VPC    | Qdrant in AKS/VNet       | Qdrant StatefulSet   |
+| natsUrl        | NATS on EKS              | NATS on GKE          | NATS on AKS              | NATS chart           |
+| clickhouseUrl  | ClickHouse on EKS        | ClickHouse on GKE    | ClickHouse on AKS        | ClickHouse chart     |
+| s3Endpoint     | S3 (eu-west-1 only)      | GCS S3-compatible    | Blob S3-compatible       | MinIO                |
+| otelEndpoint   | Managed Grafana Cloud EU | Cloud Trace europe   | App Insights westeurope  | Self-hosted otelcol  |
 
 ### Verifying residency
 

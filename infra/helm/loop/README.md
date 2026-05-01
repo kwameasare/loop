@@ -60,6 +60,15 @@ the chart bundles vetted upstream charts as Helm dependencies:
 | MinIO (S3-compat) | `bitnami/minio` | 14.10.5 | `minio.enabled` |
 | ClickHouse | `bitnami/clickhouse` | 6.2.18 | `clickhouse.enabled` |
 
+### EU-West Data Plane
+
+`values-eu-west.yaml` is the Helm overlay consumed by
+`infra/terraform/envs/prod-eu-west`. It pins the data plane to
+`eu-west`, propagates `LOOP_REGION=eu-west`, and explicitly configures
+the EU-resident Postgres, Qdrant, ClickHouse, and NATS endpoints under
+`.externals.*`. The overlay also raises persistent volume sizes for
+those stateful components and enables ClickHouse backups.
+
 ### Ingress + cert-manager
 
 The chart ships an `Ingress` template gated on `ingress.enabled`. Set
