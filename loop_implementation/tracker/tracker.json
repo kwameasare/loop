@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T21:53:03.276395+00:00",
+    "generated_at": "2026-05-01T21:54:12.341497+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3944,13 +3944,13 @@
     {
       "id": "S578",
       "title": "soc2: SBOM generation in CI (cyclonedx)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S25",
       "epic": "E16",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: every release artifact ships SBOM; checked-in workflow output."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s578-soc2-sbom-generation-in-ci-cyclo\nSkill: skills/security/secrets-kms-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T21:54:12Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S579",
