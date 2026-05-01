@@ -26,6 +26,7 @@ pattern `main`:
     - `CI / cp-api-image`
     - `CI / dp-runtime-image`
     - `CI / cp-smoke`
+    - `CI / runtime-smoke`
     - `CI / tracker-clean`
     - `CI / security`
     - `CI / docs-with-code`

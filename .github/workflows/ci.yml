@@ -347,3 +347,17 @@ jobs:
           python-version: "3.12"
       - run: uv sync --all-packages
       - run: bash scripts/cp_smoke.sh
+
+  runtime-smoke:
+    name: runtime-smoke
+    runs-on: ubuntu-latest
+    # S143: end-to-end smoke for the dp-runtime entrypoint + migrations.
+    # CI runs after dp-runtime-image succeeds (deploy gate proxy).
+    needs: dp-runtime-image
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-packages
+      - run: bash scripts/runtime_smoke.sh
