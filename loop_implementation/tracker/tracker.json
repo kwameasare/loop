@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:24:05.289713+00:00",
+    "generated_at": "2026-05-01T23:25:05.576300+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4059,8 +4059,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s595-region-signed-pipeline-that-prom\nSkill: skills/ops/deploy-agent-version.md\nLast step: 3/5\nHeartbeat: 2026-05-01T23:24:05Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: signed regional image promotion workflow, verification tests, and docs landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: https://github.com/kwameasare/loop/pull/15\nBranch: codex-orion/s595-region-signed-pipeline-that-prom (merged + deletable)\nSkill: skills/ops/deploy-agent-version.md\nFinal heartbeat: 2026-05-01T23:25:05Z (codex-orion)\nTests: Focused ruff/pyright on tests/test_regional_image_promotion_workflow.py; uv run pytest -q tests/test_regional_image_promotion_workflow.py tests/test_cp_api_image_ci.py (9 passed); uv run pytest -q -m 'not integration and not e2e' (1224 passed, 3 skipped, 4 deselected); tracker/docs gates pass. Full repo ruff/format/pyright remain baseline-red in unrelated files.\nDocs touched: .github/workflows/promote-regional-images.yml, loop_implementation/engineering/REGIONAL_DEPLOYS.md\nFollow-ups: none"
     },
     {
       "id": "S596",
