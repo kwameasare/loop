@@ -688,11 +688,12 @@ Follow-ups: none"
 S592,region: control-plane region routing (per-workspace dispatch),codex-orion,S26,E12,2,P0,In progress,"**Active.**
 Branch: codex-orion/s592-region-control-plane-region-rout
 Skill: skills/api/add-rest-endpoint.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-01T23:09:50Z (codex-orion)
+Last step: 3/5
+Heartbeat: 2026-05-01T23:14:52Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: region router, cp-api forwarding facade, docs, and dispatch tests landed"
 S593,region: cross-region data export blocker (deny-by-default),tbd,S26,E12,2,P0,Not started,AC: any code path that loads cross-region data → 403; integration test.
 S594,region: studio region selector at workspace creation,tbd,S26,E10,1,P0,Not started,AC: dropdown defaults to inferred region; selection persisted; clear cannot-change-later notice.
 S595,region: signed pipeline that promotes images to all regions,tbd,S26,E12,2,P0,Not started,AC: same image hash deployed in NA + EU; verified daily.

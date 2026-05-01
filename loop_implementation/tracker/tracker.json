@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:09:50.183440+00:00",
+    "generated_at": "2026-05-01T23:14:52.879500+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4027,7 +4027,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s592-region-control-plane-region-rout\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T23:09:50Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: codex-orion/s592-region-control-plane-region-rout\nSkill: skills/api/add-rest-endpoint.md\nLast step: 3/5\nHeartbeat: 2026-05-01T23:14:52Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: region router, cp-api forwarding facade, docs, and dispatch tests landed"
     },
     {
       "id": "S593",
