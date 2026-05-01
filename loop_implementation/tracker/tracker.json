@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:14:52.879500+00:00",
+    "generated_at": "2026-05-01T23:15:50.360250+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4026,8 +4026,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s592-region-control-plane-region-rout\nSkill: skills/api/add-rest-endpoint.md\nLast step: 3/5\nHeartbeat: 2026-05-01T23:14:52Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: region router, cp-api forwarding facade, docs, and dispatch tests landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: https://github.com/kwameasare/loop/pull/13\nBranch: codex-orion/s592-region-control-plane-region-rout (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-01T23:15:50Z (codex-orion)\nTests: Focused ruff/pyright on region_routing.py, regions.py, workspace_api.py, and test_region_routing.py; uv run pytest -q packages/control-plane/_tests/test_region_routing.py packages/control-plane/_tests/test_workspace_region_pinning.py packages/control-plane/_tests/test_workspace_api.py (22 passed); uv run pytest -q -m 'not integration and not e2e' (1218 passed, 3 skipped, 4 deselected); tracker/docs gates pass. Full repo ruff/format/pyright remain baseline-red in unrelated files.\nDocs touched: loop_implementation/architecture/CLOUD_PORTABILITY.md\nFollow-ups: none"
     },
     {
       "id": "S593",
