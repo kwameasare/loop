@@ -1,0 +1,43 @@
+{{- if and .Values.enabled .Values.preInstallCheck.enabled .Values.kata.required }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "dp-tool-host.kataCheckName" . }}
+  labels:
+    {{- include "dp-tool-host.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "dp-tool-host.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: dp-tool-host-kata-check
+    spec:
+      serviceAccountName: {{ include "dp-tool-host.kataCheckName" . }}
+      restartPolicy: Never
+      containers:
+        - name: runtimeclass-check
+          image: {{ .Values.preInstallCheck.image | quote }}
+          imagePullPolicy: {{ .Values.preInstallCheck.pullPolicy }}
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              runtime_class={{ .Values.sandboxRuntimeClassName | quote }}
+              required_handler={{ .Values.kata.runtimeClassHandler | quote }}
+              if ! kubectl get runtimeclass "$runtime_class" >/dev/null 2>&1; then
+                echo "ERROR: Loop dp-tool-host requires Kubernetes RuntimeClass '$runtime_class' backed by Kata Containers/Firecracker. Install Kata and apply infra/k8s/sandbox/runtime-class.yaml, or set toolHost.enabled=false on clusters without sandbox support." >&2
+                exit 1
+              fi
+              handler="$(kubectl get runtimeclass "$runtime_class" -o jsonpath='{.handler}')"
+              if [ "$handler" != "$required_handler" ]; then
+                echo "ERROR: RuntimeClass '$runtime_class' exists but handler '$handler' does not match required Kata handler '$required_handler'." >&2
+                exit 1
+              fi
+              echo "RuntimeClass '$runtime_class' is present with Kata handler '$required_handler'."
+{{- end }}
