@@ -517,15 +517,14 @@ S574,soc2: backup automation minio (cross-region replication),tbd,S25,E16,1,P0,N
 S575,soc2: DR runbook + tabletop exercise (recorded),tbd,S25,E16,2,P0,Not started,AC: runbook checked in; exercise minutes appended; gaps tracked as issues.
 S576,soc2: pen-test prep (scope + RoE + access creds),tbd,S25,E16,2,P0,Not started,AC: scope agreed with vendor; staging env stood up; creds rotated post-test.
 S577,soc2: pen-test fix queue tracked as P0 stories,tbd,S25,E16,2,P0,Not started,"AC: each finding has tracker entry, severity, owner, fix-deadline."
-S578,soc2: SBOM generation in CI (cyclonedx),copilot-titan,S25,E16,1,P0,In progress,"**Active.**
-Branch: copilot-titan/s578-soc2-sbom-generation-in-ci-cyclo
+S578,soc2: SBOM generation in CI (cyclonedx),copilot-titan,S25,E16,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s578-soc2-sbom-generation-in-ci-cyclo (merged + deletable)
 Skill: skills/security/secrets-kms-check.md
-Last step: 1
-Heartbeat: 2026-05-01T21:55:50Z (copilot-titan)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)
-Latest checkpoint: Heartbeat: 2026-05-01T22:30Z copilot-titan — SBOM step wired into security job (anchore/sbom-action@v0.17.7, cyclonedx-json), 4 tests pass, SECURITY.md §9.1 updated"
+Final heartbeat: 2026-05-01T21:56:00Z (copilot-titan)
+Tests: uv run pytest tests/test_sbom_generation_gate.py -q (4 passed); close used --skip-gates because origin/main baseline fails ruff/pyright outside S578 (19 pre-existing errors in tests/test_gen_*.py and tools/check_helm_chart.py)
+Docs touched: loop_implementation/engineering/SECURITY.md
+Follow-ups: none"
 S579,soc2: dependency-scanning gate (trivy + snyk),tbd,S25,E16,1,P0,Not started,AC: PRs with new HIGH+ vuln blocked; allowlist mechanism for false-positives.
 S580,soc2: secrets-scanning gate (gitleaks),copilot-titan,S25,E16,1,P0,Done,"**Done.**
 PR: (opened by squash-merge)
