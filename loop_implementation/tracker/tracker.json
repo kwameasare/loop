@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T18:35:47.615460+00:00",
+    "generated_at": "2026-05-01T18:43:30.331312+00:00",
     "format_version": 2
   },
   "epics": [
@@ -935,8 +935,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s119-cp-api-openapi-yaml-round-trip-v\nSkill: skills/testing/write-integration-test.md\nLast step: 3/5\nHeartbeat: 2026-05-01T18:35:47Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: schemathesis contract test and testing docs landed"
+      "status": "Blocked",
+      "notes": "**Blocked.**\nBranch: codex-orion/s119-cp-api-openapi-yaml-round-trip-v\nSkill: skills/testing/write-integration-test.md\nLast step: 4/5 (implementation and focused verification complete; lifecycle close blocked by repo-wide baseline gates)\nHeartbeat: 2026-05-01T18:43:03Z (codex-orion)\nOpen questions: none\nBlockers:\n- uv run ruff check . fails on pre-existing tools/_stories_v2.py, tools/agent_lifecycle.py, tools/build_tracker.py, and related tool lint.\n- uv run ruff format --check . would reformat 161 unrelated files across packages/tools.\n- uv run pyright reports 104 pre-existing errors in root tests/tools outside S119.\nCommits: 9aa17e4 claim; 17f2584 test(cp-api): add OpenAPI schemathesis round trip; c576769 checkpoint S119 step 3/5.\nTests: uv run pytest -q packages/control-plane/_tests/test_openapi_schemathesis.py (40 passed); uv run pytest -q -m 'not integration and not e2e' (1112 passed, 8 warnings)."
     },
     {
       "id": "S120",
