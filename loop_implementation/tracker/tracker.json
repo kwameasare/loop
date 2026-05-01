@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:00:39.280055+00:00",
+    "generated_at": "2026-05-01T22:04:14.310618+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1260,13 +1260,13 @@
     {
       "id": "S162",
       "title": "studio: secrets tab list + add/rotate flow",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S4",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: list shows name+ref+rotated_at; 'Rotate' bumps rotated_at via cp-api; cannot reveal secret value."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: agent/copilot-thor/scratch (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-01T22:04:14Z (copilot-thor)\nTests: vitest run (120 passed) covering list shape, add validation+POST, rotate happy + error, name-uppercasing, duplicate guard\nDocs touched: apps/studio/src/components/agents/secrets-list.tsx\nFollow-ups: none"
     },
     {
       "id": "S163",
