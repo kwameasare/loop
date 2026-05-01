@@ -1,19 +1,34 @@
 {{- if .Values.ingress.enabled -}}
+{{- $cm := .Values.ingress.certManager | default dict -}}
+{{- $cmEnabled := and $cm $cm.enabled -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "loop.fullname" . }}
   labels:
     {{- include "loop.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
   annotations:
+    {{- if $cmEnabled }}
+    cert-manager.io/cluster-issuer: {{ $cm.clusterIssuer | quote }}
+    {{- if eq .Values.ingress.className "traefik" }}
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    {{- else }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    {{- end }}
+    {{- end }}
+    {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className }}
-  {{- with .Values.ingress.tls }}
+  {{- if $cmEnabled }}
   tls:
-    {{- toYaml . | nindent 4 }}
+    - hosts:
+        - {{ .Values.ingress.host }}
+      secretName: {{ $cm.tlsSecretName | quote }}
+  {{- else if .Values.ingress.tls }}
+  tls:
+    {{- toYaml .Values.ingress.tls | nindent 4 }}
   {{- end }}
   rules:
     - host: {{ .Values.ingress.host }}

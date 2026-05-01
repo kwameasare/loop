@@ -106,10 +106,20 @@ secrets:
 
 ingress:
   enabled: false
+  # Supported: "nginx" (ingress-nginx) or "traefik". Sane defaults are
+  # auto-merged into annotations when certManager.enabled=true.
   className: "nginx"
-  annotations: {}
   host: loop.local
+  annotations: {}
   tls: []
+  # cert-manager integration: when enabled, the ingress is annotated
+  # with cert-manager.io/cluster-issuer and a TLS section is rendered
+  # using the configured issuer + secretName so a fresh `helm install
+  # --set ingress.enabled=true` produces TLS-terminated routes.
+  certManager:
+    enabled: false
+    clusterIssuer: letsencrypt-prod
+    tlsSecretName: loop-tls
 
 serviceAccount:
   create: true

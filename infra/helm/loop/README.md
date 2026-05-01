@@ -56,6 +56,16 @@ the chart bundles vetted upstream charts as Helm dependencies:
 | MinIO (S3-compat) | `bitnami/minio` | 14.10.5 | `minio.enabled` |
 | ClickHouse | `bitnami/clickhouse` | 6.2.18 | `clickhouse.enabled` |
 
+### Ingress + cert-manager
+
+The chart ships an `Ingress` template gated on `ingress.enabled`. Set
+`ingress.className` to either `nginx` (ingress-nginx) or `traefik`.
+When `ingress.certManager.enabled=true`, the Ingress is annotated
+with `cert-manager.io/cluster-issuer` and a TLS section is rendered
+using `ingress.certManager.tlsSecretName`, so a fresh
+`helm install --set ingress.enabled=true --set ingress.certManager.enabled=true`
+produces TLS-terminated routes (verified on kind).
+
 To use an existing managed Postgres (RDS, Cloud SQL, etc.) set
 `postgresql.enabled=false` and override `externals.postgresUrl`. Same
 pattern for Redis: set `redis.enabled=false` and point
