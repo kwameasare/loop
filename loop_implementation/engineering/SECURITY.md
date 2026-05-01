@@ -370,6 +370,12 @@ For enterprise customers in healthcare:
 - **In-CI gates:**
   - `pip-audit` (Python), `npm audit` (Node), `govulncheck` (Go): PR fails on High/Critical.
   - Snyk (or osv.dev for open-source) for SCA + copyleft license detection.
+    Wired in the required `security` job via `snyk/actions/python` with
+    `--severity-threshold=high`, gated on `SNYK_TOKEN` presence so
+    fork PRs / cold-clone CI skip cleanly. Production CI runs the
+    repo with the token set, so the gate is hard. See
+    `.github/workflows/ci.yml` (S579).
+  - Trivy filesystem scan (HIGH+CRITICAL, blocking) on every PR.
   - Static analysis: `bandit` (Python), `gosec` (Go), CodeQL (all languages).
 - **SBOM (Software Bill of Materials) + attestation:**
   - Every CI run on a PR or push to `main` generates a CycloneDX 1.5
