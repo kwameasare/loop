@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:43:38.187885+00:00",
+    "generated_at": "2026-05-01T22:45:52.537482+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3234,8 +3234,8 @@
       "epic": "E13",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s453-helm-smoke-test-workflow-kind-cl\nSkill: skills/testing/write-e2e-test.md\nLast step: 3/5\nHeartbeat: 2026-05-01T22:43:38Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: kind helm e2e workflow, smoke server, workflow tests, and docs landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: https://github.com/kwameasare/loop/pull/10\nBranch: codex-orion/s453-helm-smoke-test-workflow-kind-cl (merged + deletable)\nSkill: skills/testing/write-e2e-test.md\nFinal heartbeat: 2026-05-01T22:45:52Z (codex-orion)\nTests: GitHub Actions helm-e2e run 25236346387 passed in 1m44s; uv run pytest -q -m 'not integration and not e2e' (1204 passed, 3 skipped, 4 deselected); focused ruff/format/pyright for S453 files; tracker/docs gates passed; full ruff/format/pyright baseline-red outside S453\nDocs touched: infra/helm/loop/README.md\nFollow-ups: none"
     },
     {
       "id": "S460",

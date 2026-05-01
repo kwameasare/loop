@@ -564,15 +564,14 @@ Final heartbeat: 2026-05-01T19:45:44Z (copilot-titan)
 Tests: uv run pytest tests/test_helm_ingress_cert_manager.py tests/test_helm_chart.py tests/test_helm_values_schema.py -q (11 passed, 3 skipped pending helm CLI on CI)
 Docs touched: infra/helm/loop/README.md
 Follow-ups: none"
-S453,"helm: smoke test workflow (kind cluster, install chart, send a turn)",codex-orion,S18,E13,2,P0,In progress,"**Active.**
-Branch: codex-orion/s453-helm-smoke-test-workflow-kind-cl
+S453,"helm: smoke test workflow (kind cluster, install chart, send a turn)",codex-orion,S18,E13,2,P0,Done,"**Done.**
+PR: https://github.com/kwameasare/loop/pull/10
+Branch: codex-orion/s453-helm-smoke-test-workflow-kind-cl (merged + deletable)
 Skill: skills/testing/write-e2e-test.md
-Last step: 3/5
-Heartbeat: 2026-05-01T22:43:38Z (codex-orion)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)
-Latest checkpoint: kind helm e2e workflow, smoke server, workflow tests, and docs landed"
+Final heartbeat: 2026-05-01T22:45:52Z (codex-orion)
+Tests: GitHub Actions helm-e2e run 25236346387 passed in 1m44s; uv run pytest -q -m 'not integration and not e2e' (1204 passed, 3 skipped, 4 deselected); focused ruff/format/pyright for S453 files; tracker/docs gates passed; full ruff/format/pyright baseline-red outside S453
+Docs touched: infra/helm/loop/README.md
+Follow-ups: none"
 S460,flow: studio React-Flow canvas in /agents/{id}/flow,tbd,S19,E10,2,P0,Not started,AC: blank canvas with pan/zoom; toolbar exists; placeholder until S461.
 S461,flow: node palette w/ types start/message/condition/ai-task/http/code/end,tbd,S19,E10,3,P0,Not started,AC: drag-and-drop creates node; each type renders distinct icon.
 S462,flow: node config sidebar (per-type form),tbd,S19,E10,3,P0,Not started,AC: clicking a node opens sidebar; form fields persist on blur; validation surfaces.
