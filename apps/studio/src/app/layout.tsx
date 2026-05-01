@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { AppErrorBoundary } from "@/components/error-boundary";
+import { ToastProvider } from "@/lib/toast";
 
 export const metadata: Metadata = {
   title: "Loop Studio",
@@ -13,7 +15,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <AppErrorBoundary>{children}</AppErrorBoundary>
+          </AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );

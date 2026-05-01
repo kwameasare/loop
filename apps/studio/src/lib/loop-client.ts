@@ -14,11 +14,16 @@ export type LoopClientOptions = {
 };
 
 export class LoopHttpError extends Error {
+  readonly code: string;
+  readonly requestId: string | undefined;
   constructor(
     message: string,
     readonly status: number,
+    options: { code?: string; requestId?: string } = {},
   ) {
     super(message);
+    this.code = options.code ?? `E_LOOP_${status}`;
+    this.requestId = options.requestId;
   }
 }
 
@@ -64,7 +69,11 @@ export class LoopClient {
         attempt += 1;
         continue;
       }
-      throw new LoopHttpError(`Loop API ${method} ${path} failed: ${response.status}`, response.status);
+      throw new LoopHttpError(
+        `Loop API ${method} ${path} failed: ${response.status}`,
+        response.status,
+        { requestId: response.headers.get("x-request-id") ?? undefined },
+      );
     }
   }
 
@@ -97,7 +106,11 @@ export class LoopClient {
       body: JSON.stringify(body),
     });
     if (!response.ok) {
-      throw new LoopHttpError(`Loop API POST /turns stream failed: ${response.status}`, response.status);
+      throw new LoopHttpError(
+        `Loop API POST /turns stream failed: ${response.status}`,
+        response.status,
+        { requestId: response.headers.get("x-request-id") ?? undefined },
+      );
     }
     const text = await response.text();
     const frames = parseSseText<TurnEvent>(text);
