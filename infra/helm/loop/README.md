@@ -1,8 +1,8 @@
 # Loop self-host Helm chart
 
-Single chart that brings up the three Loop services -- **control-plane**,
-**runtime**, and **gateway** -- on any Kubernetes >= 1.27. Goal: feature
-parity with the managed cloud offering.
+Single chart that brings up Loop's control-plane, data-plane runtime,
+gateway, and optional **dp-tool-host** sandbox tier on Kubernetes >= 1.27.
+Goal: feature parity with the managed cloud offering.
 
 ## Install
 
@@ -35,6 +35,7 @@ helm install loop ./infra/helm/loop \
 | `templates/gateway-pdb.yaml` | PodDisruptionBudget for gateway (gated on `gateway.pdb.enabled`) |
 | `templates/ingress.yaml` | optional ingress (`/v1/cp`, `/v1/runtime`, `/v1/llm`) |
 | `templates/NOTES.txt` | post-install notes |
+| `charts/dp-tool-host/` | local subchart for the tool-host Deployment, Service, service account, and Kata pre-install hook |
 
 ## Cloud portability
 
@@ -66,6 +67,27 @@ using `ingress.certManager.tlsSecretName`, so a fresh
 `helm install --set ingress.enabled=true --set ingress.certManager.enabled=true`
 produces TLS-terminated routes (verified on kind).
 
+### dp-tool-host + Kata
+
+The `dp-tool-host` sandbox tier is packaged as a local subchart and is
+enabled by default with `toolHost.enabled=true`. The subchart assumes
+clusters have the Kata/Firecracker RuntimeClass from
+[`infra/k8s/sandbox/runtime-class.yaml`](../../k8s/sandbox/runtime-class.yaml):
+
+| Value | Default | Purpose |
+| ----- | ------- | ------- |
+| `toolHost.enabled` | `true` | installs or skips the local subchart |
+| `toolHost.sandboxRuntimeClassName` | `loop-firecracker` | RuntimeClass used by tool sandbox Pods |
+| `toolHost.kata.runtimeClassHandler` | `kata-fc` | expected RuntimeClass handler |
+| `toolHost.preInstallCheck.enabled` | `true` | runs a Helm pre-install/pre-upgrade check |
+
+When `toolHost.enabled=true` and the pre-install check is enabled, Helm
+runs a hook Job before creating workloads. The Job reads the cluster's
+`RuntimeClass` and fails with a clear error if `loop-firecracker` is
+missing or not backed by the configured Kata handler. Clusters without
+Kata support should set `toolHost.enabled=false`; tool dispatch remains
+disabled until the sandbox RuntimeClass is installed.
+
 To use an existing managed Postgres (RDS, Cloud SQL, etc.) set
 `postgresql.enabled=false` and override `externals.postgresUrl`. Same
 pattern for Redis: set `redis.enabled=false` and point
@@ -82,6 +104,7 @@ and asserts that:
 * `Chart.yaml` has the required keys.
 * `values.yaml` exposes the components, externals, and secrets the
   templates reference.
+* Local file dependencies such as `charts/dp-tool-host/` exist.
 * Every template under `templates/` is parseable YAML (after stripping
   helm template directives).
 
