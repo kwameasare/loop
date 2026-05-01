@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:27:44.747681+00:00",
+    "generated_at": "2026-05-01T22:29:40.772859+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2783,8 +2783,8 @@
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s387-voice-integration-test-phone-cal\nSkill: skills/testing/write-e2e-test.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:27:44Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Blocked",
+      "notes": "**Blocked.**\nBranch: codex-vega/s387-voice-integration-test-phone-cal\nSkill: skills/testing/write-e2e-test.md\nLast step: 0/5 (blocked before implementation)\nHeartbeat: 2026-05-01T22:29:02Z (codex-vega)\nBlockers: requires Twilio Programmable Voice test credentials, a verified from/to number pair, and a reachable Loop voice stream/callback environment to place the phone call and verify agent audio.\nOpen questions: once the Twilio test environment exists, implement scripts/voice_call_e2e.sh plus the nightly workflow.\nCommits: blocked before implementation."
     },
     {
       "id": "S388",
