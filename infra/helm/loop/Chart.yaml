@@ -25,3 +25,9 @@ dependencies:
     version: 15.5.38
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled
+  # Bitnami Redis pinned; bypass via externals.redisUrl +
+  # redis.enabled=false to point at ElastiCache, Memorystore, etc.
+  - name: redis
+    version: 20.3.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled

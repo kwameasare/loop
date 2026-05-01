@@ -129,3 +129,16 @@ postgresql:
       enabled: true
       size: 10Gi
   fullnameOverride: loop-postgres
+
+# Bundled Redis (Bitnami subchart). Disable to bring your own --
+# override externals.redisUrl to point at ElastiCache, Memorystore, etc.
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 2Gi
+  fullnameOverride: loop-redis

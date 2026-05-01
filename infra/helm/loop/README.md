@@ -50,9 +50,12 @@ the chart bundles vetted upstream charts as Helm dependencies:
 | Dependency | Subchart | Version | Toggle |
 | ---------- | -------- | ------- | ------ |
 | PostgreSQL | `bitnami/postgresql` | 15.5.38 | `postgresql.enabled` |
+| Redis | `bitnami/redis` | 20.3.0 | `redis.enabled` |
 
 To use an existing managed Postgres (RDS, Cloud SQL, etc.) set
-`postgresql.enabled=false` and override `externals.postgresUrl`. Run
+`postgresql.enabled=false` and override `externals.postgresUrl`. Same
+pattern for Redis: set `redis.enabled=false` and point
+`externals.redisUrl` at ElastiCache / Memorystore / etc. Run
 `helm dependency update infra/helm/loop` once before `helm install`
 to pull the pinned subcharts into `infra/helm/loop/charts/`.
 
