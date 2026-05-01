@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:26:20.451318+00:00",
+    "generated_at": "2026-05-01T19:26:54.176807+00:00",
     "format_version": 2
   },
   "epics": [
@@ -963,13 +963,13 @@
     {
       "id": "S122",
       "title": "cp-api: end-to-end smoke: create user → workspace → API key → authed echo",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S2",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: scripts/cp_smoke.sh exits 0 against a freshly-deployed cp-api; CI runs it on every PR."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s122-cp-api-end-to-end-smoke-create-u\nSkill: testing/integration-fixtures\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T19:26:54Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S130",
