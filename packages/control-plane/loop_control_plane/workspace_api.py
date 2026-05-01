@@ -30,6 +30,7 @@ from loop_control_plane.authorize import (
     AuthorisationError,
     authorize_workspace_access,
 )
+from loop_control_plane.regions import RegionError
 from loop_control_plane.workspaces import (
     Membership,
     Role,
@@ -45,15 +46,6 @@ def _serialise_ws(ws: Workspace) -> dict[str, Any]:
 
 def _serialise_member(m: Membership) -> dict[str, Any]:
     return m.model_dump(mode="json")
-
-
-def _require_uuid(name: str, value: object) -> UUID:
-    if not isinstance(value, str):
-        raise WorkspaceError(f"{name} must be a UUID string")
-    try:
-        return UUID(value)
-    except ValueError as exc:
-        raise WorkspaceError(f"{name} is not a valid UUID") from exc
 
 
 def _require_str(name: str, value: object, *, min_length: int = 1) -> str:
@@ -81,12 +73,31 @@ class WorkspaceAPI:
 
     workspaces: WorkspaceService
 
+    def _require_request_region(self, *, workspace: Workspace, request_region: str | None) -> None:
+        if request_region is None:
+            return
+        try:
+            self.workspaces.require_same_region(
+                workspace_region=workspace.region,
+                request_region=request_region,
+            )
+        except RegionError as exc:
+            raise AuthorisationError(str(exc)) from exc
+
     # -- S108 --------------------------------------------------------------- #
     async def create(self, *, caller_sub: str, body: dict[str, Any]) -> dict[str, Any]:
         """Create a workspace; the caller becomes the OWNER. Returns 201 body."""
         name = _require_str("name", body.get("name"))
         slug = _require_str("slug", body.get("slug"))
-        ws = await self.workspaces.create(name=name, slug=slug, owner_sub=caller_sub)
+        region = body.get("region")
+        if region is not None and not isinstance(region, str):
+            raise WorkspaceError("region must be a string")
+        ws = await self.workspaces.create(
+            name=name,
+            slug=slug,
+            owner_sub=caller_sub,
+            region=region,
+        )
         return _serialise_ws(ws)
 
     # -- S109 --------------------------------------------------------------- #
@@ -114,13 +125,20 @@ class WorkspaceAPI:
         }
 
     # -- S110 --------------------------------------------------------------- #
-    async def get(self, *, caller_sub: str, workspace_id: UUID) -> dict[str, Any]:
+    async def get(
+        self,
+        *,
+        caller_sub: str,
+        workspace_id: UUID,
+        request_region: str | None = None,
+    ) -> dict[str, Any]:
         """Read a single workspace; caller must be a member."""
         ws, _ = await authorize_workspace_access(
             workspaces=self.workspaces,
             workspace_id=workspace_id,
             user_sub=caller_sub,
         )
+        self._require_request_region(workspace=ws, request_region=request_region)
         return _serialise_ws(ws)
 
     async def patch(
@@ -129,17 +147,24 @@ class WorkspaceAPI:
         caller_sub: str,
         workspace_id: UUID,
         body: dict[str, Any],
+        request_region: str | None = None,
     ) -> dict[str, Any]:
         """Update a workspace. Owner-only."""
-        await authorize_workspace_access(
+        ws, _ = await authorize_workspace_access(
             workspaces=self.workspaces,
             workspace_id=workspace_id,
             user_sub=caller_sub,
             required_role=Role.OWNER,
         )
+        self._require_request_region(workspace=ws, request_region=request_region)
         name_value = body.get("name")
         if name_value is not None and not isinstance(name_value, str):
             raise WorkspaceError("name must be a string")
+        if "region" in body:
+            region_value = body["region"]
+            if not isinstance(region_value, str):
+                raise WorkspaceError("region must be a string")
+            raise WorkspaceError("workspace.region is immutable after create")
         new_ws = await self.workspaces.update(
             workspace_id=workspace_id,
             actor_sub=caller_sub,
@@ -149,13 +174,18 @@ class WorkspaceAPI:
 
     # -- S112 --------------------------------------------------------------- #
     async def list_members(
-        self, *, caller_sub: str, workspace_id: UUID
+        self,
+        *,
+        caller_sub: str,
+        workspace_id: UUID,
+        request_region: str | None = None,
     ) -> dict[str, Any]:
-        await authorize_workspace_access(
+        ws, _ = await authorize_workspace_access(
             workspaces=self.workspaces,
             workspace_id=workspace_id,
             user_sub=caller_sub,
         )
+        self._require_request_region(workspace=ws, request_region=request_region)
         members = await self.workspaces.list_members(workspace_id)
         members.sort(key=lambda m: m.user_sub)
         return {"items": [_serialise_member(m) for m in members]}
@@ -166,6 +196,7 @@ class WorkspaceAPI:
         caller_sub: str,
         workspace_id: UUID,
         body: dict[str, Any],
+        request_region: str | None = None,
     ) -> dict[str, Any]:
         """Direct membership add (S112). Owner-only.
 
@@ -173,25 +204,22 @@ class WorkspaceAPI:
         the synchronous "I already know the user_sub" path used by
         admin tooling and by the invite-acceptance handler in S111.
         """
-        await authorize_workspace_access(
+        ws, _ = await authorize_workspace_access(
             workspaces=self.workspaces,
             workspace_id=workspace_id,
             user_sub=caller_sub,
             required_role=Role.OWNER,
         )
+        self._require_request_region(workspace=ws, request_region=request_region)
         target_sub = _require_str("user_sub", body.get("user_sub"))
         role = _require_role("role", body.get("role", Role.MEMBER.value))
         if role is Role.OWNER:
             # Adding a second owner is fine; we just guard against
             # accidentally promoting via the add path -- the canonical
             # promote path is :meth:`update_member_role`.
-            existing = await self.workspaces.role_of(
-                workspace_id=workspace_id, user_sub=target_sub
-            )
+            existing = await self.workspaces.role_of(workspace_id=workspace_id, user_sub=target_sub)
             if existing is not None:
-                raise WorkspaceError(
-                    "user is already a member; use PATCH to change role"
-                )
+                raise WorkspaceError("user is already a member; use PATCH to change role")
         membership = await self.workspaces.add_member(
             workspace_id=workspace_id, user_sub=target_sub, role=role
         )
@@ -203,13 +231,15 @@ class WorkspaceAPI:
         caller_sub: str,
         workspace_id: UUID,
         user_sub: str,
+        request_region: str | None = None,
     ) -> dict[str, Any]:
-        await authorize_workspace_access(
+        ws, _ = await authorize_workspace_access(
             workspaces=self.workspaces,
             workspace_id=workspace_id,
             user_sub=caller_sub,
             required_role=Role.OWNER,
         )
+        self._require_request_region(workspace=ws, request_region=request_region)
         await self.workspaces.remove_member(
             workspace_id=workspace_id,
             user_sub=user_sub,
@@ -224,13 +254,15 @@ class WorkspaceAPI:
         workspace_id: UUID,
         user_sub: str,
         body: dict[str, Any],
+        request_region: str | None = None,
     ) -> dict[str, Any]:
-        await authorize_workspace_access(
+        ws, _ = await authorize_workspace_access(
             workspaces=self.workspaces,
             workspace_id=workspace_id,
             user_sub=caller_sub,
             required_role=Role.OWNER,
         )
+        self._require_request_region(workspace=ws, request_region=request_region)
         role = _require_role("role", body.get("role"))
         updated = await self.workspaces.update_role(
             workspace_id=workspace_id,
