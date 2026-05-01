@@ -37,3 +37,10 @@ dependencies:
     version: 1.13.6
     repository: https://qdrant.github.io/qdrant-helm
     condition: qdrant.enabled
+  # NATS official chart pinned with JetStream on; bypass via
+  # externals.natsUrl + nats.enabled=false to point at NATS Synadia
+  # Cloud or another managed cluster.
+  - name: nats
+    version: 1.2.2
+    repository: https://nats-io.github.io/k8s/helm/charts/
+    condition: nats.enabled

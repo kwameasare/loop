@@ -151,3 +151,16 @@ qdrant:
   persistence:
     size: 10Gi
   fullnameOverride: loop-qdrant
+
+# Bundled NATS (official chart) with JetStream enabled per AC. Disable to
+# point at Synadia Cloud or self-managed NATS via externals.natsUrl.
+nats:
+  enabled: true
+  config:
+    jetstream:
+      enabled: true
+      fileStore:
+        enabled: true
+        pvc:
+          size: 10Gi
+  fullnameOverride: loop-nats
