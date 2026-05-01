@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:07:02.661897+00:00",
+    "generated_at": "2026-05-01T22:07:28.619028+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1282,13 +1282,13 @@
     {
       "id": "S164",
       "title": "studio: error boundary + toast system (sonner) for failed fetches",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S4",
       "epic": "E10",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: any unhandled error shows red toast with code + request_id; production sourcemap-stripped."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s164-studio-error-boundary-toast-syst\nSkill: skills/ux/component-design.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-01T22:07:28Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S170",
