@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:41:51.595836+00:00",
+    "generated_at": "2026-05-01T19:41:53.092920+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3190,8 +3190,8 @@
       "epic": "E13",
       "points": 1,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s449-helm-nats-dependency-jetstream-o\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1\nHeartbeat: 2026-05-01T19:41:50Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: nats jetstream-on dep pinned + condition + bypass; 20 helm tests pass"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s449-helm-nats-dependency-jetstream-o (merged + deletable)\nSkill: (unspecified)\nFinal heartbeat: 2026-05-01T19:41:52Z (copilot-titan)\nTests: uv run pytest tests/test_helm_nats_dependency.py tests/test_helm_qdrant_dependency.py tests/test_helm_redis_dependency.py tests/test_helm_postgres_dependency.py tests/test_helm_chart.py tests/test_helm_values_schema.py -q (20 passed)\nDocs touched: infra/helm/loop/README.md\nFollow-ups: none"
     },
     {
       "id": "S450",
