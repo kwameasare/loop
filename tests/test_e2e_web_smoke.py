@@ -30,7 +30,7 @@ class DemoHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(payload)
 
-    def log_message(self, *_args: object) -> None:
+    def log_message(self, format: str, *args: object) -> None:
         return
 
 
@@ -45,7 +45,7 @@ def _run_server(
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    host, port = server.server_address
+    host, port = cast(tuple[str, int], server.server_address[:2])
     return server, Handler, f"http://{host}:{port}"
 
 
@@ -103,8 +103,9 @@ def test_e2e_web_smoke_fails_on_wrong_answer() -> None:
 
 
 def test_e2e_web_smoke_runs_nightly_in_ci() -> None:
-    workflow = cast(dict[str, Any], yaml.safe_load(WORKFLOW.read_text()))
+    workflow = cast(dict[object, Any], yaml.safe_load(WORKFLOW.read_text()))
     assert "schedule" in workflow[True]
-    job = workflow["jobs"]["e2e-web-smoke"]
+    jobs = cast(dict[str, Any], workflow["jobs"])
+    job = jobs["e2e-web-smoke"]
     assert job["env"]["LOOP_DEMO_URL"] == "${{ vars.LOOP_DEMO_URL }}"
     assert any(step.get("run") == "bash scripts/e2e_web_smoke.sh" for step in job["steps"])
