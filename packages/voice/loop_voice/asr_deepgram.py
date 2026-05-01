@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import contextlib
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
@@ -53,6 +53,7 @@ class DeepgramConfig:
     encoding: str = "linear16"
     interim_results: bool = True
     endpointing_ms: int = 250  # silence threshold for utterance end
+    dispatch_frame_ms: int = 50  # send ASR audio in low-latency slices
 
     def __post_init__(self) -> None:
         if not self.api_key:
@@ -61,6 +62,20 @@ class DeepgramConfig:
             raise ValueError(f"unsupported sample_rate {self.sample_rate}")
         if self.endpointing_ms < 50:
             raise ValueError("endpointing_ms must be >=50")
+        if not 10 <= self.dispatch_frame_ms <= self.endpointing_ms:
+            raise ValueError("dispatch_frame_ms must be between 10 and endpointing_ms")
+
+
+def _dispatch_frame_bytes(config: DeepgramConfig) -> int:
+    # linear16 mono = 2 bytes/sample. DeepgramConfig pins encoding to linear16 today.
+    return max(2, config.sample_rate * 2 * config.dispatch_frame_ms // 1000)
+
+
+def _iter_dispatch_chunks(pcm: bytes, chunk_bytes: int) -> Iterator[bytes]:
+    for start in range(0, len(pcm), chunk_bytes):
+        chunk = pcm[start : start + chunk_bytes]
+        if chunk:
+            yield chunk
 
 
 def deepgram_url(config: DeepgramConfig, *, base: str = "wss://api.deepgram.com") -> str:
@@ -108,9 +123,7 @@ class DeepgramSpeechToText:
     base_url: str = "wss://api.deepgram.com"
     _ws: AsyncWebSocket | None = field(default=None, init=False)
 
-    async def transcribe(
-        self, audio: AsyncIterator[AudioFrame]
-    ) -> AsyncIterator[Transcript]:
+    async def transcribe(self, audio: AsyncIterator[AudioFrame]) -> AsyncIterator[Transcript]:
         url = deepgram_url(self.config, base=self.base_url)
         headers = {"Authorization": f"Token {self.config.api_key}"}
         try:
@@ -120,9 +133,11 @@ class DeepgramSpeechToText:
         self._ws = ws
 
         async def _pump_audio() -> None:
+            chunk_bytes = _dispatch_frame_bytes(self.config)
             try:
                 async for frame in audio:
-                    await ws.send_bytes(frame.pcm)
+                    for chunk in _iter_dispatch_chunks(frame.pcm, chunk_bytes):
+                        await ws.send_bytes(chunk)
                 # Deepgram closes the stream on receipt of an empty binary frame.
                 await ws.send_text(json.dumps({"type": "CloseStream"}))
             except Exception as exc:
