@@ -285,3 +285,16 @@ jobs:
       - run: uv run loop eval run tests/evals/runtime --fail-on "regression>5%"
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_TEST_KEY }}
+
+  cp-smoke:
+    name: cp-smoke
+    runs-on: ubuntu-latest
+    # S122: end-to-end smoke walks the cp-api onboarding flow
+    # (workspace -> api key -> verify -> /me) and asserts shapes.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-packages
+      - run: bash scripts/cp_smoke.sh

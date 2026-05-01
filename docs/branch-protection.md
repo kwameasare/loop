@@ -24,6 +24,7 @@ pattern `main`:
     - `CI / lint`
     - `CI / unit`
     - `CI / cp-api-image`
+    - `CI / cp-smoke`
     - `CI / tracker-clean`
     - `CI / security`
     - `CI / docs-with-code`
