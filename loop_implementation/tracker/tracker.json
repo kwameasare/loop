@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:06:55.922306+00:00",
+    "generated_at": "2026-05-01T22:07:02.661897+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1276,8 +1276,8 @@
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s163-studio-emulator-panel-right-rail\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:06:55Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s163-studio-emulator-panel-right-rail (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-01T22:07:02Z (copilot-thor)\nTests: vitest run covering token streaming, tool-call status, error tile\nDocs touched: apps/studio/src/components/agents/emulator-panel.tsx\nFollow-ups: none"
     },
     {
       "id": "S164",
