@@ -40,14 +40,20 @@ class FixedSizeChunker:
         start = 0
         while start < len(text):
             end = min(start + self._size, len(text))
-            piece = text[start:end].strip()
+            raw_piece = text[start:end]
+            piece = raw_piece.strip()
             if piece:
+                leading_ws = len(raw_piece) - len(raw_piece.lstrip())
+                trailing_ws = len(raw_piece) - len(raw_piece.rstrip())
+                piece_start = start + leading_ws
+                piece_end = end - trailing_ws
                 chunks.append(
                     Chunk(
                         document_id=document.id,
                         workspace_id=document.workspace_id,
                         ordinal=ordinal,
                         text=piece,
+                        metadata=_citation_metadata(document, piece_start, piece_end),
                     )
                 )
                 ordinal += 1
@@ -73,23 +79,29 @@ class SemanticChunker:
     def chunk(self, document: Document) -> list[Chunk]:
         if not document.text:
             return []
-        paragraphs = [p.strip() for p in _PARA_BOUNDARY.split(document.text)]
-        paragraphs = [p for p in paragraphs if p]
+        paragraphs = _paragraphs_with_offsets(document.text)
 
-        merged: list[str] = []
-        current = ""
-        for para in paragraphs:
-            if not current:
-                current = para
+        merged: list[tuple[str, int, int]] = []
+        current_text = ""
+        current_start = 0
+        current_end = 0
+        for para, para_start, para_end in paragraphs:
+            if not current_text:
+                current_text = para
+                current_start = para_start
+                current_end = para_end
                 continue
-            candidate = f"{current}\n\n{para}"
+            candidate = f"{current_text}\n\n{para}"
             if len(candidate) <= self._max:
-                current = candidate
+                current_text = candidate
+                current_end = para_end
             else:
-                merged.append(current)
-                current = para
-        if current:
-            merged.append(current)
+                merged.append((current_text, current_start, current_end))
+                current_text = para
+                current_start = para_start
+                current_end = para_end
+        if current_text:
+            merged.append((current_text, current_start, current_end))
 
         return [
             Chunk(
@@ -97,8 +109,9 @@ class SemanticChunker:
                 workspace_id=document.workspace_id,
                 ordinal=i,
                 text=text,
+                metadata=_citation_metadata(document, start, end),
             )
-            for i, text in enumerate(merged)
+            for i, (text, start, end) in enumerate(merged)
         ]
 
 
@@ -186,16 +199,63 @@ class HeadingChunker:
                 metadata["context"] = " > ".join(path)
             if title:
                 metadata["heading"] = title
+            start = document.text.find(body_text or title)
+            if start < 0:
+                start = 0
+            end = start + len(body_text or title)
             chunks.append(
                 Chunk(
                     document_id=document.id,
                     workspace_id=document.workspace_id,
                     ordinal=ordinal,
                     text=text_blob,
-                    metadata=metadata,
+                    metadata=_citation_metadata(document, start, end, extra=metadata),
                 )
             )
         return chunks
+
+
+def _paragraphs_with_offsets(text: str) -> list[tuple[str, int, int]]:
+    paragraphs: list[tuple[str, int, int]] = []
+    start = 0
+    for match in _PARA_BOUNDARY.finditer(text):
+        _append_paragraph(paragraphs, text, start, match.start())
+        start = match.end()
+    _append_paragraph(paragraphs, text, start, len(text))
+    return paragraphs
+
+
+def _append_paragraph(
+    paragraphs: list[tuple[str, int, int]], text: str, start: int, end: int
+) -> None:
+    raw = text[start:end]
+    piece = raw.strip()
+    if not piece:
+        return
+    leading_ws = len(raw) - len(raw.lstrip())
+    trailing_ws = len(raw) - len(raw.rstrip())
+    paragraphs.append((piece, start + leading_ws, end - trailing_ws))
+
+
+def _citation_metadata(
+    document: Document,
+    start: int,
+    end: int,
+    *,
+    extra: dict[str, str] | None = None,
+) -> dict[str, str]:
+    metadata = dict(document.metadata)
+    if extra:
+        metadata.update(extra)
+    if document.source:
+        metadata.setdefault("source_uri", document.source)
+    if document.title:
+        metadata.setdefault("title", document.title)
+    safe_start = max(0, min(start, len(document.text)))
+    safe_end = max(safe_start, min(end, len(document.text)))
+    metadata["byte_start"] = str(len(document.text[:safe_start].encode()))
+    metadata["byte_end"] = str(len(document.text[:safe_end].encode()))
+    return metadata
 
 
 __all__ = [
