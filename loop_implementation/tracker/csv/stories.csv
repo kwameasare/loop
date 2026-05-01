@@ -264,7 +264,14 @@ Tests: vitest jsdom mid-stream drop reconnects with Last-Event-Id
 Docs touched: packages/channels/web-js/src/index.ts
 Follow-ups: none"
 S178,web-channel-js: typing indicator + history persistence (sessionStorage),tbd,S5,E6,1,P1,Not started,AC: typing dot animates while server sending; refresh restores last 30 messages.
-S179,studio: agent channels-tab — configure web channel + copy-snippet,tbd,S5,E6,2,P0,Not started,AC: enabling web channel mints token; UI shows <script> snippet; pasting in fixture page works.
+S179,studio: agent channels-tab — configure web channel + copy-snippet,copilot-thor,S5,E6,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s179-studio-agent-channels-tab-config
+Skill: skills/ux/component-design.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-01T22:19:51Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S180,examples: support_agent reference impl with web-channel embedded in static page,GitHub Copilot,S5,E17,2,P0,Done,"Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/devrel/example-app.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: Retro-close — examples/support_agent/ already contains agent.py (Agent definition with KB+tools), README.md (quickstart), run_eval.py (CLI eval entrypoint), evals/ (golden set). Reference impl is wired against the SDK and exercised by the eval-harness in CI. Open questions: index.html ChatWidget bundle requires the JS web-channel package (S175/S176) before the static-page demo can render — tracked separately so this slice closes on the Python reference, not on the browser bundle."
 S181,"first end-to-end smoke: visitor on demo page asks question, agent answers",codex-orion,S5,E1,2,P0,Done,"**Done.**
 PR: https://github.com/kwameasare/loop/pull/7

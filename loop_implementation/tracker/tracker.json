@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:19:34.524155+00:00",
+    "generated_at": "2026-05-01T22:19:51.216074+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1392,13 +1392,13 @@
     {
       "id": "S179",
       "title": "studio: agent channels-tab — configure web channel + copy-snippet",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S5",
       "epic": "E6",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: enabling web channel mints token; UI shows <script> snippet; pasting in fixture page works."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s179-studio-agent-channels-tab-config\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:19:51Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S180",
