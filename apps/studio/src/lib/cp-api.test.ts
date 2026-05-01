@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { listAgents } from "./cp-api";
+import { createAgent, listAgents } from "./cp-api";
 
 const ORIGINAL = process.env.LOOP_CP_API_BASE_URL;
 const ORIGINAL_TOKEN = process.env.LOOP_TOKEN;
@@ -70,5 +70,70 @@ describe("listAgents", () => {
     await expect(listAgents({ fetcher: fetchMock })).rejects.toThrow(
       /503/,
     );
+  });
+});
+
+describe("createAgent", () => {
+  beforeEach(() => {
+    delete process.env.LOOP_CP_API_BASE_URL;
+    delete process.env.LOOP_TOKEN;
+  });
+
+  afterEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = ORIGINAL;
+    process.env.LOOP_TOKEN = ORIGINAL_TOKEN;
+    vi.restoreAllMocks();
+  });
+
+  it("posts the form payload to /v1/agents and returns the canonical summary", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({
+        id: "agt_42",
+        name: "Sales",
+        slug: "sales",
+        description: "Outbound sales",
+        active_version: null,
+        created_at: "2026-05-01T00:00:00Z",
+        workspace_id: "ws_1",
+      }),
+    });
+
+    const summary = await createAgent(
+      { name: "Sales", slug: "sales", description: "Outbound sales" },
+      { fetcher: fetchMock, token: "tkn" },
+    );
+
+    expect(summary).toMatchObject({
+      id: "agt_42",
+      name: "Sales",
+      slug: "sales",
+      workspace_id: "ws_1",
+    });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://cp.test/v1/agents");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body)).toEqual({
+      name: "Sales",
+      slug: "sales",
+      description: "Outbound sales",
+    });
+    expect(init.headers.authorization).toBe("Bearer tkn");
+  });
+
+  it("propagates non-2xx responses as errors", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 409, json: async () => ({}) });
+
+    await expect(
+      createAgent(
+        { name: "Dup", slug: "dup" },
+        { fetcher: fetchMock },
+      ),
+    ).rejects.toThrow(/409/);
   });
 });

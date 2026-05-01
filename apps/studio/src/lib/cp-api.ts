@@ -63,3 +63,39 @@ export async function listAgents(
   const agents = await api.GetAgents({ body: undefined });
   return { agents: agents.map(toAgentSummary) };
 }
+
+export interface CreateAgentInput {
+  name: string;
+  slug: string;
+  description?: string;
+}
+
+export interface CreateAgentOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+/**
+ * Create a new agent in the active workspace and return the canonical
+ * summary. Studio's "New agent" modal calls this from a client
+ * component; the host browser's fetch carries the bearer token via
+ * cp-api auth middleware.
+ */
+export async function createAgent(
+  input: CreateAgentInput,
+  opts: CreateAgentOptions = {},
+): Promise<AgentSummary> {
+  const api = createCpApi({
+    baseUrl: opts.baseUrl ?? cpApiBaseUrl(),
+    fetch: opts.fetcher ?? fetch,
+    token: opts.token,
+  });
+  const payload = {
+    name: input.name,
+    slug: input.slug,
+    description: input.description ?? "",
+  };
+  const created = await api.PostAgents({ body: payload });
+  return toAgentSummary(created);
+}
