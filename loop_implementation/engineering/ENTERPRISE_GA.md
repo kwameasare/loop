@@ -11,7 +11,8 @@ release:
    retention controls.
 3. **On-prem parity** — feature matrix where the Helm-installed
    private build matches the multi-tenant cloud, with documented
-   deltas and timelines.
+   deltas and timelines. The authoritative checked matrix is
+   [PARITY.md](PARITY.md).
 
 ## Pillar 1 — SSO / SAML
 
@@ -152,8 +153,8 @@ of the following are green for two consecutive release trains:
    [TESTING.md](TESTING.md)).
 3. Audit log UI passes Studio visual-regression suite + a11y
    contract (see [ux/UX_DESIGN.md](../ux/UX_DESIGN.md)).
-4. On-prem parity matrix above is published in the docs site for
-   the exact release tag.
+4. [PARITY.md](PARITY.md) is published in the docs site for the exact
+   release tag, with evidence committed beside it.
 5. p50 voice latency ≤ 700 ms on the synthetic harness
    (S048 budget).
 

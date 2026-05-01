@@ -1,0 +1,16 @@
+id|cloud_gate|feature_gates|status|evidence_paths|accepted_gap
+runtime-turns|managed runtime deployment|runtime.enabled;runtime.replicaCount;runtime.service.port|parity|infra/helm/loop/templates/runtime.yaml;infra/helm/loop/values.yaml|
+control-plane-api|managed control-plane deployment|controlPlane.enabled;controlPlane.replicaCount;controlPlane.service.port|parity|infra/helm/loop/templates/control-plane.yaml;infra/helm/loop/values.yaml|
+llm-gateway|managed provider gateway|gateway.enabled;gateway.replicaCount;gateway.service.port|parity|infra/helm/loop/templates/gateway.yaml;infra/helm/loop/values.yaml|
+kb-search|managed kb/vector services|kbEngine.enabled;qdrant.enabled;externals.qdrantUrl;minio.enabled;externals.s3Endpoint|parity|infra/helm/loop/templates/kb-engine.yaml;infra/helm/loop/values.yaml|
+tool-sandbox|managed sandbox tier|toolHost.enabled;toolHost.kata.required;toolHost.preInstallCheck.enabled|parity|infra/helm/loop/charts/dp-tool-host/templates/kata-check-job.yaml;infra/helm/loop/values.yaml|
+data-stores|managed data stores|postgresql.enabled;redis.enabled;nats.config.jetstream.enabled;clickhouse.enabled|parity|infra/helm/loop/values.yaml;tests/test_helm_postgres_dependency.py;tests/test_helm_nats_dependency.py;tests/test_helm_clickhouse_dependency.py|
+ingress-tls|managed public edge|ingress.enabled;ingress.certManager.enabled;ingress.certManager.clusterIssuer|parity|infra/helm/loop/templates/ingress.yaml;tests/test_helm_ingress_cert_manager.py|
+observability|managed telemetry backend|externals.otelEndpoint|parity|infra/helm/loop/templates/configmap.yaml;loop_implementation/engineering/ENV_REFERENCE.md|
+ha-resilience|managed autoscaling and disruption budgets|controlPlane.autoscaling.enabled;runtime.autoscaling.enabled;gateway.autoscaling.enabled;kbEngine.autoscaling.enabled|parity|tests/test_helm_cp_api_hpa_pdb.py;tests/test_helm_dp_runtime_hpa_pdb.py;tests/test_helm_dp_gateway_hpa_pdb.py;tests/test_helm_dp_kb_engine_hpa_pdb.py|
+audit-compliance|managed compliance surfaces|accepted:S630;accepted:S631;accepted:S632;accepted:S633;accepted:S634;accepted:S635|accepted_gap|loop_implementation/engineering/ENTERPRISE_GA.md;loop_implementation/engineering/SECURITY.md|Accepted: S630-S635 own audit, DPA, and GDPR shipment.
+customer-managed-keys|managed KMS controls|accepted:S636;accepted:S637|accepted_gap|loop_implementation/engineering/SECURITY.md;loop_implementation/engineering/ENV_REFERENCE.md|Accepted: S636-S637 own CMK and BYO Vault shipment.
+single-tenant-mode|cloud tenant isolation|accepted:S638|accepted_gap|loop_implementation/engineering/ENTERPRISE_GA.md;infra/helm/loop/README.md|Accepted: S638 owns enterprise single-tenant values.
+multi-tenant-cluster|managed shared control plane|accepted:S082|accepted_gap|loop_implementation/engineering/ENTERPRISE_GA.md|Accepted: S082 tracks in-cluster multi-tenancy; GA is one tenant per Helm release.
+cross-region-failover|managed regional failover|accepted:customer-topology|accepted_gap|loop_implementation/engineering/REGIONAL_DEPLOYS.md|Accepted: customer owns cluster topology; Loop supplies regional runbooks.
+airgap-bundle|cloud release channel|accepted:S080|accepted_gap|loop_implementation/engineering/ENTERPRISE_GA.md|Accepted: S080 owns air-gapped bundle packaging.
