@@ -92,14 +92,14 @@ Final heartbeat: 2026-05-01T19:20:45Z (codex-orion)
 Tests: uv run pytest -q packages/control-plane/_tests_integration/test_postgres_migrations.py (3 passed, 2 warnings); uv run pytest -q -m 'not integration and not e2e' (1117 passed, 3 deselected, 8 warnings); tracker/docs/checkpoint/no-bulk gates passed; close used --skip-gates because origin/main baseline fails ruff/format/pyright outside S121
 Docs touched: loop_implementation/engineering/TESTING.md
 Follow-ups: none"
-S122,cp-api: end-to-end smoke: create user → workspace → API key → authed echo,copilot-thor,S2,E12,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s122-cp-api-end-to-end-smoke-create-u
+S122,cp-api: end-to-end smoke: create user → workspace → API key → authed echo,copilot-thor,S2,E12,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s122-cp-api-end-to-end-smoke-create-u (merged + deletable)
 Skill: testing/integration-fixtures
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-01T19:26:54Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-01T19:27:03Z (copilot-thor)
+Tests: scripts/cp_smoke.sh exits 0; tests/test_cp_smoke.py runs the script as subprocess; uv run pytest 1118 passed
+Docs touched: docs/branch-protection.md adds CI / cp-smoke to required checks; scripts/cp_smoke.py module docstring documents the flow
+Follow-ups: none"
 S130,dp-runtime: FastAPI skeleton + /healthz with version+commit,GitHub Copilot,S3,E1,1,P0,Done,"Done. Branch: copilot/s-pass7 (merged). PR: local-merge (ff to main). Skill: skills/observability/structured-logging.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_runtime/healthz.py — sibling to cp-api healthz, narrower probe set (db/cp_api/otel). build_runtime_healthz returns RuntimeHealth where db_ok=False ⇒ status=unhealthy (load balancer takes the pod out), cp_api or otel down ⇒ degraded (still serves). Async probes called via _safe_probe so any exception flips ok→False rather than crashing the route. Tests: default green path, otel-down maps to degraded with otel_ok=False. Open questions: db probe in production uses a pinned 'SELECT 1' query bound to the dp-runtime pgbouncer pool — wired in the route handler, not in this module."
 S131,dp-runtime: Pydantic Settings for LOOP_RUNTIME_*,GitHub Copilot,S3,E1,1,P0,Done,"Done. Branch: copilot/s-pass6 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-19T04:00:00Z. Substance: loop_runtime/settings.py — Settings(BaseSettings) with env_prefix='LOOP_RUNTIME_', extra='forbid'; SecretStr for paseto_key; Literal for environment ('dev'|'staging'|'prod') and log_format ('json'|'console'); HttpUrl for cp_api_url + otel_endpoint; bounded turn_default_timeout_ms / per-workspace concurrency / per-workspace+per-agent RPS. load_settings(**overrides) for tests. Tests: defaults, env overrides, extra-fields rejected, port bounds, invalid environment Literal, SecretStr redacted in repr. Open questions: pydantic-settings already pinned in runtime pyproject from S101 work."
 S132,dp-runtime: cp-api client (workspace+agent+version lookup with cache),GitHub Copilot,S3,E1,2,P0,Done,"Done. Branch: copilot/s-pass4 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-12T03:00:00Z. Substance: loop_runtime/cp_client.py — TtlCache with single-flight get_or_fetch() coalescing concurrent fetches, asyncio.Lock-guarded, bounded max_entries with O(n) closest-to-expiry eviction. CpApiFetcher Protocol abstracts transport; CpApiClient.workspace()/agent_version() each have their own TtlCache so eviction pressure is independent. WorkspaceRecord/AgentVersionRecord are pydantic v2 strict models. Tests: TTL hit/miss, single-flight under 10 concurrent callers, per-record-type cache isolation. Open questions: 60s TTL configurable via cp-api settings; 404-invalidation will hook .invalidate() in the http error mapper (next slice)."
