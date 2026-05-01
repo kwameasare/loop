@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Loop Web Channel — Fixture</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+      body { margin: 0; padding: 24px; max-width: 720px; }
+      pre { background: #f3f4f6; padding: 12px; overflow: auto; border-radius: 6px; }
+      .note { color: #6b7280; font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <h1>Loop Web Channel — Embed Fixture</h1>
+    <p class="note">
+      Paste the snippet from your agent's <strong>Channels</strong> tab in
+      place of the placeholder below to verify the embed loads end-to-end.
+      The script is loaded with <code>async</code>; it appends a chat
+      launcher to <code>document.body</code> when the bundle is reachable.
+    </p>
+    <pre id="snippet-preview">&lt;!-- paste &lt;script&gt; from Studio here --&gt;</pre>
+    <!--
+      Drop-in snippet. Replace AGENT_ID and TOKEN with the values minted
+      by the Studio "Channels" tab. Setting data-fixture="1" tells the
+      embed to attach to #loop-web-channel-mount instead of the body.
+    -->
+    <script
+      async
+      src="https://cdn.loop.dev/web-channel/v1/web-channel.js"
+      data-agent-id="AGENT_ID"
+      data-token="TOKEN"
+      data-fixture="1"
+    ></script>
+    <div id="loop-web-channel-mount"></div>
+    <p class="note">
+      This page is committed under <code>apps/studio/public/</code> so the
+      Studio dev server serves it at
+      <code>/web-channel-fixture.html</code>. Pasting a real snippet from
+      the agent's Channels tab and reloading the page boots the live chat
+      widget against the configured Loop API.
+    </p>
+  </body>
+</html>
