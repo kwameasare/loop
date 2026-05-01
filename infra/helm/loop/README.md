@@ -124,3 +124,8 @@ and asserts that:
 `helm install` / `helm upgrade`). The schema permits regional overlays
 to add governance sections (`audit`, `networkPolicy`, `telemetry`); see
 [CLOUD_PORTABILITY.md](../../../loop_implementation/architecture/CLOUD_PORTABILITY.md).
+
+`.github/workflows/helm-e2e.yml` runs the release smoke on a kind cluster:
+it builds a local smoke image, installs the chart with heavyweight bundled
+dependencies disabled, port-forwards `dp-runtime`, and posts a synthetic
+turn. The job has a 12 minute timeout and also runs nightly.
