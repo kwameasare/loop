@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:05:51.606580+00:00",
+    "generated_at": "2026-05-01T22:05:57.768706+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1683,8 +1683,8 @@
       "epic": "E5",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s213-kb-integration-test-upload-pdf-a\nSkill: skills/coding/implement-kb-feature.md\nLast step: 2/5\nHeartbeat: 2026-05-01T21:57:41Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: qdrant postgres pdf citation integration covered\nLatest checkpoint: chunk citation metadata landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s213-kb-integration-test-upload-pdf-a (merged + deletable)\nSkill: skills/coding/implement-kb-feature.md\nFinal heartbeat: 2026-05-01T21:59:47Z (codex-vega)\nTests: uv run pytest packages/kb-engine (110 passed, incl. S213 Postgres+Qdrant integration); uv run ruff check packages/kb-engine loop_implementation/architecture/ARCHITECTURE.md; ruff format touched files; tracker/docs/checkpoint/no-bulk gates passed; full ruff/pyright blocked by pre-existing tools/tests baseline\nDocs touched: loop_implementation/architecture/ARCHITECTURE.md\nFollow-ups: none"
     },
     {
       "id": "S220",
