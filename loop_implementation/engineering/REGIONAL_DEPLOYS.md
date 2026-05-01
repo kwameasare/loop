@@ -110,4 +110,5 @@ migrations. Schema migrations are gated on the migration job
 
 | Date       | Author       | Change                                            |
 | ---------- | ------------ | ------------------------------------------------- |
+| 2026-05-01 | codex-orion (S595) | Add signed regional image promotion workflow; daily verification keeps NA/EU tags on one digest. |
 | 2026-04-30 | GitHub Copilot (S045) | Add EU-west overlay + regional deploy doc. |
