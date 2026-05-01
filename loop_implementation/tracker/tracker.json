@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:41:05.752453+00:00",
+    "generated_at": "2026-05-01T19:41:51.595836+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3191,7 +3191,7 @@
       "points": 1,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s449-helm-nats-dependency-jetstream-o\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-01T19:41:05Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: copilot-titan/s449-helm-nats-dependency-jetstream-o\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1\nHeartbeat: 2026-05-01T19:41:50Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: nats jetstream-on dep pinned + condition + bypass; 20 helm tests pass"
     },
     {
       "id": "S450",
