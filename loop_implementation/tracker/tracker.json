@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:05:57.768706+00:00",
+    "generated_at": "2026-05-01T22:06:55.922306+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1271,13 +1271,13 @@
     {
       "id": "S163",
       "title": "studio: emulator panel (right rail on agent detail) — POST turn + render SSE",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S4",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: text input → POST /v1/turns to dp-runtime → stream renders token-by-token + tool calls + final answer."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s163-studio-emulator-panel-right-rail\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T22:06:55Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S164",
