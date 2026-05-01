@@ -218,6 +218,28 @@ paths:
 
   /agents/{agent_id}/versions:
     parameters: [{ $ref: "#/components/parameters/AgentId" }]
+    get:
+      tags: [Agents]
+      summary: List agent versions
+      parameters:
+        - in: query
+          name: cursor
+          schema: { type: string }
+          required: false
+          description: Opaque cursor returned by the previous page.
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+          required: false
+          description: Maximum versions to return.
+      responses:
+        "200":
+          description: Agent versions, newest first
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentVersionList" }
+        "404":
+          $ref: "#/components/responses/NotFound"
     post:
       tags: [Agents]
       summary: Deploy a new agent version
@@ -905,9 +927,23 @@ components:
         id: { type: string, format: uuid }
         agent_id: { type: string, format: uuid }
         version: { type: integer }
+        created_at: { type: string, format: date-time }
+        created_by: { type: string, format: uuid, nullable: true }
+        config_json:
+          type: object
+          additionalProperties: true
+        code_hash: { type: string }
         eval_status: { type: string, enum: [pending, running, passed, failed, skipped] }
         deploy_state: { type: string, enum: [inactive, canary, active, rolled_back] }
         deployed_at: { type: string, format: date-time, nullable: true }
+
+    AgentVersionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AgentVersion" }
+        next_cursor: { type: string, nullable: true }
 
     InvokeRequest:
       type: object
