@@ -75,6 +75,24 @@ def test_cp_enables_required_extensions(cp_sql: str) -> None:
     assert "CREATE EXTENSION IF NOT EXISTS citext" in cp_sql
 
 
+def test_cp_creates_mcp_marketplace_tables(cp_sql: str) -> None:
+    for table in (
+        "mcp_servers",
+        "mcp_server_versions",
+        "mcp_agent_installs",
+        "mcp_server_reviews",
+        "mcp_server_usage",
+    ):
+        assert f"CREATE TABLE {table}" in cp_sql
+
+
+def test_cp_enables_marketplace_rls(cp_sql: str) -> None:
+    for table in ("mcp_agent_installs", "mcp_server_reviews", "mcp_server_usage"):
+        assert f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY" in cp_sql
+        assert f"CREATE POLICY {table}_tenant_isolation" in cp_sql
+        assert f"ON {table}" in cp_sql
+
+
 # ---------------------------------------------------------------------------
 # Data plane
 # ---------------------------------------------------------------------------

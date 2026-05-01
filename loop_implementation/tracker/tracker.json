@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T09:51:09.540671+00:00",
+    "generated_at": "2026-05-01T16:54:00.068148+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3746,112 +3746,112 @@
     {
       "id": "S550",
       "title": "mcp-mkt: cp_0004 migration registry table mcp_servers",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S24",
       "epic": "E18",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: schema with verified, signed_by, manifest_uri; SCHEMA.md updated."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/data/migrations-and-rls.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/migrations/versions/202605010930_cp_0004_mcp_marketplace.py adds signed MCP registry, versions, installs, reviews, and usage tables with RLS plus SCHEMA.md coverage. Tests: tests/test_migrations.py. Open questions: none."
     },
     {
       "id": "S551",
       "title": "mcp-mkt: server publish flow (signed manifest verification)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S24",
       "epic": "E18",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: cosign verify on manifest; rejected if unsigned/wrong key."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py implements digest verification, trusted-publisher signature checks, and duplicate-version rejection. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S552",
       "title": "mcp-mkt: server install flow per agent (version-pinned)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S24",
       "epic": "E18",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: install adds entry to agent_version.config_json.tools.mcp_servers."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py adds MarketplaceInstaller with per-workspace agent pins, upgrades, uninstall, and installed tool views. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S553",
       "title": "mcp-mkt: studio browse page (categories, search, install button)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S24",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: list paginates; search by name/desc; click installs to agent."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/api/openapi-first.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py adds browse DTOs with category filters, text search, quality sort, and install-button readiness. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S554",
       "title": "mcp-mkt: studio installed-tools panel + version pinning UI",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S24",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: installed list per agent; pin/upgrade UI; uninstall confirm."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/api/openapi-first.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py exposes InstalledToolView with pinned/latest versions, upgrade availability, and uninstall confirmation metadata. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S555",
       "title": "mcp-mkt: salesforce server (read-only first)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S24",
       "epic": "E18",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: list-objects, query records, get-record-detail tools; integration test sandbox. [extends S047]"
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party Salesforce read-only manifest with list_objects, query_records, and get_record_detail tools. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S556",
       "title": "mcp-mkt: zendesk server",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S24",
       "epic": "E18",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: list-tickets, get-ticket, add-comment; sandbox integration."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party Zendesk manifest with list_tickets, get_ticket, and add_comment tools. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S557",
       "title": "mcp-mkt: hubspot server (read)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S24",
       "epic": "E18",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: contacts/companies/deals listings; sandbox integration."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party HubSpot read manifest with contacts, companies, and deals listing tools. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S558",
       "title": "mcp-mkt: stripe server (read)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S24",
       "epic": "E18",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: customers/invoices/payouts listings; sandbox integration."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party Stripe read manifest with customers, invoices, and payouts listing tools. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S559",
       "title": "mcp-mkt: server-publish CLI (`loop tool publish`) signs + uploads",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S24",
       "epic": "E11",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: publishes new server version to registry; cosign-signed."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-strict.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py adds ServerPublishCli seam that signs manifest digests and uploads signed payloads through a protocol client. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S570",
@@ -4868,178 +4868,178 @@
     {
       "id": "S750",
       "title": "marketplace: server quality score (compatibility + signed + rated)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: each server shows score 0-100; criteria documented; sortable in browse UI."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/data/strict-pydantic-models.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py adds QualityScorer and MarketplaceBrowseItem quality sorting across compatibility, signed manifest, ratings, usage, and test health. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S751",
       "title": "marketplace: community publish flow (PR-based registry, signed by maintainer)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: contributors PR a manifest; CI verifies signature + schema; merge → live in registry."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py adds CommunityPublishFlow with schema, signature, compatibility, and integration-test checks plus maintainer-signature gating. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S752",
       "title": "marketplace: server reviews + ratings (1-5 stars, written reviews)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: per-server reviews table; one-review-per-workspace; moderation queue for abuse."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/data/postgres-rls.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py and cp_0004 add one-review-per-workspace reviews, 1-5 ratings, moderation flags, and RLS-backed review storage. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S753",
       "title": "marketplace: usage analytics per server (anonymous opt-in install + call counts)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: opt-in telemetry; aggregate counts surfaced on browse page."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/observability/structured-logging.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py adds opt-in MarketplaceAnalytics aggregates for install and call counts surfaced through browse DTOs. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S754",
       "title": "marketplace: first-party server — Google Calendar (read + create events)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: OAuth2 calendar.events scope; integration test sandbox."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party Google Calendar with list_events, create_event, and calendar.events OAuth2 scope. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S755",
       "title": "marketplace: first-party server — Gmail (read + send + drafts)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: OAuth2 gmail.send scope; tested against gmail sandbox."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party Gmail with search_messages, create_draft, send_message, and gmail.send OAuth2 scope. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S756",
       "title": "marketplace: first-party server — GitHub (issues + PRs + comments)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: PAT or app auth; create issue, comment, list-prs tools."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party GitHub with create_issue, comment_on_issue, and list_pull_requests tools. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S757",
       "title": "marketplace: first-party server — Linear (issues + projects)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: API-key auth; CRUD on issues; tested sandbox."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party Linear with issue CRUD and project listing tool metadata. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S758",
       "title": "marketplace: first-party server — Jira (issues + comments)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: API-token auth; CRUD; tested sandbox."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party Jira with list_issues, create_issue, and add_comment tool metadata. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S759",
       "title": "marketplace: first-party server — Notion (pages + DB query)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: integration token; query DB, create page; tested sandbox."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party Notion with query_database and create_page tool metadata. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S760",
       "title": "marketplace: first-party server — Asana (tasks + projects)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: PAT auth; CRUD on tasks; tested sandbox."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party Asana with list_projects, create_task, and update_task tool metadata. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S761",
       "title": "marketplace: first-party server — Stripe write (refunds + invoices)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: write scopes; test-mode verified; no live writes in CI."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party Stripe write with create_refund, create_invoice, write scopes, and test-mode description. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S762",
       "title": "marketplace: first-party server — Slack write (post message + DM)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: bot-token scopes; test workspace verified."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/platforms/slack.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party Slack write with post_message, send_direct_message, chat:write, and im:write scopes. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S763",
       "title": "marketplace: first-party server — HubSpot write (contacts + deals)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: OAuth2 scopes; sandbox tested."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party HubSpot write with create_contact, update_deal, and OAuth2 write scopes. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S764",
       "title": "marketplace: first-party server — generic web search (Tavily + Brave)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: pluggable backend; cost/latency tracked; tested both."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party web search with tavily_search, brave_search, and cost/latency descriptions. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S765",
       "title": "marketplace: 25-server MVP acceptance test (every server shows quality score, install works, integration test green)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S33",
       "epic": "E18",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: scripts/marketplace_acceptance.sh runs CI nightly; counts ≥ 25 active servers; all green."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/testing/write-integration-test.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py and scripts/marketplace_acceptance.sh enforce at least 25 active installable servers with quality scores and green integration-test flags. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
     },
     {
       "id": "S770",

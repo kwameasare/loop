@@ -21,13 +21,17 @@ This is the canonical data model for Loop. Every table, collection, and key name
 | Migration | Plane | Story | Tables created |
 |-----------|-------|-------|----------------|
 | `cp_0001_initial` (`packages/control-plane/.../202604300215_cp_0001_initial.py`) | Control plane | S006 | `workspaces`, `users`, `workspace_members`, `api_keys`, `agent_secrets`, `agents`, `agent_versions` |
+| `cp_0003_operator_assignments` (`packages/control-plane/.../202605260400_cp_0003_operator_assignments.py`) | Control plane | S300 | `operator_assignments` |
+| `cp_0004_mcp_marketplace` (`packages/control-plane/.../202605010930_cp_0004_mcp_marketplace.py`) | Control plane | S550-S559, S750-S765 | `mcp_servers`, `mcp_server_versions`, `mcp_agent_installs`, `mcp_server_reviews`, `mcp_server_usage` |
 | `dp_0001_initial` (`packages/data-plane/.../202604300220_dp_0001_initial.py`) | Data plane | S006 | `conversations`, `turns`, `memory_user`, `memory_bot`, `tool_calls` |
 
 Every customer-data table from these migrations has **row-level security
-enabled** under the policy `tenant_isolation`, gated by
+enabled** under a tenant-isolation policy gated by
 `current_setting('loop.workspace_id')::uuid` (ADR-020). Data-plane tables
 additionally use `FORCE ROW LEVEL SECURITY` so even the table owner is bound
-by the policy.
+by the policy. The MCP marketplace global registry tables (`mcp_servers`,
+`mcp_server_versions`) are shared catalog tables; tenant-scoped marketplace
+state (`mcp_agent_installs`, `mcp_server_reviews`, `mcp_server_usage`) has RLS.
 
 ### 0.2 Divergences between as-shipped and the design draft below
 
