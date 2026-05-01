@@ -285,7 +285,14 @@ S430,cli: `loop logs` streams SSE from dp-runtime,Codex,S17,E11,1,P0,Done,"Done.
 S431,cli: `loop eval run [suite]` invokes server-side runner,Codex,S17,E11,1,P0,Done,Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-cli-command.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/sdk-py/loop/cli.py adds eval run [suite] with agent-version selection and TAP-style remote-run status output. Tests: packages/sdk-py/_tests/test_cli_pass14.py. Open questions: none.
 S432,cli: `loop secrets list/set/get/rotate`,Codex,S17,E11,2,P0,Done,Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-cli-command.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/sdk-py/loop/cli.py adds secrets list/set/get/rotate against cp-api and redacts secret values in all human output. Tests: packages/sdk-py/_tests/test_cli_pass14.py. Open questions: none.
 S433,"cli: tarball release pipeline (multi-arch, GitHub Releases)",Codex,S17,E11,2,P1,Done,Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-cli-command.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/sdk-py/loop/cli.py builds multi-arch release manifests with checksums and an optional publish transport seam for release automation. Tests: packages/sdk-py/_tests/test_cli_pass14.py. Open questions: none.
-S440,helm: umbrella chart skeleton + Chart.yaml + values.schema.json,tbd,S18,E13,1,P0,Not started,AC: helm lint clean; values.schema.json validates with ajv. [extends S036]
+S440,helm: umbrella chart skeleton + Chart.yaml + values.schema.json,copilot-titan,S18,E13,1,P0,In progress,"**Active.**
+Branch: copilot-titan/s440-helm-umbrella-chart-skeleton-cha
+Skill: skills/architecture/cloud-portability-check.md
+Last step: 0/4 (just claimed)
+Heartbeat: 2026-05-01T19:22:33Z (copilot-titan)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S441,helm: cp-api subchart (Deployment + Service + HPA + PDB),tbd,S18,E13,2,P0,Not started,AC: helm template renders; kubeval clean; helm install on kind passes.
 S442,helm: dp-runtime subchart,tbd,S18,E13,2,P0,Not started,AC: same as S441 for dp-runtime.
 S443,helm: dp-gateway subchart,tbd,S18,E13,1,P0,Not started,AC: same.
