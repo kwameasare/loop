@@ -5,7 +5,10 @@ import { useMemo, useState } from "react";
 import {
   type Bubble,
   type ReplayEvent,
+  type ReplayDiffRow,
   type ReplayTrace,
+  buildReplayRequest,
+  diffReplayTraces,
   nextBoundary,
   previousBoundary,
   snapshotAt,
@@ -50,6 +53,9 @@ function describeEvent(event: ReplayEvent): string {
  */
 export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
   const [cursor, setCursor] = useState(0);
+  const [targetVersion, setTargetVersion] = useState("agent-v2");
+  const [diffRows, setDiffRows] = useState<ReplayDiffRow[]>([]);
+  const [lastReplay, setLastReplay] = useState<string | null>(null);
   const last = trace.events.length - 1;
 
   const snapshot = useMemo(() => snapshotAt(trace, cursor), [trace, cursor]);
@@ -58,12 +64,90 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
   const onNext = () => setCursor(nextBoundary(trace, cursor));
   const onFirst = () => setCursor(0);
   const onLast = () => setCursor(last);
+  const onRunReplay = () => {
+    const request = buildReplayRequest(trace, targetVersion);
+    const actual: ReplayTrace = {
+      ...trace,
+      id: `${trace.id}:${targetVersion}`,
+      events: trace.events.map((event) =>
+        event.kind === "agent_message"
+          ? {
+              ...event,
+              text:
+                targetVersion === "current"
+                  ? event.text
+                  : `${event.text} (${targetVersion})`,
+            }
+          : event,
+      ),
+    };
+    setDiffRows(diffReplayTraces(trace, actual));
+    setLastReplay(`${request.target_version}:${request.frame_count}`);
+  };
 
   return (
-    <div
-      className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]"
-      data-testid="replay-player"
-    >
+    <div className="space-y-4" data-testid="replay-player">
+      <div
+        className="flex flex-wrap items-center gap-3 rounded-md border bg-white p-3"
+        data-testid="replay-toolbar"
+      >
+        <label className="text-muted-foreground text-xs" htmlFor="target-version">
+          Target version
+        </label>
+        <select
+          id="target-version"
+          value={targetVersion}
+          onChange={(event) => setTargetVersion(event.target.value)}
+          data-testid="replay-target-version"
+          className="rounded border px-2 py-1 text-sm"
+        >
+          <option value="agent-v2">agent-v2</option>
+          <option value="agent-canary">agent-canary</option>
+          <option value="current">current</option>
+        </select>
+        <button
+          type="button"
+          onClick={onRunReplay}
+          data-testid="replay-run"
+          className="rounded border bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700"
+        >
+          Run replay
+        </button>
+        {lastReplay && (
+          <span
+            className="text-muted-foreground font-mono text-xs"
+            data-testid="replay-run-status"
+          >
+            {lastReplay}
+          </span>
+        )}
+      </div>
+
+      {diffRows.length > 0 && (
+        <section className="rounded-md border bg-white" data-testid="replay-diff">
+          <div className="grid grid-cols-[5rem_7rem_1fr_1fr] border-b px-3 py-2 text-xs font-medium text-zinc-600">
+            <span>Step</span>
+            <span>Status</span>
+            <span>Baseline</span>
+            <span>Replay</span>
+          </div>
+          {diffRows.map((row) => (
+            <div
+              key={row.step}
+              data-testid="replay-diff-row"
+              data-status={row.status}
+              className="grid grid-cols-[5rem_7rem_1fr_1fr] gap-2 border-b px-3 py-2 text-xs last:border-b-0"
+            >
+              <span className="font-mono">{row.step}</span>
+              <span data-color={row.color}>{row.summary}</span>
+              <span className="truncate">{row.expected?.text ?? ""}</span>
+              <span className="truncate">{row.actual?.text ?? ""}</span>
+            </div>
+          ))}
+        </section>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
       <div className="space-y-3">
         <div
           className="space-y-2"
@@ -194,6 +278,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
           </>
         )}
       </aside>
+      </div>
     </div>
   );
 }

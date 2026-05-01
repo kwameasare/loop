@@ -64,4 +64,22 @@ describe("ReplayPlayer", () => {
       screen.getByTestId("replay-event-detail"),
     ).toHaveTextContent("No event selected");
   });
+
+  it("runs a target-version replay and renders the side-by-side diff", () => {
+    render(<ReplayPlayer trace={FIXTURE_REPLAY} />);
+
+    fireEvent.change(screen.getByTestId("replay-target-version"), {
+      target: { value: "agent-canary" },
+    });
+    fireEvent.click(screen.getByTestId("replay-run"));
+
+    expect(screen.getByTestId("replay-run-status")).toHaveTextContent(
+      `agent-canary:${FIXTURE_REPLAY.events.length}`,
+    );
+    const changed = screen
+      .getAllByTestId("replay-diff-row")
+      .filter((row) => row.getAttribute("data-status") === "changed");
+    expect(changed).toHaveLength(1);
+    expect(changed[0]).toHaveTextContent("agent-canary");
+  });
 });

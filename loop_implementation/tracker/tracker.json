@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T16:54:00.068148+00:00",
+    "generated_at": "2026-05-01T17:32:03.853298+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2921,13 +2921,13 @@
     {
       "id": "S410",
       "title": "multi: integration test — 3-agent supervisor pipeline end-to-end",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S16",
       "epic": "E14",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: scripts/multi_e2e.py runs to completion; cost + trace + result asserted."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-multi-agent-pattern.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: scripts/multi_e2e.py asserts a deterministic 3-agent supervisor run, workflow cost rollup, and cross-agent trace links. Tests: packages/runtime/_tests/test_multi_e2e_pass14.py. Open questions: none."
     },
     {
       "id": "S420",
@@ -2943,35 +2943,35 @@
     {
       "id": "S421",
       "title": "ts-sdk: code-gen openapi → TypeScript types (no client code)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S17",
       "epic": "E11",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: generated types match openapi.yaml; ts-prune zero unused."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/api/update-openapi.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: tools/gen_openapi_ts.py generates apps/studio/src/lib/openapi-types.ts from loop_implementation/api/openapi.yaml with a deterministic --check mode. Tests: tests/test_gen_openapi_ts.py. Open questions: none."
     },
     {
       "id": "S422",
       "title": "ts-sdk: fetch-based client wrapper with auth + retry-with-backoff",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S17",
       "epic": "E11",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: 5xx triggers exponential retry up to 3; honours Retry-After."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-studio-screen.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: apps/studio/src/lib/loop-client.ts adds a typed fetch client with bearer auth, 5xx retry, exponential backoff, and Retry-After support. Tests: apps/studio/src/lib/loop-client.test.ts. Open questions: none."
     },
     {
       "id": "S423",
       "title": "ts-sdk: SSE parser supporting Last-Event-Id reconnect",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S17",
       "epic": "E11",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: integration tests in jsdom + Node 20."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-studio-screen.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: apps/studio/src/lib/sse.ts parses text/event-stream frames, carries retry values, and emits Last-Event-Id reconnect headers. Tests: apps/studio/src/lib/sse.test.ts. Open questions: none."
     },
     {
       "id": "S424",
@@ -2987,101 +2987,101 @@
     {
       "id": "S425",
       "title": "ts-sdk: react hook useTurn() streaming agent calls",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S17",
       "epic": "E11",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: hook returns {start, frames, done, error}; example app on Storybook."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-studio-screen.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: apps/studio/src/lib/use-turn.ts exposes useTurn(client) with start/reset, streamed frames, done, reconnect, and error state. Tests: apps/studio/src/lib/use-turn.test.tsx. Open questions: none."
     },
     {
       "id": "S426",
       "title": "cli: typer skeleton + auto-completion for bash/zsh/fish",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S17",
       "epic": "E11",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: loop --install-completion bash works; shellcheck-clean."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-cli-command.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/sdk-py/loop/cli.py adds the loop command tree with bash/zsh/fish completion over a transport-injected, network-free CLI core. Tests: packages/sdk-py/_tests/test_cli_pass14.py. Open questions: none."
     },
     {
       "id": "S427",
       "title": "cli: `loop login` device-code flow → PASETO refresh",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S17",
       "epic": "E11",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: CLI prints code+URL; user authorizes; token persisted to ~/.loop/credentials."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-cli-command.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/sdk-py/loop/cli.py implements login device-code exchange and writes strict Credentials to ~/.loop/credentials with mode 0600. Tests: packages/sdk-py/_tests/test_cli_pass14.py. Open questions: none."
     },
     {
       "id": "S428",
       "title": "cli: `loop init` scaffolds an agent project (skill-aware)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S17",
       "epic": "E11",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: directory tree + sample agent.yaml + first turn passes locally."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-cli-command.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/sdk-py/loop/cli.py scaffolds agent.yaml, agent.py, and evals/smoke.yaml for a runnable starter agent project. Tests: packages/sdk-py/_tests/test_cli_pass14.py. Open questions: none."
     },
     {
       "id": "S429",
       "title": "cli: `loop deploy` builds + uploads via cp-api",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S17",
       "epic": "E11",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: zips project, calls deploy endpoint, polls status, exits with success/failure."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-cli-command.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/sdk-py/loop/cli.py zips projects deterministically, sends sha256/size to cp-api, polls pending deployment status, and returns failure on failed/error. Tests: packages/sdk-py/_tests/test_cli_pass14.py. Open questions: none."
     },
     {
       "id": "S430",
       "title": "cli: `loop logs` streams SSE from dp-runtime",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S17",
       "epic": "E11",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: logs --follow agent_id/conv_id; Ctrl-C clean exit."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-cli-command.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/sdk-py/loop/cli.py adds logs agent_id with --conversation-id, --follow, token propagation, and KeyboardInterrupt cleanup. Tests: packages/sdk-py/_tests/test_cli_pass14.py. Open questions: none."
     },
     {
       "id": "S431",
       "title": "cli: `loop eval run [suite]` invokes server-side runner",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S17",
       "epic": "E11",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: tracks remote run; prints colored TAP output."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-cli-command.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/sdk-py/loop/cli.py adds eval run [suite] with agent-version selection and TAP-style remote-run status output. Tests: packages/sdk-py/_tests/test_cli_pass14.py. Open questions: none."
     },
     {
       "id": "S432",
       "title": "cli: `loop secrets list/set/get/rotate`",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S17",
       "epic": "E11",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: CRUD against cp-api; never logs values."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-cli-command.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/sdk-py/loop/cli.py adds secrets list/set/get/rotate against cp-api and redacts secret values in all human output. Tests: packages/sdk-py/_tests/test_cli_pass14.py. Open questions: none."
     },
     {
       "id": "S433",
       "title": "cli: tarball release pipeline (multi-arch, GitHub Releases)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S17",
       "epic": "E11",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: tagged release publishes darwin-arm64/linux-amd64/windows zips with checksums."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-cli-command.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/sdk-py/loop/cli.py builds multi-arch release manifests with checksums and an optional publish transport seam for release automation. Tests: packages/sdk-py/_tests/test_cli_pass14.py. Open questions: none."
     },
     {
       "id": "S440",
@@ -3383,90 +3383,90 @@
     {
       "id": "S480",
       "title": "replay: per-turn frame recorder writing JSONL to NATS log subject",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S20",
       "epic": "E9",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: every TurnEvent persisted with turn_id; replayable later. [extends S041]"
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-eval-scorer.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/eval-harness/loop_eval/turn_replay.py adds TurnFrameRecorder over a FrameLogSink and canonical loop.turn.<id>.frames JSONL subjects. Tests: packages/eval-harness/_tests/test_turn_replay_pass14.py. Open questions: none."
     },
     {
       "id": "S481",
       "title": "replay: deterministic replayer (substitutes gateway with cassette of recording)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S20",
       "epic": "E9",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: replay against alternate version yields events for diffing."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-eval-scorer.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/eval-harness/loop_eval/turn_replay.py adds DeterministicTurnReplayer with a target-version transform seam and frame diff output. Tests: packages/eval-harness/_tests/test_turn_replay_pass14.py. Open questions: none."
     },
     {
       "id": "S482",
       "title": "studio: replay button on trace detail",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S20",
       "epic": "E10",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: click → choose target version → run → side-by-side."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-studio-screen.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: apps/studio/src/app/traces/[id]/page.tsx and components/replay/replay-player.tsx add replay entry, target-version select, and run payload construction. Tests: apps/studio/src/components/replay/replay-player.test.tsx. Open questions: none."
     },
     {
       "id": "S483",
       "title": "studio: side-by-side replay diff (frames colour-coded by divergence)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S20",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: differing frames highlighted; tool calls + outputs diffable."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-studio-screen.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: apps/studio/src/lib/replay.ts and components/replay/replay-player.tsx add diffReplayTraces rows with same/changed/missing/extra statuses and side-by-side rendering. Tests: apps/studio/src/lib/replay.test.ts and apps/studio/src/components/replay/replay-player.test.tsx. Open questions: none."
     },
     {
       "id": "S484",
       "title": "replay: cassette → eval-case converter (one-click)",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S20",
       "epic": "E8",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: 'Add to eval suite' from a failed turn creates a YAML case."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/testing/write-eval-suite.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/eval-harness/loop_eval/turn_replay.py converts CassetteEntry rows to Sample objects and deterministic eval-suite YAML. Tests: packages/eval-harness/_tests/test_turn_replay_pass14.py. Open questions: none."
     },
     {
       "id": "S485",
       "title": "replay: prod-failure auto-add to deploy-gate eval suite",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S20",
       "epic": "E8",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: turn failing prod → auto-PR to evals/regressions/<sha>.yml."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/testing/write-eval-suite.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/eval-harness/loop_eval/turn_replay.py builds RegressionCasePullRequest payloads for deploy-gate regression YAML under evals/regressions/<sha>.yml. Tests: packages/eval-harness/_tests/test_turn_replay_pass14.py. Open questions: none."
     },
     {
       "id": "S486",
       "title": "replay: cost+latency assertion in cassette diff",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S20",
       "epic": "E8",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: replay diff fails if cost or latency regress > threshold."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-eval-scorer.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/eval-harness/loop_eval/turn_replay.py diff_recordings compares bytes plus configurable cost and latency regression thresholds. Tests: packages/eval-harness/_tests/test_turn_replay_pass14.py. Open questions: none."
     },
     {
       "id": "S487",
       "title": "replay: integration test capture-then-replay of a real turn",
-      "owner": "tbd",
+      "owner": "Codex",
       "sprint": "S20",
       "epic": "E9",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: pytest captures, replays against same version, asserts byte-equal frames."
+      "status": "Done",
+      "notes": "Done. Branch: codex/s-pass14 (merged). PR: local-merge (ff to main). Skill: skills/testing/write-eval-suite.md. Last step: 5/5. Heartbeat: 2026-05-01T17:30:00Z. Substance: packages/eval-harness/_tests/test_turn_replay_pass14.py captures frames, loads them from the log, replays same version, and asserts byte-equal frames. Tests: packages/eval-harness/_tests/test_turn_replay_pass14.py. Open questions: none."
     },
     {
       "id": "S490",

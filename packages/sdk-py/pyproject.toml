@@ -11,6 +11,9 @@ dependencies = [
     "pydantic>=2.7",
 ]
 
+[project.scripts]
+loop = "loop.cli:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

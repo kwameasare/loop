@@ -196,6 +196,96 @@ export function nextBoundary(trace: ReplayTrace, cursor: number): number {
   return last;
 }
 
+export type ReplayRunRequest = {
+  trace_id: string;
+  conversation_id: string;
+  target_version: string;
+  frame_count: number;
+};
+
+export type ReplayDiffStatus = "same" | "changed" | "missing" | "extra";
+
+export type ReplayDiffRow = {
+  step: number;
+  status: ReplayDiffStatus;
+  color: "neutral" | "amber" | "red" | "blue";
+  expected: ReplayEvent | null;
+  actual: ReplayEvent | null;
+  summary: string;
+};
+
+/** Build the payload fired by the trace-detail replay button. */
+export function buildReplayRequest(
+  trace: ReplayTrace,
+  targetVersion: string,
+): ReplayRunRequest {
+  return {
+    trace_id: trace.id,
+    conversation_id: trace.conversation_id,
+    target_version: targetVersion,
+    frame_count: trace.events.length,
+  };
+}
+
+function eventFingerprint(event: ReplayEvent): string {
+  return JSON.stringify({
+    kind: event.kind,
+    actor: event.actor,
+    text: event.text,
+    attributes: event.attributes ?? {},
+  });
+}
+
+function diffSummary(
+  expected: ReplayEvent | null,
+  actual: ReplayEvent | null,
+): string {
+  if (expected === null && actual !== null) return `extra ${actual.kind}`;
+  if (expected !== null && actual === null) return `missing ${expected.kind}`;
+  if (expected === null || actual === null) return "same";
+  if (expected.kind !== actual.kind) {
+    return `${expected.kind} -> ${actual.kind}`;
+  }
+  if (expected.actor !== actual.actor) {
+    return `${expected.actor} -> ${actual.actor}`;
+  }
+  return expected.text === actual.text ? "same" : "text changed";
+}
+
+/** Side-by-side frame diff rows for the replay comparison view. */
+export function diffReplayTraces(
+  expected: ReplayTrace,
+  actual: ReplayTrace,
+): ReplayDiffRow[] {
+  const rows: ReplayDiffRow[] = [];
+  const maxLen = Math.max(expected.events.length, actual.events.length);
+  for (let i = 0; i < maxLen; i++) {
+    const left = expected.events[i] ?? null;
+    const right = actual.events[i] ?? null;
+    let status: ReplayDiffStatus = "same";
+    let color: ReplayDiffRow["color"] = "neutral";
+    if (left === null) {
+      status = "extra";
+      color = "blue";
+    } else if (right === null) {
+      status = "missing";
+      color = "red";
+    } else if (eventFingerprint(left) !== eventFingerprint(right)) {
+      status = "changed";
+      color = "amber";
+    }
+    rows.push({
+      step: i,
+      status,
+      color,
+      expected: left,
+      actual: right,
+      summary: diffSummary(left, right),
+    });
+  }
+  return rows;
+}
+
 /* -------------------------------------------------------------------------
  * Fixture
  * ------------------------------------------------------------------------- */

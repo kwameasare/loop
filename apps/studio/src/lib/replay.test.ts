@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   FIXTURE_REPLAY,
+  buildReplayRequest,
   collapseToBubbles,
+  diffReplayTraces,
   nextBoundary,
   previousBoundary,
   snapshotAt,
@@ -33,6 +35,69 @@ describe("snapshotAt", () => {
     const snap = snapshotAt(FIXTURE_REPLAY, 2); // through tool_call_end
     expect(snap.bubbles.map((b) => b.role)).toEqual(["user", "tool", "tool"]);
     expect(snap.current?.kind).toBe("tool_call_end");
+  });
+});
+
+describe("replay run request", () => {
+  it("builds the trace detail replay-button payload", () => {
+    expect(buildReplayRequest(FIXTURE_REPLAY, "agent-v2")).toEqual({
+      trace_id: "rpl_demo_001",
+      conversation_id: "cnv_demo_001",
+      target_version: "agent-v2",
+      frame_count: FIXTURE_REPLAY.events.length,
+    });
+  });
+});
+
+describe("diffReplayTraces", () => {
+  it("marks changed, missing, and extra frames for the side-by-side view", () => {
+    const actual = {
+      ...FIXTURE_REPLAY,
+      id: "rpl_demo_002",
+      events: [
+        FIXTURE_REPLAY.events[0],
+        {
+          ...FIXTURE_REPLAY.events[1],
+          text: "calling lookup_order with retry",
+        },
+        FIXTURE_REPLAY.events[2],
+        FIXTURE_REPLAY.events[3],
+        FIXTURE_REPLAY.events[4],
+        FIXTURE_REPLAY.events[5],
+        FIXTURE_REPLAY.events[6],
+        {
+          step: 7,
+          timestamp_ms: 1_700_000_001_500,
+          kind: "error" as const,
+          actor: "runtime",
+          text: "late warning",
+        },
+      ],
+    };
+
+    const rows = diffReplayTraces(FIXTURE_REPLAY, actual);
+
+    expect(rows[0].status).toBe("same");
+    expect(rows[1]).toMatchObject({
+      status: "changed",
+      color: "amber",
+      summary: "text changed",
+    });
+    expect(rows[7]).toMatchObject({
+      status: "extra",
+      color: "blue",
+      summary: "extra error",
+    });
+
+    const missingRows = diffReplayTraces(FIXTURE_REPLAY, {
+      ...FIXTURE_REPLAY,
+      events: FIXTURE_REPLAY.events.slice(0, 6),
+    });
+    expect(missingRows[6]).toMatchObject({
+      status: "missing",
+      color: "red",
+      summary: "missing agent_message",
+    });
   });
 });
 
