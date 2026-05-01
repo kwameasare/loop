@@ -1,8 +1,8 @@
 apiVersion: v2
 name: loop
 description: |
-  Loop self-host chart -- control-plane, runtime, and LLM gateway,
-  feature-parity with the managed cloud offering.
+  Loop self-host chart -- control-plane, runtime, LLM gateway, and
+  dp-tool-host sandbox tier, feature-parity with the managed cloud offering.
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
@@ -59,3 +59,10 @@ dependencies:
     version: 6.2.18
     repository: https://charts.bitnami.com/bitnami
     condition: clickhouse.enabled
+  # Local dp-tool-host chart. It is gated by toolHost.enabled and its
+  # pre-install hook verifies the Kata/Firecracker RuntimeClass exists.
+  - name: dp-tool-host
+    alias: toolHost
+    version: 0.1.0
+    repository: file://charts/dp-tool-host
+    condition: toolHost.enabled

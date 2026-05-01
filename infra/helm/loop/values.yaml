@@ -92,6 +92,35 @@ gateway:
     minAvailable: 1
     maxUnavailable: null
 
+toolHost:
+  enabled: true
+  image:
+    repository: tool-host
+    tag: "0.1.0"
+  replicaCount: 1
+  service:
+    port: 8002
+  sandboxRuntimeClassName: loop-firecracker
+  kata:
+    required: true
+    runtimeClassHandler: kata-fc
+  preInstallCheck:
+    enabled: true
+    image: docker.io/bitnami/kubectl:1.30.6
+    pullPolicy: IfNotPresent
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  env: {}
+
 externals:
   postgresUrl: "postgresql://loop:loop@loop-postgres:5432/loop"
   redisUrl: "redis://loop-redis:6379/0"
