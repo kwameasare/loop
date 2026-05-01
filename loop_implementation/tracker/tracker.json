@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T19:44:19.782925+00:00",
+    "generated_at": "2026-05-01T19:44:35.719048+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1172,13 +1172,13 @@
     {
       "id": "S154",
       "title": "studio: workspace switcher dropdown in topbar",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S4",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: dropdown lists user's workspaces from /v1/workspaces; selection updates active context + URL."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s154-studio-workspace-switcher-dropdo\nSkill: ux/workspace-switcher\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-01T19:44:35Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S155",
