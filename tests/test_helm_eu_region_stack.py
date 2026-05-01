@@ -58,7 +58,7 @@ def test_eu_overlay_preserves_base_values_schema_parity() -> None:
 
     jsonschema.validate(merged, schema)
     base_externals = set(cast(dict[str, object], base["externals"]))
-    eu_externals = set(cast(dict[str, object], cast(dict[str, object], merged)["externals"]))
+    eu_externals = set(cast(dict[str, object], merged["externals"]))
     assert base_externals <= eu_externals
 
 
