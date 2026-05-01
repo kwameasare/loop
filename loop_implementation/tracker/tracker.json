@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T23:55:22.337917+00:00",
+    "generated_at": "2026-05-01T23:56:33.518909+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5055,13 +5055,13 @@
     {
       "id": "S771",
       "title": "infra: terraform module — Azure (AKS + Postgres Flexible + Redis + Blob + Key Vault + Front Door)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S34",
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: same as S770 against Azure."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s771-infra-terraform-module-azure-aks\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/1 (just claimed)\nHeartbeat: 2026-05-01T23:56:33Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S772",
