@@ -25,6 +25,30 @@ from loop_tool_host.errors import (
     ToolHostError,
 )
 from loop_tool_host.inmemory import InMemorySandbox, InMemorySandboxFactory
+from loop_tool_host.mcp_governance import (
+    EgressPolicy,
+    EgressRule,
+    SecretInjector,
+    SecretReference,
+    SignedToolVerifier,
+    ToolKillSwitchRegistry,
+    ToolObserver,
+    ToolPolicy,
+    ToolQuota,
+    ToolRevokeEvent,
+    ToolSignature,
+)
+from loop_tool_host.mcp_runtime import (
+    HotRestartPlanner,
+    InboundMcpServer,
+    McpProtocolNegotiator,
+    PoolDemand,
+    ToolCall,
+    ToolExecutor,
+    ToolVersion,
+    ToolVersionRegistry,
+    WarmPoolController,
+)
 from loop_tool_host.models import (
     SandboxConfig,
     SandboxExecResult,
@@ -35,8 +59,14 @@ from loop_tool_host.pool import WarmPool
 from loop_tool_host.sandbox import Sandbox, SandboxFactory
 
 __all__ = [
+    "EgressPolicy",
+    "EgressRule",
+    "HotRestartPlanner",
     "InMemorySandbox",
     "InMemorySandboxFactory",
+    "InboundMcpServer",
+    "McpProtocolNegotiator",
+    "PoolDemand",
     "Sandbox",
     "SandboxBusyError",
     "SandboxConfig",
@@ -44,7 +74,21 @@ __all__ = [
     "SandboxFactory",
     "SandboxStartupError",
     "SandboxState",
+    "SecretInjector",
+    "SecretReference",
+    "SignedToolVerifier",
+    "ToolCall",
+    "ToolExecutor",
     "ToolHostError",
+    "ToolKillSwitchRegistry",
+    "ToolObserver",
+    "ToolPolicy",
+    "ToolQuota",
+    "ToolRevokeEvent",
+    "ToolSignature",
+    "ToolVersion",
+    "ToolVersionRegistry",
     "WarmPool",
+    "WarmPoolController",
     "WarmPoolStats",
 ]

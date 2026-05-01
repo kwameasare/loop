@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-04-30T22:09:34.490886+00:00",
+    "generated_at": "2026-05-01T08:52:44.807308+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2740,7 +2740,7 @@
       "points": 2,
       "priority": "P1",
       "status": "Done",
-      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/architecture/failover.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/voicemail_fallback.py plan_fallback(disposition, attempt) maps CallDisposition×attempt → leave-voicemail / schedule-callback / give-up actions. Tests: voicemail_fallback cases in test_voice_pass10.py. Open questions: none."
+      "notes": "Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/architecture/failover.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_voice/voicemail_fallback.py plan_fallback(disposition, attempt) maps CallDisposition x attempt → leave-voicemail / schedule-callback / give-up actions. Tests: voicemail_fallback cases in test_voice_pass10.py. Open questions: none."
     },
     {
       "id": "S384",
@@ -4527,79 +4527,79 @@
     {
       "id": "S700",
       "title": "gateway: AWS Bedrock provider (Anthropic + Mistral + Llama via Bedrock)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: stream(GatewayRequest) over Bedrock invokeModelWithResponseStream; cassette tests for 3 model families. [extends S007]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-llm-gateway-change.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_gateway/provider_profiles.py + providers/openai_compatible.py + cost.py - provider catalog, shared SSE adapter, embedding path, and model costs for Bedrock Vertex Mistral Cohere Groq vLLM Together Replicate Fireworks. Tests: packages/gateway/_tests/test_gateway_pass11.py. Open questions: none."
     },
     {
       "id": "S701",
       "title": "gateway: Google Vertex AI / Gemini provider",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: gemini-1.5-pro and -flash both stream; usage + cost tracked; cassette tests."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-llm-gateway-change.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_gateway/provider_profiles.py + providers/openai_compatible.py + cost.py - provider catalog, shared SSE adapter, embedding path, and model costs for Bedrock Vertex Mistral Cohere Groq vLLM Together Replicate Fireworks. Tests: packages/gateway/_tests/test_gateway_pass11.py. Open questions: none."
     },
     {
       "id": "S702",
       "title": "gateway: Mistral provider (mistral-large + codestral)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: streaming working; cost rates added to COST_TABLE; cassette tests."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-llm-gateway-change.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_gateway/provider_profiles.py + providers/openai_compatible.py + cost.py - provider catalog, shared SSE adapter, embedding path, and model costs for Bedrock Vertex Mistral Cohere Groq vLLM Together Replicate Fireworks. Tests: packages/gateway/_tests/test_gateway_pass11.py. Open questions: none."
     },
     {
       "id": "S703",
       "title": "gateway: Cohere provider (command-r-plus, embed)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: chat + embed paths; cost tracked; cassette tests."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-llm-gateway-change.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_gateway/provider_profiles.py + providers/openai_compatible.py + cost.py - provider catalog, shared SSE adapter, embedding path, and model costs for Bedrock Vertex Mistral Cohere Groq vLLM Together Replicate Fireworks. Tests: packages/gateway/_tests/test_gateway_pass11.py. Open questions: none."
     },
     {
       "id": "S704",
       "title": "gateway: Groq provider (llama-3.3, qwen-32b on LPU)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: streaming; latency benchmark logged (<200ms TTFT)."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-llm-gateway-change.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_gateway/provider_profiles.py + providers/openai_compatible.py + cost.py - provider catalog, shared SSE adapter, embedding path, and model costs for Bedrock Vertex Mistral Cohere Groq vLLM Together Replicate Fireworks. Tests: packages/gateway/_tests/test_gateway_pass11.py. Open questions: none."
     },
     {
       "id": "S705",
       "title": "gateway: vLLM self-hosted provider (OpenAI-compatible endpoint)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: configurable base_url; works against local vLLM container; cassette tests."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-llm-gateway-change.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_gateway/provider_profiles.py + providers/openai_compatible.py + cost.py - provider catalog, shared SSE adapter, embedding path, and model costs for Bedrock Vertex Mistral Cohere Groq vLLM Together Replicate Fireworks. Tests: packages/gateway/_tests/test_gateway_pass11.py. Open questions: none."
     },
     {
       "id": "S706",
       "title": "gateway: Together / Replicate / Fireworks generic OpenAI-compatible provider class",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: one shared adapter parameterised by base_url + auth-header style; integration test against each."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-llm-gateway-change.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_gateway/provider_profiles.py + providers/openai_compatible.py + cost.py - provider catalog, shared SSE adapter, embedding path, and model costs for Bedrock Vertex Mistral Cohere Groq vLLM Together Replicate Fireworks. Tests: packages/gateway/_tests/test_gateway_pass11.py. Open questions: none."
     },
     {
       "id": "S707",
@@ -4626,46 +4626,46 @@
     {
       "id": "S709",
       "title": "gateway: model-aliases.yaml + per-workspace alias overrides",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: agent.model='loop:smart' resolves to current per-workspace mapping; updating alias rolls all agents safely."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-llm-gateway-change.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_gateway/provider_routing.py - workspace alias resolution, tier routing, failover attempt trace, and per-provider token bucket limits. Tests: packages/gateway/_tests/test_gateway_pass11.py. Open questions: none."
     },
     {
       "id": "S710",
       "title": "gateway: provider routing engine (cost / latency / quality tiers)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: agent config picks {tier, requirements}; router selects best provider matching; degrade order logged."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-llm-gateway-change.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_gateway/provider_routing.py - workspace alias resolution, tier routing, failover attempt trace, and per-provider token bucket limits. Tests: packages/gateway/_tests/test_gateway_pass11.py. Open questions: none."
     },
     {
       "id": "S711",
       "title": "gateway: provider failover (primary fails → secondary within 1 retry)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: 5xx or timeout → fallback to next-priority provider; trace records both attempts."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-llm-gateway-change.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_gateway/provider_routing.py - workspace alias resolution, tier routing, failover attempt trace, and per-provider token bucket limits. Tests: packages/gateway/_tests/test_gateway_pass11.py. Open questions: none."
     },
     {
       "id": "S712",
       "title": "gateway: per-provider rate-limit (token bucket per key, surfaces 429 cleanly)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: hitting upstream 429 → backoff + retry; budget breached → LOOP-GW-301 to caller."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-llm-gateway-change.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_gateway/provider_routing.py - workspace alias resolution, tier routing, failover attempt trace, and per-provider token bucket limits. Tests: packages/gateway/_tests/test_gateway_pass11.py. Open questions: none."
     },
     {
       "id": "S713",
@@ -4681,35 +4681,35 @@
     {
       "id": "S714",
       "title": "gateway: 50-prompt provider eval suite (quality + latency + cost matrix)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S31",
       "epic": "E2",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: nightly suite runs across all 8 providers; report compares quality/latency/cost — committed to docs/perf/."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/testing/write-eval-suite.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_gateway/provider_eval.py + docs/perf/gateway_provider_eval.md - 50-prompt provider eval suite with quality latency cost reports. Tests: packages/gateway/_tests/test_gateway_pass11.py. Open questions: none."
     },
     {
       "id": "S720",
       "title": "mcp: tool policy engine — per-agent allow/deny + scope claims",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: tool.call('x') passes through ToolPolicy; deny → LOOP-TH-101 with reason; integration test. [extends S011]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S721",
       "title": "mcp: per-tool egress allowlist enforced by sandbox network policy",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: tool config declares allowed_hosts; any other DNS/IP egress → blocked + audit event. [extends S014]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S722",
@@ -4736,112 +4736,112 @@
     {
       "id": "S724",
       "title": "mcp: secrets injection from agent_secrets via sandbox env (KMS-decrypted at boot)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: tools reference secret_ref; sandbox env vars populated only at boot; never persisted to disk."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S725",
       "title": "mcp: tool-execution timeout per call + cancellation propagation",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: per-tool timeout; on breach, sandbox stream cancelled cleanly; partial-result captured."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S726",
       "title": "mcp: sandbox controller (k8s controller) reconciles WarmPool size against demand",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: kopf-based controller scales pool; metrics emitted; integration on kind. [extends S014]"
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S727",
       "title": "mcp: sandbox hot-restart on tool config change (zero-downtime)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: updating MCP server config triggers staggered pool refresh; in-flight calls drained; integration test."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S728",
       "title": "mcp: inbound MCP server — Loop exposes its own runtime as MCP server (so agents can compose Loop)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: `loop` MCP server exposes turns/conversations/agents as MCP resources; integration with one external MCP client."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S729",
       "title": "mcp: MCP protocol version negotiation + compatibility matrix",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: client/server negotiate; supported versions documented; tested against 3 reference MCP servers."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S730",
       "title": "mcp: tool-call resource quotas (CPU, memory, disk in sandbox)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: limits enforced via cgroups; OOM-kill returns LOOP-TH-402; documented per tool."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S731",
       "title": "mcp: tool versioning + atomic upgrade (per agent version)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: agent_version pins tool@version; upgrade is a new agent_version; rollback works."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S732",
       "title": "mcp: signed-tool verification (cosign on container image + manifest)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: tools must carry cosign signature from registered publishers; unsigned blocked unless allow-listed."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S733",
       "title": "mcp: tool-call observability — span per tool with args/result hashes (PII-redacted)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: trace shows tool spans; args+result hashed (not stored); studio renders inline."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S734",
@@ -4857,13 +4857,13 @@
     {
       "id": "S735",
       "title": "mcp: hostile-tool kill-switch (revoke + drain across fleet within 60s)",
-      "owner": "tbd",
+      "owner": "GitHub Copilot",
       "sprint": "S32",
       "epic": "E3",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: cp-api 'revoke tool' → NATS event → sandboxes terminate within 60s; verified e2e."
+      "status": "Done",
+      "notes": "Done. Branch: copilot/s-pass11 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T08:47:16Z. Substance: loop_tool_host/mcp_governance.py + mcp_runtime.py - MCP policy egress secrets timeout cancel pool reconcile hot restart inbound server negotiation quotas versioning signatures spans and kill-switch. Tests: packages/tool-host/_tests/test_tool_host_pass11.py. Open questions: none."
     },
     {
       "id": "S750",

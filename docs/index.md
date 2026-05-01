@@ -20,6 +20,8 @@ evaluate AI agents that talk to real users on real channels.
 ## Operations
 
 - [Branch protection](./branch-protection.md) — required CI checks for `main`.
+- [Gateway provider eval](./perf/gateway_provider_eval.md) — nightly
+  provider quality, latency, and cost matrix.
 
 ## How docs are organised
 
@@ -33,6 +35,8 @@ docs/
     memory.md
     channels.md
     eval.md
+  perf/
+    gateway_provider_eval.md
   cookbook/             # opinionated, end-to-end examples
     support_agent.md
 ```
