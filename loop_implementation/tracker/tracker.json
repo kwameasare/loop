@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-01T22:11:46.655001+00:00",
+    "generated_at": "2026-05-01T22:13:40.574269+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1420,7 +1420,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s181-first-end-to-end-smoke-visitor-o\nSkill: skills/testing/write-e2e-test.md\nLast step: 3/5\nHeartbeat: 2026-05-01T22:11:46Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: web demo smoke runner, nightly workflow, env docs, and tests landed\nLatest checkpoint: verified Orion assignment and mapped the web smoke script workflow"
+      "notes": "**Active.**\nBranch: codex-orion/s181-first-end-to-end-smoke-visitor-o\nSkill: skills/testing/write-e2e-test.md\nLast step: 4/5\nHeartbeat: 2026-05-01T22:13:40Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: web smoke runner and tests are focused-lint, focused-pyright, and focused-pytest clean\nLatest checkpoint: web demo smoke runner, nightly workflow, env docs, and tests landed\nLatest checkpoint: verified Orion assignment and mapped the web smoke script workflow"
     },
     {
       "id": "S190",
