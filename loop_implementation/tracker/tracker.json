@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:34:45.788660+00:00",
+    "generated_at": "2026-05-02T06:35:00.651620+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4444,8 +4444,8 @@
       "epic": "E17",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s673-launch-hn-product-hunt-launch-pl\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:34:45Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s673-launch-hn-product-hunt-launch-pl (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:35:00Z (copilot-titan)\nTests: tests/test_launch_playbook.py\nDocs touched: loop_implementation/operations/hn_ph_launch.md\nFollow-ups: none"
     },
     {
       "id": "S674",
@@ -5696,7 +5696,7 @@
       "theme": "1.0 launch + Series A",
       "goal": "Release notes, pricing page, design-partner conversion, HN/PH launch, Series A data room.",
       "stories": "S670-S674",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S31",
