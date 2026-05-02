@@ -21,6 +21,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/evals", label: "Evals" },
   { href: "/inbox", label: "Inbox" },
   { href: "/costs", label: "Costs" },
+  { href: "/enterprise", label: "Enterprise" },
 ];
 
 function isActive(current: string | null, href: string): boolean {
