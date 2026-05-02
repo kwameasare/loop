@@ -1013,7 +1013,14 @@ Final heartbeat: 2026-05-02T05:32:33Z (codex-vega)
 Tests: touched ruff/format pass; touched pyright pass; packages/voice/_tests 120 passed; pytest -q -m 'not integration and not e2e' passed 1340, 3 skipped, 4 deselected; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff+pyright remain baseline-red in unrelated tools/tests
 Docs touched: loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_tts_sentence_streaming.json
 Follow-ups: none"
-S652,voice-perf: model warm-up + connection-pooling for ASR/TTS providers,tbd,S29,E7,2,P0,Not started,AC: keep-alive; pre-handshake; idle teardown after N min.
+S652,voice-perf: model warm-up + connection-pooling for ASR/TTS providers,codex-vega,S29,E7,2,P0,In progress,"**Active.**
+Branch: codex-vega/s652-voice-perf-model-warm-up-connect
+Skill: skills/testing/perf-check.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T05:34:26Z (codex-vega)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S653,"voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS",tbd,S29,E7,2,P0,Not started,AC: nearest-region selector; latency map committed.
 S654,voice-perf: latency benchmark ≤700ms p50 acceptance gate,tbd,S29,E7,2,P0,Not started,AC: scripts/voice_perf.py runs nightly; CI alerts if breached.
 S655,ga-polish: design-system audit + component refactor,tbd,S29,E10,3,P1,Not started,AC: token map sweep; <5 hardcoded colours/spacings remain; doc'd in design system.

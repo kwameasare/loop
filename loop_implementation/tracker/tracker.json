@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:33:28.560911+00:00",
+    "generated_at": "2026-05-02T05:34:26.538314+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4318,13 +4318,13 @@
     {
       "id": "S652",
       "title": "voice-perf: model warm-up + connection-pooling for ASR/TTS providers",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S29",
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: keep-alive; pre-handshake; idle teardown after N min."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s652-voice-perf-model-warm-up-connect\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:34:26Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S653",
