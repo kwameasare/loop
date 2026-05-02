@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T13:38:43.091709+00:00",
+    "generated_at": "2026-05-02T13:40:37.530507+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3553,8 +3553,8 @@
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s497-studio-kb-freshness-indicators-m\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T13:38:43Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s497-studio-kb-freshness-indicators-m (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T13:40:37Z (copilot-thor)\nTests: 10 vitest (kb-list.test.tsx): freshness indicator, refresh button, disabled-during-flight, error toast\nDocs touched: KbDocument.lastRefreshedAt field; kb-list.tsx per-row refresh button and freshness label\nFollow-ups: Bulk refresh all docs; auto-poll freshness status while running"
     },
     {
       "id": "S510",
