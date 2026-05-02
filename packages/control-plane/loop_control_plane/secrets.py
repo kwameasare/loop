@@ -16,6 +16,13 @@ class SecretsBackendError(RuntimeError): ...
 
 
 @dataclass(frozen=True)
+class SecretAccess:
+    operation: str
+    ref: str
+    version: int
+
+
+@dataclass(frozen=True)
 class _SecretValue:
     value: str
     version: int
@@ -27,12 +34,15 @@ class SecretsBackend(Protocol):
     def set(self, ref: str, value: str, *, ttl_seconds: int | None = None) -> int: ...
     def get(self, ref: str) -> str: ...
     def rotate(self, ref: str, new_value: str) -> int: ...
+    def delete(self, ref: str) -> None: ...
+    def access_pattern(self) -> tuple[SecretAccess, ...]: ...
 
 
 @dataclass
 class InMemorySecretsBackend:
     backend: str
     _secrets: dict[str, _SecretValue] = field(default_factory=dict[str, _SecretValue])
+    _accesses: list[SecretAccess] = field(default_factory=list[SecretAccess])
 
     def set(self, ref: str, value: str, *, ttl_seconds: int | None = None) -> int:
         self._validate_ref(ref)
@@ -41,10 +51,12 @@ class InMemorySecretsBackend:
             raise SecretsBackendError("ttl_seconds must be positive")
         version = self._next_version(ref)
         self._secrets[ref] = _SecretValue(value=value, version=version)
+        self._record("set", ref, version)
         return version
 
     def get(self, ref: str) -> str:
         secret = self._secret(ref)
+        self._record("get", ref, secret.version)
         return secret.value
 
     def rotate(self, ref: str, new_value: str) -> int:
@@ -52,7 +64,16 @@ class InMemorySecretsBackend:
         self._validate_value(new_value)
         version = self._next_version(ref)
         self._secrets[ref] = _SecretValue(value=new_value, version=version)
+        self._record("rotate", ref, version)
         return version
+
+    def delete(self, ref: str) -> None:
+        secret = self._secret(ref)
+        del self._secrets[ref]
+        self._record("delete", ref, secret.version)
+
+    def access_pattern(self) -> tuple[SecretAccess, ...]:
+        return tuple(self._accesses)
 
     def _secret(self, ref: str) -> _SecretValue:
         self._validate_ref(ref)
@@ -63,6 +84,9 @@ class InMemorySecretsBackend:
     def _next_version(self, ref: str) -> int:
         secret = self._secrets.get(ref)
         return 1 if secret is None else secret.version + 1
+
+    def _record(self, operation: str, ref: str, version: int) -> None:
+        self._accesses.append(SecretAccess(operation=operation, ref=ref, version=version))
 
     @staticmethod
     def _validate_ref(ref: str) -> None:
