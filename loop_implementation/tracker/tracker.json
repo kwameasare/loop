@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T13:41:59.779529+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4219,13 +4219,13 @@
     {
       "id": "S633",
       "title": "audit: SIEM webhook (Datadog/Splunk/generic)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S28",
       "epic": "E20",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s633-audit-siem-webhook-datadog-splun\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T13:41:59Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S634",
