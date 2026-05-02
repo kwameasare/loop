@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T13:37:27.299507+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3537,13 +3537,13 @@
     {
       "id": "S496",
       "title": "kb-v1: layout-aware chunking (tables, code blocks, math preserved)",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S21",
       "epic": "E5",
       "points": 2,
       "priority": "P1",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s496-kb-v1-layout-aware-chunking-tabl (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T13:37:27Z (copilot-thor)\nTests: 20 pytest (test_layout_chunker.py): prose merging, code/table/math preservation, mixed doc, metadata fields\nDocs touched: loop_kb_engine/layout_chunker.py: LayoutAwareChunker with ChunkType enum; protected span detection for code fences, GFM tables, display math\nFollow-ups: AST-based HTML table extraction; inline math support; DOCX table detection"
+      "status": "Not started",
+      "notes": "AC: tables stay intact in retrieved chunks; code blocks preserved verbatim."
     },
     {
       "id": "S497",
