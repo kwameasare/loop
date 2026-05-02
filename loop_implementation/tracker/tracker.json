@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:41:09.214079+00:00",
+    "generated_at": "2026-05-02T06:41:43.537545+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5302,8 +5302,8 @@
       "epic": "E4",
       "points": 2,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s821-memory-zep-adapter-drop-in\nSkill: skills/coding/implement-runtime-feature.md\nLast step: 3/4\nHeartbeat: 2026-05-02T06:40:11Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: Zep adapter, exports, and protocol tests landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s821-memory-zep-adapter-drop-in (merged + deletable)\nSkill: skills/coding/implement-runtime-feature.md\nFinal heartbeat: 2026-05-02T06:41:43Z (codex-orion)\nTests: uv run ruff check packages/memory/loop_memory/zep_adapter.py packages/memory/loop_memory/__init__.py packages/memory/_tests/test_zep_adapter.py; uv run pyright same files; uv run pytest -q packages/memory/_tests/test_zep_adapter.py packages/memory/_tests/test_memory_pass10.py packages/memory/_tests/test_episodic.py; tracker/docs/checkpoint/no-bulk gates pass\nDocs touched: none\nFollow-ups: none"
     },
     {
       "id": "S822",
