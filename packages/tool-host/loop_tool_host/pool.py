@@ -27,11 +27,15 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from collections import deque
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 
 from loop_tool_host.errors import SandboxBusyError, SandboxStartupError
 from loop_tool_host.models import SandboxConfig, SandboxState, WarmPoolStats
 from loop_tool_host.sandbox import Sandbox, SandboxFactory
+
+DEFAULT_MIN_IDLE = 2
+DEFAULT_MAX_SIZE = 8
+DEFAULT_ACQUIRE_TIMEOUT_SECONDS = 0.3
 
 
 class WarmPool:
@@ -42,9 +46,9 @@ class WarmPool:
         *,
         config: SandboxConfig,
         factory: SandboxFactory,
-        min_idle: int = 1,
-        max_size: int = 4,
-        acquire_timeout_seconds: float = 60.0,
+        min_idle: int = DEFAULT_MIN_IDLE,
+        max_size: int = DEFAULT_MAX_SIZE,
+        acquire_timeout_seconds: float = DEFAULT_ACQUIRE_TIMEOUT_SECONDS,
     ) -> None:
         if min_idle < 0:
             raise ValueError("min_idle must be >= 0")
@@ -113,7 +117,7 @@ class WarmPool:
     # ---------------------------------------------------------------- acquire
 
     @contextlib.asynccontextmanager
-    async def acquire(self) -> AsyncIterator[Sandbox]:
+    async def acquire(self) -> AsyncGenerator[Sandbox]:
         """Borrow a sandbox for the duration of the ``async with``
         block. Released back to idle on exit (or shut down + replaced
         if it ended in a non-READY state)."""
@@ -208,4 +212,9 @@ class WarmPool:
                 await sandbox.shutdown()
 
 
-__all__ = ["WarmPool"]
+__all__ = [
+    "DEFAULT_ACQUIRE_TIMEOUT_SECONDS",
+    "DEFAULT_MAX_SIZE",
+    "DEFAULT_MIN_IDLE",
+    "WarmPool",
+]
