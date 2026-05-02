@@ -1,0 +1,13 @@
+{
+  "baseline_ref": "main",
+  "chunk_count": 1000000,
+  "iterations": 120,
+  "name": "kb_retrieval_1m_chunks",
+  "p50_ms": 0.082,
+  "p95_ms": 0.088,
+  "passed": true,
+  "regression_threshold": 0.1,
+  "target_p50_ms": 200.0,
+  "top_k": 8,
+  "ts": "2026-05-02T06:02:50+00:00"
+}
