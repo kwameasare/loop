@@ -821,7 +821,14 @@ Final heartbeat: 2026-05-02T03:54:28Z (copilot-thor)
 Tests: 5 new tests in tests/test_dr_clickhouse_restore_drill.py — runbook index row, RTO target string, cumulative budget ≤90min, driver dry-run emits 10 ok JSON steps, missing-arg handling. Full pytest 1293/1293 (5 new).
 Docs touched: loop_implementation/engineering/RUNBOOKS.md,loop_implementation/engineering/DR.md,scripts/dr_clickhouse_restore_drill.sh
 Follow-ups: none"
-S574,soc2: backup automation minio (cross-region replication),tbd,S25,E16,1,P0,Not started,AC: bucket replicated; integrity verified daily.
+S574,soc2: backup automation minio (cross-region replication),copilot-thor,S25,E16,1,P0,In progress,"**Active.**
+Branch: copilot-thor/s574-soc2-backup-automation-minio-cro
+Skill: skills/security/update-threat-model.md
+Last step: 0/4 (just claimed)
+Heartbeat: 2026-05-02T03:54:55Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S575,soc2: DR runbook + tabletop exercise (recorded),tbd,S25,E16,2,P0,Not started,AC: runbook checked in; exercise minutes appended; gaps tracked as issues.
 S576,soc2: pen-test prep (scope + RoE + access creds),tbd,S25,E16,2,P0,Not started,AC: scope agreed with vendor; staging env stood up; creds rotated post-test.
 S577,soc2: pen-test fix queue tracked as P0 stories,tbd,S25,E16,2,P0,Not started,"AC: each finding has tracker entry, severity, owner, fix-deadline."
