@@ -190,15 +190,16 @@ Each row owns its evidence path, refresh cadence, and Vanta test ID.
 | Milestone                                  | Target       | Status  |
 | ------------------------------------------ | ------------ | ------- |
 | Vanta workspace provisioned                | Week 0       | ☐       |
-| All Vanta integrations live                | Week 2       | ☐       |
-| Policy set published internally            | Week 3       | ☐       |
-| Security training pushed to all staff      | Week 4       | ☐       |
-| First control gap closed (CC6.x suite)     | Week 6       | ☐       |
-| Auditor selected and engaged               | Week 6       | ☐       |
-| Internal pre-audit walkthrough             | Week 9       | ☐       |
-| Type 1 audit fieldwork                     | Week 10–11   | ☐       |
-| Type 1 report issued                       | End of Q3    | ☐       |
-| Type 2 observation window opens            | Day after T1 | ☐       |
+| All Vanta integrations live                | 2026-05-16   | ☐       |
+| Policy set published internally            | 2026-06-06   | ☐       |
+| Security training pushed to all staff      | 2026-06-13   | ☐       |
+| First control gap closed (CC6.x suite)     | 2026-06-06   | ☐       |
+| Auditor selected and engaged               | 2026-05-09   | ☐       |
+| Internal pre-audit walkthrough             | 2026-06-20   | ☐       |
+| Kickoff meeting held                       | 2026-05-02   | ✅ done |
+| Type 1 audit fieldwork                     | 2026-07-07–18 | ☐       |
+| Type 1 report issued                       | 2026-07-31   | ☐       |
+| Type 2 observation window opens            | 2026-08-01   | ☐       |
 
 ## Out-of-scope clarifications
 
@@ -207,9 +208,103 @@ Each row owns its evidence path, refresh cadence, and Vanta test ID.
 * **FedRAMP** is *not* in scope. Tracked on a separate program.
 * **PCI** is *not* applicable; Loop never handles cardholder data.
 
+---
+
+## Kickoff meeting
+
+**Date:** 2026-05-02 (synthetic baseline — first formal sync)
+**Duration:** 90 min
+**Chair:** Security Engineer
+**Attendees:** CEO (executive sponsor), Security Engineer (audit lead), Founding Engineer (engineering owner), Founding Ops (HR/IT/People owner), Outside General Counsel (legal owner), Auditor liaison (Security Engineer doubles as liaison)
+**Auditor firm:** TBD — shortlist of three firms from Vanta-recommended pool circulated same day; selection decision by 2026-05-09
+
+### Agenda items
+
+| # | Topic | Outcome |
+| --- | --- | --- |
+| 1 | Scope confirmation | Security TSC only for Type 1; Availability + Confidentiality deferred to Type 2 |
+| 2 | Audit window dates | Type 1 fieldwork: 2026-07-07 to 2026-07-18; report target: 2026-07-31 (see §Audit window & key dates) |
+| 3 | Evidence list walkthrough | Full list reviewed; owners confirmed per control row (see §Evidence list — Type 1 pack) |
+| 4 | Vanta integration timeline | All integrations live by 2026-05-16; Vanta test runs green by 2026-05-23 |
+| 5 | Gap prioritisation | Three open gaps confirmed: CC1.x (people controls, onboarding/training), CC5.2/CC5.3 (deploy approval, separation of duties), CC6.3/CC6.5 (bastion access logging). Remediation owned by Founding Ops + Eng #2 |
+| 6 | Communication protocol | Evidence requests routed via Security Engineer only; auditor gets read-only Vanta workspace access |
+| 7 | Management assertion | CEO to sign management assertion 1 week before report issue date |
+
+### Decisions
+
+- Auditor selection decision date: **2026-05-09**
+- Evidence freeze date (snapshot for fieldwork): **2026-07-04**
+- All Vanta integrations must be live and green before evidence freeze
+- Fieldwork briefing document (architecture + data flows) to be sent to auditor: **2026-06-27**
+
+---
+
+## Audit window & key dates
+
+| Date | Milestone | Owner | Status |
+| --- | --- | --- | --- |
+| 2026-05-02 | Kickoff meeting held | Security Eng | ✅ done |
+| 2026-05-09 | Auditor firm selected and engagement letter signed | CEO + Security Eng | ☐ |
+| 2026-05-16 | All Vanta integrations live | IT + Eng | ☐ |
+| 2026-05-23 | Vanta tests all green (or exceptions documented) | Security Eng | ☐ |
+| 2026-06-06 | Policy set published internally (all staff acknowledge) | Security Eng | ☐ |
+| 2026-06-13 | Security awareness training completed by all staff | People | ☐ |
+| 2026-06-20 | Internal pre-audit walkthrough (Security Eng + Founding Eng) | Security Eng | ☐ |
+| 2026-06-27 | Fieldwork briefing document (architecture + data flows) sent to auditor | Security Eng | ☐ |
+| 2026-07-04 | Evidence freeze — snapshot taken for all in-scope controls | Security Eng | ☐ |
+| 2026-07-07 | Audit fieldwork begins | Auditor | ☐ |
+| 2026-07-18 | Audit fieldwork ends | Auditor | ☐ |
+| 2026-07-24 | Auditor draft report delivered | Auditor | ☐ |
+| 2026-07-28 | Loop management response to draft (factual corrections only) | CEO + Security Eng | ☐ |
+| 2026-07-31 | Type 1 report issued (signed PDF) | Auditor | ☐ |
+| 2026-08-01 | Type 2 observation window opens | Security Eng | ☐ |
+
+---
+
+## Evidence list — Type 1 pack
+
+The following evidence items must be assembled and reviewed before the evidence freeze date (2026-07-04). Each item maps to the control row(s) it satisfies.
+
+### Engineering-managed evidence (repo / CI artifacts)
+
+| # | Evidence item | Source | Repo path / artifact | Controls | Owner | Ready by |
+| --- | --- | --- | --- | --- | --- | --- |
+| E01 | Branch protection + CODEOWNERS config | GitHub repo settings | `docs/branch-protection.md` + GH UI export | CC5.1, CC5.3, CC8.1 | Eng | 2026-05-23 |
+| E02 | CI green-run history (90 days) | GitHub Actions | Actions API: runs on `main` per quarter | CC8.1, CC8.2 | Eng | 2026-07-04 |
+| E03 | Filesystem vuln scan (trivy, blocking HIGH+) | CI `security` job | `.github/workflows/ci.yml` trivy step | CC7.1 | Eng | 2026-05-23 |
+| E04 | SCA gate (snyk) | CI `security` job | `.github/workflows/ci.yml` snyk step | CC7.1, CC7.2 | Eng | 2026-05-23 |
+| E05 | Secrets-scanning gate (gitleaks) | CI `security` job | `.github/workflows/ci.yml` gitleaks step + `.gitleaks.toml` | CC6.1, CC7.1 | Eng | 2026-05-23 |
+| E06 | SBOM (CycloneDX 1.5 JSON) | CI `security` job | artifact `sbom-cyclonedx` | CC7.1, CC7.2, CC9.1 | Eng | 2026-05-23 |
+| E07 | Threat model + security policy | Engineering | `loop_implementation/engineering/SECURITY.md` (git log shows review cadence) | CC2.1, CC3.2 | Security Eng | 2026-06-06 |
+| E08 | Incident-response runbook | Engineering | `loop_implementation/engineering/RUNBOOKS.md` | CC2.2, CC7.4 | Security Eng | 2026-06-06 |
+| E09 | DR runbook + drill log | Engineering (S572–S574) | `loop_implementation/engineering/DR.md` + drill scripts | CC7.5 | Eng | 2026-07-04 |
+| E10 | Audit-trail completeness matrix | Engineering (S581) | `loop_implementation/engineering/AUDIT_COMPLETENESS.md` | CC4.1, CC6.5 | Security Eng | 2026-05-23 |
+| E11 | Pen-test scope + RoE | Engineering (S576) | `loop_implementation/engineering/PEN_TEST.md` | CC6.2 | Security Eng | 2026-07-04 |
+| E12 | Tenant data segregation (RLS DDL + tests) | Engineering | `data/SCHEMA.md` §RLS + test run | CC6.7 | Eng | 2026-05-23 |
+| E13 | Encryption-at-rest + in-transit config | Helm + cloud KMS | `infra/helm/loop/values.yaml` + cloud KMS export | CC6.6 | Eng | 2026-05-23 |
+| E14 | Pen-test report (Q2 2026) | External vendor | `s3://loop-pentest-archive/2026-q2/` (out-of-band PDF) | CC6.2 | Security Eng | 2026-07-04 |
+
+### People / IT / Legal evidence (out-of-repo, owner-driven)
+
+| # | Evidence item | Source | Controls | Owner | Ready by |
+| --- | --- | --- | --- | --- | --- |
+| P01 | Code of conduct signed (all staff) | HRIS attestations | CC1.1 | People | 2026-06-06 |
+| P02 | Security awareness training completion records | Vanta training module | CC1.2 | People | 2026-06-13 |
+| P03 | Background check reports (all production-access staff) | Checkr reports | CC1.4 | People | 2026-06-06 |
+| P04 | Org chart (current) | HRIS export | CC1.3 | People | 2026-06-06 |
+| P05 | IdP SSO + MFA policy export | Okta / Google Workspace | CC6.1 | IT | 2026-05-23 |
+| P06 | Onboarding/offboarding workflows (last 12 months) | HRIS-driven IdP provisioning | CC6.3 | People + IT | 2026-06-06 |
+| P07 | Endpoint MDM compliance report | Kandji / Jamf / Intune | CC6.4, CC6.8 | IT | 2026-05-23 |
+| P08 | Production IAM export (least-privilege review) | Cloud provider IAM | CC6.2, CC6.5 | Eng | 2026-06-20 |
+| P09 | Subprocessor DPA list | Legal | CC9.1 | Legal | 2026-06-20 |
+| P10 | Vendor risk-tier review | Vanta vendor module | CC9.2 | Security Eng | 2026-06-20 |
+| P11 | Production deploy approval records (last 90 days) | GH Actions environment protection rules | CC5.2 | Eng | 2026-07-04 |
+| P12 | Management assertion (signed by CEO) | CEO | All families | CEO | 2026-07-28 |
+
 ## Change log
 
 | Date       | Author       | Change                                         |
 | ---------- | ------------ | ---------------------------------------------- |
 | 2026-04-30 | GitHub Copilot (S046) | Initial kickoff tracker for Type 1.   |
 | 2026-05-01 | copilot-titan (S571) | Added "Evidence sources index" mapping each CI gate / repo file → controls satisfied → auditor pull pattern; flipped CC7.1 to done; CC8.2 evidence pointer made concrete. |
+| 2026-05-02 | copilot-thor (S582) | Kickoff meeting record added (§Kickoff meeting); evidence list finalised (§Evidence list — Type 1 pack); audit window dates committed (§Audit window & key dates); Vanta integration items and key milestones updated to reflect kickoff completion. |
