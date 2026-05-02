@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:26:46.346861+00:00",
+    "generated_at": "2026-05-02T06:27:02.601757+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4400,8 +4400,8 @@
       "epic": "E17",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s659-ga-polish-docs-loop-example-v1-m\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:26:46Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s659-ga-polish-docs-loop-example-v1-m (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:27:02Z (copilot-titan)\nTests: tests/test_docs_site.py\nDocs touched: docs/site/introduction.mdx,docs/site/quickstart.mdx,docs/site/tutorials/build-support-agent.mdx,docs/site/tutorials/connect-channels.mdx,docs/site/tutorials/eval-and-deploy.mdx,docs/site/PARTNER_REVIEWS.md\nFollow-ups: none"
     },
     {
       "id": "S670",
