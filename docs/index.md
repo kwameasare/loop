@@ -30,6 +30,8 @@ evaluate AI agents that talk to real users on real channels.
   provider quality, latency, and cost matrix.
 - [Runtime SSE 1000-concurrency](./perf/runtime_sse_1000_concurrency.md)
   — high-concurrency streaming acceptance gate.
+- [Runtime baseline](./perf/runtime-baseline.md) — 100 turns/minute
+  latency report.
 - [Tool-host warm-start](./perf/tool_host_warm_start.md) — nightly WarmPool
   p95 budget gate.
 
@@ -50,6 +52,7 @@ docs/
     cp_api_5000_rps.md
     gateway_cache_hit_ratio.md
     gateway_provider_eval.md
+    runtime-baseline.md
     runtime_sse_1000_concurrency.md
     tool_host_warm_start.md
   cookbook/             # opinionated, end-to-end examples

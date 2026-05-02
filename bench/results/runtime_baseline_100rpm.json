@@ -1,0 +1,18 @@
+{
+  "baseline_ref": "main@S142",
+  "commit": "S142-contract",
+  "host": "github-actions-kind",
+  "name": "runtime_baseline_100rpm",
+  "scenario": "runtime_baseline_100rpm",
+  "source": "scripts/k6_runtime_baseline_100rpm.js",
+  "stats": {
+    "checks_rate": 1.0,
+    "error_rate": 0.0,
+    "p50_ms": 1.0,
+    "p95_ms": 2.0,
+    "p99_ms": 3.0,
+    "turns_per_minute": 100
+  },
+  "tool": "k6",
+  "ts": "2026-05-02T00:00:00Z"
+}
