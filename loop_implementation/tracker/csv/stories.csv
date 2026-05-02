@@ -1058,7 +1058,14 @@ Open questions: none
 Blockers: Need AWS KMS sandbox credentials/key ARN and region to run the required live integration against a customer-managed AWS KMS key. Local code uses Workspace.tenant_kms_key_id for envelope encryption and verifies the AWS-KMS-labeled backend contract in unit tests.
 Commits: eb6c4c3 feat(control-plane): thread workspace cmk refs; 1b782ac feat(control-plane): add workspace envelope encryption; 7946088 test(control-plane): cover workspace cmk envelopes; f88893f docs(security): document workspace cmk envelope use"
 S637,"ent: BYO Vault integration (existing tenant Vault, not Loop's)",tbd,S28,E20,2,P0,Not started,AC: vault_address + role configurable per workspace; secrets-rotation runbook updated.
-S638,ent: dedicated single-tenant deploy mode (one helm-install per customer),tbd,S28,E20,3,P1,Not started,AC: 'enterprise' values produce isolated stack; smoke test.
+S638,ent: dedicated single-tenant deploy mode (one helm-install per customer),codex-orion,S28,E20,3,P1,In progress,"**Active.**
+Branch: codex-orion/s638-ent-dedicated-single-tenant-depl
+Skill: skills/architecture/cloud-portability-check.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T06:05:34Z (codex-orion)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S639,ent: on-prem parity matrix verification (cloud-vs-onprem feature gates),codex-orion,S28,E13,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-orion/s639-ent-on-prem-parity-matrix-verifi (merged + deletable)

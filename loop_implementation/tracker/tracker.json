@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:05:03.687567+00:00",
+    "generated_at": "2026-05-02T06:05:34.664155+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4274,13 +4274,13 @@
     {
       "id": "S638",
       "title": "ent: dedicated single-tenant deploy mode (one helm-install per customer)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S28",
       "epic": "E20",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: 'enterprise' values produce isolated stack; smoke test."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s638-ent-dedicated-single-tenant-depl\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:05:34Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S639",
