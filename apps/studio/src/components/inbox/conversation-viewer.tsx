@@ -12,6 +12,10 @@ export type TakeoverFn = (args: {
   conversation_id: string;
 }) => Promise<{ ok: boolean; error?: string }>;
 
+export type HandbackFn = (args: {
+  conversation_id: string;
+}) => Promise<{ ok: boolean; error?: string }>;
+
 export type PostMessageFn = (args: {
   conversation_id: string;
   body: string;
@@ -24,6 +28,7 @@ export interface ConversationViewerProps {
   operator_id?: string;
   takeover?: TakeoverFn;
   postMessage?: PostMessageFn;
+  handback?: HandbackFn;
   initialOwnership?: "agent" | "operator";
 }
 
@@ -69,6 +74,8 @@ export function ConversationViewer(props: ConversationViewerProps) {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [confirmHandback, setConfirmHandback] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -132,6 +139,32 @@ export function ConversationViewer(props: ConversationViewerProps) {
     }
   }
 
+  async function handleHandback() {
+    if (!props.handback || ownership !== "operator" || busy) return;
+    setBusy(true);
+    setErrorMsg(null);
+    try {
+      const res = await props.handback({
+        conversation_id: props.conversation_id,
+      });
+      if (res.ok) {
+        setOwnership("agent");
+        setConfirmHandback(false);
+        setToast("Handed back to agent.");
+      } else {
+        setErrorMsg(res.error ?? "Handback failed");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    if (toast === null) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
   return (
     <section
       className="flex flex-col gap-3"
@@ -182,12 +215,25 @@ export function ConversationViewer(props: ConversationViewerProps) {
             {busy ? "Taking over…" : "Takeover"}
           </button>
         ) : (
-          <span
-            className="rounded bg-emerald-100 px-2 py-0.5 text-emerald-700"
-            data-testid="conversation-owned-badge"
-          >
-            Operator
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className="rounded bg-emerald-100 px-2 py-0.5 text-emerald-700"
+              data-testid="conversation-owned-badge"
+            >
+              Operator
+            </span>
+            {props.handback ? (
+              <button
+                className="rounded border border-zinc-300 bg-white px-3 py-1 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                data-testid="conversation-handback"
+                disabled={busy}
+                onClick={() => setConfirmHandback(true)}
+                type="button"
+              >
+                Hand back to agent
+              </button>
+            ) : null}
+          </div>
         )}
       </div>
 
@@ -275,6 +321,54 @@ export function ConversationViewer(props: ConversationViewerProps) {
           </button>
         </div>
       </form>
+
+      {confirmHandback ? (
+        <div
+          aria-modal
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+          data-testid="conversation-handback-modal"
+          role="dialog"
+        >
+          <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-lg">
+            <h2 className="text-base font-semibold">Hand back to agent?</h2>
+            <p className="mt-1 text-sm text-zinc-600">
+              The agent will resume control of this conversation. Any
+              pending operator drafts will be discarded.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                className="rounded border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-50"
+                data-testid="conversation-handback-cancel"
+                disabled={busy}
+                onClick={() => setConfirmHandback(false)}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+                data-testid="conversation-handback-confirm"
+                disabled={busy}
+                onClick={handleHandback}
+                type="button"
+              >
+                {busy ? "Handing back…" : "Hand back"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {toast ? (
+        <div
+          aria-live="polite"
+          className="fixed bottom-4 right-4 z-50 rounded-lg bg-zinc-900 px-3 py-2 text-sm text-white shadow-lg"
+          data-testid="conversation-toast"
+          role="status"
+        >
+          {toast}
+        </div>
+      ) : null}
     </section>
   );
 }

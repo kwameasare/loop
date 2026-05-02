@@ -12,6 +12,10 @@ async function fixtureTakeover() {
   return { ok: true as const };
 }
 
+async function fixtureHandback() {
+  return { ok: true as const };
+}
+
 async function fixturePostMessage({
   conversation_id,
   body,
@@ -48,6 +52,7 @@ export default function ConversationPage({
       </header>
       <ConversationViewer
         conversation_id={conversation_id}
+        handback={fixtureHandback}
         initialTranscript={FIXTURE_TRANSCRIPT}
         postMessage={fixturePostMessage}
         subscribe={fixtureSubscriber}

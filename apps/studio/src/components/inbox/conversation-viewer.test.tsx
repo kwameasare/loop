@@ -227,3 +227,95 @@ describe("ConversationViewer takeover + composer", () => {
     });
   });
 });
+
+describe("ConversationViewer handback", () => {
+  it("opens confirmation modal then calls handback handler on confirm", async () => {
+    const stub = makeSubscriber();
+    let handbackCalls = 0;
+    const handback = async () => {
+      handbackCalls += 1;
+      return { ok: true as const };
+    };
+    render(
+      <ConversationViewer
+        conversation_id={FIXTURE_CONVERSATION_ID}
+        handback={handback}
+        initialOwnership="operator"
+        initialTranscript={FIXTURE_TRANSCRIPT}
+        subscribe={stub.subscriber}
+      />,
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conversation-handback"));
+    });
+    expect(
+      screen.getByTestId("conversation-handback-modal"),
+    ).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conversation-handback-confirm"));
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("conversation-takeover")).toBeInTheDocument();
+    });
+    expect(handbackCalls).toBe(1);
+    expect(screen.getByTestId("conversation-toast").textContent).toMatch(
+      /Handed back/,
+    );
+  });
+
+  it("cancel closes the modal without invoking the handler", async () => {
+    const stub = makeSubscriber();
+    let handbackCalls = 0;
+    const handback = async () => {
+      handbackCalls += 1;
+      return { ok: true as const };
+    };
+    render(
+      <ConversationViewer
+        conversation_id={FIXTURE_CONVERSATION_ID}
+        handback={handback}
+        initialOwnership="operator"
+        initialTranscript={FIXTURE_TRANSCRIPT}
+        subscribe={stub.subscriber}
+      />,
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conversation-handback"));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conversation-handback-cancel"));
+    });
+    expect(screen.queryByTestId("conversation-handback-modal")).toBeNull();
+    expect(handbackCalls).toBe(0);
+    expect(screen.getByTestId("conversation-owned-badge")).toBeInTheDocument();
+  });
+
+  it("shows error toast on handback failure and keeps operator ownership", async () => {
+    const stub = makeSubscriber();
+    const handback = async () => ({
+      ok: false as const,
+      error: "network-error",
+    });
+    render(
+      <ConversationViewer
+        conversation_id={FIXTURE_CONVERSATION_ID}
+        handback={handback}
+        initialOwnership="operator"
+        initialTranscript={FIXTURE_TRANSCRIPT}
+        subscribe={stub.subscriber}
+      />,
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conversation-handback"));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conversation-handback-confirm"));
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("conversation-error").textContent).toMatch(
+        /network-error/,
+      );
+    });
+    expect(screen.getByTestId("conversation-owned-badge")).toBeInTheDocument();
+  });
+});
