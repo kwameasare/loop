@@ -1364,7 +1364,14 @@ Final heartbeat: 2026-05-02T06:40:09Z (copilot-titan)
 Tests: tests/test_fuzz_harness.py
 Docs touched: loop_implementation/engineering/SECURITY.md
 Follow-ups: none"
-S801,security: threat-model verification — STRIDE checklist gate per PR touching auth/security paths,tbd,S35,E16,2,P0,Not started,AC: PRs touching auth/RLS/secrets fail without docs/THREAT_MODEL.md update; bot enforces.
+S801,security: threat-model verification — STRIDE checklist gate per PR touching auth/security paths,copilot-titan,S35,E16,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s801-security-threat-model-verificati (merged + deletable)
+Skill: skills/api/api-versioning.md
+Final heartbeat: 2026-05-02T06:42:39Z (copilot-titan)
+Tests: tests/test_threat_model_gate.py
+Docs touched: docs/THREAT_MODEL.md
+Follow-ups: none"
 S802,security: SLSA Level 3 build provenance for container images (in-toto attestations),tbd,S35,E16,3,P0,Not started,AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing.
 S803,security: runtime detection (Falco rules) for sandbox + cp-api anomalies,tbd,S35,E16,2,P0,Not started,AC: rules deployed; alerts on shell-exec / unauthorized syscall / unexpected egress; tested with red-team triggers.
 S804,"security: chaos-engineering harness (network partition, DB failover, NATS outage)",tbd,S35,E16,3,P1,Not started,AC: scripted scenarios run weekly in staging; recovery time + data-loss measured; runbook updates from findings.

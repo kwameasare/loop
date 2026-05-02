@@ -1,0 +1,42 @@
+name: threat-model-gate
+
+# STRIDE checklist gate (S801).
+#
+# Fails the PR check when a change touches an auth/RLS/secrets path
+# without also updating docs/THREAT_MODEL.md. A documented bypass is
+# allowed via the literal token 'threat-model: skip' in the PR body.
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  threat-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Collect changed files
+        id: diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr diff "${{ github.event.pull_request.number }}" --name-only \
+            > changed-files.txt
+          echo "----- changed files -----"
+          cat changed-files.txt
+
+      - name: Run STRIDE gate
+        env:
+          LOOP_GATE_PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          python tools/check_threat_model.py \
+            --changed-files changed-files.txt
