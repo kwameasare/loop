@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:19:12.150998+00:00",
+    "generated_at": "2026-05-02T06:19:41.667314+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4208,13 +4208,13 @@
     {
       "id": "S632",
       "title": "audit: audit log export CSV",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S28",
       "epic": "E20",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: filtered export in <30s for ≤100k rows."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s632-audit-audit-log-export-csv (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:16:17Z (copilot-titan)\nTests: packages/control-plane/_tests/test_audit_export.py\nDocs touched: packages/control-plane/loop_control_plane/audit_export.py\nFollow-ups: none"
     },
     {
       "id": "S633",
@@ -4241,13 +4241,13 @@
     {
       "id": "S635",
       "title": "audit: GDPR Art-17 data-deletion request endpoint + workflow",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S28",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: POST /v1/workspaces/{id}/data-deletion enqueues job; results emailed."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s635-audit-gdpr-art-17-data-deletion (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:18:03Z (copilot-titan)\nTests: packages/control-plane/_tests/test_data_deletion.py\nDocs touched: packages/control-plane/loop_control_plane/data_deletion.py\nFollow-ups: none"
     },
     {
       "id": "S636",
@@ -5440,13 +5440,13 @@
     {
       "id": "S846",
       "title": "perf: regression budget — any 5%+ p95 regression blocks PR",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S37",
       "epic": "E9",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: perf CI check compares to last 7-day baseline; PR fails if breaches."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s846-perf-regression-budget-any-5-p95\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:13:38Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     }
   ],
   "sprints": [

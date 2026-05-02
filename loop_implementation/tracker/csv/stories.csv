@@ -1059,10 +1059,24 @@ Final heartbeat: 2026-05-02T06:09:56Z (copilot-titan)
 Tests: apps/studio/src/components/workspaces/audit-log-page.test.tsx
 Docs touched: apps/studio/src/components/workspaces/audit-log-page.tsx
 Follow-ups: none"
-S632,audit: audit log export CSV,tbd,S28,E20,1,P0,Not started,AC: filtered export in <30s for ≤100k rows.
+S632,audit: audit log export CSV,copilot-titan,S28,E20,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s632-audit-audit-log-export-csv (merged + deletable)
+Skill: skills/api/api-versioning.md
+Final heartbeat: 2026-05-02T06:16:17Z (copilot-titan)
+Tests: packages/control-plane/_tests/test_audit_export.py
+Docs touched: packages/control-plane/loop_control_plane/audit_export.py
+Follow-ups: none"
 S633,audit: SIEM webhook (Datadog/Splunk/generic),tbd,S28,E20,2,P1,Not started,AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify.
 S634,audit: DPA template + redlines workflow,tbd,S28,E20,2,P1,Not started,AC: DPA.md + redlines mechanism documented; sample redline-PR closed.
-S635,audit: GDPR Art-17 data-deletion request endpoint + workflow,tbd,S28,E16,2,P0,Not started,AC: POST /v1/workspaces/{id}/data-deletion enqueues job; results emailed.
+S635,audit: GDPR Art-17 data-deletion request endpoint + workflow,copilot-titan,S28,E16,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s635-audit-gdpr-art-17-data-deletion (merged + deletable)
+Skill: skills/api/api-versioning.md
+Final heartbeat: 2026-05-02T06:18:03Z (copilot-titan)
+Tests: packages/control-plane/_tests/test_data_deletion.py
+Docs touched: packages/control-plane/loop_control_plane/data_deletion.py
+Follow-ups: none"
 S636,ent: customer-managed KMS key (CMK) per workspace,codex-orion,S28,E20,3,P0,Blocked,"**Blocked.**
 Branch: codex-orion/s636-ent-customer-managed-kms-key-cmk
 Skill: skills/security/secrets-kms-check.md
@@ -1362,4 +1376,11 @@ Final heartbeat: 2026-05-02T05:51:04Z (codex-orion)
 Tests: uv run ruff check/pyright tests/test_cp_api_5000_rps.py; uv run pytest -q tests/test_cp_api_5000_rps.py tests/test_docs_links.py tests/test_helm_e2e_workflow.py; tracker/docs gates pass
 Docs touched: docs/perf/cp_api_5000_rps.md,docs/index.md,bench/results/cp_api_5000_rps.json,.github/workflows/cp-api-5000-rps.yml
 Follow-ups: none"
-S846,perf: regression budget — any 5%+ p95 regression blocks PR,tbd,S37,E9,2,P0,Not started,AC: perf CI check compares to last 7-day baseline; PR fails if breaches.
+S846,perf: regression budget — any 5%+ p95 regression blocks PR,codex-vega,S37,E9,2,P0,In progress,"**Active.**
+Branch: codex-vega/s846-perf-regression-budget-any-5-p95
+Skill: skills/testing/perf-check.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T06:13:38Z (codex-vega)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
