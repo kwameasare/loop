@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T13:47:06.355099+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4230,13 +4230,13 @@
     {
       "id": "S634",
       "title": "audit: DPA template + redlines workflow",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S28",
       "epic": "E20",
       "points": 2,
       "priority": "P1",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s634-audit-dpa-template-redlines-work (merged + deletable)\nSkill: loop_implementation/skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T13:47:06Z (copilot-thor)\nTests: 28 pytest (test_dpa.py): DPA.md structure, required clauses, Annexes I-II, breach-notification SLA, SCCs reference, redlines workflow roles, PR naming, SLA, sample PR, escalation\nDocs touched: loop_implementation/engineering/DPA.md; loop_implementation/engineering/DPA_REDLINES.md\nFollow-ups: SCCs addendum; HIPAA BAA template; customer self-service DPA portal"
+      "status": "Not started",
+      "notes": "AC: DPA.md + redlines mechanism documented; sample redline-PR closed."
     },
     {
       "id": "S635",

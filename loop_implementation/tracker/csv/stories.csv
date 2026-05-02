@@ -1068,14 +1068,7 @@ Tests: packages/control-plane/_tests/test_audit_export.py
 Docs touched: packages/control-plane/loop_control_plane/audit_export.py
 Follow-ups: none"
 S633,audit: SIEM webhook (Datadog/Splunk/generic),tbd,S28,E20,2,P1,Not started,AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify.
-S634,audit: DPA template + redlines workflow,copilot-thor,S28,E20,2,P1,Done,"**Done.**
-PR: (opened by squash-merge)
-Branch: copilot-thor/s634-audit-dpa-template-redlines-work (merged + deletable)
-Skill: loop_implementation/skills/api/add-rest-endpoint.md
-Final heartbeat: 2026-05-02T13:47:06Z (copilot-thor)
-Tests: 28 pytest (test_dpa.py): DPA.md structure, required clauses, Annexes I-II, breach-notification SLA, SCCs reference, redlines workflow roles, PR naming, SLA, sample PR, escalation
-Docs touched: loop_implementation/engineering/DPA.md; loop_implementation/engineering/DPA_REDLINES.md
-Follow-ups: SCCs addendum; HIPAA BAA template; customer self-service DPA portal"
+S634,audit: DPA template + redlines workflow,tbd,S28,E20,2,P1,Not started,AC: DPA.md + redlines mechanism documented; sample redline-PR closed.
 S635,audit: GDPR Art-17 data-deletion request endpoint + workflow,copilot-titan,S28,E16,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-titan/s635-audit-gdpr-art-17-data-deletion (merged + deletable)
