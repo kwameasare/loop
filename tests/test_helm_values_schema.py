@@ -67,6 +67,15 @@ def test_schema_rejects_unknown_image_pull_policy() -> None:
         jsonschema.validate(bad, schema)
 
 
+def test_schema_rejects_unknown_deployment_mode() -> None:
+    schema = _load_schema()
+    bad = copy.deepcopy(_load_yaml(BASE_VALUES))
+    assert isinstance(bad["global"], dict)
+    bad["global"]["deploymentMode"] = "partial"
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(bad, schema)
+
+
 def test_schema_rejects_missing_required_top_level_section() -> None:
     schema = _load_schema()
     bad = copy.deepcopy(_load_yaml(BASE_VALUES))
