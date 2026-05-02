@@ -693,7 +693,14 @@ Final heartbeat: 2026-05-02T03:24:21Z (copilot-thor)
 Tests: vitest covers NodePalette renders all 7 kinds with distinct icons + dragStart callback; FlowEditor drop creates node, multiple drops use distinct types, ignores empty drops
 Docs touched: apps/studio/src/components/flow/flow-editor.tsx,apps/studio/src/components/flow/node-palette.tsx,apps/studio/src/lib/flow-nodes.ts,apps/studio/src/app/agents/[agent_id]/flow/page.tsx
 Follow-ups: none"
-S462,flow: node config sidebar (per-type form),tbd,S19,E10,3,P0,Not started,AC: clicking a node opens sidebar; form fields persist on blur; validation surfaces.
+S462,flow: node config sidebar (per-type form),copilot-thor,S19,E10,3,P0,In progress,"**Active.**
+Branch: copilot-thor/s462-flow-node-config-sidebar-per-typ
+Skill: skills/ux/component-design.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T03:24:38Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S463,flow: edge editing (connect/disconnect/redirect),tbd,S19,E10,2,P0,Not started,AC: drag-from-handle connects; click edge → delete confirm.
 S464,flow: variable inspector (state at any node),tbd,S19,E10,2,P0,Not started,AC: side panel shows live state during emulator run.
 S465,"flow: serialize to YAML (deterministic, sorted keys)",GitHub Copilot,S19,E10,2,P0,Done,"Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/data/yaml-determinism.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_runtime/yaml_serializer.py — serialize_flow(graph) emits yaml.safe_dump(sort_keys=False, width=200) with stable ordering and default-omission so two serializations of the same graph are byte-identical. Defaults dropped: agent_version when 'latest', timeout_ms when 30000, reducer when 'first_non_empty'. Edges emit {from, to, condition?}; ParallelOperator uses key 'branches' (matches yaml_compiler reader). Tests: byte-equal across runs, defaults omitted, edge dict shape, branches key parity, compile->serialize idempotent. Open questions: schema-versioned migration tags for older flow yaml live in S466 reader."

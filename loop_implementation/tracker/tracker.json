@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:24:21.162721+00:00",
+    "generated_at": "2026-05-02T03:24:38.160753+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3262,13 +3262,13 @@
     {
       "id": "S462",
       "title": "flow: node config sidebar (per-type form)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S19",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: clicking a node opens sidebar; form fields persist on blur; validation surfaces."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s462-flow-node-config-sidebar-per-typ\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T03:24:38Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S463",
