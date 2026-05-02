@@ -13,6 +13,11 @@ The shipped `InMemory*` impls drive the unit tests and the studio dev
 runner; the real adapters land in S016b under loop_voice.adapters.
 """
 
+from loop_voice.connection_pool import (
+    ConnectionPoolError,
+    PooledWebSocket,
+    WarmWebSocketPool,
+)
 from loop_voice.echo import make_echo_agent
 from loop_voice.latency import (
     DEFAULT_BUDGET,
@@ -70,6 +75,7 @@ __all__ = [
     "AgentResponder",
     "AudioFrame",
     "BudgetBreach",
+    "ConnectionPoolError",
     "InMemoryPhoneNumberProvisioner",
     "InMemoryRealtimeTransport",
     "InMemorySpeechToText",
@@ -85,6 +91,7 @@ __all__ = [
     "PhoneNumberSearchQuery",
     "PhoneNumberStatus",
     "PhoneProvisioningError",
+    "PooledWebSocket",
     "PrewarmableTextToSpeech",
     "RealtimeTransport",
     "SignalKind",
@@ -96,6 +103,7 @@ __all__ = [
     "VoiceSession",
     "VoiceTurn",
     "VoiceTurnState",
+    "WarmWebSocketPool",
     "WebRTCError",
     "WebRTCSession",
     "WebRTCSessionRegistry",
