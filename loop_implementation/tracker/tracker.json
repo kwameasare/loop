@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:27:19.305721+00:00",
+    "generated_at": "2026-05-02T05:28:13.104737+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4043,13 +4043,13 @@
     {
       "id": "S594",
       "title": "region: studio region selector at workspace creation",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S26",
       "epic": "E10",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: dropdown defaults to inferred region; selection persisted; clear cannot-change-later notice."
+      "status": "Done",
+      "notes": "**Done.**\nPR: https://github.com/kwameasare/loop/pull/49 (squash-merged 2026-05-02T05:23Z)\nBranch: copilot-titan/s594-region-studio-region-selector-at (merged + deletable)\nSkill: skills/api/typescript-frontend.md\nFinal heartbeat: 2026-05-02T05:23:14Z (copilot-titan)\nTests: apps/studio src/lib/regions.test.ts (5 passed) + src/components/workspaces/workspace-create-form.test.tsx (5 passed) — 10 total. Validates region catalog ↔ RegionName invariant, TZ-based inference table, default region selection, cannot-change-later notice presence, submit-payload shape, validation, dropdown-driven description swap.\nDocs touched: apps/studio/src/lib/regions.ts, apps/studio/src/lib/regions.test.ts, apps/studio/src/components/workspaces/workspace-create-form.tsx, apps/studio/src/components/workspaces/workspace-create-form.test.tsx, apps/studio/src/app/workspaces/new/page.tsx (inline docstrings cite cannot-change-later contract from S593)\nFollow-ups: S023 (swap stub fetch for generated cp-api client)"
     },
     {
       "id": "S595",
@@ -4307,13 +4307,13 @@
     {
       "id": "S651",
       "title": "voice-perf: TTS pre-warm + sentence-boundary streaming",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S29",
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: TTS speaks before LLM finishes; measurable p50 cut."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s651-voice-perf-tts-pre-warm-sentence\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:23:49Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S652",
@@ -5664,7 +5664,7 @@
       "theme": "EU region (data residency)",
       "goal": "Region pinning, EU stack, region-aware routing, cross-region export blocker, smoke test.",
       "stories": "S590-S597",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S27",
