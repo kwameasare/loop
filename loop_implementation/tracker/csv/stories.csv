@@ -1128,11 +1128,12 @@ Follow-ups: none"
 S781,docs: cloud-portability proof report (Wk-by-Wk parity matrix shipped to docs/CLOUD_PROOF.md),codex-orion,S34,E17,1,P0,In progress,"**Active.**
 Branch: codex-orion/s781-docs-cloud-portability-proof-rep
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-02T05:19:54Z (codex-orion)
+Last step: 1/4
+Heartbeat: 2026-05-02T05:25:57Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: proof page and nightly mark publisher landed"
 S800,security: continuous fuzz testing of cp-api + dp-runtime (atheris/restler),tbd,S35,E16,3,P0,Not started,AC: fuzz harness runs in CI nightly; crashes/oom auto-issue; coverage report.
 S801,security: threat-model verification — STRIDE checklist gate per PR touching auth/security paths,tbd,S35,E16,2,P0,Not started,AC: PRs touching auth/RLS/secrets fail without docs/THREAT_MODEL.md update; bot enforces.
 S802,security: SLSA Level 3 build provenance for container images (in-toto attestations),tbd,S35,E16,3,P0,Not started,AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing.
