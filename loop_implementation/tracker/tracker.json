@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T12:26:29.643654+00:00",
+    "generated_at": "2026-05-02T12:28:29.213680+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5247,8 +5247,8 @@
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s806-ops-incident-response-runbook-ga\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-02T12:26:29Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s806-ops-incident-response-runbook-ga (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T12:28:29Z (copilot-thor)\nTests: 13 pytest (packages/control-plane/_tests/test_ir_runbook.py): test_ir_runbook_exists, test_ir_runbook_has_required_sections, test_ir_runbook_defines_all_roles, test_ir_runbook_references_all_severity_levels, test_ir_runbook_includes_rollback_procedure, test_ir_runbook_references_pir, test_ir_runbook_references_game_day_log, test_game_day_log_exists, test_game_day_log_has_at_least_one_session, test_game_day_log_records_outcome, test_game_day_log_has_gap_tracker, test_game_day_log_gaps_have_owners, test_game_day_log_references_ir_runbook\nDocs touched: loop_implementation/engineering/INCIDENT_RESPONSE_RUNBOOK.md; loop_implementation/engineering/GAME_DAY_LOG.md\nFollow-ups: Wire /incident declare Slack command; schedule monthly game-day calendar invite; create pirs/ directory"
     },
     {
       "id": "S807",
