@@ -1158,14 +1158,14 @@ Final heartbeat: 2026-05-02T06:23:57Z (copilot-titan)
 Tests: apps/studio/src/components/__a11y__/a11y-audit.test.ts
 Docs touched: apps/studio/a11y/AXE_AUDIT.md
 Follow-ups: none"
-S657,"ga-polish: i18n scaffolding (en, es, de, fr, ja)",copilot-thor,S29,E10,2,P1,In progress,"**Active.**
-Branch: copilot-thor/s657-ga-polish-i18n-scaffolding-en-es
+S657,"ga-polish: i18n scaffolding (en, es, de, fr, ja)",copilot-thor,S29,E10,2,P1,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s657-ga-polish-i18n-scaffolding-en-es (merged + deletable)
 Skill: loop_implementation/skills/_base/skill.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-02T14:07:55Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T14:10:25Z (copilot-thor)
+Tests: 21 vitest (i18n.test.ts: 18, language-switcher.test.tsx: 3): module structure, 5 language coverage, key completeness, initialisation, language switching, fallback, component render+change
+Docs touched: apps/studio/src/lib/i18n.ts; apps/studio/src/locales/{en,es,de,fr,ja}/common.json; apps/studio/src/components/shell/language-switcher.tsx
+Follow-ups: lazy-load per-locale JSON; date/number formatters; RTL support; auto-detect browser language"
 S658,ga-polish: support runbook + ticketing integration (Front),tbd,S29,E17,1,P1,Not started,AC: tickets reach support@; routing rules documented.
 S659,ga-polish: docs.loop.example v1 (Mintlify) — getting started + 3 tutorials,copilot-titan,S29,E17,3,P0,Done,"**Done.**
 PR: (opened by squash-merge)
