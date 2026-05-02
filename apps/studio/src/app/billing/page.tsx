@@ -1,10 +1,16 @@
 import { BillingPanel } from "@/components/billing/billing-panel";
+import { UpdatePaymentMethod } from "@/components/billing/update-payment-method";
 import {
   FIXTURE_BILLING,
   FIXTURE_BILLING_NOW_MS,
 } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
+
+async function fixturePaymentMethodSubmit(_args: { cardholderName: string }) {
+  // Server route would call Stripe here; the fixture echoes a stable last4.
+  return { ok: true as const, last4: "4242" };
+}
 
 export default function BillingPage(): JSX.Element {
   return (
@@ -17,10 +23,16 @@ export default function BillingPage(): JSX.Element {
           methods.
         </p>
       </header>
-      <BillingPanel
-        billing={FIXTURE_BILLING}
-        now_ms={FIXTURE_BILLING_NOW_MS}
-      />
+      <div className="flex flex-col gap-6">
+        <BillingPanel
+          billing={FIXTURE_BILLING}
+          now_ms={FIXTURE_BILLING_NOW_MS}
+        />
+        <UpdatePaymentMethod
+          initialLast4={FIXTURE_BILLING.payment_method_last4}
+          submit={fixturePaymentMethodSubmit}
+        />
+      </div>
     </main>
   );
 }
