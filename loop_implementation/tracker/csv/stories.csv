@@ -749,7 +749,14 @@ Final heartbeat: 2026-05-02T03:39:28Z (copilot-thor)
 Tests: emulator-transport unit tests cover fixture stream + extractTokenText; FlowEmulatorPanel renders empty/disabled, streams tokens to chat preview, forwards events to onTurnEvent, surfaces degrade as inline error, Stop cancels in-flight stream, ignores whitespace-only input
 Docs touched: apps/studio/src/components/flow/flow-emulator-panel.tsx,apps/studio/src/lib/emulator-transport.ts
 Follow-ups: none"
-S469,flow: undo/redo with capped history,tbd,S19,E10,2,P1,Not started,AC: Cmd+Z undoes last node/edge change; capped at 50.
+S469,flow: undo/redo with capped history,copilot-thor,S19,E10,2,P1,In progress,"**Active.**
+Branch: copilot-thor/s469-flow-undo-redo-with-capped-histo
+Skill: skills/api/add-rest-endpoint.md
+Last step: 0/4 (just claimed)
+Heartbeat: 2026-05-02T12:55:54Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S470,"flow: validation - missing-edge, unreachable-node, dangling-condition",GitHub Copilot,S19,E10,2,P0,Done,"Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/data/flow-validation.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_runtime/flow_validation.py — FlowIssueKind {MISSING_EDGE, DANGLING_CONDITION, UNREACHABLE_NODE, NO_TERMINAL_FROM_ENTRY, DUPLICATE_OUTPUT_KEY}. _CONDITION_PATTERN '^\s*(?P<key>[A-Za-z_][A-Za-z0-9_]*)\s*(?:==|!=)\s*(?P<rhs>.+?)\s*$' parses edge guards. validate_flow(graph) returns sorted FlowIssue list (by node_id, kind) so the studio banner is deterministic. Duplicate-output-key check excludes TerminalNode (terminals legitimately echo upstream keys). AgentGraph constructor already rejects unreachable nodes (pydantic ValidationError); this lint surfaces the same set non-fatally. Tests: clean graph yields []; dangling condition flagged when key not present in upstream outputs; duplicate output key flagged across non-terminal nodes; sorted output. Open questions: studio per-node UI markers wire onto FlowIssue.node_id in S471."
 S471,"flow: 3 starter templates (FAQ, support-triage, lead-qual)",tbd,S19,E10,2,P1,Not started,AC: 'New agent from template' picks one of three; each runs out of the box.
 S472,"flow: integration test — build a graph, save, run, expected branch hit",copilot-thor,S19,E10,2,P0,Done,"**Done.**

@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T12:55:54.664048+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3339,13 +3339,13 @@
     {
       "id": "S469",
       "title": "flow: undo/redo with capped history",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S19",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: Cmd+Z undoes last node/edge change; capped at 50."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s469-flow-undo-redo-with-capped-histo\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T12:55:54Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S470",
