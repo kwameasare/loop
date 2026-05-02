@@ -920,15 +920,14 @@ Final heartbeat: 2026-05-01T23:25:05Z (codex-orion)
 Tests: Focused ruff/pyright on tests/test_regional_image_promotion_workflow.py; uv run pytest -q tests/test_regional_image_promotion_workflow.py tests/test_cp_api_image_ci.py (9 passed); uv run pytest -q -m 'not integration and not e2e' (1224 passed, 3 skipped, 4 deselected); tracker/docs gates pass. Full repo ruff/format/pyright remain baseline-red in unrelated files.
 Docs touched: .github/workflows/promote-regional-images.yml, loop_implementation/engineering/REGIONAL_DEPLOYS.md
 Follow-ups: none"
-S596,region: metadata-only telemetry (no PII) leaving region,copilot-titan,S26,E16,1,P0,In progress,"**Active.**
-Branch: copilot-titan/s596-region-metadata-only-telemetry-n
+S596,region: metadata-only telemetry (no PII) leaving region,copilot-titan,S26,E16,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s596-region-metadata-only-telemetry-n (merged + deletable)
 Skill: skills/security/secrets-kms-check.md
-Last step: 1
-Heartbeat: 2026-05-02T05:10:16Z (copilot-titan)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)
-Latest checkpoint: Heartbeat: 2026-05-02T00:10Z copilot-titan — about to land PIIScrubber module + exporter wiring (>90 lines, split into feat/test/docs)"
+Final heartbeat: 2026-05-02T05:10:49Z (copilot-titan)
+Tests: packages/sdk-py/_tests/test_region_pii_filter.py (5 new) + test_observability.py (regression) — 12 passed
+Docs touched: loop_implementation/engineering/SECURITY.md
+Follow-ups: none"
 S597,region: smoke test against EU stack (full turn),codex-orion,S26,E12,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-orion/s597-region-smoke-test-against-eu-sta (merged + deletable)

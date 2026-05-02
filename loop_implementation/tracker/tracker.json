@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:11:04.936043+00:00",
+    "generated_at": "2026-05-02T05:11:05.208636+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4070,8 +4070,8 @@
       "epic": "E16",
       "points": 1,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s596-region-metadata-only-telemetry-n\nSkill: skills/security/secrets-kms-check.md\nLast step: 1\nHeartbeat: 2026-05-02T05:10:16Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: Heartbeat: 2026-05-02T00:10Z copilot-titan — about to land PIIScrubber module + exporter wiring (>90 lines, split into feat/test/docs)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s596-region-metadata-only-telemetry-n (merged + deletable)\nSkill: skills/security/secrets-kms-check.md\nFinal heartbeat: 2026-05-02T05:10:49Z (copilot-titan)\nTests: packages/sdk-py/_tests/test_region_pii_filter.py (5 new) + test_observability.py (regression) — 12 passed\nDocs touched: loop_implementation/engineering/SECURITY.md\nFollow-ups: none"
     },
     {
       "id": "S597",
