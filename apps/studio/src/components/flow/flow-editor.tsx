@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   DEFAULT_VIEWPORT,
@@ -24,6 +24,8 @@ import {
   type FlowEdge,
   removeEdge,
 } from "@/lib/flow-edges";
+
+import { useFlowHistory } from "@/lib/use-flow-history";
 
 import { NodePalette } from "./node-palette";
 import { NodeConfigSidebar } from "./node-config-sidebar";
@@ -51,17 +53,44 @@ export interface FlowEditorProps {
 
 export function FlowEditor(props: FlowEditorProps) {
   const [viewport, setViewport] = useState<Viewport>(DEFAULT_VIEWPORT);
-  const [nodes, setNodes] = useState<FlowNode[]>(props.initialNodes ?? []);
+  const {
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    push: pushHistory,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useFlowHistory(props.initialNodes ?? [], props.initialEdges ?? []);
   const [pending, setPending] = useState<FlowNodeType | null>(
     props.pendingDragType ?? null,
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [configs, setConfigs] = useState<Record<string, AnyNodeConfig>>({});
-  const [edges, setEdges] = useState<FlowEdge[]>(props.initialEdges ?? []);
   const [pendingConnect, setPendingConnect] = useState<string | null>(
     props.pendingConnectFromId ?? null,
   );
   const dragRef = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const isMac = navigator.platform.startsWith("Mac");
+      const ctrl = isMac ? e.metaKey : e.ctrlKey;
+      if (!ctrl) return;
+      if (e.key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+      } else if (e.key === "y") {
+        e.preventDefault();
+        redo();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [undo, redo]);
 
   function onMouseDown(e: React.MouseEvent) {
     dragRef.current = { x: e.clientX, y: e.clientY };
@@ -104,7 +133,8 @@ export function FlowEditor(props: FlowEditorProps) {
       x: worldX,
       y: worldY,
     };
-    setNodes((prev) => [...prev, node]);
+    pushHistory();
+    setNodes([...nodes, node]);
     setPending(null);
   }
   function zoomIn() {
@@ -123,7 +153,8 @@ export function FlowEditor(props: FlowEditorProps) {
         ? window.confirm("Delete this edge?")
         : false;
     if (!ok) return;
-    setEdges((prev) => removeEdge(prev, edge.id));
+    pushHistory();
+    setEdges(removeEdge(edges, edge.id));
   }
 
   const transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`;
@@ -172,6 +203,26 @@ export function FlowEditor(props: FlowEditorProps) {
               type="button"
             >
               +
+            </button>
+            <button
+              aria-label="Undo"
+              className="rounded border px-2 py-1 text-sm hover:bg-zinc-100 disabled:opacity-40"
+              data-testid="flow-undo"
+              disabled={!canUndo}
+              onClick={undo}
+              type="button"
+            >
+              ↩
+            </button>
+            <button
+              aria-label="Redo"
+              className="rounded border px-2 py-1 text-sm hover:bg-zinc-100 disabled:opacity-40"
+              data-testid="flow-redo"
+              disabled={!canRedo}
+              onClick={redo}
+              type="button"
+            >
+              ↪
             </button>
             <button
               className="rounded border px-2 py-1 text-sm hover:bg-zinc-100"
@@ -257,9 +308,8 @@ export function FlowEditor(props: FlowEditorProps) {
                     onClick={(e) => {
                       e.stopPropagation();
                       if (pendingConnect && pendingConnect !== n.id) {
-                        setEdges((prev) =>
-                          addEdge(prev, pendingConnect, n.id),
-                        );
+                          pushHistory();
+                          setEdges(addEdge(edges, pendingConnect, n.id));
                         setPendingConnect(null);
                         return;
                       }
@@ -268,9 +318,8 @@ export function FlowEditor(props: FlowEditorProps) {
                     onMouseDown={(e) => e.stopPropagation()}
                     onMouseUp={() => {
                       if (pendingConnect && pendingConnect !== n.id) {
-                        setEdges((prev) =>
-                          addEdge(prev, pendingConnect, n.id),
-                        );
+                        pushHistory();
+                        setEdges(addEdge(edges, pendingConnect, n.id));
                         setPendingConnect(null);
                       }
                     }}
