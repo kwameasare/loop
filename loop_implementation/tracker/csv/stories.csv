@@ -1254,5 +1254,12 @@ Final heartbeat: 2026-05-02T05:46:11Z (codex-orion)
 Tests: uv run ruff check/pyright on runtime SSE smoke files; uv run pytest -q tests/test_runtime_sse_1000.py tests/test_turn_latency_k6.py tests/test_helm_e2e_workflow.py tests/test_docs_links.py; tracker/docs gates pass
 Docs touched: docs/perf/runtime_sse_1000_concurrency.md,docs/index.md,bench/results/runtime_sse_1000_concurrency.json,.github/workflows/runtime-sse-1000.yml
 Follow-ups: none"
-S845,perf: cp-api 5000 RPS sustained (acceptance test),tbd,S37,E12,2,P0,Not started,AC: k6 sustained; error rate < 0.1%; p95 < 100ms; report committed.
+S845,perf: cp-api 5000 RPS sustained (acceptance test),codex-orion,S37,E12,2,P0,In progress,"**Active.**
+Branch: codex-orion/s845-perf-cp-api-5000-rps-sustained-a
+Skill: skills/testing/perf-check.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T05:47:50Z (codex-orion)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S846,perf: regression budget — any 5%+ p95 regression blocks PR,tbd,S37,E9,2,P0,Not started,AC: perf CI check compares to last 7-day baseline; PR fails if breaches.
