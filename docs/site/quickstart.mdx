@@ -1,0 +1,69 @@
+---
+title: "Quickstart"
+description: "Run your first Loop agent in five minutes."
+---
+
+# Quickstart
+
+This guide takes you from zero to a running agent. You'll install the CLI,
+sign in, and run a sample agent locally backed by the Loop gateway.
+
+## Prerequisites
+
+- Python 3.11+ (`python3 --version`)
+- A Loop account — sign up at [app.loop.example](https://app.loop.example/signup)
+
+## 1. Install the CLI
+
+```bash
+pip install loop-sdk
+```
+
+Verify the install:
+
+```bash
+loop --version
+```
+
+## 2. Sign in
+
+```bash
+loop auth login
+```
+
+The CLI opens your browser; complete the OAuth flow and the device-code
+exchange will finish automatically.
+
+## 3. Create an agent
+
+```bash
+loop agent create --name hello-loop --template starter
+```
+
+This scaffolds a minimal `agent.py`, an `evals/` folder with two golden
+tests, and a `loop.toml` manifest.
+
+## 4. Run locally
+
+```bash
+cd hello-loop
+loop agent run
+```
+
+You can now chat with your agent in the terminal. Type `:q` to exit.
+
+## 5. Deploy
+
+```bash
+loop agent deploy
+```
+
+Loop returns a public URL and a `studio` link where you can view traces,
+costs, and conversation history.
+
+## What's next?
+
+- [Build a support agent](/tutorials/build-support-agent) — go beyond the
+  starter template.
+- [Connect channels](/tutorials/connect-channels) — Slack, web, SMS.
+- [Eval and deploy](/tutorials/eval-and-deploy) — gate releases on quality.
