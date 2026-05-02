@@ -79,6 +79,7 @@ when availability or latency budget burn exceeds the fast/slow thresholds.
 - **Per PR (microbenches only).** `pytest-benchmark --benchmark-only` runs on every push touching `packages/runtime/`, `packages/gateway/`, `packages/kb-engine/`. Results compared to `main`'s last green run; >10% regression blocks.
 - **Nightly (full).** Full k6 + locust against staging. Results posted to `#perf` Slack with diffs vs 7-day baseline.
 - **Nightly turn-latency gate.** <!-- S840 --> `.github/workflows/turn-latency-k6.yml` deploys the Helm smoke runtime in kind and runs `scripts/k6_turn_latency.js` against `/v1/turns`. The k6 threshold `http_req_duration p(95)<2000` fails CI on breach and the failure path pages `LOOP_ONCALL_WEBHOOK_URL`.
+- **PR p95 regression budget.** <!-- S846 --> `.github/workflows/perf-regression-budget.yml` runs `scripts/perf_regression_budget.py` on every PR touching committed perf contracts. The script compares each current `bench/results/` p95 to `bench/results/perf_7d_baseline.json`, the last 7-day baseline, and fails the PR on any 5%+ p95 regression. The failure path uploads `bench/results/perf_regression_budget.json` and pages `LOOP_ONCALL_WEBHOOK_URL`.
 - **Pre-release.** Voice leg + load matrix on every release-candidate.
 - **Quarterly.** Cross-cloud comparison run (AWS, GCP, Azure, Alibaba) — same workload, three runs each, results published in the engineering blog.
 
