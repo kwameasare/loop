@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:39:05.496168+00:00",
+    "generated_at": "2026-05-02T05:41:58.378124+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4125,8 +4125,8 @@
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s613-sso-entra-id-recipe-sandbox-tena\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T05:39:05Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s613-sso-entra-id-recipe-sandbox-tena (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T05:41:58Z (copilot-thor)\nTests: 16 pytest (test_entra_integration.py): parse Entra fixture metadata, entity_id/sso_url/cert extraction, sp_entity_id/acs_url generation, group-role map, issuer mismatch, audience mismatch, expired assertion, malformed XML, missing entityID, missing POST binding; full StubSamlValidator ACS loop (happy path, admin role, editor role, default role, issuer reject, audience reject, expiry reject)\nDocs touched: packages/control-plane/loop_control_plane/saml_entra.py module docstring; packages/control-plane/fixtures/entra_idp_metadata.xml fixture README comment\nFollow-ups: S614 Google Workspace recipe; S618 Playwright Entra SP-initiated login e2e"
     },
     {
       "id": "S614",
