@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:27:58.154762+00:00",
+    "generated_at": "2026-05-02T06:28:39.114239+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4406,13 +4406,13 @@
     {
       "id": "S670",
       "title": "launch: 1.0 release-notes draft + changelog automation",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S30",
       "epic": "E17",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: Keep-A-Changelog; release-please bot wired."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s670-launch-1-0-release-notes-draft-c\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:28:39Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S671",
