@@ -15,7 +15,7 @@ E13,Self-host (docker-compose + Helm),Eng #2,M7,Done,"Compose at MVP, Helm at M7
 E14,Multi-agent orchestration,Eng #1,M9,Done,"Supervisor, Pipeline, Parallel, AgentGraph"
 E15,HITL / Operator inbox,Eng #5,M7,Done,"Takeover, shared inbox, CRM connectors"
 E16,Security & compliance (SOC2 Type 1),Sec eng,M12,In progress,"Vanta, audit log, RLS, KMS"
-E17,Docs site & DevRel,Eng #6,Rolling,Done,"Quickstart, API ref, examples"
+E17,Docs site & DevRel,Eng #6,Rolling,In progress,"Quickstart, API ref, examples"
 E18,MCP marketplace,Eng #6,M6,Done,"25 servers at MVP, 200 by M12"
 E19,Pricing & billing,Eng #2,M6,Done,Stripe + 3-meter + cap rules
 E20,"Enterprise (SSO, audit UI, on-prem parity)",Eng #2+sec,M12,In progress,"SAML, residency, BYOK"
