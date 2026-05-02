@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T02:37:30.591494+00:00",
+    "generated_at": "2026-05-02T02:37:49.480788+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1942,13 +1942,13 @@
     {
       "id": "S253",
       "title": "studio: eval suites/runs pages (list, detail, regression diff)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S8",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: studio /evals lists suites; clicking a run shows per-case pass/fail + diff vs baseline."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s253-studio-eval-suites-runs-pages-li\nSkill: skills/ux/component-design.md\nLast step: 0/7 (just claimed)\nHeartbeat: 2026-05-02T02:37:49Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S260",
