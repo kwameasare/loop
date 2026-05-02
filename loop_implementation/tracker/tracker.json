@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:28:42.747934+00:00",
+    "generated_at": "2026-05-02T05:31:18.387893+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4103,8 +4103,8 @@
       "epic": "E20",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s611-sso-scim-provisioning-endpoint-r\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:28:42Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: https://github.com/kwameasare/loop/pull/56\nBranch: copilot-thor/s611-sso-scim-provisioning-endpoint-r (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T05:31:18Z (copilot-thor)\nTests: 25 pytest tests in packages/control-plane/_tests/test_scim.py (user CRUD: create, get, list with eq-filter, replace, patch deactivate, delete; group CRUD: create, get, list, patch add-member, patch remove-member, delete; consistency: group membership reflected in user.groups; cascading delete removes members; to_scim serialisation; ServiceProviderConfig doc; SCIMError.to_dict)\nDocs touched: packages/control-plane/loop_control_plane/scim.py module docstring\nFollow-ups: HTTP router exposing /scim/v2/* via FastAPI; bulk endpoint RFC 7644 §3.7; SCIM etag support; schemathesis fuzzing against live endpoint"
     },
     {
       "id": "S612",
