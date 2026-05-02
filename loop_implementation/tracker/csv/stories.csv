@@ -925,7 +925,14 @@ Final heartbeat: 2026-05-01T23:19:57Z (codex-orion)
 Tests: Focused ruff/pyright on data_exports.py, workspace_api.py, and test_data_export_region_guard.py; uv run pytest -q packages/control-plane/_tests/test_data_export_region_guard.py packages/control-plane/_tests/test_region_routing.py packages/control-plane/_tests/test_workspace_region_pinning.py packages/control-plane/_tests/test_workspace_api.py (24 passed); uv run pytest -q -m 'not integration and not e2e' (1220 passed, 3 skipped, 4 deselected); tracker/docs gates pass. Full repo ruff/format/pyright remain baseline-red in unrelated files.
 Docs touched: loop_implementation/architecture/CLOUD_PORTABILITY.md
 Follow-ups: none"
-S594,region: studio region selector at workspace creation,tbd,S26,E10,1,P0,Not started,AC: dropdown defaults to inferred region; selection persisted; clear cannot-change-later notice.
+S594,region: studio region selector at workspace creation,copilot-thor,S26,E10,1,P0,In progress,"**Active.**
+Branch: copilot-thor/s594-region-studio-region-selector-at
+Skill: skills/coding/typescript.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T05:20:22Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S595,region: signed pipeline that promotes images to all regions,codex-orion,S26,E12,2,P0,Done,"**Done.**
 PR: https://github.com/kwameasare/loop/pull/15
 Branch: codex-orion/s595-region-signed-pipeline-that-prom (merged + deletable)
