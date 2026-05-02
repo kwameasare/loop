@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:43:10.388662+00:00",
+    "generated_at": "2026-05-02T05:45:11.873017+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4136,8 +4136,8 @@
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s614-sso-google-workspace-recipe-sand\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T05:43:10Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s614-sso-google-workspace-recipe-sand (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T05:45:11Z (copilot-thor)\nTests: 16 pytest (test_google_integration.py): parse Google Workspace fixture metadata, entity_id/sso_url/cert, sp_entity_id/acs_url, group-role map (email address groups), full StubSamlValidator ACS loop happy+reject paths (issuer, audience, expiry)\nDocs touched: packages/control-plane/loop_control_plane/saml_google.py module docstring; packages/control-plane/fixtures/google_idp_metadata.xml fixture comments\nFollow-ups: S615 studio enterprise tab; S618 Playwright Google SP-initiated e2e"
     },
     {
       "id": "S615",
