@@ -122,3 +122,29 @@ def test_dp_workspace_id_is_not_null(dp_sql: str) -> None:
         idx = dp_sql.index(table_marker)
         body = dp_sql[idx : idx + 1500]
         assert "workspace_id" in body and "NOT NULL" in body
+
+
+# ---------------------------------------------------------------------------
+# cp_0005_audit_log: append-only audit table (S630)
+# ---------------------------------------------------------------------------
+
+
+def test_cp_creates_audit_log_table(cp_sql: str) -> None:
+    assert "CREATE TABLE audit_log" in cp_sql
+
+
+def test_cp_audit_log_has_required_columns(cp_sql: str) -> None:
+    idx = cp_sql.index("CREATE TABLE audit_log")
+    body = cp_sql[idx : idx + 2000]
+    for col in ("workspace_id", "actor_user_id", "action", "resource_type",
+                "entry_hash", "previous_hash", "created_at"):
+        assert col in body, f"audit_log missing column {col!r}"
+
+
+def test_cp_audit_log_indexes(cp_sql: str) -> None:
+    for idx_name in (
+        "idx_audit_workspace_action",
+        "idx_audit_resource",
+        "idx_audit_actor",
+    ):
+        assert idx_name in cp_sql, f"audit_log missing index {idx_name!r}"
