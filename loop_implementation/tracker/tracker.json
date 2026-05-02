@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:18:48.780832+00:00",
+    "generated_at": "2026-05-02T05:16:33.220651+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3988,13 +3988,13 @@
     {
       "id": "S582",
       "title": "soc2: SOC2 Type 1 attestation kickoff with auditor",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S25",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s582-soc2-soc2-type-1-attestation-kic (merged + deletable)\nSkill: skills/security/update-threat-model.md\nFinal heartbeat: 2026-05-02T05:18:48Z (copilot-thor)\nTests: 6 tests — doc exists, kickoff section, evidence list, audit window dates, milestone marked done, changelog entry. pytest 1335/1335.\nDocs touched: loop_implementation/engineering/SOC2.md\nFollow-ups: S583"
+      "status": "Not started",
+      "notes": "AC: kickoff meeting held; evidence list + window dates committed."
     },
     {
       "id": "S590",
@@ -4252,13 +4252,13 @@
     {
       "id": "S636",
       "title": "ent: customer-managed KMS key (CMK) per workspace",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S28",
       "epic": "E20",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: workspace.tenant_kms_key_id used for envelope encryption; integration with AWS KMS sandbox."
+      "status": "Blocked",
+      "notes": "**Blocked.**\nBranch: codex-orion/s636-ent-customer-managed-kms-key-cmk\nSkill: skills/security/secrets-kms-check.md\nLast step: 5/6 (code, unit tests, docs, tracker gates passed; live AWS KMS sandbox not available)\nHeartbeat: 2026-05-02T05:14:56Z (codex-orion)\nOpen questions: none\nBlockers: Need AWS KMS sandbox credentials/key ARN and region to run the required live integration against a customer-managed AWS KMS key. Local code uses Workspace.tenant_kms_key_id for envelope encryption and verifies the AWS-KMS-labeled backend contract in unit tests.\nCommits: eb6c4c3 feat(control-plane): thread workspace cmk refs; 1b782ac feat(control-plane): add workspace envelope encryption; 7946088 test(control-plane): cover workspace cmk envelopes; f88893f docs(security): document workspace cmk envelope use"
     },
     {
       "id": "S637",
