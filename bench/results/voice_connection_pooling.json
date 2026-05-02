@@ -1,0 +1,26 @@
+{
+  "name": "voice_connection_pooling",
+  "commit": "S652-contract",
+  "ts": "2026-05-02T05:36:00Z",
+  "host": "local-deterministic-sim",
+  "tool": "pytest-asyncio",
+  "scenario": "prewarmed_provider_websocket_reuse",
+  "stats": {
+    "cold_handshake_p50_ms": 90,
+    "prewarmed_acquire_p50_ms": 0,
+    "p50_cut_ms": 90,
+    "p50_cut_percent": 100.0,
+    "n": 1
+  },
+  "pool_contract": {
+    "keepalive": true,
+    "pre_handshake": true,
+    "idle_teardown_ms": 300000
+  },
+  "budgets": {
+    "voice_first_audio_p50_ms": 700,
+    "regression_threshold": 0.1
+  },
+  "source": "packages/voice/_tests/test_connection_pool.py",
+  "baseline_ref": "main@S651"
+}
