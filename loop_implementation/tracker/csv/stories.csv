@@ -402,14 +402,7 @@ Final heartbeat: 2026-05-02T02:50:18Z (copilot-thor)
 Tests: vitest covers buildDailyCostSeries backfill+filter+isolation, thirtyDayWindowUTC, formatDayLabel, CostTimeSeriesChart points/tooltip/multi-select
 Docs touched: apps/studio/src/components/cost/cost-time-series-chart.tsx,apps/studio/src/lib/cost-series.ts
 Follow-ups: none"
-S285,"studio: cost filters (agent, channel, model, date)",copilot-thor,S10,E10,1,P1,Done,"**Done.**
-PR: (opened by squash-merge)
-Branch: copilot-thor/s285-studio-cost-filters-agent-channe (merged + deletable)
-Skill: skills/api/add-rest-endpoint.md
-Final heartbeat: 2026-05-02T12:51:23Z (copilot-thor)
-Tests: 12 vitest (apps/studio/src/components/cost/cost-filters.test.tsx): filterRecords by agent/channel/model/date, CostFilterBar renders controls, reset button shown/hidden, onChange/onReset callbacks
-Docs touched: apps/studio/src/components/cost/cost-filter-bar.tsx apps/studio/src/lib/use-cost-filters.ts
-Follow-ups: wire to real API; add preset date-range shortcuts (7d, 30d, 90d)"
+S285,"studio: cost filters (agent, channel, model, date)",tbd,S10,E10,1,P1,Not started,AC: filters URL-synced + persisted to localStorage.
 S286,obs: trace export to ClickHouse (replace InMemory in non-test env),codex-vega,S10,E9,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-vega/s286-obs-trace-export-to-clickhouse-r (merged + deletable)

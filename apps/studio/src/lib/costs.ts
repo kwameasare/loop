@@ -17,6 +17,10 @@ export type UsageRecord = {
   workspace_id: string;
   agent_id: string;
   agent_name: string;
+  /** Channel the usage was generated on (e.g. "web", "whatsapp"). Optional – absent means "all channels". */
+  channel?: string;
+  /** Model identifier (e.g. "gpt-4o"). Optional – absent means "default model". */
+  model?: string;
   metric: UsageMetric;
   quantity: number;
   /** Day bucket the record was rolled up into (UTC midnight, ms). */
@@ -54,6 +58,48 @@ const DEFAULT_RATES: RatesCentsPerUnit = {
   tool_calls: 50,
   retrievals: 10,
 };
+
+export type CostFilters = {
+  agent_id: string;
+  channel: string;
+  model: string;
+  /** Inclusive start date (UTC midnight, ms). Empty string means unbounded. */
+  date_from: string;
+  /** Inclusive end date (UTC midnight, ms). Empty string means unbounded. */
+  date_to: string;
+};
+
+export const EMPTY_FILTERS: CostFilters = {
+  agent_id: "",
+  channel: "",
+  model: "",
+  date_from: "",
+  date_to: "",
+};
+
+/**
+ * Apply a CostFilters to a UsageRecord[] before aggregation.
+ * All filter dimensions are optional: empty string means "show all".
+ */
+export function filterRecords(
+  records: UsageRecord[],
+  filters: CostFilters,
+): UsageRecord[] {
+  return records.filter((r) => {
+    if (filters.agent_id && r.agent_id !== filters.agent_id) return false;
+    if (filters.channel && (r.channel ?? "") !== filters.channel) return false;
+    if (filters.model && (r.model ?? "") !== filters.model) return false;
+    if (filters.date_from) {
+      const from = Number(filters.date_from);
+      if (!Number.isNaN(from) && r.day_ms < from) return false;
+    }
+    if (filters.date_to) {
+      const to = Number(filters.date_to);
+      if (!Number.isNaN(to) && r.day_ms > to) return false;
+    }
+    return true;
+  });
+}
 
 export function summariseCosts(
   records: UsageRecord[],
@@ -141,6 +187,8 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
       workspace_id: FIXTURE_WORKSPACE_ID,
       agent_id: "agt_support",
       agent_name: "Support",
+      channel: "web",
+      model: "gpt-4o",
       metric: "tokens.in",
       quantity: 12_000,
       day_ms: day(2),
@@ -149,6 +197,8 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
       workspace_id: FIXTURE_WORKSPACE_ID,
       agent_id: "agt_support",
       agent_name: "Support",
+      channel: "web",
+      model: "gpt-4o",
       metric: "tokens.out",
       quantity: 4_000,
       day_ms: day(2),
@@ -157,6 +207,8 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
       workspace_id: FIXTURE_WORKSPACE_ID,
       agent_id: "agt_support",
       agent_name: "Support",
+      channel: "whatsapp",
+      model: "gpt-4o-mini",
       metric: "tool_calls",
       quantity: 30,
       day_ms: day(1),
@@ -165,6 +217,8 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
       workspace_id: FIXTURE_WORKSPACE_ID,
       agent_id: "agt_sales",
       agent_name: "Sales Outreach",
+      channel: "email",
+      model: "gpt-4o",
       metric: "tokens.in",
       quantity: 6_500,
       day_ms: day(3),
@@ -173,6 +227,8 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
       workspace_id: FIXTURE_WORKSPACE_ID,
       agent_id: "agt_sales",
       agent_name: "Sales Outreach",
+      channel: "email",
+      model: "gpt-4o",
       metric: "tokens.out",
       quantity: 2_200,
       day_ms: day(3),
@@ -181,6 +237,8 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
       workspace_id: FIXTURE_WORKSPACE_ID,
       agent_id: "agt_sales",
       agent_name: "Sales Outreach",
+      channel: "whatsapp",
+      model: "gpt-4o-mini",
       metric: "retrievals",
       quantity: 80,
       day_ms: day(3),

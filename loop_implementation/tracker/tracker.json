@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T12:51:23.375048+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2140,13 +2140,13 @@
     {
       "id": "S285",
       "title": "studio: cost filters (agent, channel, model, date)",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S10",
       "epic": "E10",
       "points": 1,
       "priority": "P1",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s285-studio-cost-filters-agent-channe (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T12:51:23Z (copilot-thor)\nTests: 12 vitest (apps/studio/src/components/cost/cost-filters.test.tsx): filterRecords by agent/channel/model/date, CostFilterBar renders controls, reset button shown/hidden, onChange/onReset callbacks\nDocs touched: apps/studio/src/components/cost/cost-filter-bar.tsx apps/studio/src/lib/use-cost-filters.ts\nFollow-ups: wire to real API; add preset date-range shortcuts (7d, 30d, 90d)"
+      "status": "Not started",
+      "notes": "AC: filters URL-synced + persisted to localStorage."
     },
     {
       "id": "S286",
@@ -5536,7 +5536,7 @@
       "theme": "Cost / observability v1",
       "goal": "ClickHouse rollups, cost dashboard, trace search + waterfall, alert rules.",
       "stories": "S280-S291",
-      "status": "Done"
+      "status": "In progress"
     },
     {
       "id": "S11",
