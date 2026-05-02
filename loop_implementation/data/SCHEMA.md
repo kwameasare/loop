@@ -511,6 +511,13 @@ CREATE TABLE episodic_memory (
 CREATE INDEX idx_episodic_user ON episodic_memory (workspace_id, agent_id, user_id, ts DESC);
 ```
 
+The runtime treats the `memory_user` primary key as the isolation
+contract, not just a storage detail. S823's `loop_runtime.memory_isolation`
+helper keys reads and writes by the full `(workspace_id, agent_id,
+user_id, key)` tuple and emits value-redacted audit events for every
+put/get/list operation. The red-team suite verifies 100k cross-user
+attempts with zero leaks and zero false positives.
+
 ### 3.3 Tool calls
 
 ```sql

@@ -238,6 +238,12 @@ Three layers:
 2. **Qdrant per-workspace collections** — no shared collections, ever. Collections named `kb_<workspace_id>_<kb_id>`, `episodic_<workspace_id>`. Queries filter by `workspace_id` in metadata.
 3. **Network policies** in k8s: pods in `workspace-X` namespace can only reach pods in their own namespace + control plane + external (egress ACL per agent). Tested in chaos week.
 
+S823 adds a runtime-level `UserMemoryStore` isolation guard for the
+`memory_user` tuple `(workspace_id, agent_id, user_id, key)`. Reads and
+writes are audit-recorded without storing values in the audit trail, and
+the red-team harness runs 100k same-user/cross-user cases with zero
+leaks and zero false positives before memory code can be marked done.
+
 **RLS enforcement examples:**
 
 ```python
