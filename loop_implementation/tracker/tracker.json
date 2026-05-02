@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T13:44:55.124981+00:00",
+    "generated_at": "2026-05-02T13:47:06.355099+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4235,8 +4235,8 @@
       "epic": "E20",
       "points": 2,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s634-audit-dpa-template-redlines-work\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T13:44:55Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s634-audit-dpa-template-redlines-work (merged + deletable)\nSkill: loop_implementation/skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T13:47:06Z (copilot-thor)\nTests: 28 pytest (test_dpa.py): DPA.md structure, required clauses, Annexes I-II, breach-notification SLA, SCCs reference, redlines workflow roles, PR naming, SLA, sample PR, escalation\nDocs touched: loop_implementation/engineering/DPA.md; loop_implementation/engineering/DPA_REDLINES.md\nFollow-ups: SCCs addendum; HIPAA BAA template; customer self-service DPA portal"
     },
     {
       "id": "S635",
