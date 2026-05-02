@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T14:15:14.344469+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5220,13 +5220,13 @@
     {
       "id": "S804",
       "title": "security: chaos-engineering harness (network partition, DB failover, NATS outage)",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S35",
       "epic": "E16",
       "points": 3,
       "priority": "P1",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s804-security-chaos-engineering-harne (merged + deletable)\nSkill: loop_implementation/skills/_base/skill.md\nFinal heartbeat: 2026-05-02T14:15:14Z (copilot-thor)\nTests: 19 pytest (test_chaos_harness.py): script existence, findings file, harness import, SLA limits, SLA pass/fail logic, dry-run execution, append_findings\nDocs touched: loop_implementation/engineering/chaos/{harness.py,network_partition.sh,db_failover.sh,nats_outage.sh}; loop_implementation/engineering/CHAOS_FINDINGS.md\nFollow-ups: CI weekly cron job for chaos drills; Slack alert on SLA violation; Redis partition scenario"
+      "status": "Not started",
+      "notes": "AC: scripted scenarios run weekly in staging; recovery time + data-loss measured; runbook updates from findings."
     },
     {
       "id": "S805",

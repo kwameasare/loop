@@ -1374,14 +1374,7 @@ Docs touched: docs/THREAT_MODEL.md
 Follow-ups: none"
 S802,security: SLSA Level 3 build provenance for container images (in-toto attestations),tbd,S35,E16,3,P0,Not started,AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing.
 S803,security: runtime detection (Falco rules) for sandbox + cp-api anomalies,tbd,S35,E16,2,P0,Not started,AC: rules deployed; alerts on shell-exec / unauthorized syscall / unexpected egress; tested with red-team triggers.
-S804,"security: chaos-engineering harness (network partition, DB failover, NATS outage)",copilot-thor,S35,E16,3,P1,Done,"**Done.**
-PR: (opened by squash-merge)
-Branch: copilot-thor/s804-security-chaos-engineering-harne (merged + deletable)
-Skill: loop_implementation/skills/_base/skill.md
-Final heartbeat: 2026-05-02T14:15:14Z (copilot-thor)
-Tests: 19 pytest (test_chaos_harness.py): script existence, findings file, harness import, SLA limits, SLA pass/fail logic, dry-run execution, append_findings
-Docs touched: loop_implementation/engineering/chaos/{harness.py,network_partition.sh,db_failover.sh,nats_outage.sh}; loop_implementation/engineering/CHAOS_FINDINGS.md
-Follow-ups: CI weekly cron job for chaos drills; Slack alert on SLA violation; Redis partition scenario"
+S804,"security: chaos-engineering harness (network partition, DB failover, NATS outage)",tbd,S35,E16,3,P1,Not started,AC: scripted scenarios run weekly in staging; recovery time + data-loss measured; runbook updates from findings.
 S805,ops: SLO definitions per service + error-budget burn alerts,codex-vega,S35,E9,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-vega/s805-ops-slo-definitions-per-service (merged + deletable)
