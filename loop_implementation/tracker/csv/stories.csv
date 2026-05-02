@@ -1043,7 +1043,14 @@ Final heartbeat: 2026-05-02T06:05:03Z (copilot-titan)
 Tests: packages/control-plane/_tests/test_okta_sp_initiated_e2e.py
 Docs touched: packages/control-plane/_tests/test_okta_sp_initiated_e2e.py
 Follow-ups: Real Playwright + live-Okta-sandbox browser driver deferred — requires CI outbound HTTP and a managed Okta org credential."
-S630,audit: audit_events table cp_0004 + write-only middleware,tbd,S28,E20,2,P0,Not started,AC: every cp-api write endpoint emits an audit_event; integration test.
+S630,audit: audit_events table cp_0004 + write-only middleware,copilot-titan,S28,E20,2,P0,In progress,"**Active.**
+Branch: copilot-titan/s630-audit-audit-events-table-cp-0004
+Skill: skills/api/api-versioning.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T06:07:37Z (copilot-titan)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S631,"audit: studio audit log page (filterable, paginated)",tbd,S28,E10,3,P0,Not started,"AC: 7 filters: actor, action, resource, time, ip, success/failure."
 S632,audit: audit log export CSV,tbd,S28,E20,1,P0,Not started,AC: filtered export in <30s for ≤100k rows.
 S633,audit: SIEM webhook (Datadog/Splunk/generic),tbd,S28,E20,2,P1,Not started,AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify.

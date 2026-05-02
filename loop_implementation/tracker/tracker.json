@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:07:14.094503+00:00",
+    "generated_at": "2026-05-02T06:07:38.032992+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4186,13 +4186,13 @@
     {
       "id": "S630",
       "title": "audit: audit_events table cp_0004 + write-only middleware",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S28",
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: every cp-api write endpoint emits an audit_event; integration test."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s630-audit-audit-events-table-cp-0004\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:07:37Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S631",
