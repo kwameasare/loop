@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T12:55:54.664048+00:00",
+    "generated_at": "2026-05-02T13:24:26.508807+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3344,8 +3344,8 @@
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s469-flow-undo-redo-with-capped-histo\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T12:55:54Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s469-flow-undo-redo-with-capped-histo (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T13:24:26Z (copilot-thor)\nTests: 10 vitest (apps/studio/src/components/flow/flow-undo-redo.test.tsx): useFlowHistory unit tests (start/canUndo/redo/push clears redo/cap/edges), FlowEditor toolbar undo/redo buttons\nDocs touched: apps/studio/src/lib/use-flow-history.ts apps/studio/src/components/flow/flow-editor.tsx\nFollow-ups: keyboard shortcut hint in toolbar tooltip; undo across page save"
     },
     {
       "id": "S470",
