@@ -28,6 +28,8 @@ evaluate AI agents that talk to real users on real channels.
   semantic-cache effectiveness gate.
 - [Gateway provider eval](./perf/gateway_provider_eval.md) — nightly
   provider quality, latency, and cost matrix.
+- [KB retrieval 1M](./perf/kb_retrieval_1m.md) — nightly synthetic
+  million-chunk retrieval p50 gate.
 - [Runtime SSE 1000-concurrency](./perf/runtime_sse_1000_concurrency.md)
   — high-concurrency streaming acceptance gate.
 - [Runtime baseline](./perf/runtime-baseline.md) — 100 turns/minute
@@ -54,6 +56,7 @@ docs/
     cp_api_5000_rps.md
     gateway_cache_hit_ratio.md
     gateway_provider_eval.md
+    kb_retrieval_1m.md
     runtime-baseline.md
     runtime_sse_1000_concurrency.md
     tool_host_warm_start.md
