@@ -1372,14 +1372,7 @@ Final heartbeat: 2026-05-02T06:42:39Z (copilot-titan)
 Tests: tests/test_threat_model_gate.py
 Docs touched: docs/THREAT_MODEL.md
 Follow-ups: none"
-S802,security: SLSA Level 3 build provenance for container images (in-toto attestations),copilot-thor,S35,E16,3,P0,Done,"**Done.**
-PR: (opened by squash-merge)
-Branch: copilot-thor/s802-security-slsa-level-3-build-prov (merged + deletable)
-Skill: skills/api/add-rest-endpoint.md
-Final heartbeat: 2026-05-02T12:22:20Z (copilot-thor)
-Tests: 13 pytest (packages/control-plane/_tests/test_slsa_provenance.py): test_provenance_fields_are_accessible, test_provenance_is_immutable, test_policy_trusts_matching_builder_prefix, test_policy_rejects_untrusted_builder, test_default_policy_trusts_slsa_github_generator_and_tekton, test_stub_verifier_returns_provenance_when_registered, test_stub_verifier_raises_when_digest_not_registered, test_stub_verifier_raises_when_builder_untrusted, test_deploy_succeeds_when_slsa3_provenance_present, test_deploy_fails_when_provenance_missing, test_deploy_fails_when_builder_untrusted, test_deploy_without_verifier_still_succeeds, test_deploy_defaults_policy_when_only_verifier_provided
-Docs touched: loop_implementation/engineering/SECURITY.md section 9.1
-Follow-ups: Wire cosign verify-attestation CLI call in production ProvenanceVerifier; add Kyverno policy for k8s admission control"
+S802,security: SLSA Level 3 build provenance for container images (in-toto attestations),tbd,S35,E16,3,P0,Not started,AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing.
 S803,security: runtime detection (Falco rules) for sandbox + cp-api anomalies,tbd,S35,E16,2,P0,Not started,AC: rules deployed; alerts on shell-exec / unauthorized syscall / unexpected egress; tested with red-team triggers.
 S804,"security: chaos-engineering harness (network partition, DB failover, NATS outage)",tbd,S35,E16,3,P1,Not started,AC: scripted scenarios run weekly in staging; recovery time + data-loss measured; runbook updates from findings.
 S805,ops: SLO definitions per service + error-budget burn alerts,codex-vega,S35,E9,2,P0,Done,"**Done.**

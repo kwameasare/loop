@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T12:22:20.534211+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5198,13 +5198,13 @@
     {
       "id": "S802",
       "title": "security: SLSA Level 3 build provenance for container images (in-toto attestations)",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S35",
       "epic": "E16",
       "points": 3,
       "priority": "P0",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s802-security-slsa-level-3-build-prov (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T12:22:20Z (copilot-thor)\nTests: 13 pytest (packages/control-plane/_tests/test_slsa_provenance.py): test_provenance_fields_are_accessible, test_provenance_is_immutable, test_policy_trusts_matching_builder_prefix, test_policy_rejects_untrusted_builder, test_default_policy_trusts_slsa_github_generator_and_tekton, test_stub_verifier_returns_provenance_when_registered, test_stub_verifier_raises_when_digest_not_registered, test_stub_verifier_raises_when_builder_untrusted, test_deploy_succeeds_when_slsa3_provenance_present, test_deploy_fails_when_provenance_missing, test_deploy_fails_when_builder_untrusted, test_deploy_without_verifier_still_succeeds, test_deploy_defaults_policy_when_only_verifier_provided\nDocs touched: loop_implementation/engineering/SECURITY.md section 9.1\nFollow-ups: Wire cosign verify-attestation CLI call in production ProvenanceVerifier; add Kyverno policy for k8s admission control"
+      "status": "Not started",
+      "notes": "AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing."
     },
     {
       "id": "S803",
