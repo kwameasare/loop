@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Microsoft Entra ID (Azure AD) SAML 2.0 IdP metadata fixture — S613
+  ====================================================================
+  This is a *sandbox* Entra ID metadata document used for integration
+  tests.  The certificate, tenant ID, and app IDs are synthetic; they
+  do NOT correspond to a real Azure tenant.
+
+  A real Entra ID metadata file is obtained from:
+    https://login.microsoftonline.com/<tenant-id>/federationmetadata/2007-06/federationmetadata.xml
+  or from the Enterprise App → Single sign-on → SAML Certificates section.
+
+  Key fields used by EntraMetadataParser:
+    - EntityDescriptor[@entityID]                      -> IdP Entity ID
+    - IDPSSODescriptor/SingleSignOnService[@Binding=HTTP-POST][@Location]
+      -> SSO URL
+    - RoleDescriptor/KeyDescriptor[@use="signing"]/.../X509Certificate
+      -> IdP signing certificate (PEM body)
+
+  Entra-specific differences from Okta:
+    1. The entityID uses the full
+       https://sts.windows.net/<tenant-id>/ form.
+    2. Federation metadata can include an ms-fed:ClaimTypesRequested
+       block — this parser intentionally ignores it.
+    3. The signing cert is usually a 2048-bit RSA cert, renewed
+       automatically every ~12 months by Entra.
+-->
+<EntityDescriptor
+  xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
+  xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+  xmlns:fed="http://docs.oasis-open.org/wsfed/federation/200706"
+  entityID="https://sts.windows.net/sandbox-tenant-id-00000000/">
+
+  <IDPSSODescriptor
+    WantAuthnRequestsSigned="false"
+    protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+
+    <KeyDescriptor use="signing">
+      <ds:KeyInfo>
+        <ds:X509Data>
+          <!-- Sandbox self-signed cert (not used for real crypto; test only) -->
+          <ds:X509Certificate>
+MIICpDCCAYwCCQDU7pQ4pHgSaNDANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAls
+b29wLWVudHJhMHhcNMjQwMTAxMDAwMDAwWhcNMjUwMTAxMDAwMDAwWjAUMRIwEAYD
+VQQDDAlsb29wLWVudHJhMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA
+xNzYzGSandboxEntraCertBase64BodyForTestingPurposesNotRealAAA==
+          </ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </KeyDescriptor>
+
+    <NameIDFormat>
+      urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+    </NameIDFormat>
+
+    <!-- HTTP-POST binding (primary) -->
+    <SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+      Location="https://login.microsoftonline.com/sandbox-tenant-id-00000000/saml2"/>
+
+    <!-- HTTP-Redirect binding (secondary) -->
+    <SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+      Location="https://login.microsoftonline.com/sandbox-tenant-id-00000000/saml2"/>
+
+  </IDPSSODescriptor>
+
+</EntityDescriptor>
