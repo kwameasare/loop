@@ -829,14 +829,14 @@ Final heartbeat: 2026-05-02T03:57:30Z (copilot-thor)
 Tests: 6 new tests in tests/test_objstore_integrity_check.py — runbook index, runbook section, DR cross-link, driver dry-run summary/tsv/prom artifacts, repair mode walks manifest, missing-arg handling. Full pytest 1299/1299 (6 new).
 Docs touched: loop_implementation/engineering/RUNBOOKS.md,loop_implementation/engineering/DR.md,scripts/objstore_integrity_check.sh
 Follow-ups: none"
-S575,soc2: DR runbook + tabletop exercise (recorded),copilot-thor,S25,E16,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s575-soc2-dr-runbook-tabletop-exercis
+S575,soc2: DR runbook + tabletop exercise (recorded),copilot-thor,S25,E16,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s575-soc2-dr-runbook-tabletop-exercis (merged + deletable)
 Skill: skills/security/update-threat-model.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-02T03:57:55Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T04:00:16Z (copilot-thor)
+Tests: 5 new tests in tests/test_dr_tabletop.py — file exists, DR.md cross-link, ≥1 dated exercise entry, required sections present, gaps recorded with owners. Full pytest 1304/1304 (5 new).
+Docs touched: loop_implementation/engineering/DR_TABLETOP.md,loop_implementation/engineering/DR.md
+Follow-ups: none"
 S576,soc2: pen-test prep (scope + RoE + access creds),tbd,S25,E16,2,P0,Not started,AC: scope agreed with vendor; staging env stood up; creds rotated post-test.
 S577,soc2: pen-test fix queue tracked as P0 stories,tbd,S25,E16,2,P0,Not started,"AC: each finding has tracker entry, severity, owner, fix-deadline."
 S578,soc2: SBOM generation in CI (cyclonedx),copilot-titan,S25,E16,1,P0,Done,"**Done.**
