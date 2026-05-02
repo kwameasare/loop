@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:55:34.290118+00:00",
+    "generated_at": "2026-05-02T06:00:16.480614+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4169,8 +4169,8 @@
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s617-sso-saml-group-workspace-role-ma\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T05:55:34Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s617-sso-saml-group-workspace-role-ma (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T06:00:16Z (copilot-thor)\nTests: 19 pytest (test_saml_group_rules.py): GroupRuleRecord validation, InMemoryGroupRuleStore CRUD, rules_to_group_role_map, project_role integration owner/editor/viewer; 12 vitest (group-rule-editor.test.tsx): renders, empty, add/remove row, group input, role select owner/editor, onSave, validation empty group, validation duplicate, success, error; 15 vitest (enterprise.test.ts): fixtures, WORKSPACE_ROLES, putGroupRules\nDocs touched: saml_group_rules.py module docstring; GroupRuleStore Protocol docs; GroupRuleRecord field docs; enterprise.ts GroupRuleRow/GroupRulesResponse types\nFollow-ups: S618 Playwright Okta SP-initiated login e2e; wire GroupRuleEditor into enterprise page"
     },
     {
       "id": "S618",
