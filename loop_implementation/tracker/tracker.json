@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T12:23:23.223992+00:00",
+    "generated_at": "2026-05-02T12:25:36.472338+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5214,8 +5214,8 @@
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s803-security-runtime-detection-falco\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T12:23:23Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s803-security-runtime-detection-falco (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T12:25:36Z (copilot-thor)\nTests: 19 pytest (packages/control-plane/_tests/test_falco_rules.py): test_rules_file_parses_without_error, test_all_expected_rules_present, test_all_rules_have_red_team_trigger_tag, test_rules_have_non_empty_output, test_rules_have_valid_priority, test_macros_include_loop_managed_container, test_macros_include_shell_binary, test_shell_exec_in_sandbox_triggers_alert, test_shell_exec_in_cp_api_triggers_alert, test_non_shell_exec_does_not_trigger_shell_rule, test_shell_exec_in_unrelated_image_does_not_trigger, test_ptrace_attach_in_sandbox_triggers_alert, test_non_ptrace_attach_request_does_not_trigger, test_unexpected_execve_in_cp_api_triggers_alert, test_known_init_process_execve_does_not_trigger, test_egress_to_external_ip_triggers_alert, test_egress_to_internal_rfc1918_does_not_trigger, test_egress_on_allowed_port_does_not_trigger, test_sendto_to_external_triggers_alert\nDocs touched: loop_implementation/engineering/SECURITY.md section 9; infra/falco/loop_rules.yaml\nFollow-ups: Deploy Falco DaemonSet via Helm; wire alerts to PagerDuty; add Falco sidecar for dp-runtime"
     },
     {
       "id": "S804",

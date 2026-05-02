@@ -1373,14 +1373,14 @@ Tests: tests/test_threat_model_gate.py
 Docs touched: docs/THREAT_MODEL.md
 Follow-ups: none"
 S802,security: SLSA Level 3 build provenance for container images (in-toto attestations),tbd,S35,E16,3,P0,Not started,AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing.
-S803,security: runtime detection (Falco rules) for sandbox + cp-api anomalies,copilot-thor,S35,E16,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s803-security-runtime-detection-falco
+S803,security: runtime detection (Falco rules) for sandbox + cp-api anomalies,copilot-thor,S35,E16,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s803-security-runtime-detection-falco (merged + deletable)
 Skill: skills/api/add-rest-endpoint.md
-Last step: 0/3 (just claimed)
-Heartbeat: 2026-05-02T12:23:23Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T12:25:36Z (copilot-thor)
+Tests: 19 pytest (packages/control-plane/_tests/test_falco_rules.py): test_rules_file_parses_without_error, test_all_expected_rules_present, test_all_rules_have_red_team_trigger_tag, test_rules_have_non_empty_output, test_rules_have_valid_priority, test_macros_include_loop_managed_container, test_macros_include_shell_binary, test_shell_exec_in_sandbox_triggers_alert, test_shell_exec_in_cp_api_triggers_alert, test_non_shell_exec_does_not_trigger_shell_rule, test_shell_exec_in_unrelated_image_does_not_trigger, test_ptrace_attach_in_sandbox_triggers_alert, test_non_ptrace_attach_request_does_not_trigger, test_unexpected_execve_in_cp_api_triggers_alert, test_known_init_process_execve_does_not_trigger, test_egress_to_external_ip_triggers_alert, test_egress_to_internal_rfc1918_does_not_trigger, test_egress_on_allowed_port_does_not_trigger, test_sendto_to_external_triggers_alert
+Docs touched: loop_implementation/engineering/SECURITY.md section 9; infra/falco/loop_rules.yaml
+Follow-ups: Deploy Falco DaemonSet via Helm; wire alerts to PagerDuty; add Falco sidecar for dp-runtime"
 S804,"security: chaos-engineering harness (network partition, DB failover, NATS outage)",tbd,S35,E16,3,P1,Not started,AC: scripted scenarios run weekly in staging; recovery time + data-loss measured; runbook updates from findings.
 S805,ops: SLO definitions per service + error-budget burn alerts,codex-vega,S35,E9,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
