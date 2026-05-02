@@ -41,6 +41,7 @@ from loop_memory.stores import (
     SessionMemoryStore,
     UserMemoryStore,
 )
+from loop_memory.zep_adapter import ZepClient, ZepEpisodicStore, ZepError
 
 __version__ = "0.1.0"
 
@@ -62,6 +63,9 @@ __all__ = [
     "SessionEntry",
     "SessionMemoryStore",
     "UserMemoryStore",
+    "ZepClient",
+    "ZepEpisodicStore",
+    "ZepError",
     "__version__",
     "auto_summarize",
     "cosine_similarity",
