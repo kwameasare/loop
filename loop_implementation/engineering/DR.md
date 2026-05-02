@@ -56,6 +56,7 @@ DR is the discipline of "we lost X — what now?" Loop's commitments are explici
 - ReplicatedMergeTree across 2 replicas in-region.
 - 24h S3 backup snapshots (`clickhouse-backup`), retained 30 days.
 - Sustained loss → re-ingest from NATS retention (30 min) + S3 archive (90 days). Latest data within 30 min may be lost in catastrophic failures (matches the trace RPO above).
+- **Test:** monthly automated snapshot-restore drill into a sandbox namespace; runbook + driver script live at [`RUNBOOKS.md` §RB-022](RUNBOOKS.md#rb-022--clickhouse-snapshot-restore-drill). Drill budget keeps wall-clock under 90 min and includes a NATS gap-replay step so the verified RPO matches the published 30 min trace SLO.
 
 ### 2.5 Vault
 
