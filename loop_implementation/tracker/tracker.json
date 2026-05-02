@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:04:34.106685+00:00",
+    "generated_at": "2026-05-02T06:03:15.690064+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1986,13 +1986,13 @@
     {
       "id": "S263",
       "title": "deploy: image push w/ cosign signature",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S9",
       "epic": "E12",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: cosign sign + verify gate before deploy."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s263-deploy-image-push-w-cosign-signa (merged + deletable)\nSkill: skills/ops/deploy-agent-version.md\nFinal heartbeat: 2026-05-02T06:02:53Z (codex-orion)\nTests: uv run ruff check/pyright tests/test_cp_api_image_ci.py; uv run pytest -q tests/test_cp_api_image_ci.py; tracker/docs/checkpoint/no-bulk gates pass\nDocs touched: docs/branch-protection.md,loop_implementation/engineering/SECURITY.md\nFollow-ups: none"
     },
     {
       "id": "S264",
@@ -4164,24 +4164,24 @@
     {
       "id": "S617",
       "title": "sso: SAML group → workspace role mapping rules",
+      "owner": "copilot-titan",
+      "sprint": "S27",
+      "epic": "E20",
+      "points": 2,
+      "priority": "P0",
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s617-sso-saml-group-workspace-role-ma (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:01:23Z (copilot-titan)\nTests: packages/control-plane/_tests/test_saml_group_rules.py\nDocs touched: packages/control-plane/loop_control_plane/saml_group_rules.py\nFollow-ups: none"
+    },
+    {
+      "id": "S618",
+      "title": "sso: integration test full Okta SP-initiated login → studio session",
       "owner": "tbd",
       "sprint": "S27",
       "epic": "E20",
       "points": 2,
       "priority": "P0",
       "status": "Not started",
-      "notes": "AC: rules in workspace_sso_groups table; UI to edit; tested for owner/editor/viewer."
-    },
-    {
-      "id": "S618",
-      "title": "sso: integration test full Okta SP-initiated login → studio session",
-      "owner": "copilot-thor",
-      "sprint": "S27",
-      "epic": "E20",
-      "points": 2,
-      "priority": "P0",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s618-sso-integration-test-full-okta-s (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T06:04:34Z (copilot-thor)\nTests: 11 pytest (test_okta_e2e_pipeline.py): full pipeline new user admin role, editor role from group, viewer default fallback, second login reuses user, role refresh on group change, email attribute overrides subject, display name from assertion, ACS rejects wrong audience, ACS rejects expired assertion, JIT collision error for email takeover, two users in same workspace; 2 e2e smoke hooks skipped (require live Okta sandbox)\nDocs touched: S618 documents the full Okta SP-initiated SSO flow: OktaMetadataParser -> SamlSpConfig -> accept_acs_post -> jit_provision -> JitProvisionResult. E2E Playwright smoke hooks documented as skip stubs for graduation to live sandbox.\nFollow-ups: S619: wire S618 pipeline into cp-api HTTP handler (POST /auth/saml/acs); S620: mint JWT/session cookie after jit_provision"
+      "notes": "AC: Playwright drives Okta sandbox + studio; ends in authenticated session."
     },
     {
       "id": "S630",
@@ -5528,7 +5528,7 @@
       "theme": "Deploy controller v0",
       "goal": "Artifact → image → k8s with canary promotion, rollback, deploy events.",
       "stories": "S260-S271",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S10",
