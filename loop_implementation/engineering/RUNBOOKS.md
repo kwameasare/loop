@@ -36,6 +36,7 @@ This file is the index. Per-runbook detail follows.
 | RB-021 | Postgres PITR restore drill | Eng #2 | 2026-04-30 (synthetic) | SEV1, RTO ≤ 60 min, RPO ≤ 5 min |
 | RB-022 | ClickHouse snapshot restore drill | Eng #4 | 2026-05-01 (synthetic) | SEV2, RTO ≤ 90 min, RPO ≤ 30 min |
 | RB-023 | Object-store replication integrity failure | Eng #2 | 2026-05-02 (synthetic) | SEV2, RTO ≤ 30 min |
+| RB-024 | BYO Vault credential rotation | Sec eng | TBD M9 | SEV2 if stale; SEV1 if leaked |
 
 Drill cadence: every runbook drilled once before its first prod-incident; every active runbook re-drilled at least every 6 months. Drill results captured in this file.
 
@@ -501,3 +502,57 @@ The Vanta evidence collector pulls `summary.json` daily and asserts `failures ==
    - Anti-patterns
 4. Drill it once before first prod use. Capture the drill date in the index row.
 5. Re-drill every 6 months minimum.
+
+---
+
+## RB-024 — BYO Vault credential rotation
+
+**Owner:** Sec eng. **SEV target:** SEV2 if rotation is overdue; SEV1 if a credential leak is suspected.
+
+**Scope:** Tenants that bring their own HashiCorp Vault cluster (configured via `VaultConfig` in `packages/control-plane/loop_control_plane/byo_vault.py`). Loop authenticates to the customer's Vault using AppRole; Loop holds the `role_id` per workspace and fetches a wrapped `secret_id` from a customer-side endpoint per request lease. Rotation here means: (a) rotating the AppRole `role_id` because the customer rolled it, or (b) rotating the wrapping endpoint URL/credential.
+
+**Symptoms:**
+- `LOOP-API-403 byo_vault_auth_failed` in cp-api logs after a customer-side Vault change.
+- Customer notifies us out-of-band that they rolled the AppRole.
+- Periodic rotation cadence (90 days; tracked in the rotation calendar).
+
+### Steps
+
+1. **Acknowledge** the page or scheduled rotation ticket. Open `#byo-vault-rotate-<workspace>`.
+2. **Pause writes** that depend on BYO Vault for the affected workspace:
+   ```bash
+   loopctl workspace pause-byo-vault --workspace <id> --reason "rotation"
+   ```
+3. **Confirm new role_id with the tenant** through the agreed secure channel (signed email or shared 1Password). Do **not** accept role_ids over Slack or unencrypted channels.
+4. **Update the workspace BYO Vault config** via the cp-api admin endpoint:
+   ```bash
+   loopctl workspace set-byo-vault \
+     --workspace <id> \
+     --address <https://vault…> \
+     --role <new-role-id> \
+     [--namespace <ns>] \
+     [--mount-path <path>]
+   ```
+   The new value lands in the `byo_vault_configs` table; existing in-flight reads continue using the old value until the next fetch.
+5. **Verify** by issuing a probe secret read against a known test path:
+   ```bash
+   loopctl workspace probe-byo-vault --workspace <id> --path test/canary
+   ```
+   Expect a 200 with the canary value. A 403 means the new role isn't yet trusted by the customer's Vault — coordinate with the tenant.
+6. **Resume writes**:
+   ```bash
+   loopctl workspace resume-byo-vault --workspace <id>
+   ```
+7. **Audit-log entry** is written automatically by the cp-api handler (`workspace.byo_vault.rotate`); confirm it appears in the workspace audit log.
+8. **Update the rotation calendar** with the new rotation due date (today + 90 days).
+9. **If a leak is suspected** (SEV1 escalation): immediately call `loopctl workspace pause-byo-vault`, notify the tenant security contact via the IR runbook channel, and treat per `engineering/SECURITY.md` incident response.
+
+### Recent drills
+
+- TBD M9 — first production drill once at least one design-partner enables BYO Vault.
+
+### Anti-patterns
+
+- **Do not** store the `role_id` in source control or in our own Vault — it is per-tenant data and lives only in the `byo_vault_configs` Postgres row protected by RLS.
+- **Do not** keep the old `role_id` "for rollback"; once the tenant rolls the AppRole, the old value is invalid, and keeping it adds blast radius.
+- **Do not** rotate without pausing writes — partial reads with the old role surface confusing 403s in logs and delay actual rotation discovery.
