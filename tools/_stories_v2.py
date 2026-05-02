@@ -523,7 +523,7 @@ NEW_STORIES: list[StoryV2] = [
     # =====================================================================
     # Sprint S27 — Enterprise SSO/SAML (≈9 stories)
     # =====================================================================
-    StoryV2("S610", "sso: SAML SP impl via PySAML2", "S27", "E20", 3, "P0", "AC: ACS endpoint validates assertion; cert-rotation supported. [extends S050]"),
+    StoryV2("S610", "sso: SAML SP impl via PySAML2", "S27", "E20", 3, "P0", "AC: ACS endpoint validates assertion; cert-rotation supported. [extends S050]", owner="copilot-titan", status="Done", notes_override="**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s610-sso-saml-sp-impl-via-pysaml2 (merged + deletable)\nSkill: skills/security/secrets-kms-check.md\nFinal heartbeat: 2026-05-02T05:30:06Z (copilot-titan)\nTests: packages/control-plane/_tests/test_saml.py packages/control-plane/_tests/test_saml_certs.py\nDocs touched: loop_implementation/engineering/SSO_SAML.md\nFollow-ups: S612"),
     StoryV2("S611", "sso: SCIM provisioning endpoint (RFC 7644)", "S27", "E20", 3, "P0", "AC: Users + Groups create/update/delete from IdP; Postmen schemathesis test."),
     StoryV2("S612", "sso: Okta integration recipe + sandbox tenant test", "S27", "E20", 2, "P0", "AC: sample IdP metadata in fixtures/; full SP↔IdP loop in integration."),
     StoryV2("S613", "sso: Entra ID recipe + sandbox tenant test", "S27", "E20", 2, "P0", "AC: same as Okta but Entra ID."),
