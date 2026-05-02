@@ -885,14 +885,14 @@ Final heartbeat: 2026-05-02T05:15:18Z (copilot-titan)
 Tests: tests/test_audit_coverage_matrix.py (6 passed) — pins matrix doc structure, action vocabulary, module/method coverage both directions, gap-row SID citation, gap-fix queue
 Docs touched: loop_implementation/engineering/AUDIT_COVERAGE.md, loop_implementation/engineering/SECURITY.md
 Follow-ups: S630"
-S582,soc2: SOC2 Type 1 attestation kickoff with auditor,copilot-thor,S25,E16,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s582-soc2-soc2-type-1-attestation-kic
+S582,soc2: SOC2 Type 1 attestation kickoff with auditor,copilot-thor,S25,E16,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s582-soc2-soc2-type-1-attestation-kic (merged + deletable)
 Skill: skills/security/update-threat-model.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T05:16:25Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T05:18:48Z (copilot-thor)
+Tests: 6 tests — doc exists, kickoff section, evidence list, audit window dates, milestone marked done, changelog entry. pytest 1335/1335.
+Docs touched: loop_implementation/engineering/SOC2.md
+Follow-ups: S583"
 S590,region: regions.yaml registry + per-workspace region pinning enforced in cp-api,codex-orion,S26,E12,2,P0,Done,"**Done.**
 PR: https://github.com/kwameasare/loop/pull/11
 Branch: codex-orion/s590-region-regions-yaml-registry-per (merged + deletable)

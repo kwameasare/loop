@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:18:12.347464+00:00",
+    "generated_at": "2026-05-02T05:18:48.780832+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3993,8 +3993,8 @@
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s582-soc2-soc2-type-1-attestation-kic\nSkill: skills/security/update-threat-model.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:16:25Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s582-soc2-soc2-type-1-attestation-kic (merged + deletable)\nSkill: skills/security/update-threat-model.md\nFinal heartbeat: 2026-05-02T05:18:48Z (copilot-thor)\nTests: 6 tests — doc exists, kickoff section, evidence list, audit window dates, milestone marked done, changelog entry. pytest 1335/1335.\nDocs touched: loop_implementation/engineering/SOC2.md\nFollow-ups: S583"
     },
     {
       "id": "S590",
