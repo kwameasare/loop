@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:05:03.687567+00:00",
+    "generated_at": "2026-05-02T06:06:15.491186+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5402,7 +5402,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s842-perf-kb-retrieval-p50-200ms-at-1\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:59:40Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: codex-vega/s842-perf-kb-retrieval-p50-200ms-at-1\nSkill: skills/testing/perf-check.md\nLast step: 1/5\nHeartbeat: 2026-05-02T06:03:32Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: kb retrieval benchmark verified locally"
     },
     {
       "id": "S843",
