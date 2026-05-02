@@ -1,5 +1,12 @@
 """Loop runtime hot-path package."""
 
+from loop_runtime.memory_isolation import (
+    MemoryAuditEvent,
+    MemoryIsolationReport,
+    MemoryScope,
+    UserMemoryStore,
+    run_user_memory_red_team,
+)
 from loop_runtime.multi_agent import (
     AgentGraph,
     AgentRunner,
@@ -33,6 +40,9 @@ __all__ = [
     "CallableRunner",
     "HandoffStep",
     "HandoffTrail",
+    "MemoryAuditEvent",
+    "MemoryIsolationReport",
+    "MemoryScope",
     "Merger",
     "MultiAgentError",
     "MultiAgentResult",
@@ -44,5 +54,7 @@ __all__ = [
     "ToolRegistryLike",
     "TurnBudget",
     "TurnExecutor",
+    "UserMemoryStore",
     "__version__",
+    "run_user_memory_red_team",
 ]
