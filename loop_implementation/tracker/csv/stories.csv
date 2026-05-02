@@ -1061,11 +1061,12 @@ S637,"ent: BYO Vault integration (existing tenant Vault, not Loop's)",tbd,S28,E2
 S638,ent: dedicated single-tenant deploy mode (one helm-install per customer),codex-orion,S28,E20,3,P1,In progress,"**Active.**
 Branch: codex-orion/s638-ent-dedicated-single-tenant-depl
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T06:05:34Z (codex-orion)
+Last step: 1/5
+Heartbeat: 2026-05-02T06:11:07Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: enterprise Helm overlay and smoke tests landed"
 S639,ent: on-prem parity matrix verification (cloud-vs-onprem feature gates),codex-orion,S28,E13,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-orion/s639-ent-on-prem-parity-matrix-verifi (merged + deletable)

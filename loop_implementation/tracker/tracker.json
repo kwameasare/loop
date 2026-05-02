@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:05:34.664155+00:00",
+    "generated_at": "2026-05-02T06:11:07.604544+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4280,7 +4280,7 @@
       "points": 3,
       "priority": "P1",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s638-ent-dedicated-single-tenant-depl\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:05:34Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: codex-orion/s638-ent-dedicated-single-tenant-depl\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1/5\nHeartbeat: 2026-05-02T06:11:07Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: enterprise Helm overlay and smoke tests landed"
     },
     {
       "id": "S639",
