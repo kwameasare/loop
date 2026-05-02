@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:50:32.101212+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -35,7 +35,7 @@
       "name": "Memory tiers",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "In progress",
+      "status": "Done",
       "notes": "User/session/scratch + episodic at M7"
     },
     {
@@ -5313,8 +5313,8 @@
       "epic": "E4",
       "points": 2,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s822-memory-langmem-style-summarizati\nSkill: skills/coding/implement-runtime-feature.md\nLast step: 3/4\nHeartbeat: 2026-05-02T06:50:32Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: LangMem summarizer, ablation eval, tests, and docs landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s822-memory-langmem-style-summarizati (merged + deletable)\nSkill: skills/coding/implement-runtime-feature.md\nFinal heartbeat: 2026-05-02T06:51:09Z (codex-orion)\nTests: uv run ruff check langmem summary/conversation_close/__init__/tests; uv run pyright same files; uv run pytest -q packages/memory/_tests/test_langmem_summary.py packages/memory/_tests/test_memory_pass9.py packages/memory/_tests/test_episodic.py packages/memory/_tests/test_memory_pass10.py packages/memory/_tests/test_zep_adapter.py; tracker/docs/checkpoint/no-bulk gates pass\nDocs touched: loop_implementation/engineering/GLOSSARY.md\nFollow-ups: none"
     },
     {
       "id": "S823",
