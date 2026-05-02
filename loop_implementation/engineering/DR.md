@@ -37,7 +37,7 @@ DR is the discipline of "we lost X — what now?" Loop's commitments are explici
 - **Weekly logical dumps** retained 90 days.
 - **PITR window:** 14 days (standard), 90 days (Enterprise).
 - **Encryption:** WAL-G envelope encrypts every backup with the workspace's KMS data key. Destroying the KMS key invalidates the backup — feature, not bug.
-- **Test:** monthly automated restore-and-verify of a random sample workspace into a sandbox region; row-counts compared to source.
+- **Test:** monthly automated restore-and-verify of a random sample workspace into a sandbox region; row-counts compared to source. The drill driver and step-by-step playbook live in [`RUNBOOKS.md` §RB-021](RUNBOOKS.md#rb-021--postgres-pitr-restore-drill); the published budget keeps total wall-clock under 60 min, satisfying the **<1h RTO** SLO.
 
 ### 2.2 Qdrant
 

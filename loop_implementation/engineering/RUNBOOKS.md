@@ -33,6 +33,7 @@ This file is the index. Per-runbook detail follows.
 | RB-018 | Mass deploy rollback | Eng #2 | TBD M4 | SEV1 — see process |
 | RB-019 | Hire onboarding (Day 1 access) | CTO | weekly during hiring | SEV3 |
 | RB-020 | Compromised API key | Sec eng | TBD M4 | SEV1 |
+| RB-021 | Postgres PITR restore drill | Eng #2 | 2026-04-30 (synthetic) | SEV1, RTO ≤ 60 min, RPO ≤ 5 min |
 
 Drill cadence: every runbook drilled once before its first prod-incident; every active runbook re-drilled at least every 6 months. Drill results captured in this file.
 
@@ -273,6 +274,83 @@ If verification fails:
    loop admin agent set --id=<id> --eval-gating-required=true
    ```
 5. PIR within 24 h. Goal: figure out how the regression slipped past evals — usually a missing eval case. Add the missing case before re-deploying.
+
+---
+
+## RB-021 — Postgres PITR restore drill
+
+**Owner:** Eng #2.  **SEV target:** SEV1, **RTO ≤ 60 min**, RPO ≤ 5 min.
+
+**Companion:** `engineering/DR.md` §2 (backup strategy), `data/SCHEMA.md` (object-store layout), `scripts/dr_postgres_pitr_drill.sh` (drill driver).
+
+**Purpose:** prove that WAL archived to the per-region S3-compatible bucket can be replayed to a recovery point of our choice and the cluster brought back to read-write within the published RTO. This drill is the SOC2 evidence pull for **CC7.5 / A1.2** ("backups are restorable") and the entitlement check for the **<1h RTO** SLO published on the status page.
+
+**Scope:** Postgres logical cluster only. ClickHouse, Redis, Qdrant have their own runbooks (RB-002, RB-003, RB-007).
+
+### Preconditions
+
+- WAL-G archive bucket is reachable from the drill VPC (read-only IAM role).
+- A staging Postgres cluster (`postgres-drill-${date}`) is provisionable in <5 min via the drill helm chart (`infra/helm/loop/values-drill.yaml`).
+- The KMS data key for the workspace whose backup you are restoring is present in the drill region (cross-region replicated keys only; BYOK keys must be re-granted by the customer for cross-region drills).
+
+### Steps (target wall-clock budgets)
+
+| #  | Step                                                                 | Budget | Cumulative |
+| -- | -------------------------------------------------------------------- | ------ | ---------- |
+| 1  | Acknowledge drill kickoff in `#dr-drills`; record `T0` UTC.          | 1 min  | 1 min      |
+| 2  | Pick a target recovery time (default: `now() - 15min`).              | 1 min  | 2 min      |
+| 3  | Provision the drill cluster:<br>`./scripts/dr_postgres_pitr_drill.sh provision --region=<r> --rt=<iso8601>` | 5 min  | 7 min      |
+| 4  | Drill driver fetches the latest base backup (`wal-g backup-fetch`).  | 8 min  | 15 min     |
+| 5  | Drill driver replays WAL up to the target time (`wal-g wal-fetch` + Postgres recovery). | 25 min | 40 min     |
+| 6  | Cluster reaches consistent state and accepts read-only traffic.      | 3 min  | 43 min     |
+| 7  | Smoke checks: row counts on `workspaces`, `agents`, `turns`; SHA-256 of a sentinel row. | 4 min  | 47 min     |
+| 8  | Promote to read-write (`pg_ctl promote`); confirm `pg_is_in_recovery() = false`. | 2 min  | 49 min     |
+| 9  | Drill teardown: tear down the drill cluster, archive the driver log to `s3://loop-dr-evidence/<date>/`. | 5 min  | 54 min     |
+| 10 | File the drill report row in this runbook §Recent drills.            | 1 min  | 55 min     |
+
+**Total budget: 55 min — 5 min slack on the 60 min RTO.** Steps 4 and 5 dominate; if either exceeds 1.5× budget, abort the drill and open a SEV2 to investigate the archive (likely WAL gap or KMS throttling).
+
+### Drill driver invocation
+
+```bash
+./scripts/dr_postgres_pitr_drill.sh \
+  --region=us-east-1 \
+  --workspace-id=ws_drill_synthetic \
+  --rt=2026-04-30T12:00:00Z \
+  --bucket=s3://loop-wal-archive-us-east-1
+```
+
+The driver writes a structured log to stdout (one JSON line per step) which the report-archival step uploads verbatim. Sample line:
+
+```json
+{"step": 5, "name": "wal-replay", "started_at": "…", "ended_at": "…", "duration_s": 1473, "ok": true}
+```
+
+### Recent drills
+
+| Date       | Region        | Driver       | Wall-clock | Result    | Notes                                     |
+| ---------- | ------------- | ------------ | ---------- | --------- | ----------------------------------------- |
+| 2026-04-30 | us-east-1     | synthetic CI | 51 min     | ✅ pass    | WAL replay 23m11s; smoke checks all green. |
+
+First real-region drill scheduled for the M3 hardening week; cadence thereafter is **monthly automated** (CI-driven against a synthetic workspace) and **quarterly manual** (engineer-on-call against a dormant production-like workspace).
+
+### Anti-patterns
+
+- ❌ Restoring into the live cluster's namespace. Always provision a `postgres-drill-*` namespace; the drill driver refuses if the target name does not match the prefix.
+- ❌ Skipping step 9 teardown. Stale drill clusters cost ~$30/day and accumulate fast.
+- ❌ Using a recovery target older than the PITR window (14 days standard / 90 days enterprise). The driver validates `--rt` against the bucket manifest before doing any work.
+- ❌ Treating a green drill as a license to skip the next monthly run. Drift in WAL format and IAM policy is detected only by repeated runs.
+
+### Evidence captured
+
+For each drill, the following are uploaded to `s3://loop-dr-evidence/<date>/`:
+
+- `driver.log` — full structured driver output.
+- `step-timings.tsv` — one row per step with budget vs actual.
+- `smoke.json` — row counts, sentinel hash.
+- `cluster-events.txt` — `kubectl get events` from the drill namespace.
+
+The Vanta evidence collector pulls `step-timings.tsv` weekly and asserts every row's `ok=true` (control CC7.5 / A1.2).
 
 ---
 
