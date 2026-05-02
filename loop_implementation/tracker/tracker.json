@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T12:29:21.225354+00:00",
+    "generated_at": "2026-05-02T12:31:49.216931+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5258,8 +5258,8 @@
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s807-ops-data-retention-policy-enforc\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T12:29:21Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s807-ops-data-retention-policy-enforc (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T12:31:49Z (copilot-thor)\nTests: 17 pytest (packages/control-plane/_tests/test_retention.py): test_policy_default_windows_are_set, test_policy_kb_document_has_no_expiry, test_policy_conversation_has_expiry, test_policy_cutoff_for_conversation, test_policy_cutoff_for_no_expiry_class_returns_none, test_policy_custom_window_overrides_default, test_job_deletes_expired_conversation_records, test_job_does_not_delete_kb_documents, test_job_records_audit_batch_for_each_deletion, test_job_audit_batch_contains_oldest_deleted_at, test_job_skips_regions_not_configured, test_job_returns_batches_only_for_non_empty_deletions, test_job_multiple_data_classes_deleted_independently, test_job_uses_default_policy_when_none_provided, test_data_retention_docs_page_exists, test_data_retention_docs_page_covers_all_data_classes, test_data_retention_docs_page_mentions_audit_trail\nDocs touched: docs/site/data-retention.md; loop_implementation/engineering/SECURITY.md section 11\nFollow-ups: Wire RetentionJob to a cron scheduler; add region-scoped custom windows API endpoint; integrate GDPR erasure endpoint"
     },
     {
       "id": "S808",
