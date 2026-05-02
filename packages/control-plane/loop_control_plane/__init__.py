@@ -122,6 +122,14 @@ from loop_control_plane.object_store import (
     ObjectStoreError,
     build_object_store_backend,
 )
+from loop_control_plane.secrets import (
+    SECRETS_BACKENDS,
+    InMemorySecretsBackend,
+    SecretAccess,
+    SecretsBackend,
+    SecretsBackendError,
+    build_secrets_backend,
+)
 from loop_control_plane.usage import (
     DAY_MS,
     UsageEvent,
@@ -143,6 +151,7 @@ __all__ = [
     "KMS",
     "KMS_BACKENDS",
     "OBJECT_STORE_BACKENDS",
+    "SECRETS_BACKENDS",
     "ApiKey",
     "ApiKeyAPI",
     "ApiKeyError",
@@ -177,6 +186,7 @@ __all__ = [
     "InMemoryKubeClient",
     "InMemoryMarketplaceStore",
     "InMemoryObjectStore",
+    "InMemorySecretsBackend",
     "InMemoryStripe",
     "InboxAPI",
     "InboxError",
@@ -214,6 +224,9 @@ __all__ = [
     "QualityScorer",
     "RejectedManifestError",
     "Role",
+    "SecretAccess",
+    "SecretsBackend",
+    "SecretsBackendError",
     "ServerNotFoundError",
     "ServerPublishCli",
     "SigningKey",
@@ -235,6 +248,7 @@ __all__ = [
     "authorize_workspace_access",
     "build_kms_backend",
     "build_object_store_backend",
+    "build_secrets_backend",
     "compute_manifest_digest",
     "first_party_manifests",
     "has_scope",
