@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:57:43.452596+00:00",
+    "generated_at": "2026-05-02T05:57:47.695058+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4345,8 +4345,8 @@
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s654-voice-perf-latency-benchmark-700\nSkill: skills/testing/perf-check.md\nLast step: 2/5\nHeartbeat: 2026-05-02T05:54:38Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: nightly voice p50 gate and docs landed\nLatest checkpoint: voice p50 benchmark verified locally"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s654-voice-perf-latency-benchmark-700 (merged + deletable)\nSkill: skills/testing/perf-check.md\nFinal heartbeat: 2026-05-02T05:54:47Z (codex-vega)\nTests: touched ruff/format pass; touched pyright pass; voice perf script/workflow tests pass (12); pytest -q -m 'not integration and not e2e' passed (1479 passed, 3 skipped, 4 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests\nDocs touched: docs/perf/voice_perf.md, docs/index.md, loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_perf.json\nFollow-ups: none"
     },
     {
       "id": "S655",
