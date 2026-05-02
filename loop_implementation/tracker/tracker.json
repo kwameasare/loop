@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:41:53.134995+00:00",
+    "generated_at": "2026-05-02T03:45:30.334108+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3377,8 +3377,8 @@
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s472-flow-integration-test-build-a-gr\nSkill: skills/testing/write-e2e-test.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T03:41:53Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: agent/copilot-thor/scratch (merged + deletable)\nSkill: skills/testing/write-e2e-test.md\nFinal heartbeat: 2026-05-02T03:45:30Z (copilot-thor)\nTests: flow-runner unit tests cover linear walks, conditional decider routing both branches, missing-node, max-steps cycle guard, runResultToEvents trace+complete/degrade; flow-integration test wires FlowPersistencePanel + FlowEmulatorPanel with a runFlow-backed transport, builds graph, saves yaml, asserts branch_a fires for matching input and branch_b for non-matching input\nDocs touched: apps/studio/src/lib/flow-runner.ts,apps/studio/src/components/flow/flow-integration.test.tsx\nFollow-ups: none"
     },
     {
       "id": "S480",
