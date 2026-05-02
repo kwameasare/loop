@@ -19,6 +19,7 @@ helm install loop ./infra/helm/loop \
 | ---- | ------- |
 | `Chart.yaml` | chart metadata |
 | `values.yaml` | tuneables -- replicas, resources, image refs, externals, secrets, ingress |
+| `values-enterprise.yaml` | single-tenant enterprise overlay with customer-scoped names and dedicated bundled state |
 | `values.schema.json` | JSON Schema (Draft 2020-12) helm validates `-f` overrides against |
 | `templates/_helpers.tpl` | name / label / image helpers |
 | `templates/configmap.yaml` | non-secret externals (`POSTGRES_URL`, etc.) |
@@ -115,6 +116,23 @@ pattern for Redis: set `redis.enabled=false` and point
 `helm dependency update infra/helm/loop` once before `helm install`
 to pull the pinned subcharts into `infra/helm/loop/charts/`.
 
+### Dedicated Enterprise Install
+
+`values-enterprise.yaml` is the checked example for one Helm release per
+enterprise customer. It sets `global.deploymentMode=enterprise`,
+`global.isolation.dedicatedStack=true`, a non-empty `global.customerId`,
+and customer-scoped `fullnameOverride` values for every bundled stateful
+dependency (`postgresql`, `redis`, `qdrant`, `nats`, `minio`,
+`clickhouse`). The corresponding `.Values.externals.*` URLs point at
+those customer-scoped service names, so an enterprise release renders an
+isolated stack even when several customers share one Kubernetes cluster.
+
+```bash
+helm upgrade --install loop-acme ./infra/helm/loop \
+  -f infra/helm/loop/values-enterprise.yaml \
+  --namespace loop-acme --create-namespace
+```
+
 ## Validation
 
 `tools/check_helm_chart.py` runs a structural check against the chart
@@ -133,6 +151,10 @@ and asserts that:
 `helm install` / `helm upgrade`). The schema permits regional overlays
 to add governance sections (`audit`, `networkPolicy`, `telemetry`); see
 [CLOUD_PORTABILITY.md](../../../loop_implementation/architecture/CLOUD_PORTABILITY.md).
+`tests/test_enterprise_helm_values.py` deep-merges
+`values-enterprise.yaml` with the base chart values and smoke-tests that
+the enterprise overlay produces customer-scoped stateful dependency
+names and matching internal URLs.
 
 `.github/workflows/helm-e2e.yml` runs the release smoke on a kind cluster:
 it builds a local smoke image, installs the chart with heavyweight bundled

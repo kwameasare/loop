@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:09:56.455658+00:00",
+    "generated_at": "2026-05-02T06:11:51.677146+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4274,13 +4274,13 @@
     {
       "id": "S638",
       "title": "ent: dedicated single-tenant deploy mode (one helm-install per customer)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S28",
       "epic": "E20",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: 'enterprise' values produce isolated stack; smoke test."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s638-ent-dedicated-single-tenant-depl (merged + deletable)\nSkill: skills/architecture/cloud-portability-check.md\nFinal heartbeat: 2026-05-02T06:11:30Z (codex-orion)\nTests: uv run ruff check/pyright helm tests + tools/check_helm_chart.py; uv run pytest -q tests/test_enterprise_helm_values.py tests/test_helm_values_schema.py tests/test_helm_chart.py; cloud SDK import guard and tracker/docs/checkpoint/no-bulk gates pass\nDocs touched: infra/helm/loop/README.md\nFollow-ups: none"
     },
     {
       "id": "S639",

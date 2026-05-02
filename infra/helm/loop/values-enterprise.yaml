@@ -1,0 +1,88 @@
+fullnameOverride: loop-enterprise-acme
+
+global:
+  deploymentMode: enterprise
+  customerId: acme
+  isolation:
+    dedicatedStack: true
+
+controlPlane:
+  replicaCount: 3
+
+runtime:
+  replicaCount: 4
+
+gateway:
+  replicaCount: 3
+
+kbEngine:
+  replicaCount: 3
+
+toolHost:
+  replicaCount: 2
+
+externals:
+  postgresUrl: "postgresql://loop:loop@loop-enterprise-acme-postgres:5432/loop"
+  redisUrl: "redis://loop-enterprise-acme-redis:6379/0"
+  qdrantUrl: "http://loop-enterprise-acme-qdrant:6333"
+  natsUrl: "nats://loop-enterprise-acme-nats:4222"
+  clickhouseUrl: "http://loop-enterprise-acme-clickhouse:8123"
+  s3Endpoint: "http://loop-enterprise-acme-minio:9000"
+
+ingress:
+  enabled: true
+  host: acme.loop.example
+  certManager:
+    enabled: true
+    tlsSecretName: acme-loop-tls
+
+postgresql:
+  enabled: true
+  fullnameOverride: loop-enterprise-acme-postgres
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+
+redis:
+  enabled: true
+  fullnameOverride: loop-enterprise-acme-redis
+  master:
+    persistence:
+      enabled: true
+      size: 20Gi
+
+qdrant:
+  enabled: true
+  fullnameOverride: loop-enterprise-acme-qdrant
+  persistence:
+    size: 100Gi
+
+nats:
+  enabled: true
+  fullnameOverride: loop-enterprise-acme-nats
+  config:
+    jetstream:
+      enabled: true
+      fileStore:
+        enabled: true
+        pvc:
+          size: 50Gi
+
+minio:
+  enabled: true
+  fullnameOverride: loop-enterprise-acme-minio
+  persistence:
+    enabled: true
+    size: 100Gi
+
+clickhouse:
+  enabled: true
+  fullnameOverride: loop-enterprise-acme-clickhouse
+  replicaCount: 2
+  persistence:
+    enabled: true
+    size: 200Gi
+  backup:
+    enabled: true
+    retentionDays: 30
