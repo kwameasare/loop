@@ -39,6 +39,11 @@ from loop_kb_engine.perf_fixture import (
     SyntheticMillionChunkFixture,
 )
 from loop_kb_engine.qdrant_store import QdrantRestVectorStore, qdrant_collection_name
+from loop_kb_engine.crawler import (
+    CrawlResult,
+    CrawlStats,
+    SitemapCrawler,
+)
 from loop_kb_engine.scheduler import (
     DocRefreshConfig,
     DocRefreshRecord,
@@ -55,6 +60,9 @@ from loop_kb_engine.retrieval import (
 from loop_kb_engine.store import InMemoryVectorStore, VectorStore
 
 __all__ = [
+    "CrawlResult",
+    "CrawlStats",
+    "SitemapCrawler",
     "DocRefreshConfig",
     "DocRefreshRecord",
     "RefreshScheduler",
