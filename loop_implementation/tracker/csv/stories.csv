@@ -998,14 +998,14 @@ Tests: packages/control-plane/_tests/test_google_integration.py
 Docs touched: packages/control-plane/fixtures/google_idp_metadata.xml
 Follow-ups: S615 S617"
 S615,sso: studio enterprise tab → connect IdP + upload metadata,tbd,S27,E10,2,P0,Not started,AC: paste metadata URL or upload XML; status flips to Connected after ACS-roundtrip.
-S616,sso: just-in-time user provisioning at first login,copilot-thor,S27,E20,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s616-sso-just-in-time-user-provisioni
+S616,sso: just-in-time user provisioning at first login,copilot-thor,S27,E20,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s616-sso-just-in-time-user-provisioni (merged + deletable)
 Skill: skills/api/add-rest-endpoint.md
-Last step: 0/3 (just claimed)
-Heartbeat: 2026-05-02T05:51:44Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T05:54:37Z (copilot-thor)
+Tests: 17 pytest (test_jit_provisioning.py): user create/get/duplicate, membership upsert created flag, provision_jit new user created, existing user not duplicated, membership with role from groups, membership upserted on second login, default role no match, default role no groups, highest-privilege group wins, email attribute preferred, display name from attribute, display name empty, role refresh on group change
+Docs touched: packages/control-plane/loop_control_plane/jit_provisioning.py module docstring; UserStore+MembershipStore Protocol docs; InMemoryUserStore+InMemoryMembershipStore for sandbox use
+Follow-ups: S617 SAML group to workspace role mapping UI; S618 Playwright Okta SP-initiated login e2e"
 S617,sso: SAML group → workspace role mapping rules,tbd,S27,E20,2,P0,Not started,AC: rules in workspace_sso_groups table; UI to edit; tested for owner/editor/viewer.
 S618,sso: integration test full Okta SP-initiated login → studio session,tbd,S27,E20,2,P0,Not started,AC: Playwright drives Okta sandbox + studio; ends in authenticated session.
 S630,audit: audit_events table cp_0004 + write-only middleware,tbd,S28,E20,2,P0,Not started,AC: every cp-api write endpoint emits an audit_event; integration test.

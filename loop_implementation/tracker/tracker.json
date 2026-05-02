@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:51:44.338332+00:00",
+    "generated_at": "2026-05-02T05:54:37.621343+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4158,8 +4158,8 @@
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s616-sso-just-in-time-user-provisioni\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T05:51:44Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s616-sso-just-in-time-user-provisioni (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T05:54:37Z (copilot-thor)\nTests: 17 pytest (test_jit_provisioning.py): user create/get/duplicate, membership upsert created flag, provision_jit new user created, existing user not duplicated, membership with role from groups, membership upserted on second login, default role no match, default role no groups, highest-privilege group wins, email attribute preferred, display name from attribute, display name empty, role refresh on group change\nDocs touched: packages/control-plane/loop_control_plane/jit_provisioning.py module docstring; UserStore+MembershipStore Protocol docs; InMemoryUserStore+InMemoryMembershipStore for sandbox use\nFollow-ups: S617 SAML group to workspace role mapping UI; S618 Playwright Okta SP-initiated login e2e"
     },
     {
       "id": "S617",
