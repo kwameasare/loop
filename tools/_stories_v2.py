@@ -686,7 +686,7 @@ NEW_STORIES: list[StoryV2] = [
     StoryV2("S806", "ops: incident-response runbook + game-day cadence (monthly)", "S35", "E16", 2, "P0", "AC: runbook checked in; first game-day held; recorded; gaps tracked."),
     StoryV2("S807", "ops: data-retention policy enforced by scheduled jobs (per data type, per region)", "S35", "E16", 2, "P0", "AC: jobs delete per policy; deletion audited; user-visible policy page on docs site."),
     StoryV2("S808", "ops: encrypted backup verification (restore-then-diff weekly)", "S35", "E16", 2, "P0", "AC: weekly job restores latest backup to scratch; diff against live; alerts on mismatch."),
-    StoryV2("S809", "security: bug-bounty program launch (HackerOne or YesWeHack)", "S35", "E16", 2, "P0", "AC: program live; scope+rules+payouts published; first 3 reports triaged within SLA."),
+    StoryV2("S809", "security: bug-bounty program launch (HackerOne or YesWeHack)", "S35", "E16", 2, "P0", "AC: program live; scope+rules+payouts published; first 3 reports triaged within SLA.", owner="copilot-thor", status="In progress", notes_override="**Active.**\nBranch: copilot-thor/s809-security-bug-bounty-program-laun\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T12:35:38Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"),
 
     # =====================================================================
     # Sprint S36 — Memory provider integrations + KB v2 (≈8 stories)
