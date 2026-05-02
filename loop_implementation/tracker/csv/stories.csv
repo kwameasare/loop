@@ -965,8 +965,22 @@ Final heartbeat: 2026-05-02T05:30:06Z (copilot-titan)
 Tests: packages/control-plane/_tests/test_saml.py packages/control-plane/_tests/test_saml_certs.py
 Docs touched: loop_implementation/engineering/SSO_SAML.md
 Follow-ups: S612"
-S611,sso: SCIM provisioning endpoint (RFC 7644),tbd,S27,E20,3,P0,Not started,AC: Users + Groups create/update/delete from IdP; Postmen schemathesis test.
-S612,sso: Okta integration recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: sample IdP metadata in fixtures/; full SP↔IdP loop in integration.
+S611,sso: SCIM provisioning endpoint (RFC 7644),copilot-titan,S27,E20,3,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s611-sso-scim-provisioning-endpoint-r (merged + deletable)
+Skill: skills/security/secrets-kms-check.md
+Final heartbeat: 2026-05-02T05:39:07Z (copilot-titan)
+Tests: packages/control-plane/_tests/test_scim.py
+Docs touched: loop_implementation/api/openapi.yaml
+Follow-ups: S612 S617"
+S612,sso: Okta integration recipe + sandbox tenant test,copilot-titan,S27,E20,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s612-sso-okta-integration-recipe-sand (merged + deletable)
+Skill: skills/security/secrets-kms-check.md
+Final heartbeat: 2026-05-02T05:40:21Z (copilot-titan)
+Tests: packages/control-plane/_tests/test_saml_sp.py packages/control-plane/_tests/test_okta_integration.py
+Docs touched: packages/control-plane/fixtures/okta_idp_metadata.xml
+Follow-ups: S613 S617"
 S613,sso: Entra ID recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: same as Okta but Entra ID.
 S614,sso: Google Workspace recipe + sandbox test,tbd,S27,E20,2,P0,Not started,AC: same.
 S615,sso: studio enterprise tab → connect IdP + upload metadata,tbd,S27,E10,2,P0,Not started,AC: paste metadata URL or upload XML; status flips to Connected after ACS-roundtrip.

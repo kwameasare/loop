@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:40:46.331890+00:00",
+    "generated_at": "2026-05-02T05:41:13.772758+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4098,24 +4098,24 @@
     {
       "id": "S611",
       "title": "sso: SCIM provisioning endpoint (RFC 7644)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S27",
       "epic": "E20",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: Users + Groups create/update/delete from IdP; Postmen schemathesis test."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s611-sso-scim-provisioning-endpoint-r (merged + deletable)\nSkill: skills/security/secrets-kms-check.md\nFinal heartbeat: 2026-05-02T05:39:07Z (copilot-titan)\nTests: packages/control-plane/_tests/test_scim.py\nDocs touched: loop_implementation/api/openapi.yaml\nFollow-ups: S612 S617"
     },
     {
       "id": "S612",
       "title": "sso: Okta integration recipe + sandbox tenant test",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S27",
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: sample IdP metadata in fixtures/; full SP↔IdP loop in integration."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s612-sso-okta-integration-recipe-sand (merged + deletable)\nSkill: skills/security/secrets-kms-check.md\nFinal heartbeat: 2026-05-02T05:40:21Z (copilot-titan)\nTests: packages/control-plane/_tests/test_saml_sp.py packages/control-plane/_tests/test_okta_integration.py\nDocs touched: packages/control-plane/fixtures/okta_idp_metadata.xml\nFollow-ups: S613 S617"
     },
     {
       "id": "S613",
