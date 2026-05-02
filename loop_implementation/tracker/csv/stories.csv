@@ -882,11 +882,12 @@ S779,portability: EmailSender Protocol parity tests across SES/Resend/SMTP,GitHu
 S780,ci: cross-cloud nightly smoke test matrix (deploy + first-turn on AWS+Azure+GCP),codex-orion,S34,E12,3,P0,In progress,"**Active.**
 Branch: codex-orion/s780-ci-cross-cloud-nightly-smoke-tes
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T00:29:49Z (codex-orion)
+Last step: 1/5
+Heartbeat: 2026-05-02T00:38:29Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: cross-cloud smoke workflow script tests and docs landed"
 S781,docs: cloud-portability proof report (Wk-by-Wk parity matrix shipped to docs/CLOUD_PROOF.md),tbd,S34,E17,1,P0,Not started,AC: matrix lists each capability × cloud; nightly job appends a green/red mark; published live.
 S800,security: continuous fuzz testing of cp-api + dp-runtime (atheris/restler),tbd,S35,E16,3,P0,Not started,AC: fuzz harness runs in CI nightly; crashes/oom auto-issue; coverage report.
 S801,security: threat-model verification — STRIDE checklist gate per PR touching auth/security paths,tbd,S35,E16,2,P0,Not started,AC: PRs touching auth/RLS/secrets fail without docs/THREAT_MODEL.md update; bot enforces.
