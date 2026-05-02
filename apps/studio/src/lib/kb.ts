@@ -197,6 +197,122 @@ export async function uploadKbDocument(
   return uploader(url, input, headers);
 }
 
+// ---------------------------------------------------------------------------
+// S494: per-doc scheduled refresh cadence + on-demand trigger
+// ---------------------------------------------------------------------------
+
+/** How often a document should be refreshed. "manual" means no schedule. */
+export type RefreshCadence = "manual" | "hourly" | "daily" | "weekly";
+
+export const REFRESH_CADENCE_LABELS: Record<RefreshCadence, string> = {
+  manual: "Manual only",
+  hourly: "Every hour",
+  daily: "Every 24 h",
+  weekly: "Every 7 days",
+};
+
+/** Live status of the last / current refresh run for one document. */
+export type DocRefreshStatusKind = "pending" | "running" | "ok" | "error";
+
+export interface DocRefreshStatus {
+  documentId: string;
+  cadence: RefreshCadence;
+  status: DocRefreshStatusKind;
+  lastRunAt: string | null;   // ISO-8601 or null
+  nextRunAt: string | null;   // ISO-8601 or null
+  runCount: number;
+  error: string | null;
+}
+
+// In-memory fixture store so the UI is demo-able without a live API.
+const FIXTURE_REFRESH: Record<string, DocRefreshStatus> = {};
+
+function fixtureRefreshFor(documentId: string): DocRefreshStatus {
+  if (!FIXTURE_REFRESH[documentId]) {
+    FIXTURE_REFRESH[documentId] = {
+      documentId,
+      cadence: "daily",
+      status: "ok",
+      lastRunAt: "2026-05-01T08:00:00Z",
+      nextRunAt: "2026-05-02T08:00:00Z",
+      runCount: 1,
+      error: null,
+    };
+  }
+  return FIXTURE_REFRESH[documentId]!;
+}
+
+export async function getDocRefreshStatus(
+  _agentId: string,
+  documentId: string,
+  opts: KbHelperOptions = {},
+): Promise<DocRefreshStatus> {
+  const base = resolveBase(opts);
+  if (!base) return { ...fixtureRefreshFor(documentId) };
+  const f = opts.fetcher ?? fetch;
+  const res = await f(
+    `${base}/kb/documents/${encodeURIComponent(documentId)}/refresh`,
+    { headers: authHeaders(opts) },
+  );
+  if (!res.ok) throw new Error(`GET refresh status -> ${res.status}`);
+  return (await res.json()) as DocRefreshStatus;
+}
+
+export async function setDocRefreshCadence(
+  _agentId: string,
+  documentId: string,
+  cadence: RefreshCadence,
+  opts: KbHelperOptions = {},
+): Promise<DocRefreshStatus> {
+  const base = resolveBase(opts);
+  if (!base) {
+    const rec = fixtureRefreshFor(documentId);
+    rec.cadence = cadence;
+    return { ...rec };
+  }
+  const f = opts.fetcher ?? fetch;
+  const res = await f(
+    `${base}/kb/documents/${encodeURIComponent(documentId)}/refresh`,
+    {
+      method: "PATCH",
+      headers: { ...authHeaders(opts), "content-type": "application/json" },
+      body: JSON.stringify({ cadence }),
+    },
+  );
+  if (!res.ok) throw new Error(`PATCH refresh cadence -> ${res.status}`);
+  return (await res.json()) as DocRefreshStatus;
+}
+
+export async function triggerDocRefresh(
+  _agentId: string,
+  documentId: string,
+  opts: KbHelperOptions = {},
+): Promise<DocRefreshStatus> {
+  const base = resolveBase(opts);
+  if (!base) {
+    const rec = fixtureRefreshFor(documentId);
+    rec.status = "running";
+    rec.lastRunAt = new Date().toISOString();
+    rec.runCount += 1;
+    // Simulate completion asynchronously in fixture mode.
+    setTimeout(() => {
+      rec.status = "ok";
+      rec.error = null;
+    }, 100);
+    return { ...rec };
+  }
+  const f = opts.fetcher ?? fetch;
+  const res = await f(
+    `${base}/kb/documents/${encodeURIComponent(documentId)}/refresh`,
+    {
+      method: "POST",
+      headers: authHeaders(opts),
+    },
+  );
+  if (!res.ok) throw new Error(`POST trigger refresh -> ${res.status}`);
+  return (await res.json()) as DocRefreshStatus;
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;

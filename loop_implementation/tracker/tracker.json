@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T13:31:29.567796+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3515,13 +3515,13 @@
     {
       "id": "S494",
       "title": "kb-v1: scheduled refresh (cron + on-demand)",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S21",
       "epic": "E5",
       "points": 2,
       "priority": "P1",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s494-kb-v1-scheduled-refresh-cron-on (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T13:31:29Z (copilot-thor)\nTests: 15 vitest (kb-refresh-panel.test.tsx): getDocRefreshStatus, setDocRefreshCadence, triggerDocRefresh helpers + KbRefreshPanel component\nDocs touched: loop_kb_engine/scheduler.py: RefreshScheduler with cron tick + on-demand trigger; DocRefreshStatus in kb.ts; KbRefreshPanel in studio\nFollow-ups: wire scheduler.tick to cron job in cp-api; persist DocRefreshConfig to DB"
+      "status": "Not started",
+      "notes": "AC: per-doc refresh cadence; status shown in studio."
     },
     {
       "id": "S495",
