@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:53:08.208367+00:00",
+    "generated_at": "2026-05-02T05:55:29.205856+00:00",
     "format_version": 2
   },
   "epics": [
@@ -11,7 +11,7 @@
       "name": "Agent runtime core",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Hot path: TurnExecutor, streaming, budgets, idempotency"
     },
     {
@@ -1106,13 +1106,13 @@
     {
       "id": "S142",
       "title": "dp-runtime: k6 baseline load test 100 turns/min for 5 min, p95 latency report",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S3",
       "epic": "E1",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: docs/perf/runtime-baseline.md committed with p50/p95/p99/error-rate at 100 rpm."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s142-dp-runtime-k6-baseline-load-test (merged + deletable)\nSkill: skills/testing/perf-check.md\nFinal heartbeat: 2026-05-02T05:54:55Z (codex-orion)\nTests: uv run ruff check/pyright tests/test_runtime_baseline_100rpm.py; uv run pytest -q tests/test_runtime_baseline_100rpm.py tests/test_docs_links.py tests/test_turn_latency_k6.py; tracker/docs gates pass\nDocs touched: docs/perf/runtime-baseline.md,docs/index.md,bench/results/runtime_baseline_100rpm.json\nFollow-ups: none"
     },
     {
       "id": "S143",
@@ -5480,7 +5480,7 @@
       "theme": "dp-runtime HTTP service",
       "goal": "POST /v1/turns returns SSE TurnEvent stream end-to-end with API-key auth and persistence.",
       "stories": "S130-S143",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S4",

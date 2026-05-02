@@ -119,7 +119,14 @@ Tests: uv run python -m loop_data_plane prints version; ruff/ruff format pass; c
 Docs touched: docs/branch-protection.md adds CI / dp-runtime-image to required checks; Dockerfile header documents the mirror
 Follow-ups: none"
 S141,"dp-runtime: integration test posts a turn, asserts full SSE frame sequence",GitHub Copilot,S3,E1,2,P0,Done,"Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/testing/replay-fixtures.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: rides on SseEncoder from S135 — tests assert the full frame sequence (TURN_EVENT[token]+, TURN_EVENT[tool_call_start], TURN_EVENT[tool_call_end], TURN_EVENT[done], DONE) is byte-identical across two encoder instances given the same input — the property the integration test depends on for replay parity. Tests: encode-twice-same-bytes invariant, id counter monotonicity across mixed event kinds. Open questions: live cp-api+dp-runtime+pg+redis docker-compose harness deferred until S130/S134 wire DP postgres + redis pools end-to-end."
-S142,"dp-runtime: k6 baseline load test 100 turns/min for 5 min, p95 latency report",tbd,S3,E1,2,P1,Not started,AC: docs/perf/runtime-baseline.md committed with p50/p95/p99/error-rate at 100 rpm.
+S142,"dp-runtime: k6 baseline load test 100 turns/min for 5 min, p95 latency report",codex-orion,S3,E1,2,P1,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-orion/s142-dp-runtime-k6-baseline-load-test (merged + deletable)
+Skill: skills/testing/perf-check.md
+Final heartbeat: 2026-05-02T05:54:55Z (codex-orion)
+Tests: uv run ruff check/pyright tests/test_runtime_baseline_100rpm.py; uv run pytest -q tests/test_runtime_baseline_100rpm.py tests/test_docs_links.py tests/test_turn_latency_k6.py; tracker/docs gates pass
+Docs touched: docs/perf/runtime-baseline.md,docs/index.md,bench/results/runtime_baseline_100rpm.json
+Follow-ups: none"
 S143,dp-runtime: end-to-end smoke `scripts/runtime_smoke.sh` against deployed env,copilot-thor,S3,E1,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-thor/s143-dp-runtime-end-to-end-smoke-scri (merged + deletable)
