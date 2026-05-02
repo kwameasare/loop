@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T12:34:39.136229+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5264,13 +5264,13 @@
     {
       "id": "S808",
       "title": "ops: encrypted backup verification (restore-then-diff weekly)",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S35",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s808-ops-encrypted-backup-verificatio (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T12:34:39Z (copilot-thor)\nTests: 13 pytest (packages/control-plane/_tests/test_backup_verifier.py): test_diff_identical_snapshots_is_clean, test_diff_detects_key_only_in_live, test_diff_detects_key_only_in_backup, test_diff_detects_content_mismatch, test_job_returns_clean_result_when_snapshots_match, test_job_selects_latest_manifest_for_region, test_job_alerts_on_mismatch, test_job_raises_when_no_backup_exists, test_job_ignores_backups_in_other_regions, test_job_does_not_alert_on_clean_diff, test_job_result_contains_manifest_and_report, test_job_alert_report_has_correct_backup_id, test_job_alert_includes_verified_at_timestamp\nDocs touched: loop_implementation/engineering/SECURITY.md section 12; loop_implementation/engineering/RUNBOOKS.md\nFollow-ups: Wire to actual S3/GCS backup store; integrate PagerDuty alert on mismatch; add backup encryption key rotation check"
+      "status": "Not started",
+      "notes": "AC: weekly job restores latest backup to scratch; diff against live; alerts on mismatch."
     },
     {
       "id": "S809",
