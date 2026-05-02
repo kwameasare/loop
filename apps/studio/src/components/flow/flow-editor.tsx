@@ -18,8 +18,10 @@ import {
   getNodeKind,
   nextFlowNodeId,
 } from "@/lib/flow-nodes";
+import { type AnyNodeConfig } from "@/lib/flow-node-config";
 
 import { NodePalette } from "./node-palette";
+import { NodeConfigSidebar } from "./node-config-sidebar";
 
 export interface FlowEditorProps {
   agentId: string;
@@ -37,6 +39,8 @@ export function FlowEditor(props: FlowEditorProps) {
   const [pending, setPending] = useState<FlowNodeType | null>(
     props.pendingDragType ?? null,
   );
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [configs, setConfigs] = useState<Record<string, AnyNodeConfig>>({});
   const dragRef = useRef<{ x: number; y: number } | null>(null);
 
   function onMouseDown(e: React.MouseEvent) {
@@ -95,6 +99,9 @@ export function FlowEditor(props: FlowEditorProps) {
 
   const transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`;
   const zoomPct = Math.round(viewport.zoom * 100);
+  const selectedNode = selectedId
+    ? nodes.find((n) => n.id === selectedId) ?? null
+    : null;
 
   return (
     <section
@@ -174,13 +181,20 @@ export function FlowEditor(props: FlowEditorProps) {
           >
             {nodes.map((n) => {
               const kind = getNodeKind(n.type);
+              const isSelected = selectedId === n.id;
               return (
-                <div
-                  className="absolute flex min-w-[7rem] -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm shadow-sm"
+                <button
+                  className={`absolute flex min-w-[7rem] -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm shadow-sm hover:bg-zinc-50 ${isSelected ? "ring-2 ring-blue-500" : ""}`}
                   data-testid={`flow-node-${n.id}`}
                   data-node-type={n.type}
                   key={n.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedId(n.id);
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
                   style={{ left: n.x, top: n.y }}
+                  type="button"
                 >
                   <span
                     aria-hidden
@@ -189,7 +203,7 @@ export function FlowEditor(props: FlowEditorProps) {
                     {kind.icon}
                   </span>
                   <span className="font-medium">{kind.label}</span>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -208,6 +222,16 @@ export function FlowEditor(props: FlowEditorProps) {
           ) : null}
         </div>
       </div>
+      {selectedNode ? (
+        <NodeConfigSidebar
+          config={configs[selectedNode.id]}
+          node={selectedNode}
+          onClose={() => setSelectedId(null)}
+          onPersist={(next) =>
+            setConfigs((prev) => ({ ...prev, [selectedNode.id]: next }))
+          }
+        />
+      ) : null}
     </section>
   );
 }
