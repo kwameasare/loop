@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T00:07:21.784386+00:00",
+    "generated_at": "2026-05-02T00:08:56.057034+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5121,13 +5121,13 @@
     {
       "id": "S777",
       "title": "portability: KMS Protocol parity tests across AWS/Azure/GCP/Alibaba KMS + Vault Transit",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S34",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: encrypt/decrypt/rotate/sign Sketches identical results; tested in CI nightly."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s777-portability-kms-protocol-parity\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T00:08:55Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S778",
