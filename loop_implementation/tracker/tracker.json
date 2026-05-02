@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T14:03:21.029034+00:00",
+    "generated_at": "2026-05-02T14:07:07.435696+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4356,8 +4356,8 @@
       "epic": "E10",
       "points": 3,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s655-ga-polish-design-system-audit-co\nSkill: loop_implementation/skills/_base/skill.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T14:03:20Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s655-ga-polish-design-system-audit-co (merged + deletable)\nSkill: loop_implementation/skills/_base/skill.md\nFinal heartbeat: 2026-05-02T14:07:07Z (copilot-thor)\nTests: 13 vitest (design-tokens.test.ts): token module structure, CSS-var mirrors, span-kind/status/chart/flow tokens, spacing scale, hardcoded-colour audit (<5 hex literals), spot-checks\nDocs touched: loop_implementation/engineering/DESIGN_SYSTEM.md; apps/studio/src/lib/design-tokens.ts\nFollow-ups: dark-mode CSS variable values; storybook integration; lint rule to block new hex literals"
     },
     {
       "id": "S656",

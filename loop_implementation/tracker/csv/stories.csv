@@ -1149,14 +1149,14 @@ Final heartbeat: 2026-05-02T05:54:47Z (codex-vega)
 Tests: touched ruff/format pass; touched pyright pass; voice perf script/workflow tests pass (12); pytest -q -m 'not integration and not e2e' passed (1479 passed, 3 skipped, 4 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests
 Docs touched: docs/perf/voice_perf.md, docs/index.md, loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_perf.json
 Follow-ups: none"
-S655,ga-polish: design-system audit + component refactor,copilot-thor,S29,E10,3,P1,In progress,"**Active.**
-Branch: copilot-thor/s655-ga-polish-design-system-audit-co
+S655,ga-polish: design-system audit + component refactor,copilot-thor,S29,E10,3,P1,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s655-ga-polish-design-system-audit-co (merged + deletable)
 Skill: loop_implementation/skills/_base/skill.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-02T14:03:20Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T14:07:07Z (copilot-thor)
+Tests: 13 vitest (design-tokens.test.ts): token module structure, CSS-var mirrors, span-kind/status/chart/flow tokens, spacing scale, hardcoded-colour audit (<5 hex literals), spot-checks
+Docs touched: loop_implementation/engineering/DESIGN_SYSTEM.md; apps/studio/src/lib/design-tokens.ts
+Follow-ups: dark-mode CSS variable values; storybook integration; lint rule to block new hex literals"
 S656,ga-polish: a11y audit (WCAG 2.1 AA) on top 10 studio pages,copilot-titan,S29,E10,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-titan/s656-ga-polish-a11y-audit-wcag-2-1-aa (merged + deletable)
