@@ -564,7 +564,7 @@ NEW_STORIES: list[StoryV2] = [
     # =====================================================================
     # Sprint S30 — 1.0 launch + Series A (≈5 stories)
     # =====================================================================
-    StoryV2("S670", "launch: 1.0 release-notes draft + changelog automation", "S30", "E17", 1, "P0", "AC: Keep-A-Changelog; release-please bot wired.", owner="copilot-titan", status="In progress", notes_override="**Active.**\nBranch: copilot-titan/s670-launch-1-0-release-notes-draft-c\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:28:39Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"),
+    StoryV2("S670", "launch: 1.0 release-notes draft + changelog automation", "S30", "E17", 1, "P0", "AC: Keep-A-Changelog; release-please bot wired.", owner="copilot-titan", status="Done", notes_override="**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s670-launch-1-0-release-notes-draft-c (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:28:53Z (copilot-titan)\nTests: tests/test_release_automation.py\nDocs touched: CHANGELOG.md\nFollow-ups: none"),
     StoryV2("S671", "launch: pricing page + plan-comparison matrix", "S30", "E17", 2, "P0", "AC: live page; sales-ops verified; A/B-flag-enabled."),
     StoryV2("S672", "launch: design partners → 10 paid customers conversion plan", "S30", "E17", 2, "P0", "AC: each partner converted or churned with reason; documented in OPS/launch.md."),
     StoryV2("S673", "launch: HN / Product Hunt launch playbook executed", "S30", "E17", 2, "P0", "AC: launched, ranked, post-mortem; conversion + churn measured for first 7 days."),

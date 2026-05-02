@@ -1168,14 +1168,14 @@ Final heartbeat: 2026-05-02T06:27:02Z (copilot-titan)
 Tests: tests/test_docs_site.py
 Docs touched: docs/site/introduction.mdx,docs/site/quickstart.mdx,docs/site/tutorials/build-support-agent.mdx,docs/site/tutorials/connect-channels.mdx,docs/site/tutorials/eval-and-deploy.mdx,docs/site/PARTNER_REVIEWS.md
 Follow-ups: none"
-S670,launch: 1.0 release-notes draft + changelog automation,copilot-titan,S30,E17,1,P0,In progress,"**Active.**
-Branch: copilot-titan/s670-launch-1-0-release-notes-draft-c
+S670,launch: 1.0 release-notes draft + changelog automation,copilot-titan,S30,E17,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s670-launch-1-0-release-notes-draft-c (merged + deletable)
 Skill: skills/api/api-versioning.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T06:28:39Z (copilot-titan)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T06:28:53Z (copilot-titan)
+Tests: tests/test_release_automation.py
+Docs touched: CHANGELOG.md
+Follow-ups: none"
 S671,launch: pricing page + plan-comparison matrix,tbd,S30,E17,2,P0,Not started,AC: live page; sales-ops verified; A/B-flag-enabled.
 S672,launch: design partners → 10 paid customers conversion plan,tbd,S30,E17,2,P0,Not started,AC: each partner converted or churned with reason; documented in OPS/launch.md.
 S673,launch: HN / Product Hunt launch playbook executed,tbd,S30,E17,2,P0,Not started,"AC: launched, ranked, post-mortem; conversion + churn measured for first 7 days."
