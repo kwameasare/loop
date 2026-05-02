@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:36:29.042348+00:00",
+    "generated_at": "2026-05-02T03:36:45.481653+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3328,13 +3328,13 @@
     {
       "id": "S468",
       "title": "flow: emulator panel shares state with runtime emulator",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S19",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: clicking Play in flow editor uses /v1/turns; tokens stream into a chat preview."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s468-flow-emulator-panel-shares-state\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T03:36:45Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S469",

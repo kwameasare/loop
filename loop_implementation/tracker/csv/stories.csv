@@ -727,7 +727,14 @@ Final heartbeat: 2026-05-02T03:36:28Z (copilot-thor)
 Tests: vitest covers flowToYaml deterministic render and round-trip via flowFromYaml; makeMemoryFlowApi save success+rotates tag, save with stale tag returns server tag, load returns null/seeded; 4 component tests for mount-load, save success, conflict surfaces server tag, conflict-reload pulls server tag
 Docs touched: apps/studio/src/components/flow/flow-persistence-panel.tsx,apps/studio/src/lib/flow-yaml.ts
 Follow-ups: none"
-S468,flow: emulator panel shares state with runtime emulator,tbd,S19,E10,2,P0,Not started,AC: clicking Play in flow editor uses /v1/turns; tokens stream into a chat preview.
+S468,flow: emulator panel shares state with runtime emulator,copilot-thor,S19,E10,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s468-flow-emulator-panel-shares-state
+Skill: skills/ux/component-design.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T03:36:45Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S469,flow: undo/redo with capped history,tbd,S19,E10,2,P1,Not started,AC: Cmd+Z undoes last node/edge change; capped at 50.
 S470,"flow: validation - missing-edge, unreachable-node, dangling-condition",GitHub Copilot,S19,E10,2,P0,Done,"Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/data/flow-validation.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_runtime/flow_validation.py — FlowIssueKind {MISSING_EDGE, DANGLING_CONDITION, UNREACHABLE_NODE, NO_TERMINAL_FROM_ENTRY, DUPLICATE_OUTPUT_KEY}. _CONDITION_PATTERN '^\s*(?P<key>[A-Za-z_][A-Za-z0-9_]*)\s*(?:==|!=)\s*(?P<rhs>.+?)\s*$' parses edge guards. validate_flow(graph) returns sorted FlowIssue list (by node_id, kind) so the studio banner is deterministic. Duplicate-output-key check excludes TerminalNode (terminals legitimately echo upstream keys). AgentGraph constructor already rejects unreachable nodes (pydantic ValidationError); this lint surfaces the same set non-fatally. Tests: clean graph yields []; dangling condition flagged when key not present in upstream outputs; duplicate output key flagged across non-terminal nodes; sorted output. Open questions: studio per-node UI markers wire onto FlowIssue.node_id in S471."
 S471,"flow: 3 starter templates (FAQ, support-triage, lead-qual)",tbd,S19,E10,2,P1,Not started,AC: 'New agent from template' picks one of three; each runs out of the box.
