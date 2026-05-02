@@ -44,11 +44,17 @@ from loop_voice.protocols import (
     InMemoryRealtimeTransport,
     InMemorySpeechToText,
     InMemoryTextToSpeech,
+    PrewarmableTextToSpeech,
     RealtimeTransport,
     SpeechToText,
     TextToSpeech,
 )
-from loop_voice.session import AgentResponder, VoiceSession
+from loop_voice.session import (
+    AgentResponder,
+    StreamingAgentResponder,
+    VoiceSession,
+    stream_sentence_boundaries,
+)
 from loop_voice.webrtc import (
     SignalKind,
     WebRTCError,
@@ -79,10 +85,12 @@ __all__ = [
     "PhoneNumberSearchQuery",
     "PhoneNumberStatus",
     "PhoneProvisioningError",
+    "PrewarmableTextToSpeech",
     "RealtimeTransport",
     "SignalKind",
     "SpeechToText",
     "StageBudget",
+    "StreamingAgentResponder",
     "TextToSpeech",
     "Transcript",
     "VoiceSession",
@@ -95,5 +103,6 @@ __all__ = [
     "WebRTCSignal",
     "echo_answer_for",
     "make_echo_agent",
+    "stream_sentence_boundaries",
     "validate_e164",
 ]

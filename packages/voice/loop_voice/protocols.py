@@ -35,6 +35,13 @@ class TextToSpeech(Protocol):
     def synthesize(self, text: str) -> AsyncIterator[AudioFrame]: ...
 
 
+@runtime_checkable
+class PrewarmableTextToSpeech(TextToSpeech, Protocol):
+    """TTS provider that can warm sockets/model state before text arrives."""
+
+    async def prewarm(self) -> None: ...
+
+
 # --------------------------------------------------------------------- impls
 
 
@@ -94,6 +101,12 @@ class InMemoryTextToSpeech:
     *per call* so multiple replies in a session don't collide -- the
     transport assigns global ordering."""
 
+    def __init__(self) -> None:
+        self.prewarm_count = 0
+
+    async def prewarm(self) -> None:
+        self.prewarm_count += 1
+
     async def synthesize(self, text: str) -> AsyncIterator[AudioFrame]:
         for i, ch in enumerate(text):
             yield AudioFrame(pcm=ch.encode("utf-8"), sequence=i)
@@ -103,6 +116,7 @@ __all__ = [
     "InMemoryRealtimeTransport",
     "InMemorySpeechToText",
     "InMemoryTextToSpeech",
+    "PrewarmableTextToSpeech",
     "RealtimeTransport",
     "SpeechToText",
     "TextToSpeech",
