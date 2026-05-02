@@ -865,11 +865,12 @@ Follow-ups: none"
 S777,portability: KMS Protocol parity tests across AWS/Azure/GCP/Alibaba KMS + Vault Transit,codex-orion,S34,E12,2,P0,In progress,"**Active.**
 Branch: codex-orion/s777-portability-kms-protocol-parity
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 3/5
-Heartbeat: 2026-05-02T00:15:18Z (codex-orion)
+Last step: 4/5
+Heartbeat: 2026-05-02T00:15:28Z (codex-orion)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: control-plane and broad pytest passed
 Latest checkpoint: tracker and docs gates passed
 Latest checkpoint: focused KMS static parity tests and SDK scan passed
 Latest checkpoint: KMS contract parity suite and docs landed"
