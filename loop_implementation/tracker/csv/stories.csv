@@ -957,7 +957,14 @@ Final heartbeat: 2026-05-01T23:34:20Z (codex-orion)
 Tests: scripts/eu_smoke.sh against local helm smoke server; uv run ruff check scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run ruff format --check scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run pyright scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run pytest -q tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py tests/test_helm_e2e_workflow.py; uv run pytest -q -m 'not integration and not e2e' (1228 passed, 3 skipped, 4 deselected); python3 tools/build_tracker.py; python3 tools/check_tracker_notes.py; python3 tools/check_docs_with_code.py; python3 tools/check_checkpoint_discipline.py; full repo ruff/format/pyright remain baseline-red in unrelated files
 Docs touched: loop_implementation/engineering/REGIONAL_DEPLOYS.md
 Follow-ups: none"
-S610,sso: SAML SP impl via PySAML2,tbd,S27,E20,3,P0,Not started,AC: ACS endpoint validates assertion; cert-rotation supported. [extends S050]
+S610,sso: SAML SP impl via PySAML2,copilot-thor,S27,E20,3,P0,In progress,"**Active.**
+Branch: copilot-thor/s610-sso-saml-sp-impl-via-pysaml2
+Skill: skills/api/add-rest-endpoint.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T05:23:33Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S611,sso: SCIM provisioning endpoint (RFC 7644),tbd,S27,E20,3,P0,Not started,AC: Users + Groups create/update/delete from IdP; Postmen schemathesis test.
 S612,sso: Okta integration recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: sample IdP metadata in fixtures/; full SP↔IdP loop in integration.
 S613,sso: Entra ID recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: same as Okta but Entra ID.
