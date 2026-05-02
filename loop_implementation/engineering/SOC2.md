@@ -46,6 +46,11 @@ See also:
 
 ## Vanta integration checklist
 
+> The OAuth handshake by which Loop links a workspace to a Vanta
+> organization is specified separately in
+> [VANTA_INTEGRATION.md](VANTA_INTEGRATION.md) (S570). The table below
+> tracks the inverse: what Vanta connects to *inside* Loop.
+
 | Integration            | Status      | Notes                                |
 | ---------------------- | ----------- | ------------------------------------ |
 | Identity provider (IdP)| ☐ pending   | Okta / Google Workspace TBC          |
