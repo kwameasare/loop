@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:35:00.651620+00:00",
+    "generated_at": "2026-05-02T06:39:39.529686+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5176,13 +5176,13 @@
     {
       "id": "S800",
       "title": "security: continuous fuzz testing of cp-api + dp-runtime (atheris/restler)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S35",
       "epic": "E16",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: fuzz harness runs in CI nightly; crashes/oom auto-issue; coverage report."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s800-security-continuous-fuzz-testing\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:39:39Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S801",

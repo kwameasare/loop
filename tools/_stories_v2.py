@@ -677,7 +677,7 @@ NEW_STORIES: list[StoryV2] = [
     # Sprint S35 — Production security / ops acceptance gates (≈10 stories)
     # Closes the gap between "SOC2 paperwork" and "actually-secure runtime".
     # =====================================================================
-    StoryV2("S800", "security: continuous fuzz testing of cp-api + dp-runtime (atheris/restler)", "S35", "E16", 3, "P0", "AC: fuzz harness runs in CI nightly; crashes/oom auto-issue; coverage report."),
+    StoryV2("S800", "security: continuous fuzz testing of cp-api + dp-runtime (atheris/restler)", "S35", "E16", 3, "P0", "AC: fuzz harness runs in CI nightly; crashes/oom auto-issue; coverage report.", owner="copilot-titan", status="In progress", notes_override="**Active.**\nBranch: copilot-titan/s800-security-continuous-fuzz-testing\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:39:39Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"),
     StoryV2("S801", "security: threat-model verification — STRIDE checklist gate per PR touching auth/security paths", "S35", "E16", 2, "P0", "AC: PRs touching auth/RLS/secrets fail without docs/THREAT_MODEL.md update; bot enforces."),
     StoryV2("S802", "security: SLSA Level 3 build provenance for container images (in-toto attestations)", "S35", "E16", 3, "P0", "AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing."),
     StoryV2("S803", "security: runtime detection (Falco rules) for sandbox + cp-api anomalies", "S35", "E16", 2, "P0", "AC: rules deployed; alerts on shell-exec / unauthorized syscall / unexpected egress; tested with red-team triggers."),

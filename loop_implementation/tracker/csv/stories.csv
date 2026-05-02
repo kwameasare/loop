@@ -1356,7 +1356,14 @@ Final heartbeat: 2026-05-02T05:27:19Z (codex-orion)
 Tests: uv run ruff check/pyright on cloud proof files; uv run pytest -q tests/test_cloud_proof_report.py tests/test_cross_cloud_smoke.py tests/test_docs_links.py; tracker/docs gates pass
 Docs touched: docs/CLOUD_PROOF.md,docs/index.md,.github/workflows/cross-cloud-smoke.yml
 Follow-ups: none"
-S800,security: continuous fuzz testing of cp-api + dp-runtime (atheris/restler),tbd,S35,E16,3,P0,Not started,AC: fuzz harness runs in CI nightly; crashes/oom auto-issue; coverage report.
+S800,security: continuous fuzz testing of cp-api + dp-runtime (atheris/restler),copilot-titan,S35,E16,3,P0,In progress,"**Active.**
+Branch: copilot-titan/s800-security-continuous-fuzz-testing
+Skill: skills/api/api-versioning.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T06:39:39Z (copilot-titan)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S801,security: threat-model verification — STRIDE checklist gate per PR touching auth/security paths,tbd,S35,E16,2,P0,Not started,AC: PRs touching auth/RLS/secrets fail without docs/THREAT_MODEL.md update; bot enforces.
 S802,security: SLSA Level 3 build provenance for container images (in-toto attestations),tbd,S35,E16,3,P0,Not started,AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing.
 S803,security: runtime detection (Falco rules) for sandbox + cp-api anomalies,tbd,S35,E16,2,P0,Not started,AC: rules deployed; alerts on shell-exec / unauthorized syscall / unexpected egress; tested with red-team triggers.
