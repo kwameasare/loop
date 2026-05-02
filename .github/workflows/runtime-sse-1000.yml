@@ -1,0 +1,88 @@
+name: runtime-sse-1000
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/runtime-sse-1000.yml"
+      - "bench/results/runtime_sse_1000_concurrency.json"
+      - "infra/helm/loop/**"
+      - "scripts/helm_e2e_smoke_server.py"
+      - "scripts/k6_runtime_sse_1000.js"
+  workflow_dispatch:
+  schedule:
+    - cron: "7 6 * * *"
+
+jobs:
+  runtime-sse-1000:
+    name: runtime-sse-1000
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      LOOP_NAMESPACE: loop-runtime-sse
+      LOOP_RELEASE: loop
+      LOOP_RUNTIME_SSE_BASE_URL: http://127.0.0.1:18082
+      LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES: "4294967296"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - uses: grafana/setup-k6-action@v1
+      - uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: loop-runtime-sse
+          wait: 60s
+      - name: Build and load smoke image
+        run: |
+          cat > /tmp/loop-helm-smoke.Dockerfile <<'DOCKER'
+          FROM python:3.12-alpine
+          COPY scripts/helm_e2e_smoke_server.py /server.py
+          ENV HELM_SMOKE_PORTS=8080,8081,8082,8003
+          CMD ["python", "/server.py"]
+          DOCKER
+          docker build -f /tmp/loop-helm-smoke.Dockerfile -t loop/helm-smoke:ci .
+          kind load docker-image loop/helm-smoke:ci --name loop-runtime-sse
+      - name: Install Loop chart
+        run: |
+          helm dependency build infra/helm/loop
+          helm upgrade --install "$LOOP_RELEASE" infra/helm/loop \
+            --namespace "$LOOP_NAMESPACE" --create-namespace --wait --timeout 8m \
+            --set global.imageRegistry=loop --set global.imagePullPolicy=IfNotPresent \
+            --set runtime.image.repository=helm-smoke --set runtime.image.tag=ci \
+            --set runtime.replicaCount=1 --set toolHost.enabled=false \
+            --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \
+            --set nats.enabled=false --set minio.enabled=false \
+            --set clickhouse.enabled=false
+      - name: Run 1000 SSE turns
+        run: |
+          kubectl -n "$LOOP_NAMESPACE" rollout status deploy/loop-loop-runtime --timeout=90s
+          kubectl -n "$LOOP_NAMESPACE" port-forward svc/loop-loop-runtime 18082:8081 >/tmp/runtime-sse.log 2>&1 &
+          pf_pid=$!
+          trap 'kill "$pf_pid"' EXIT
+          for _ in $(seq 1 30); do
+            curl -fsS "$LOOP_RUNTIME_SSE_BASE_URL/healthz" >/dev/null && break
+            sleep 1
+          done
+          k6 run --summary-export /tmp/runtime-sse-1000-summary.json scripts/k6_runtime_sse_1000.js
+      - name: Check runtime memory
+        run: |
+          pod=$(kubectl -n "$LOOP_NAMESPACE" get pod -l app.kubernetes.io/component=runtime -o jsonpath='{.items[0].metadata.name}')
+          memory=$(kubectl -n "$LOOP_NAMESPACE" exec "$pod" -- sh -c 'cat /sys/fs/cgroup/memory.current 2>/dev/null || cat /sys/fs/cgroup/memory/memory.usage_in_bytes')
+          echo "{\"memory_bytes\":$memory,\"budget_bytes\":$LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES}" >/tmp/runtime-sse-memory.json
+          test "$memory" -lt "$LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES"
+      - name: Upload runtime SSE reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-sse-1000
+          path: |
+            /tmp/runtime-sse-1000-summary.json
+            /tmp/runtime-sse-memory.json
+          if-no-files-found: ignore
+      - name: Page on-call
+        if: failure()
+        env:
+          LOOP_ONCALL_WEBHOOK_URL: ${{ secrets.LOOP_ONCALL_WEBHOOK_URL }}
+        run: |
+          if [ -z "$LOOP_ONCALL_WEBHOOK_URL" ]; then exit 1; fi
+          curl -fsS -X POST -H "content-type: application/json" \
+            --data "{\"summary\":\"Loop runtime SSE 1000 concurrency gate failed\",\"severity\":\"critical\",\"source\":\"github-actions\"}" \
+            "$LOOP_ONCALL_WEBHOOK_URL"
