@@ -1,0 +1,63 @@
+groups:
+  - name: loop-slo-burn
+    rules:
+      - alert: LoopControlPlaneAvailabilityBurn
+        expr: loop_slo_error_budget_burn_rate{service="control-plane",objective="availability",window="5m"} > 14.4
+        for: 5m
+        labels: { severity: page, pagerduty: "true", pagerduty_receiver: pagerduty-slo, service: control-plane, slo: availability }
+        annotations: { summary: "control-plane availability error budget is burning fast", runbook_url: "loop_implementation/engineering/RUNBOOKS.md" }
+      - alert: LoopControlPlaneLatencyBurn
+        expr: loop_slo_latency_burn_rate{service="control-plane",objective="latency",window="1h"} > 6
+        for: 15m
+        labels: { severity: page, pagerduty: "true", pagerduty_receiver: pagerduty-slo, service: control-plane, slo: latency }
+        annotations: { summary: "control-plane p95 latency is burning error budget", runbook_url: "loop_implementation/engineering/PERFORMANCE.md" }
+      - alert: LoopRuntimeAvailabilityBurn
+        expr: loop_slo_error_budget_burn_rate{service="runtime",objective="availability",window="5m"} > 14.4
+        for: 5m
+        labels: { severity: page, pagerduty: "true", pagerduty_receiver: pagerduty-slo, service: runtime, slo: availability }
+        annotations: { summary: "runtime availability error budget is burning fast", runbook_url: "loop_implementation/engineering/RUNBOOKS.md" }
+      - alert: LoopRuntimeLatencyBurn
+        expr: loop_slo_latency_burn_rate{service="runtime",objective="latency",window="1h"} > 6
+        for: 15m
+        labels: { severity: page, pagerduty: "true", pagerduty_receiver: pagerduty-slo, service: runtime, slo: latency }
+        annotations: { summary: "runtime p95 latency is burning error budget", runbook_url: "loop_implementation/engineering/PERFORMANCE.md" }
+      - alert: LoopGatewayAvailabilityBurn
+        expr: loop_slo_error_budget_burn_rate{service="gateway",objective="availability",window="5m"} > 14.4
+        for: 5m
+        labels: { severity: page, pagerduty: "true", pagerduty_receiver: pagerduty-slo, service: gateway, slo: availability }
+        annotations: { summary: "gateway availability error budget is burning fast", runbook_url: "loop_implementation/engineering/RUNBOOKS.md" }
+      - alert: LoopGatewayLatencyBurn
+        expr: loop_slo_latency_burn_rate{service="gateway",objective="latency",window="1h"} > 6
+        for: 15m
+        labels: { severity: page, pagerduty: "true", pagerduty_receiver: pagerduty-slo, service: gateway, slo: latency }
+        annotations: { summary: "gateway p95 latency is burning error budget", runbook_url: "loop_implementation/engineering/PERFORMANCE.md" }
+      - alert: LoopKbEngineAvailabilityBurn
+        expr: loop_slo_error_budget_burn_rate{service="kb-engine",objective="availability",window="5m"} > 14.4
+        for: 5m
+        labels: { severity: page, pagerduty: "true", pagerduty_receiver: pagerduty-slo, service: kb-engine, slo: availability }
+        annotations: { summary: "kb-engine availability error budget is burning fast", runbook_url: "loop_implementation/engineering/RUNBOOKS.md" }
+      - alert: LoopKbEngineLatencyBurn
+        expr: loop_slo_latency_burn_rate{service="kb-engine",objective="latency",window="1h"} > 6
+        for: 15m
+        labels: { severity: page, pagerduty: "true", pagerduty_receiver: pagerduty-slo, service: kb-engine, slo: latency }
+        annotations: { summary: "kb-engine p95 latency is burning error budget", runbook_url: "loop_implementation/engineering/PERFORMANCE.md" }
+      - alert: LoopToolHostAvailabilityBurn
+        expr: loop_slo_error_budget_burn_rate{service="tool-host",objective="availability",window="5m"} > 14.4
+        for: 5m
+        labels: { severity: page, pagerduty: "true", pagerduty_receiver: pagerduty-slo, service: tool-host, slo: availability }
+        annotations: { summary: "tool-host availability error budget is burning fast", runbook_url: "loop_implementation/engineering/RUNBOOKS.md" }
+      - alert: LoopToolHostLatencyBurn
+        expr: loop_slo_latency_burn_rate{service="tool-host",objective="latency",window="1h"} > 6
+        for: 15m
+        labels: { severity: page, pagerduty: "true", pagerduty_receiver: pagerduty-slo, service: tool-host, slo: latency }
+        annotations: { summary: "tool-host p95 latency is burning error budget", runbook_url: "loop_implementation/engineering/PERFORMANCE.md" }
+      - alert: LoopVoiceAvailabilityBurn
+        expr: loop_slo_error_budget_burn_rate{service="voice",objective="availability",window="5m"} > 14.4
+        for: 5m
+        labels: { severity: page, pagerduty: "true", pagerduty_receiver: pagerduty-slo, service: voice, slo: availability }
+        annotations: { summary: "voice availability error budget is burning fast", runbook_url: "loop_implementation/engineering/RUNBOOKS.md" }
+      - alert: LoopVoiceLatencyBurn
+        expr: loop_slo_latency_burn_rate{service="voice",objective="latency",window="1h"} > 6
+        for: 15m
+        labels: { severity: page, pagerduty: "true", pagerduty_receiver: pagerduty-slo, service: voice, slo: latency }
+        annotations: { summary: "voice p95 latency is burning error budget", runbook_url: "loop_implementation/engineering/VOICE_LATENCY.md" }

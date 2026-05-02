@@ -1,0 +1,75 @@
+version: 1
+window_days: 30
+pagerduty:
+  receiver: pagerduty-slo
+  routing_key_secret: PAGERDUTY_SLO_ROUTING_KEY
+burn_rates:
+  fast_5m: 14.4
+  slow_1h: 6.0
+services:
+  control-plane:
+    owner: Eng #2
+    availability:
+      metric: loop_control_plane_requests_total
+      target: 0.999
+    latency:
+      metric: loop_control_plane_request_latency_seconds
+      percentile: p95
+      target_ms: 200
+    error_budget:
+      percent: 0.1
+  runtime:
+    owner: Eng #1
+    availability:
+      metric: loop_runtime_turns_total
+      target: 0.999
+    latency:
+      metric: loop_runtime_turn_latency_seconds
+      percentile: p95
+      target_ms: 2000
+    error_budget:
+      percent: 0.1
+  gateway:
+    owner: Eng #1
+    availability:
+      metric: loop_gateway_provider_dispatch_total
+      target: 0.999
+    latency:
+      metric: loop_gateway_provider_dispatch_latency_seconds
+      percentile: p95
+      target_ms: 1200
+    error_budget:
+      percent: 0.1
+  kb-engine:
+    owner: Eng #4
+    availability:
+      metric: loop_kb_retrieval_requests_total
+      target: 0.999
+    latency:
+      metric: loop_kb_retrieval_latency_seconds
+      percentile: p95
+      target_ms: 200
+    error_budget:
+      percent: 0.1
+  tool-host:
+    owner: Eng #1
+    availability:
+      metric: loop_tool_host_invocations_total
+      target: 0.999
+    latency:
+      metric: loop_tool_host_invocation_latency_seconds
+      percentile: p95
+      target_ms: 300
+    error_budget:
+      percent: 0.1
+  voice:
+    owner: Eng #3
+    availability:
+      metric: loop_voice_turns_total
+      target: 0.999
+    latency:
+      metric: loop_voice_turn_duration_seconds
+      percentile: p95
+      target_ms: 1100
+    error_budget:
+      percent: 0.1

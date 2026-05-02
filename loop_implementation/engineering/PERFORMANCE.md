@@ -11,6 +11,15 @@ This is the canonical reference for what "fast enough" means at Loop, the rig we
 
 These are **hard contracts**. A PR that regresses any of them by > 10% (vs the rolling 7-day baseline) is blocked from merge unless the regression is justified in the PR body and approved by the relevant owner.
 
+### 1.0 Service SLOs
+
+<!-- S805 -->
+Published service SLOs live in `loop_implementation/operations/SLOs.yaml`.
+Each service defines availability, p95 latency, and 30-day error-budget
+targets. Burn-rate alerts live in `infra/prometheus/alerts/slo-burn.yaml`
+and route PagerDuty pages through `infra/prometheus/alertmanager.yaml`
+when availability or latency budget burn exceeds the fast/slow thresholds.
+
 ### 1.1 User-visible
 
 | Surface | Metric | p50 | p95 | p99 | Owner |
