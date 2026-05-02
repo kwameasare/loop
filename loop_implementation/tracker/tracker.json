@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:35:11.404264+00:00",
+    "generated_at": "2026-05-02T05:39:05.496168+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4120,13 +4120,13 @@
     {
       "id": "S613",
       "title": "sso: Entra ID recipe + sandbox tenant test",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S27",
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: same as Okta but Entra ID."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s613-sso-entra-id-recipe-sandbox-tena\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T05:39:05Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S614",
