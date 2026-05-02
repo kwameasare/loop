@@ -912,11 +912,12 @@ Follow-ups: none"
 S824,memory: PII redaction at memory-write time (configurable per agent),codex-orion,S36,E4,2,P0,In progress,"**Active.**
 Branch: codex-orion/s824-memory-pii-redaction-at-memory-w
 Skill: skills/coding/implement-runtime-feature.md
-Last step: 1/5
-Heartbeat: 2026-05-02T01:00:10Z (codex-orion)
+Last step: 2/5
+Heartbeat: 2026-05-02T01:01:08Z (codex-orion)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: runtime and broad pytest passed
 Latest checkpoint: memory PII redaction modes tests and docs landed"
 S825,memory: memory-usage dashboard in studio (per agent + per user),tbd,S36,E10,2,P1,Not started,AC: lists memory entries; redacted; user-deletable per GDPR Art-17.
 S826,kb-v2: late-interaction retrieval (ColBERT-style for high-recall surfaces),tbd,S36,E5,3,P1,Not started,AC: opt-in retrieval mode; eval shows ≥5% recall@10 improvement on hard queries.
