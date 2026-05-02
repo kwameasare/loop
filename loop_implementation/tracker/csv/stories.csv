@@ -1274,11 +1274,12 @@ S804,"security: chaos-engineering harness (network partition, DB failover, NATS 
 S805,ops: SLO definitions per service + error-budget burn alerts,codex-vega,S35,E9,2,P0,In progress,"**Active.**
 Branch: codex-vega/s805-ops-slo-definitions-per-service
 Skill: skills/observability/add-metric.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T06:07:14Z (codex-vega)
+Last step: 1/5
+Heartbeat: 2026-05-02T06:11:31Z (codex-vega)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: service SLOs and PagerDuty alerts landed"
 S806,ops: incident-response runbook + game-day cadence (monthly),tbd,S35,E16,2,P0,Not started,AC: runbook checked in; first game-day held; recorded; gaps tracked.
 S807,"ops: data-retention policy enforced by scheduled jobs (per data type, per region)",tbd,S35,E16,2,P0,Not started,AC: jobs delete per policy; deletion audited; user-visible policy page on docs site.
 S808,ops: encrypted backup verification (restore-then-diff weekly),tbd,S35,E16,2,P0,Not started,AC: weekly job restores latest backup to scratch; diff against live; alerts on mismatch.
