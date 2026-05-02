@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:45:11.873017+00:00",
+    "generated_at": "2026-05-02T05:45:03.060471+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4120,24 +4120,24 @@
     {
       "id": "S613",
       "title": "sso: Entra ID recipe + sandbox tenant test",
+      "owner": "copilot-titan",
+      "sprint": "S27",
+      "epic": "E20",
+      "points": 2,
+      "priority": "P0",
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s613-sso-entra-id-recipe-sandbox-tena (merged + deletable)\nSkill: skills/security/secrets-kms-check.md\nFinal heartbeat: 2026-05-02T05:44:47Z (copilot-titan)\nTests: packages/control-plane/_tests/test_entra_integration.py\nDocs touched: packages/control-plane/fixtures/entra_idp_metadata.xml\nFollow-ups: S614 S617"
+    },
+    {
+      "id": "S614",
+      "title": "sso: Google Workspace recipe + sandbox test",
       "owner": "tbd",
       "sprint": "S27",
       "epic": "E20",
       "points": 2,
       "priority": "P0",
       "status": "Not started",
-      "notes": "AC: same as Okta but Entra ID."
-    },
-    {
-      "id": "S614",
-      "title": "sso: Google Workspace recipe + sandbox test",
-      "owner": "copilot-thor",
-      "sprint": "S27",
-      "epic": "E20",
-      "points": 2,
-      "priority": "P0",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s614-sso-google-workspace-recipe-sand (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T05:45:11Z (copilot-thor)\nTests: 16 pytest (test_google_integration.py): parse Google Workspace fixture metadata, entity_id/sso_url/cert, sp_entity_id/acs_url, group-role map (email address groups), full StubSamlValidator ACS loop happy+reject paths (issuer, audience, expiry)\nDocs touched: packages/control-plane/loop_control_plane/saml_google.py module docstring; packages/control-plane/fixtures/google_idp_metadata.xml fixture comments\nFollow-ups: S615 studio enterprise tab; S618 Playwright Google SP-initiated e2e"
+      "notes": "AC: same."
     },
     {
       "id": "S615",
@@ -4323,19 +4323,19 @@
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s652-voice-perf-model-warm-up-connect\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:34:26Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s652-voice-perf-model-warm-up-connect (merged + deletable)\nSkill: skills/testing/perf-check.md\nFinal heartbeat: 2026-05-02T05:42:37Z (codex-vega)\nTests: touched ruff/format pass; touched pyright pass; voice pooling tests pass (52); pytest -q -m 'not integration and not e2e' passed (1408 passed, 3 skipped, 4 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests\nDocs touched: loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_connection_pooling.json\nFollow-ups: none"
     },
     {
       "id": "S653",
       "title": "voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S29",
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: nearest-region selector; latency map committed."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s653-voice-perf-regional-endpoints-eu\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:44:23Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S654",
