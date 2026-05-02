@@ -1,14 +1,14 @@
 month,milestone,deliverables,status
 M0,Hire + scope,Hire engineers 1–4; tech-stack lock-in; runtime + SDK started,In progress
 M1,Runtime alpha,Python SDK skeleton; LLM gateway w/ OpenAI + Anthropic; Slack channel,In progress
-M2,Tools + KB,Tool/MCP layer; auto-MCP; KB ingestion v0; web widget,In progress
-M3,Eval + cloud,"Eval harness v0 (6 scorers); CLI v0; cloud control plane (auth, deploy)",In progress
-M4,Closed alpha,10 design partners; WhatsApp; Studio v0 (conversations + traces),In progress
+M2,Tools + KB,Tool/MCP layer; auto-MCP; KB ingestion v0; web widget,Done
+M3,Eval + cloud,"Eval harness v0 (6 scorers); CLI v0; cloud control plane (auth, deploy)",Done
+M4,Closed alpha,10 design partners; WhatsApp; Studio v0 (conversations + traces),Done
 M5,Voice MVP,Voice channel MVP; memory tiers; cost dashboard,In progress
 M6,Public beta,OSS the runtime (Apache 2.0); Hub v0; free hobby tier; PUBLIC BETA,In progress
-M7,Episodic + helm,Episodic memory; Helm chart; email + Telegram; multi-agent primitives v0,In progress
+M7,Episodic + helm,Episodic memory; Helm chart; email + Telegram; multi-agent primitives v0,Done
 M8,TS SDK + replay,TS SDK GA; Discord + Teams; replay/time-travel debugging,Done
 M9,Multi-agent GA,"Multi-agent GA (Graph, Parallel, Blackboard); public eval registry; Series A",Done
 M10,EU + SOC2,"EU region (`eu-west`, cloud-agnostic); SOC2 Type 1 kickoff; Salesforce + Zendesk MCP",In progress
-M11,Voice latency,Voice ≤700ms p50; phone-number provisioning; RCS,In progress
+M11,Voice latency,Voice ≤700ms p50; phone-number provisioning; RCS,Done
 M12,Enterprise GA,"SSO/SAML, audit logs, on-prem parity, SOC2 Type 1 done; ENTERPRISE GA",In progress

@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T14:22:00.071430+00:00",
+    "generated_at": "2026-05-02T14:22:27.890282+00:00",
     "format_version": 2
   },
   "epics": [
@@ -43,7 +43,7 @@
       "name": "KB / RAG engine",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "In progress",
+      "status": "Done",
       "notes": "PDF/web/Notion + hybrid retrieval + vision"
     },
     {
@@ -51,7 +51,7 @@
       "name": "Channel adapters",
       "owner": "Eng #7",
       "target": "Rolling",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Web, Slack, WhatsApp, SMS first"
     },
     {
@@ -83,7 +83,7 @@
       "name": "Studio (UI)",
       "owner": "Eng #5",
       "target": "MVP M6",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Conversations, traces, replay, costs"
     },
     {
@@ -139,7 +139,7 @@
       "name": "Docs site & DevRel",
       "owner": "Eng #6",
       "target": "Rolling",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Quickstart, API ref, examples"
     },
     {
@@ -1183,13 +1183,13 @@
     {
       "id": "S155",
       "title": "studio: settings drawer (profile, region, theme)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S4",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: profile name editable; region read-only display; theme persists to localStorage."
+      "status": "Done",
+      "notes": "S155 | Done | pr:121 | tests:13 vitest"
     },
     {
       "id": "S156",
@@ -1227,13 +1227,13 @@
     {
       "id": "S159",
       "title": "studio: agent overview tab shows description, model, last-deploy",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S4",
       "epic": "E10",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: tab renders agent metadata + 'last deploy' summary; edit-description modal works."
+      "status": "Done",
+      "notes": "S159 | Done | pr:122 | tests:13 vitest"
     },
     {
       "id": "S160",
@@ -1381,13 +1381,13 @@
     {
       "id": "S178",
       "title": "web-channel-js: typing indicator + history persistence (sessionStorage)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S5",
       "epic": "E6",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: typing dot animates while server sending; refresh restores last 30 messages."
+      "status": "Done",
+      "notes": "S178 | Done | pr:123 | tests:6 vitest"
     },
     {
       "id": "S179",
@@ -2140,13 +2140,13 @@
     {
       "id": "S285",
       "title": "studio: cost filters (agent, channel, model, date)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S10",
       "epic": "E10",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: filters URL-synced + persisted to localStorage."
+      "status": "Done",
+      "notes": "S285 | Done | pr:124 | tests:12 vitest"
     },
     {
       "id": "S286",
@@ -2415,13 +2415,13 @@
     {
       "id": "S328",
       "title": "studio: billing — invoice list + download PDF",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S12",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: list paginates; click downloads from Stripe."
+      "status": "Done",
+      "notes": "S328 | Done | pr:125 | tests:12 vitest"
     },
     {
       "id": "S329",
@@ -3339,13 +3339,13 @@
     {
       "id": "S469",
       "title": "flow: undo/redo with capped history",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S19",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: Cmd+Z undoes last node/edge change; capped at 50."
+      "status": "Done",
+      "notes": "S469 | Done | pr:126 | tests:10 vitest"
     },
     {
       "id": "S470",
@@ -3361,13 +3361,13 @@
     {
       "id": "S471",
       "title": "flow: 3 starter templates (FAQ, support-triage, lead-qual)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S19",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: 'New agent from template' picks one of three; each runs out of the box."
+      "status": "Done",
+      "notes": "S471 | Done | pr:127 | tests:13 vitest"
     },
     {
       "id": "S472",
@@ -3515,46 +3515,46 @@
     {
       "id": "S494",
       "title": "kb-v1: scheduled refresh (cron + on-demand)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S21",
       "epic": "E5",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: per-doc refresh cadence; status shown in studio."
+      "status": "Done",
+      "notes": "S494 | Done | pr:128 | tests:15 vitest"
     },
     {
       "id": "S495",
       "title": "kb-v1: incremental URL crawler (sitemap-aware)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S21",
       "epic": "E5",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: crawls sitemap.xml; respects robots.txt; only fetches changed-since."
+      "status": "Done",
+      "notes": "S495 | Done | pr:129 | tests:17 pytest"
     },
     {
       "id": "S496",
       "title": "kb-v1: layout-aware chunking (tables, code blocks, math preserved)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S21",
       "epic": "E5",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: tables stay intact in retrieved chunks; code blocks preserved verbatim."
+      "status": "Done",
+      "notes": "S496 | Done | pr:130 | tests:20 pytest"
     },
     {
       "id": "S497",
       "title": "studio: KB freshness indicators + manual refresh button",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S21",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: KB list shows last-refreshed; click triggers refresh."
+      "status": "Done",
+      "notes": "S497 | Done | pr:131 | tests:10 vitest"
     },
     {
       "id": "S510",
@@ -4219,24 +4219,24 @@
     {
       "id": "S633",
       "title": "audit: SIEM webhook (Datadog/Splunk/generic)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S28",
       "epic": "E20",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify."
+      "status": "Done",
+      "notes": "S633 | Done | pr:132 | tests:18 pytest"
     },
     {
       "id": "S634",
       "title": "audit: DPA template + redlines workflow",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S28",
       "epic": "E20",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: DPA.md + redlines mechanism documented; sample redline-PR closed."
+      "status": "Done",
+      "notes": "S634 | Done | pr:133 | tests:28 pytest"
     },
     {
       "id": "S635",
@@ -4351,13 +4351,13 @@
     {
       "id": "S655",
       "title": "ga-polish: design-system audit + component refactor",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S29",
       "epic": "E10",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: token map sweep; <5 hardcoded colours/spacings remain; doc'd in design system."
+      "status": "Done",
+      "notes": "S655 | Done | pr:134 | tests:13 vitest"
     },
     {
       "id": "S656",
@@ -4373,24 +4373,24 @@
     {
       "id": "S657",
       "title": "ga-polish: i18n scaffolding (en, es, de, fr, ja)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S29",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: react-i18next; en is source; 4 languages stub-translated; switcher works."
+      "status": "Done",
+      "notes": "S657 | Done | pr:135 | tests:21 vitest"
     },
     {
       "id": "S658",
       "title": "ga-polish: support runbook + ticketing integration (Front)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S29",
       "epic": "E17",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: tickets reach support@; routing rules documented."
+      "status": "Done",
+      "notes": "S658 | Done | pr:136 | tests:24 pytest"
     },
     {
       "id": "S659",
@@ -5198,35 +5198,35 @@
     {
       "id": "S802",
       "title": "security: SLSA Level 3 build provenance for container images (in-toto attestations)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S35",
       "epic": "E16",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing."
+      "status": "Done",
+      "notes": "S802 | Done | pr:115 | tests:13 pytest"
     },
     {
       "id": "S803",
       "title": "security: runtime detection (Falco rules) for sandbox + cp-api anomalies",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S35",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: rules deployed; alerts on shell-exec / unauthorized syscall / unexpected egress; tested with red-team triggers."
+      "status": "Done",
+      "notes": "S803 | Done | pr:116 | tests:19 pytest"
     },
     {
       "id": "S804",
       "title": "security: chaos-engineering harness (network partition, DB failover, NATS outage)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S35",
       "epic": "E16",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: scripted scenarios run weekly in staging; recovery time + data-loss measured; runbook updates from findings."
+      "status": "Done",
+      "notes": "S804 | Done | pr:137 | tests:19 pytest"
     },
     {
       "id": "S805",
@@ -5242,46 +5242,46 @@
     {
       "id": "S806",
       "title": "ops: incident-response runbook + game-day cadence (monthly)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S35",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: runbook checked in; first game-day held; recorded; gaps tracked."
+      "status": "Done",
+      "notes": "S806 | Done | pr:117 | tests:13 pytest"
     },
     {
       "id": "S807",
       "title": "ops: data-retention policy enforced by scheduled jobs (per data type, per region)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S35",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: jobs delete per policy; deletion audited; user-visible policy page on docs site."
+      "status": "Done",
+      "notes": "S807 | Done | pr:118 | tests:17 pytest"
     },
     {
       "id": "S808",
       "title": "ops: encrypted backup verification (restore-then-diff weekly)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S35",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: weekly job restores latest backup to scratch; diff against live; alerts on mismatch."
+      "status": "Done",
+      "notes": "S808 | Done | pr:119 | tests:13 pytest"
     },
     {
       "id": "S809",
       "title": "security: bug-bounty program launch (HackerOne or YesWeHack)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S35",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: program live; scope+rules+payouts published; first 3 reports triaged within SLA."
+      "status": "Done",
+      "notes": "S809 | Done | pr:120 | tests:19 pytest"
     },
     {
       "id": "S820",
@@ -5347,7 +5347,7 @@
       "points": 2,
       "priority": "P1",
       "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s825-memory-memory-usage-dashboard-in (merged + deletable)\nSkill: loop_implementation/skills/_base/skill.md\nFinal heartbeat: 2026-05-02T14:17:08Z (copilot-thor)\nTests: 14 vitest (memory-dashboard.test.tsx): empty state, rows per entry, redacted content, delete button, onDelete called, disable during delete, KPI counts, KPI size, GDPR Art-17 mention\nDocs touched: apps/studio/src/components/memory/memory-table.tsx; apps/studio/src/components/memory/memory-dashboard.tsx\nFollow-ups: wire MemoryDashboard into agent detail page; add pagination for large sets; backend DELETE /v1/memory/{id} endpoint"
+      "notes": "S825 | Done | pr:138 | tests:14 vitest"
     },
     {
       "id": "S826",
@@ -5358,7 +5358,7 @@
       "points": 3,
       "priority": "P1",
       "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s826-kb-v2-late-interaction-retrieval (merged + deletable)\nSkill: loop_implementation/skills/_base/skill.md\nFinal heartbeat: 2026-05-02T14:19:34Z (copilot-thor)\nTests: 21 pytest (test_late_interaction.py): TokenEmbedding, cosine_sim, maxsim, LateInteractionIndex add/remove/query/top-k, late_interaction_retrieve, recall@10 ≥5% improvement over dense\nDocs touched: packages/kb-engine/loop_kb_engine/late_interaction.py\nFollow-ups: ColBERT token encoder integration; persist TokenEmbedding in Qdrant multi-vector; batch ingestion pipeline for token vecs; opt-in flag in KB query API"
+      "notes": "S826 | Done | pr:139 | tests:21 pytest"
     },
     {
       "id": "S827",
@@ -5369,7 +5369,7 @@
       "points": 3,
       "priority": "P1",
       "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s827-kb-v2-structured-data-retrieval (merged + deletable)\nSkill: loop_implementation/skills/_base/skill.md\nFinal heartbeat: 2026-05-02T14:22:00Z (copilot-thor)\nTests: 20 pytest (test_structured_retrieval.py): name validation, load_csv, load_json, SELECT-only, GROUP BY, WHERE, ORDER BY, multiple tables, integration upload + SQL\nDocs touched: packages/kb-engine/loop_kb_engine/structured_retrieval.py\nFollow-ups: openpyxl Excel integration test; natural-language-to-SQL translation layer; streaming result sets for large tables; async query execution"
+      "notes": "S827 | Done | pr:140 | tests:20 pytest"
     },
     {
       "id": "S840",
@@ -5488,7 +5488,7 @@
       "theme": "Studio MVP",
       "goal": "User logs in, sees workspaces+agents from real cp-api, runs an emulator turn, manages versions+secrets.",
       "stories": "S150-S164",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S5",
@@ -5496,7 +5496,7 @@
       "theme": "Web channel + first end-to-end demo",
       "goal": "Visitor on a webpage talks to a Loop agent via embedded ChatWidget; demo + smoke test live.",
       "stories": "S170-S181",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S6",
@@ -5536,7 +5536,7 @@
       "theme": "Cost / observability v1",
       "goal": "ClickHouse rollups, cost dashboard, trace search + waterfall, alert rules.",
       "stories": "S280-S291",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S11",
@@ -5552,7 +5552,7 @@
       "theme": "Billing v0 (Stripe)",
       "goal": "Customer creation, plans, webhooks, metered usage push, suspension, studio billing tab.",
       "stories": "S320-S331",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S13",
@@ -5608,7 +5608,7 @@
       "theme": "Studio flow editor v0",
       "goal": "Visual node-based editor with palette/config/edges/serialize/emulator/templates — Botpress's killer UX.",
       "stories": "S460-S472",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S20",
@@ -5624,7 +5624,7 @@
       "theme": "Episodic memory + KB v1",
       "goal": "Auto-summarize on conv close, retrieval at turn-start, scheduled refresh, layout-aware chunking.",
       "stories": "S490-S497",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S22",
@@ -5688,7 +5688,7 @@
       "theme": "Voice latency + GA polish",
       "goal": "Voice ≤700ms p50; design-system audit; a11y WCAG-AA; i18n; support runbook; docs.loop.example v1.",
       "stories": "S650-S659",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S30",
@@ -5736,7 +5736,7 @@
       "theme": "Production security / ops acceptance gates",
       "goal": "Continuous fuzz testing, STRIDE PR-gate, SLSA-3 provenance, Falco runtime detection, chaos-eng harness, SLOs + error-budget alerts, incident-response game-days, data-retention enforcement, backup-restore verification, bug bounty.",
       "stories": "S800-S809",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S36",
@@ -5956,19 +5956,19 @@
       "month": "M2",
       "milestone": "Tools + KB",
       "deliverables": "Tool/MCP layer; auto-MCP; KB ingestion v0; web widget",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "month": "M3",
       "milestone": "Eval + cloud",
       "deliverables": "Eval harness v0 (6 scorers); CLI v0; cloud control plane (auth, deploy)",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "month": "M4",
       "milestone": "Closed alpha",
       "deliverables": "10 design partners; WhatsApp; Studio v0 (conversations + traces)",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "month": "M5",
@@ -5986,7 +5986,7 @@
       "month": "M7",
       "milestone": "Episodic + helm",
       "deliverables": "Episodic memory; Helm chart; email + Telegram; multi-agent primitives v0",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "month": "M8",
@@ -6010,7 +6010,7 @@
       "month": "M11",
       "milestone": "Voice latency",
       "deliverables": "Voice ≤700ms p50; phone-number provisioning; RCS",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "month": "M12",

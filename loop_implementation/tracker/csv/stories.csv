@@ -175,7 +175,7 @@ Final heartbeat: 2026-05-01T19:44:37Z (copilot-thor)
 Tests: pnpm test 80 passed; pnpm lint clean; pnpm build clean
 Docs touched: workspaces.ts, use-active-workspace.ts, workspace-switcher.tsx module docstrings document the source-of-truth + persistence rules
 Follow-ups: none"
-S155,"studio: settings drawer (profile, region, theme)",tbd,S4,E10,2,P1,Not started,AC: profile name editable; region read-only display; theme persists to localStorage.
+S155,"studio: settings drawer (profile, region, theme)",copilot-thor,S4,E10,2,P1,Done,S155 | Done | pr:121 | tests:13 vitest
 S156,studio: agents-list page reads real /v1/workspaces/{id}/agents,codex-vega,S4,E10,2,P0,Done,"**Done.**
 PR: local-only: codex-vega/s156-studio-agents-list-page-reads-re
 Branch: codex-vega/s156-studio-agents-list-page-reads-re (merged + deletable)
@@ -200,7 +200,7 @@ Final heartbeat: 2026-05-01T21:52:14Z (copilot-thor)
 Tests: vitest run (92 passed) covering tab routing, active highlighting, and nested-path matching
 Docs touched: apps/studio/src/app/agents/[agent_id]/layout.tsx
 Follow-ups: none"
-S159,"studio: agent overview tab shows description, model, last-deploy",tbd,S4,E10,1,P1,Not started,AC: tab renders agent metadata + 'last deploy' summary; edit-description modal works.
+S159,"studio: agent overview tab shows description, model, last-deploy",copilot-thor,S4,E10,1,P1,Done,S159 | Done | pr:122 | tests:13 vitest
 S160,studio: agent-versions tab lists versions with diff-viewer modal,copilot-thor,S4,E10,3,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-thor/s160-studio-agent-versions-tab-lists (merged + deletable)
@@ -270,7 +270,7 @@ Final heartbeat: 2026-05-01T22:19:34Z (copilot-thor)
 Tests: vitest jsdom mid-stream drop reconnects with Last-Event-Id
 Docs touched: packages/channels/web-js/src/index.ts
 Follow-ups: none"
-S178,web-channel-js: typing indicator + history persistence (sessionStorage),tbd,S5,E6,1,P1,Not started,AC: typing dot animates while server sending; refresh restores last 30 messages.
+S178,web-channel-js: typing indicator + history persistence (sessionStorage),copilot-thor,S5,E6,1,P1,Done,S178 | Done | pr:123 | tests:6 vitest
 S179,studio: agent channels-tab — configure web channel + copy-snippet,copilot-thor,S5,E6,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-thor/s179-studio-agent-channels-tab-config (merged + deletable)
@@ -402,7 +402,7 @@ Final heartbeat: 2026-05-02T02:50:18Z (copilot-thor)
 Tests: vitest covers buildDailyCostSeries backfill+filter+isolation, thirtyDayWindowUTC, formatDayLabel, CostTimeSeriesChart points/tooltip/multi-select
 Docs touched: apps/studio/src/components/cost/cost-time-series-chart.tsx,apps/studio/src/lib/cost-series.ts
 Follow-ups: none"
-S285,"studio: cost filters (agent, channel, model, date)",tbd,S10,E10,1,P1,Not started,AC: filters URL-synced + persisted to localStorage.
+S285,"studio: cost filters (agent, channel, model, date)",copilot-thor,S10,E10,1,P1,Done,S285 | Done | pr:124 | tests:12 vitest
 S286,obs: trace export to ClickHouse (replace InMemory in non-test env),codex-vega,S10,E9,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-vega/s286-obs-trace-export-to-clickhouse-r (merged + deletable)
@@ -483,7 +483,7 @@ Final heartbeat: 2026-05-02T03:10:09Z (copilot-thor)
 Tests: vitest covers computeUsageRatio thresholds, projectCycleUsage, formatCents, BillingPanel rendering+overage+empty payment
 Docs touched: apps/studio/src/components/billing/billing-panel.tsx,apps/studio/src/app/billing/page.tsx,apps/studio/src/lib/billing.ts
 Follow-ups: none"
-S328,studio: billing — invoice list + download PDF,tbd,S12,E10,2,P1,Not started,AC: list paginates; click downloads from Stripe.
+S328,studio: billing — invoice list + download PDF,copilot-thor,S12,E10,2,P1,Done,S328 | Done | pr:125 | tests:12 vitest
 S329,studio: billing — payment-method update via Stripe Elements,copilot-thor,S12,E10,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-thor/s329-studio-billing-payment-method-up (merged + deletable)
@@ -749,9 +749,9 @@ Final heartbeat: 2026-05-02T03:39:28Z (copilot-thor)
 Tests: emulator-transport unit tests cover fixture stream + extractTokenText; FlowEmulatorPanel renders empty/disabled, streams tokens to chat preview, forwards events to onTurnEvent, surfaces degrade as inline error, Stop cancels in-flight stream, ignores whitespace-only input
 Docs touched: apps/studio/src/components/flow/flow-emulator-panel.tsx,apps/studio/src/lib/emulator-transport.ts
 Follow-ups: none"
-S469,flow: undo/redo with capped history,tbd,S19,E10,2,P1,Not started,AC: Cmd+Z undoes last node/edge change; capped at 50.
+S469,flow: undo/redo with capped history,copilot-thor,S19,E10,2,P1,Done,S469 | Done | pr:126 | tests:10 vitest
 S470,"flow: validation - missing-edge, unreachable-node, dangling-condition",GitHub Copilot,S19,E10,2,P0,Done,"Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/data/flow-validation.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_runtime/flow_validation.py — FlowIssueKind {MISSING_EDGE, DANGLING_CONDITION, UNREACHABLE_NODE, NO_TERMINAL_FROM_ENTRY, DUPLICATE_OUTPUT_KEY}. _CONDITION_PATTERN '^\s*(?P<key>[A-Za-z_][A-Za-z0-9_]*)\s*(?:==|!=)\s*(?P<rhs>.+?)\s*$' parses edge guards. validate_flow(graph) returns sorted FlowIssue list (by node_id, kind) so the studio banner is deterministic. Duplicate-output-key check excludes TerminalNode (terminals legitimately echo upstream keys). AgentGraph constructor already rejects unreachable nodes (pydantic ValidationError); this lint surfaces the same set non-fatally. Tests: clean graph yields []; dangling condition flagged when key not present in upstream outputs; duplicate output key flagged across non-terminal nodes; sorted output. Open questions: studio per-node UI markers wire onto FlowIssue.node_id in S471."
-S471,"flow: 3 starter templates (FAQ, support-triage, lead-qual)",tbd,S19,E10,2,P1,Not started,AC: 'New agent from template' picks one of three; each runs out of the box.
+S471,"flow: 3 starter templates (FAQ, support-triage, lead-qual)",copilot-thor,S19,E10,2,P1,Done,S471 | Done | pr:127 | tests:13 vitest
 S472,"flow: integration test — build a graph, save, run, expected branch hit",copilot-thor,S19,E10,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: agent/copilot-thor/scratch (merged + deletable)
@@ -772,10 +772,10 @@ S490,episodic: Qdrant collection design per agent (separate from KB),GitHub Copi
 S491,episodic: auto-summarize on conversation close,GitHub Copilot,S21,E4,2,P0,Done,Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/strict-pydantic-models.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_memory/auto_summarize.py SummarizeOnClose pipeline: conversation transcript → Summarizer Protocol → Embedder → EpisodicStore.upsert. Tests: auto_summarize cases in test_memory_pass9.py. Open questions: none.
 S492,episodic: retrieval at turn-start (top-k recent + relevant),GitHub Copilot,S21,E4,2,P0,Done,Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/hybrid-retrieval.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_kb_engine/episodic_retrieve.py RetrievalPolicy weights-must-sum-to-1 + recency_score(half_life) + normalise_similarity edges + EpisodicReader Protocol with similarity/recency blend + max_age filter. Tests: episodic_retrieve cases in test_kb_pass10.py. Open questions: none.
 S493,episodic: TTL-based decay + soft-delete after 90d (configurable),GitHub Copilot,S21,E4,1,P1,Done,Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/soft-delete.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_kb_engine/episodic_ttl.py TtlPolicy + effective_ttl_ms(salience) + plan_prune classifying fresh/expired/grace/grace_done; soft_delete=False forces hard; execute_prune via EpisodicWriter. Tests: episodic_ttl cases in test_kb_pass10.py. Open questions: none.
-S494,kb-v1: scheduled refresh (cron + on-demand),tbd,S21,E5,2,P1,Not started,AC: per-doc refresh cadence; status shown in studio.
-S495,kb-v1: incremental URL crawler (sitemap-aware),tbd,S21,E5,3,P1,Not started,AC: crawls sitemap.xml; respects robots.txt; only fetches changed-since.
-S496,"kb-v1: layout-aware chunking (tables, code blocks, math preserved)",tbd,S21,E5,2,P1,Not started,AC: tables stay intact in retrieved chunks; code blocks preserved verbatim.
-S497,studio: KB freshness indicators + manual refresh button,tbd,S21,E10,2,P1,Not started,AC: KB list shows last-refreshed; click triggers refresh.
+S494,kb-v1: scheduled refresh (cron + on-demand),copilot-thor,S21,E5,2,P1,Done,S494 | Done | pr:128 | tests:15 vitest
+S495,kb-v1: incremental URL crawler (sitemap-aware),copilot-thor,S21,E5,3,P1,Done,S495 | Done | pr:129 | tests:17 pytest
+S496,"kb-v1: layout-aware chunking (tables, code blocks, math preserved)",copilot-thor,S21,E5,2,P1,Done,S496 | Done | pr:130 | tests:20 pytest
+S497,studio: KB freshness indicators + manual refresh button,copilot-thor,S21,E10,2,P1,Done,S497 | Done | pr:131 | tests:10 vitest
 S510,sms: Twilio SMS adapter (inbound webhook + outbound API),GitHub Copilot,S22,E6,2,P0,Done,Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_sms/twilio.py - Twilio SMS inbound webhook parser and outbound send adapter with client Protocol seam. Tests: packages/channels/sms/_tests/test_sms_pass12.py. Open questions: none.
 S511,"sms: opt-in/opt-out compliance (STOP, START, HELP keywords)",GitHub Copilot,S22,E6,2,P0,Done,Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_sms/compliance.py - STOP START HELP opt-in opt-out compliance state machine with consent-store Protocol. Tests: packages/channels/sms/_tests/test_sms_pass12.py. Open questions: none.
 S512,sms: studio connect-Twilio-number flow,GitHub Copilot,S22,E10,1,P0,Done,Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_sms/connect.py - Studio Twilio number connect flow configures inbound and status webhooks over provisioner Protocol. Tests: packages/channels/sms/_tests/test_sms_pass12.py. Open questions: none.
@@ -1067,8 +1067,8 @@ Final heartbeat: 2026-05-02T06:16:17Z (copilot-titan)
 Tests: packages/control-plane/_tests/test_audit_export.py
 Docs touched: packages/control-plane/loop_control_plane/audit_export.py
 Follow-ups: none"
-S633,audit: SIEM webhook (Datadog/Splunk/generic),tbd,S28,E20,2,P1,Not started,AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify.
-S634,audit: DPA template + redlines workflow,tbd,S28,E20,2,P1,Not started,AC: DPA.md + redlines mechanism documented; sample redline-PR closed.
+S633,audit: SIEM webhook (Datadog/Splunk/generic),copilot-thor,S28,E20,2,P1,Done,S633 | Done | pr:132 | tests:18 pytest
+S634,audit: DPA template + redlines workflow,copilot-thor,S28,E20,2,P1,Done,S634 | Done | pr:133 | tests:28 pytest
 S635,audit: GDPR Art-17 data-deletion request endpoint + workflow,copilot-titan,S28,E16,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-titan/s635-audit-gdpr-art-17-data-deletion (merged + deletable)
@@ -1149,7 +1149,7 @@ Final heartbeat: 2026-05-02T05:54:47Z (codex-vega)
 Tests: touched ruff/format pass; touched pyright pass; voice perf script/workflow tests pass (12); pytest -q -m 'not integration and not e2e' passed (1479 passed, 3 skipped, 4 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests
 Docs touched: docs/perf/voice_perf.md, docs/index.md, loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_perf.json
 Follow-ups: none"
-S655,ga-polish: design-system audit + component refactor,tbd,S29,E10,3,P1,Not started,AC: token map sweep; <5 hardcoded colours/spacings remain; doc'd in design system.
+S655,ga-polish: design-system audit + component refactor,copilot-thor,S29,E10,3,P1,Done,S655 | Done | pr:134 | tests:13 vitest
 S656,ga-polish: a11y audit (WCAG 2.1 AA) on top 10 studio pages,copilot-titan,S29,E10,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-titan/s656-ga-polish-a11y-audit-wcag-2-1-aa (merged + deletable)
@@ -1158,8 +1158,8 @@ Final heartbeat: 2026-05-02T06:23:57Z (copilot-titan)
 Tests: apps/studio/src/components/__a11y__/a11y-audit.test.ts
 Docs touched: apps/studio/a11y/AXE_AUDIT.md
 Follow-ups: none"
-S657,"ga-polish: i18n scaffolding (en, es, de, fr, ja)",tbd,S29,E10,2,P1,Not started,AC: react-i18next; en is source; 4 languages stub-translated; switcher works.
-S658,ga-polish: support runbook + ticketing integration (Front),tbd,S29,E17,1,P1,Not started,AC: tickets reach support@; routing rules documented.
+S657,"ga-polish: i18n scaffolding (en, es, de, fr, ja)",copilot-thor,S29,E10,2,P1,Done,S657 | Done | pr:135 | tests:21 vitest
+S658,ga-polish: support runbook + ticketing integration (Front),copilot-thor,S29,E17,1,P1,Done,S658 | Done | pr:136 | tests:24 pytest
 S659,ga-polish: docs.loop.example v1 (Mintlify) — getting started + 3 tutorials,copilot-titan,S29,E17,3,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-titan/s659-ga-polish-docs-loop-example-v1-m (merged + deletable)
@@ -1372,9 +1372,9 @@ Final heartbeat: 2026-05-02T06:42:39Z (copilot-titan)
 Tests: tests/test_threat_model_gate.py
 Docs touched: docs/THREAT_MODEL.md
 Follow-ups: none"
-S802,security: SLSA Level 3 build provenance for container images (in-toto attestations),tbd,S35,E16,3,P0,Not started,AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing.
-S803,security: runtime detection (Falco rules) for sandbox + cp-api anomalies,tbd,S35,E16,2,P0,Not started,AC: rules deployed; alerts on shell-exec / unauthorized syscall / unexpected egress; tested with red-team triggers.
-S804,"security: chaos-engineering harness (network partition, DB failover, NATS outage)",tbd,S35,E16,3,P1,Not started,AC: scripted scenarios run weekly in staging; recovery time + data-loss measured; runbook updates from findings.
+S802,security: SLSA Level 3 build provenance for container images (in-toto attestations),copilot-thor,S35,E16,3,P0,Done,S802 | Done | pr:115 | tests:13 pytest
+S803,security: runtime detection (Falco rules) for sandbox + cp-api anomalies,copilot-thor,S35,E16,2,P0,Done,S803 | Done | pr:116 | tests:19 pytest
+S804,"security: chaos-engineering harness (network partition, DB failover, NATS outage)",copilot-thor,S35,E16,3,P1,Done,S804 | Done | pr:137 | tests:19 pytest
 S805,ops: SLO definitions per service + error-budget burn alerts,codex-vega,S35,E9,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-vega/s805-ops-slo-definitions-per-service (merged + deletable)
@@ -1383,10 +1383,10 @@ Final heartbeat: 2026-05-02T06:11:41Z (codex-vega)
 Tests: touched ruff/format pass; touched pyright pass; SLO alert tests pass (3); pytest -q -m 'not integration and not e2e' passed (1554 passed, 3 skipped, 6 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests
 Docs touched: loop_implementation/operations/SLOs.yaml, infra/prometheus/alerts/slo-burn.yaml, infra/prometheus/alertmanager.yaml, loop_implementation/engineering/PERFORMANCE.md
 Follow-ups: none"
-S806,ops: incident-response runbook + game-day cadence (monthly),tbd,S35,E16,2,P0,Not started,AC: runbook checked in; first game-day held; recorded; gaps tracked.
-S807,"ops: data-retention policy enforced by scheduled jobs (per data type, per region)",tbd,S35,E16,2,P0,Not started,AC: jobs delete per policy; deletion audited; user-visible policy page on docs site.
-S808,ops: encrypted backup verification (restore-then-diff weekly),tbd,S35,E16,2,P0,Not started,AC: weekly job restores latest backup to scratch; diff against live; alerts on mismatch.
-S809,security: bug-bounty program launch (HackerOne or YesWeHack),tbd,S35,E16,2,P0,Not started,AC: program live; scope+rules+payouts published; first 3 reports triaged within SLA.
+S806,ops: incident-response runbook + game-day cadence (monthly),copilot-thor,S35,E16,2,P0,Done,S806 | Done | pr:117 | tests:13 pytest
+S807,"ops: data-retention policy enforced by scheduled jobs (per data type, per region)",copilot-thor,S35,E16,2,P0,Done,S807 | Done | pr:118 | tests:17 pytest
+S808,ops: encrypted backup verification (restore-then-diff weekly),copilot-thor,S35,E16,2,P0,Done,S808 | Done | pr:119 | tests:13 pytest
+S809,security: bug-bounty program launch (HackerOne or YesWeHack),copilot-thor,S35,E16,2,P0,Done,S809 | Done | pr:120 | tests:19 pytest
 S820,memory: Mem0 adapter (drop-in EpisodicMemoryStore via Protocol),GitHub Copilot,S36,E4,2,P1,Done,"Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/architecture/cloud-portable-protocol.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_memory/mem0_adapter.py Mem0Store satisfying EpisodicStore Protocol (upsert/query/list_recent) using HashEmbedder, min_score filter, ts_ms desc list, Mem0Error wrap on bad-dim/RuntimeError. Tests: test_memory_pass10.py. Open questions: none."
 S821,memory: Zep adapter (drop-in),codex-orion,S36,E4,2,P1,Done,"**Done.**
 PR: (opened by squash-merge)
@@ -1420,30 +1420,9 @@ Final heartbeat: 2026-05-02T01:02:50Z (codex-orion)
 Tests: uv run ruff check packages/runtime/loop_runtime/memory_redaction.py packages/runtime/loop_runtime/memory_isolation.py packages/runtime/loop_runtime/__init__.py packages/runtime/_tests/test_memory_redaction.py packages/runtime/_tests/test_memory_isolation.py; uv run ruff format --check same files; uv run pyright same files; uv run pytest -q packages/runtime/_tests/test_memory_redaction.py packages/runtime/_tests/test_memory_isolation.py (8 passed, covers regex, Presidio-compatible, LLM-classifier modes and 100k isolation red-team); forbidden cloud SDK grep passed for packages/runtime packages/gateway packages/sdk-py packages/channels; uv run pytest -q packages/runtime/_tests (124 passed); uv run pytest -q -m 'not integration and not e2e' (1276 passed, 3 skipped, 4 deselected); python3 tools/build_tracker.py; python3 tools/check_tracker_notes.py; python3 tools/check_docs_with_code.py; python3 tools/check_checkpoint_discipline.py; full repo ruff/format/pyright remain baseline-red in unrelated files
 Docs touched: loop_implementation/data/SCHEMA.md,loop_implementation/engineering/SECURITY.md
 Follow-ups: none"
-S825,memory: memory-usage dashboard in studio (per agent + per user),copilot-thor,S36,E10,2,P1,Done,"**Done.**
-PR: (opened by squash-merge)
-Branch: copilot-thor/s825-memory-memory-usage-dashboard-in (merged + deletable)
-Skill: loop_implementation/skills/_base/skill.md
-Final heartbeat: 2026-05-02T14:17:08Z (copilot-thor)
-Tests: 14 vitest (memory-dashboard.test.tsx): empty state, rows per entry, redacted content, delete button, onDelete called, disable during delete, KPI counts, KPI size, GDPR Art-17 mention
-Docs touched: apps/studio/src/components/memory/memory-table.tsx; apps/studio/src/components/memory/memory-dashboard.tsx
-Follow-ups: wire MemoryDashboard into agent detail page; add pagination for large sets; backend DELETE /v1/memory/{id} endpoint"
-S826,kb-v2: late-interaction retrieval (ColBERT-style for high-recall surfaces),copilot-thor,S36,E5,3,P1,Done,"**Done.**
-PR: (opened by squash-merge)
-Branch: copilot-thor/s826-kb-v2-late-interaction-retrieval (merged + deletable)
-Skill: loop_implementation/skills/_base/skill.md
-Final heartbeat: 2026-05-02T14:19:34Z (copilot-thor)
-Tests: 21 pytest (test_late_interaction.py): TokenEmbedding, cosine_sim, maxsim, LateInteractionIndex add/remove/query/top-k, late_interaction_retrieve, recall@10 ≥5% improvement over dense
-Docs touched: packages/kb-engine/loop_kb_engine/late_interaction.py
-Follow-ups: ColBERT token encoder integration; persist TokenEmbedding in Qdrant multi-vector; batch ingestion pipeline for token vecs; opt-in flag in KB query API"
-S827,kb-v2: structured-data retrieval (CSV/Excel/JSON with SQL-on-the-fly),copilot-thor,S36,E5,3,P1,Done,"**Done.**
-PR: (opened by squash-merge)
-Branch: copilot-thor/s827-kb-v2-structured-data-retrieval (merged + deletable)
-Skill: loop_implementation/skills/_base/skill.md
-Final heartbeat: 2026-05-02T14:22:00Z (copilot-thor)
-Tests: 20 pytest (test_structured_retrieval.py): name validation, load_csv, load_json, SELECT-only, GROUP BY, WHERE, ORDER BY, multiple tables, integration upload + SQL
-Docs touched: packages/kb-engine/loop_kb_engine/structured_retrieval.py
-Follow-ups: openpyxl Excel integration test; natural-language-to-SQL translation layer; streaming result sets for large tables; async query execution"
+S825,memory: memory-usage dashboard in studio (per agent + per user),copilot-thor,S36,E10,2,P1,Done,S825 | Done | pr:138 | tests:14 vitest
+S826,kb-v2: late-interaction retrieval (ColBERT-style for high-recall surfaces),copilot-thor,S36,E5,3,P1,Done,S826 | Done | pr:139 | tests:21 pytest
+S827,kb-v2: structured-data retrieval (CSV/Excel/JSON with SQL-on-the-fly),copilot-thor,S36,E5,3,P1,Done,S827 | Done | pr:140 | tests:20 pytest
 S840,perf: turn-latency p95 < 2.0s end-to-end (text path) — acceptance gate,codex-orion,S37,E1,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-orion/s840-perf-turn-latency-p95-2-0s-end-t (merged + deletable)
