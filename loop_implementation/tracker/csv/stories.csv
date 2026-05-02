@@ -1081,11 +1081,12 @@ Follow-ups: none"
 S654,voice-perf: latency benchmark ≤700ms p50 acceptance gate,codex-vega,S29,E7,2,P0,In progress,"**Active.**
 Branch: codex-vega/s654-voice-perf-latency-benchmark-700
 Skill: skills/testing/perf-check.md
-Last step: 1/5
-Heartbeat: 2026-05-02T05:53:48Z (codex-vega)
+Last step: 2/5
+Heartbeat: 2026-05-02T05:54:38Z (codex-vega)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: nightly voice p50 gate and docs landed
 Latest checkpoint: voice p50 benchmark verified locally"
 S655,ga-polish: design-system audit + component refactor,tbd,S29,E10,3,P1,Not started,AC: token map sweep; <5 hardcoded colours/spacings remain; doc'd in design system.
 S656,ga-polish: a11y audit (WCAG 2.1 AA) on top 10 studio pages,tbd,S29,E10,2,P0,Not started,AC: axe-core zero serious; manual screen-reader pass; report committed.
