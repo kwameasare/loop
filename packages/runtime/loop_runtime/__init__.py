@@ -7,6 +7,11 @@ from loop_runtime.memory_isolation import (
     UserMemoryStore,
     run_user_memory_red_team,
 )
+from loop_runtime.memory_redaction import (
+    MemoryPIIRedactor,
+    MemoryRedactionMode,
+    PIISpan,
+)
 from loop_runtime.multi_agent import (
     AgentGraph,
     AgentRunner,
@@ -42,10 +47,13 @@ __all__ = [
     "HandoffTrail",
     "MemoryAuditEvent",
     "MemoryIsolationReport",
+    "MemoryPIIRedactor",
+    "MemoryRedactionMode",
     "MemoryScope",
     "Merger",
     "MultiAgentError",
     "MultiAgentResult",
+    "PIISpan",
     "Parallel",
     "Pipeline",
     "Router",
