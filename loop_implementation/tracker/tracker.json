@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:07:39.059035+00:00",
+    "generated_at": "2026-05-02T05:08:50.973825+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3933,13 +3933,13 @@
     {
       "id": "S577",
       "title": "soc2: pen-test fix queue tracked as P0 stories",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S25",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: each finding has tracker entry, severity, owner, fix-deadline."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s577-soc2-pen-test-fix-queue-tracked\nSkill: skills/security/update-threat-model.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-02T05:08:50Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S578",
