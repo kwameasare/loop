@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:19:41.667314+00:00",
+    "generated_at": "2026-05-02T06:20:55.515525+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5088,13 +5088,13 @@
     {
       "id": "S774",
       "title": "infra: terraform module — OVHcloud (managed K8s + Postgres + Redis + S3-compat + KMS via Vault)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S34",
       "epic": "E12",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: same against OVH; sovereign-EU region option."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s774-infra-terraform-module-ovhcloud\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:20:55Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S775",
