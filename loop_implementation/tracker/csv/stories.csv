@@ -1008,11 +1008,12 @@ Follow-ups: none"
 S651,voice-perf: TTS pre-warm + sentence-boundary streaming,codex-vega,S29,E7,2,P0,In progress,"**Active.**
 Branch: codex-vega/s651-voice-perf-tts-pre-warm-sentence
 Skill: skills/testing/perf-check.md
-Last step: 1/5
-Heartbeat: 2026-05-02T05:31:09Z (codex-vega)
+Last step: 2/5
+Heartbeat: 2026-05-02T05:31:53Z (codex-vega)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: sentence-boundary TTS streaming and latency contract landed
 Latest checkpoint: streaming TTS design verified with focused voice tests"
 S652,voice-perf: model warm-up + connection-pooling for ASR/TTS providers,tbd,S29,E7,2,P0,Not started,AC: keep-alive; pre-handshake; idle teardown after N min.
 S653,"voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS",tbd,S29,E7,2,P0,Not started,AC: nearest-region selector; latency map committed.
