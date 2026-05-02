@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Okta SAML 2.0 IdP metadata fixture — S612
+  ==========================================
+  This is a *sandbox* Okta metadata document used for integration tests.
+  The certificate and entity IDs are synthetic; they do NOT correspond to
+  a real Okta organisation.
+
+  A real Okta metadata file is obtained from:
+    https://<your-okta-domain>/app/<app-id>/sso/saml/metadata
+
+  Key fields used by OktaMetadataParser:
+    - md:EntityDescriptor[@entityID]   → IdP Entity ID
+    - md:IDPSSODescriptor/md:SingleSignOnService[@Binding=HTTP-POST][@Location]
+      → SSO URL
+    - ds:X509Certificate               → IdP signing certificate (PEM body)
+-->
+<md:EntityDescriptor
+  xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+  xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+  entityID="http://www.okta.com/sandbox_loop_test_idp">
+
+  <md:IDPSSODescriptor
+    WantAuthnRequestsSigned="false"
+    protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <!-- Sandbox self-signed cert (not used for real crypto — test only) -->
+          <ds:X509Certificate>
+MIICpDCCAYwCCQDU7pQ4pHgSpDANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAls
+b29wLXRlc3QwHhcNMjQwMTAxMDAwMDAwWhcNMjUwMTAxMDAwMDAwWjAUMRIwEAYD
+VQQDDAlsb29wLXRlc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC7
+o4qne60TB3wolGNkRZTVhfDJBtPpMwvZHWRNbQMTGFfXEFMBV8jF9dRGmEMTySPv
+Hu8s1dQFJyVt4oCsTbDV+QdQGqHBEF3UrmcJX5yRjAGfSandboxCertBodyBase64==
+          </ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+
+    <md:NameIDFormat>
+      urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+    </md:NameIDFormat>
+
+    <!-- HTTP-POST binding (primary) -->
+    <md:SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+      Location="https://sandbox.okta.com/app/loop_test/sso/saml"/>
+
+    <!-- HTTP-Redirect binding (secondary) -->
+    <md:SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+      Location="https://sandbox.okta.com/app/loop_test/sso/saml"/>
+
+  </md:IDPSSODescriptor>
+
+</md:EntityDescriptor>
