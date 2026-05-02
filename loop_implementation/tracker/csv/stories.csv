@@ -1043,14 +1043,14 @@ Final heartbeat: 2026-05-02T06:05:03Z (copilot-titan)
 Tests: packages/control-plane/_tests/test_okta_sp_initiated_e2e.py
 Docs touched: packages/control-plane/_tests/test_okta_sp_initiated_e2e.py
 Follow-ups: Real Playwright + live-Okta-sandbox browser driver deferred — requires CI outbound HTTP and a managed Okta org credential."
-S630,audit: audit_events table cp_0004 + write-only middleware,copilot-thor,S28,E20,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s630-audit-audit-events-table-cp-0004
+S630,audit: audit_events table cp_0004 + write-only middleware,copilot-thor,S28,E20,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s630-audit-audit-events-table-cp-0004 (merged + deletable)
 Skill: skills/api/add-rest-endpoint.md
-Last step: 0/3 (just claimed)
-Heartbeat: 2026-05-02T06:05:38Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T11:59:14Z (copilot-thor)
+Tests: 27 pytest (test_audit_log.py: 18 tests, test_migrations.py: 3 new tests): AuditLogger records events with hash chain, entry_hash reproducible, multi-workspace isolation, api_key:create/revoke chain, scim:user:provision, sso:config:update, validation errors, InMemoryAuditStore behaviour; migration tests: audit_log table created, required columns, indexes
+Docs touched: audit_log.py: AuditEvent, AuditLogger, AuditStore Protocol, InMemoryAuditStore; migration cp_0005_audit_log; SCHEMA.md section 2.2a
+Follow-ups: S631: wire AuditLogger into cp-api FastAPI middleware so every write endpoint emits events automatically"
 S631,"audit: studio audit log page (filterable, paginated)",tbd,S28,E10,3,P0,Not started,"AC: 7 filters: actor, action, resource, time, ip, success/failure."
 S632,audit: audit log export CSV,tbd,S28,E20,1,P0,Not started,AC: filtered export in <30s for ≤100k rows.
 S633,audit: SIEM webhook (Datadog/Splunk/generic),tbd,S28,E20,2,P1,Not started,AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify.
