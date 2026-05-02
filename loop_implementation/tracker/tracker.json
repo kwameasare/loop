@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:00:15.935990+00:00",
+    "generated_at": "2026-05-02T06:02:23.718505+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1992,7 +1992,7 @@
       "points": 2,
       "priority": "P1",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s263-deploy-image-push-w-cosign-signa\nSkill: skills/ops/deploy-agent-version.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T05:56:55Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: codex-orion/s263-deploy-image-push-w-cosign-signa\nSkill: skills/ops/deploy-agent-version.md\nLast step: 1/4\nHeartbeat: 2026-05-02T06:02:23Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: cosign sign and verify gate landed"
     },
     {
       "id": "S264",

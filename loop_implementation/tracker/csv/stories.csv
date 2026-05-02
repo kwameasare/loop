@@ -363,11 +363,12 @@ S262,deploy: image builder — BuildKit Dockerfile.template render,GitHub Copilo
 S263,deploy: image push w/ cosign signature,codex-orion,S9,E12,2,P1,In progress,"**Active.**
 Branch: codex-orion/s263-deploy-image-push-w-cosign-signa
 Skill: skills/ops/deploy-agent-version.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-02T05:56:55Z (codex-orion)
+Last step: 1/4
+Heartbeat: 2026-05-02T06:02:23Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: cosign sign and verify gate landed"
 S264,deploy: k8s manifest renderer (Deployment + Service + HPA template),GitHub Copilot,S9,E12,2,P0,Done,"Done. Branch: copilot/s101-s290-pass2 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-package-layout.md. Last step: 5/5. Heartbeat: 2026-05-12T01:00:00Z. Substance: loop_control_plane/k8s_manifest.py — frozen ManifestSpec dataclass (DNS-1123 name validation, image-must-have-tag, replicas>=1, port bounds, hpa min<=max, env-key whitespace check). render() emits sorted-keys YAML for Deployment+Service+HPA with readiness/liveness probes, resource requests/limits, app.kubernetes.io labels. render_documents() returns dicts for tests. Tests: yaml.safe_load_all round-trip; kinds == [Deployment, Service, HPA]; env list deterministic; invalid name/image/replicas/min>max all rejected. Open questions: kubeval gate in CI — defer to S265."
 S265,deploy: cp-api POST /v1/agents/{id}/deployments enqueues job,GitHub Copilot,S9,E12,2,P0,Done,"Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/api/add-rest-endpoint.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: retro-close on DeployController.submit() in loop_control_plane/deploy.py — submit() produces a Deployment row in PENDING and is the seam the cp-api 202 handler invokes; controller.run() is the queue-side reconciler. submit is idempotent on (agent_id, agent_version, image_uri) under the in-memory store. Tests: dual-submit returns same deployment_id, deploy-events stream emits SUBMITTED on submit. Open questions: NATS subject + at-least-once redelivery wired in queue-driver story."
 S266,"deploy: deploy controller (k8s controller pattern, Python kopf)",GitHub Copilot,S9,E12,3,P0,Done,"Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/ops/kubernetes-controllers.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: retro-close on DeployController FSM in loop_control_plane/deploy.py — DeployPhase {PENDING→BUILDING→EVALUATING→PUSHING→APPLYING→READY|FAILED|ROLLED_BACK}, TERMINAL_PHASES tuple. controller.run(deployment_id) drives the FSM: builder → registry → eval-gate → kube.apply → record baseline. Eval failure ⇒ FAILED with regression captured; baselines registered ONLY after READY when eval did not regress. Tests: full happy-path PENDING→READY, eval-regression flips to FAILED + emits CANARY_REGRESSION, terminal-phase guards (re-run is no-op). Open questions: kopf-style live k8s controller wraps this state machine in queue-driver story."
