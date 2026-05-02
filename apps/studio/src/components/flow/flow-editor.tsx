@@ -27,6 +27,7 @@ import {
 
 import { useFlowHistory } from "@/lib/use-flow-history";
 
+import { FlowTemplatePicker } from "./flow-template-picker";
 import { NodePalette } from "./node-palette";
 import { NodeConfigSidebar } from "./node-config-sidebar";
 
@@ -72,6 +73,7 @@ export function FlowEditor(props: FlowEditorProps) {
   const [pendingConnect, setPendingConnect] = useState<string | null>(
     props.pendingConnectFromId ?? null,
   );
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const dragRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
@@ -232,6 +234,14 @@ export function FlowEditor(props: FlowEditorProps) {
             >
               Reset
             </button>
+            <button
+              className="rounded border border-blue-300 px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
+              data-testid="flow-templates"
+              onClick={() => setShowTemplatePicker(true)}
+              type="button"
+            >
+              Templates
+            </button>
           </div>
         </header>
         <div
@@ -371,6 +381,17 @@ export function FlowEditor(props: FlowEditorProps) {
           onPersist={(next) =>
             setConfigs((prev) => ({ ...prev, [selectedNode.id]: next }))
           }
+        />
+      ) : null}
+      {showTemplatePicker ? (
+        <FlowTemplatePicker
+          onDismiss={() => setShowTemplatePicker(false)}
+          onSelect={(tpl) => {
+            pushHistory();
+            setNodes(tpl.nodes);
+            setEdges(tpl.edges);
+            setShowTemplatePicker(false);
+          }}
         />
       ) : null}
     </section>
