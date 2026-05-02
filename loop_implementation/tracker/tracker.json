@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T13:24:26.508807+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3339,13 +3339,13 @@
     {
       "id": "S469",
       "title": "flow: undo/redo with capped history",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S19",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s469-flow-undo-redo-with-capped-histo (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T13:24:26Z (copilot-thor)\nTests: 10 vitest (apps/studio/src/components/flow/flow-undo-redo.test.tsx): useFlowHistory unit tests (start/canUndo/redo/push clears redo/cap/edges), FlowEditor toolbar undo/redo buttons\nDocs touched: apps/studio/src/lib/use-flow-history.ts apps/studio/src/components/flow/flow-editor.tsx\nFollow-ups: keyboard shortcut hint in toolbar tooltip; undo across page save"
+      "status": "Not started",
+      "notes": "AC: Cmd+Z undoes last node/edge change; capped at 50."
     },
     {
       "id": "S470",
