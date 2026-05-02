@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:51:40.694286+00:00",
+    "generated_at": "2026-05-02T05:52:52.624071+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1106,13 +1106,13 @@
     {
       "id": "S142",
       "title": "dp-runtime: k6 baseline load test 100 turns/min for 5 min, p95 latency report",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S3",
       "epic": "E1",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: docs/perf/runtime-baseline.md committed with p50/p95/p99/error-rate at 100 rpm."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s142-dp-runtime-k6-baseline-load-test\nSkill: skills/testing/perf-check.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T05:52:52Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S143",
