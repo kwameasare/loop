@@ -25,6 +25,7 @@ import {
   removeEdge,
 } from "@/lib/flow-edges";
 
+import { FLOW_DOT_GRID, FLOW_EDGE_SELECTED } from "@/lib/design-tokens";
 import { useFlowHistory } from "@/lib/use-flow-history";
 
 import { FlowTemplatePicker } from "./flow-template-picker";
@@ -267,7 +268,7 @@ export function FlowEditor(props: FlowEditorProps) {
               transform,
               transformOrigin: "0 0",
               backgroundImage:
-                "radial-gradient(circle, #d4d4d8 1px, transparent 1px)",
+                `radial-gradient(circle, ${FLOW_DOT_GRID} 1px, transparent 1px)`,
               backgroundSize: "24px 24px",
               backgroundPosition: "0 0",
             }}
@@ -290,7 +291,7 @@ export function FlowEditor(props: FlowEditorProps) {
                         e.stopPropagation();
                         deleteEdge(edge);
                       }}
-                      stroke="#3f3f46"
+                      stroke={FLOW_EDGE_SELECTED}
                       strokeWidth={2}
                       x1={src.x}
                       x2={dst.x}
