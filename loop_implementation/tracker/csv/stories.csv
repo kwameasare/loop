@@ -912,11 +912,12 @@ Follow-ups: none"
 S824,memory: PII redaction at memory-write time (configurable per agent),codex-orion,S36,E4,2,P0,In progress,"**Active.**
 Branch: codex-orion/s824-memory-pii-redaction-at-memory-w
 Skill: skills/coding/implement-runtime-feature.md
-Last step: 3/5
-Heartbeat: 2026-05-02T01:01:58Z (codex-orion)
+Last step: 4/5
+Heartbeat: 2026-05-02T01:02:09Z (codex-orion)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: focused static redaction and SDK scan passed
 Latest checkpoint: tracker docs and checkpoint gates passed
 Latest checkpoint: runtime and broad pytest passed
 Latest checkpoint: memory PII redaction modes tests and docs landed"
