@@ -55,6 +55,18 @@ models cold provider handshake p50 at 90 ms and prewarmed acquisition at
 0 ms for the first ASR/TTS socket, removing the handshake from the
 caller-visible voice budget.
 
+<!-- S653 -->
+Voice ASR/TTS provider websockets can be pinned to the nearest supported
+Loop voice POP with `loop_voice.resolve_voice_endpoint()`. The selector
+uses a committed latency map across `{us-east, us-west, eu-west,
+ap-south}` and returns the provider edge `base_url` that existing
+Deepgram, ElevenLabs, and Cartesia adapters already accept.
+
+The S653 contract in `bench/results/voice_regional_latency_map.json`
+keeps the source-region latency matrix under review. Unknown caller
+regions or missing provider endpoints raise instead of silently sending
+live audio across an arbitrary region.
+
 ## Measurement
 
 Every voice turn that flows through `VoiceSession` is timestamped at

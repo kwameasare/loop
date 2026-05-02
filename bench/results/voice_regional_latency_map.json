@@ -1,0 +1,19 @@
+{
+  "name": "voice_regional_latency_map",
+  "commit": "S653-contract",
+  "ts": "2026-05-02T05:48:00Z",
+  "host": "deterministic-pop-map",
+  "supported_voice_regions": ["us-east", "us-west", "eu-west", "ap-south"],
+  "source_regions": {
+    "us-east": { "nearest": "us-east", "candidate_rtt_ms": { "us-east": 12, "us-west": 58, "eu-west": 76, "ap-south": 214 } },
+    "us-west": { "nearest": "us-west", "candidate_rtt_ms": { "us-east": 58, "us-west": 14, "eu-west": 142, "ap-south": 188 } },
+    "eu-west": { "nearest": "eu-west", "candidate_rtt_ms": { "us-east": 76, "us-west": 142, "eu-west": 14, "ap-south": 122 } },
+    "eu-central": { "nearest": "eu-west", "candidate_rtt_ms": { "us-east": 82, "us-west": 150, "eu-west": 22, "ap-south": 128 } },
+    "ap-south": { "nearest": "ap-south", "candidate_rtt_ms": { "us-east": 214, "us-west": 188, "eu-west": 122, "ap-south": 18 } },
+    "ap-southeast": { "nearest": "ap-south", "candidate_rtt_ms": { "us-east": 194, "us-west": 132, "eu-west": 168, "ap-south": 74 } },
+    "af-south": { "nearest": "eu-west", "candidate_rtt_ms": { "us-east": 138, "us-west": 196, "eu-west": 92, "ap-south": 142 } }
+  },
+  "provider_edge_base_url_template": "wss://voice.{region}.loop.example/{provider}",
+  "source": "packages/voice/loop_voice/regional_endpoints.py",
+  "baseline_ref": "main@S652"
+}
