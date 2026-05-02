@@ -1035,7 +1035,14 @@ Final heartbeat: 2026-05-02T06:01:23Z (copilot-titan)
 Tests: packages/control-plane/_tests/test_saml_group_rules.py
 Docs touched: packages/control-plane/loop_control_plane/saml_group_rules.py
 Follow-ups: none"
-S618,sso: integration test full Okta SP-initiated login → studio session,tbd,S27,E20,2,P0,Not started,AC: Playwright drives Okta sandbox + studio; ends in authenticated session.
+S618,sso: integration test full Okta SP-initiated login → studio session,copilot-titan,S27,E20,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s618-sso-integration-test-full-okta-s (merged + deletable)
+Skill: skills/api/api-versioning.md
+Final heartbeat: 2026-05-02T06:05:03Z (copilot-titan)
+Tests: packages/control-plane/_tests/test_okta_sp_initiated_e2e.py
+Docs touched: packages/control-plane/_tests/test_okta_sp_initiated_e2e.py
+Follow-ups: Real Playwright + live-Okta-sandbox browser driver deferred — requires CI outbound HTTP and a managed Okta org credential."
 S630,audit: audit_events table cp_0004 + write-only middleware,tbd,S28,E20,2,P0,Not started,AC: every cp-api write endpoint emits an audit_event; integration test.
 S631,"audit: studio audit log page (filterable, paginated)",tbd,S28,E10,3,P0,Not started,"AC: 7 filters: actor, action, resource, time, ip, success/failure."
 S632,audit: audit log export CSV,tbd,S28,E20,1,P0,Not started,AC: filtered export in <30s for ≤100k rows.
