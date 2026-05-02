@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:31:19.571581+00:00",
+    "generated_at": "2026-05-02T05:36:59.383703+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4103,8 +4103,8 @@
       "epic": "E20",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s611-sso-scim-provisioning-endpoint-r\nSkill: skills/security/secrets-kms-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:31:19Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s611-sso-scim-provisioning-endpoint-r (merged + deletable)\nSkill: skills/security/secrets-kms-check.md\nFinal heartbeat: 2026-05-02T05:36:59Z (copilot-titan)\nTests: packages/control-plane/_tests/test_scim_users.py packages/control-plane/_tests/test_scim_groups.py packages/control-plane/_tests/test_openapi_schemathesis.py\nDocs touched: loop_implementation/engineering/SSO_SAML.md\nFollow-ups: S612"
     },
     {
       "id": "S612",
