@@ -989,15 +989,15 @@ Final heartbeat: 2026-05-02T05:44:47Z (copilot-titan)
 Tests: packages/control-plane/_tests/test_entra_integration.py
 Docs touched: packages/control-plane/fixtures/entra_idp_metadata.xml
 Follow-ups: S614 S617"
-S614,sso: Google Workspace recipe + sandbox test,tbd,S27,E20,2,P0,Not started,AC: same.
-S615,sso: studio enterprise tab → connect IdP + upload metadata,copilot-thor,S27,E10,2,P0,Done,"**Done.**
+S614,sso: Google Workspace recipe + sandbox test,copilot-titan,S27,E20,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
-Branch: copilot-thor/s615-sso-studio-enterprise-tab-connec (merged + deletable)
-Skill: skills/api/add-rest-endpoint.md
-Final heartbeat: 2026-05-02T05:50:35Z (copilot-thor)
-Tests: 19 vitest (enterprise.test.ts x8, idp-connect-panel.test.tsx x11): fixture shapes, postIdpMetadata URL+XML source, auth header, non-2xx error, panel status badge, URL/XML tab toggle, onConnect url/xml source, empty validation, error display, status flip to connected after ACS roundtrip
-Docs touched: apps/studio/src/lib/enterprise.ts module docstring; apps/studio/src/components/enterprise/idp-connect-panel.tsx component JSDoc; apps/studio/src/app/enterprise/page.tsx
-Follow-ups: S616 JIT user provisioning; S617 SAML group to workspace role mapping; S618 Playwright Okta SP-initiated login e2e"
+Branch: copilot-titan/s614-sso-google-workspace-recipe-sand (merged + deletable)
+Skill: skills/security/secrets-kms-check.md
+Final heartbeat: 2026-05-02T05:48:31Z (copilot-titan)
+Tests: packages/control-plane/_tests/test_google_integration.py
+Docs touched: packages/control-plane/fixtures/google_idp_metadata.xml
+Follow-ups: S615 S617"
+S615,sso: studio enterprise tab → connect IdP + upload metadata,tbd,S27,E10,2,P0,Not started,AC: paste metadata URL or upload XML; status flips to Connected after ACS-roundtrip.
 S616,sso: just-in-time user provisioning at first login,tbd,S27,E20,2,P0,Not started,AC: unknown SAML subject creates user + workspace_members row per group mapping.
 S617,sso: SAML group → workspace role mapping rules,tbd,S27,E20,2,P0,Not started,AC: rules in workspace_sso_groups table; UI to edit; tested for owner/editor/viewer.
 S618,sso: integration test full Okta SP-initiated login → studio session,tbd,S27,E20,2,P0,Not started,AC: Playwright drives Okta sandbox + studio; ends in authenticated session.
@@ -1049,14 +1049,14 @@ Final heartbeat: 2026-05-02T05:42:37Z (codex-vega)
 Tests: touched ruff/format pass; touched pyright pass; voice pooling tests pass (52); pytest -q -m 'not integration and not e2e' passed (1408 passed, 3 skipped, 4 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests
 Docs touched: loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_connection_pooling.json
 Follow-ups: none"
-S653,"voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS",codex-vega,S29,E7,2,P0,In progress,"**Active.**
-Branch: codex-vega/s653-voice-perf-regional-endpoints-eu
+S653,"voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS",codex-vega,S29,E7,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-vega/s653-voice-perf-regional-endpoints-eu (merged + deletable)
 Skill: skills/testing/perf-check.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T05:44:23Z (codex-vega)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T05:49:24Z (codex-vega)
+Tests: touched ruff/format pass; touched pyright pass; regional endpoint voice tests pass (47); pytest -q -m 'not integration and not e2e' passed (1455 passed, 3 skipped, 4 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests
+Docs touched: loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_regional_latency_map.json
+Follow-ups: none"
 S654,voice-perf: latency benchmark ≤700ms p50 acceptance gate,tbd,S29,E7,2,P0,Not started,AC: scripts/voice_perf.py runs nightly; CI alerts if breached.
 S655,ga-polish: design-system audit + component refactor,tbd,S29,E10,3,P1,Not started,AC: token map sweep; <5 hardcoded colours/spacings remain; doc'd in design system.
 S656,ga-polish: a11y audit (WCAG 2.1 AA) on top 10 studio pages,tbd,S29,E10,2,P0,Not started,AC: axe-core zero serious; manual screen-reader pass; report committed.
@@ -1253,6 +1253,13 @@ Final heartbeat: 2026-05-02T05:40:46Z (codex-orion)
 Tests: uv run ruff check/pyright on warm-start files; uv run pytest -q packages/tool-host/_tests/test_warm_start_bench.py tests/test_tool_host_warm_start_workflow.py tests/test_docs_links.py packages/tool-host/_tests/test_pool.py; tracker/docs gates pass
 Docs touched: docs/perf/tool_host_warm_start.md,docs/index.md,bench/results/tool_host_warm_start.json,.github/workflows/tool-host-warm-start.yml
 Follow-ups: none"
-S844,perf: 1000 concurrent turns held by single dp-runtime pod (acceptance test),tbd,S37,E1,3,P0,Not started,AC: k6 1000 parallel SSE; no errors; latency p95 < 3s; memory < 4 GB.
+S844,perf: 1000 concurrent turns held by single dp-runtime pod (acceptance test),codex-orion,S37,E1,3,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-orion/s844-perf-1000-concurrent-turns-held (merged + deletable)
+Skill: skills/testing/perf-check.md
+Final heartbeat: 2026-05-02T05:46:11Z (codex-orion)
+Tests: uv run ruff check/pyright on runtime SSE smoke files; uv run pytest -q tests/test_runtime_sse_1000.py tests/test_turn_latency_k6.py tests/test_helm_e2e_workflow.py tests/test_docs_links.py; tracker/docs gates pass
+Docs touched: docs/perf/runtime_sse_1000_concurrency.md,docs/index.md,bench/results/runtime_sse_1000_concurrency.json,.github/workflows/runtime-sse-1000.yml
+Follow-ups: none"
 S845,perf: cp-api 5000 RPS sustained (acceptance test),tbd,S37,E12,2,P0,Not started,AC: k6 sustained; error rate < 0.1%; p95 < 100ms; report committed.
 S846,perf: regression budget — any 5%+ p95 regression blocks PR,tbd,S37,E9,2,P0,Not started,AC: perf CI check compares to last 7-day baseline; PR fails if breaches.
