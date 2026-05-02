@@ -97,6 +97,16 @@ class SamlSpConfig:
     clock_skew: timedelta = timedelta(minutes=2)
     """Tolerated drift on NotBefore / NotOnOrAfter checks."""
 
+    groups_attribute: str = "groups"
+    """SAML attribute name that carries group memberships.
+
+    Okta and Google Workspace use the plain ``groups`` attribute; Microsoft
+    Entra ID uses the WS-Federation URI
+    ``http://schemas.microsoft.com/ws/2008/06/identity/claims/groups``
+    and emits group **Object IDs** rather than display names. The cp-api
+    layer sets this field per IdP type when constructing the SP config.
+    """
+
 
 class SamlValidator(Protocol):
     """The signature/parse boundary. Production: PySAML2; tests: stub."""
@@ -162,7 +172,7 @@ def project_role(assertion: SamlAssertion, sp_config: SamlSpConfig) -> str:
     Highest-privilege match wins; fallback is ``sp_config.default_role``.
     """
     role_priority = ("owner", "admin", "editor", "operator", "viewer")
-    groups = set(assertion.attributes.get("groups", []))
+    groups = set(assertion.attributes.get(sp_config.groups_attribute, []))
     matched: list[str] = []
     for mapping in sp_config.group_role_map:
         if mapping.group in groups:

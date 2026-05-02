@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Microsoft Entra ID (Azure AD) SAML 2.0 IdP metadata fixture — S613
+  ===================================================================
+  This is a *sandbox* Entra ID metadata document used for integration
+  tests.  The certificate, tenant GUID, and app-id are synthetic; they
+  do NOT correspond to a real Entra tenant.
+
+  A real Entra metadata file is obtained from:
+    Azure Portal → Enterprise Applications → <your app>
+    → Single sign-on → SAML Certificates → "App Federation Metadata Url"
+
+  Key fields used by EntraMetadataParser:
+    - md:EntityDescriptor[@entityID]
+        → https://sts.windows.net/<tenant-guid>/
+    - md:IDPSSODescriptor/md:SingleSignOnService[@Binding=HTTP-POST][@Location]
+        → https://login.microsoftonline.com/<tenant-guid>/saml2
+    - ds:X509Certificate
+        → IdP token-signing certificate (PEM body, base64)
+
+  Note: the sandbox tenant GUID below (00000000-0000-0000-0000-0000beefcafe)
+  is intentionally invalid for a real Microsoft cloud lookup.
+-->
+<md:EntityDescriptor
+  xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+  xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+  entityID="https://sts.windows.net/00000000-0000-0000-0000-0000beefcafe/">
+
+  <md:IDPSSODescriptor
+    WantAuthnRequestsSigned="false"
+    protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <!-- Sandbox self-signed cert (not used for real crypto — test only) -->
+          <ds:X509Certificate>
+MIICpDCCAYwCCQDU7pQ4pHgSpDANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAls
+b29wLWVudHJhLXRlc3QwHhcNMjQwMTAxMDAwMDAwWhcNMjcwMTAxMDAwMDAwWjAU
+MRIwEAYDVQQDDAlsb29wLWVudHJhMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+CgKCAQEAuTBnDtVR6yjRJgFq0pK9wRqr4dOuJXxeBs0vRLgGXLmHj9pVkqKQwEnt
+EntraSandboxCertBodyBase64Padding==
+          </ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+
+    <md:NameIDFormat>
+      urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+    </md:NameIDFormat>
+
+    <!-- HTTP-POST binding (primary) -->
+    <md:SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+      Location="https://login.microsoftonline.com/00000000-0000-0000-0000-0000beefcafe/saml2"/>
+
+    <!-- HTTP-Redirect binding (secondary) -->
+    <md:SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+      Location="https://login.microsoftonline.com/00000000-0000-0000-0000-0000beefcafe/saml2"/>
+
+  </md:IDPSSODescriptor>
+
+</md:EntityDescriptor>

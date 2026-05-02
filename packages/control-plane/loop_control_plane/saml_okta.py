@@ -65,6 +65,7 @@ class IdPMetadata:
         default_role: str = "viewer",
         group_role_map: dict[str, str] | None = None,
         sandbox_mode: bool = False,
+        groups_attribute: str = "groups",
     ) -> tuple[SamlSpConfig, CertificateBundle]:
         """Build a (:class:`SamlSpConfig`, :class:`CertificateBundle`) tuple
         for *tenant_id* from this metadata.
@@ -101,6 +102,7 @@ class IdPMetadata:
             default_role=default_role,
             group_role_map=mappings,
             sandbox_mode=sandbox_mode,
+            groups_attribute=groups_attribute,
         )
         return cfg, bundle
 
