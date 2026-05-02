@@ -1,0 +1,125 @@
+name: turn-latency-k6
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/turn-latency-k6.yml"
+      - "bench/results/turn_latency_text_path_k6.json"
+      - "infra/helm/loop/**"
+      - "scripts/helm_e2e_smoke_server.py"
+      - "scripts/k6_turn_latency.js"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/turn-latency-k6.yml"
+      - "bench/results/turn_latency_text_path_k6.json"
+      - "infra/helm/loop/**"
+      - "scripts/helm_e2e_smoke_server.py"
+      - "scripts/k6_turn_latency.js"
+  workflow_dispatch:
+  schedule:
+    - cron: "43 5 * * *"
+
+jobs:
+  turn-latency-k6:
+    name: turn-latency-k6
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    env:
+      LOOP_NAMESPACE: loop-turn-latency
+      LOOP_RELEASE: loop
+      LOOP_TURN_LATENCY_BASE_URL: http://127.0.0.1:18081
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - uses: grafana/setup-k6-action@v1
+      - uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: loop-turn-latency
+          wait: 60s
+      - name: Build and load smoke image
+        run: |
+          cat > /tmp/loop-helm-smoke.Dockerfile <<'DOCKER'
+          FROM python:3.12-alpine
+          COPY scripts/helm_e2e_smoke_server.py /server.py
+          ENV HELM_SMOKE_PORTS=8080,8081,8082,8003
+          CMD ["python", "/server.py"]
+          DOCKER
+          docker build -f /tmp/loop-helm-smoke.Dockerfile -t loop/helm-smoke:ci .
+          kind load docker-image loop/helm-smoke:ci --name loop-turn-latency
+      - name: Install Loop chart
+        run: |
+          helm dependency build infra/helm/loop
+          helm upgrade --install "$LOOP_RELEASE" infra/helm/loop \
+            --namespace "$LOOP_NAMESPACE" --create-namespace \
+            --wait --timeout 8m \
+            --set global.imageRegistry=loop \
+            --set global.imagePullPolicy=IfNotPresent \
+            --set controlPlane.image.repository=helm-smoke \
+            --set controlPlane.image.tag=ci \
+            --set controlPlane.replicaCount=1 \
+            --set runtime.image.repository=helm-smoke \
+            --set runtime.image.tag=ci \
+            --set runtime.replicaCount=1 \
+            --set gateway.image.repository=helm-smoke \
+            --set gateway.image.tag=ci \
+            --set gateway.replicaCount=1 \
+            --set kbEngine.image.repository=helm-smoke \
+            --set kbEngine.image.tag=ci \
+            --set kbEngine.replicaCount=1 \
+            --set toolHost.enabled=false \
+            --set postgresql.enabled=false \
+            --set redis.enabled=false \
+            --set qdrant.enabled=false \
+            --set nats.enabled=false \
+            --set minio.enabled=false \
+            --set clickhouse.enabled=false
+      - name: Run k6 turn latency gate
+        run: |
+          kubectl -n "$LOOP_NAMESPACE" rollout status deploy/loop-loop-runtime --timeout=90s
+          kubectl -n "$LOOP_NAMESPACE" port-forward svc/loop-loop-runtime 18081:8081 \
+            >/tmp/loop-turn-latency-runtime.log 2>&1 &
+          pf_pid=$!
+          trap 'kill "$pf_pid"' EXIT
+          for _ in $(seq 1 30); do
+            if curl -fsS "$LOOP_TURN_LATENCY_BASE_URL/healthz" >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          k6 run --summary-export /tmp/turn-latency-k6-summary.json scripts/k6_turn_latency.js
+      - name: Upload k6 summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: turn-latency-k6-summary
+          path: /tmp/turn-latency-k6-summary.json
+          if-no-files-found: ignore
+      - name: Dump cluster diagnostics
+        if: failure()
+        run: |
+          kubectl -n "$LOOP_NAMESPACE" get all
+          kubectl -n "$LOOP_NAMESPACE" describe pods
+          kubectl -n "$LOOP_NAMESPACE" logs -l app.kubernetes.io/instance=loop \
+            --all-containers --tail=120
+      - name: Page on-call
+        if: failure()
+        env:
+          LOOP_ONCALL_WEBHOOK_URL: ${{ secrets.LOOP_ONCALL_WEBHOOK_URL }}
+        run: |
+          if [ -z "$LOOP_ONCALL_WEBHOOK_URL" ]; then
+            echo "::error::LOOP_ONCALL_WEBHOOK_URL secret is required to page on-call"
+            exit 1
+          fi
+          python3 - <<'PY' >/tmp/oncall-payload.json
+          import json, os
+          run_url = f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          print(json.dumps({
+              "summary": "Loop turn latency k6 p95 gate failed",
+              "severity": "critical",
+              "source": "github-actions",
+              "run_url": run_url,
+          }))
+          PY
+          curl -fsS -X POST -H "content-type: application/json" \
+            --data @/tmp/oncall-payload.json "$LOOP_ONCALL_WEBHOOK_URL"

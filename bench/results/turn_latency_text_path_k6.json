@@ -1,0 +1,22 @@
+{
+  "name": "turn_latency_text_path_k6",
+  "commit": "S840-contract",
+  "ts": "2026-05-02T00:00:00Z",
+  "host": "github-actions-kind",
+  "tool": "k6",
+  "scenario": "text_turn_latency",
+  "source": ".github/workflows/turn-latency-k6.yml",
+  "stats": {
+    "p95_ms": 1.0,
+    "http_req_failed_rate": 0.0,
+    "checks_rate": 1.0,
+    "n": 1
+  },
+  "budgets": {
+    "p95_ms": 2000,
+    "http_req_failed_rate": 0.001,
+    "checks_rate": 0.999
+  },
+  "regression_threshold": 0.1,
+  "baseline_ref": "main@S840"
+}
