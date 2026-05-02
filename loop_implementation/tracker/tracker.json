@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:27:00.326553+00:00",
+    "generated_at": "2026-05-02T05:26:44.980950+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4043,13 +4043,13 @@
     {
       "id": "S594",
       "title": "region: studio region selector at workspace creation",
-      "owner": "copilot-thor",
+      "owner": "copilot-titan",
       "sprint": "S26",
       "epic": "E10",
       "points": 1,
       "priority": "P0",
       "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s594-region-studio-region-selector-at (merged + deletable)\nSkill: skills/coding/typescript.md\nFinal heartbeat: 2026-05-02T05:22:50Z (copilot-thor)\nTests: 8 vitest tests (opens modal, defaults region to inferred TZ, defaults to us-east-1 for unknown TZ, shows all regions, shows cannot-change-later notice, persists selected region to onSubmit, slug format error, cancel resets). pytest 1341/1341.\nDocs touched: apps/studio/src/lib/regions.ts,apps/studio/src/components/shell/create-workspace-modal.tsx\nFollow-ups: S595"
+      "notes": "**Done.**\nPR: https://github.com/kwameasare/loop/pull/49 (squash-merged 2026-05-02T05:23Z)\nBranch: copilot-titan/s594-region-studio-region-selector-at (merged + deletable)\nSkill: skills/api/typescript-frontend.md\nFinal heartbeat: 2026-05-02T05:23:14Z (copilot-titan)\nTests: apps/studio src/lib/regions.test.ts (5 passed) + src/components/workspaces/workspace-create-form.test.tsx (5 passed) — 10 total. Validates region catalog ↔ RegionName invariant, TZ-based inference table, default region selection, cannot-change-later notice presence, submit-payload shape, validation, dropdown-driven description swap.\nDocs touched: apps/studio/src/lib/regions.ts, apps/studio/src/lib/regions.test.ts, apps/studio/src/components/workspaces/workspace-create-form.tsx, apps/studio/src/components/workspaces/workspace-create-form.test.tsx, apps/studio/src/app/workspaces/new/page.tsx (inline docstrings cite cannot-change-later contract from S593)\nFollow-ups: S023 (swap stub fetch for generated cp-api client)"
     },
     {
       "id": "S595",
@@ -4087,13 +4087,13 @@
     {
       "id": "S610",
       "title": "sso: SAML SP impl via PySAML2",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S27",
       "epic": "E20",
       "points": 3,
       "priority": "P0",
-      "status": "Done",
-      "notes": "**Done.**\nPR: https://github.com/kwameasare/loop/pull/52\nBranch: copilot-thor/s610-sso-saml-sp-impl-via-pysaml2 (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T05:27:00Z (copilot-thor)\nTests: 13 pytest tests in packages/control-plane/_tests/test_saml_sp.py (5 happy-path: parse valid response, multiple groups, session NotOnOrAfter, SP metadata XML, cert fingerprint match; 8 failure cases: non-success status, issuer mismatch, audience mismatch, expired assertion, invalid base64, malformed XML, missing signature, cert rotation rejects unknown cert)\nDocs touched: loop_implementation/engineering/SSO_SAML.md (existing; ACS URL + SP entity ID patterns already documented); saml_sp.py module docstring covers swap-in note for lxml+xmlsec1 full sig validation\nFollow-ups: Add lxml+xmlsec1 RSA-SHA256 full XML-DSIG verification; expose ACS HTTP endpoint in control-plane FastAPI router; add OIDC SP counterpart"
+      "status": "Not started",
+      "notes": "AC: ACS endpoint validates assertion; cert-rotation supported. [extends S050]"
     },
     {
       "id": "S611",
@@ -4307,13 +4307,13 @@
     {
       "id": "S651",
       "title": "voice-perf: TTS pre-warm + sentence-boundary streaming",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S29",
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: TTS speaks before LLM finishes; measurable p50 cut."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s651-voice-perf-tts-pre-warm-sentence\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:23:49Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S652",
@@ -5672,7 +5672,7 @@
       "theme": "Enterprise SSO/SAML",
       "goal": "PySAML2 SP, SCIM provisioning, Okta/Entra/Google recipes, JIT user provisioning, group→role mapping.",
       "stories": "S610-S618",
-      "status": "In progress"
+      "status": "Not started"
     },
     {
       "id": "S28",
