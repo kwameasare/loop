@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:12:58.760658+00:00",
+    "generated_at": "2026-05-02T06:13:21.235941+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5077,13 +5077,13 @@
     {
       "id": "S773",
       "title": "infra: terraform module — Alibaba Cloud (ACK + RDS + Redis + OSS + KMS + DCDN)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S34",
       "epic": "E12",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: same against Alibaba Cloud (China region)."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s773-infra-terraform-module-alibaba-c\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:13:21Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S774",
