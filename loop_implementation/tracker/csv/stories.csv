@@ -1190,11 +1190,12 @@ Follow-ups: none"
 S841,perf: gateway-cache hit ratio > 30% on a fixed eval workload,codex-orion,S37,E2,2,P0,In progress,"**Active.**
 Branch: codex-orion/s841-perf-gateway-cache-hit-ratio-30
 Skill: skills/testing/perf-check.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T05:29:59Z (codex-orion)
+Last step: 1/5
+Heartbeat: 2026-05-02T05:34:11Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: cache hit ratio eval workflow report and tests landed"
 S842,perf: KB retrieval p50 < 200ms at 1M chunks per agent,tbd,S37,E5,2,P0,Not started,AC: synthetic 1M-chunk fixture; benchmark in CI; report committed.
 S843,perf: tool-host warm-start < 300ms p95 (vs 8s+ cold-start),tbd,S37,E3,2,P0,Not started,AC: WarmPool tuned; benchmark in CI; alert if breached.
 S844,perf: 1000 concurrent turns held by single dp-runtime pod (acceptance test),tbd,S37,E1,3,P0,Not started,AC: k6 1000 parallel SSE; no errors; latency p95 < 3s; memory < 4 GB.
