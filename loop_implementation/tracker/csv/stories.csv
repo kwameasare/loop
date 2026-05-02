@@ -398,14 +398,14 @@ Tests: uv run pytest packages/sdk-py/_tests/test_observability.py packages/runti
 Docs touched: loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/data/SCHEMA.md,loop_implementation/architecture/ARCHITECTURE.md
 Follow-ups: none"
 S287,"obs: trace search API in cp-api (by turn_id, conv_id, time range)",GitHub Copilot,S10,E9,2,P0,Done,"Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/observability/trace-search.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_control_plane/trace_search.py — TraceSummary(workspace_id, trace_id 32-hex, turn_id, conversation_id, agent_id, started_at, duration_ms, span_count>=1, error). TraceQuery(workspace_id, optional turn_id/conversation_id/agent_id, started_at_from<=to validator, only_errors flag, opaque cursor 'started_at|trace_id', page_size 1..200). TraceSearchService.run() applies filters in workspace-scoped index, sorts by (started_at desc, trace_id) and uses page_size+1 sentinel to compute next_cursor. Tests: workspace-scoping enforced, only_errors filter, pagination cursor round-trip, started_at window validator rejects from>to, page_size bounds. Open questions: ClickHouse-backed index for production scale (>1M spans) is a future story; in-memory store is the cloud-portable seam."
-S288,studio: trace list page with filter + search,copilot-thor,S10,E10,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s288-studio-trace-list-page-with-filt
+S288,studio: trace list page with filter + search,copilot-thor,S10,E10,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s288-studio-trace-list-page-with-filt (merged + deletable)
 Skill: skills/ux/component-design.md
-Last step: 0/6 (just claimed)
-Heartbeat: 2026-05-02T02:50:36Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T02:53:09Z (copilot-thor)
+Tests: vitest covers listTraces pagination/filter/search/clamp, formatTraceTimestamp, TraceList row+filter+search+pagination+empty-state
+Docs touched: apps/studio/src/components/trace/trace-list.tsx,apps/studio/src/app/traces/page.tsx,apps/studio/src/lib/traces.ts
+Follow-ups: none"
 S289,"studio: trace detail waterfall (custom SVG, not Mermaid)",tbd,S10,E10,3,P0,Not started,AC: spans ordered + nested; click expands attrs; ≤10ms render at 200 spans.
 S290,"obs: alert rules YAML — budget breach, error spike, latency p95",GitHub Copilot,S10,E9,2,P0,Done,"Done. Branch: copilot/s101-s290-pass2 (merged). PR: local-merge (ff to main). Skill: skills/observability/structured-logging.md. Last step: 5/5. Heartbeat: 2026-05-12T01:00:00Z. Substance: loop_control_plane/alerts.py — AlertRule (name, metric, op∈{'>','>=','<','<=','==','!='}, threshold, severity∈{info,warning,critical}, description). load_rules(path) parses rules.yaml with file-prefixed errors, rejects unknown ops + duplicate names. evaluate(rules, metrics) returns Alert tuple — missing metric keys silently skipped (alerting layer doesn't decide telemetry policy). Tests: parse valid yaml, unknown op error names rules[i].op, duplicate-name caught, missing-file error, fires only when threshold crossed, unknown metric skipped. Open questions: webhook delivery — separate story (alerting-layer split from rules engine intentional)."
 S291,obs: alert delivery to Slack/email/PagerDuty (per workspace pref),GitHub Copilot,S10,E9,2,P0,Done,"Done. Branch: copilot/s-pass3 (merged). PR: local-merge (ff to main). Skill: skills/observability/alert-delivery.md. Last step: 5/5. Heartbeat: 2026-05-12T02:00:00Z. Substance: loop_control_plane/alerts.py — AlertSink runtime_checkable Protocol (name, accepts: frozenset[Severity], async send), InMemoryAlertSink test fixture, DeliveryResult frozen dataclass, AlertDispatcher.dispatch(alerts) fans out to every matching sink and isolates per-sink failures (BLE001 noqa intentional — exception captured into DeliveryResult.error so one bad webhook does not silence the rest). Tests: _tests/test_alerts_dispatch.py covers fan-out, severity filtering, sink-failure isolation, empty alerts/sinks no-op. Open questions: real Slack/email/PagerDuty Protocol implementations bind transport SDKs in their own files; PII redaction rides on Alert.message construction (rule.evaluate already produces redacted messages)."
