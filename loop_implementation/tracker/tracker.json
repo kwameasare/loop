@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T14:17:08.334960+00:00",
+    "generated_at": "2026-05-02T14:17:55.747434+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5352,13 +5352,13 @@
     {
       "id": "S826",
       "title": "kb-v2: late-interaction retrieval (ColBERT-style for high-recall surfaces)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S36",
       "epic": "E5",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: opt-in retrieval mode; eval shows ≥5% recall@10 improvement on hard queries."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s826-kb-v2-late-interaction-retrieval\nSkill: loop_implementation/skills/_base/skill.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T14:17:55Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S827",
