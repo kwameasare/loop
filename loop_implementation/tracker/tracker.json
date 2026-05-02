@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T02:53:10.039337+00:00",
+    "generated_at": "2026-05-02T02:53:26.411622+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2184,13 +2184,13 @@
     {
       "id": "S289",
       "title": "studio: trace detail waterfall (custom SVG, not Mermaid)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S10",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: spans ordered + nested; click expands attrs; ≤10ms render at 200 spans."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s289-studio-trace-detail-waterfall-cu\nSkill: skills/ux/component-design.md\nLast step: 0/6 (just claimed)\nHeartbeat: 2026-05-02T02:53:26Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S290",
