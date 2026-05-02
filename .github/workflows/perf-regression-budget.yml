@@ -1,0 +1,70 @@
+name: perf-regression-budget
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/perf-regression-budget.yml"
+      - "bench/results/**"
+      - "docs/perf/perf_regression_budget.md"
+      - "loop_implementation/engineering/PERFORMANCE.md"
+      - "scripts/perf_regression_budget.py"
+      - "tests/test_perf_regression_budget.py"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/perf-regression-budget.yml"
+      - "bench/results/**"
+      - "docs/perf/perf_regression_budget.md"
+      - "loop_implementation/engineering/PERFORMANCE.md"
+      - "scripts/perf_regression_budget.py"
+      - "tests/test_perf_regression_budget.py"
+  workflow_dispatch:
+  schedule:
+    - cron: "29 6 * * *"
+
+jobs:
+  perf-regression-budget:
+    name: perf-regression-budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Compare p95 reports to 7-day baseline
+        id: perf_budget
+        continue-on-error: true
+        run: |
+          uv run python scripts/perf_regression_budget.py \
+            --baseline bench/results/perf_7d_baseline.json \
+            --output bench/results/perf_regression_budget.json
+      - name: Upload perf regression report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-regression-budget
+          path: bench/results/perf_regression_budget.json
+          if-no-files-found: error
+      - name: Fail breached p95 regression budget
+        if: steps.perf_budget.outcome != 'success'
+        run: exit 1
+      - name: Page on-call
+        if: failure()
+        env:
+          LOOP_ONCALL_WEBHOOK_URL: ${{ secrets.LOOP_ONCALL_WEBHOOK_URL }}
+        run: |
+          if [ -z "$LOOP_ONCALL_WEBHOOK_URL" ]; then
+            echo "::error::LOOP_ONCALL_WEBHOOK_URL secret is required to page on-call"
+            exit 1
+          fi
+          python3 - <<'PY' >/tmp/oncall-payload.json
+          import json, os
+          run_url = f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          print(json.dumps({
+              "summary": "Loop perf regression budget breached a 5% p95 guardrail",
+              "severity": "critical",
+              "source": "github-actions",
+              "run_url": run_url,
+          }))
+          PY
+          curl -fsS -X POST -H "content-type: application/json" \
+            --data @/tmp/oncall-payload.json "$LOOP_ONCALL_WEBHOOK_URL"

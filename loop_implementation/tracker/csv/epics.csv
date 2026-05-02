@@ -7,7 +7,7 @@ E5,KB / RAG engine,Eng #1,MVP M6,In progress,PDF/web/Notion + hybrid retrieval +
 E6,Channel adapters,Eng #7,Rolling,In progress,"Web, Slack, WhatsApp, SMS first"
 E7,Voice subsystem,Eng #3,MVP M6,In progress,WebRTC + STT + TTS + barge-in. Sub-700ms p50
 E8,Eval harness,Eng #4,MVP M6,Done,"8 scorers, replay, registry"
-E9,Observability backend,Eng #4,MVP M6,In progress,OTel + ClickHouse + Studio dashboards
+E9,Observability backend,Eng #4,MVP M6,Done,OTel + ClickHouse + Studio dashboards
 E10,Studio (UI),Eng #5,MVP M6,In progress,"Conversations, traces, replay, costs"
 E11,CLI & SDKs,Eng #1+5,MVP M6,Done,"Python core, Go CLI; TS gen later"
 E12,Cloud control plane,Eng #2,MVP M6,In progress,"Auth, billing, deploy, multi-tenant"

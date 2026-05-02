@@ -30,6 +30,8 @@ evaluate AI agents that talk to real users on real channels.
   provider quality, latency, and cost matrix.
 - [KB retrieval 1M](./perf/kb_retrieval_1m.md) — nightly synthetic
   million-chunk retrieval p50 gate.
+- [Perf regression budget](./perf/perf_regression_budget.md) — PR-blocking
+  p95 comparison against the 7-day baseline.
 - [Runtime SSE 1000-concurrency](./perf/runtime_sse_1000_concurrency.md)
   — high-concurrency streaming acceptance gate.
 - [Runtime baseline](./perf/runtime-baseline.md) — 100 turns/minute
@@ -57,6 +59,7 @@ docs/
     gateway_cache_hit_ratio.md
     gateway_provider_eval.md
     kb_retrieval_1m.md
+    perf_regression_budget.md
     runtime-baseline.md
     runtime_sse_1000_concurrency.md
     tool_host_warm_start.md
