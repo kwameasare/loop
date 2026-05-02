@@ -4,7 +4,7 @@ E2,LLM Gateway,Eng #1,MVP M6,Done,"Multi-provider, semantic cache, cost accounti
 E3,MCP / Tool layer,Eng #1,MVP M6,Done,"Auto-MCP, Firecracker sandboxes, allow-lists"
 E4,Memory tiers,Eng #1,MVP M6,Done,User/session/scratch + episodic at M7
 E5,KB / RAG engine,Eng #1,MVP M6,In progress,PDF/web/Notion + hybrid retrieval + vision
-E6,Channel adapters,Eng #7,Rolling,In progress,"Web, Slack, WhatsApp, SMS first"
+E6,Channel adapters,Eng #7,Rolling,Done,"Web, Slack, WhatsApp, SMS first"
 E7,Voice subsystem,Eng #3,MVP M6,In progress,WebRTC + STT + TTS + barge-in. Sub-700ms p50
 E8,Eval harness,Eng #4,MVP M6,Done,"8 scorers, replay, registry"
 E9,Observability backend,Eng #4,MVP M6,Done,OTel + ClickHouse + Studio dashboards

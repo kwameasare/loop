@@ -4,7 +4,7 @@ S1,Wk 7–18,Vision-headline stub layer (closed; stubs only),Each S015-S050 ship
 S2,Wk 19–20,cp-api basics,"A live cp-api a developer can hit — auth, workspaces, members, API keys, error mapping, integration smoke.",S100-S122,Done
 S3,Wk 21–22,dp-runtime HTTP service,POST /v1/turns returns SSE TurnEvent stream end-to-end with API-key auth and persistence.,S130-S143,Done
 S4,Wk 23–24,Studio MVP,"User logs in, sees workspaces+agents from real cp-api, runs an emulator turn, manages versions+secrets.",S150-S164,In progress
-S5,Wk 25–26,Web channel + first end-to-end demo,Visitor on a webpage talks to a Loop agent via embedded ChatWidget; demo + smoke test live.,S170-S181,In progress
+S5,Wk 25–26,Web channel + first end-to-end demo,Visitor on a webpage talks to a Loop agent via embedded ChatWidget; demo + smoke test live.,S170-S181,Done
 S6,Wk 27–30,KB engine v0 (productionization),"Upload a PDF, agent answers from it with citations. Full parser registry, chunkers, embeddings, hybrid retrieval, reranker, studio UI.",S190-S213,Done
 S7,Wk 31–32,Slack channel productionization,"Threaded conversations, signed webhooks, Block Kit, OAuth install, integration tests.",S220-S229,Done
 S8,Wk 33–34,Eval harness productionization,"Real scorers, cassette record/replay, suite runner, regression detector, studio UI.",S240-S253,Done

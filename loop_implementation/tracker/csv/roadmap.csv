@@ -1,7 +1,7 @@
 month,milestone,deliverables,status
 M0,Hire + scope,Hire engineers 1–4; tech-stack lock-in; runtime + SDK started,In progress
 M1,Runtime alpha,Python SDK skeleton; LLM gateway w/ OpenAI + Anthropic; Slack channel,In progress
-M2,Tools + KB,Tool/MCP layer; auto-MCP; KB ingestion v0; web widget,In progress
+M2,Tools + KB,Tool/MCP layer; auto-MCP; KB ingestion v0; web widget,Done
 M3,Eval + cloud,"Eval harness v0 (6 scorers); CLI v0; cloud control plane (auth, deploy)",In progress
 M4,Closed alpha,10 design partners; WhatsApp; Studio v0 (conversations + traces),In progress
 M5,Voice MVP,Voice channel MVP; memory tiers; cost dashboard,In progress
