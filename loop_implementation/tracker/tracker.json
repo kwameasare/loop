@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T02:41:29.135629+00:00",
+    "generated_at": "2026-05-02T02:41:45.939544+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2063,13 +2063,13 @@
     {
       "id": "S270",
       "title": "studio: deploy tab on agent detail (history, current canary %, rollback)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S9",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: timeline view of deployments; promote/pause/rollback buttons work."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s270-studio-deploy-tab-on-agent-detai\nSkill: skills/ux/component-design.md\nLast step: 0/7 (just claimed)\nHeartbeat: 2026-05-02T02:41:45Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S271",
