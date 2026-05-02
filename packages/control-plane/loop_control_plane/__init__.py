@@ -19,6 +19,21 @@ from loop_control_plane.api_keys import (
     IssuedApiKey,
 )
 from loop_control_plane.api_keys_api import ApiKeyAPI
+from loop_control_plane.audit import (
+    AuditContext,
+    AuditEventInput,
+    AuditLog,
+    AuditLogEntry,
+    AuditLogError,
+    InMemoryAuditLog,
+    audit_log_append,
+)
+from loop_control_plane.audit_coverage import (
+    AUDIT_COVERAGE,
+    WriteEndpointAuditCoverage,
+    coverage_gaps,
+    required_write_routes,
+)
 from loop_control_plane.auth import (
     AuthError,
     HS256Verifier,
@@ -147,6 +162,7 @@ from loop_control_plane.workspaces import (
 )
 
 __all__ = [
+    "AUDIT_COVERAGE",
     "DAY_MS",
     "KMS",
     "KMS_BACKENDS",
@@ -156,6 +172,11 @@ __all__ = [
     "ApiKeyAPI",
     "ApiKeyError",
     "ApiKeyService",
+    "AuditContext",
+    "AuditEventInput",
+    "AuditLog",
+    "AuditLogEntry",
+    "AuditLogError",
     "AuthError",
     "AuthorisationError",
     "BaselineRegistry",
@@ -178,6 +199,7 @@ __all__ = [
     "IdentityClaims",
     "ImageBuilder",
     "ImageRegistry",
+    "InMemoryAuditLog",
     "InMemoryBaselineRegistry",
     "InMemoryEvalGate",
     "InMemoryImageBuilder",
@@ -244,14 +266,18 @@ __all__ = [
     "WorkspaceAPI",
     "WorkspaceError",
     "WorkspaceService",
+    "WriteEndpointAuditCoverage",
     "aggregate",
+    "audit_log_append",
     "authorize_workspace_access",
     "build_kms_backend",
     "build_object_store_backend",
     "build_secrets_backend",
     "compute_manifest_digest",
+    "coverage_gaps",
     "first_party_manifests",
     "has_scope",
     "map_to_loop_api_error",
+    "required_write_routes",
     "role_satisfies",
 ]
