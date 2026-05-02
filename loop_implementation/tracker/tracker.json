@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:46:39.971639+00:00",
+    "generated_at": "2026-05-02T05:48:31.635288+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4131,13 +4131,13 @@
     {
       "id": "S614",
       "title": "sso: Google Workspace recipe + sandbox test",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S27",
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: same."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s614-sso-google-workspace-recipe-sand (merged + deletable)\nSkill: skills/security/secrets-kms-check.md\nFinal heartbeat: 2026-05-02T05:48:31Z (copilot-titan)\nTests: packages/control-plane/_tests/test_google_integration.py\nDocs touched: packages/control-plane/fixtures/google_idp_metadata.xml\nFollow-ups: S615 S617"
     },
     {
       "id": "S615",
