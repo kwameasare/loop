@@ -559,7 +559,7 @@ NEW_STORIES: list[StoryV2] = [
     StoryV2("S656", "ga-polish: a11y audit (WCAG 2.1 AA) on top 10 studio pages", "S29", "E10", 2, "P0", "AC: axe-core zero serious; manual screen-reader pass; report committed.", owner="copilot-titan", status="Done", notes_override="**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s656-ga-polish-a11y-audit-wcag-2-1-aa (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:23:57Z (copilot-titan)\nTests: apps/studio/src/components/__a11y__/a11y-audit.test.ts\nDocs touched: apps/studio/a11y/AXE_AUDIT.md\nFollow-ups: none"),
     StoryV2("S657", "ga-polish: i18n scaffolding (en, es, de, fr, ja)", "S29", "E10", 2, "P1", "AC: react-i18next; en is source; 4 languages stub-translated; switcher works."),
     StoryV2("S658", "ga-polish: support runbook + ticketing integration (Front)", "S29", "E17", 1, "P1", "AC: tickets reach support@; routing rules documented."),
-    StoryV2("S659", "ga-polish: docs.loop.example v1 (Mintlify) — getting started + 3 tutorials", "S29", "E17", 3, "P0", "AC: docs site live; tutorials checked by 3 design partners."),
+    StoryV2("S659", "ga-polish: docs.loop.example v1 (Mintlify) — getting started + 3 tutorials", "S29", "E17", 3, "P0", "AC: docs site live; tutorials checked by 3 design partners.", owner="copilot-titan", status="In progress", notes_override="**Active.**\nBranch: copilot-titan/s659-ga-polish-docs-loop-example-v1-m\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:26:46Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"),
 
     # =====================================================================
     # Sprint S30 — 1.0 launch + Series A (≈5 stories)

@@ -1160,7 +1160,14 @@ Docs touched: apps/studio/a11y/AXE_AUDIT.md
 Follow-ups: none"
 S657,"ga-polish: i18n scaffolding (en, es, de, fr, ja)",tbd,S29,E10,2,P1,Not started,AC: react-i18next; en is source; 4 languages stub-translated; switcher works.
 S658,ga-polish: support runbook + ticketing integration (Front),tbd,S29,E17,1,P1,Not started,AC: tickets reach support@; routing rules documented.
-S659,ga-polish: docs.loop.example v1 (Mintlify) — getting started + 3 tutorials,tbd,S29,E17,3,P0,Not started,AC: docs site live; tutorials checked by 3 design partners.
+S659,ga-polish: docs.loop.example v1 (Mintlify) — getting started + 3 tutorials,copilot-titan,S29,E17,3,P0,In progress,"**Active.**
+Branch: copilot-titan/s659-ga-polish-docs-loop-example-v1-m
+Skill: skills/api/api-versioning.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T06:26:46Z (copilot-titan)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S670,launch: 1.0 release-notes draft + changelog automation,tbd,S30,E17,1,P0,Not started,AC: Keep-A-Changelog; release-please bot wired.
 S671,launch: pricing page + plan-comparison matrix,tbd,S30,E17,2,P0,Not started,AC: live page; sales-ops verified; A/B-flag-enabled.
 S672,launch: design partners → 10 paid customers conversion plan,tbd,S30,E17,2,P0,Not started,AC: each partner converted or churned with reason; documented in OPS/launch.md.
