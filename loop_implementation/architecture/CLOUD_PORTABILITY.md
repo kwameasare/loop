@@ -254,6 +254,9 @@ Loop is **dual-stack IPv6/IPv4 ready** at the platform level:
 
 **Sovereign cloud / on-prem:**
 - Customer runs k8s in their own VPC / data center.
+- `eu-sovereign` can map to OVHcloud Managed Kubernetes plus managed
+  Postgres/Redis, S3-compatible Object Storage, and Vault Transit for
+  KMS via `infra/terraform/envs/prod-ovh-eu-sovereign` (S774).
 - Loop control plane (cloud) communicates to data plane via outbound HTTPS + mTLS only.
 - No inbound firewall rules required on customer side; data plane initiates.
 

@@ -28,3 +28,11 @@ regions:
     data_plane_url: https://runtime.cn-shanghai.loop.example
     concrete:
       alibaba: cn-shanghai
+  eu-sovereign:
+    display_name: Europe Sovereign
+    residency: EU
+    primary: false
+    control_plane_url: https://api.eu-sovereign.loop.example/v1
+    data_plane_url: https://runtime.eu-sovereign.loop.example
+    concrete:
+      ovh: GRA11
