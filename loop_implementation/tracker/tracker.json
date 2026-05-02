@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:18:17.291547+00:00",
+    "generated_at": "2026-05-02T03:20:31.740892+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3245,8 +3245,8 @@
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s460-flow-studio-react-flow-canvas-in\nSkill: skills/ux/component-design.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T03:18:17Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s460-flow-studio-react-flow-canvas-in (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-02T03:20:31Z (copilot-thor)\nTests: vitest covers FlowCanvas toolbar render, zoom-in via toolbar, reset, drag-to-pan; flow-canvas geometry helpers (clamp/pan/zoomAt/reset)\nDocs touched: apps/studio/src/components/flow/flow-canvas.tsx,apps/studio/src/lib/flow-canvas.ts,apps/studio/src/app/agents/[agent_id]/flow/page.tsx\nFollow-ups: none"
     },
     {
       "id": "S461",
