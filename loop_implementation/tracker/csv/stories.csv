@@ -1184,7 +1184,14 @@ Final heartbeat: 2026-05-02T06:31:07Z (copilot-titan)
 Tests: apps/studio/src/components/billing/pricing-page.test.tsx
 Docs touched: docs/site/pricing-verification.md
 Follow-ups: none"
-S672,launch: design partners → 10 paid customers conversion plan,tbd,S30,E17,2,P0,Not started,AC: each partner converted or churned with reason; documented in OPS/launch.md.
+S672,launch: design partners → 10 paid customers conversion plan,copilot-titan,S30,E17,2,P0,In progress,"**Active.**
+Branch: copilot-titan/s672-launch-design-partners-10-paid-c
+Skill: skills/api/api-versioning.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T06:32:50Z (copilot-titan)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S673,launch: HN / Product Hunt launch playbook executed,tbd,S30,E17,2,P0,Not started,"AC: launched, ranked, post-mortem; conversion + churn measured for first 7 days."
 S674,launch: Series A data room update + investor narrative refresh,codex-orion,S30,E12,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
