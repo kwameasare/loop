@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T13:32:58.947281+00:00",
+    "generated_at": "2026-05-02T13:34:26.660174+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3531,8 +3531,8 @@
       "epic": "E5",
       "points": 3,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s495-kb-v1-incremental-url-crawler-si\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T13:32:58Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s495-kb-v1-incremental-url-crawler-si (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T13:34:26Z (copilot-thor)\nTests: 17 pytest (test_crawler.py): sitemap parsing, robots.txt compliance, incremental changed_since filtering, error handling, max_pages cap\nDocs touched: loop_kb_engine/crawler.py: SitemapCrawler with sitemap-aware crawl, robots.txt filter, changed_since incremental fetch, pluggable fetcher\nFollow-ups: recursive sitemapindex support; etag-based dedup; async fetch pipeline"
     },
     {
       "id": "S496",
