@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:33:54.736120+00:00",
+    "generated_at": "2026-05-02T03:34:11.265250+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3317,13 +3317,13 @@
     {
       "id": "S467",
       "title": "flow: save/load to cp-api as agent_versions.flow_yaml",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S19",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: Save button posts; Load on mount; conflict-detection on stale version_tag."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s467-flow-save-load-to-cp-api-as-agen\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T03:34:11Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S468",
