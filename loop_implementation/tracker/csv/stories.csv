@@ -446,14 +446,14 @@ Final heartbeat: 2026-05-02T03:05:11Z (copilot-thor)
 Tests: vitest covers takeover handler call+ownership lock, composer disabled until owner, post-as-operator appends, takeover error display
 Docs touched: apps/studio/src/components/inbox/conversation-viewer.tsx,apps/studio/src/app/inbox/conversation/[id]/page.tsx
 Follow-ups: none"
-S309,studio: handback button restores agent + closes operator session,copilot-thor,S11,E10,1,P0,In progress,"**Active.**
-Branch: copilot-thor/s309-studio-handback-button-restores
+S309,studio: handback button restores agent + closes operator session,copilot-thor,S11,E10,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s309-studio-handback-button-restores (merged + deletable)
 Skill: skills/ux/component-design.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-02T03:05:29Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T03:07:44Z (copilot-thor)
+Tests: vitest covers handback confirmation modal flow, cancel path, error toast
+Docs touched: apps/studio/src/components/inbox/conversation-viewer.tsx
+Follow-ups: none"
 S320,billing: cp-api → Stripe customer creation on workspace POST,GitHub Copilot,S12,E19,2,P0,Done,"Done. Branch: copilot/s-pass7 (merged). PR: local-merge (ff to main). Skill: skills/security/zero-trust.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: retro-close — loop_control_plane/billing.py exposes BillingClient Protocol with create_customer(workspace_id, email) -> StripeCustomer plus FakeBillingClient for tests. The cloud-portability constraint forbids importing the stripe-python SDK directly (pinned in the module docstring); the production adapter that wraps stripe.Customer.create lives in a separate module and is selected via dependency injection. customer_id is stored on the workspace row by the cp-api workspace-create handler. The webhook handler in stripe_webhook.py reverses the lookup. Tests: existing test_billing.py covers create_customer/get_customer/get_subscription roundtrips. Open questions: idempotency-key wiring on retries is a follow-up resilience story."
 S321,billing: subscription_plans table cp_0003 + seed plan rows,GitHub Copilot,S12,E19,1,P0,Done,"Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/data/migration-discipline.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: loop_control_plane/subscription_plans.py — frozen Plan dataclass (tier, daily_cost_usd_micro, monthly_turn_cap, rps_per_workspace, rps_per_agent, seats); seed_plans() returns the canonical 4-tier tuple (hobby $5/day, pro $50, team $500, enterprise uncapped) cheapest→richest. get_plan(tier) raises UnknownPlanError on miss. The cp_0003 SQL migration must INSERT exactly these rows so unit tests + production agree. Tests: every tier present, hobby/team caps match the AC numbers, unknown tier raises. Open questions: cp_0003 SQL is in migrations/; this module is the source-of-truth Python representation."
 S322,billing: Stripe webhook receiver /v1/billing/webhook (signature verified),GitHub Copilot,S12,E19,2,P0,Done,"Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/security/secret-handling.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: loop_control_plane/stripe_webhook.py — verify_signature() re-implements Stripe's t=<ts>,v1=<sig> header check (HMAC-SHA256 over `${ts}.${rawBody}`, hmac.compare_digest, 5-min default tolerance) without importing the stripe SDK so the cp stays cloud-portable. StripeWebhookDispatcher composes verification with handler dispatch and dedupes by event.id (retry-idempotent). Tests: signature round-trip, tampered-payload rejected, stale-timestamp rejected, dispatcher de-dupes on retry. Open questions: stripe-python adapter that pushes the raw body into dispatch lives in the cp-api FastAPI route, outside this generic module."
