@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:51:40.694286+00:00",
+    "generated_at": "2026-05-02T05:53:04.533816+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4142,13 +4142,13 @@
     {
       "id": "S615",
       "title": "sso: studio enterprise tab → connect IdP + upload metadata",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S27",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: paste metadata URL or upload XML; status flips to Connected after ACS-roundtrip."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s615-sso-studio-enterprise-tab-connec\nSkill: skills/ux/component-pattern.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:49:28Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S616",
