@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T12:54:37.453167+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2415,13 +2415,13 @@
     {
       "id": "S328",
       "title": "studio: billing — invoice list + download PDF",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S12",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s328-studio-billing-invoice-list-down (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T12:54:37Z (copilot-thor)\nTests: 12 vitest (apps/studio/src/components/billing/invoice-list.test.tsx): paginateInvoices sort/paginate, InvoiceList renders rows, amount/status/pdf link, pagination navigation, empty state, count\nDocs touched: apps/studio/src/components/billing/invoice-list.tsx apps/studio/src/lib/billing.ts\nFollow-ups: wire to Stripe API; add void/refund status colors; download tracking"
+      "status": "Not started",
+      "notes": "AC: list paginates; click downloads from Stripe."
     },
     {
       "id": "S329",
@@ -5552,7 +5552,7 @@
       "theme": "Billing v0 (Stripe)",
       "goal": "Customer creation, plans, webhooks, metered usage push, suspension, studio billing tab.",
       "stories": "S320-S331",
-      "status": "Done"
+      "status": "In progress"
     },
     {
       "id": "S13",

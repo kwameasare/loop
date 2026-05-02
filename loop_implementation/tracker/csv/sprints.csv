@@ -11,7 +11,7 @@ S8,Wk 33–34,Eval harness productionization,"Real scorers, cassette record/repl
 S9,Wk 35–36,Deploy controller v0,"Artifact → image → k8s with canary promotion, rollback, deploy events.",S260-S271,Done
 S10,Wk 37–38,Cost / observability v1,"ClickHouse rollups, cost dashboard, trace search + waterfall, alert rules.",S280-S291,In progress
 S11,Wk 39–40,HITL operator inbox v0,"Real takeover state machine, queue, conversation viewer, composer, handback.",S300-S309,Done
-S12,Wk 41–42,Billing v0 (Stripe),"Customer creation, plans, webhooks, metered usage push, suspension, studio billing tab.",S320-S331,Done
+S12,Wk 41–42,Billing v0 (Stripe),"Customer creation, plans, webhooks, metered usage push, suspension, studio billing tab.",S320-S331,In progress
 S13,Wk 43–44,WhatsApp channel productionization,"Cloud API webhooks, 24h-window enforcement, templates, media, interactive elements, studio connect.",S340-S349,Done
 S14,Wk 45–46,Voice infrastructure,"Real ASR/TTS/VAD adapters, turn-take FSM, LiveKit room bridge, tracing, web-RTC echo agent.",S360-S371,Done
 S15,Wk 47–48,Voice MVP — phone calls,"Twilio SIP gateway, outbound call API, number provisioning, voice widget, latency benchmark, integration test.",S380-S389,In progress

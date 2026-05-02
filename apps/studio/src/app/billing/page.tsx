@@ -1,8 +1,10 @@
 import { BillingPanel } from "@/components/billing/billing-panel";
+import { InvoiceList } from "@/components/billing/invoice-list";
 import { UpdatePaymentMethod } from "@/components/billing/update-payment-method";
 import {
   FIXTURE_BILLING,
   FIXTURE_BILLING_NOW_MS,
+  FIXTURE_INVOICES,
 } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +34,7 @@ export default function BillingPage(): JSX.Element {
           initialLast4={FIXTURE_BILLING.payment_method_last4}
           submit={fixturePaymentMethodSubmit}
         />
+        <InvoiceList invoices={FIXTURE_INVOICES} />
       </div>
     </main>
   );
