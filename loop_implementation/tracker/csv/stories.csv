@@ -1085,7 +1085,14 @@ Heartbeat: 2026-05-02T05:14:56Z (codex-orion)
 Open questions: none
 Blockers: Need AWS KMS sandbox credentials/key ARN and region to run the required live integration against a customer-managed AWS KMS key. Local code uses Workspace.tenant_kms_key_id for envelope encryption and verifies the AWS-KMS-labeled backend contract in unit tests.
 Commits: eb6c4c3 feat(control-plane): thread workspace cmk refs; 1b782ac feat(control-plane): add workspace envelope encryption; 7946088 test(control-plane): cover workspace cmk envelopes; f88893f docs(security): document workspace cmk envelope use"
-S637,"ent: BYO Vault integration (existing tenant Vault, not Loop's)",tbd,S28,E20,2,P0,Not started,AC: vault_address + role configurable per workspace; secrets-rotation runbook updated.
+S637,"ent: BYO Vault integration (existing tenant Vault, not Loop's)",copilot-titan,S28,E20,2,P0,In progress,"**Active.**
+Branch: copilot-titan/s637-ent-byo-vault-integration-existi
+Skill: skills/api/api-versioning.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T06:20:19Z (copilot-titan)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S638,ent: dedicated single-tenant deploy mode (one helm-install per customer),codex-orion,S28,E20,3,P1,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-orion/s638-ent-dedicated-single-tenant-depl (merged + deletable)

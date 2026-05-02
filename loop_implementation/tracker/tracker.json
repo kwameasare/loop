@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:19:41.667314+00:00",
+    "generated_at": "2026-05-02T06:20:19.460867+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4263,13 +4263,13 @@
     {
       "id": "S637",
       "title": "ent: BYO Vault integration (existing tenant Vault, not Loop's)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S28",
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: vault_address + role configurable per workspace; secrets-rotation runbook updated."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s637-ent-byo-vault-integration-existi\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:20:19Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S638",
