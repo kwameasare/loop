@@ -135,3 +135,34 @@ The production binding (PySAML2 / xmlsec1) is **deferred to S612**
 integration tests. The Protocol seam means S612 is a drop-in: no
 caller of `accept_acs_post()` needs to change.
 
+## SCIM 2.0 provisioning (S611)
+
+The provisioning surface is RFC 7644 — see the OpenAPI spec under
+`/scim/v2/{tenant_id}` (tag: SCIM). The protocol layer lives in
+`packages/control-plane/loop_control_plane/scim.py`; the persistence
+boundary is `ScimStore` with an in-memory implementation in
+`scim_store.py` for tests + sandbox tenants. Production wires the
+Postgres-backed store inside cp-api.
+
+Capabilities advertised at
+`/scim/v2/{tenant_id}/ServiceProviderConfig`:
+
+| Capability        | Supported | Notes                                          |
+| ----------------- | --------- | ---------------------------------------------- |
+| PATCH (`PatchOp`) | yes       | RFC 7644 §3.5.2; also Okta no-`path` envelope. |
+| Filter            | yes       | `eq` only; sufficient for Okta/Entra/Google.   |
+| ETag              | yes       | `meta.version` populated from `lastModified`.  |
+| Bulk              | no        | Returns `{ supported: false }`.                |
+| Sort              | no        | —                                              |
+| changePassword    | no        | Loop is bring-your-own-IdP.                    |
+
+Auth is a **tenant-scoped SCIM bearer token** minted in Studio →
+Settings → SSO → "Generate SCIM token". It is *not* the same token
+as a user's PASETO and is rotated independently. Token revocation
+emits `auth.sso.scim.token_revoked`.
+
+The schemathesis fuzz coverage is automatic: every SCIM path
+declared in `loop_implementation/api/openapi.yaml` is hammered by
+`packages/control-plane/_tests/test_openapi_schemathesis.py` on
+every CI run.
+

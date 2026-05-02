@@ -44,6 +44,8 @@ tags:
     description: Audit logs, API keys, secrets, webhooks
   - name: Health
     description: Operational readiness and version checks
+  - name: SCIM
+    description: SCIM 2.0 user/group provisioning (RFC 7644)
 
 paths:
 
@@ -814,6 +816,253 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Version" }
 
+  # ──────────────── SCIM 2.0 (RFC 7644) ────────────────
+  # Tenant-scoped IdP provisioning. Bearer token is a tenant-scoped
+  # SCIM token minted in Studio → Settings → SSO; it is *not* the
+  # same as a user PASETO. ``X-Loop-Region`` is honored for
+  # region-pinned tenants. Filter syntax is limited to ``eq`` (RFC
+  # 7644 §3.4.2.2) — sufficient for Okta/Entra/Google.
+  /scim/v2/{tenant_id}/Users:
+    parameters: [{ $ref: "#/components/parameters/SCIMTenantId" }]
+    get:
+      tags: [SCIM]
+      summary: List users (RFC 7644 §3.4.2)
+      parameters:
+        - in: query
+          name: filter
+          schema: { type: string, example: 'userName eq "alice@example.com"' }
+        - in: query
+          name: startIndex
+          schema: { type: integer, default: 1, minimum: 1 }
+        - in: query
+          name: count
+          schema: { type: integer, default: 50, minimum: 0, maximum: 200 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/scim+json:
+              schema: { $ref: "#/components/schemas/SCIMUserListResponse" }
+            application/json:
+              schema: { $ref: "#/components/schemas/SCIMUserListResponse" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [SCIM]
+      summary: Create user (RFC 7644 §3.3)
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema: { $ref: "#/components/schemas/SCIMUser" }
+          application/json:
+            schema: { $ref: "#/components/schemas/SCIMUser" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/scim+json:
+              schema: { $ref: "#/components/schemas/SCIMUser" }
+            application/json:
+              schema: { $ref: "#/components/schemas/SCIMUser" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/SCIMConflict"
+
+  /scim/v2/{tenant_id}/Users/{user_id}:
+    parameters:
+      - { $ref: "#/components/parameters/SCIMTenantId" }
+      - { $ref: "#/components/parameters/SCIMUserId" }
+    get:
+      tags: [SCIM]
+      summary: Get user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/scim+json:
+              schema: { $ref: "#/components/schemas/SCIMUser" }
+            application/json:
+              schema: { $ref: "#/components/schemas/SCIMUser" }
+        "404":
+          $ref: "#/components/responses/SCIMNotFound"
+    put:
+      tags: [SCIM]
+      summary: Replace user (RFC 7644 §3.5.1)
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema: { $ref: "#/components/schemas/SCIMUser" }
+          application/json:
+            schema: { $ref: "#/components/schemas/SCIMUser" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/scim+json:
+              schema: { $ref: "#/components/schemas/SCIMUser" }
+            application/json:
+              schema: { $ref: "#/components/schemas/SCIMUser" }
+        "404":
+          $ref: "#/components/responses/SCIMNotFound"
+    patch:
+      tags: [SCIM]
+      summary: Modify user (RFC 7644 §3.5.2 PatchOp)
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema: { $ref: "#/components/schemas/SCIMPatchOp" }
+          application/json:
+            schema: { $ref: "#/components/schemas/SCIMPatchOp" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/scim+json:
+              schema: { $ref: "#/components/schemas/SCIMUser" }
+            application/json:
+              schema: { $ref: "#/components/schemas/SCIMUser" }
+        "404":
+          $ref: "#/components/responses/SCIMNotFound"
+    delete:
+      tags: [SCIM]
+      summary: Delete user (deprovision)
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          $ref: "#/components/responses/SCIMNotFound"
+
+  /scim/v2/{tenant_id}/Groups:
+    parameters: [{ $ref: "#/components/parameters/SCIMTenantId" }]
+    get:
+      tags: [SCIM]
+      summary: List groups (RFC 7644 §3.4.2)
+      parameters:
+        - in: query
+          name: filter
+          schema: { type: string, example: 'displayName eq "Loop-Editors"' }
+        - in: query
+          name: startIndex
+          schema: { type: integer, default: 1, minimum: 1 }
+        - in: query
+          name: count
+          schema: { type: integer, default: 50, minimum: 0, maximum: 200 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/scim+json:
+              schema: { $ref: "#/components/schemas/SCIMGroupListResponse" }
+            application/json:
+              schema: { $ref: "#/components/schemas/SCIMGroupListResponse" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [SCIM]
+      summary: Create group
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema: { $ref: "#/components/schemas/SCIMGroup" }
+          application/json:
+            schema: { $ref: "#/components/schemas/SCIMGroup" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/scim+json:
+              schema: { $ref: "#/components/schemas/SCIMGroup" }
+            application/json:
+              schema: { $ref: "#/components/schemas/SCIMGroup" }
+        "409":
+          $ref: "#/components/responses/SCIMConflict"
+
+  /scim/v2/{tenant_id}/Groups/{group_id}:
+    parameters:
+      - { $ref: "#/components/parameters/SCIMTenantId" }
+      - { $ref: "#/components/parameters/SCIMGroupId" }
+    get:
+      tags: [SCIM]
+      summary: Get group
+      responses:
+        "200":
+          description: OK
+          content:
+            application/scim+json:
+              schema: { $ref: "#/components/schemas/SCIMGroup" }
+            application/json:
+              schema: { $ref: "#/components/schemas/SCIMGroup" }
+        "404":
+          $ref: "#/components/responses/SCIMNotFound"
+    put:
+      tags: [SCIM]
+      summary: Replace group
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema: { $ref: "#/components/schemas/SCIMGroup" }
+          application/json:
+            schema: { $ref: "#/components/schemas/SCIMGroup" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/scim+json:
+              schema: { $ref: "#/components/schemas/SCIMGroup" }
+            application/json:
+              schema: { $ref: "#/components/schemas/SCIMGroup" }
+        "404":
+          $ref: "#/components/responses/SCIMNotFound"
+    patch:
+      tags: [SCIM]
+      summary: Modify group (PatchOp; supports member add/remove)
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema: { $ref: "#/components/schemas/SCIMPatchOp" }
+          application/json:
+            schema: { $ref: "#/components/schemas/SCIMPatchOp" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/scim+json:
+              schema: { $ref: "#/components/schemas/SCIMGroup" }
+            application/json:
+              schema: { $ref: "#/components/schemas/SCIMGroup" }
+        "404":
+          $ref: "#/components/responses/SCIMNotFound"
+    delete:
+      tags: [SCIM]
+      summary: Delete group
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          $ref: "#/components/responses/SCIMNotFound"
+
+  /scim/v2/{tenant_id}/ServiceProviderConfig:
+    parameters: [{ $ref: "#/components/parameters/SCIMTenantId" }]
+    get:
+      tags: [SCIM]
+      summary: Service provider capabilities (RFC 7644 §4)
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/scim+json:
+              schema: { $ref: "#/components/schemas/SCIMServiceProviderConfig" }
+            application/json:
+              schema: { $ref: "#/components/schemas/SCIMServiceProviderConfig" }
+
 
 components:
 
@@ -858,6 +1107,20 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/ProblemDetail" }
+    SCIMNotFound:
+      description: SCIM resource not found
+      content:
+        application/scim+json:
+          schema: { $ref: "#/components/schemas/SCIMError" }
+        application/json:
+          schema: { $ref: "#/components/schemas/SCIMError" }
+    SCIMConflict:
+      description: SCIM uniqueness violation (e.g. userName already exists)
+      content:
+        application/scim+json:
+          schema: { $ref: "#/components/schemas/SCIMError" }
+        application/json:
+          schema: { $ref: "#/components/schemas/SCIMError" }
 
   parameters:
     WorkspaceId:
@@ -901,6 +1164,21 @@ components:
       name: turn_id
       required: true
       schema: { type: string, format: uuid }
+    SCIMTenantId:
+      in: path
+      name: tenant_id
+      required: true
+      schema: { type: string, format: uuid }
+    SCIMUserId:
+      in: path
+      name: user_id
+      required: true
+      schema: { type: string }
+    SCIMGroupId:
+      in: path
+      name: group_id
+      required: true
+      schema: { type: string }
 
   schemas:
 
@@ -1279,3 +1557,206 @@ components:
         api_version: { type: string, example: "0.1.0" }
         build_hash: { type: string }
         built_at: { type: string, format: date-time }
+
+    # ──────────────── SCIM 2.0 (RFC 7643/7644) ────────────────
+    SCIMUser:
+      type: object
+      required: [schemas, userName]
+      properties:
+        schemas:
+          type: array
+          items: { type: string }
+          example: ["urn:ietf:params:scim:schemas:core:2.0:User"]
+        id:
+          type: string
+          description: Server-assigned (server returns; client omits on POST).
+          example: "u-7f3e"
+        externalId:
+          type: string
+          description: IdP-assigned stable id.
+          example: "okta-00u1abcd"
+        userName:
+          type: string
+          description: RFC 7643 §4.1.1; unique within tenant.
+          example: "alice@example.com"
+        name:
+          type: object
+          properties:
+            givenName: { type: string, example: "Alice" }
+            familyName: { type: string, example: "Anderson" }
+            formatted: { type: string }
+        emails:
+          type: array
+          items:
+            type: object
+            required: [value]
+            properties:
+              value: { type: string, format: email }
+              type: { type: string, example: "work" }
+              primary: { type: boolean, default: true }
+        active:
+          type: boolean
+          default: true
+        groups:
+          type: array
+          description: Groups this user belongs to (read-only on User; managed via Group resource).
+          items:
+            type: object
+            properties:
+              value: { type: string }
+              display: { type: string }
+              "$ref": { type: string }
+              type: { type: string, enum: [direct, indirect] }
+        meta:
+          $ref: "#/components/schemas/SCIMMeta"
+      additionalProperties: true
+
+    SCIMGroup:
+      type: object
+      required: [schemas, displayName]
+      properties:
+        schemas:
+          type: array
+          items: { type: string }
+          example: ["urn:ietf:params:scim:schemas:core:2.0:Group"]
+        id:
+          type: string
+          example: "g-loop-admins"
+        displayName:
+          type: string
+          example: "Loop-Admins"
+        members:
+          type: array
+          items:
+            type: object
+            required: [value]
+            properties:
+              value: { type: string, description: "User id" }
+              display: { type: string }
+              "$ref": { type: string }
+              type: { type: string, enum: [User, Group], default: "User" }
+        meta:
+          $ref: "#/components/schemas/SCIMMeta"
+      additionalProperties: true
+
+    SCIMMeta:
+      type: object
+      properties:
+        resourceType: { type: string, example: "User" }
+        created: { type: string, format: date-time }
+        lastModified: { type: string, format: date-time }
+        version: { type: string, description: "ETag" }
+        location: { type: string }
+
+    SCIMUserListResponse:
+      type: object
+      required: [schemas, totalResults, Resources]
+      properties:
+        schemas:
+          type: array
+          items: { type: string }
+          example: ["urn:ietf:params:scim:api:messages:2.0:ListResponse"]
+        totalResults: { type: integer, minimum: 0, example: 1 }
+        startIndex: { type: integer, minimum: 1, default: 1 }
+        itemsPerPage: { type: integer, minimum: 0 }
+        Resources:
+          type: array
+          items: { $ref: "#/components/schemas/SCIMUser" }
+
+    SCIMGroupListResponse:
+      type: object
+      required: [schemas, totalResults, Resources]
+      properties:
+        schemas:
+          type: array
+          items: { type: string }
+          example: ["urn:ietf:params:scim:api:messages:2.0:ListResponse"]
+        totalResults: { type: integer, minimum: 0 }
+        startIndex: { type: integer, minimum: 1, default: 1 }
+        itemsPerPage: { type: integer, minimum: 0 }
+        Resources:
+          type: array
+          items: { $ref: "#/components/schemas/SCIMGroup" }
+
+    SCIMPatchOp:
+      type: object
+      required: [schemas, Operations]
+      properties:
+        schemas:
+          type: array
+          items: { type: string }
+          example: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"]
+        Operations:
+          type: array
+          items:
+            type: object
+            required: [op]
+            properties:
+              op: { type: string, enum: [add, replace, remove, Add, Replace, Remove] }
+              path: { type: string, example: "active" }
+              value: {}
+
+    SCIMError:
+      type: object
+      required: [schemas, status, detail]
+      properties:
+        schemas:
+          type: array
+          items: { type: string }
+          example: ["urn:ietf:params:scim:api:messages:2.0:Error"]
+        status: { type: string, example: "404" }
+        scimType:
+          type: string
+          enum: [invalidFilter, tooMany, uniqueness, mutability, invalidSyntax,
+                 invalidPath, noTarget, invalidValue, invalidVers, sensitive]
+        detail: { type: string }
+
+    SCIMServiceProviderConfig:
+      type: object
+      required: [schemas, patch, bulk, filter, changePassword, sort, etag, authenticationSchemes]
+      properties:
+        schemas:
+          type: array
+          items: { type: string }
+          example: ["urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"]
+        documentationUri: { type: string, format: uri }
+        patch:
+          type: object
+          required: [supported]
+          properties: { supported: { type: boolean, example: true } }
+        bulk:
+          type: object
+          required: [supported, maxOperations, maxPayloadSize]
+          properties:
+            supported: { type: boolean, example: false }
+            maxOperations: { type: integer, example: 0 }
+            maxPayloadSize: { type: integer, example: 0 }
+        filter:
+          type: object
+          required: [supported, maxResults]
+          properties:
+            supported: { type: boolean, example: true }
+            maxResults: { type: integer, example: 200 }
+        changePassword:
+          type: object
+          required: [supported]
+          properties: { supported: { type: boolean, example: false } }
+        sort:
+          type: object
+          required: [supported]
+          properties: { supported: { type: boolean, example: false } }
+        etag:
+          type: object
+          required: [supported]
+          properties: { supported: { type: boolean, example: true } }
+        authenticationSchemes:
+          type: array
+          items:
+            type: object
+            required: [type, name, description]
+            properties:
+              type: { type: string, example: "oauthbearertoken" }
+              name: { type: string, example: "OAuth Bearer Token" }
+              description: { type: string }
+              specUri: { type: string, format: uri }
+              documentationUri: { type: string, format: uri }
