@@ -108,6 +108,13 @@ from loop_control_plane.mcp_marketplace import (
     compute_manifest_digest,
     first_party_manifests,
 )
+from loop_control_plane.object_store import (
+    OBJECT_STORE_BACKENDS,
+    InMemoryObjectStore,
+    ObjectStore,
+    ObjectStoreError,
+    build_object_store_backend,
+)
 from loop_control_plane.usage import (
     DAY_MS,
     UsageEvent,
@@ -126,6 +133,7 @@ from loop_control_plane.workspaces import (
 
 __all__ = [
     "DAY_MS",
+    "OBJECT_STORE_BACKENDS",
     "ApiKey",
     "ApiKeyAPI",
     "ApiKeyError",
@@ -158,6 +166,7 @@ __all__ = [
     "InMemoryImageRegistry",
     "InMemoryKubeClient",
     "InMemoryMarketplaceStore",
+    "InMemoryObjectStore",
     "InMemoryStripe",
     "InboxAPI",
     "InboxError",
@@ -186,6 +195,8 @@ __all__ = [
     "McpServerVersion",
     "McpToolSpec",
     "Membership",
+    "ObjectStore",
+    "ObjectStoreError",
     "PublishClient",
     "PublishResult",
     "QualityBreakdown",
@@ -211,6 +222,7 @@ __all__ = [
     "WorkspaceService",
     "aggregate",
     "authorize_workspace_access",
+    "build_object_store_backend",
     "compute_manifest_digest",
     "first_party_manifests",
     "has_scope",
