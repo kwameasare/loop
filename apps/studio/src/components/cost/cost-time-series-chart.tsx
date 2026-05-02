@@ -8,6 +8,11 @@ import {
   type DailyCostPoint,
 } from "@/lib/cost-series";
 import { formatUSD, type UsageRecord } from "@/lib/costs";
+import {
+  CHART_AXIS_LABEL,
+  CHART_GRID,
+  CHART_PRIMARY_SERIES,
+} from "@/lib/design-tokens";
 
 export interface CostTimeSeriesChartProps {
   records: UsageRecord[];
@@ -138,14 +143,14 @@ export function CostTimeSeriesChart(props: CostTimeSeriesChartProps) {
         width="100%"
       >
         <line
-          stroke="#e5e7eb"
+          stroke={CHART_GRID}
           x1={PADDING.left}
           x2={CHART_WIDTH - PADDING.right}
           y1={CHART_HEIGHT - PADDING.bottom}
           y2={CHART_HEIGHT - PADDING.bottom}
         />
         <text
-          fill="#6b7280"
+          fill={CHART_AXIS_LABEL}
           fontSize="10"
           textAnchor="end"
           x={PADDING.left - 4}
@@ -154,7 +159,7 @@ export function CostTimeSeriesChart(props: CostTimeSeriesChartProps) {
           {formatUSD(maxCents)}
         </text>
         <text
-          fill="#6b7280"
+          fill={CHART_AXIS_LABEL}
           fontSize="10"
           textAnchor="end"
           x={PADDING.left - 4}
@@ -166,7 +171,7 @@ export function CostTimeSeriesChart(props: CostTimeSeriesChartProps) {
           <path
             d={linePath}
             fill="none"
-            stroke="#2563eb"
+            stroke={CHART_PRIMARY_SERIES}
             strokeWidth="1.5"
           />
         ) : null}
@@ -178,7 +183,7 @@ export function CostTimeSeriesChart(props: CostTimeSeriesChartProps) {
                 cx={x}
                 cy={y}
                 data-testid={`cost-point-${i}`}
-                fill="#2563eb"
+                fill={CHART_PRIMARY_SERIES}
                 onMouseEnter={() => setFocusIdx(i)}
                 onMouseLeave={() => setFocusIdx(null)}
                 onFocus={() => setFocusIdx(i)}
@@ -194,7 +199,7 @@ export function CostTimeSeriesChart(props: CostTimeSeriesChartProps) {
           i === series.points.length - 1 ||
           i === Math.floor(series.points.length / 2) ? (
             <text
-              fill="#6b7280"
+              fill={CHART_AXIS_LABEL}
               fontSize="10"
               key={`label-${p.day_ms}`}
               textAnchor="middle"

@@ -4,6 +4,15 @@ import { useMemo, useState } from "react";
 
 import { SpanDetail } from "@/components/trace/span-detail";
 import {
+  TRACE_CLIENT,
+  TRACE_CONSUMER,
+  TRACE_INTERNAL,
+  TRACE_PRODUCER,
+  TRACE_SERVER,
+  TRACE_STATUS_ERROR,
+  TRACE_STATUS_UNSET,
+} from "@/lib/design-tokens";
+import {
   formatDurationNs,
   layoutTrace,
   type Span,
@@ -11,17 +20,17 @@ import {
 } from "@/lib/traces";
 
 const KIND_FILL: Record<Span["kind"], string> = {
-  server: "#0ea5e9",
-  client: "#8b5cf6",
-  internal: "#10b981",
-  producer: "#f59e0b",
-  consumer: "#f43f5e",
+  server: TRACE_SERVER,
+  client: TRACE_CLIENT,
+  internal: TRACE_INTERNAL,
+  producer: TRACE_PRODUCER,
+  consumer: TRACE_CONSUMER,
 };
 
 const STATUS_STROKE: Record<Span["status"], string> = {
   ok: "transparent",
-  error: "#ef4444",
-  unset: "#d4d4d8",
+  error: TRACE_STATUS_ERROR,
+  unset: TRACE_STATUS_UNSET,
 };
 
 const ROW_HEIGHT = 22;

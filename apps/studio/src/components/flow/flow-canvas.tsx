@@ -11,6 +11,7 @@ import {
   type Viewport,
   zoomAt,
 } from "@/lib/flow-canvas";
+import { FLOW_DOT_GRID } from "@/lib/design-tokens";
 
 export interface FlowCanvasProps {
   agentId: string;
@@ -118,8 +119,8 @@ export function FlowCanvas(props: FlowCanvasProps) {
           style={{
             transform,
             transformOrigin: "0 0",
-            backgroundImage:
-              "radial-gradient(circle, #d4d4d8 1px, transparent 1px)",
+              backgroundImage:
+              `radial-gradient(circle, ${FLOW_DOT_GRID} 1px, transparent 1px)`,
             backgroundSize: "24px 24px",
             backgroundPosition: "0 0",
           }}
