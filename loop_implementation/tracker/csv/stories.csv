@@ -1296,11 +1296,12 @@ Follow-ups: none"
 S842,perf: KB retrieval p50 < 200ms at 1M chunks per agent,codex-vega,S37,E5,2,P0,In progress,"**Active.**
 Branch: codex-vega/s842-perf-kb-retrieval-p50-200ms-at-1
 Skill: skills/testing/perf-check.md
-Last step: 1/5
-Heartbeat: 2026-05-02T06:03:32Z (codex-vega)
+Last step: 2/5
+Heartbeat: 2026-05-02T06:04:32Z (codex-vega)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: kb retrieval perf gate and report landed
 Latest checkpoint: kb retrieval benchmark verified locally"
 S843,perf: tool-host warm-start < 300ms p95 (vs 8s+ cold-start),codex-orion,S37,E3,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
