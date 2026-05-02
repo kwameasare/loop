@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:11:40.818202+00:00",
+    "generated_at": "2026-05-02T05:15:18.582218+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3982,8 +3982,8 @@
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s581-soc2-audit-trail-completeness-re\nSkill: skills/security/add-audit-event.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:11:40Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s581-soc2-audit-trail-completeness-re (merged + deletable)\nSkill: skills/security/add-audit-event.md\nFinal heartbeat: 2026-05-02T05:15:18Z (copilot-titan)\nTests: tests/test_audit_coverage_matrix.py (6 passed) — pins matrix doc structure, action vocabulary, module/method coverage both directions, gap-row SID citation, gap-fix queue\nDocs touched: loop_implementation/engineering/AUDIT_COVERAGE.md, loop_implementation/engineering/SECURITY.md\nFollow-ups: S630"
     },
     {
       "id": "S582",
