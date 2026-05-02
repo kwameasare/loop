@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:20:31.740892+00:00",
+    "generated_at": "2026-05-02T03:20:49.112736+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3251,13 +3251,13 @@
     {
       "id": "S461",
       "title": "flow: node palette w/ types start/message/condition/ai-task/http/code/end",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S19",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: drag-and-drop creates node; each type renders distinct icon."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s461-flow-node-palette-w-types-start\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T03:20:49Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S462",
