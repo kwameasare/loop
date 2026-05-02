@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T00:26:34.177354+00:00",
+    "generated_at": "2026-05-02T00:26:46.381159+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5138,7 +5138,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s778-portability-secretsbackend-proto\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 3/5\nHeartbeat: 2026-05-02T00:26:34Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: tracker docs and checkpoint gates passed\nLatest checkpoint: control-plane and broad pytest passed\nLatest checkpoint: SecretsBackend contract parity suite and docs landed"
+      "notes": "**Active.**\nBranch: codex-orion/s778-portability-secretsbackend-proto\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 4/5\nHeartbeat: 2026-05-02T00:26:46Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: focused static tests and SDK scan passed\nLatest checkpoint: tracker docs and checkpoint gates passed\nLatest checkpoint: control-plane and broad pytest passed\nLatest checkpoint: SecretsBackend contract parity suite and docs landed"
     },
     {
       "id": "S779",
