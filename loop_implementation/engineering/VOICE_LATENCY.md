@@ -27,6 +27,20 @@ The budget is enforced in code via `loop_voice.DEFAULT_BUDGET`
 | `network_out`      |     20 |     45 | LiveKit edge → caller                  |
 | **end-to-end**     |    640 |   1150 | Sum, with 60 ms p50 / 50 ms p95 buffer |
 
+<!-- S651 -->
+`VoiceSession` supports a streaming-agent path for the TTS portion of
+the budget: when the caller's transcript is final, the session starts
+TTS pre-warm immediately, consumes the agent reply as text chunks, and
+flushes complete sentence-boundary chunks to TTS before the full reply
+has finished. The compatibility path that waits for a complete string
+reply is unchanged.
+
+The S651 deterministic contract in
+`bench/results/voice_tts_sentence_streaming.json` models the old
+full-reply first-audio p50 at 420 ms and the sentence-streaming path at
+180 ms, a 240 ms / 57.1% cut while staying inside the 700 ms voice p50
+budget.
+
 ## Measurement
 
 Every voice turn that flows through `VoiceSession` is timestamped at
