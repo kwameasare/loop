@@ -70,6 +70,13 @@ Implementations:
 - `S3CompatibleObjectStore` (works for AWS S3, GCS-via-interop, Alibaba OSS, MinIO).
 - `AzureBlobObjectStore` (native; falls back to S3 gateway when configured).
 
+S776 adds the checked contract in
+`loop_control_plane.object_store`: the same parity suite runs against
+the six supported backend labels (`s3`, `azure-blob`, `gcs`, `oss`,
+`swift`, `minio`) and verifies put/get, signed URLs, presign metadata,
+and multipart assembly semantics before any provider-specific adapter
+can claim compatibility.
+
 ### 4.2 KMS
 
 ```python
