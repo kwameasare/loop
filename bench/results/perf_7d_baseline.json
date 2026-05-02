@@ -1,0 +1,14 @@
+{
+  "name": "perf_7d_baseline",
+  "window_days": 7,
+  "max_p95_regression_percent": 5.0,
+  "metrics": {
+    "cp_api_5000_rps": { "source": "bench/results/cp_api_5000_rps.json", "p95_ms": 1.0 },
+    "kb_retrieval_1m_chunks": { "source": "bench/results/kb_retrieval_1m.json", "p95_ms": 0.088 },
+    "runtime_baseline_100rpm": { "source": "bench/results/runtime_baseline_100rpm.json", "p95_ms": 2.0 },
+    "runtime_sse_1000_concurrency": { "source": "bench/results/runtime_sse_1000_concurrency.json", "p95_ms": 1.0 },
+    "tool_host_warm_start": { "source": "bench/results/tool_host_warm_start.json", "p95_ms": 0.018 },
+    "turn_latency_text_path_k6": { "source": "bench/results/turn_latency_text_path_k6.json", "p95_ms": 1.0 },
+    "voice_perf_p50_gate": { "source": "bench/results/voice_perf.json", "p95_ms": 632.0 }
+  }
+}

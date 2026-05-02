@@ -1,0 +1,74 @@
+{
+  "baseline_ref": "last_7_days",
+  "breaches": [],
+  "max_p95_regression_percent": 5.0,
+  "metrics": [
+    {
+      "baseline_p95_ms": 1.0,
+      "breached": false,
+      "current_p95_ms": 1.0,
+      "name": "cp_api_5000_rps",
+      "regression_percent": 0.0,
+      "source": "bench/results/cp_api_5000_rps.json",
+      "threshold_percent": 5.0
+    },
+    {
+      "baseline_p95_ms": 0.088,
+      "breached": false,
+      "current_p95_ms": 0.088,
+      "name": "kb_retrieval_1m_chunks",
+      "regression_percent": 0.0,
+      "source": "bench/results/kb_retrieval_1m.json",
+      "threshold_percent": 5.0
+    },
+    {
+      "baseline_p95_ms": 2.0,
+      "breached": false,
+      "current_p95_ms": 2.0,
+      "name": "runtime_baseline_100rpm",
+      "regression_percent": 0.0,
+      "source": "bench/results/runtime_baseline_100rpm.json",
+      "threshold_percent": 5.0
+    },
+    {
+      "baseline_p95_ms": 1.0,
+      "breached": false,
+      "current_p95_ms": 1.0,
+      "name": "runtime_sse_1000_concurrency",
+      "regression_percent": 0.0,
+      "source": "bench/results/runtime_sse_1000_concurrency.json",
+      "threshold_percent": 5.0
+    },
+    {
+      "baseline_p95_ms": 0.018,
+      "breached": false,
+      "current_p95_ms": 0.018,
+      "name": "tool_host_warm_start",
+      "regression_percent": 0.0,
+      "source": "bench/results/tool_host_warm_start.json",
+      "threshold_percent": 5.0
+    },
+    {
+      "baseline_p95_ms": 1.0,
+      "breached": false,
+      "current_p95_ms": 1.0,
+      "name": "turn_latency_text_path_k6",
+      "regression_percent": 0.0,
+      "source": "bench/results/turn_latency_text_path_k6.json",
+      "threshold_percent": 5.0
+    },
+    {
+      "baseline_p95_ms": 632.0,
+      "breached": false,
+      "current_p95_ms": 632.0,
+      "name": "voice_perf_p50_gate",
+      "regression_percent": 0.0,
+      "source": "bench/results/voice_perf.json",
+      "threshold_percent": 5.0
+    }
+  ],
+  "name": "perf_regression_budget",
+  "passed": true,
+  "ts": "2026-05-02T06:19:22+00:00",
+  "window_days": 7
+}
