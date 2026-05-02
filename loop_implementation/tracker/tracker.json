@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:15:18.582218+00:00",
+    "generated_at": "2026-05-02T05:16:26.025271+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3988,13 +3988,13 @@
     {
       "id": "S582",
       "title": "soc2: SOC2 Type 1 attestation kickoff with auditor",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S25",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: kickoff meeting held; evidence list + window dates committed."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s582-soc2-soc2-type-1-attestation-kic\nSkill: skills/security/update-threat-model.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:16:25Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S590",
