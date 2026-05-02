@@ -1374,7 +1374,14 @@ Docs touched: docs/THREAT_MODEL.md
 Follow-ups: none"
 S802,security: SLSA Level 3 build provenance for container images (in-toto attestations),tbd,S35,E16,3,P0,Not started,AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing.
 S803,security: runtime detection (Falco rules) for sandbox + cp-api anomalies,tbd,S35,E16,2,P0,Not started,AC: rules deployed; alerts on shell-exec / unauthorized syscall / unexpected egress; tested with red-team triggers.
-S804,"security: chaos-engineering harness (network partition, DB failover, NATS outage)",tbd,S35,E16,3,P1,Not started,AC: scripted scenarios run weekly in staging; recovery time + data-loss measured; runbook updates from findings.
+S804,"security: chaos-engineering harness (network partition, DB failover, NATS outage)",copilot-thor,S35,E16,3,P1,In progress,"**Active.**
+Branch: copilot-thor/s804-security-chaos-engineering-harne
+Skill: loop_implementation/skills/_base/skill.md
+Last step: 0/4 (just claimed)
+Heartbeat: 2026-05-02T14:13:07Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S805,ops: SLO definitions per service + error-budget burn alerts,codex-vega,S35,E9,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-vega/s805-ops-slo-definitions-per-service (merged + deletable)
