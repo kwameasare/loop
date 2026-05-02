@@ -1051,14 +1051,14 @@ Final heartbeat: 2026-05-02T06:08:03Z (copilot-titan)
 Tests: packages/control-plane/_tests/test_audit_events.py
 Docs touched: packages/control-plane/loop_control_plane/audit_events.py
 Follow-ups: none"
-S631,"audit: studio audit log page (filterable, paginated)",copilot-titan,S28,E10,3,P0,In progress,"**Active.**
-Branch: copilot-titan/s631-audit-studio-audit-log-page-filt
+S631,"audit: studio audit log page (filterable, paginated)",copilot-titan,S28,E10,3,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s631-audit-studio-audit-log-page-filt (merged + deletable)
 Skill: skills/api/api-versioning.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T06:09:42Z (copilot-titan)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T06:09:56Z (copilot-titan)
+Tests: apps/studio/src/components/workspaces/audit-log-page.test.tsx
+Docs touched: apps/studio/src/components/workspaces/audit-log-page.tsx
+Follow-ups: none"
 S632,audit: audit log export CSV,tbd,S28,E20,1,P0,Not started,AC: filtered export in <30s for ≤100k rows.
 S633,audit: SIEM webhook (Datadog/Splunk/generic),tbd,S28,E20,2,P1,Not started,AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify.
 S634,audit: DPA template + redlines workflow,tbd,S28,E20,2,P1,Not started,AC: DPA.md + redlines mechanism documented; sample redline-PR closed.
