@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:09:06.947633+00:00",
+    "generated_at": "2026-05-02T05:09:12.745974+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3922,24 +3922,24 @@
     {
       "id": "S576",
       "title": "soc2: pen-test prep (scope + RoE + access creds)",
-      "owner": "copilot-thor",
+      "owner": "codex-vega",
       "sprint": "S25",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s576-soc2-pen-test-prep-scope-roe-acc (merged + deletable)\nSkill: skills/security/update-threat-model.md\nFinal heartbeat: 2026-05-02T05:09:06Z (copilot-thor)\nTests: 4 new tests — doc exists, SECURITY.md link, required sections, escalation matrix. pytest 1308/1308.\nDocs touched: loop_implementation/engineering/PEN_TEST.md,loop_implementation/engineering/SECURITY.md\nFollow-ups: S577,S578"
+      "status": "Blocked",
+      "notes": "**Blocked.**\nBranch: codex-vega/s576-soc2-pen-test-prep-scope-roe-acc\nSkill: skills/security/update-threat-model.md\nLast step: 0/2 (blocked before implementation)\nHeartbeat: 2026-05-02T05:07:16Z (codex-vega)\nOpen questions: none\nBlockers: Security/Compliance owner must provide signed penetration-test vendor engagement, agreed scope and Rules of Engagement, approved testing window/IP allowlist, live staging environment URL, temporary test credentials stored in Vault, and a named owner plus evidence path for post-test credential rotation.\nCommits: blocked before implementation."
     },
     {
       "id": "S577",
       "title": "soc2: pen-test fix queue tracked as P0 stories",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S25",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: each finding has tracker entry, severity, owner, fix-deadline."
+      "status": "Blocked",
+      "notes": "**Blocked.**\nBranch: codex-vega/s577-soc2-pen-test-fix-queue-tracked\nSkill: skills/security/update-threat-model.md\nLast step: 0/2 (blocked before implementation)\nHeartbeat: 2026-05-02T05:08:58Z (codex-vega)\nOpen questions: none\nBlockers: requires the completed penetration-test report from S576, including vendor finding IDs, severity ratings, affected components, evidence, remediation guidance, and agreed due dates/owners so each real finding can be converted into a P0 StoryV2 entry without inventing issues.\nCommits: blocked before implementation."
     },
     {
       "id": "S578",
