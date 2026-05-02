@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:43:12.045706+00:00",
+    "generated_at": "2026-05-02T05:43:15.752072+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4324,7 +4324,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s652-voice-perf-model-warm-up-connect\nSkill: skills/testing/perf-check.md\nLast step: 1/5\nHeartbeat: 2026-05-02T05:40:49Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: connection pool implementation verified locally"
+      "notes": "**Active.**\nBranch: codex-vega/s652-voice-perf-model-warm-up-connect\nSkill: skills/testing/perf-check.md\nLast step: 2/5\nHeartbeat: 2026-05-02T05:42:19Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: provider pool tests and latency contract landed\nLatest checkpoint: connection pool implementation verified locally"
     },
     {
       "id": "S653",
