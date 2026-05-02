@@ -982,7 +982,14 @@ Tests: packages/control-plane/_tests/test_saml_sp.py packages/control-plane/_tes
 Docs touched: packages/control-plane/fixtures/okta_idp_metadata.xml
 Follow-ups: S613 S617"
 S613,sso: Entra ID recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: same as Okta but Entra ID.
-S614,sso: Google Workspace recipe + sandbox test,tbd,S27,E20,2,P0,Not started,AC: same.
+S614,sso: Google Workspace recipe + sandbox test,copilot-thor,S27,E20,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s614-sso-google-workspace-recipe-sand
+Skill: skills/api/add-rest-endpoint.md
+Last step: 0/3 (just claimed)
+Heartbeat: 2026-05-02T05:43:10Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S615,sso: studio enterprise tab → connect IdP + upload metadata,tbd,S27,E10,2,P0,Not started,AC: paste metadata URL or upload XML; status flips to Connected after ACS-roundtrip.
 S616,sso: just-in-time user provisioning at first login,tbd,S27,E20,2,P0,Not started,AC: unknown SAML subject creates user + workspace_members row per group mapping.
 S617,sso: SAML group → workspace role mapping rules,tbd,S27,E20,2,P0,Not started,AC: rules in workspace_sso_groups table; UI to edit; tested for owner/editor/viewer.
