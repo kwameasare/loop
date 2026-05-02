@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T02:56:27.119462+00:00",
+    "generated_at": "2026-05-02T02:59:27.735466+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2288,8 +2288,8 @@
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s306-studio-inbox-queue-page-filtered\nSkill: skills/ux/component-design.md\nLast step: 0/6 (just claimed)\nHeartbeat: 2026-05-02T02:56:27Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s306-studio-inbox-queue-page-filtered (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-02T02:59:27Z (copilot-thor)\nTests: vitest covers listInboxQueue filter/sort/paginate/workspace-isolation/clamp, InboxQueue rendering, team filter, channel filter, sort toggle, pagination\nDocs touched: apps/studio/src/components/inbox/inbox-queue.tsx,apps/studio/src/app/inbox/queue/page.tsx,apps/studio/src/lib/inbox.ts\nFollow-ups: none"
     },
     {
       "id": "S307",
