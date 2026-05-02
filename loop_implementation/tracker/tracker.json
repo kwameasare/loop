@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:00:16.480614+00:00",
+    "generated_at": "2026-05-02T05:59:40.589832+00:00",
     "format_version": 2
   },
   "epics": [
@@ -11,7 +11,7 @@
       "name": "Agent runtime core",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Hot path: TurnExecutor, streaming, budgets, idempotency"
     },
     {
@@ -1106,13 +1106,13 @@
     {
       "id": "S142",
       "title": "dp-runtime: k6 baseline load test 100 turns/min for 5 min, p95 latency report",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S3",
       "epic": "E1",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: docs/perf/runtime-baseline.md committed with p50/p95/p99/error-rate at 100 rpm."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s142-dp-runtime-k6-baseline-load-test (merged + deletable)\nSkill: skills/testing/perf-check.md\nFinal heartbeat: 2026-05-02T05:54:55Z (codex-orion)\nTests: uv run ruff check/pyright tests/test_runtime_baseline_100rpm.py; uv run pytest -q tests/test_runtime_baseline_100rpm.py tests/test_docs_links.py tests/test_turn_latency_k6.py; tracker/docs gates pass\nDocs touched: docs/perf/runtime-baseline.md,docs/index.md,bench/results/runtime_baseline_100rpm.json\nFollow-ups: none"
     },
     {
       "id": "S143",
@@ -4153,24 +4153,24 @@
     {
       "id": "S616",
       "title": "sso: just-in-time user provisioning at first login",
+      "owner": "copilot-titan",
+      "sprint": "S27",
+      "epic": "E20",
+      "points": 2,
+      "priority": "P0",
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s616-sso-just-in-time-user-provisioni (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T05:56:01Z (copilot-titan)\nTests: packages/control-plane/_tests/test_saml_jit.py\nDocs touched: packages/control-plane/loop_control_plane/saml_jit.py\nFollow-ups: S617"
+    },
+    {
+      "id": "S617",
+      "title": "sso: SAML group → workspace role mapping rules",
       "owner": "tbd",
       "sprint": "S27",
       "epic": "E20",
       "points": 2,
       "priority": "P0",
       "status": "Not started",
-      "notes": "AC: unknown SAML subject creates user + workspace_members row per group mapping."
-    },
-    {
-      "id": "S617",
-      "title": "sso: SAML group → workspace role mapping rules",
-      "owner": "copilot-thor",
-      "sprint": "S27",
-      "epic": "E20",
-      "points": 2,
-      "priority": "P0",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s617-sso-saml-group-workspace-role-ma (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T06:00:16Z (copilot-thor)\nTests: 19 pytest (test_saml_group_rules.py): GroupRuleRecord validation, InMemoryGroupRuleStore CRUD, rules_to_group_role_map, project_role integration owner/editor/viewer; 12 vitest (group-rule-editor.test.tsx): renders, empty, add/remove row, group input, role select owner/editor, onSave, validation empty group, validation duplicate, success, error; 15 vitest (enterprise.test.ts): fixtures, WORKSPACE_ROLES, putGroupRules\nDocs touched: saml_group_rules.py module docstring; GroupRuleStore Protocol docs; GroupRuleRecord field docs; enterprise.ts GroupRuleRow/GroupRulesResponse types\nFollow-ups: S618 Playwright Okta SP-initiated login e2e; wire GroupRuleEditor into enterprise page"
+      "notes": "AC: rules in workspace_sso_groups table; UI to edit; tested for owner/editor/viewer."
     },
     {
       "id": "S618",
@@ -4345,8 +4345,8 @@
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s654-voice-perf-latency-benchmark-700\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:51:04Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s654-voice-perf-latency-benchmark-700 (merged + deletable)\nSkill: skills/testing/perf-check.md\nFinal heartbeat: 2026-05-02T05:54:47Z (codex-vega)\nTests: touched ruff/format pass; touched pyright pass; voice perf script/workflow tests pass (12); pytest -q -m 'not integration and not e2e' passed (1479 passed, 3 skipped, 4 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests\nDocs touched: docs/perf/voice_perf.md, docs/index.md, loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_perf.json\nFollow-ups: none"
     },
     {
       "id": "S655",
@@ -5396,13 +5396,13 @@
     {
       "id": "S842",
       "title": "perf: KB retrieval p50 < 200ms at 1M chunks per agent",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S37",
       "epic": "E5",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: synthetic 1M-chunk fixture; benchmark in CI; report committed."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s842-perf-kb-retrieval-p50-200ms-at-1\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:59:40Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S843",
@@ -5480,7 +5480,7 @@
       "theme": "dp-runtime HTTP service",
       "goal": "POST /v1/turns returns SSE TurnEvent stream end-to-end with API-key auth and persistence.",
       "stories": "S130-S143",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S4",

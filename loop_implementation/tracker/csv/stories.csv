@@ -119,7 +119,14 @@ Tests: uv run python -m loop_data_plane prints version; ruff/ruff format pass; c
 Docs touched: docs/branch-protection.md adds CI / dp-runtime-image to required checks; Dockerfile header documents the mirror
 Follow-ups: none"
 S141,"dp-runtime: integration test posts a turn, asserts full SSE frame sequence",GitHub Copilot,S3,E1,2,P0,Done,"Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/testing/replay-fixtures.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: rides on SseEncoder from S135 — tests assert the full frame sequence (TURN_EVENT[token]+, TURN_EVENT[tool_call_start], TURN_EVENT[tool_call_end], TURN_EVENT[done], DONE) is byte-identical across two encoder instances given the same input — the property the integration test depends on for replay parity. Tests: encode-twice-same-bytes invariant, id counter monotonicity across mixed event kinds. Open questions: live cp-api+dp-runtime+pg+redis docker-compose harness deferred until S130/S134 wire DP postgres + redis pools end-to-end."
-S142,"dp-runtime: k6 baseline load test 100 turns/min for 5 min, p95 latency report",tbd,S3,E1,2,P1,Not started,AC: docs/perf/runtime-baseline.md committed with p50/p95/p99/error-rate at 100 rpm.
+S142,"dp-runtime: k6 baseline load test 100 turns/min for 5 min, p95 latency report",codex-orion,S3,E1,2,P1,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-orion/s142-dp-runtime-k6-baseline-load-test (merged + deletable)
+Skill: skills/testing/perf-check.md
+Final heartbeat: 2026-05-02T05:54:55Z (codex-orion)
+Tests: uv run ruff check/pyright tests/test_runtime_baseline_100rpm.py; uv run pytest -q tests/test_runtime_baseline_100rpm.py tests/test_docs_links.py tests/test_turn_latency_k6.py; tracker/docs gates pass
+Docs touched: docs/perf/runtime-baseline.md,docs/index.md,bench/results/runtime_baseline_100rpm.json
+Follow-ups: none"
 S143,dp-runtime: end-to-end smoke `scripts/runtime_smoke.sh` against deployed env,copilot-thor,S3,E1,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-thor/s143-dp-runtime-end-to-end-smoke-scri (merged + deletable)
@@ -1005,15 +1012,15 @@ Final heartbeat: 2026-05-02T05:52:54Z (copilot-titan)
 Tests: apps/studio/src/components/workspaces/enterprise-sso-form.test.tsx
 Docs touched: apps/studio/src/app/workspaces/enterprise/page.tsx
 Follow-ups: S617"
-S616,sso: just-in-time user provisioning at first login,tbd,S27,E20,2,P0,Not started,AC: unknown SAML subject creates user + workspace_members row per group mapping.
-S617,sso: SAML group → workspace role mapping rules,copilot-thor,S27,E20,2,P0,Done,"**Done.**
+S616,sso: just-in-time user provisioning at first login,copilot-titan,S27,E20,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
-Branch: copilot-thor/s617-sso-saml-group-workspace-role-ma (merged + deletable)
-Skill: skills/api/add-rest-endpoint.md
-Final heartbeat: 2026-05-02T06:00:16Z (copilot-thor)
-Tests: 19 pytest (test_saml_group_rules.py): GroupRuleRecord validation, InMemoryGroupRuleStore CRUD, rules_to_group_role_map, project_role integration owner/editor/viewer; 12 vitest (group-rule-editor.test.tsx): renders, empty, add/remove row, group input, role select owner/editor, onSave, validation empty group, validation duplicate, success, error; 15 vitest (enterprise.test.ts): fixtures, WORKSPACE_ROLES, putGroupRules
-Docs touched: saml_group_rules.py module docstring; GroupRuleStore Protocol docs; GroupRuleRecord field docs; enterprise.ts GroupRuleRow/GroupRulesResponse types
-Follow-ups: S618 Playwright Okta SP-initiated login e2e; wire GroupRuleEditor into enterprise page"
+Branch: copilot-titan/s616-sso-just-in-time-user-provisioni (merged + deletable)
+Skill: skills/api/api-versioning.md
+Final heartbeat: 2026-05-02T05:56:01Z (copilot-titan)
+Tests: packages/control-plane/_tests/test_saml_jit.py
+Docs touched: packages/control-plane/loop_control_plane/saml_jit.py
+Follow-ups: S617"
+S617,sso: SAML group → workspace role mapping rules,tbd,S27,E20,2,P0,Not started,AC: rules in workspace_sso_groups table; UI to edit; tested for owner/editor/viewer.
 S618,sso: integration test full Okta SP-initiated login → studio session,tbd,S27,E20,2,P0,Not started,AC: Playwright drives Okta sandbox + studio; ends in authenticated session.
 S630,audit: audit_events table cp_0004 + write-only middleware,tbd,S28,E20,2,P0,Not started,AC: every cp-api write endpoint emits an audit_event; integration test.
 S631,"audit: studio audit log page (filterable, paginated)",tbd,S28,E10,3,P0,Not started,"AC: 7 filters: actor, action, resource, time, ip, success/failure."
@@ -1071,14 +1078,14 @@ Final heartbeat: 2026-05-02T05:49:24Z (codex-vega)
 Tests: touched ruff/format pass; touched pyright pass; regional endpoint voice tests pass (47); pytest -q -m 'not integration and not e2e' passed (1455 passed, 3 skipped, 4 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests
 Docs touched: loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_regional_latency_map.json
 Follow-ups: none"
-S654,voice-perf: latency benchmark ≤700ms p50 acceptance gate,codex-vega,S29,E7,2,P0,In progress,"**Active.**
-Branch: codex-vega/s654-voice-perf-latency-benchmark-700
+S654,voice-perf: latency benchmark ≤700ms p50 acceptance gate,codex-vega,S29,E7,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-vega/s654-voice-perf-latency-benchmark-700 (merged + deletable)
 Skill: skills/testing/perf-check.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T05:51:04Z (codex-vega)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T05:54:47Z (codex-vega)
+Tests: touched ruff/format pass; touched pyright pass; voice perf script/workflow tests pass (12); pytest -q -m 'not integration and not e2e' passed (1479 passed, 3 skipped, 4 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests
+Docs touched: docs/perf/voice_perf.md, docs/index.md, loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_perf.json
+Follow-ups: none"
 S655,ga-polish: design-system audit + component refactor,tbd,S29,E10,3,P1,Not started,AC: token map sweep; <5 hardcoded colours/spacings remain; doc'd in design system.
 S656,ga-polish: a11y audit (WCAG 2.1 AA) on top 10 studio pages,tbd,S29,E10,2,P0,Not started,AC: axe-core zero serious; manual screen-reader pass; report committed.
 S657,"ga-polish: i18n scaffolding (en, es, de, fr, ja)",tbd,S29,E10,2,P1,Not started,AC: react-i18next; en is source; 4 languages stub-translated; switcher works.
@@ -1265,7 +1272,14 @@ Final heartbeat: 2026-05-02T05:34:41Z (codex-orion)
 Tests: uv run ruff check/pyright on cache eval files; uv run pytest -q packages/gateway/_tests/test_cache_eval.py tests/test_gateway_cache_hit_ratio_workflow.py tests/test_docs_links.py packages/gateway/_tests/test_gateway_pass11.py; tracker/docs gates pass
 Docs touched: docs/perf/gateway_cache_hit_ratio.md,docs/index.md,bench/results/gateway_cache_hit_ratio.json,.github/workflows/gateway-cache-hit-ratio.yml
 Follow-ups: none"
-S842,perf: KB retrieval p50 < 200ms at 1M chunks per agent,tbd,S37,E5,2,P0,Not started,AC: synthetic 1M-chunk fixture; benchmark in CI; report committed.
+S842,perf: KB retrieval p50 < 200ms at 1M chunks per agent,codex-vega,S37,E5,2,P0,In progress,"**Active.**
+Branch: codex-vega/s842-perf-kb-retrieval-p50-200ms-at-1
+Skill: skills/testing/perf-check.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T05:59:40Z (codex-vega)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S843,perf: tool-host warm-start < 300ms p95 (vs 8s+ cold-start),codex-orion,S37,E3,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-orion/s843-perf-tool-host-warm-start-300ms (merged + deletable)
