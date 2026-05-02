@@ -865,11 +865,12 @@ Follow-ups: none"
 S777,portability: KMS Protocol parity tests across AWS/Azure/GCP/Alibaba KMS + Vault Transit,codex-orion,S34,E12,2,P0,In progress,"**Active.**
 Branch: codex-orion/s777-portability-kms-protocol-parity
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T00:08:55Z (codex-orion)
+Last step: 1/5
+Heartbeat: 2026-05-02T00:12:11Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: KMS contract parity suite and docs landed"
 S778,portability: SecretsBackend Protocol parity tests across Vault/AWS-SM/Azure-KV/GCP-SM,tbd,S34,E12,2,P0,Not started,AC: get/set/rotate identical; access-pattern tests.
 S779,portability: EmailSender Protocol parity tests across SES/Resend/SMTP,GitHub Copilot,S34,E12,1,P0,Done,"Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/architecture/cloud-portable-protocol.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_channels_email/parity.py run_parity(impl, reference=InMemoryEmailSender) drives identical send-cases through both, asserts shape + flags ParityFailure on lax sender. Tests: parity cases in test_email_pass10.py. Open questions: none."
 S780,ci: cross-cloud nightly smoke test matrix (deploy + first-turn on AWS+Azure+GCP),tbd,S34,E12,3,P0,Not started,AC: GHA matrix workflow nightly; all 3 must pass for green status; on-failure pages on-call.
