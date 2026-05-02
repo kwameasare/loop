@@ -39,12 +39,84 @@ export interface ChatWidgetProps {
   title?: string;
   /** Placeholder for the prompt input. */
   placeholder?: string;
+  /**
+   * S178: sessionStorage key used to persist the last 30 messages.
+   * Omit to disable persistence. Must be unique per agent/widget instance.
+   */
+  historyKey?: string;
 }
 
 let counter = 0;
 function nextId(): string {
   counter += 1;
   return `m_${counter}`;
+}
+
+// ---------------------------------------------------------------------------
+// S178: History persistence helpers
+// ---------------------------------------------------------------------------
+const HISTORY_MAX = 30;
+
+function loadHistory(key: string): ChatMessage[] {
+  if (typeof sessionStorage === "undefined") return [];
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Only restore completed messages -- drop any streaming/error state
+    return (parsed as ChatMessage[]).filter((m) => m.status === "complete");
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(key: string, messages: ChatMessage[]): void {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    const toSave = messages
+      .filter((m) => m.status === "complete")
+      .slice(-HISTORY_MAX);
+    sessionStorage.setItem(key, JSON.stringify(toSave));
+  } catch {
+    // Silently ignore quota errors
+  }
+}
+
+// ---------------------------------------------------------------------------
+// S178: Typing indicator
+// ---------------------------------------------------------------------------
+
+/** Animated three-dot indicator shown while the assistant is typing. */
+function TypingIndicator() {
+  return (
+    <li
+      data-testid="chat-typing-indicator"
+      aria-label="Assistant is typing"
+      style={{
+        alignSelf: "flex-start",
+        display: "flex",
+        gap: 4,
+        padding: "8px 10px",
+        borderRadius: 12,
+        background: "#f3f4f6",
+      }}
+    >
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: "#9ca3af",
+            display: "inline-block",
+            animation: `loop-bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+          }}
+        />
+      ))}
+    </li>
+  );
 }
 
 function resolveStream(
@@ -72,13 +144,27 @@ export function ChatWidget(props: ChatWidgetProps) {
     initialMessages = [],
     title = "Loop chat",
     placeholder = "Send a message…",
+    historyKey,
   } = props;
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+
+  // S178: seed from sessionStorage when a historyKey is provided
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (historyKey) {
+      const persisted = loadHistory(historyKey);
+      if (persisted.length > 0) return persisted;
+    }
+    return initialMessages;
+  });
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const inputId = useId();
   const abortRef = useRef<AbortController | null>(null);
+
+  // S178: persist whenever messages change
+  useEffect(() => {
+    if (historyKey) saveHistory(historyKey, messages);
+  }, [historyKey, messages]);
 
   useEffect(
     () => () => {
@@ -251,6 +337,10 @@ export function ChatWidget(props: ChatWidgetProps) {
             {m.text || (m.status === "streaming" ? "…" : "")}
           </li>
         ))}
+        {/* S178: typing indicator while server is streaming and no text yet */}
+        {streaming && messages.at(-1)?.role === "assistant" && messages.at(-1)?.text === "" ? (
+          <TypingIndicator />
+        ) : null}
       </ol>
       {errorBanner ? (
         <p
