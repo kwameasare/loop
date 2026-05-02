@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:17:48.902074+00:00",
+    "generated_at": "2026-05-02T06:18:03.322771+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4246,8 +4246,8 @@
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s635-audit-gdpr-art-17-data-deletion\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:17:48Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s635-audit-gdpr-art-17-data-deletion (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:18:03Z (copilot-titan)\nTests: packages/control-plane/_tests/test_data_deletion.py\nDocs touched: packages/control-plane/loop_control_plane/data_deletion.py\nFollow-ups: none"
     },
     {
       "id": "S636",
