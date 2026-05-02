@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:09:12.745974+00:00",
+    "generated_at": "2026-05-02T05:11:04.977980+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3977,13 +3977,13 @@
     {
       "id": "S581",
       "title": "soc2: audit-trail completeness review (every state change is logged)",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S25",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: matrix of write endpoints → audit-event coverage; gaps fixed."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s581-soc2-audit-trail-completeness-re\nSkill: skills/security/add-audit-event.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:11:04Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S582",
