@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:07:41.810506+00:00",
+    "generated_at": "2026-05-02T05:09:06.947633+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3927,8 +3927,8 @@
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s576-soc2-pen-test-prep-scope-roe-acc\nSkill: skills/security/update-threat-model.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:06:09Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s576-soc2-pen-test-prep-scope-roe-acc (merged + deletable)\nSkill: skills/security/update-threat-model.md\nFinal heartbeat: 2026-05-02T05:09:06Z (copilot-thor)\nTests: 4 new tests — doc exists, SECURITY.md link, required sections, escalation matrix. pytest 1308/1308.\nDocs touched: loop_implementation/engineering/PEN_TEST.md,loop_implementation/engineering/SECURITY.md\nFollow-ups: S577,S578"
     },
     {
       "id": "S577",

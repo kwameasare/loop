@@ -837,14 +837,14 @@ Final heartbeat: 2026-05-02T04:00:16Z (copilot-thor)
 Tests: 5 new tests in tests/test_dr_tabletop.py — file exists, DR.md cross-link, ≥1 dated exercise entry, required sections present, gaps recorded with owners. Full pytest 1304/1304 (5 new).
 Docs touched: loop_implementation/engineering/DR_TABLETOP.md,loop_implementation/engineering/DR.md
 Follow-ups: none"
-S576,soc2: pen-test prep (scope + RoE + access creds),copilot-thor,S25,E16,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s576-soc2-pen-test-prep-scope-roe-acc
+S576,soc2: pen-test prep (scope + RoE + access creds),copilot-thor,S25,E16,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s576-soc2-pen-test-prep-scope-roe-acc (merged + deletable)
 Skill: skills/security/update-threat-model.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T05:06:09Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T05:09:06Z (copilot-thor)
+Tests: 4 new tests — doc exists, SECURITY.md link, required sections, escalation matrix. pytest 1308/1308.
+Docs touched: loop_implementation/engineering/PEN_TEST.md,loop_implementation/engineering/SECURITY.md
+Follow-ups: S577,S578"
 S577,soc2: pen-test fix queue tracked as P0 stories,tbd,S25,E16,2,P0,Not started,"AC: each finding has tracker entry, severity, owner, fix-deadline."
 S578,soc2: SBOM generation in CI (cyclonedx),copilot-titan,S25,E16,1,P0,Done,"**Done.**
 PR: (opened by squash-merge)
