@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T13:25:44.788481+00:00",
+    "generated_at": "2026-05-02T13:27:57.236065+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3366,8 +3366,8 @@
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s471-flow-3-starter-templates-faq-sup\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T13:25:44Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s471-flow-3-starter-templates-faq-sup (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T13:27:57Z (copilot-thor)\nTests: 13 vitest (apps/studio/src/components/flow/flow-templates.test.tsx): FLOW_TEMPLATES data (4), FlowTemplatePicker (6), FlowEditor Templates button (3)\nDocs touched: apps/studio/src/lib/flow-templates.ts apps/studio/src/components/flow/flow-template-picker.tsx apps/studio/src/components/flow/flow-editor.tsx\nFollow-ups: persist selected template to agent API; thumbnail previews; custom templates"
     },
     {
       "id": "S472",
