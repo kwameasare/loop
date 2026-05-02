@@ -1128,11 +1128,12 @@ Follow-ups: none"
 S781,docs: cloud-portability proof report (Wk-by-Wk parity matrix shipped to docs/CLOUD_PROOF.md),codex-orion,S34,E17,1,P0,In progress,"**Active.**
 Branch: codex-orion/s781-docs-cloud-portability-proof-rep
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 1/4
-Heartbeat: 2026-05-02T05:25:57Z (codex-orion)
+Last step: 2/4
+Heartbeat: 2026-05-02T05:27:08Z (codex-orion)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: targeted lint type docs and proof tests passed; full repo static gates baseline-red outside story
 Latest checkpoint: proof page and nightly mark publisher landed"
 S800,security: continuous fuzz testing of cp-api + dp-runtime (atheris/restler),tbd,S35,E16,3,P0,Not started,AC: fuzz harness runs in CI nightly; crashes/oom auto-issue; coverage report.
 S801,security: threat-model verification — STRIDE checklist gate per PR touching auth/security paths,tbd,S35,E16,2,P0,Not started,AC: PRs touching auth/RLS/secrets fail without docs/THREAT_MODEL.md update; bot enforces.
