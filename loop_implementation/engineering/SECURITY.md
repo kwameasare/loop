@@ -531,6 +531,20 @@ For data-breach SEV1 affecting customer data:
 | Container scan | Trivy | block on Critical |
 | Infra lint | tflint / kube-linter / checkov | block on High |
 | License | scancode-toolkit | block on copyleft incompat |
+| Fuzzing (cp-api + dp-runtime) | `tools/fuzz_harness.py` via `.github/workflows/fuzz-nightly.yml` | nightly; auto-files issue on crash/OOM |
+
+### 12.1 Continuous fuzz testing
+
+The nightly `fuzz-nightly` workflow runs four mutation-fuzz campaigns against high-risk Python surfaces:
+
+1. `cp-api/paseto.decode_local` — PASETO `v4.local.` token decoder; oracle expects `PasetoError` (subclass of `ValueError`).
+2. `cp-api/audit_export.export_audit_csv` — audit-event filter & CSV streaming; oracle expects `AuditEventError`.
+3. `cp-api/audit_events.hash_payload` — exotic / nested JSON payload hashing; oracle expects `TypeError`/`ValueError` on non-serialisable inputs.
+4. `cp-api/byo_vault.VaultConfig` — BYO Vault address & role validation; oracle expects `ByoVaultError`.
+
+The harness applies `RLIMIT_AS = 512 MiB` so allocator regressions surface as `MemoryError`. Crashes / OOMs are written to `fuzz-report.json` (uploaded as a workflow artifact, retained 30 days) and `tools/fuzz_report_to_issue.py` collapses duplicate stack-trace signatures and files one issue per unique signature with labels `fuzz,security,nightly`. The job fails when any unexpected exception is observed so the nightly run is visible in the repo's failed-checks badge.
+
+Replay is deterministic: each campaign uses a stable seed (default `0xC0FFEE`, overridable via `workflow_dispatch`). Future migration to `atheris` (libFuzzer-driven coverage feedback) only requires swapping the inner `_iterate` loop in `tools/fuzz_harness.py`; the campaign / oracle structure is already shaped around a libFuzzer-style `target(rng)` callable.
 
 ---
 

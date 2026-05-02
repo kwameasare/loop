@@ -1,0 +1,90 @@
+name: fuzz-nightly
+
+# Continuous fuzz testing of cp-api + dp-runtime (S800).
+#
+# Runs the deterministic mutation fuzzer in tools/fuzz_harness.py every
+# night and after explicit dispatches. Crashes / OOMs are auto-filed as
+# GitHub issues by tools/fuzz_report_to_issue.py. The full crash report
+# (and a coverage summary) is uploaded as a workflow artifact.
+
+on:
+  schedule:
+    # 03:17 UTC daily; offset from the top of the hour to spread load.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: "Iterations per campaign (default 2000)."
+        required: false
+        default: "2000"
+      seed:
+        description: "Hex seed for deterministic replay (default 0xC0FFEE)."
+        required: false
+        default: "0xC0FFEE"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.12
+
+      - name: Sync deps
+        run: uv sync --all-extras --frozen || uv sync --all-extras
+
+      - name: Run fuzz campaigns
+        id: fuzz
+        run: |
+          uv run python tools/fuzz_harness.py \
+            --seed "${{ github.event.inputs.seed || '0xC0FFEE' }}" \
+            --iterations "${{ github.event.inputs.iterations || '2000' }}" \
+            --out fuzz-report.json
+          # Emit coverage/outcome summary to the run log + step summary.
+          python - <<'PY'
+          import json, os, pathlib
+          r = json.loads(pathlib.Path("fuzz-report.json").read_text())
+          lines = ["| campaign | iters | expected | crashes | duration_s |",
+                   "|---|---:|---:|---:|---:|"]
+          for c in r["campaigns"]:
+              lines.append(f"| {c['name']} | {c['iterations']} | {c['expected_raises']} | {len(c['crashes'])} | {c['duration_s']} |")
+          lines.append("")
+          lines.append(f"**Totals**: iters={r['totals']['iterations']} expected={r['totals']['expected_raises']} crashes={r['totals']['crashes']}")
+          summary = pathlib.Path(os.environ["GITHUB_STEP_SUMMARY"])
+          summary.write_text("\n".join(lines))
+          PY
+
+      - name: File issues for crashes
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: uv run python tools/fuzz_report_to_issue.py --report fuzz-report.json
+
+      - name: Upload fuzz report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-report
+          path: fuzz-report.json
+          retention-days: 30
+
+      - name: Fail run on crashes
+        if: always()
+        run: |
+          crashes=$(python -c "import json; print(json.load(open('fuzz-report.json'))['totals']['crashes'])")
+          echo "crashes=$crashes"
+          if [ "$crashes" != "0" ]; then
+            echo "::error::Fuzz run reported $crashes crash(es); see uploaded artifact and auto-filed issues."
+            exit 1
+          fi
