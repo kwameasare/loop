@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:08:01.728772+00:00",
+    "generated_at": "2026-05-02T03:10:09.256525+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2409,8 +2409,8 @@
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s327-studio-billing-tab-current-plan\nSkill: skills/ux/component-design.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T03:08:01Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s327-studio-billing-tab-current-plan (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-02T03:10:09Z (copilot-thor)\nTests: vitest covers computeUsageRatio thresholds, projectCycleUsage, formatCents, BillingPanel rendering+overage+empty payment\nDocs touched: apps/studio/src/components/billing/billing-panel.tsx,apps/studio/src/app/billing/page.tsx,apps/studio/src/lib/billing.ts\nFollow-ups: none"
     },
     {
       "id": "S328",
