@@ -1353,4 +1353,11 @@ Final heartbeat: 2026-05-02T05:51:04Z (codex-orion)
 Tests: uv run ruff check/pyright tests/test_cp_api_5000_rps.py; uv run pytest -q tests/test_cp_api_5000_rps.py tests/test_docs_links.py tests/test_helm_e2e_workflow.py; tracker/docs gates pass
 Docs touched: docs/perf/cp_api_5000_rps.md,docs/index.md,bench/results/cp_api_5000_rps.json,.github/workflows/cp-api-5000-rps.yml
 Follow-ups: none"
-S846,perf: regression budget — any 5%+ p95 regression blocks PR,tbd,S37,E9,2,P0,Not started,AC: perf CI check compares to last 7-day baseline; PR fails if breaches.
+S846,perf: regression budget — any 5%+ p95 regression blocks PR,codex-vega,S37,E9,2,P0,In progress,"**Active.**
+Branch: codex-vega/s846-perf-regression-budget-any-5-p95
+Skill: skills/testing/perf-check.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T06:13:38Z (codex-vega)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
