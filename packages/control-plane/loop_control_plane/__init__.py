@@ -70,6 +70,13 @@ from loop_control_plane.inbox import (
     InboxStatus,
 )
 from loop_control_plane.inbox_api import InboxAPI
+from loop_control_plane.kms import (
+    KMS,
+    KMS_BACKENDS,
+    InMemoryKMS,
+    KMSError,
+    build_kms_backend,
+)
 from loop_control_plane.mcp_marketplace import (
     CommunityPublishFlow,
     CommunityPublishResult,
@@ -133,6 +140,8 @@ from loop_control_plane.workspaces import (
 
 __all__ = [
     "DAY_MS",
+    "KMS",
+    "KMS_BACKENDS",
     "OBJECT_STORE_BACKENDS",
     "ApiKey",
     "ApiKeyAPI",
@@ -164,6 +173,7 @@ __all__ = [
     "InMemoryEvalGate",
     "InMemoryImageBuilder",
     "InMemoryImageRegistry",
+    "InMemoryKMS",
     "InMemoryKubeClient",
     "InMemoryMarketplaceStore",
     "InMemoryObjectStore",
@@ -176,6 +186,7 @@ __all__ = [
     "InstallNotFoundError",
     "InstalledToolView",
     "IssuedApiKey",
+    "KMSError",
     "KubeClient",
     "LoopApiError",
     "ManifestSignatureVerifier",
@@ -222,6 +233,7 @@ __all__ = [
     "WorkspaceService",
     "aggregate",
     "authorize_workspace_access",
+    "build_kms_backend",
     "build_object_store_backend",
     "compute_manifest_digest",
     "first_party_manifests",
