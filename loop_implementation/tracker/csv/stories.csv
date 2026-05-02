@@ -430,7 +430,14 @@ Final heartbeat: 2026-05-02T02:59:27Z (copilot-thor)
 Tests: vitest covers listInboxQueue filter/sort/paginate/workspace-isolation/clamp, InboxQueue rendering, team filter, channel filter, sort toggle, pagination
 Docs touched: apps/studio/src/components/inbox/inbox-queue.tsx,apps/studio/src/app/inbox/queue/page.tsx,apps/studio/src/lib/inbox.ts
 Follow-ups: none"
-S307,studio: inbox conversation viewer with live SSE tail,tbd,S11,E10,3,P0,Not started,AC: opening conv subscribes to live stream; new messages append in real-time.
+S307,studio: inbox conversation viewer with live SSE tail,copilot-thor,S11,E10,3,P0,In progress,"**Active.**
+Branch: copilot-thor/s307-studio-inbox-conversation-viewer
+Skill: skills/ux/component-design.md
+Last step: 0/6 (just claimed)
+Heartbeat: 2026-05-02T02:59:43Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S308,studio: takeover button + composer in conversation viewer,tbd,S11,E10,2,P0,Not started,AC: clicking Takeover acquires; composer posts as operator; agent paused.
 S309,studio: handback button restores agent + closes operator session,tbd,S11,E10,1,P0,Not started,AC: confirmation modal; click → POST /handback; conv updates; toast.
 S320,billing: cp-api → Stripe customer creation on workspace POST,GitHub Copilot,S12,E19,2,P0,Done,"Done. Branch: copilot/s-pass7 (merged). PR: local-merge (ff to main). Skill: skills/security/zero-trust.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: retro-close — loop_control_plane/billing.py exposes BillingClient Protocol with create_customer(workspace_id, email) -> StripeCustomer plus FakeBillingClient for tests. The cloud-portability constraint forbids importing the stripe-python SDK directly (pinned in the module docstring); the production adapter that wraps stripe.Customer.create lives in a separate module and is selected via dependency injection. customer_id is stored on the workspace row by the cp-api workspace-create handler. The webhook handler in stripe_webhook.py reverses the lookup. Tests: existing test_billing.py covers create_customer/get_customer/get_subscription roundtrips. Open questions: idempotency-key wiring on retries is a follow-up resilience story."

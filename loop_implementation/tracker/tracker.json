@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T02:59:27.735466+00:00",
+    "generated_at": "2026-05-02T02:59:43.161943+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2294,13 +2294,13 @@
     {
       "id": "S307",
       "title": "studio: inbox conversation viewer with live SSE tail",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S11",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: opening conv subscribes to live stream; new messages append in real-time."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s307-studio-inbox-conversation-viewer\nSkill: skills/ux/component-design.md\nLast step: 0/6 (just claimed)\nHeartbeat: 2026-05-02T02:59:43Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S308",
