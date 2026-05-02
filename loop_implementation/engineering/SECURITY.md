@@ -270,6 +270,8 @@ conversations = await db.fetch("SELECT * FROM conversations")  # RLS ensures onl
 
 Append-only log of admin events; cryptographic chain (each entry includes hash of the previous).
 
+**Completeness:** Every write endpoint (POST/PATCH/DELETE) must emit an audit event. See [`AUDIT_COMPLETENESS.md`](AUDIT_COMPLETENESS.md) for the master coverage matrix, gap analysis, and remediation tracking.
+
 Events tracked:
 - Workspace lifecycle (create / delete / plan change).
 - Member invite / role change / removal.
