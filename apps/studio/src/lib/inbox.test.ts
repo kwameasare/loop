@@ -102,3 +102,68 @@ describe("formatRelativeMs", () => {
     expect(formatRelativeMs(now, now + 1_000)).toBe("0s ago");
   });
 });
+
+import { listInboxQueue, FIXTURE_QUEUE, type InboxQueueOptions } from "./inbox";
+
+describe("listInboxQueue", () => {
+  const baseOpts: InboxQueueOptions = { workspace_id: FIXTURE_WORKSPACE_ID };
+
+  it("paginates by created_at desc by default", () => {
+    const result = listInboxQueue(FIXTURE_QUEUE, { ...baseOpts, page: 1, page_size: 10 });
+    expect(result.total).toBeGreaterThanOrEqual(60);
+    expect(result.items).toHaveLength(10);
+    for (let i = 1; i < result.items.length; i += 1) {
+      expect(result.items[i - 1].created_at_ms).toBeGreaterThanOrEqual(
+        result.items[i].created_at_ms,
+      );
+    }
+  });
+
+  it("filters by team, agent, and channel", () => {
+    const careOnly = listInboxQueue(FIXTURE_QUEUE, {
+      ...baseOpts,
+      team_id: "team-care",
+      page_size: 999,
+    });
+    expect(careOnly.items.every((i) => i.team_id === "team-care")).toBe(true);
+
+    const voice = listInboxQueue(FIXTURE_QUEUE, {
+      ...baseOpts,
+      channel: "voice",
+      page_size: 999,
+    });
+    expect(voice.items.every((i) => i.channel === "voice")).toBe(true);
+  });
+
+  it("sorts ascending by user_id when requested", () => {
+    const result = listInboxQueue(FIXTURE_QUEUE, {
+      ...baseOpts,
+      sort_by: "user_id",
+      sort_dir: "asc",
+      page_size: 5,
+    });
+    const ids = result.items.map((i) => i.user_id);
+    const sorted = [...ids].sort();
+    expect(ids).toEqual(sorted);
+  });
+
+  it("ignores items from other workspaces", () => {
+    const cross = listInboxQueue(
+      [
+        ...FIXTURE_QUEUE,
+        { ...FIXTURE_QUEUE[0], id: "x", workspace_id: "other-ws" },
+      ],
+      { ...baseOpts, page_size: 999 },
+    );
+    expect(cross.items.find((i) => i.id === "x")).toBeUndefined();
+  });
+
+  it("clamps page beyond available pages", () => {
+    const result = listInboxQueue(FIXTURE_QUEUE, {
+      ...baseOpts,
+      page: 99,
+      page_size: 10,
+    });
+    expect(result.page).toBeLessThanOrEqual(result.page_count);
+  });
+});
