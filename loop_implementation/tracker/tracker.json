@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T02:56:10.058140+00:00",
+    "generated_at": "2026-05-02T02:56:27.119462+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2283,13 +2283,13 @@
     {
       "id": "S306",
       "title": "studio: inbox queue page filtered by team / agent / channel",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S11",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: list paginates; sortable; per-row last-message preview. [extends S032]"
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s306-studio-inbox-queue-page-filtered\nSkill: skills/ux/component-design.md\nLast step: 0/6 (just claimed)\nHeartbeat: 2026-05-02T02:56:27Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S307",
