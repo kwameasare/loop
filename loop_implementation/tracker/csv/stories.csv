@@ -1428,14 +1428,14 @@ Final heartbeat: 2026-05-02T14:17:08Z (copilot-thor)
 Tests: 14 vitest (memory-dashboard.test.tsx): empty state, rows per entry, redacted content, delete button, onDelete called, disable during delete, KPI counts, KPI size, GDPR Art-17 mention
 Docs touched: apps/studio/src/components/memory/memory-table.tsx; apps/studio/src/components/memory/memory-dashboard.tsx
 Follow-ups: wire MemoryDashboard into agent detail page; add pagination for large sets; backend DELETE /v1/memory/{id} endpoint"
-S826,kb-v2: late-interaction retrieval (ColBERT-style for high-recall surfaces),copilot-thor,S36,E5,3,P1,In progress,"**Active.**
-Branch: copilot-thor/s826-kb-v2-late-interaction-retrieval
+S826,kb-v2: late-interaction retrieval (ColBERT-style for high-recall surfaces),copilot-thor,S36,E5,3,P1,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s826-kb-v2-late-interaction-retrieval (merged + deletable)
 Skill: loop_implementation/skills/_base/skill.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-02T14:17:55Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T14:19:34Z (copilot-thor)
+Tests: 21 pytest (test_late_interaction.py): TokenEmbedding, cosine_sim, maxsim, LateInteractionIndex add/remove/query/top-k, late_interaction_retrieve, recall@10 ≥5% improvement over dense
+Docs touched: packages/kb-engine/loop_kb_engine/late_interaction.py
+Follow-ups: ColBERT token encoder integration; persist TokenEmbedding in Qdrant multi-vector; batch ingestion pipeline for token vecs; opt-in flag in KB query API"
 S827,kb-v2: structured-data retrieval (CSV/Excel/JSON with SQL-on-the-fly),tbd,S36,E5,3,P1,Not started,AC: agent uploads spreadsheet; tool can SQL it; integration test.
 S840,perf: turn-latency p95 < 2.0s end-to-end (text path) — acceptance gate,codex-orion,S37,E1,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
