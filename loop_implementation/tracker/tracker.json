@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:12:16.564414+00:00",
+    "generated_at": "2026-05-02T03:16:03.100297+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2750,8 +2750,8 @@
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s384-voice-voice-channel-react-widget\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T03:12:16Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s384-voice-voice-channel-react-widget (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-02T03:16:02Z (copilot-thor)\nTests: vitest covers VoiceWidget idle render, connect+connected, PTT mic toggle, always-on mic open, transport-rejected error, end-call disconnect\nDocs touched: apps/studio/src/components/voice/voice-widget.tsx,apps/studio/src/lib/voice-transport.ts,apps/studio/src/app/voice/page.tsx\nFollow-ups: none"
     },
     {
       "id": "S385",
