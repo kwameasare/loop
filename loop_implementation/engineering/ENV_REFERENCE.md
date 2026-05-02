@@ -35,6 +35,8 @@ Naming convention: `LOOP_<DOMAIN>_<NAME>` (e.g. `LOOP_RUNTIME_PORT`). Avoid `_` 
 | `LOOP_DEMO_EXPECTED_ANSWER` | `scripts/e2e_web_smoke.py` — required golden answer fragment asserted in the demo response | S181 |
 | `LOOP_DEMO_TIMEOUT_SECONDS` | `scripts/e2e_web_smoke.py` — HTTP timeout for the published demo smoke (default `20`) | S181 |
 | `LOOP_DEMO_TOKEN` | `scripts/e2e_web_smoke.py` — optional bearer token for protected demo environments | S181 |
+| `LOOP_CLOUD` | `.github/workflows/cross-cloud-smoke.yml` — cloud label injected into Helm smoke pods for the AWS/Azure/GCP nightly matrix | S780 |
+| `LOOP_ONCALL_WEBHOOK_URL` | `.github/workflows/cross-cloud-smoke.yml` — GitHub Actions secret receiving the JSON page payload when a cloud smoke leg fails | S780 |
 
 > Note — **`LOOP_WORKSPACE_ID` is not an env var.** It is a Postgres
 > session-scoped setting (`SET LOCAL loop.workspace_id = '<uuid>'`) used by
@@ -209,6 +211,13 @@ LiveKit (voice):
 | `LOOP_DEMO_EXPECTED_ANSWER` | (required) | Case-insensitive answer fragment the response must include. |
 | `LOOP_DEMO_TIMEOUT_SECONDS` | `20` | HTTP timeout for the smoke request. |
 | `LOOP_DEMO_TOKEN` | (none) | Optional bearer token when the published demo is protected. |
+
+### 10.2 Cross-cloud smoke (`.github/workflows/cross-cloud-smoke.yml`)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOOP_CLOUD` | matrix value | Cloud label injected into the Helm smoke deployment (`aws`, `azure`, `gcp`). |
+| `LOOP_ONCALL_WEBHOOK_URL` | (required GitHub Actions secret) | Webhook that pages the primary on-call with the failed cloud/region and Actions run URL. |
 
 ## 11. CLI (`loop`)
 

@@ -88,6 +88,17 @@ EU-west runtime endpoint and fails unless the response confirms the
 EU overlay into kind every night, port-forwards the runtime Service, and
 runs the same script with `EU_SMOKE_REGION=eu-west`.
 
+### Nightly cross-cloud smoke
+
+`.github/workflows/cross-cloud-smoke.yml` runs nightly, manually, and on
+changes to the Helm smoke surface. Its matrix deploys the chart into
+kind once each for `aws`, `azure`, and `gcp` cloud labels, injects the
+abstract `LOOP_REGION`/`LOOP_CLOUD` pair into the smoke pods, and then
+runs `scripts/cross_cloud_smoke.sh` against the runtime Service. A green
+run requires all three matrix legs to pass. Any failure dumps cluster
+diagnostics and posts a JSON page payload to the
+`LOOP_ONCALL_WEBHOOK_URL` GitHub Actions secret.
+
 ### Failure modes
 
 * **Cross-region egress detected.** NetworkPolicy alert fires; the
@@ -118,6 +129,7 @@ migrations. Schema migrations are gated on the migration job
 
 | Date       | Author       | Change                                            |
 | ---------- | ------------ | ------------------------------------------------- |
+| 2026-05-02 | codex-orion (S780) | Add nightly AWS/Azure/GCP Helm deploy + first-turn smoke matrix. |
 | 2026-05-01 | codex-orion (S597) | Add nightly EU full-turn smoke workflow and `scripts/eu_smoke.sh`. |
 | 2026-05-01 | codex-orion (S595) | Add signed regional image promotion workflow; daily verification keeps NA/EU tags on one digest. |
 | 2026-04-30 | GitHub Copilot (S045) | Add EU-west overlay + regional deploy doc. |
