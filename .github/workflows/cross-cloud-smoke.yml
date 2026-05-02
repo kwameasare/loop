@@ -5,18 +5,25 @@ on:
     paths:
       - ".github/workflows/cross-cloud-smoke.yml"
       - "infra/helm/loop/**"
+      - "docs/CLOUD_PROOF.md"
       - "scripts/cross_cloud_smoke.*"
+      - "scripts/cloud_proof_report.py"
       - "scripts/helm_e2e_smoke_server.py"
   push:
     branches: [main]
     paths:
       - ".github/workflows/cross-cloud-smoke.yml"
       - "infra/helm/loop/**"
+      - "docs/CLOUD_PROOF.md"
       - "scripts/cross_cloud_smoke.*"
+      - "scripts/cloud_proof_report.py"
       - "scripts/helm_e2e_smoke_server.py"
   workflow_dispatch:
   schedule:
     - cron: "17 5 * * *"
+
+permissions:
+  contents: write
 
 jobs:
   cross-cloud-smoke:
@@ -95,6 +102,8 @@ jobs:
             --set minio.enabled=false \
             --set clickhouse.enabled=false
       - name: Run first-turn smoke for ${{ matrix.cloud }}
+        id: smoke
+        continue-on-error: true
         run: |
           kubectl -n "${{ matrix.namespace }}" rollout status deploy/loop-loop-runtime --timeout=90s
           kubectl -n "${{ matrix.namespace }}" port-forward svc/loop-loop-runtime \
@@ -105,6 +114,28 @@ jobs:
             --cloud "${{ matrix.cloud }}" \
             --region "${{ matrix.region }}" \
             --base-url "http://127.0.0.1:${{ matrix.port }}"
+      - name: Write cloud proof mark
+        if: always()
+        env:
+          SMOKE_STATUS: ${{ steps.smoke.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python scripts/cloud_proof_report.py mark \
+            --cloud "${{ matrix.cloud }}" \
+            --region "${{ matrix.region }}" \
+            --status "$SMOKE_STATUS" \
+            --run-url "$RUN_URL" \
+            --sha "${{ github.sha }}" \
+            --output "cloud-proof-${{ matrix.cloud }}.json"
+      - name: Upload cloud proof mark
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloud-proof-${{ matrix.cloud }}
+          path: cloud-proof-${{ matrix.cloud }}.json
+      - name: Fail failed smoke
+        if: steps.smoke.outcome != 'success'
+        run: exit 1
       - name: Dump cluster diagnostics
         if: failure()
         run: |
@@ -135,3 +166,33 @@ jobs:
           PY
           curl -fsS -X POST -H "content-type: application/json" \
             --data @/tmp/oncall-payload.json "$LOOP_ONCALL_WEBHOOK_URL"
+  publish-cloud-proof:
+    name: publish cloud proof
+    needs: cross-cloud-smoke
+    if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cloud-proof-*
+          merge-multiple: true
+          path: .cloud-proof
+      - name: Append nightly cloud proof marks
+        run: |
+          shopt -s nullglob
+          marks=(.cloud-proof/cloud-proof-*.json)
+          python scripts/cloud_proof_report.py append \
+            --report docs/CLOUD_PROOF.md \
+            "${marks[@]}"
+      - name: Commit published cloud proof
+        run: |
+          if git diff --quiet docs/CLOUD_PROOF.md; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/CLOUD_PROOF.md
+          git commit -m "docs(cloud): update portability proof marks"
+          git push

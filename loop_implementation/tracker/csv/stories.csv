@@ -1139,7 +1139,14 @@ Final heartbeat: 2026-05-02T00:40:44Z (codex-orion)
 Tests: uv run ruff check scripts/cross_cloud_smoke.py tests/test_cross_cloud_smoke.py; uv run ruff format --check same files; uv run pyright same files; uv run pytest -q tests/test_cross_cloud_smoke.py (3 passed); bash -n scripts/cross_cloud_smoke.sh; forbidden cloud SDK grep passed for packages/runtime packages/gateway packages/sdk-py packages/channels; uv run pytest -q tests/test_cross_cloud_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py (7 passed); uv run pytest -q -m 'not integration and not e2e' (1268 passed, 3 skipped, 4 deselected); python3 tools/build_tracker.py; python3 tools/check_tracker_notes.py; python3 tools/check_docs_with_code.py; python3 tools/check_checkpoint_discipline.py; full repo ruff/format/pyright remain baseline-red in unrelated files
 Docs touched: loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/engineering/REGIONAL_DEPLOYS.md
 Follow-ups: none"
-S781,docs: cloud-portability proof report (Wk-by-Wk parity matrix shipped to docs/CLOUD_PROOF.md),tbd,S34,E17,1,P0,Not started,AC: matrix lists each capability × cloud; nightly job appends a green/red mark; published live.
+S781,docs: cloud-portability proof report (Wk-by-Wk parity matrix shipped to docs/CLOUD_PROOF.md),codex-orion,S34,E17,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-orion/s781-docs-cloud-portability-proof-rep (merged + deletable)
+Skill: skills/architecture/cloud-portability-check.md
+Final heartbeat: 2026-05-02T05:27:19Z (codex-orion)
+Tests: uv run ruff check/pyright on cloud proof files; uv run pytest -q tests/test_cloud_proof_report.py tests/test_cross_cloud_smoke.py tests/test_docs_links.py; tracker/docs gates pass
+Docs touched: docs/CLOUD_PROOF.md,docs/index.md,.github/workflows/cross-cloud-smoke.yml
+Follow-ups: none"
 S800,security: continuous fuzz testing of cp-api + dp-runtime (atheris/restler),tbd,S35,E16,3,P0,Not started,AC: fuzz harness runs in CI nightly; crashes/oom auto-issue; coverage report.
 S801,security: threat-model verification — STRIDE checklist gate per PR touching auth/security paths,tbd,S35,E16,2,P0,Not started,AC: PRs touching auth/RLS/secrets fail without docs/THREAT_MODEL.md update; bot enforces.
 S802,security: SLSA Level 3 build provenance for container images (in-toto attestations),tbd,S35,E16,3,P0,Not started,AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing.
