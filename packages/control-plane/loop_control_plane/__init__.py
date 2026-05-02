@@ -67,6 +67,17 @@ from loop_control_plane.slsa_provenance import (
     SlsaProvenance,
     StubProvenanceVerifier,
 )
+from loop_control_plane.retention import (
+    DataClass,
+    DataRecord,
+    DataStore,
+    DeletionBatch,
+    InMemoryAuditSink,
+    InMemoryDataStore as InMemoryRetentionStore,
+    RetentionError,
+    RetentionJob,
+    RetentionPolicy,
+)
 from loop_control_plane.errors import (
     LoopApiError,
     map_to_loop_api_error,
