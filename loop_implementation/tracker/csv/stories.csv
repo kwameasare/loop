@@ -1012,7 +1012,14 @@ Final heartbeat: 2026-05-02T05:52:54Z (copilot-titan)
 Tests: apps/studio/src/components/workspaces/enterprise-sso-form.test.tsx
 Docs touched: apps/studio/src/app/workspaces/enterprise/page.tsx
 Follow-ups: S617"
-S616,sso: just-in-time user provisioning at first login,tbd,S27,E20,2,P0,Not started,AC: unknown SAML subject creates user + workspace_members row per group mapping.
+S616,sso: just-in-time user provisioning at first login,copilot-titan,S27,E20,2,P0,In progress,"**Active.**
+Branch: copilot-titan/s616-sso-just-in-time-user-provisioni
+Skill: skills/api/api-versioning.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T05:54:19Z (copilot-titan)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S617,sso: SAML group → workspace role mapping rules,tbd,S27,E20,2,P0,Not started,AC: rules in workspace_sso_groups table; UI to edit; tested for owner/editor/viewer.
 S618,sso: integration test full Okta SP-initiated login → studio session,tbd,S27,E20,2,P0,Not started,AC: Playwright drives Okta sandbox + studio; ends in authenticated session.
 S630,audit: audit_events table cp_0004 + write-only middleware,tbd,S28,E20,2,P0,Not started,AC: every cp-api write endpoint emits an audit_event; integration test.

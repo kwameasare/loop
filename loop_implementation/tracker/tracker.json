@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:55:29.205856+00:00",
+    "generated_at": "2026-05-02T05:56:14.013438+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4153,13 +4153,13 @@
     {
       "id": "S616",
       "title": "sso: just-in-time user provisioning at first login",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S27",
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: unknown SAML subject creates user + workspace_members row per group mapping."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s616-sso-just-in-time-user-provisioni\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:54:19Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S617",
