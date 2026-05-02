@@ -536,7 +536,7 @@ NEW_STORIES: list[StoryV2] = [
     # =====================================================================
     # Sprint S28 — Audit log UI + DPA + on-prem parity (≈10 stories)
     # =====================================================================
-    StoryV2("S630", "audit: audit_events table cp_0004 + write-only middleware", "S28", "E20", 2, "P0", "AC: every cp-api write endpoint emits an audit_event; integration test."),
+    StoryV2("S630", "audit: audit_events table cp_0004 + write-only middleware", "S28", "E20", 2, "P0", "AC: every cp-api write endpoint emits an audit_event; integration test.", owner="copilot-titan", status="Done", notes_override="**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s630-audit-audit-events-table-cp-0004 (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:08:03Z (copilot-titan)\nTests: packages/control-plane/_tests/test_audit_events.py\nDocs touched: packages/control-plane/loop_control_plane/audit_events.py\nFollow-ups: none"),
     StoryV2("S631", "audit: studio audit log page (filterable, paginated)", "S28", "E10", 3, "P0", "AC: 7 filters: actor, action, resource, time, ip, success/failure."),
     StoryV2("S632", "audit: audit log export CSV", "S28", "E20", 1, "P0", "AC: filtered export in <30s for ≤100k rows."),
     StoryV2("S633", "audit: SIEM webhook (Datadog/Splunk/generic)", "S28", "E20", 2, "P1", "AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify."),
