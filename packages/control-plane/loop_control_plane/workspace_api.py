@@ -96,11 +96,15 @@ class WorkspaceAPI:
         region = body.get("region")
         if region is not None and not isinstance(region, str):
             raise WorkspaceError("region must be a string")
+        tenant_kms_key_id = body.get("tenant_kms_key_id")
+        if tenant_kms_key_id is not None and not isinstance(tenant_kms_key_id, str):
+            raise WorkspaceError("tenant_kms_key_id must be a string")
         ws = await self.workspaces.create(
             name=name,
             slug=slug,
             owner_sub=caller_sub,
             region=region,
+            tenant_kms_key_id=tenant_kms_key_id,
         )
         return _serialise_ws(ws)
 
@@ -235,6 +239,8 @@ class WorkspaceAPI:
             if not isinstance(region_value, str):
                 raise WorkspaceError("region must be a string")
             raise WorkspaceError("workspace.region is immutable after create")
+        if "tenant_kms_key_id" in body:
+            raise WorkspaceError("workspace.tenant_kms_key_id is immutable after create")
         new_ws = await self.workspaces.update(
             workspace_id=workspace_id,
             actor_sub=caller_sub,
