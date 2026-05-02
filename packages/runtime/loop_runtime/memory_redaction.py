@@ -10,7 +10,7 @@ from typing import Any, Literal, cast
 MemoryRedactionMode = Literal["off", "regex", "presidio", "llm_classifier"]
 
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
-PHONE_RE = re.compile(r"\b(?:\+?\d[\d .()/-]{7,}\d)\b")
+PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d .()/-]{7,}\d)(?!\w)")
 CARD_RE = re.compile(r"\b(?:\d[ -]*?){13,19}\b")
 
 
@@ -73,9 +73,14 @@ class MemoryPIIRedactor:
 def _regex_spans(text: str) -> tuple[PIISpan, ...]:
     spans: list[PIISpan] = []
     for label, pattern in (
+        ("PAYMENT_CARD", CARD_RE),
         ("EMAIL", EMAIL_RE),
         ("PHONE", PHONE_RE),
-        ("PAYMENT_CARD", CARD_RE),
     ):
-        spans.extend(PIISpan(match.start(), match.end(), label) for match in pattern.finditer(text))
+        for match in pattern.finditer(text):
+            span = PIISpan(match.start(), match.end(), label)
+            if not any(
+                span.start < existing.end and existing.start < span.end for existing in spans
+            ):
+                spans.append(span)
     return tuple(spans)
