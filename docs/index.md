@@ -22,6 +22,8 @@ evaluate AI agents that talk to real users on real channels.
 - [Branch protection](./branch-protection.md) — required CI checks for `main`.
 - [Cloud portability proof](./CLOUD_PROOF.md) — capability matrix and nightly
   GREEN/RED smoke marks.
+- [Gateway cache hit-ratio](./perf/gateway_cache_hit_ratio.md) — nightly
+  semantic-cache effectiveness gate.
 - [Gateway provider eval](./perf/gateway_provider_eval.md) — nightly
   provider quality, latency, and cost matrix.
 
@@ -39,6 +41,7 @@ docs/
     channels.md
     eval.md
   perf/
+    gateway_cache_hit_ratio.md
     gateway_provider_eval.md
   cookbook/             # opinionated, end-to-end examples
     support_agent.md

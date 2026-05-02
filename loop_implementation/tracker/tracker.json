@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:34:26.538314+00:00",
+    "generated_at": "2026-05-02T05:35:11.404264+00:00",
     "format_version": 2
   },
   "epics": [
@@ -19,7 +19,7 @@
       "name": "LLM Gateway",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Multi-provider, semantic cache, cost accounting"
     },
     {
@@ -5385,13 +5385,13 @@
     {
       "id": "S841",
       "title": "perf: gateway-cache hit ratio > 30% on a fixed eval workload",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S37",
       "epic": "E2",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: nightly run reports hit ratio; alert if below target."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s841-perf-gateway-cache-hit-ratio-30 (merged + deletable)\nSkill: skills/testing/perf-check.md\nFinal heartbeat: 2026-05-02T05:34:41Z (codex-orion)\nTests: uv run ruff check/pyright on cache eval files; uv run pytest -q packages/gateway/_tests/test_cache_eval.py tests/test_gateway_cache_hit_ratio_workflow.py tests/test_docs_links.py packages/gateway/_tests/test_gateway_pass11.py; tracker/docs gates pass\nDocs touched: docs/perf/gateway_cache_hit_ratio.md,docs/index.md,bench/results/gateway_cache_hit_ratio.json,.github/workflows/gateway-cache-hit-ratio.yml\nFollow-ups: none"
     },
     {
       "id": "S842",
