@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:26:15.153840+00:00",
+    "generated_at": "2026-05-02T06:29:38.944504+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5105,7 +5105,7 @@
       "points": 2,
       "priority": "P1",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s775-infra-terraform-module-hetzner-h\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:26:15Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: codex-orion/s775-infra-terraform-module-hetzner-h\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1/5\nHeartbeat: 2026-05-02T06:29:38Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: Hetzner Terraform module and static checks landed"
     },
     {
       "id": "S776",
