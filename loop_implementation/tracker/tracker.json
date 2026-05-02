@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T00:40:24.357809+00:00",
+    "generated_at": "2026-05-02T00:40:44.192038+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5159,8 +5159,8 @@
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s780-ci-cross-cloud-nightly-smoke-tes\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 5/5\nHeartbeat: 2026-05-02T00:40:24Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: ready to close cross-cloud smoke matrix\nLatest checkpoint: focused static shell and SDK scan passed\nLatest checkpoint: tracker docs and checkpoint gates passed\nLatest checkpoint: nearby smoke and broad pytest passed\nLatest checkpoint: cross-cloud smoke workflow script tests and docs landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s780-ci-cross-cloud-nightly-smoke-tes (merged + deletable)\nSkill: skills/architecture/cloud-portability-check.md\nFinal heartbeat: 2026-05-02T00:40:44Z (codex-orion)\nTests: uv run ruff check scripts/cross_cloud_smoke.py tests/test_cross_cloud_smoke.py; uv run ruff format --check same files; uv run pyright same files; uv run pytest -q tests/test_cross_cloud_smoke.py (3 passed); bash -n scripts/cross_cloud_smoke.sh; forbidden cloud SDK grep passed for packages/runtime packages/gateway packages/sdk-py packages/channels; uv run pytest -q tests/test_cross_cloud_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py (7 passed); uv run pytest -q -m 'not integration and not e2e' (1268 passed, 3 skipped, 4 deselected); python3 tools/build_tracker.py; python3 tools/check_tracker_notes.py; python3 tools/check_docs_with_code.py; python3 tools/check_checkpoint_discipline.py; full repo ruff/format/pyright remain baseline-red in unrelated files\nDocs touched: loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/engineering/REGIONAL_DEPLOYS.md\nFollow-ups: none"
     },
     {
       "id": "S781",
