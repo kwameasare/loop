@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:29:38.944504+00:00",
+    "generated_at": "2026-05-02T06:30:47.330767+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5104,8 +5104,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s775-infra-terraform-module-hetzner-h\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1/5\nHeartbeat: 2026-05-02T06:29:38Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: Hetzner Terraform module and static checks landed"
+      "status": "Blocked",
+      "notes": "**Blocked.**\nBranch: codex-orion/s775-infra-terraform-module-hetzner-h\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1/5 (Hetzner module, env, static checks landed; live apply pending)\nHeartbeat: 2026-05-02T06:30:25Z (codex-orion)\nOpen questions: none\nBlockers:\n- Terraform CLI is not installed in this worktree.\n- No Hetzner Cloud token, SSH key IDs, server type, managed Postgres plan, or kube/Helm runtime context are available; the AC inherits S770's live terraform plan/apply plus deployed smoke test requirement.\nCommits: 60de1d0 claim; c64afd1 inputs; 61831e3 services; 244e9c1 outputs; b5ed953 env; b0415f5 region; 60c062d tests; 599215e docs; 9c65777 checkpoint"
     },
     {
       "id": "S776",
