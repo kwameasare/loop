@@ -1,0 +1,12 @@
+{
+  "baseline_ref": "main",
+  "iterations": 80,
+  "name": "tool_host_warm_start",
+  "p50_ms": 0.002,
+  "p95_ms": 0.018,
+  "p99_ms": 0.089,
+  "passed": true,
+  "regression_threshold": 0.1,
+  "target_p95_ms": 300.0,
+  "ts": "2026-05-02T05:38:59+00:00"
+}

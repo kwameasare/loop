@@ -26,6 +26,8 @@ evaluate AI agents that talk to real users on real channels.
   semantic-cache effectiveness gate.
 - [Gateway provider eval](./perf/gateway_provider_eval.md) — nightly
   provider quality, latency, and cost matrix.
+- [Tool-host warm-start](./perf/tool_host_warm_start.md) — nightly WarmPool
+  p95 budget gate.
 
 ## How docs are organised
 
@@ -43,6 +45,7 @@ docs/
   perf/
     gateway_cache_hit_ratio.md
     gateway_provider_eval.md
+    tool_host_warm_start.md
   cookbook/             # opinionated, end-to-end examples
     support_agent.md
 ```
