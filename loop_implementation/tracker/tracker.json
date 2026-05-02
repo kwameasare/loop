@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:40:09.976109+00:00",
+    "generated_at": "2026-05-02T06:40:59.612323+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5297,13 +5297,13 @@
     {
       "id": "S821",
       "title": "memory: Zep adapter (drop-in)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S36",
       "epic": "E4",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: same Protocol; integration test."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s821-memory-zep-adapter-drop-in\nSkill: skills/coding/implement-runtime-feature.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T06:33:44Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S822",
