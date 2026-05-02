@@ -1067,14 +1067,7 @@ Final heartbeat: 2026-05-02T06:16:17Z (copilot-titan)
 Tests: packages/control-plane/_tests/test_audit_export.py
 Docs touched: packages/control-plane/loop_control_plane/audit_export.py
 Follow-ups: none"
-S633,audit: SIEM webhook (Datadog/Splunk/generic),copilot-thor,S28,E20,2,P1,Done,"**Done.**
-PR: (opened by squash-merge)
-Branch: copilot-thor/s633-audit-siem-webhook-datadog-splun (merged + deletable)
-Skill: skills/api/add-rest-endpoint.md
-Final heartbeat: 2026-05-02T13:43:34Z (copilot-thor)
-Tests: 18 pytest (test_siem_webhook.py): HMAC signing, registration, delivery, backfill, error handling
-Docs touched: loop_control_plane/siem_webhook.py: SiemWebhookDispatcher with HMAC-SHA-256 signing, per-workspace config, backfill
-Follow-ups: Retry queue with exponential backoff; batch delivery mode; webhook delivery audit log"
+S633,audit: SIEM webhook (Datadog/Splunk/generic),tbd,S28,E20,2,P1,Not started,AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify.
 S634,audit: DPA template + redlines workflow,tbd,S28,E20,2,P1,Not started,AC: DPA.md + redlines mechanism documented; sample redline-PR closed.
 S635,audit: GDPR Art-17 data-deletion request endpoint + workflow,copilot-titan,S28,E16,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
