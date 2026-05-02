@@ -13,8 +13,8 @@ from loop_memory.episodic import EpisodicError, auto_summarize
 _TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9_.:-]{1,}", re.IGNORECASE)
 _STOPWORDS = set(re.findall(
     r"[a-z]+",
-    "about after again also because before hello just please thanks that their "
-    "there they this with would",
+    "about after again also and because before hello just please thanks that "
+    "the their there they this with would",
 ))
 _INTENT_WORDS = set(re.findall(
     r"[a-z]+",
@@ -80,7 +80,9 @@ def _fit(text: str, max_chars: int) -> str:
         raise EpisodicError("max_chars must be positive")
     if len(text) <= max_chars:
         return text
-    return text[: max_chars - 1].rstrip() + "..."
+    if max_chars <= 3:
+        return "." * max_chars
+    return text[: max_chars - 3].rstrip() + "..."
 
 
 def langmem_summarize(
@@ -95,7 +97,7 @@ def langmem_summarize(
         enumerate(lines),
         key=lambda item: (-_score_line(item[1], set(anchors)), item[0]),
     )[:3]
-    facts = " ; ".join(line for _, line in sorted(scored))
+    facts = " ; ".join(line for _, line in scored)
     llm_text = ""
     if llm_summarizer is not None:
         llm_text = llm_summarizer(lines, max_chars=max(48, max_chars // 2)).strip()
@@ -127,8 +129,8 @@ def evaluate_summary_retrieval(
         raise EpisodicError("summary retrieval eval requires at least one case")
     if min_relative_improvement < 0:
         raise EpisodicError("min_relative_improvement must be >= 0")
-    baseline_scores = []
-    candidate_scores = []
+    baseline_scores: list[float] = []
+    candidate_scores: list[float] = []
     for case in cases:
         baseline_scores.append(
             _query_coverage(baseline(case.messages, max_chars=max_chars), case.query)
