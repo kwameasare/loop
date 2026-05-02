@@ -882,11 +882,12 @@ S779,portability: EmailSender Protocol parity tests across SES/Resend/SMTP,GitHu
 S780,ci: cross-cloud nightly smoke test matrix (deploy + first-turn on AWS+Azure+GCP),codex-orion,S34,E12,3,P0,In progress,"**Active.**
 Branch: codex-orion/s780-ci-cross-cloud-nightly-smoke-tes
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 3/5
-Heartbeat: 2026-05-02T00:40:00Z (codex-orion)
+Last step: 4/5
+Heartbeat: 2026-05-02T00:40:10Z (codex-orion)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: focused static shell and SDK scan passed
 Latest checkpoint: tracker docs and checkpoint gates passed
 Latest checkpoint: nearby smoke and broad pytest passed
 Latest checkpoint: cross-cloud smoke workflow script tests and docs landed"
