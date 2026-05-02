@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T13:35:49.249448+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3537,13 +3537,13 @@
     {
       "id": "S496",
       "title": "kb-v1: layout-aware chunking (tables, code blocks, math preserved)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S21",
       "epic": "E5",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: tables stay intact in retrieved chunks; code blocks preserved verbatim."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s496-kb-v1-layout-aware-chunking-tabl\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T13:35:49Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S497",
