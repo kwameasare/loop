@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Google Workspace SAML 2.0 IdP metadata fixture — S614
+  =======================================================
+  This is a *sandbox* Google Workspace (formerly G Suite) metadata
+  document used for integration tests.  The certificate and IDs are
+  synthetic; they do NOT correspond to a real Google Cloud project.
+
+  A real Google Workspace metadata file is obtained from the Admin
+  Console:
+    Admin console -> Apps -> Web and mobile apps -> your SAML app
+    -> Download IdP metadata
+
+  Key fields used by GoogleMetadataParser:
+    - EntityDescriptor[@entityID]                      -> IdP Entity ID
+    - IDPSSODescriptor/SingleSignOnService[@Binding=HTTP-POST][@Location]
+      -> SSO URL
+    - IDPSSODescriptor/KeyDescriptor/.../X509Certificate
+      -> IdP signing certificate (PEM body)
+
+  Google-specific differences:
+    1. The entityID is typically "https://accounts.google.com/o/saml2?idpid=<ID>"
+       or "https://accounts.google.com/o/saml2/idp?idpid=<ID>".
+    2. The SSO URL is:
+       "https://accounts.google.com/o/saml2/idp?idpid=<ID>"
+    3. Google metadata uses both "md:" prefix and raw elements depending
+       on the Admin Console version; this fixture uses the "md:" prefix
+       style for parser compatibility testing.
+    4. Google rotates SAML signing certs automatically; always upload the
+       latest cert from the Admin Console.
+-->
+<md:EntityDescriptor
+  xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+  xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+  entityID="https://accounts.google.com/o/saml2?idpid=SandboxGoogleAppID0000">
+
+  <md:IDPSSODescriptor
+    WantAuthnRequestsSigned="false"
+    protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo>
+        <ds:X509Data>
+          <!-- Sandbox self-signed cert (not used for real crypto; test only) -->
+          <ds:X509Certificate>
+MIICpDCCAYwCCQDU7pQ4pHgSgWDANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAls
+b29wLWdvb2cxHhcNMjQwMTAxMDAwMDAwWhcNMjUwMTAxMDAwMDAwWjAUMRIwEAYD
+VQQDDAlsb29wLWdvb2cwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCz
+SandboxGoogleCertBase64BodyForTestingPurposesNotRealXxx==
+          </ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+
+    <md:NameIDFormat>
+      urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+    </md:NameIDFormat>
+
+    <!-- HTTP-POST binding (Google's primary binding) -->
+    <md:SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+      Location="https://accounts.google.com/o/saml2/idp?idpid=SandboxGoogleAppID0000"/>
+
+    <!-- HTTP-Redirect binding (secondary) -->
+    <md:SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+      Location="https://accounts.google.com/o/saml2/idp?idpid=SandboxGoogleAppID0000"/>
+
+  </md:IDPSSODescriptor>
+
+</md:EntityDescriptor>

@@ -41,6 +41,20 @@ full-reply first-audio p50 at 420 ms and the sentence-streaming path at
 180 ms, a 240 ms / 57.1% cut while staying inside the 700 ms voice p50
 budget.
 
+<!-- S652 -->
+ASR/TTS websocket providers can be wrapped with
+`loop_voice.WarmWebSocketPool`. The pool exposes `prewarm()` for
+pre-handshaking a provider socket before the first turn, `keepalive()`
+for idle provider keep-alives, and `close_idle()` for deterministic idle
+teardown after the configured timeout. Existing adapters keep their
+`open_ws` injection point; production passes `pool.open`, so Deepgram,
+ElevenLabs, and Cartesia can share the same pooling contract.
+
+The S652 contract in `bench/results/voice_connection_pooling.json`
+models cold provider handshake p50 at 90 ms and prewarmed acquisition at
+0 ms for the first ASR/TTS socket, removing the handshake from the
+caller-visible voice budget.
+
 ## Measurement
 
 Every voice turn that flows through `VoiceSession` is timestamped at

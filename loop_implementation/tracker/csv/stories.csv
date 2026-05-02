@@ -981,7 +981,14 @@ Final heartbeat: 2026-05-02T05:40:21Z (copilot-titan)
 Tests: packages/control-plane/_tests/test_saml_sp.py packages/control-plane/_tests/test_okta_integration.py
 Docs touched: packages/control-plane/fixtures/okta_idp_metadata.xml
 Follow-ups: S613 S617"
-S613,sso: Entra ID recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: same as Okta but Entra ID.
+S613,sso: Entra ID recipe + sandbox tenant test,copilot-titan,S27,E20,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s613-sso-entra-id-recipe-sandbox-tena (merged + deletable)
+Skill: skills/security/secrets-kms-check.md
+Final heartbeat: 2026-05-02T05:44:47Z (copilot-titan)
+Tests: packages/control-plane/_tests/test_entra_integration.py
+Docs touched: packages/control-plane/fixtures/entra_idp_metadata.xml
+Follow-ups: S614 S617"
 S614,sso: Google Workspace recipe + sandbox test,tbd,S27,E20,2,P0,Not started,AC: same.
 S615,sso: studio enterprise tab → connect IdP + upload metadata,tbd,S27,E10,2,P0,Not started,AC: paste metadata URL or upload XML; status flips to Connected after ACS-roundtrip.
 S616,sso: just-in-time user provisioning at first login,tbd,S27,E20,2,P0,Not started,AC: unknown SAML subject creates user + workspace_members row per group mapping.
@@ -1027,15 +1034,22 @@ Final heartbeat: 2026-05-02T05:32:33Z (codex-vega)
 Tests: touched ruff/format pass; touched pyright pass; packages/voice/_tests 120 passed; pytest -q -m 'not integration and not e2e' passed 1340, 3 skipped, 4 deselected; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff+pyright remain baseline-red in unrelated tools/tests
 Docs touched: loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_tts_sentence_streaming.json
 Follow-ups: none"
-S652,voice-perf: model warm-up + connection-pooling for ASR/TTS providers,codex-vega,S29,E7,2,P0,In progress,"**Active.**
-Branch: codex-vega/s652-voice-perf-model-warm-up-connect
+S652,voice-perf: model warm-up + connection-pooling for ASR/TTS providers,codex-vega,S29,E7,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-vega/s652-voice-perf-model-warm-up-connect (merged + deletable)
+Skill: skills/testing/perf-check.md
+Final heartbeat: 2026-05-02T05:42:37Z (codex-vega)
+Tests: touched ruff/format pass; touched pyright pass; voice pooling tests pass (52); pytest -q -m 'not integration and not e2e' passed (1408 passed, 3 skipped, 4 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests
+Docs touched: loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_connection_pooling.json
+Follow-ups: none"
+S653,"voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS",codex-vega,S29,E7,2,P0,In progress,"**Active.**
+Branch: codex-vega/s653-voice-perf-regional-endpoints-eu
 Skill: skills/testing/perf-check.md
 Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T05:34:26Z (codex-vega)
+Heartbeat: 2026-05-02T05:44:23Z (codex-vega)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)"
-S653,"voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS",tbd,S29,E7,2,P0,Not started,AC: nearest-region selector; latency map committed.
 S654,voice-perf: latency benchmark ≤700ms p50 acceptance gate,tbd,S29,E7,2,P0,Not started,AC: scripts/voice_perf.py runs nightly; CI alerts if breached.
 S655,ga-polish: design-system audit + component refactor,tbd,S29,E10,3,P1,Not started,AC: token map sweep; <5 hardcoded colours/spacings remain; doc'd in design system.
 S656,ga-polish: a11y audit (WCAG 2.1 AA) on top 10 studio pages,tbd,S29,E10,2,P0,Not started,AC: axe-core zero serious; manual screen-reader pass; report committed.
