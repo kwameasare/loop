@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:08:03.263900+00:00",
+    "generated_at": "2026-05-02T06:09:56.455658+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4197,13 +4197,13 @@
     {
       "id": "S631",
       "title": "audit: studio audit log page (filterable, paginated)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S28",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: 7 filters: actor, action, resource, time, ip, success/failure."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s631-audit-studio-audit-log-page-filt (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:09:56Z (copilot-titan)\nTests: apps/studio/src/components/workspaces/audit-log-page.test.tsx\nDocs touched: apps/studio/src/components/workspaces/audit-log-page.tsx\nFollow-ups: none"
     },
     {
       "id": "S632",
