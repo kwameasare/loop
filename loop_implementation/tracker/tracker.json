@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:19:23.978364+00:00",
+    "generated_at": "2026-05-02T05:22:50.273287+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4043,13 +4043,13 @@
     {
       "id": "S594",
       "title": "region: studio region selector at workspace creation",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S26",
       "epic": "E10",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: dropdown defaults to inferred region; selection persisted; clear cannot-change-later notice."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s594-region-studio-region-selector-at (merged + deletable)\nSkill: skills/coding/typescript.md\nFinal heartbeat: 2026-05-02T05:22:50Z (copilot-thor)\nTests: 8 vitest tests (opens modal, defaults region to inferred TZ, defaults to us-east-1 for unknown TZ, shows all regions, shows cannot-change-later notice, persists selected region to onSubmit, slug format error, cancel resets). pytest 1341/1341.\nDocs touched: apps/studio/src/lib/regions.ts,apps/studio/src/components/shell/create-workspace-modal.tsx\nFollow-ups: S595"
     },
     {
       "id": "S595",
@@ -5664,7 +5664,7 @@
       "theme": "EU region (data residency)",
       "goal": "Region pinning, EU stack, region-aware routing, cross-region export blocker, smoke test.",
       "stories": "S590-S597",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S27",
