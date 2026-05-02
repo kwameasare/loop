@@ -58,7 +58,7 @@ When two docs disagree on terminology, this file wins. PRs that introduce new te
 
 **End user.** A person interacting with an agent via a channel — distinct from a "user" of Loop (a builder/operator). Identified per channel by `user_id`.
 
-**Episodic memory.** Loop's per-user, semantically-searchable memory tier. Auto-summarizes turns and embeds them in Qdrant. Allows agents to recall semantically similar past interactions across a user's lifetime.
+**Episodic memory.** Loop's per-user, semantically-searchable memory tier. Auto-summarizes turns and embeds them in Qdrant. Allows agents to recall semantically similar past interactions across a user's lifetime. `langmem_summarize` is the higher-recall summary variant for conversations where late facts and retrieval anchors must survive truncation.
 
 **Eval.** Automated test suite comparing agent outputs against scorers (LLM judge, regex, tool-call assertion, latency, cost, hallucination, etc.). Blocks deploy if a regression exceeds threshold.
 

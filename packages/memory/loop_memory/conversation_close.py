@@ -31,6 +31,7 @@ from loop_memory.episodic import (
     EpisodicStore,
     auto_summarize,
 )
+from loop_memory.langmem_summary import SummaryFn
 
 
 class ConversationOutcome(StrEnum):
@@ -86,11 +87,12 @@ async def ingest_closed_conversation(
     ctx: CloseContext,
     messages: Sequence[str],
     salience_fn: SalienceFn = default_salience,
+    summarizer: SummaryFn = auto_summarize,
 ) -> EpisodicEntry:
     """Build + persist an :class:`EpisodicEntry` for a closed conversation."""
     if not messages:
         raise EpisodicError("cannot ingest a conversation with no messages")
-    summary = auto_summarize(messages)
+    summary = summarizer(messages)
     embedding = embedder.embed(summary)
     if len(embedding) != EMBEDDING_DIM:
         raise EpisodicError(
