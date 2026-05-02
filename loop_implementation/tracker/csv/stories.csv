@@ -380,14 +380,14 @@ Final heartbeat: 2026-05-02T02:47:18Z (copilot-thor)
 Tests: vitest covers computeWorkspaceKpis aggregation+projection, dayBoundsUTC, formatDeltaPercent, WorkspaceKpiCards rendering+zero-baseline
 Docs touched: apps/studio/src/components/cost/workspace-kpi-cards.tsx,apps/studio/src/lib/costs.ts
 Follow-ups: none"
-S284,studio: cost time-series chart (Recharts) per agent,copilot-thor,S10,E10,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s284-studio-cost-time-series-chart-re
+S284,studio: cost time-series chart (Recharts) per agent,copilot-thor,S10,E10,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s284-studio-cost-time-series-chart-re (merged + deletable)
 Skill: skills/ux/component-design.md
-Last step: 0/6 (just claimed)
-Heartbeat: 2026-05-02T02:47:33Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T02:50:18Z (copilot-thor)
+Tests: vitest covers buildDailyCostSeries backfill+filter+isolation, thirtyDayWindowUTC, formatDayLabel, CostTimeSeriesChart points/tooltip/multi-select
+Docs touched: apps/studio/src/components/cost/cost-time-series-chart.tsx,apps/studio/src/lib/cost-series.ts
+Follow-ups: none"
 S285,"studio: cost filters (agent, channel, model, date)",tbd,S10,E10,1,P1,Not started,AC: filters URL-synced + persisted to localStorage.
 S286,obs: trace export to ClickHouse (replace InMemory in non-test env),codex-vega,S10,E9,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
