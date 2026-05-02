@@ -685,14 +685,14 @@ Final heartbeat: 2026-05-02T03:20:31Z (copilot-thor)
 Tests: vitest covers FlowCanvas toolbar render, zoom-in via toolbar, reset, drag-to-pan; flow-canvas geometry helpers (clamp/pan/zoomAt/reset)
 Docs touched: apps/studio/src/components/flow/flow-canvas.tsx,apps/studio/src/lib/flow-canvas.ts,apps/studio/src/app/agents/[agent_id]/flow/page.tsx
 Follow-ups: none"
-S461,flow: node palette w/ types start/message/condition/ai-task/http/code/end,copilot-thor,S19,E10,3,P0,In progress,"**Active.**
-Branch: copilot-thor/s461-flow-node-palette-w-types-start
+S461,flow: node palette w/ types start/message/condition/ai-task/http/code/end,copilot-thor,S19,E10,3,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s461-flow-node-palette-w-types-start (merged + deletable)
 Skill: skills/ux/component-design.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T03:20:49Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T03:24:21Z (copilot-thor)
+Tests: vitest covers NodePalette renders all 7 kinds with distinct icons + dragStart callback; FlowEditor drop creates node, multiple drops use distinct types, ignores empty drops
+Docs touched: apps/studio/src/components/flow/flow-editor.tsx,apps/studio/src/components/flow/node-palette.tsx,apps/studio/src/lib/flow-nodes.ts,apps/studio/src/app/agents/[agent_id]/flow/page.tsx
+Follow-ups: none"
 S462,flow: node config sidebar (per-type form),tbd,S19,E10,3,P0,Not started,AC: clicking a node opens sidebar; form fields persist on blur; validation surfaces.
 S463,flow: edge editing (connect/disconnect/redirect),tbd,S19,E10,2,P0,Not started,AC: drag-from-handle connects; click edge → delete confirm.
 S464,flow: variable inspector (state at any node),tbd,S19,E10,2,P0,Not started,AC: side panel shows live state during emulator run.
