@@ -923,11 +923,12 @@ S827,kb-v2: structured-data retrieval (CSV/Excel/JSON with SQL-on-the-fly),tbd,S
 S840,perf: turn-latency p95 < 2.0s end-to-end (text path) — acceptance gate,codex-orion,S37,E1,2,P0,In progress,"**Active.**
 Branch: codex-orion/s840-perf-turn-latency-p95-2-0s-end-t
 Skill: skills/testing/perf-check.md
-Last step: 1/5
-Heartbeat: 2026-05-02T01:12:18Z (codex-orion)
+Last step: 2/5
+Heartbeat: 2026-05-02T01:12:43Z (codex-orion)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: focused static and workflow tests passed
 Latest checkpoint: turn latency k6 workflow tests and docs landed"
 S841,perf: gateway-cache hit ratio > 30% on a fixed eval workload,tbd,S37,E2,2,P0,Not started,AC: nightly run reports hit ratio; alert if below target.
 S842,perf: KB retrieval p50 < 200ms at 1M chunks per agent,tbd,S37,E5,2,P0,Not started,AC: synthetic 1M-chunk fixture; benchmark in CI; report committed.
