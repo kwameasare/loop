@@ -247,6 +247,9 @@ Loop is **dual-stack IPv6/IPv4 ready** at the platform level:
 **China / Alibaba:**
 - Mainland-China workspaces must run on Alibaba Cloud (legal requirement).
 - Abstract region `cn-shanghai` deploys exclusively to Alibaba Cloud ACK + ApsaraDB.
+- `infra/terraform/envs/prod-alibaba-cn-shanghai` resolves its concrete
+  provider region through `regions.yaml` and invokes the S773 Alibaba
+  module for ACK, ApsaraDB PostgreSQL, ApsaraDB Redis, OSS, KMS, and DCDN.
 - No cross-border egress allowed; LLM calls are routed through a local LLM provider (TBD at month 9).
 
 **Sovereign cloud / on-prem:**

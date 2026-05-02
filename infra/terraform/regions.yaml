@@ -20,3 +20,11 @@ regions:
       aws: eu-central-1
       azure: westeurope
       gcp: europe-west1
+  cn-shanghai:
+    display_name: China Shanghai
+    residency: CN
+    primary: false
+    control_plane_url: https://api.cn-shanghai.loop.example/v1
+    data_plane_url: https://runtime.cn-shanghai.loop.example
+    concrete:
+      alibaba: cn-shanghai

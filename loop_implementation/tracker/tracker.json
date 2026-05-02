@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:18:03.322771+00:00",
+    "generated_at": "2026-05-02T06:19:41.667314+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5077,13 +5077,13 @@
     {
       "id": "S773",
       "title": "infra: terraform module — Alibaba Cloud (ACK + RDS + Redis + OSS + KMS + DCDN)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S34",
       "epic": "E12",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: same against Alibaba Cloud (China region)."
+      "status": "Blocked",
+      "notes": "**Blocked.**\nBranch: codex-orion/s773-infra-terraform-module-alibaba-c\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1/5 (Alibaba module, env, static checks landed; live apply pending)\nHeartbeat: 2026-05-02T06:18:52Z (codex-orion)\nOpen questions: none\nBlockers:\n- Terraform CLI is not installed in this worktree.\n- No Alibaba Cloud credentials/account, VPC/VSwitch IDs, OSS bucket name, or DCDN domain/origin are available; the AC inherits S770's live terraform plan/apply plus deployed smoke test requirement.\nCommits: ce8f31b claim; adfdef4 inputs; e6c79f9 services; 475b75c outputs; 4728ca2 env; a359c89 region; eac9434 tests; c7506dc docs; a01cac7 checkpoint"
     },
     {
       "id": "S774",

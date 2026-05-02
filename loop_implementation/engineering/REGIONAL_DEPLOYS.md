@@ -16,12 +16,16 @@ See also:
 * `infra/helm/loop/values.yaml` — the base chart defaults.
 * `infra/terraform/envs/prod-eu-west/` — Terraform Helm release for
   installing the EU overlay into a pre-provisioned EU Kubernetes cluster.
+* `infra/terraform/envs/prod-alibaba-cn-shanghai/` — Alibaba Cloud
+  Terraform entry point for the China data plane (ACK + ApsaraDB + OSS +
+  KMS + DCDN).
 
 ## Available regions
 
 | Region    | Overlay file                                         | Status   | Residency |
 | --------- | ---------------------------------------------------- | -------- | --------- |
 | eu-west   | `infra/helm/loop/values-eu-west.yaml`                | GA (S045) | EU        |
+| cn-shanghai | Alibaba Terraform env + enterprise Helm overlay    | Blocked on live credentials (S773) | CN |
 | us-east   | (uses base `values.yaml`)                            | GA       | US        |
 | ap-south  | _planned (S0xx)_                                     | —        | —         |
 | us-gov    | _planned (FedRAMP track)_                            | —        | —         |
@@ -129,6 +133,7 @@ migrations. Schema migrations are gated on the migration job
 
 | Date       | Author       | Change                                            |
 | ---------- | ------------ | ------------------------------------------------- |
+| 2026-05-02 | codex-orion (S773) | Add Alibaba Cloud `cn-shanghai` Terraform module/env; live apply remains blocked on credentials. |
 | 2026-05-02 | codex-orion (S780) | Add nightly AWS/Azure/GCP Helm deploy + first-turn smoke matrix. |
 | 2026-05-01 | codex-orion (S597) | Add nightly EU full-turn smoke workflow and `scripts/eu_smoke.sh`. |
 | 2026-05-01 | codex-orion (S595) | Add signed regional image promotion workflow; daily verification keeps NA/EU tags on one digest. |
