@@ -69,6 +69,7 @@ These are **hard contracts**. A PR that regresses any of them by > 10% (vs the r
 
 - **Per PR (microbenches only).** `pytest-benchmark --benchmark-only` runs on every push touching `packages/runtime/`, `packages/gateway/`, `packages/kb-engine/`. Results compared to `main`'s last green run; >10% regression blocks.
 - **Nightly (full).** Full k6 + locust against staging. Results posted to `#perf` Slack with diffs vs 7-day baseline.
+- **Nightly turn-latency gate.** <!-- S840 --> `.github/workflows/turn-latency-k6.yml` deploys the Helm smoke runtime in kind and runs `scripts/k6_turn_latency.js` against `/v1/turns`. The k6 threshold `http_req_duration p(95)<2000` fails CI on breach and the failure path pages `LOOP_ONCALL_WEBHOOK_URL`.
 - **Pre-release.** Voice leg + load matrix on every release-candidate.
 - **Quarterly.** Cross-cloud comparison run (AWS, GCP, Azure, Alibaba) — same workload, three runs each, results published in the engineering blog.
 
@@ -96,6 +97,11 @@ These are **hard contracts**. A PR that regresses any of them by > 10% (vs the r
 ```
 
 The CI compares the new run to the file at `main@<baseline_ref>`. Regression = `(mean_new - mean_baseline) / mean_baseline > regression_threshold`.
+
+HTTP-load gates may also commit a compact k6 contract file under `bench/results/`.
+For S840, `bench/results/turn_latency_text_path_k6.json` records the text-turn
+p95 budget, the source workflow, and the alerting threshold; the nightly k6 run
+exports the full raw summary as a CI artifact for time-series comparison.
 
 ### 2.4 Flake handling
 
