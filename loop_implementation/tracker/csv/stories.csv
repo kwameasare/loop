@@ -1069,7 +1069,14 @@ Docs touched: packages/control-plane/loop_control_plane/audit_export.py
 Follow-ups: none"
 S633,audit: SIEM webhook (Datadog/Splunk/generic),tbd,S28,E20,2,P1,Not started,AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify.
 S634,audit: DPA template + redlines workflow,tbd,S28,E20,2,P1,Not started,AC: DPA.md + redlines mechanism documented; sample redline-PR closed.
-S635,audit: GDPR Art-17 data-deletion request endpoint + workflow,tbd,S28,E16,2,P0,Not started,AC: POST /v1/workspaces/{id}/data-deletion enqueues job; results emailed.
+S635,audit: GDPR Art-17 data-deletion request endpoint + workflow,copilot-titan,S28,E16,2,P0,In progress,"**Active.**
+Branch: copilot-titan/s635-audit-gdpr-art-17-data-deletion
+Skill: skills/api/api-versioning.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T06:17:48Z (copilot-titan)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S636,ent: customer-managed KMS key (CMK) per workspace,codex-orion,S28,E20,3,P0,Blocked,"**Blocked.**
 Branch: codex-orion/s636-ent-customer-managed-kms-key-cmk
 Skill: skills/security/secrets-kms-check.md

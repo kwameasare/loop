@@ -5,7 +5,7 @@ sprint_length,2 weeks (Sprint 0 is 6w bootstrap)
 epics_total,20
 stories_total,480
 stories_done,430
-stories_in_progress,1
+stories_in_progress,2
 stories_blocked,8
 sprints_total,38
 risks_total,12
