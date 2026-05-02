@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T00:05:35.900203+00:00",
+    "generated_at": "2026-05-02T00:05:57.948389+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5116,7 +5116,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s776-portability-objectstore-protocol\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1/5\nHeartbeat: 2026-05-02T00:05:35Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: ObjectStore contract parity suite and docs landed"
+      "notes": "**Active.**\nBranch: codex-orion/s776-portability-objectstore-protocol\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 2/5\nHeartbeat: 2026-05-02T00:05:57Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: focused ObjectStore static parity tests and SDK scan passed\nLatest checkpoint: ObjectStore contract parity suite and docs landed"
     },
     {
       "id": "S777",
