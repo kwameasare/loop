@@ -62,6 +62,31 @@ def _workflow_policy_errors(job: dict[str, Any]) -> list[str]:
     return errors
 
 
+def _signature_policy_errors(job: dict[str, Any], image_env: str, main_env: str) -> list[str]:
+    text = yaml.safe_dump(job)
+    run_text = "\n".join(str(step.get("run", "")) for step in _steps(job))
+    errors: list[str] = []
+    if job.get("permissions", {}).get("id-token") != "write":
+        errors.append("workflow must grant OIDC id-token for keyless signing")
+    if "sigstore/cosign-installer" not in text:
+        errors.append("workflow must install cosign")
+    if "imjasonh/setup-crane" not in text or "crane digest" not in run_text:
+        errors.append("workflow must resolve pushed image digests")
+    if f"docker push \"${image_env}\"" not in run_text or f"docker push \"${main_env}\"" not in run_text:
+        errors.append("workflow must push both sha and main tags")
+    if 'test "$main_digest" = "$digest"' not in run_text:
+        errors.append("workflow must prove main tag matches signed digest")
+    if "cosign sign --yes" not in run_text:
+        errors.append("workflow must sign the immutable digest")
+    if (
+        "cosign verify" not in run_text
+        or "--certificate-identity-regexp" not in run_text
+        or "--certificate-oidc-issuer" not in run_text
+    ):
+        errors.append("workflow must verify the cosign certificate identity")
+    return errors
+
+
 def test_cp_api_dockerfile_is_distroless_nonroot() -> None:
     dockerfile = DOCKERFILE.read_text()
 
@@ -97,6 +122,21 @@ def test_cp_api_image_workflow_builds_scans_and_pushes_on_main() -> None:
     assert any(step.get("uses", "").startswith("aquasecurity/trivy-action@") for step in steps)
 
 
+def test_service_image_workflows_sign_and_verify_pushed_digests() -> None:
+    jobs = _workflow_jobs()
+
+    assert _signature_policy_errors(
+        cast(dict[str, Any], jobs["cp-api-image"]),
+        "CP_API_IMAGE",
+        "CP_API_IMAGE_MAIN",
+    ) == []
+    assert _signature_policy_errors(
+        cast(dict[str, Any], jobs["dp-runtime-image"]),
+        "DP_RUNTIME_IMAGE",
+        "DP_RUNTIME_IMAGE_MAIN",
+    ) == []
+
+
 def test_cp_api_image_workflow_policy_rejects_missing_scan_and_push() -> None:
     bad_job: dict[str, Any] = {
         "env": {"CP_API_MAX_BYTES": "120000000"},
@@ -106,6 +146,25 @@ def test_cp_api_image_workflow_policy_rejects_missing_scan_and_push() -> None:
     assert _workflow_policy_errors(bad_job) == [
         "workflow must scan HIGH/CRITICAL vulnerabilities",
         "workflow must push to GHCR on main",
+    ]
+
+
+def test_image_signature_policy_rejects_unsigned_push() -> None:
+    bad_job: dict[str, Any] = {
+        "permissions": {"contents": "read", "packages": "write"},
+        "steps": [
+            {"uses": "actions/checkout@v4"},
+            {"run": 'docker push "$IMAGE"\ndocker push "$IMAGE_MAIN"'},
+        ],
+    }
+
+    assert _signature_policy_errors(bad_job, "IMAGE", "IMAGE_MAIN") == [
+        "workflow must grant OIDC id-token for keyless signing",
+        "workflow must install cosign",
+        "workflow must resolve pushed image digests",
+        "workflow must prove main tag matches signed digest",
+        "workflow must sign the immutable digest",
+        "workflow must verify the cosign certificate identity",
     ]
 
 

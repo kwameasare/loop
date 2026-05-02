@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:01:24.018214+00:00",
+    "generated_at": "2026-05-02T06:03:15.690064+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1986,13 +1986,13 @@
     {
       "id": "S263",
       "title": "deploy: image push w/ cosign signature",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S9",
       "epic": "E12",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: cosign sign + verify gate before deploy."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s263-deploy-image-push-w-cosign-signa (merged + deletable)\nSkill: skills/ops/deploy-agent-version.md\nFinal heartbeat: 2026-05-02T06:02:53Z (codex-orion)\nTests: uv run ruff check/pyright tests/test_cp_api_image_ci.py; uv run pytest -q tests/test_cp_api_image_ci.py; tracker/docs/checkpoint/no-bulk gates pass\nDocs touched: docs/branch-protection.md,loop_implementation/engineering/SECURITY.md\nFollow-ups: none"
     },
     {
       "id": "S264",
@@ -5528,7 +5528,7 @@
       "theme": "Deploy controller v0",
       "goal": "Artifact → image → k8s with canary promotion, rollback, deploy events.",
       "stories": "S260-S271",
-      "status": "In progress"
+      "status": "Done"
     },
     {
       "id": "S10",
