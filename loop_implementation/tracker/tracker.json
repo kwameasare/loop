@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:12:00.731677+00:00",
+    "generated_at": "2026-05-02T03:12:16.564414+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2745,13 +2745,13 @@
     {
       "id": "S384",
       "title": "voice: voice-channel React widget (call button + mic)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S15",
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: studio embeds widget; click talks to agent in-browser; PTT + always-on modes."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s384-voice-voice-channel-react-widget\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T03:12:16Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S385",
