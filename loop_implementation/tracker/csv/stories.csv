@@ -483,7 +483,14 @@ Final heartbeat: 2026-05-02T03:10:09Z (copilot-thor)
 Tests: vitest covers computeUsageRatio thresholds, projectCycleUsage, formatCents, BillingPanel rendering+overage+empty payment
 Docs touched: apps/studio/src/components/billing/billing-panel.tsx,apps/studio/src/app/billing/page.tsx,apps/studio/src/lib/billing.ts
 Follow-ups: none"
-S328,studio: billing — invoice list + download PDF,tbd,S12,E10,2,P1,Not started,AC: list paginates; click downloads from Stripe.
+S328,studio: billing — invoice list + download PDF,copilot-thor,S12,E10,2,P1,In progress,"**Active.**
+Branch: copilot-thor/s328-studio-billing-invoice-list-down
+Skill: skills/api/add-rest-endpoint.md
+Last step: 0/3 (just claimed)
+Heartbeat: 2026-05-02T12:52:42Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S329,studio: billing — payment-method update via Stripe Elements,copilot-thor,S12,E10,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-thor/s329-studio-billing-payment-method-up (merged + deletable)

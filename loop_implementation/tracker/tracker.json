@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T12:52:42.940969+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2415,13 +2415,13 @@
     {
       "id": "S328",
       "title": "studio: billing — invoice list + download PDF",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S12",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: list paginates; click downloads from Stripe."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s328-studio-billing-invoice-list-down\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T12:52:42Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S329",
