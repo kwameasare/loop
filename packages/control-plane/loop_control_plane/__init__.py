@@ -59,6 +59,14 @@ from loop_control_plane.deploy import (
     InMemoryKubeClient,
     KubeClient,
 )
+from loop_control_plane.slsa_provenance import (
+    InMemoryProvenanceStore,
+    ProvenanceError,
+    ProvenancePolicy,
+    ProvenanceVerifier,
+    SlsaProvenance,
+    StubProvenanceVerifier,
+)
 from loop_control_plane.errors import (
     LoopApiError,
     map_to_loop_api_error,
@@ -198,6 +206,7 @@ __all__ = [
     "IssuedApiKey",
     "KMSError",
     "KubeClient",
+    "InMemoryProvenanceStore",
     "LoopApiError",
     "ManifestSignatureVerifier",
     "MarketplaceAcceptanceGate",
@@ -205,6 +214,11 @@ __all__ = [
     "MarketplaceBrowseItem",
     "MarketplaceBrowser",
     "MarketplaceError",
+    "ProvenanceError",
+    "ProvenancePolicy",
+    "ProvenanceVerifier",
+    "SlsaProvenance",
+    "StubProvenanceVerifier",
     "MarketplaceInstall",
     "MarketplaceInstaller",
     "MarketplacePublisher",

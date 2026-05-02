@@ -22,6 +22,12 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from loop_control_plane.slsa_provenance import (
+    ProvenanceError,
+    ProvenancePolicy,
+    ProvenanceVerifier,
+)
+
 
 class DeployPhase(StrEnum):
     PENDING = "pending"
@@ -126,9 +132,7 @@ class BaselineRegistry(Protocol):
     baseline.
     """
 
-    async def get(
-        self, *, workspace_id: UUID, agent_id: UUID
-    ) -> float | None: ...
+    async def get(self, *, workspace_id: UUID, agent_id: UUID) -> float | None: ...
 
     async def record(
         self,
@@ -192,9 +196,7 @@ class InMemoryEvalGate:
             raise DeployError("InMemoryEvalGate: no more pass_rates queued")
         pr = self._pass_rates.pop(0)
         self.calls.append((artifact, baseline_pass_rate))
-        regression = (
-            baseline_pass_rate is not None and pr < baseline_pass_rate
-        )
+        regression = baseline_pass_rate is not None and pr < baseline_pass_rate
         return EvalReport(
             pass_rate=pr,
             total_cases=self._total_cases,
@@ -208,9 +210,7 @@ class InMemoryBaselineRegistry:
         self._values: dict[tuple[UUID, UUID], float] = {}
         self.records: list[tuple[UUID, UUID, float]] = []
 
-    async def get(
-        self, *, workspace_id: UUID, agent_id: UUID
-    ) -> float | None:
+    async def get(self, *, workspace_id: UUID, agent_id: UUID) -> float | None:
         return self._values.get((workspace_id, agent_id))
 
     async def record(
@@ -262,16 +262,20 @@ class DeployController:
         kube: KubeClient,
         eval_gate: EvalGate | None = None,
         baselines: BaselineRegistry | None = None,
+        provenance_verifier: ProvenanceVerifier | None = None,
+        provenance_policy: ProvenancePolicy | None = None,
     ) -> None:
         if (eval_gate is None) != (baselines is None):
-            raise DeployError(
-                "eval_gate and baselines must be provided together"
-            )
+            raise DeployError("eval_gate and baselines must be provided together")
+        if provenance_verifier is not None and provenance_policy is None:
+            provenance_policy = ProvenancePolicy()
         self._builder = builder
         self._registry = registry
         self._kube = kube
         self._eval_gate = eval_gate
         self._baselines = baselines
+        self._provenance_verifier = provenance_verifier
+        self._provenance_policy = provenance_policy
         self._deploys: dict[UUID, Deploy] = {}
         self._lock = asyncio.Lock()
 
@@ -318,9 +322,7 @@ class DeployController:
                 report = await self._eval_gate.evaluate(
                     deploy.artifact, baseline_pass_rate=baseline
                 )
-                deploy = await self._advance(
-                    deploy, DeployPhase.EVALUATING, eval_report=report
-                )
+                deploy = await self._advance(deploy, DeployPhase.EVALUATING, eval_report=report)
                 if report.regression:
                     raise DeployError(
                         f"eval-regression: pass_rate {report.pass_rate:.4f} "
@@ -328,17 +330,22 @@ class DeployController:
                     )
 
             deploy = await self._advance(deploy, DeployPhase.PUSHING)
+
+            # SLSA Level-3 provenance gate: verify before pushing to registry.
+            if self._provenance_verifier is not None:
+                assert self._provenance_policy is not None
+                try:
+                    self._provenance_verifier.verify(built.digest, self._provenance_policy)
+                except ProvenanceError as exc:
+                    raise DeployError(f"provenance-gate: {exc}") from exc
+
             image_ref = await self._registry.push(built)
 
             deploy = await self._advance(deploy, DeployPhase.APPLYING, image_ref=image_ref)
             await self._kube.apply(deploy_id=deploy.id, image_ref=image_ref)
 
             deploy = await self._advance(deploy, DeployPhase.READY)
-            if (
-                self._baselines is not None
-                and report is not None
-                and not report.regression
-            ):
+            if self._baselines is not None and report is not None and not report.regression:
                 await self._baselines.record(
                     workspace_id=deploy.artifact.workspace_id,
                     agent_id=deploy.artifact.agent_id,
