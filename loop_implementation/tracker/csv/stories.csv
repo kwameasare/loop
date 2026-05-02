@@ -709,14 +709,14 @@ Final heartbeat: 2026-05-02T03:30:51Z (copilot-thor)
 Tests: vitest covers flow-edges helpers (canConnect/addEdge/removeEdge/edgesTouching/prune) plus 6 component tests for handle->connect, seam connect, self-loop reject, click-edge confirm-delete, decline-keeps-edge, no-edge-layer-empty
 Docs touched: apps/studio/src/components/flow/flow-editor.tsx,apps/studio/src/lib/flow-edges.ts
 Follow-ups: none"
-S464,flow: variable inspector (state at any node),copilot-thor,S19,E10,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s464-flow-variable-inspector-state-at
+S464,flow: variable inspector (state at any node),copilot-thor,S19,E10,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s464-flow-variable-inspector-state-at (merged + deletable)
 Skill: skills/ux/component-design.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T03:31:08Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T03:33:54Z (copilot-thor)
+Tests: vitest covers captureFrame deep clone, cloneState, diffFrames classification (added/removed/changed), formatValue rendering; 5 component tests for empty hint, latest frame + running status, frame click switches state, empty-state row, change/remove diff kinds
+Docs touched: apps/studio/src/components/flow/variable-inspector.tsx,apps/studio/src/lib/flow-inspector.ts
+Follow-ups: none"
 S465,"flow: serialize to YAML (deterministic, sorted keys)",GitHub Copilot,S19,E10,2,P0,Done,"Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/data/yaml-determinism.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_runtime/yaml_serializer.py — serialize_flow(graph) emits yaml.safe_dump(sort_keys=False, width=200) with stable ordering and default-omission so two serializations of the same graph are byte-identical. Defaults dropped: agent_version when 'latest', timeout_ms when 30000, reducer when 'first_non_empty'. Edges emit {from, to, condition?}; ParallelOperator uses key 'branches' (matches yaml_compiler reader). Tests: byte-equal across runs, defaults omitted, edge dict shape, branches key parity, compile->serialize idempotent. Open questions: schema-versioned migration tags for older flow yaml live in S466 reader."
 S466,flow: deserialize YAML -> graph,GitHub Copilot,S19,E10,1,P0,Done,Done. Branch: copilot/s-pass8 (merged). PR: local-merge (ff to main). Skill: skills/data/yaml-determinism.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: retro-close on yaml_compiler.compile_flow — paired round-trip with serialize_flow (S465) is green: load(yaml) -> compile_flow -> serialize_flow yields byte-equal yaml. Reads 'branches' key for ParallelOperator (matches S465 writer). YamlCompileError raised on missing entry/duplicate ids/unknown node kind. Tests: compile->serialize idempotent across the sample fan-out graph. Open questions: per-version migration adapter remains future work (no live schema bumps yet).
 S467,flow: save/load to cp-api as agent_versions.flow_yaml,tbd,S19,E10,2,P0,Not started,AC: Save button posts; Load on mount; conflict-detection on stale version_tag.
