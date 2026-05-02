@@ -774,14 +774,14 @@ S492,episodic: retrieval at turn-start (top-k recent + relevant),GitHub Copilot,
 S493,episodic: TTL-based decay + soft-delete after 90d (configurable),GitHub Copilot,S21,E4,1,P1,Done,Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/soft-delete.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_kb_engine/episodic_ttl.py TtlPolicy + effective_ttl_ms(salience) + plan_prune classifying fresh/expired/grace/grace_done; soft_delete=False forces hard; execute_prune via EpisodicWriter. Tests: episodic_ttl cases in test_kb_pass10.py. Open questions: none.
 S494,kb-v1: scheduled refresh (cron + on-demand),tbd,S21,E5,2,P1,Not started,AC: per-doc refresh cadence; status shown in studio.
 S495,kb-v1: incremental URL crawler (sitemap-aware),tbd,S21,E5,3,P1,Not started,AC: crawls sitemap.xml; respects robots.txt; only fetches changed-since.
-S496,"kb-v1: layout-aware chunking (tables, code blocks, math preserved)",copilot-thor,S21,E5,2,P1,In progress,"**Active.**
-Branch: copilot-thor/s496-kb-v1-layout-aware-chunking-tabl
+S496,"kb-v1: layout-aware chunking (tables, code blocks, math preserved)",copilot-thor,S21,E5,2,P1,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s496-kb-v1-layout-aware-chunking-tabl (merged + deletable)
 Skill: skills/api/add-rest-endpoint.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-02T13:35:49Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T13:37:27Z (copilot-thor)
+Tests: 20 pytest (test_layout_chunker.py): prose merging, code/table/math preservation, mixed doc, metadata fields
+Docs touched: loop_kb_engine/layout_chunker.py: LayoutAwareChunker with ChunkType enum; protected span detection for code fences, GFM tables, display math
+Follow-ups: AST-based HTML table extraction; inline math support; DOCX table detection"
 S497,studio: KB freshness indicators + manual refresh button,tbd,S21,E10,2,P1,Not started,AC: KB list shows last-refreshed; click triggers refresh.
 S510,sms: Twilio SMS adapter (inbound webhook + outbound API),GitHub Copilot,S22,E6,2,P0,Done,Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_sms/twilio.py - Twilio SMS inbound webhook parser and outbound send adapter with client Protocol seam. Tests: packages/channels/sms/_tests/test_sms_pass12.py. Open questions: none.
 S511,"sms: opt-in/opt-out compliance (STOP, START, HELP keywords)",GitHub Copilot,S22,E6,2,P0,Done,Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_sms/compliance.py - STOP START HELP opt-in opt-out compliance state machine with consent-store Protocol. Tests: packages/channels/sms/_tests/test_sms_pass12.py. Open questions: none.

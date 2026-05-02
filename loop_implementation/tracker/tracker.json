@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T13:35:49.249448+00:00",
+    "generated_at": "2026-05-02T13:37:27.299507+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3542,8 +3542,8 @@
       "epic": "E5",
       "points": 2,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s496-kb-v1-layout-aware-chunking-tabl\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T13:35:49Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s496-kb-v1-layout-aware-chunking-tabl (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T13:37:27Z (copilot-thor)\nTests: 20 pytest (test_layout_chunker.py): prose merging, code/table/math preservation, mixed doc, metadata fields\nDocs touched: loop_kb_engine/layout_chunker.py: LayoutAwareChunker with ChunkType enum; protected span detection for code fences, GFM tables, display math\nFollow-ups: AST-based HTML table extraction; inline math support; DOCX table detection"
     },
     {
       "id": "S497",
