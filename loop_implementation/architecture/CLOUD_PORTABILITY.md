@@ -91,6 +91,12 @@ class KMS(Protocol):
 Implementations:
 - `AwsKmsBackend`, `AzureKeyVaultBackend`, `GcpKmsBackend`, `AlicloudKmsBackend`, `VaultTransitBackend`.
 
+S777 adds the checked contract in `loop_control_plane.kms`: the same
+parity suite runs against `aws_kms`, `azure_key_vault`, `gcp_kms`,
+`alicloud_kms`, and `vault_transit`, verifying encrypt/decrypt,
+data-key wrapping, rotation, and signing semantics before a provider
+adapter can claim KMS compatibility.
+
 ### 4.3 SecretsBackend
 
 ```python
