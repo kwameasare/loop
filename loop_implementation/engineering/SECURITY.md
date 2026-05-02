@@ -408,7 +408,7 @@ For enterprise customers in healthcare:
 
 - Cloud-native VM/image scanner where available (AWS Inspector / Microsoft Defender for Cloud / GCP Container Analysis / Alicloud Security Center) plus Trivy on every image in CI as the cloud-neutral baseline.
 - Trivy on container images in CI.
-- Quarterly penetration test by an external firm.
+- Quarterly penetration test by an external firm — see [`PEN_TEST.md`](PEN_TEST.md) for vendor selection, scope, RoE, staging setup, credential management, and remediation tracking.
 - Infrastructure-as-code linting: `tflint`, `kube-linter`.
 
 ### 9.3 Disclosure
