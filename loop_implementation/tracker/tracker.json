@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T00:51:37.305116+00:00",
+    "generated_at": "2026-05-02T00:53:13.568111+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5330,13 +5330,13 @@
     {
       "id": "S824",
       "title": "memory: PII redaction at memory-write time (configurable per agent)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S36",
       "epic": "E4",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: regex + Presidio + LLM-classifier modes; on-write filter; covered in tests."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s824-memory-pii-redaction-at-memory-w\nSkill: skills/coding/implement-runtime-feature.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T00:53:13Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S825",
