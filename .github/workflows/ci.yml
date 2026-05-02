@@ -48,13 +48,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
       packages: write
     env:
       CP_API_IMAGE: ghcr.io/loop-ai/cp-api:${{ github.sha }}
       CP_API_IMAGE_MAIN: ghcr.io/loop-ai/cp-api:main
       CP_API_MAX_BYTES: "120000000"
+      COSIGN_CERT_IDENTITY_REGEXP: https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main
+      COSIGN_OIDC_ISSUER: https://token.actions.githubusercontent.com
     steps:
       - uses: actions/checkout@v4
+      - uses: sigstore/cosign-installer@v3
+      - uses: imjasonh/setup-crane@v0.4
       - uses: docker/setup-buildx-action@v3
       - name: Build cp-api image
         uses: docker/build-push-action@v6
@@ -85,25 +90,39 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push cp-api image
+      - name: Push, sign, and verify cp-api image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
+          set -euo pipefail
           docker tag "$CP_API_IMAGE" "$CP_API_IMAGE_MAIN"
           docker push "$CP_API_IMAGE"
           docker push "$CP_API_IMAGE_MAIN"
+          digest="$(crane digest "$CP_API_IMAGE")"
+          main_digest="$(crane digest "$CP_API_IMAGE_MAIN")"
+          test "$main_digest" = "$digest"
+          ref="ghcr.io/loop-ai/cp-api@${digest}"
+          cosign sign --yes "$ref"
+          cosign verify "$ref" \
+            --certificate-identity-regexp "$COSIGN_CERT_IDENTITY_REGEXP" \
+            --certificate-oidc-issuer "$COSIGN_OIDC_ISSUER" >/dev/null
 
   dp-runtime-image:
     name: dp-runtime-image
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
       packages: write
     env:
       DP_RUNTIME_IMAGE: ghcr.io/loop-ai/dp-runtime:${{ github.sha }}
       DP_RUNTIME_IMAGE_MAIN: ghcr.io/loop-ai/dp-runtime:main
       DP_RUNTIME_MAX_BYTES: "150000000"
+      COSIGN_CERT_IDENTITY_REGEXP: https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main
+      COSIGN_OIDC_ISSUER: https://token.actions.githubusercontent.com
     steps:
       - uses: actions/checkout@v4
+      - uses: sigstore/cosign-installer@v3
+      - uses: imjasonh/setup-crane@v0.4
       - uses: docker/setup-buildx-action@v3
       - name: Build dp-runtime image
         uses: docker/build-push-action@v6
@@ -134,12 +153,21 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push dp-runtime image
+      - name: Push, sign, and verify dp-runtime image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
+          set -euo pipefail
           docker tag "$DP_RUNTIME_IMAGE" "$DP_RUNTIME_IMAGE_MAIN"
           docker push "$DP_RUNTIME_IMAGE"
           docker push "$DP_RUNTIME_IMAGE_MAIN"
+          digest="$(crane digest "$DP_RUNTIME_IMAGE")"
+          main_digest="$(crane digest "$DP_RUNTIME_IMAGE_MAIN")"
+          test "$main_digest" = "$digest"
+          ref="ghcr.io/loop-ai/dp-runtime@${digest}"
+          cosign sign --yes "$ref"
+          cosign verify "$ref" \
+            --certificate-identity-regexp "$COSIGN_CERT_IDENTITY_REGEXP" \
+            --certificate-oidc-issuer "$COSIGN_OIDC_ISSUER" >/dev/null
 
   tracker-clean:
     name: tracker-clean
