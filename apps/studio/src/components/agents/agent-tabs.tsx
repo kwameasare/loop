@@ -15,6 +15,7 @@ export const AGENT_TABS: AgentTabSpec[] = [
   { segment: "channels", label: "Channels" },
   { segment: "tools", label: "Tools" },
   { segment: "kb", label: "Knowledge" },
+  { segment: "deploys", label: "Deploys" },
   { segment: "secrets", label: "Secrets" },
 ];
 
