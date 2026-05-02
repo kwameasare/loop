@@ -1160,8 +1160,22 @@ Docs touched: apps/studio/a11y/AXE_AUDIT.md
 Follow-ups: none"
 S657,"ga-polish: i18n scaffolding (en, es, de, fr, ja)",tbd,S29,E10,2,P1,Not started,AC: react-i18next; en is source; 4 languages stub-translated; switcher works.
 S658,ga-polish: support runbook + ticketing integration (Front),tbd,S29,E17,1,P1,Not started,AC: tickets reach support@; routing rules documented.
-S659,ga-polish: docs.loop.example v1 (Mintlify) — getting started + 3 tutorials,tbd,S29,E17,3,P0,Not started,AC: docs site live; tutorials checked by 3 design partners.
-S670,launch: 1.0 release-notes draft + changelog automation,tbd,S30,E17,1,P0,Not started,AC: Keep-A-Changelog; release-please bot wired.
+S659,ga-polish: docs.loop.example v1 (Mintlify) — getting started + 3 tutorials,copilot-titan,S29,E17,3,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s659-ga-polish-docs-loop-example-v1-m (merged + deletable)
+Skill: skills/api/api-versioning.md
+Final heartbeat: 2026-05-02T06:27:02Z (copilot-titan)
+Tests: tests/test_docs_site.py
+Docs touched: docs/site/introduction.mdx,docs/site/quickstart.mdx,docs/site/tutorials/build-support-agent.mdx,docs/site/tutorials/connect-channels.mdx,docs/site/tutorials/eval-and-deploy.mdx,docs/site/PARTNER_REVIEWS.md
+Follow-ups: none"
+S670,launch: 1.0 release-notes draft + changelog automation,copilot-titan,S30,E17,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s670-launch-1-0-release-notes-draft-c (merged + deletable)
+Skill: skills/api/api-versioning.md
+Final heartbeat: 2026-05-02T06:28:53Z (copilot-titan)
+Tests: tests/test_release_automation.py
+Docs touched: CHANGELOG.md
+Follow-ups: none"
 S671,launch: pricing page + plan-comparison matrix,tbd,S30,E17,2,P0,Not started,AC: live page; sales-ops verified; A/B-flag-enabled.
 S672,launch: design partners → 10 paid customers conversion plan,tbd,S30,E17,2,P0,Not started,AC: each partner converted or churned with reason; documented in OPS/launch.md.
 S673,launch: HN / Product Hunt launch playbook executed,tbd,S30,E17,2,P0,Not started,"AC: launched, ranked, post-mortem; conversion + churn measured for first 7 days."
@@ -1408,11 +1422,11 @@ Final heartbeat: 2026-05-02T05:51:04Z (codex-orion)
 Tests: uv run ruff check/pyright tests/test_cp_api_5000_rps.py; uv run pytest -q tests/test_cp_api_5000_rps.py tests/test_docs_links.py tests/test_helm_e2e_workflow.py; tracker/docs gates pass
 Docs touched: docs/perf/cp_api_5000_rps.md,docs/index.md,bench/results/cp_api_5000_rps.json,.github/workflows/cp-api-5000-rps.yml
 Follow-ups: none"
-S846,perf: regression budget — any 5%+ p95 regression blocks PR,codex-vega,S37,E9,2,P0,In progress,"**Active.**
-Branch: codex-vega/s846-perf-regression-budget-any-5-p95
+S846,perf: regression budget — any 5%+ p95 regression blocks PR,codex-vega,S37,E9,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-vega/s846-perf-regression-budget-any-5-p95 (merged + deletable)
 Skill: skills/testing/perf-check.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T06:13:38Z (codex-vega)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T06:21:47Z (codex-vega)
+Tests: perf comparator temp run passed; touched ruff/format pass; touched pyright pass; tests/test_perf_regression_budget.py passed (6); pytest -q -m 'not integration and not e2e' passed (1573 passed, 3 skipped, 6 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated files
+Docs touched: docs/perf/perf_regression_budget.md, docs/index.md, loop_implementation/engineering/PERFORMANCE.md, bench/results/perf_7d_baseline.json, bench/results/perf_regression_budget.json
+Follow-ups: none"

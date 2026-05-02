@@ -1,0 +1,76 @@
+---
+title: "Tutorial: Build a support agent"
+description: "Ship a Tier-1 support bot from zero with custom tools and a knowledge base."
+---
+
+# Build a support agent
+
+In this tutorial you'll build `acme-support`, a Tier-1 support agent that
+answers product questions from a knowledge base, looks up orders via a custom
+tool, and escalates to a human when confidence drops.
+
+**Estimated time:** 30 minutes.
+
+## 1. Scaffold
+
+```bash
+loop agent create --name acme-support --template support
+cd acme-support
+```
+
+The `support` template wires:
+
+- a `kb/` folder for markdown knowledge,
+- two example tools in `tools/orders.py`,
+- five seed evals in `evals/`.
+
+## 2. Add your knowledge base
+
+Drop your help-center markdown into `kb/`. Loop chunks, embeds, and
+indexes the contents on `loop agent run`.
+
+```bash
+cp ~/Downloads/helpcenter/*.md kb/
+loop kb sync
+```
+
+## 3. Customize the order-lookup tool
+
+Open `tools/orders.py` and point `lookup_order` at your real backend:
+
+```python
+from loop_sdk import tool
+
+@tool(name="lookup_order")
+def lookup_order(order_id: str) -> dict:
+    """Return order status, ETA, and tracking number."""
+    return your_backend.get_order(order_id)
+```
+
+## 4. Set escalation policy
+
+In `agent.py`:
+
+```python
+agent.escalate_when(
+    confidence_below=0.6,
+    keywords=["refund", "manager", "lawyer"],
+)
+```
+
+## 5. Run, eval, deploy
+
+```bash
+loop agent run                    # chat locally
+loop eval run                     # offline evals
+loop agent deploy --canary 10%   # 10% traffic canary
+```
+
+Watch the canary in the [Studio](/concepts/agents) — Loop will halt the
+rollout automatically if regression budgets fire.
+
+## Reference
+
+- [Concepts: agents](/concepts/agents)
+- [Concepts: tools](/concepts/agents)
+- [Tutorial: connect channels](/tutorials/connect-channels)

@@ -1,0 +1,72 @@
+---
+title: "Tutorial: Connect channels"
+description: "Wire your agent to Slack, web chat, and SMS."
+---
+
+# Connect channels
+
+Channels are how your users reach your agent. Loop ships first-party adapters
+for Slack, web chat, SMS, voice, and email. This tutorial wires three of them.
+
+**Estimated time:** 20 minutes. **Prerequisite:** a deployed agent — see the
+[support tutorial](/tutorials/build-support-agent).
+
+## 1. Slack
+
+```bash
+loop channel add slack --agent acme-support
+```
+
+The CLI prints a manifest URL — paste it into Slack's app builder, install
+the app to your workspace, and copy the bot token back:
+
+```bash
+loop channel set slack --bot-token xoxb-***
+```
+
+Type `/loop hello` in any Slack channel where the bot is present.
+
+## 2. Web chat
+
+```bash
+loop channel add web --agent acme-support --slug acme
+```
+
+Embed the snippet on your site:
+
+```html
+<script src="https://cdn.loop.example/widget.js"
+        data-slug="acme"
+        async></script>
+```
+
+The widget honours `prefers-color-scheme`, supports keyboard navigation, and
+ships with WCAG 2.1 AA-compliant defaults.
+
+## 3. SMS
+
+```bash
+loop channel add sms --agent acme-support
+loop phone provision --country US
+```
+
+Loop returns an E.164 phone number. Wire it in your provider dashboard or use
+Loop's hosted Twilio bridge:
+
+```bash
+loop channel set sms --provider loop-hosted
+```
+
+## Production checklist
+
+- [ ] Set per-channel rate limits in **Studio → Channels → Limits**.
+- [ ] Enable PII redaction in transcripts.
+- [ ] Forward audit events to your SIEM via the
+      [audit log export](/concepts/agents).
+- [ ] Configure the [escalation policy](/tutorials/build-support-agent)
+      for each channel.
+
+## Reference
+
+- [Concepts: channels](/concepts/channels)
+- [Tutorial: eval and deploy](/tutorials/eval-and-deploy)

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Loop",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#1F6FEB",
+    "light": "#5DA1FF",
+    "dark": "#0B57D0"
+  },
+  "topbarLinks": [
+    {
+      "name": "Studio",
+      "url": "https://app.loop.example"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Sign up",
+    "url": "https://app.loop.example/signup"
+  },
+  "anchors": [
+    {
+      "name": "API reference",
+      "icon": "rectangle-terminal",
+      "url": "/api"
+    },
+    {
+      "name": "Changelog",
+      "icon": "list-timeline",
+      "url": "/changelog"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Get started",
+      "pages": ["introduction", "quickstart", "concepts/agents", "concepts/channels", "concepts/eval"]
+    },
+    {
+      "group": "Tutorials",
+      "pages": [
+        "tutorials/build-support-agent",
+        "tutorials/connect-channels",
+        "tutorials/eval-and-deploy"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/kwameasare/loop"
+  }
+}

@@ -1,0 +1,85 @@
+---
+title: "Tutorial: Eval and deploy"
+description: "Author golden tests, gate releases, and deploy with canaries."
+---
+
+# Eval and deploy
+
+Quality gates are the difference between a demo and a production agent. In
+this tutorial you'll author golden evals, run a regression suite, and deploy
+with a 10% canary that auto-halts on regressions.
+
+**Estimated time:** 25 minutes.
+
+## 1. Author golden evals
+
+Each `.yaml` in `evals/` is one test. Add a new one:
+
+```yaml
+# evals/refund-flow.yaml
+name: refund-policy-quote
+input: "What's your refund window?"
+expect:
+  contains: ["30 days"]
+  must_call: ["lookup_order"]   # optional tool-call assertion
+  max_cost_usd: 0.02
+  max_latency_ms: 2500
+```
+
+## 2. Run locally
+
+```bash
+loop eval run
+```
+
+Output:
+
+```
+✓ refund-policy-quote        1.4s   $0.011
+✓ shipping-eta-from-order    2.1s   $0.018
+✗ angry-customer-escalation  3.4s   $0.022   missing: "supervisor"
+2 / 3 passed (66%)
+```
+
+## 3. Set a regression budget
+
+In `loop.toml`:
+
+```toml
+[eval]
+min_pass_rate = 0.90
+fail_on_regression = true       # any prior-passing test going red blocks deploy
+max_cost_per_run_usd = 0.05
+```
+
+## 4. Deploy with a canary
+
+```bash
+loop agent deploy --canary 10% --auto-rollback
+```
+
+Loop runs the eval suite against the canary deployment with live traffic
+shadowing. If the regression budget fires, traffic snaps back to the previous
+version and you get a Studio link to inspect the failures.
+
+## 5. Promote
+
+```bash
+loop agent promote --to 100%
+```
+
+## CI integration
+
+Add this step to your CI:
+
+```yaml
+- name: Loop eval gate
+  run: |
+    loop eval run --reporter junit --output evals.xml
+    loop agent deploy --canary 10% --wait
+```
+
+## Reference
+
+- [Concepts: eval](/concepts/eval)
+- [Tutorial: build a support agent](/tutorials/build-support-agent)
