@@ -873,11 +873,12 @@ Follow-ups: none"
 S778,portability: SecretsBackend Protocol parity tests across Vault/AWS-SM/Azure-KV/GCP-SM,codex-orion,S34,E12,2,P0,In progress,"**Active.**
 Branch: codex-orion/s778-portability-secretsbackend-proto
 Skill: skills/architecture/cloud-portability-check.md
-Last step: 4/5
-Heartbeat: 2026-05-02T00:26:46Z (codex-orion)
+Last step: 5/5
+Heartbeat: 2026-05-02T00:26:58Z (codex-orion)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: ready to close SecretsBackend parity contract
 Latest checkpoint: focused static tests and SDK scan passed
 Latest checkpoint: tracker docs and checkpoint gates passed
 Latest checkpoint: control-plane and broad pytest passed
