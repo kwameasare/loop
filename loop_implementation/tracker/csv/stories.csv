@@ -1059,7 +1059,14 @@ Final heartbeat: 2026-05-02T06:09:56Z (copilot-titan)
 Tests: apps/studio/src/components/workspaces/audit-log-page.test.tsx
 Docs touched: apps/studio/src/components/workspaces/audit-log-page.tsx
 Follow-ups: none"
-S632,audit: audit log export CSV,tbd,S28,E20,1,P0,Not started,AC: filtered export in <30s for ≤100k rows.
+S632,audit: audit log export CSV,copilot-titan,S28,E20,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s632-audit-audit-log-export-csv (merged + deletable)
+Skill: skills/api/api-versioning.md
+Final heartbeat: 2026-05-02T06:16:17Z (copilot-titan)
+Tests: packages/control-plane/_tests/test_audit_export.py
+Docs touched: packages/control-plane/loop_control_plane/audit_export.py
+Follow-ups: none"
 S633,audit: SIEM webhook (Datadog/Splunk/generic),tbd,S28,E20,2,P1,Not started,AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify.
 S634,audit: DPA template + redlines workflow,tbd,S28,E20,2,P1,Not started,AC: DPA.md + redlines mechanism documented; sample redline-PR closed.
 S635,audit: GDPR Art-17 data-deletion request endpoint + workflow,tbd,S28,E16,2,P0,Not started,AC: POST /v1/workspaces/{id}/data-deletion enqueues job; results emailed.
