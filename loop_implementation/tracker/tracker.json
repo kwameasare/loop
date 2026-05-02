@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T13:40:37.530507+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3548,13 +3548,13 @@
     {
       "id": "S497",
       "title": "studio: KB freshness indicators + manual refresh button",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S21",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s497-studio-kb-freshness-indicators-m (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T13:40:37Z (copilot-thor)\nTests: 10 vitest (kb-list.test.tsx): freshness indicator, refresh button, disabled-during-flight, error toast\nDocs touched: KbDocument.lastRefreshedAt field; kb-list.tsx per-row refresh button and freshness label\nFollow-ups: Bulk refresh all docs; auto-poll freshness status while running"
+      "status": "Not started",
+      "notes": "AC: KB list shows last-refreshed; click triggers refresh."
     },
     {
       "id": "S510",
