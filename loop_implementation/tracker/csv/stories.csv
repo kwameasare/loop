@@ -997,7 +997,14 @@ Final heartbeat: 2026-05-02T05:48:31Z (copilot-titan)
 Tests: packages/control-plane/_tests/test_google_integration.py
 Docs touched: packages/control-plane/fixtures/google_idp_metadata.xml
 Follow-ups: S615 S617"
-S615,sso: studio enterprise tab → connect IdP + upload metadata,tbd,S27,E10,2,P0,Not started,AC: paste metadata URL or upload XML; status flips to Connected after ACS-roundtrip.
+S615,sso: studio enterprise tab → connect IdP + upload metadata,copilot-titan,S27,E10,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s615-sso-studio-enterprise-tab-connec (merged + deletable)
+Skill: skills/ux/component-pattern.md
+Final heartbeat: 2026-05-02T05:52:54Z (copilot-titan)
+Tests: apps/studio/src/components/workspaces/enterprise-sso-form.test.tsx
+Docs touched: apps/studio/src/app/workspaces/enterprise/page.tsx
+Follow-ups: S617"
 S616,sso: just-in-time user provisioning at first login,tbd,S27,E20,2,P0,Not started,AC: unknown SAML subject creates user + workspace_members row per group mapping.
 S617,sso: SAML group → workspace role mapping rules,tbd,S27,E20,2,P0,Not started,AC: rules in workspace_sso_groups table; UI to edit; tested for owner/editor/viewer.
 S618,sso: integration test full Okta SP-initiated login → studio session,tbd,S27,E20,2,P0,Not started,AC: Playwright drives Okta sandbox + studio; ends in authenticated session.
