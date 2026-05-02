@@ -10,6 +10,10 @@ global:
   imageRegistry: ghcr.io/loop
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
+  deploymentMode: shared
+  customerId: ""
+  isolation:
+    dedicatedStack: false
 
 controlPlane:
   enabled: true

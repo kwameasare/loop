@@ -47,6 +47,8 @@ REQUIRED_TEMPLATES = {
 REQUIRED_VALUE_PATHS: tuple[tuple[str, ...], ...] = (
     ("global", "imageRegistry"),
     ("global", "imagePullPolicy"),
+    ("global", "deploymentMode"),
+    ("global", "isolation", "dedicatedStack"),
     ("controlPlane", "enabled"),
     ("controlPlane", "image", "repository"),
     ("controlPlane", "image", "tag"),

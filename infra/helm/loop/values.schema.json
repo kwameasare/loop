@@ -134,7 +134,7 @@
   "properties": {
     "global": {
       "type": "object",
-      "required": ["imageRegistry", "imagePullPolicy"],
+      "required": ["imageRegistry", "imagePullPolicy", "deploymentMode", "isolation"],
       "properties": {
         "imageRegistry": { "type": "string", "minLength": 1 },
         "imagePullPolicy": {
@@ -144,6 +144,18 @@
         "imagePullSecrets": {
           "type": "array",
           "items": { "type": "object" }
+        },
+        "deploymentMode": {
+          "type": "string",
+          "enum": ["shared", "enterprise"]
+        },
+        "customerId": { "type": "string" },
+        "isolation": {
+          "type": "object",
+          "required": ["dedicatedStack"],
+          "properties": {
+            "dedicatedStack": { "type": "boolean" }
+          }
         }
       }
     },

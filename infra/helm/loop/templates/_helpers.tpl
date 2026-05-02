@@ -22,6 +22,11 @@ app.kubernetes.io/name: {{ include "loop.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" }}
+loop.ai/deployment-mode: {{ .Values.global.deploymentMode | quote }}
+{{- if .Values.global.customerId }}
+loop.ai/customer-id: {{ .Values.global.customerId | quote }}
+{{- end }}
+loop.ai/dedicated-stack: {{ ternary "true" "false" .Values.global.isolation.dedicatedStack | quote }}
 {{- end -}}
 
 {{- define "loop.serviceAccountName" -}}
