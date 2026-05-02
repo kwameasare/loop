@@ -1436,7 +1436,14 @@ Final heartbeat: 2026-05-02T14:19:34Z (copilot-thor)
 Tests: 21 pytest (test_late_interaction.py): TokenEmbedding, cosine_sim, maxsim, LateInteractionIndex add/remove/query/top-k, late_interaction_retrieve, recall@10 ≥5% improvement over dense
 Docs touched: packages/kb-engine/loop_kb_engine/late_interaction.py
 Follow-ups: ColBERT token encoder integration; persist TokenEmbedding in Qdrant multi-vector; batch ingestion pipeline for token vecs; opt-in flag in KB query API"
-S827,kb-v2: structured-data retrieval (CSV/Excel/JSON with SQL-on-the-fly),tbd,S36,E5,3,P1,Not started,AC: agent uploads spreadsheet; tool can SQL it; integration test.
+S827,kb-v2: structured-data retrieval (CSV/Excel/JSON with SQL-on-the-fly),copilot-thor,S36,E5,3,P1,In progress,"**Active.**
+Branch: copilot-thor/s827-kb-v2-structured-data-retrieval
+Skill: loop_implementation/skills/_base/skill.md
+Last step: 0/4 (just claimed)
+Heartbeat: 2026-05-02T14:20:10Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S840,perf: turn-latency p95 < 2.0s end-to-end (text path) — acceptance gate,codex-orion,S37,E1,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-orion/s840-perf-turn-latency-p95-2-0s-end-t (merged + deletable)

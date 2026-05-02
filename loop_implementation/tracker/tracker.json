@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T14:19:34.258632+00:00",
+    "generated_at": "2026-05-02T14:20:10.222170+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5363,13 +5363,13 @@
     {
       "id": "S827",
       "title": "kb-v2: structured-data retrieval (CSV/Excel/JSON with SQL-on-the-fly)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S36",
       "epic": "E5",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: agent uploads spreadsheet; tool can SQL it; integration test."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s827-kb-v2-structured-data-retrieval\nSkill: loop_implementation/skills/_base/skill.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T14:20:10Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S840",
