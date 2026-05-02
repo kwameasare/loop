@@ -270,7 +270,14 @@ Final heartbeat: 2026-05-01T22:19:34Z (copilot-thor)
 Tests: vitest jsdom mid-stream drop reconnects with Last-Event-Id
 Docs touched: packages/channels/web-js/src/index.ts
 Follow-ups: none"
-S178,web-channel-js: typing indicator + history persistence (sessionStorage),tbd,S5,E6,1,P1,Not started,AC: typing dot animates while server sending; refresh restores last 30 messages.
+S178,web-channel-js: typing indicator + history persistence (sessionStorage),copilot-thor,S5,E6,1,P1,In progress,"**Active.**
+Branch: copilot-thor/s178-web-channel-js-typing-indicator
+Skill: skills/api/add-rest-endpoint.md
+Last step: 0/3 (just claimed)
+Heartbeat: 2026-05-02T12:44:28Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S179,studio: agent channels-tab — configure web channel + copy-snippet,copilot-thor,S5,E6,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-thor/s179-studio-agent-channels-tab-config (merged + deletable)

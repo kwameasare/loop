@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T12:44:29.078472+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1381,13 +1381,13 @@
     {
       "id": "S178",
       "title": "web-channel-js: typing indicator + history persistence (sessionStorage)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S5",
       "epic": "E6",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: typing dot animates while server sending; refresh restores last 30 messages."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s178-web-channel-js-typing-indicator\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T12:44:28Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S179",
