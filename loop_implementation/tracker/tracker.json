@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:11:24.750893+00:00",
+    "generated_at": "2026-05-02T05:11:57.829976+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3982,8 +3982,8 @@
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s581-soc2-audit-trail-completeness-re\nSkill: skills/security/update-threat-model.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:10:08Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s581-soc2-audit-trail-completeness-re (merged + deletable)\nSkill: skills/security/update-threat-model.md\nFinal heartbeat: 2026-05-02T05:11:57Z (copilot-thor)\nTests: 6 tests — doc exists, SECURITY.md link, coverage matrix, gap analysis, schema, remediation. pytest 1314/1314.\nDocs touched: loop_implementation/engineering/AUDIT_COMPLETENESS.md,loop_implementation/engineering/SECURITY.md\nFollow-ups: S582,S583,S584,S585,S586"
     },
     {
       "id": "S582",
