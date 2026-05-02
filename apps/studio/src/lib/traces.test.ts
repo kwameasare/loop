@@ -80,3 +80,67 @@ describe("formatDurationNs", () => {
     expect(formatDurationNs(1_500_000_000)).toBe("1.50s");
   });
 });
+
+import { listTraces, formatTraceTimestamp, type TraceSummary } from "./traces";
+
+const baseRow: Omit<TraceSummary, "id" | "started_at_ms"> = {
+  agent_id: "agt_a",
+  agent_name: "Alpha",
+  root_name: "POST /v1/agents/{id}/turns",
+  status: "ok",
+  duration_ns: 100_000_000,
+  span_count: 4,
+};
+
+function makeRows(n: number): TraceSummary[] {
+  return Array.from({ length: n }, (_, i) => ({
+    ...baseRow,
+    id: `trc_${String(i).padStart(3, "0")}`,
+    started_at_ms: 1_700_000_000_000 - i * 60_000,
+  }));
+}
+
+describe("listTraces", () => {
+  it("paginates by started_at_ms desc", () => {
+    const result = listTraces(makeRows(25), { page: 2, page_size: 10 });
+    expect(result.total).toBe(25);
+    expect(result.page).toBe(2);
+    expect(result.page_count).toBe(3);
+    expect(result.traces).toHaveLength(10);
+    expect(result.traces[0].id).toBe("trc_010");
+  });
+
+  it("filters by status and agent_id", () => {
+    const rows: TraceSummary[] = [
+      { ...baseRow, id: "a", started_at_ms: 1, status: "ok", agent_id: "x" },
+      { ...baseRow, id: "b", started_at_ms: 2, status: "error", agent_id: "x" },
+      { ...baseRow, id: "c", started_at_ms: 3, status: "error", agent_id: "y" },
+    ];
+    const errors = listTraces(rows, { status: "error" });
+    expect(errors.traces.map((t) => t.id)).toEqual(["c", "b"]);
+    const onlyX = listTraces(rows, { agent_id: "x" });
+    expect(onlyX.traces.map((t) => t.id)).toEqual(["b", "a"]);
+  });
+
+  it("free-text search matches id, agent_name, root_name", () => {
+    const rows: TraceSummary[] = [
+      { ...baseRow, id: "trc_alpha_1", started_at_ms: 1 },
+      { ...baseRow, id: "trc_other", started_at_ms: 2, agent_name: "Beta", root_name: "GET /v1/health" },
+    ];
+    expect(listTraces(rows, { q: "alpha" }).traces.map((t) => t.id)).toEqual(["trc_alpha_1"]);
+    expect(listTraces(rows, { q: "beta" }).traces.map((t) => t.id)).toEqual(["trc_other"]);
+    expect(listTraces(rows, { q: "health" }).traces.map((t) => t.id)).toEqual(["trc_other"]);
+  });
+
+  it("clamps page beyond available pages", () => {
+    const result = listTraces(makeRows(5), { page: 99, page_size: 10 });
+    expect(result.page).toBe(1);
+    expect(result.traces).toHaveLength(5);
+  });
+});
+
+describe("formatTraceTimestamp", () => {
+  it("renders MMM D HH:MM UTC", () => {
+    expect(formatTraceTimestamp(Date.UTC(2026, 3, 15, 9, 5))).toBe("Apr 15 09:05 UTC");
+  });
+});

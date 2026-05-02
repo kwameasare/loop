@@ -178,3 +178,127 @@ export async function getTrace(id: string): Promise<Trace | null> {
 }
 
 export const FIXTURE_TRACE_ID = FIXTURE_TRACE.id;
+
+/** Lightweight row shown on the trace list page. */
+export type TraceSummary = {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  root_name: string;
+  status: "ok" | "error";
+  duration_ns: number;
+  started_at_ms: number;
+  span_count: number;
+};
+
+export interface ListTracesOptions {
+  /** Free-text search across id, root_name, agent_name (case-insensitive). */
+  q?: string;
+  status?: "ok" | "error" | "all";
+  agent_id?: string;
+  /** 1-based page index. Defaults to 1. */
+  page?: number;
+  /** Page size. Defaults to 20. */
+  page_size?: number;
+}
+
+export interface ListTracesResult {
+  traces: TraceSummary[];
+  total: number;
+  page: number;
+  page_size: number;
+  page_count: number;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const TRACE_BASE_MS = Date.UTC(2026, 3, 30, 12, 0, 0);
+
+/** Synthetic fixture set so the list page renders deterministically. */
+export const FIXTURE_TRACES: TraceSummary[] = (() => {
+  const agents: { id: string; name: string }[] = [
+    { id: "agt_support", name: "Support Bot" },
+    { id: "agt_sales", name: "Sales Concierge" },
+    { id: "agt_ops", name: "Ops Assistant" },
+  ];
+  const rootNames = [
+    "POST /v1/agents/{id}/turns",
+    "POST /v1/agents/{id}/messages",
+    "POST /v1/agents/{id}/tools/invoke",
+    "POST /v1/agents/{id}/runs",
+  ];
+  const list: TraceSummary[] = [];
+  for (let i = 0; i < 47; i += 1) {
+    const agent = agents[i % agents.length];
+    list.push({
+      id: `trc_demo_${String(i + 1).padStart(3, "0")}`,
+      agent_id: agent.id,
+      agent_name: agent.name,
+      root_name: rootNames[i % rootNames.length],
+      status: i % 11 === 0 ? "error" : "ok",
+      duration_ns: 100_000_000 + ((i * 37_000_000) % 1_500_000_000),
+      started_at_ms: TRACE_BASE_MS - i * (DAY_MS / 12),
+      span_count: 3 + (i % 8),
+    });
+  }
+  list.unshift({
+    id: FIXTURE_TRACE_ID,
+    agent_id: "agt_support",
+    agent_name: "Support Bot",
+    root_name: "POST /v1/agents/agt_support/turns",
+    status: "ok",
+    duration_ns: 850_000_000,
+    started_at_ms: TRACE_BASE_MS + 60 * 1000,
+    span_count: FIXTURE_TRACE.spans.length,
+  });
+  return list;
+})();
+
+/**
+ * Filter + paginate the in-memory trace fixture set. Real data will
+ * come from the data plane; the contract here mirrors what that
+ * endpoint should return so the UI can swap implementations cleanly.
+ */
+export function listTraces(
+  records: readonly TraceSummary[],
+  opts: ListTracesOptions = {},
+): ListTracesResult {
+  const page = Math.max(1, opts.page ?? 1);
+  const page_size = Math.max(1, opts.page_size ?? 20);
+  const status = opts.status ?? "all";
+  const q = opts.q?.trim().toLowerCase() ?? "";
+
+  const filtered = records.filter((t) => {
+    if (status !== "all" && t.status !== status) return false;
+    if (opts.agent_id && t.agent_id !== opts.agent_id) return false;
+    if (q) {
+      const hay = `${t.id} ${t.root_name} ${t.agent_name}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  filtered.sort((a, b) => b.started_at_ms - a.started_at_ms);
+
+  const total = filtered.length;
+  const page_count = Math.max(1, Math.ceil(total / page_size));
+  const safePage = Math.min(page, page_count);
+  const start = (safePage - 1) * page_size;
+  return {
+    traces: filtered.slice(start, start + page_size),
+    total,
+    page: safePage,
+    page_size,
+    page_count,
+  };
+}
+
+export function formatTraceTimestamp(ms: number): string {
+  const d = new Date(ms);
+  const date = d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${date} ${hh}:${mm} UTC`;
+}
