@@ -89,7 +89,7 @@ listed in the previous section and lives outside this repo.
 | Migration discipline (reversible/flagged)    | Alembic templates                                           | `data/SCHEMA.md` + migration files                            | CC8.3               | Inspect migration files for `downgrade()` body                              |
 | Tenant data segregation (RLS)                | Postgres policies + integration tests                       | `data/SCHEMA.md` §RLS + `_tests_integration/test_postgres_*`  | CC6.7               | Read schema + green test runs                                               |
 | Encryption at rest + in transit              | Helm values + cloud KMS                                     | `infra/helm/loop/values.yaml` + cloud-provider key inventory  | CC6.6               | Helm values diff + cloud KMS export                                         |
-| Audit-trail completeness                     | `audit_log` table + emit-on-state-change discipline (S581)  | `data/SCHEMA.md` §audit + `loop_control_plane/audit/`         | CC4.1, CC6.x        | SQL: `SELECT count(*) … per state-change type per day`                      |
+| Audit-trail completeness                     | `audit_log` table + emit-on-state-change discipline (S581)  | `data/SCHEMA.md` §audit + `engineering/AUDIT_TRAIL_COVERAGE.md` | CC4.1, CC6.x        | SQL: `SELECT count(*) … per state-change type per day`                      |
 | SOC2 Type 1 attestation                      | External auditor (S582)                                     | Signed PDF (delivered out-of-band)                            | All families        | Auditor portal                                                              |
 
 ## Control families
