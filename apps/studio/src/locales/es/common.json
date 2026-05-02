@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "agents": "Agentes",
+    "knowledge": "Conocimiento",
+    "evals": "Evaluaciones",
+    "cost": "Costo",
+    "settings": "Configuración"
+  },
+  "actions": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "loading": "Cargando…"
+  },
+  "auth": {
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión",
+    "profile": "Perfil"
+  },
+  "errors": {
+    "generic": "Algo salió mal. Por favor, inténtelo de nuevo.",
+    "notFound": "No encontrado.",
+    "unauthorized": "No tiene autorización para ver esta página."
+  }
+}
