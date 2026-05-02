@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T00:15:28.130185+00:00",
+    "generated_at": "2026-05-02T00:15:36.533740+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5127,7 +5127,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s777-portability-kms-protocol-parity\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 4/5\nHeartbeat: 2026-05-02T00:15:28Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: control-plane and broad pytest passed\nLatest checkpoint: tracker and docs gates passed\nLatest checkpoint: focused KMS static parity tests and SDK scan passed\nLatest checkpoint: KMS contract parity suite and docs landed"
+      "notes": "**Active.**\nBranch: codex-orion/s777-portability-kms-protocol-parity\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 5/5\nHeartbeat: 2026-05-02T00:15:36Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: ready to close KMS parity contract\nLatest checkpoint: control-plane and broad pytest passed\nLatest checkpoint: tracker and docs gates passed\nLatest checkpoint: focused KMS static parity tests and SDK scan passed\nLatest checkpoint: KMS contract parity suite and docs landed"
     },
     {
       "id": "S778",
