@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T02:59:43.161943+00:00",
+    "generated_at": "2026-05-02T03:02:31.788153+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2299,8 +2299,8 @@
       "epic": "E10",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s307-studio-inbox-conversation-viewer\nSkill: skills/ux/component-design.md\nLast step: 0/6 (just claimed)\nHeartbeat: 2026-05-02T02:59:43Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s307-studio-inbox-conversation-viewer (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-02T03:02:31Z (copilot-thor)\nTests: vitest covers appendMessage, ConversationViewer initial render, live append, dedupe, unmount unsubscribe, empty state\nDocs touched: apps/studio/src/components/inbox/conversation-viewer.tsx,apps/studio/src/lib/conversation.ts,apps/studio/src/app/inbox/conversation/[id]/page.tsx\nFollow-ups: none"
     },
     {
       "id": "S308",
