@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T00:40:10.727757+00:00",
+    "generated_at": "2026-05-02T00:40:24.357809+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5160,7 +5160,7 @@
       "points": 3,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s780-ci-cross-cloud-nightly-smoke-tes\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 4/5\nHeartbeat: 2026-05-02T00:40:10Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: focused static shell and SDK scan passed\nLatest checkpoint: tracker docs and checkpoint gates passed\nLatest checkpoint: nearby smoke and broad pytest passed\nLatest checkpoint: cross-cloud smoke workflow script tests and docs landed"
+      "notes": "**Active.**\nBranch: codex-orion/s780-ci-cross-cloud-nightly-smoke-tes\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 5/5\nHeartbeat: 2026-05-02T00:40:24Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: ready to close cross-cloud smoke matrix\nLatest checkpoint: focused static shell and SDK scan passed\nLatest checkpoint: tracker docs and checkpoint gates passed\nLatest checkpoint: nearby smoke and broad pytest passed\nLatest checkpoint: cross-cloud smoke workflow script tests and docs landed"
     },
     {
       "id": "S781",
