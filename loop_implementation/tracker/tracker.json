@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:28:53.746454+00:00",
+    "generated_at": "2026-05-02T06:30:54.125030+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4417,13 +4417,13 @@
     {
       "id": "S671",
       "title": "launch: pricing page + plan-comparison matrix",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S30",
       "epic": "E17",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: live page; sales-ops verified; A/B-flag-enabled."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s671-launch-pricing-page-plan-compari\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:30:54Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S672",
