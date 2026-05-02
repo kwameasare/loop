@@ -1,0 +1,27 @@
+{
+  "name": "voice_tts_sentence_streaming",
+  "commit": "S651-contract",
+  "ts": "2026-05-02T05:29:45Z",
+  "host": "local-deterministic-sim",
+  "tool": "pytest-asyncio",
+  "scenario": "streaming_agent_first_sentence_before_full_reply",
+  "stats": {
+    "baseline_full_reply_first_audio_p50_ms": 420,
+    "sentence_streaming_first_audio_p50_ms": 180,
+    "p50_cut_ms": 240,
+    "p50_cut_percent": 57.1,
+    "n": 1
+  },
+  "model_inputs": {
+    "first_sentence_available_ms": 120,
+    "full_reply_available_ms": 360,
+    "tts_prewarm_ms": 60,
+    "tts_first_frame_ms": 60
+  },
+  "budgets": {
+    "voice_first_audio_p50_ms": 700,
+    "regression_threshold": 0.1
+  },
+  "source": "packages/voice/_tests/test_voice_session.py::test_streaming_agent_starts_tts_before_reply_finishes",
+  "baseline_ref": "main@S650"
+}

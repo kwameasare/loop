@@ -1005,14 +1005,14 @@ Final heartbeat: 2026-05-01T22:36:18Z (codex-vega)
 Tests: uv run pytest packages/voice/_tests/test_deepgram_dispatch.py packages/voice/_tests/test_voice_pass10.py packages/voice/_tests/test_voice_echo_e2e.py; uv run ruff check/format --check targeted files; uv run pyright packages/voice/loop_voice/asr_deepgram.py packages/voice/_tests/test_deepgram_dispatch.py; tracker/docs gates passed; full close gate blocked by existing repo-wide ruff baseline in tools
 Docs touched: none
 Follow-ups: none"
-S651,voice-perf: TTS pre-warm + sentence-boundary streaming,codex-vega,S29,E7,2,P0,In progress,"**Active.**
-Branch: codex-vega/s651-voice-perf-tts-pre-warm-sentence
+S651,voice-perf: TTS pre-warm + sentence-boundary streaming,codex-vega,S29,E7,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-vega/s651-voice-perf-tts-pre-warm-sentence (merged + deletable)
 Skill: skills/testing/perf-check.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T05:23:49Z (codex-vega)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T05:32:33Z (codex-vega)
+Tests: touched ruff/format pass; touched pyright pass; packages/voice/_tests 120 passed; pytest -q -m 'not integration and not e2e' passed 1340, 3 skipped, 4 deselected; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff+pyright remain baseline-red in unrelated tools/tests
+Docs touched: loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_tts_sentence_streaming.json
+Follow-ups: none"
 S652,voice-perf: model warm-up + connection-pooling for ASR/TTS providers,tbd,S29,E7,2,P0,Not started,AC: keep-alive; pre-handshake; idle teardown after N min.
 S653,"voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS",tbd,S29,E7,2,P0,Not started,AC: nearest-region selector; latency map committed.
 S654,voice-perf: latency benchmark ≤700ms p50 acceptance gate,tbd,S29,E7,2,P0,Not started,AC: scripts/voice_perf.py runs nightly; CI alerts if breached.
