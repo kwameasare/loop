@@ -1,4 +1,4 @@
-import { FlowCanvas } from "@/components/flow/flow-canvas";
+import { FlowEditor } from "@/components/flow/flow-editor";
 
 export const dynamic = "force-dynamic";
 
@@ -12,12 +12,11 @@ export default function FlowPage({
       <header className="mb-4">
         <h1 className="text-2xl font-semibold tracking-tight">Flow</h1>
         <p className="text-muted-foreground text-sm">
-          Visual flow editor for agent <code>{params.agent_id}</code>. The
-          blank canvas with pan/zoom is the foundation; nodes and edges land
-          in S461.
+          Visual flow editor for agent <code>{params.agent_id}</code>. Drag
+          nodes from the palette to compose the flow.
         </p>
       </header>
-      <FlowCanvas agentId={params.agent_id} />
+      <FlowEditor agentId={params.agent_id} />
     </main>
   );
 }
