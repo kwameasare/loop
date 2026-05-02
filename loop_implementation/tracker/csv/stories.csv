@@ -880,11 +880,12 @@ Follow-ups: none"
 S581,soc2: audit-trail completeness review (every state change is logged),codex-vega,S25,E16,2,P0,In progress,"**Active.**
 Branch: codex-vega/s581-soc2-audit-trail-completeness-re
 Skill: skills/security/add-audit-event.md
-Last step: 1/5
-Heartbeat: 2026-05-02T05:18:58Z (codex-vega)
+Last step: 2/5
+Heartbeat: 2026-05-02T05:20:03Z (codex-vega)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: audit helper, registry, facades, docs, and tests committed
 Latest checkpoint: audit primitives, coverage matrix, and targeted tests drafted"
 S582,soc2: SOC2 Type 1 attestation kickoff with auditor,tbd,S25,E16,2,P0,Not started,AC: kickoff meeting held; evidence list + window dates committed.
 S590,region: regions.yaml registry + per-workspace region pinning enforced in cp-api,codex-orion,S26,E12,2,P0,Done,"**Done.**
