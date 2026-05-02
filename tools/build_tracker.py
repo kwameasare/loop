@@ -2572,6 +2572,101 @@ UNIT_ECONOMICS: list[Budget] = [
 
 
 # --------------------------------------------------------------------------- #
+# Rollup status: epic / sprint / milestone derive from story status           #
+# --------------------------------------------------------------------------- #
+#
+# The hand-written `status` on each Epic / Sprint / Milestone above is the
+# *intent* — kept around so a maintainer can see at a glance what was
+# originally targeted. We override it on every render with a value derived
+# from the underlying STORIES so the tracker never lies about progress.
+#
+# Rule:
+#   - no stories → "Not started"
+#   - all stories Done → "Done"
+#   - all stories Not started → "Not started"
+#   - all stories Blocked → "Blocked"
+#   - all stories Cancelled → "Cancelled"
+#   - anything else → "In progress"
+#
+# Roadmap milestones don't reference stories directly. They reference the
+# sprints whose deliverables together make up the milestone, and roll up the
+# same way over those sprint statuses. The mapping below is taken from the
+# milestone deliverables in ROADMAP and the sprint goals in SPRINTS — it is
+# intentionally explicit so a reader can verify it by eye.
+
+# Each milestone → the sprint IDs whose deliverables together satisfy it.
+# A milestone is Done when every sprint it depends on is Done.
+MILESTONE_SPRINTS: dict[str, list[str]] = {
+    "M0": ["S0"],
+    "M1": ["S0", "S1", "S31"],
+    "M2": ["S2", "S3", "S5", "S6", "S32"],
+    "M3": ["S4", "S7", "S8", "S9"],
+    "M4": ["S4", "S5", "S11", "S13"],
+    "M5": ["S10", "S12", "S14", "S15"],
+    "M6": ["S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10",
+           "S11", "S12", "S13", "S14", "S15", "S31", "S32"],
+    "M7": ["S16", "S17", "S18", "S21", "S22"],
+    "M8": ["S17", "S20", "S23"],
+    "M9": ["S16", "S24", "S33"],
+    "M10": ["S25", "S26", "S34"],
+    "M11": ["S29", "S37"],
+    "M12": ["S27", "S28", "S29", "S30", "S35", "S36"],
+}
+
+
+def _rollup_status(statuses: list[str]) -> str:
+    """Roll a list of child statuses up to a single parent status."""
+    if not statuses:
+        return "Not started"
+    counts: dict[str, int] = {}
+    for s in statuses:
+        counts[s] = counts.get(s, 0) + 1
+    total = len(statuses)
+    if counts.get("Done", 0) == total:
+        return "Done"
+    if counts.get("Not started", 0) == total:
+        return "Not started"
+    if counts.get("Blocked", 0) == total:
+        return "Blocked"
+    if counts.get("Cancelled", 0) == total:
+        return "Cancelled"
+    return "In progress"
+
+
+def _align_rollups() -> None:
+    """Override Epic / Sprint / Milestone status from underlying story status.
+
+    Idempotent — safe to call repeatedly. Mutates EPICS, SPRINTS, ROADMAP in
+    place so render_md / render_json / validate all see the aligned values.
+    """
+    # Epics: roll up the stories that point to each epic.
+    stories_by_epic: dict[str, list[str]] = {e.id: [] for e in EPICS}
+    for s in STORIES:
+        if s.epic in stories_by_epic:
+            stories_by_epic[s.epic].append(s.status)
+    for e in EPICS:
+        e.status = _rollup_status(stories_by_epic[e.id])
+
+    # Sprints: roll up the stories assigned to each sprint via story.sprint.
+    stories_by_sprint: dict[str, list[str]] = {sp.id: [] for sp in SPRINTS}
+    for s in STORIES:
+        if s.sprint in stories_by_sprint:
+            stories_by_sprint[s.sprint].append(s.status)
+    sprint_status: dict[str, str] = {}
+    for sp in SPRINTS:
+        sp.status = _rollup_status(stories_by_sprint[sp.id])
+        sprint_status[sp.id] = sp.status
+
+    # Roadmap: each milestone rolls up over its constituent sprints.
+    for m in ROADMAP:
+        sprint_ids = MILESTONE_SPRINTS.get(m.month, [])
+        m.status = _rollup_status([sprint_status[sid] for sid in sprint_ids if sid in sprint_status])
+
+
+_align_rollups()
+
+
+# --------------------------------------------------------------------------- #
 # Validation                                                                  #
 # --------------------------------------------------------------------------- #
 
