@@ -1,0 +1,21 @@
+{
+  "baseline_ref": "main@S845",
+  "budgets": {
+    "checks_rate": 0.999,
+    "http_req_failed_rate": 0.001,
+    "p95_ms": 100
+  },
+  "commit": "S845-contract",
+  "host": "github-actions-kind",
+  "name": "cp_api_5000_rps",
+  "scenario": "cp_api_5000_rps",
+  "source": ".github/workflows/cp-api-5000-rps.yml",
+  "stats": {
+    "checks_rate": 1.0,
+    "http_req_failed_rate": 0.0,
+    "p95_ms": 1.0,
+    "rps": 5000
+  },
+  "tool": "k6",
+  "ts": "2026-05-02T00:00:00Z"
+}
