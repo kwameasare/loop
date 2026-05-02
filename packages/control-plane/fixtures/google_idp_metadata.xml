@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Google Workspace SAML 2.0 IdP metadata fixture — S614
+  =======================================================
+  Sandbox Google Workspace SAML metadata used for integration tests.
+  The certificate, idpid, and tenant references are synthetic; they do
+  NOT correspond to a real Google Workspace tenant.
+
+  A real metadata file is obtained from:
+    Google Admin Console → Apps → Web and mobile apps → <your app>
+    → SAML attribute mapping → "Download Metadata"
+
+  Key fields used by GoogleMetadataParser:
+    - md:EntityDescriptor[@entityID]
+        → https://accounts.google.com/o/saml2?idpid=<idpid>
+    - md:IDPSSODescriptor/md:SingleSignOnService[@Binding=HTTP-POST][@Location]
+        → https://accounts.google.com/o/saml2/idp?idpid=<idpid>
+    - ds:X509Certificate
+        → IdP signing certificate (PEM body, base64)
+-->
+<md:EntityDescriptor
+  xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+  xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+  entityID="https://accounts.google.com/o/saml2?idpid=C0sandbox42">
+
+  <md:IDPSSODescriptor
+    WantAuthnRequestsSigned="false"
+    protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <!-- Sandbox self-signed cert (not used for real crypto — test only) -->
+          <ds:X509Certificate>
+MIICpDCCAYwCCQDU7pQ4pHgSpDANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAls
+b29wLWdvb2dsZS10ZXN0MB4XDTI0MDEwMTAwMDAwMFoXDTI3MDEwMTAwMDAwMFow
+FDESMBAGA1UEAwwJbG9vcC1nb29nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+CgKCAQEAuTBnDtVR6yjRJgFq0pK9wRqr4dOuJXxeBs0vRLgGXLmHj9pVkqKQwEnt
+GoogleSandboxCertBodyBase64Pad==
+          </ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+
+    <md:NameIDFormat>
+      urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+    </md:NameIDFormat>
+
+    <md:SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+      Location="https://accounts.google.com/o/saml2/idp?idpid=C0sandbox42"/>
+
+    <md:SingleSignOnService
+      Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+      Location="https://accounts.google.com/o/saml2/idp?idpid=C0sandbox42"/>
+
+  </md:IDPSSODescriptor>
+
+</md:EntityDescriptor>
