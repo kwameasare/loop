@@ -157,5 +157,6 @@ These failure modes are out of scope (loss is permanent, by design):
 ## 8. References
 
 - `engineering/SECURITY.md` §11 — data lifecycle + retention policy.
-- `engineering/RUNBOOKS.md` — RB-001, RB-002, RB-003, RB-004, RB-016.
+- `engineering/RUNBOOKS.md` — RB-001, RB-002, RB-003, RB-004, RB-016, RB-021, RB-022, RB-023.
+- `engineering/DR_TABLETOP.md` — recorded tabletop exercises (most recent + history).
 - `architecture/CLOUD_PORTABILITY.md` §13 — cross-cloud rclone migration playbook.

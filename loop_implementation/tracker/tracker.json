@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:57:30.779168+00:00",
+    "generated_at": "2026-05-02T04:00:16.936171+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3911,13 +3911,13 @@
     {
       "id": "S575",
       "title": "soc2: DR runbook + tabletop exercise (recorded)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S25",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: runbook checked in; exercise minutes appended; gaps tracked as issues."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s575-soc2-dr-runbook-tabletop-exercis (merged + deletable)\nSkill: skills/security/update-threat-model.md\nFinal heartbeat: 2026-05-02T04:00:16Z (copilot-thor)\nTests: 5 new tests in tests/test_dr_tabletop.py — file exists, DR.md cross-link, ≥1 dated exercise entry, required sections present, gaps recorded with owners. Full pytest 1304/1304 (5 new).\nDocs touched: loop_implementation/engineering/DR_TABLETOP.md,loop_implementation/engineering/DR.md\nFollow-ups: none"
     },
     {
       "id": "S576",
