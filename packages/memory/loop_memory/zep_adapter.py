@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 from uuid import UUID
 
@@ -10,6 +11,7 @@ from loop_memory.episodic import (
     EMBEDDING_DIM,
     EpisodicEntry,
     EpisodicError,
+    cosine_similarity,
 )
 
 
@@ -86,4 +88,77 @@ def _entry(record: dict[str, Any]) -> EpisodicEntry:
         raise ZepError(f"failed to rehydrate record: {exc}") from exc
 
 
-__all__ = ["ZepClient", "ZepError"]
+@dataclass(slots=True)
+class ZepEpisodicStore:
+    """EpisodicStore backed by a Zep-compatible async client."""
+
+    client: ZepClient
+
+    async def upsert(self, entry: EpisodicEntry) -> None:
+        try:
+            await self.client.add_episode(
+                session_id=_session_id(entry.workspace_id, entry.agent_id),
+                summary=entry.summary,
+                metadata=_metadata(entry),
+                embedding=entry.embedding,
+            )
+        except Exception as exc:
+            raise ZepError(f"failed to upsert Zep episode: {exc}") from exc
+
+    async def query(
+        self,
+        *,
+        workspace_id: UUID,
+        agent_id: UUID,
+        embedding: Sequence[float],
+        limit: int = 5,
+        min_score: float = 0.0,
+    ) -> list[EpisodicEntry]:
+        if limit <= 0:
+            raise ZepError("limit must be positive")
+        try:
+            records = await self.client.search(
+                session_id=_session_id(workspace_id, agent_id),
+                embedding=embedding,
+                limit=max(limit * 2, limit),
+            )
+            scored = []
+            for record in records:
+                entry = _entry(record)
+                raw_score = record.get("score")
+                score = raw_score if isinstance(raw_score, (int, float)) else cosine_similarity(
+                    tuple(float(x) for x in embedding),
+                    entry.embedding,
+                )
+                if float(score) >= min_score:
+                    scored.append((float(score), entry))
+        except ZepError:
+            raise
+        except Exception as exc:
+            raise ZepError(f"failed to query Zep episodes: {exc}") from exc
+        scored.sort(key=lambda item: (-item[0], -item[1].salience, item[1].ts_ms))
+        return [entry for _, entry in scored[:limit]]
+
+    async def list_recent(
+        self,
+        *,
+        workspace_id: UUID,
+        agent_id: UUID,
+        limit: int = 20,
+    ) -> list[EpisodicEntry]:
+        if limit <= 0:
+            raise ZepError("limit must be positive")
+        try:
+            records = await self.client.list_episodes(
+                session_id=_session_id(workspace_id, agent_id),
+                limit=limit,
+            )
+            entries = [_entry(record) for record in records]
+        except ZepError:
+            raise
+        except Exception as exc:
+            raise ZepError(f"failed to list Zep episodes: {exc}") from exc
+        return sorted(entries, key=lambda entry: entry.ts_ms, reverse=True)[:limit]
+
+
+__all__ = ["ZepClient", "ZepEpisodicStore", "ZepError"]
