@@ -1,0 +1,66 @@
+name: tool-host-warm-start
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/tool-host-warm-start.yml"
+      - "bench/results/tool_host_warm_start.json"
+      - "packages/tool-host/**"
+      - "scripts/tool_host_warm_start.py"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/tool-host-warm-start.yml"
+      - "bench/results/tool_host_warm_start.json"
+      - "packages/tool-host/**"
+      - "scripts/tool_host_warm_start.py"
+  workflow_dispatch:
+  schedule:
+    - cron: "58 5 * * *"
+
+jobs:
+  tool-host-warm-start:
+    name: tool-host-warm-start
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Run warm-start benchmark
+        id: warm_start
+        continue-on-error: true
+        run: |
+          uv run python scripts/tool_host_warm_start.py \
+            --output bench/results/tool_host_warm_start.json \
+            --target-p95-ms 300
+      - name: Upload warm-start report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tool-host-warm-start
+          path: bench/results/tool_host_warm_start.json
+          if-no-files-found: error
+      - name: Fail breached warm-start budget
+        if: steps.warm_start.outcome != 'success'
+        run: exit 1
+      - name: Page on-call
+        if: failure()
+        env:
+          LOOP_ONCALL_WEBHOOK_URL: ${{ secrets.LOOP_ONCALL_WEBHOOK_URL }}
+        run: |
+          if [ -z "$LOOP_ONCALL_WEBHOOK_URL" ]; then
+            echo "::error::LOOP_ONCALL_WEBHOOK_URL secret is required to page on-call"
+            exit 1
+          fi
+          python3 - <<'PY' >/tmp/oncall-payload.json
+          import json, os
+          run_url = f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          print(json.dumps({
+              "summary": "Loop tool-host warm-start p95 breached 300 ms",
+              "severity": "critical",
+              "source": "github-actions",
+              "run_url": run_url,
+          }))
+          PY
+          curl -fsS -X POST -H "content-type: application/json" \
+            --data @/tmp/oncall-payload.json "$LOOP_ONCALL_WEBHOOK_URL"
