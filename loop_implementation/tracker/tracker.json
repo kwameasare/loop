@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:24:39.176371+00:00",
+    "generated_at": "2026-05-02T06:24:59.121398+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4263,13 +4263,13 @@
     {
       "id": "S637",
       "title": "ent: BYO Vault integration (existing tenant Vault, not Loop's)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S28",
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: vault_address + role configurable per workspace; secrets-rotation runbook updated."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s637-ent-byo-vault-integration-existi (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:20:59Z (copilot-titan)\nTests: packages/control-plane/_tests/test_byo_vault.py\nDocs touched: loop_implementation/engineering/RUNBOOKS.md packages/control-plane/loop_control_plane/byo_vault.py\nFollow-ups: none"
     },
     {
       "id": "S638",
@@ -4362,13 +4362,13 @@
     {
       "id": "S656",
       "title": "ga-polish: a11y audit (WCAG 2.1 AA) on top 10 studio pages",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S29",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: axe-core zero serious; manual screen-reader pass; report committed."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s656-ga-polish-a11y-audit-wcag-2-1-aa (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:23:57Z (copilot-titan)\nTests: apps/studio/src/components/__a11y__/a11y-audit.test.ts\nDocs touched: apps/studio/a11y/AXE_AUDIT.md\nFollow-ups: none"
     },
     {
       "id": "S657",
