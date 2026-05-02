@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:48:05.517330+00:00",
+    "generated_at": "2026-05-02T03:48:44.719953+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3878,13 +3878,13 @@
     {
       "id": "S572",
       "title": "soc2: backup automation postgres (point-in-time recovery)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S25",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: WAL archived to object-store; restore drill in DR runbook proves <1h RTO."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s572-soc2-backup-automation-postgres\nSkill: skills/security/update-threat-model.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T03:48:44Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S573",

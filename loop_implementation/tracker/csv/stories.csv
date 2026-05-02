@@ -805,7 +805,14 @@ Final heartbeat: 2026-05-01T22:03:50Z (copilot-titan)
 Tests: uv run pytest tests/test_soc2_control_mapping.py -q (6 passed); close used --skip-gates because origin/main baseline fails ruff/pyright outside S571
 Docs touched: loop_implementation/engineering/SOC2.md
 Follow-ups: none"
-S572,soc2: backup automation postgres (point-in-time recovery),tbd,S25,E16,2,P0,Not started,AC: WAL archived to object-store; restore drill in DR runbook proves <1h RTO.
+S572,soc2: backup automation postgres (point-in-time recovery),copilot-thor,S25,E16,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s572-soc2-backup-automation-postgres
+Skill: skills/security/update-threat-model.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T03:48:44Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S573,soc2: backup automation clickhouse,tbd,S25,E16,2,P0,Not started,AC: scheduled exports to object-store; restore drill verified.
 S574,soc2: backup automation minio (cross-region replication),tbd,S25,E16,1,P0,Not started,AC: bucket replicated; integrity verified daily.
 S575,soc2: DR runbook + tabletop exercise (recorded),tbd,S25,E16,2,P0,Not started,AC: runbook checked in; exercise minutes appended; gaps tracked as issues.
