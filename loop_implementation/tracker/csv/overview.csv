@@ -4,18 +4,8 @@ owner,CTO
 sprint_length,2 weeks (Sprint 0 is 6w bootstrap)
 epics_total,20
 stories_total,480
-<<<<<<< HEAD
-<<<<<<< HEAD
 stories_done,404
 stories_in_progress,0
-=======
-stories_done,403
-stories_in_progress,1
->>>>>>> d206f2a (chore(tracker): claim S594)
-=======
-stories_done,404
-stories_in_progress,0
->>>>>>> e538174 (chore(tracker): close S594)
 stories_blocked,8
 sprints_total,38
 risks_total,12
