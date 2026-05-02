@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T13:34:26.660174+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3526,13 +3526,13 @@
     {
       "id": "S495",
       "title": "kb-v1: incremental URL crawler (sitemap-aware)",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S21",
       "epic": "E5",
       "points": 3,
       "priority": "P1",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s495-kb-v1-incremental-url-crawler-si (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T13:34:26Z (copilot-thor)\nTests: 17 pytest (test_crawler.py): sitemap parsing, robots.txt compliance, incremental changed_since filtering, error handling, max_pages cap\nDocs touched: loop_kb_engine/crawler.py: SitemapCrawler with sitemap-aware crawl, robots.txt filter, changed_since incremental fetch, pluggable fetcher\nFollow-ups: recursive sitemapindex support; etag-based dedup; async fetch pipeline"
+      "status": "Not started",
+      "notes": "AC: crawls sitemap.xml; respects robots.txt; only fetches changed-since."
     },
     {
       "id": "S496",
