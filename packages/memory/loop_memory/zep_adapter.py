@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Protocol, cast, runtime_checkable
 from uuid import UUID
 
 from loop_memory.episodic import (
@@ -64,25 +64,40 @@ def _metadata(entry: EpisodicEntry) -> dict[str, Any]:
 
 
 def _entry(record: dict[str, Any]) -> EpisodicEntry:
-    md = record.get("metadata") or {}
+    md_raw = record.get("metadata")
+    if not isinstance(md_raw, dict):
+        raise ZepError("record missing metadata")
+    md = cast("dict[str, object]", md_raw)
     summary = record.get("summary")
     if not isinstance(summary, str) or not summary:
         raise ZepError(f"record missing 'summary' string: {record!r}")
     embedding = record.get("embedding")
     if not isinstance(embedding, (list, tuple)):
         raise ZepError("record missing embedding")
-    if len(embedding) != EMBEDDING_DIM:
-        raise ZepError(f"embedding dim {len(embedding)} != {EMBEDDING_DIM}")
+    parsed_values: list[float] = []
+    for value in cast("Sequence[object]", embedding):
+        if not isinstance(value, (int, float, str)):
+            raise ZepError("embedding contains non-numeric value")
+        parsed_values.append(float(value))
+    values = tuple(parsed_values)
+    if len(values) != EMBEDDING_DIM:
+        raise ZepError(f"embedding dim {len(values)} != {EMBEDDING_DIM}")
     try:
+        salience = md["salience"]
+        ts_ms = md["ts_ms"]
+        if not isinstance(salience, (int, float, str)):
+            raise ZepError("metadata salience must be numeric")
+        if not isinstance(ts_ms, (int, float, str)):
+            raise ZepError("metadata ts_ms must be numeric")
         return EpisodicEntry(
-            id=UUID(md["loop_id"]),
-            workspace_id=UUID(md["workspace_id"]),
-            agent_id=UUID(md["agent_id"]),
-            conversation_id=UUID(md["conversation_id"]),
+            id=UUID(str(md["loop_id"])),
+            workspace_id=UUID(str(md["workspace_id"])),
+            agent_id=UUID(str(md["agent_id"])),
+            conversation_id=UUID(str(md["conversation_id"])),
             summary=summary,
-            embedding=tuple(float(x) for x in embedding),
-            salience=float(md["salience"]),
-            ts_ms=int(md["ts_ms"]),
+            embedding=values,
+            salience=float(salience),
+            ts_ms=int(ts_ms),
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise ZepError(f"failed to rehydrate record: {exc}") from exc
