@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:24:59.121398+00:00",
+    "generated_at": "2026-05-02T06:26:15.153840+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5099,13 +5099,13 @@
     {
       "id": "S775",
       "title": "infra: terraform module — Hetzner (HCloud K8s + managed Postgres + S3-compat MinIO + KMS via Vault)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S34",
       "epic": "E12",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: same against Hetzner; cost-optimized self-hosted alternative."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s775-infra-terraform-module-hetzner-h\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:26:15Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S776",
