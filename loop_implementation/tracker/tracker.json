@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T12:29:21.225354+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5253,13 +5253,13 @@
     {
       "id": "S807",
       "title": "ops: data-retention policy enforced by scheduled jobs (per data type, per region)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S35",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: jobs delete per policy; deletion audited; user-visible policy page on docs site."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s807-ops-data-retention-policy-enforc\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T12:29:21Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S808",

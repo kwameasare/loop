@@ -1384,7 +1384,14 @@ Tests: touched ruff/format pass; touched pyright pass; SLO alert tests pass (3);
 Docs touched: loop_implementation/operations/SLOs.yaml, infra/prometheus/alerts/slo-burn.yaml, infra/prometheus/alertmanager.yaml, loop_implementation/engineering/PERFORMANCE.md
 Follow-ups: none"
 S806,ops: incident-response runbook + game-day cadence (monthly),tbd,S35,E16,2,P0,Not started,AC: runbook checked in; first game-day held; recorded; gaps tracked.
-S807,"ops: data-retention policy enforced by scheduled jobs (per data type, per region)",tbd,S35,E16,2,P0,Not started,AC: jobs delete per policy; deletion audited; user-visible policy page on docs site.
+S807,"ops: data-retention policy enforced by scheduled jobs (per data type, per region)",copilot-thor,S35,E16,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s807-ops-data-retention-policy-enforc
+Skill: skills/api/add-rest-endpoint.md
+Last step: 0/3 (just claimed)
+Heartbeat: 2026-05-02T12:29:21Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S808,ops: encrypted backup verification (restore-then-diff weekly),tbd,S35,E16,2,P0,Not started,AC: weekly job restores latest backup to scratch; diff against live; alerts on mismatch.
 S809,security: bug-bounty program launch (HackerOne or YesWeHack),tbd,S35,E16,2,P0,Not started,AC: program live; scope+rules+payouts published; first 3 reports triaged within SLA.
 S820,memory: Mem0 adapter (drop-in EpisodicMemoryStore via Protocol),GitHub Copilot,S36,E4,2,P1,Done,"Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/architecture/cloud-portable-protocol.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_memory/mem0_adapter.py Mem0Store satisfying EpisodicStore Protocol (upsert/query/list_recent) using HashEmbedder, min_score filter, ts_ms desc list, Mem0Error wrap on bad-dim/RuntimeError. Tests: test_memory_pass10.py. Open questions: none."
