@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T04:35:43.101875+00:00",
+    "generated_at": "2026-05-02T05:07:36.975652+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4252,13 +4252,13 @@
     {
       "id": "S636",
       "title": "ent: customer-managed KMS key (CMK) per workspace",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S28",
       "epic": "E20",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: workspace.tenant_kms_key_id used for envelope encryption; integration with AWS KMS sandbox."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s636-ent-customer-managed-kms-key-cmk\nSkill: skills/security/secrets-kms-check.md\nLast step: 0/6 (just claimed)\nHeartbeat: 2026-05-02T05:07:36Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S637",

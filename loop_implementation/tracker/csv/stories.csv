@@ -930,7 +930,14 @@ S632,audit: audit log export CSV,tbd,S28,E20,1,P0,Not started,AC: filtered expor
 S633,audit: SIEM webhook (Datadog/Splunk/generic),tbd,S28,E20,2,P1,Not started,AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify.
 S634,audit: DPA template + redlines workflow,tbd,S28,E20,2,P1,Not started,AC: DPA.md + redlines mechanism documented; sample redline-PR closed.
 S635,audit: GDPR Art-17 data-deletion request endpoint + workflow,tbd,S28,E16,2,P0,Not started,AC: POST /v1/workspaces/{id}/data-deletion enqueues job; results emailed.
-S636,ent: customer-managed KMS key (CMK) per workspace,tbd,S28,E20,3,P0,Not started,AC: workspace.tenant_kms_key_id used for envelope encryption; integration with AWS KMS sandbox.
+S636,ent: customer-managed KMS key (CMK) per workspace,codex-orion,S28,E20,3,P0,In progress,"**Active.**
+Branch: codex-orion/s636-ent-customer-managed-kms-key-cmk
+Skill: skills/security/secrets-kms-check.md
+Last step: 0/6 (just claimed)
+Heartbeat: 2026-05-02T05:07:36Z (codex-orion)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S637,"ent: BYO Vault integration (existing tenant Vault, not Loop's)",tbd,S28,E20,2,P0,Not started,AC: vault_address + role configurable per workspace; secrets-rotation runbook updated.
 S638,ent: dedicated single-tenant deploy mode (one helm-install per customer),tbd,S28,E20,3,P1,Not started,AC: 'enterprise' values produce isolated stack; smoke test.
 S639,ent: on-prem parity matrix verification (cloud-vs-onprem feature gates),codex-orion,S28,E13,2,P0,Done,"**Done.**
