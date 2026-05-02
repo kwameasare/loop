@@ -175,7 +175,14 @@ Final heartbeat: 2026-05-01T19:44:37Z (copilot-thor)
 Tests: pnpm test 80 passed; pnpm lint clean; pnpm build clean
 Docs touched: workspaces.ts, use-active-workspace.ts, workspace-switcher.tsx module docstrings document the source-of-truth + persistence rules
 Follow-ups: none"
-S155,"studio: settings drawer (profile, region, theme)",tbd,S4,E10,2,P1,Not started,AC: profile name editable; region read-only display; theme persists to localStorage.
+S155,"studio: settings drawer (profile, region, theme)",copilot-thor,S4,E10,2,P1,In progress,"**Active.**
+Branch: copilot-thor/s155-studio-settings-drawer-profile-r
+Skill: skills/api/add-rest-endpoint.md
+Last step: 0/3 (just claimed)
+Heartbeat: 2026-05-02T12:38:30Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S156,studio: agents-list page reads real /v1/workspaces/{id}/agents,codex-vega,S4,E10,2,P0,Done,"**Done.**
 PR: local-only: codex-vega/s156-studio-agents-list-page-reads-re
 Branch: codex-vega/s156-studio-agents-list-page-reads-re (merged + deletable)

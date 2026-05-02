@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T12:38:30.944932+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1183,13 +1183,13 @@
     {
       "id": "S155",
       "title": "studio: settings drawer (profile, region, theme)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S4",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: profile name editable; region read-only display; theme persists to localStorage."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s155-studio-settings-drawer-profile-r\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T12:38:30Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S156",
