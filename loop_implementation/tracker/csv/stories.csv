@@ -837,8 +837,22 @@ Final heartbeat: 2026-05-02T04:00:16Z (copilot-thor)
 Tests: 5 new tests in tests/test_dr_tabletop.py — file exists, DR.md cross-link, ≥1 dated exercise entry, required sections present, gaps recorded with owners. Full pytest 1304/1304 (5 new).
 Docs touched: loop_implementation/engineering/DR_TABLETOP.md,loop_implementation/engineering/DR.md
 Follow-ups: none"
-S576,soc2: pen-test prep (scope + RoE + access creds),tbd,S25,E16,2,P0,Not started,AC: scope agreed with vendor; staging env stood up; creds rotated post-test.
-S577,soc2: pen-test fix queue tracked as P0 stories,tbd,S25,E16,2,P0,Not started,"AC: each finding has tracker entry, severity, owner, fix-deadline."
+S576,soc2: pen-test prep (scope + RoE + access creds),codex-vega,S25,E16,2,P0,Blocked,"**Blocked.**
+Branch: codex-vega/s576-soc2-pen-test-prep-scope-roe-acc
+Skill: skills/security/update-threat-model.md
+Last step: 0/2 (blocked before implementation)
+Heartbeat: 2026-05-02T05:07:16Z (codex-vega)
+Open questions: none
+Blockers: Security/Compliance owner must provide signed penetration-test vendor engagement, agreed scope and Rules of Engagement, approved testing window/IP allowlist, live staging environment URL, temporary test credentials stored in Vault, and a named owner plus evidence path for post-test credential rotation.
+Commits: blocked before implementation."
+S577,soc2: pen-test fix queue tracked as P0 stories,codex-vega,S25,E16,2,P0,Blocked,"**Blocked.**
+Branch: codex-vega/s577-soc2-pen-test-fix-queue-tracked
+Skill: skills/security/update-threat-model.md
+Last step: 0/2 (blocked before implementation)
+Heartbeat: 2026-05-02T05:08:58Z (codex-vega)
+Open questions: none
+Blockers: requires the completed penetration-test report from S576, including vendor finding IDs, severity ratings, affected components, evidence, remediation guidance, and agreed due dates/owners so each real finding can be converted into a P0 StoryV2 entry without inventing issues.
+Commits: blocked before implementation."
 S578,soc2: SBOM generation in CI (cyclonedx),copilot-titan,S25,E16,1,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-titan/s578-soc2-sbom-generation-in-ci-cyclo (merged + deletable)
@@ -906,7 +920,14 @@ Final heartbeat: 2026-05-01T23:25:05Z (codex-orion)
 Tests: Focused ruff/pyright on tests/test_regional_image_promotion_workflow.py; uv run pytest -q tests/test_regional_image_promotion_workflow.py tests/test_cp_api_image_ci.py (9 passed); uv run pytest -q -m 'not integration and not e2e' (1224 passed, 3 skipped, 4 deselected); tracker/docs gates pass. Full repo ruff/format/pyright remain baseline-red in unrelated files.
 Docs touched: .github/workflows/promote-regional-images.yml, loop_implementation/engineering/REGIONAL_DEPLOYS.md
 Follow-ups: none"
-S596,region: metadata-only telemetry (no PII) leaving region,tbd,S26,E16,1,P0,Not started,AC: telemetry pipeline filters PII before cross-region; tested with synthetic PII.
+S596,region: metadata-only telemetry (no PII) leaving region,copilot-titan,S26,E16,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s596-region-metadata-only-telemetry-n (merged + deletable)
+Skill: skills/security/secrets-kms-check.md
+Final heartbeat: 2026-05-02T05:10:49Z (copilot-titan)
+Tests: packages/sdk-py/_tests/test_region_pii_filter.py (5 new) + test_observability.py (regression) — 12 passed
+Docs touched: loop_implementation/engineering/SECURITY.md
+Follow-ups: none"
 S597,region: smoke test against EU stack (full turn),codex-orion,S26,E12,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-orion/s597-region-smoke-test-against-eu-sta (merged + deletable)
@@ -930,18 +951,7 @@ S632,audit: audit log export CSV,tbd,S28,E20,1,P0,Not started,AC: filtered expor
 S633,audit: SIEM webhook (Datadog/Splunk/generic),tbd,S28,E20,2,P1,Not started,AC: per-workspace webhook URL; back-fill on outage; signature for receiver verify.
 S634,audit: DPA template + redlines workflow,tbd,S28,E20,2,P1,Not started,AC: DPA.md + redlines mechanism documented; sample redline-PR closed.
 S635,audit: GDPR Art-17 data-deletion request endpoint + workflow,tbd,S28,E16,2,P0,Not started,AC: POST /v1/workspaces/{id}/data-deletion enqueues job; results emailed.
-S636,ent: customer-managed KMS key (CMK) per workspace,codex-orion,S28,E20,3,P0,In progress,"**Active.**
-Branch: codex-orion/s636-ent-customer-managed-kms-key-cmk
-Skill: skills/security/secrets-kms-check.md
-Last step: 4/6
-Heartbeat: 2026-05-02T05:13:39Z (codex-orion)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)
-Latest checkpoint: tracker docs and checkpoint gates passed
-Latest checkpoint: broad hermetic pytest passed
-Latest checkpoint: focused static control-plane tests and cloud SDK scan passed
-Latest checkpoint: workspace cmk envelope code tests and docs landed"
+S636,ent: customer-managed KMS key (CMK) per workspace,tbd,S28,E20,3,P0,Not started,AC: workspace.tenant_kms_key_id used for envelope encryption; integration with AWS KMS sandbox.
 S637,"ent: BYO Vault integration (existing tenant Vault, not Loop's)",tbd,S28,E20,2,P0,Not started,AC: vault_address + role configurable per workspace; secrets-rotation runbook updated.
 S638,ent: dedicated single-tenant deploy mode (one helm-install per customer),tbd,S28,E20,3,P1,Not started,AC: 'enterprise' values produce isolated stack; smoke test.
 S639,ent: on-prem parity matrix verification (cloud-vs-onprem feature gates),codex-orion,S28,E13,2,P0,Done,"**Done.**

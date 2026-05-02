@@ -12,6 +12,8 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
 from opentelemetry.trace import StatusCode
 
+from loop.observability.region_filter import PIIScrubber
+
 
 class ClickHouseSpanExporter(SpanExporter):
     def __init__(
@@ -21,18 +23,28 @@ class ClickHouseSpanExporter(SpanExporter):
         table: str = "otel_traces",
         timeout_seconds: float = 5.0,
         transport: Callable[[str, bytes, float], None] | None = None,
+        pii_scrubber: PIIScrubber | None = None,
+        cross_region: bool = False,
     ) -> None:
         if not endpoint.startswith(("http://", "https://")):
             raise ValueError("endpoint must use http or https")
+        if cross_region and pii_scrubber is None:
+            # S596: a cross-region exporter MUST run a PII scrubber.
+            # Refuse to construct rather than silently exfiltrate.
+            raise ValueError("cross_region=True requires a pii_scrubber")
         self._endpoint = endpoint.rstrip("/")
         self._table = table
         self._timeout = timeout_seconds
         self._transport = transport or _http_post
+        self._scrubber = pii_scrubber
 
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
         if not spans:
             return SpanExportResult.SUCCESS
-        body = "\n".join(json.dumps(_span_to_row(span), sort_keys=True) for span in spans)
+        rows = [_span_to_row(span) for span in spans]
+        if self._scrubber is not None:
+            rows = [self._scrubber.scrub(row) for row in rows]
+        body = "\n".join(json.dumps(row, sort_keys=True) for row in rows)
         query = urlencode({"query": f"INSERT INTO {self._table} FORMAT JSONEachRow"})
         try:
             self._transport(f"{self._endpoint}/?{query}", body.encode(), self._timeout)

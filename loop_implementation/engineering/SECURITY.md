@@ -271,6 +271,8 @@ conversations = await db.fetch("SELECT * FROM conversations")  # RLS ensures onl
 
 Append-only log of admin events; cryptographic chain (each entry includes hash of the previous).
 
+**Completeness:** Every write endpoint (POST/PATCH/DELETE) must emit an audit event. See [`AUDIT_COMPLETENESS.md`](AUDIT_COMPLETENESS.md) for the master coverage matrix, gap analysis, and remediation tracking.
+
 Events tracked:
 - Workspace lifecycle (create / delete / plan change).
 - Member invite / role change / removal.
@@ -317,6 +319,33 @@ Presidio mode accepts a Presidio-compatible analyzer, and
 LLM-classifier mode accepts classifier-produced spans. Memory audit
 events record only action/scope/key metadata, never pre-redaction
 values.
+
+#### 7.3.1 Cross-region telemetry filter (S596)
+
+Loop pins each workspace to a single region (S/D/P-plane). The OTel
+trace pipeline, however, carries spans into a global aggregation
+cluster so SRE has one pane of glass. That seam is enforced by
+`loop.observability.PIIScrubber` and the `cross_region=True` flag on
+`ClickHouseSpanExporter`:
+
+* known PII attribute keys (`user.email`, `user.phone`, `msisdn`,
+  `prompt`, `completion`, `request_body`, `response_body`,
+  `user_input`, `user_text`, `message_text`, `address`, `ssn`,
+  `credit_card`, …) are replaced with `<redacted-pii>` rather than
+  forwarded;
+* free-form attribute values that match the canonical email / phone /
+  SSN / PAN regexes are redacted by value scan — even on attribute
+  keys we have not enumerated;
+* a structural keep-list (`workspace_id`, `conversation_id`,
+  `turn_id`, `trace_id`, `span_id`, `span_kind`, `name`, timing,
+  `cost_usd`, `status`, `region`, `tenant_id`) survives so receiving
+  regions can still alert on shape;
+* constructing a cross-region exporter without a scrubber **raises at
+  boot** rather than silently exfiltrating — a misconfigured deploy
+  fails closed.
+
+Tested with synthetic PII in
+`packages/sdk-py/_tests/test_region_pii_filter.py`.
 
 ---
 
@@ -409,7 +438,7 @@ For enterprise customers in healthcare:
 
 - Cloud-native VM/image scanner where available (AWS Inspector / Microsoft Defender for Cloud / GCP Container Analysis / Alicloud Security Center) plus Trivy on every image in CI as the cloud-neutral baseline.
 - Trivy on container images in CI.
-- Quarterly penetration test by an external firm.
+- Quarterly penetration test by an external firm — see [`PEN_TEST.md`](PEN_TEST.md) for vendor selection, scope, RoE, staging setup, credential management, and remediation tracking.
 - Infrastructure-as-code linting: `tflint`, `kube-linter`.
 
 ### 9.3 Disclosure

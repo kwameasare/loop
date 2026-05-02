@@ -23,9 +23,11 @@ from loop.observability._tracing import (
     tracer,
 )
 from loop.observability.clickhouse_exporter import ClickHouseSpanExporter
+from loop.observability.region_filter import PIIScrubber
 
 __all__ = [
     "ClickHouseSpanExporter",
+    "PIIScrubber",
     "SpanKind",
     "Tracer",
     "init_tracing",
