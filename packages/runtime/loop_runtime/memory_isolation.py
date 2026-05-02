@@ -4,9 +4,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
-from uuid import UUID
+from uuid import NAMESPACE_URL, UUID, uuid5
 
-__all__ = ["MemoryAuditEvent", "MemoryScope", "UserMemoryStore"]
+__all__ = [
+    "MemoryAuditEvent",
+    "MemoryIsolationReport",
+    "MemoryScope",
+    "UserMemoryStore",
+    "run_user_memory_red_team",
+]
 
 
 @dataclass(frozen=True)
@@ -28,6 +34,18 @@ class MemoryAuditEvent:
     user_id: str
     key: str
     allowed: bool
+
+
+@dataclass(frozen=True)
+class MemoryIsolationReport:
+    cases: int
+    leaks_detected: int
+    false_positives: int
+    audit_events: int
+
+    @property
+    def passed(self) -> bool:
+        return self.leaks_detected == 0 and self.false_positives == 0
 
 
 @dataclass
@@ -85,3 +103,44 @@ class UserMemoryStore:
     def _validate_key(key: str) -> None:
         if not key:
             raise ValueError("memory key must be non-empty")
+
+
+def _stable_uuid(label: str) -> UUID:
+    return uuid5(NAMESPACE_URL, f"loop:memory-isolation:{label}")
+
+
+def run_user_memory_red_team(*, cases: int = 100_000) -> MemoryIsolationReport:
+    if cases < 1:
+        raise ValueError("cases must be positive")
+    store = UserMemoryStore()
+    workspaces = tuple(_stable_uuid(f"workspace:{i}") for i in range(32))
+    agents = tuple(_stable_uuid(f"agent:{i}") for i in range(8))
+    leaks = 0
+    false_positives = 0
+
+    for index in range(cases):
+        scope = MemoryScope(
+            workspace_id=workspaces[index % len(workspaces)],
+            agent_id=agents[index % len(agents)],
+            user_id=f"user-{index % 4096}",
+        )
+        intruder = MemoryScope(
+            workspace_id=scope.workspace_id,
+            agent_id=scope.agent_id,
+            user_id=f"intruder-{index % 4096}",
+        )
+        key = f"profile:{index % 97}"
+        value = {"case": index, "marker": f"secret-{index}"}
+
+        store.put(scope, key, value)
+        if store.get(scope, key) != value:
+            false_positives += 1
+        if store.get(intruder, key) is not None:
+            leaks += 1
+
+    return MemoryIsolationReport(
+        cases=cases,
+        leaks_detected=leaks,
+        false_positives=false_positives,
+        audit_events=len(store.audit_log()),
+    )
