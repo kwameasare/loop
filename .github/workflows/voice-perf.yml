@@ -1,0 +1,71 @@
+name: voice-perf
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/voice-perf.yml"
+      - "bench/results/voice_perf.json"
+      - "docs/perf/voice_perf.md"
+      - "packages/voice/**"
+      - "scripts/voice_perf.py"
+      - "tests/test_voice_perf.py"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/voice-perf.yml"
+      - "bench/results/voice_perf.json"
+      - "docs/perf/voice_perf.md"
+      - "packages/voice/**"
+      - "scripts/voice_perf.py"
+      - "tests/test_voice_perf.py"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * *"
+
+jobs:
+  voice-perf:
+    name: voice-perf
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Run voice p50 benchmark
+        id: voice_perf
+        continue-on-error: true
+        run: |
+          uv run python scripts/voice_perf.py \
+            --output bench/results/voice_perf.json \
+            --iterations 100 \
+            --target-p50-ms 700
+      - name: Upload voice performance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-perf
+          path: bench/results/voice_perf.json
+          if-no-files-found: error
+      - name: Fail breached voice p50 budget
+        if: steps.voice_perf.outcome != 'success'
+        run: exit 1
+      - name: Page on-call
+        if: failure()
+        env:
+          LOOP_ONCALL_WEBHOOK_URL: ${{ secrets.LOOP_ONCALL_WEBHOOK_URL }}
+        run: |
+          if [ -z "$LOOP_ONCALL_WEBHOOK_URL" ]; then
+            echo "::error::LOOP_ONCALL_WEBHOOK_URL secret is required to page on-call"
+            exit 1
+          fi
+          python3 - <<'PY' >/tmp/oncall-payload.json
+          import json, os
+          run_url = f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          print(json.dumps({
+              "summary": "Loop voice p50 latency breached 700 ms",
+              "severity": "critical",
+              "source": "github-actions",
+              "run_url": run_url,
+          }))
+          PY
+          curl -fsS -X POST -H "content-type: application/json" \
+            --data @/tmp/oncall-payload.json "$LOOP_ONCALL_WEBHOOK_URL"
