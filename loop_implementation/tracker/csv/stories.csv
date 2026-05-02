@@ -933,11 +933,12 @@ S635,audit: GDPR Art-17 data-deletion request endpoint + workflow,tbd,S28,E16,2,
 S636,ent: customer-managed KMS key (CMK) per workspace,codex-orion,S28,E20,3,P0,In progress,"**Active.**
 Branch: codex-orion/s636-ent-customer-managed-kms-key-cmk
 Skill: skills/security/secrets-kms-check.md
-Last step: 3/6
-Heartbeat: 2026-05-02T05:13:14Z (codex-orion)
+Last step: 4/6
+Heartbeat: 2026-05-02T05:13:39Z (codex-orion)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: tracker docs and checkpoint gates passed
 Latest checkpoint: broad hermetic pytest passed
 Latest checkpoint: focused static control-plane tests and cloud SDK scan passed
 Latest checkpoint: workspace cmk envelope code tests and docs landed"
