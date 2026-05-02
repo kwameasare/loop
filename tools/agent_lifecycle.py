@@ -391,6 +391,8 @@ def cmd_pick(args: argparse.Namespace) -> int:
         str(SCRIPT_DIR / "pick_next_story.py"),
         "--owner",
         owner,
+        "--assigned-to",
+        owner,
     ]
     if args.json:
         cmd.append("--json")
