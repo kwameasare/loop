@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from uuid import uuid4
 
 import pytest
+from loop_memory import langmem_summarize
 from loop_memory.conversation_close import (
     CloseContext,
     ConversationOutcome,
@@ -20,7 +22,7 @@ from loop_memory.episodic import (
 
 
 def _ctx(**overrides: object) -> CloseContext:
-    base = dict(
+    base: dict[str, object] = dict(
         workspace_id=uuid4(),
         agent_id=uuid4(),
         conversation_id=uuid4(),
@@ -52,7 +54,7 @@ def test_default_salience_escalation_bonus() -> None:
 
 def test_default_salience_caps_turn_bonus() -> None:
     s = default_salience(_ctx(turn_count=10_000, user_marked_important=True))
-    assert s == pytest.approx(1.0)
+    assert abs(s - 1.0) < 1e-9
 
 
 def test_close_context_validates_negative_fields() -> None:
@@ -149,4 +151,25 @@ async def test_ingest_uses_custom_salience_fn() -> None:
         messages=["hi"],
         salience_fn=lambda _ctx: 0.42,
     )
-    assert entry.salience == pytest.approx(0.42)
+    assert abs(entry.salience - 0.42) < 1e-9
+
+
+@pytest.mark.asyncio
+async def test_ingest_accepts_langmem_summarizer_variant() -> None:
+    def summarize(messages: Sequence[str], *, max_chars: int = 240) -> str:
+        assert max_chars > 0
+        return langmem_summarize(messages, max_chars=120)
+
+    store = InMemoryEpisodicStore()
+    embedder = HashEmbedder()
+    entry = await ingest_closed_conversation(
+        store=store,
+        embedder=embedder,
+        ctx=_ctx(),
+        messages=[
+            " ".join(["small talk about onboarding"] * 30),
+            "User needs Datadog SIEM webhook export for audit evidence.",
+        ],
+        summarizer=summarize,
+    )
+    assert "datadog" in entry.summary.lower()
