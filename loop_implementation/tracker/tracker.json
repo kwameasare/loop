@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:41:13.772758+00:00",
+    "generated_at": "2026-05-02T05:42:22.208410+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5418,13 +5418,13 @@
     {
       "id": "S844",
       "title": "perf: 1000 concurrent turns held by single dp-runtime pod (acceptance test)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S37",
       "epic": "E1",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: k6 1000 parallel SSE; no errors; latency p95 < 3s; memory < 4 GB."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s844-perf-1000-concurrent-turns-held\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:42:22Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S845",
