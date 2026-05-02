@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T12:46:57.620308+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -51,7 +51,7 @@
       "name": "Channel adapters",
       "owner": "Eng #7",
       "target": "Rolling",
-      "status": "Done",
+      "status": "In progress",
       "notes": "Web, Slack, WhatsApp, SMS first"
     },
     {
@@ -1381,13 +1381,13 @@
     {
       "id": "S178",
       "title": "web-channel-js: typing indicator + history persistence (sessionStorage)",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S5",
       "epic": "E6",
       "points": 1,
       "priority": "P1",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s178-web-channel-js-typing-indicator (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T12:46:57Z (copilot-thor)\nTests: 6 vitest (packages/channels/web-js/src/widget-s178.test.tsx): typing indicator shown/hidden, history restored on mount, persisted after exchange, no persist without key, streaming messages excluded from restore\nDocs touched: packages/channels/web-js/src/widget.tsx\nFollow-ups: BroadcastChannel sync across tabs; configurable history limit; configurable key"
+      "status": "Not started",
+      "notes": "AC: typing dot animates while server sending; refresh restores last 30 messages."
     },
     {
       "id": "S179",
@@ -5496,7 +5496,7 @@
       "theme": "Web channel + first end-to-end demo",
       "goal": "Visitor on a webpage talks to a Loop agent via embedded ChatWidget; demo + smoke test live.",
       "stories": "S170-S181",
-      "status": "Done"
+      "status": "In progress"
     },
     {
       "id": "S6",
@@ -5956,7 +5956,7 @@
       "month": "M2",
       "milestone": "Tools + KB",
       "deliverables": "Tool/MCP layer; auto-MCP; KB ingestion v0; web widget",
-      "status": "Done"
+      "status": "In progress"
     },
     {
       "month": "M3",
