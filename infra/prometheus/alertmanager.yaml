@@ -1,0 +1,14 @@
+route:
+  receiver: default
+  group_by: [alertname, service]
+  routes:
+    - matchers: ['pagerduty="true"']
+      receiver: pagerduty-slo
+      continue: false
+receivers:
+  - name: default
+  - name: pagerduty-slo
+    pagerduty_configs:
+      - routing_key: ${PAGERDUTY_SLO_ROUTING_KEY}
+        severity: '{{ .CommonLabels.severity }}'
+        description: '{{ .CommonAnnotations.summary }}'
