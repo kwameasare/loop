@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T12:35:38.479781+00:00",
+    "generated_at": "2026-05-02T12:37:37.059148+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5280,8 +5280,8 @@
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s809-security-bug-bounty-program-laun\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T12:35:38Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s809-security-bug-bounty-program-laun (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T12:37:36Z (copilot-thor)\nTests: 19 pytest (packages/control-plane/_tests/test_bug_bounty.py): test_new_report_is_not_acknowledged, test_acknowledge_sets_timestamp, test_ack_sla_met_when_within_24h, test_ack_sla_violated_when_after_24h, test_triage_sla_met_when_within_7_days, test_triage_sla_violated_when_after_7_days, test_double_ack_raises_triage_error, test_decide_without_ack_raises_triage_error, test_double_decide_raises_triage_error, test_unknown_report_id_raises_triage_error, test_program_not_live_before_three_reports, test_program_live_after_three_clean_reports, test_program_not_live_when_sla_violated, test_sla_violations_empty_for_clean_reports, test_sla_violations_detected_for_late_ack, test_public_bug_bounty_page_exists, test_public_bug_bounty_page_covers_scope_and_payouts, test_internal_bug_bounty_ops_doc_exists, test_internal_bug_bounty_ops_doc_has_triage_log\nDocs touched: docs/site/bug-bounty.md; loop_implementation/engineering/BUG_BOUNTY.md\nFollow-ups: Wire HackerOne webhook to BountyProgram; add hall-of-fame page; complete triage log for first 3 live reports"
     },
     {
       "id": "S820",

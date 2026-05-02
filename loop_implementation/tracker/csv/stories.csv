@@ -1386,14 +1386,14 @@ Follow-ups: none"
 S806,ops: incident-response runbook + game-day cadence (monthly),tbd,S35,E16,2,P0,Not started,AC: runbook checked in; first game-day held; recorded; gaps tracked.
 S807,"ops: data-retention policy enforced by scheduled jobs (per data type, per region)",tbd,S35,E16,2,P0,Not started,AC: jobs delete per policy; deletion audited; user-visible policy page on docs site.
 S808,ops: encrypted backup verification (restore-then-diff weekly),tbd,S35,E16,2,P0,Not started,AC: weekly job restores latest backup to scratch; diff against live; alerts on mismatch.
-S809,security: bug-bounty program launch (HackerOne or YesWeHack),copilot-thor,S35,E16,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s809-security-bug-bounty-program-laun
+S809,security: bug-bounty program launch (HackerOne or YesWeHack),copilot-thor,S35,E16,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s809-security-bug-bounty-program-laun (merged + deletable)
 Skill: skills/api/add-rest-endpoint.md
-Last step: 0/3 (just claimed)
-Heartbeat: 2026-05-02T12:35:38Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T12:37:36Z (copilot-thor)
+Tests: 19 pytest (packages/control-plane/_tests/test_bug_bounty.py): test_new_report_is_not_acknowledged, test_acknowledge_sets_timestamp, test_ack_sla_met_when_within_24h, test_ack_sla_violated_when_after_24h, test_triage_sla_met_when_within_7_days, test_triage_sla_violated_when_after_7_days, test_double_ack_raises_triage_error, test_decide_without_ack_raises_triage_error, test_double_decide_raises_triage_error, test_unknown_report_id_raises_triage_error, test_program_not_live_before_three_reports, test_program_live_after_three_clean_reports, test_program_not_live_when_sla_violated, test_sla_violations_empty_for_clean_reports, test_sla_violations_detected_for_late_ack, test_public_bug_bounty_page_exists, test_public_bug_bounty_page_covers_scope_and_payouts, test_internal_bug_bounty_ops_doc_exists, test_internal_bug_bounty_ops_doc_has_triage_log
+Docs touched: docs/site/bug-bounty.md; loop_implementation/engineering/BUG_BOUNTY.md
+Follow-ups: Wire HackerOne webhook to BountyProgram; add hall-of-fame page; complete triage log for first 3 live reports"
 S820,memory: Mem0 adapter (drop-in EpisodicMemoryStore via Protocol),GitHub Copilot,S36,E4,2,P1,Done,"Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/architecture/cloud-portable-protocol.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_memory/mem0_adapter.py Mem0Store satisfying EpisodicStore Protocol (upsert/query/list_recent) using HashEmbedder, min_score filter, ts_ms desc list, Mem0Error wrap on bad-dim/RuntimeError. Tests: test_memory_pass10.py. Open questions: none."
 S821,memory: Zep adapter (drop-in),codex-orion,S36,E4,2,P1,Done,"**Done.**
 PR: (opened by squash-merge)
