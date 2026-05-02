@@ -89,6 +89,11 @@ CREATE TABLE workspaces (
 );
 CREATE INDEX idx_workspaces_slug ON workspaces(slug) WHERE deleted_at IS NULL;
 
+`tenant_kms_key_id` is set at workspace creation and immutable thereafter
+(`S636`). The control plane passes this value into the cloud-portable `KMS`
+interface for envelope encryption; it may be a Vault Transit path or a
+customer-managed cloud KMS key reference such as an AWS KMS key ARN.
+
 CREATE TABLE users (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email           CITEXT NOT NULL UNIQUE,
