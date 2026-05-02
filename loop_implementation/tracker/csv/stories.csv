@@ -470,14 +470,14 @@ Tests: vitest covers computeUsageRatio thresholds, projectCycleUsage, formatCent
 Docs touched: apps/studio/src/components/billing/billing-panel.tsx,apps/studio/src/app/billing/page.tsx,apps/studio/src/lib/billing.ts
 Follow-ups: none"
 S328,studio: billing — invoice list + download PDF,tbd,S12,E10,2,P1,Not started,AC: list paginates; click downloads from Stripe.
-S329,studio: billing — payment-method update via Stripe Elements,copilot-thor,S12,E10,2,P0,In progress,"**Active.**
-Branch: copilot-thor/s329-studio-billing-payment-method-up
+S329,studio: billing — payment-method update via Stripe Elements,copilot-thor,S12,E10,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s329-studio-billing-payment-method-up (merged + deletable)
 Skill: skills/ux/component-design.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-02T03:10:25Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T03:12:00Z (copilot-thor)
+Tests: vitest covers UpdatePaymentMethod success toast, hard error, 3DS requiresAction hint, submit-disabled-without-name
+Docs touched: apps/studio/src/components/billing/update-payment-method.tsx,apps/studio/src/app/billing/page.tsx
+Follow-ups: none"
 S330,billing: plan-tier rate limit enforcement at gateway + dp-runtime,GitHub Copilot,S12,E19,2,P0,Done,"Done. Branch: copilot/s-pass5 (merged). PR: local-merge (ff to main). Skill: skills/api/rate-limit.md. Last step: 5/5. Heartbeat: 2026-05-12T04:00:00Z. Substance: loop_control_plane/plan_limits.py — PlanLimitGuard.admit(workspace_id, agent_id, now_ms) composes (a) DailyCostLedger lookup against Plan.daily_cost_usd_micro, (b) RateLimiter (S117) per-workspace at plan.rps_per_workspace, (c) RateLimiter per-(workspace,agent) at plan.rps_per_agent. Returns PlanGateDecision(admitted, reason∈{ok, workspace_rate_exceeded, agent_rate_exceeded, daily_cost_exceeded}, daily_cost_usd_micro, daily_cap_usd_micro) so the gateway maps to the right error code. InMemoryDailyCostLedger uses day-bucketed micro-USD addition. Tests: admit-within, daily_cost_exceeded at hobby cap (5_000_000µUSD), unknown-workspace raises PlanGateError. Open questions: ClickHouse-backed DailyCostLedger adapter slots in same Protocol; rps capacity formula is `rps_per_* x 60` to allow 1-minute bursts."
 S331,billing: trial → paid conversion email + 7-day-left + 1-day-left nudges,GitHub Copilot,S12,E19,2,P1,Done,"Done. Branch: copilot/s-pass10 (merged). PR: local-merge (ff to main). Skill: skills/data/strict-pydantic-models.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: loop_control_plane/billing_nudges.py plan_trial_nudges(now, trial_end_at, sent_kinds) emits 7d/1d/expired nudge plans honouring opt-out. Tests: billing_nudges cases in test_cp_pass9.py. Open questions: none."
 S340,wa: WA Cloud API SDK pin + channel package skeleton,GitHub Copilot,S13,E6,1,P0,Done,Done. Branch: copilot/s-pass12 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-channel-adapter.md. Last step: 5/5. Heartbeat: 2026-05-01T09:47:02Z. Substance: loop_channels_whatsapp/connect.py - WhatsApp Cloud API v20.0 connect model and WABA phone-number subscription flow. Tests: packages/channels/whatsapp/_tests/test_whatsapp_connect_pass12.py. Open questions: none.
