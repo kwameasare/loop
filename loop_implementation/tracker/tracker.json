@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:20:19.460867+00:00",
+    "generated_at": "2026-05-02T06:20:59.713167+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4268,8 +4268,8 @@
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s637-ent-byo-vault-integration-existi\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:20:19Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s637-ent-byo-vault-integration-existi (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:20:59Z (copilot-titan)\nTests: packages/control-plane/_tests/test_byo_vault.py\nDocs touched: loop_implementation/engineering/RUNBOOKS.md packages/control-plane/loop_control_plane/byo_vault.py\nFollow-ups: none"
     },
     {
       "id": "S638",
