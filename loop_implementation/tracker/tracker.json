@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T14:15:54.812185+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5341,13 +5341,13 @@
     {
       "id": "S825",
       "title": "memory: memory-usage dashboard in studio (per agent + per user)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S36",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: lists memory entries; redacted; user-deletable per GDPR Art-17."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s825-memory-memory-usage-dashboard-in\nSkill: loop_implementation/skills/_base/skill.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T14:15:54Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S826",

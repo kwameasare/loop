@@ -1420,7 +1420,14 @@ Final heartbeat: 2026-05-02T01:02:50Z (codex-orion)
 Tests: uv run ruff check packages/runtime/loop_runtime/memory_redaction.py packages/runtime/loop_runtime/memory_isolation.py packages/runtime/loop_runtime/__init__.py packages/runtime/_tests/test_memory_redaction.py packages/runtime/_tests/test_memory_isolation.py; uv run ruff format --check same files; uv run pyright same files; uv run pytest -q packages/runtime/_tests/test_memory_redaction.py packages/runtime/_tests/test_memory_isolation.py (8 passed, covers regex, Presidio-compatible, LLM-classifier modes and 100k isolation red-team); forbidden cloud SDK grep passed for packages/runtime packages/gateway packages/sdk-py packages/channels; uv run pytest -q packages/runtime/_tests (124 passed); uv run pytest -q -m 'not integration and not e2e' (1276 passed, 3 skipped, 4 deselected); python3 tools/build_tracker.py; python3 tools/check_tracker_notes.py; python3 tools/check_docs_with_code.py; python3 tools/check_checkpoint_discipline.py; full repo ruff/format/pyright remain baseline-red in unrelated files
 Docs touched: loop_implementation/data/SCHEMA.md,loop_implementation/engineering/SECURITY.md
 Follow-ups: none"
-S825,memory: memory-usage dashboard in studio (per agent + per user),tbd,S36,E10,2,P1,Not started,AC: lists memory entries; redacted; user-deletable per GDPR Art-17.
+S825,memory: memory-usage dashboard in studio (per agent + per user),copilot-thor,S36,E10,2,P1,In progress,"**Active.**
+Branch: copilot-thor/s825-memory-memory-usage-dashboard-in
+Skill: loop_implementation/skills/_base/skill.md
+Last step: 0/4 (just claimed)
+Heartbeat: 2026-05-02T14:15:54Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S826,kb-v2: late-interaction retrieval (ColBERT-style for high-recall surfaces),tbd,S36,E5,3,P1,Not started,AC: opt-in retrieval mode; eval shows ≥5% recall@10 improvement on hard queries.
 S827,kb-v2: structured-data retrieval (CSV/Excel/JSON with SQL-on-the-fly),tbd,S36,E5,3,P1,Not started,AC: agent uploads spreadsheet; tool can SQL it; integration test.
 S840,perf: turn-latency p95 < 2.0s end-to-end (text path) — acceptance gate,codex-orion,S37,E1,2,P0,Done,"**Done.**
