@@ -101,15 +101,23 @@ adapter can claim KMS compatibility.
 
 ```python
 class SecretsBackend(Protocol):
-    async def read(self, ref: str) -> str: ...
-    async def write(self, ref: str, value: str, *, ttl: int | None = None) -> None: ...
+    async def get(self, ref: str) -> str: ...
+    async def set(self, ref: str, value: str, *, ttl_seconds: int | None = None) -> int: ...
     async def delete(self, ref: str) -> None: ...
-    async def rotate(self, ref: str, new_value: str) -> None: ...
+    async def rotate(self, ref: str, new_value: str) -> int: ...
+    async def access_pattern(self) -> tuple[SecretAccess, ...]: ...
 ```
 
 Implementations: `VaultBackend` (default for self-host AND multi-cloud), `AwsSecretsManagerBackend`, `AzureKeyVaultSecretsBackend`, `GcpSecretManagerBackend`, `AlicloudKmsSecretsBackend`.
 
 **Default in cloud:** Vault deployed as a service in our own cluster. We do not depend on the cloud's secrets product unless a customer requires it for compliance.
+
+S778 adds the checked contract in `loop_control_plane.secrets`: the same
+parity suite runs against `vault`, `aws_secrets_manager`,
+`azure_key_vault`, `gcp_secret_manager`, and `alicloud_kms_secret`,
+verifying get/set/rotate/delete semantics and redacted access-pattern
+recording before a provider adapter can claim SecretsBackend
+compatibility.
 
 ### 4.4 ManagedPostgres / ManagedRedis / ManagedQdrant
 
