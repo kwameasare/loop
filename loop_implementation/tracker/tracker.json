@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T00:15:49.650128+00:00",
+    "generated_at": "2026-05-02T00:17:23.149254+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5132,13 +5132,13 @@
     {
       "id": "S778",
       "title": "portability: SecretsBackend Protocol parity tests across Vault/AWS-SM/Azure-KV/GCP-SM",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S34",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: get/set/rotate identical; access-pattern tests."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s778-portability-secretsbackend-proto\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T00:17:23Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S779",
