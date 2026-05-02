@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:03:15.690064+00:00",
+    "generated_at": "2026-05-02T06:04:34.929047+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4175,13 +4175,13 @@
     {
       "id": "S618",
       "title": "sso: integration test full Okta SP-initiated login → studio session",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S27",
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: Playwright drives Okta sandbox + studio; ends in authenticated session."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s618-sso-integration-test-full-okta-s\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:04:34Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S630",
