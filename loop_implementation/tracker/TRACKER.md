@@ -10,25 +10,25 @@ Source of truth: `tools/build_tracker.py`. xlsx companion regenerated separately
 | ID | Epic | Owner | Target milestone | Status | Notes |
 |---|---|---|---|---|---|
 | E1 | Agent runtime core | Eng #1 | MVP M6 | In progress | Hot path: TurnExecutor, streaming, budgets, idempotency |
-| E2 | LLM Gateway | Eng #1 | MVP M6 | Not started | Multi-provider, semantic cache, cost accounting |
-| E3 | MCP / Tool layer | Eng #1 | MVP M6 | Not started | Auto-MCP, Firecracker sandboxes, allow-lists |
-| E4 | Memory tiers | Eng #1 | MVP M6 | Not started | User/session/scratch + episodic at M7 |
-| E5 | KB / RAG engine | Eng #1 | MVP M6 | Not started | PDF/web/Notion + hybrid retrieval + vision |
-| E6 | Channel adapters | Eng #7 | Rolling | Not started | Web, Slack, WhatsApp, SMS first |
-| E7 | Voice subsystem | Eng #3 | MVP M6 | Not started | WebRTC + STT + TTS + barge-in. Sub-700ms p50 |
-| E8 | Eval harness | Eng #4 | MVP M6 | Not started | 8 scorers, replay, registry |
-| E9 | Observability backend | Eng #4 | MVP M6 | Not started | OTel + ClickHouse + Studio dashboards |
-| E10 | Studio (UI) | Eng #5 | MVP M6 | Not started | Conversations, traces, replay, costs |
-| E11 | CLI & SDKs | Eng #1+5 | MVP M6 | Not started | Python core, Go CLI; TS gen later |
+| E2 | LLM Gateway | Eng #1 | MVP M6 | In progress | Multi-provider, semantic cache, cost accounting |
+| E3 | MCP / Tool layer | Eng #1 | MVP M6 | In progress | Auto-MCP, Firecracker sandboxes, allow-lists |
+| E4 | Memory tiers | Eng #1 | MVP M6 | In progress | User/session/scratch + episodic at M7 |
+| E5 | KB / RAG engine | Eng #1 | MVP M6 | In progress | PDF/web/Notion + hybrid retrieval + vision |
+| E6 | Channel adapters | Eng #7 | Rolling | In progress | Web, Slack, WhatsApp, SMS first |
+| E7 | Voice subsystem | Eng #3 | MVP M6 | In progress | WebRTC + STT + TTS + barge-in. Sub-700ms p50 |
+| E8 | Eval harness | Eng #4 | MVP M6 | Done | 8 scorers, replay, registry |
+| E9 | Observability backend | Eng #4 | MVP M6 | In progress | OTel + ClickHouse + Studio dashboards |
+| E10 | Studio (UI) | Eng #5 | MVP M6 | In progress | Conversations, traces, replay, costs |
+| E11 | CLI & SDKs | Eng #1+5 | MVP M6 | Done | Python core, Go CLI; TS gen later |
 | E12 | Cloud control plane | Eng #2 | MVP M6 | In progress | Auth, billing, deploy, multi-tenant |
-| E13 | Self-host (docker-compose + Helm) | Eng #2 | M7 | Not started | Compose at MVP, Helm at M7 |
-| E14 | Multi-agent orchestration | Eng #1 | M9 | Not started | Supervisor, Pipeline, Parallel, AgentGraph |
-| E15 | HITL / Operator inbox | Eng #5 | M7 | Not started | Takeover, shared inbox, CRM connectors |
-| E16 | Security & compliance (SOC2 Type 1) | Sec eng | M12 | Not started | Vanta, audit log, RLS, KMS |
-| E17 | Docs site & DevRel | Eng #6 | Rolling | Not started | Quickstart, API ref, examples |
-| E18 | MCP marketplace | Eng #6 | M6 | Not started | 25 servers at MVP, 200 by M12 |
-| E19 | Pricing & billing | Eng #2 | M6 | Not started | Stripe + 3-meter + cap rules |
-| E20 | Enterprise (SSO, audit UI, on-prem parity) | Eng #2+sec | M12 | Not started | SAML, residency, BYOK |
+| E13 | Self-host (docker-compose + Helm) | Eng #2 | M7 | Done | Compose at MVP, Helm at M7 |
+| E14 | Multi-agent orchestration | Eng #1 | M9 | Done | Supervisor, Pipeline, Parallel, AgentGraph |
+| E15 | HITL / Operator inbox | Eng #5 | M7 | Done | Takeover, shared inbox, CRM connectors |
+| E16 | Security & compliance (SOC2 Type 1) | Sec eng | M12 | In progress | Vanta, audit log, RLS, KMS |
+| E17 | Docs site & DevRel | Eng #6 | Rolling | In progress | Quickstart, API ref, examples |
+| E18 | MCP marketplace | Eng #6 | M6 | Done | 25 servers at MVP, 200 by M12 |
+| E19 | Pricing & billing | Eng #2 | M6 | Done | Stripe + 3-meter + cap rules |
+| E20 | Enterprise (SSO, audit UI, on-prem parity) | Eng #2+sec | M12 | In progress | SAML, residency, BYOK |
 
 ## Stories
 
@@ -519,44 +519,44 @@ Source of truth: `tools/build_tracker.py`. xlsx companion regenerated separately
 
 | Sprint | Window | Theme | Goal | Stories | Status |
 |---|---|---|---|---|---|
-| S0 | Wk 1–6 | Bootstrap (closed) | Foundation: repo, CI, types, docker-compose, migrations, gateway+runtime+memory+tools skeletons. 14/15 closed; S002 blocked on CTO. | S001-S014, S002 | Done |
+| S0 | Wk 1–6 | Bootstrap (closed) | Foundation: repo, CI, types, docker-compose, migrations, gateway+runtime+memory+tools skeletons. 14/15 closed; S002 blocked on CTO. | S001-S014, S002 | In progress |
 | S1 | Wk 7–18 | Vision-headline stub layer (closed; stubs only) | Each S015-S050 shipped a stub under a vision-headline title. The real production work is decomposed across S2-S30 below. | S015-S050 | Done |
-| S2 | Wk 19–20 | cp-api basics | A live cp-api a developer can hit — auth, workspaces, members, API keys, error mapping, integration smoke. | S100-S122 | Not started |
-| S3 | Wk 21–22 | dp-runtime HTTP service | POST /v1/turns returns SSE TurnEvent stream end-to-end with API-key auth and persistence. | S130-S143 | Not started |
-| S4 | Wk 23–24 | Studio MVP | User logs in, sees workspaces+agents from real cp-api, runs an emulator turn, manages versions+secrets. | S150-S164 | Not started |
-| S5 | Wk 25–26 | Web channel + first end-to-end demo | Visitor on a webpage talks to a Loop agent via embedded ChatWidget; demo + smoke test live. | S170-S181 | Not started |
-| S6 | Wk 27–30 | KB engine v0 (productionization) | Upload a PDF, agent answers from it with citations. Full parser registry, chunkers, embeddings, hybrid retrieval, reranker, studio UI. | S190-S213 | Not started |
-| S7 | Wk 31–32 | Slack channel productionization | Threaded conversations, signed webhooks, Block Kit, OAuth install, integration tests. | S220-S229 | Not started |
-| S8 | Wk 33–34 | Eval harness productionization | Real scorers, cassette record/replay, suite runner, regression detector, studio UI. | S240-S253 | Not started |
-| S9 | Wk 35–36 | Deploy controller v0 | Artifact → image → k8s with canary promotion, rollback, deploy events. | S260-S271 | Not started |
-| S10 | Wk 37–38 | Cost / observability v1 | ClickHouse rollups, cost dashboard, trace search + waterfall, alert rules. | S280-S291 | Not started |
-| S11 | Wk 39–40 | HITL operator inbox v0 | Real takeover state machine, queue, conversation viewer, composer, handback. | S300-S309 | Not started |
-| S12 | Wk 41–42 | Billing v0 (Stripe) | Customer creation, plans, webhooks, metered usage push, suspension, studio billing tab. | S320-S331 | Not started |
-| S13 | Wk 43–44 | WhatsApp channel productionization | Cloud API webhooks, 24h-window enforcement, templates, media, interactive elements, studio connect. | S340-S349 | Not started |
-| S14 | Wk 45–46 | Voice infrastructure | Real ASR/TTS/VAD adapters, turn-take FSM, LiveKit room bridge, tracing, web-RTC echo agent. | S360-S371 | Not started |
-| S15 | Wk 47–48 | Voice MVP — phone calls | Twilio SIP gateway, outbound call API, number provisioning, voice widget, latency benchmark, integration test. | S380-S389 | Not started |
-| S16 | Wk 49–50 | Multi-agent orchestration v0 | AgentGraph types, Supervisor/Pipeline/Parallel patterns, executor with cycle detection, shared memory + cost rollup, integration test. | S400-S410 | Not started |
-| S17 | Wk 51–52 | TS SDK + CLI v0 | Auto-gen TS client, react hooks, full CLI surface (login/init/deploy/logs/eval/secrets), multi-arch release pipeline. | S420-S433 | Not started |
-| S18 | Wk 53–54 | Helm chart for self-host | Per-service subcharts, dependencies (Postgres/Redis/Qdrant/NATS/ClickHouse/MinIO), ingress + cert-manager, kind smoke test. | S440-S453 | Not started |
-| S19 | Wk 55–56 | Studio flow editor v0 | Visual node-based editor with palette/config/edges/serialize/emulator/templates — Botpress's killer UX. | S460-S472 | Not started |
-| S20 | Wk 57–58 | Trace viewer + replay | Frame recorder, deterministic replayer, side-by-side diff, prod-failure → eval-case auto-flow. | S480-S487 | Not started |
-| S21 | Wk 59–60 | Episodic memory + KB v1 | Auto-summarize on conv close, retrieval at turn-start, scheduled refresh, layout-aware chunking. | S490-S497 | Not started |
-| S22 | Wk 61–62 | SMS + RCS + Email + Telegram channels | Twilio SMS w/ STOP compliance, RCS via Jibe/MaaP, SES inbound+outbound w/ DKIM, Telegram polling+webhook. | S510-S519, S540-S545 | Not started |
-| S23 | Wk 63–64 | Discord + Teams channels | Bot SDK adapters; studio connect flows; cross-channel test fixture. | S530-S536 | Not started |
-| S24 | Wk 65–66 | MCP marketplace v0 | Registry table, signed-manifest verification, install flow, browse/install UI, first 4 first-party MCP servers. | S550-S559 | Not started |
-| S25 | Wk 67–70 | SOC2 Type 1 prep | Vanta sync, control mapping, backups+DR, pen-test, SBOM, scanning gates, audit-trail review, attestation kickoff. | S570-S582 | Not started |
-| S26 | Wk 71–72 | EU region (data residency) | Region pinning, EU stack, region-aware routing, cross-region export blocker, smoke test. | S590-S597 | Not started |
+| S2 | Wk 19–20 | cp-api basics | A live cp-api a developer can hit — auth, workspaces, members, API keys, error mapping, integration smoke. | S100-S122 | Done |
+| S3 | Wk 21–22 | dp-runtime HTTP service | POST /v1/turns returns SSE TurnEvent stream end-to-end with API-key auth and persistence. | S130-S143 | In progress |
+| S4 | Wk 23–24 | Studio MVP | User logs in, sees workspaces+agents from real cp-api, runs an emulator turn, manages versions+secrets. | S150-S164 | In progress |
+| S5 | Wk 25–26 | Web channel + first end-to-end demo | Visitor on a webpage talks to a Loop agent via embedded ChatWidget; demo + smoke test live. | S170-S181 | In progress |
+| S6 | Wk 27–30 | KB engine v0 (productionization) | Upload a PDF, agent answers from it with citations. Full parser registry, chunkers, embeddings, hybrid retrieval, reranker, studio UI. | S190-S213 | Done |
+| S7 | Wk 31–32 | Slack channel productionization | Threaded conversations, signed webhooks, Block Kit, OAuth install, integration tests. | S220-S229 | Done |
+| S8 | Wk 33–34 | Eval harness productionization | Real scorers, cassette record/replay, suite runner, regression detector, studio UI. | S240-S253 | Done |
+| S9 | Wk 35–36 | Deploy controller v0 | Artifact → image → k8s with canary promotion, rollback, deploy events. | S260-S271 | In progress |
+| S10 | Wk 37–38 | Cost / observability v1 | ClickHouse rollups, cost dashboard, trace search + waterfall, alert rules. | S280-S291 | In progress |
+| S11 | Wk 39–40 | HITL operator inbox v0 | Real takeover state machine, queue, conversation viewer, composer, handback. | S300-S309 | Done |
+| S12 | Wk 41–42 | Billing v0 (Stripe) | Customer creation, plans, webhooks, metered usage push, suspension, studio billing tab. | S320-S331 | In progress |
+| S13 | Wk 43–44 | WhatsApp channel productionization | Cloud API webhooks, 24h-window enforcement, templates, media, interactive elements, studio connect. | S340-S349 | Done |
+| S14 | Wk 45–46 | Voice infrastructure | Real ASR/TTS/VAD adapters, turn-take FSM, LiveKit room bridge, tracing, web-RTC echo agent. | S360-S371 | Done |
+| S15 | Wk 47–48 | Voice MVP — phone calls | Twilio SIP gateway, outbound call API, number provisioning, voice widget, latency benchmark, integration test. | S380-S389 | In progress |
+| S16 | Wk 49–50 | Multi-agent orchestration v0 | AgentGraph types, Supervisor/Pipeline/Parallel patterns, executor with cycle detection, shared memory + cost rollup, integration test. | S400-S410 | Done |
+| S17 | Wk 51–52 | TS SDK + CLI v0 | Auto-gen TS client, react hooks, full CLI surface (login/init/deploy/logs/eval/secrets), multi-arch release pipeline. | S420-S433 | Done |
+| S18 | Wk 53–54 | Helm chart for self-host | Per-service subcharts, dependencies (Postgres/Redis/Qdrant/NATS/ClickHouse/MinIO), ingress + cert-manager, kind smoke test. | S440-S453 | Done |
+| S19 | Wk 55–56 | Studio flow editor v0 | Visual node-based editor with palette/config/edges/serialize/emulator/templates — Botpress's killer UX. | S460-S472 | In progress |
+| S20 | Wk 57–58 | Trace viewer + replay | Frame recorder, deterministic replayer, side-by-side diff, prod-failure → eval-case auto-flow. | S480-S487 | Done |
+| S21 | Wk 59–60 | Episodic memory + KB v1 | Auto-summarize on conv close, retrieval at turn-start, scheduled refresh, layout-aware chunking. | S490-S497 | In progress |
+| S22 | Wk 61–62 | SMS + RCS + Email + Telegram channels | Twilio SMS w/ STOP compliance, RCS via Jibe/MaaP, SES inbound+outbound w/ DKIM, Telegram polling+webhook. | S510-S519, S540-S545 | Done |
+| S23 | Wk 63–64 | Discord + Teams channels | Bot SDK adapters; studio connect flows; cross-channel test fixture. | S530-S536 | Done |
+| S24 | Wk 65–66 | MCP marketplace v0 | Registry table, signed-manifest verification, install flow, browse/install UI, first 4 first-party MCP servers. | S550-S559 | Done |
+| S25 | Wk 67–70 | SOC2 Type 1 prep | Vanta sync, control mapping, backups+DR, pen-test, SBOM, scanning gates, audit-trail review, attestation kickoff. | S570-S582 | In progress |
+| S26 | Wk 71–72 | EU region (data residency) | Region pinning, EU stack, region-aware routing, cross-region export blocker, smoke test. | S590-S597 | In progress |
 | S27 | Wk 73–74 | Enterprise SSO/SAML | PySAML2 SP, SCIM provisioning, Okta/Entra/Google recipes, JIT user provisioning, group→role mapping. | S610-S618 | Not started |
-| S28 | Wk 75–76 | Audit log UI + DPA + on-prem parity | Audit events table+middleware, studio audit UI, SIEM webhook, DPA, GDPR Art-17, CMK, BYO Vault, dedicated single-tenant. | S630-S639 | Not started |
-| S29 | Wk 77–78 | Voice latency + GA polish | Voice ≤700ms p50; design-system audit; a11y WCAG-AA; i18n; support runbook; docs.loop.example v1. | S650-S659 | Not started |
-| S30 | Wk 79–80 | 1.0 launch + Series A | Release notes, pricing page, design-partner conversion, HN/PH launch, Series A data room. | S670-S674 | Not started |
-| S31 | Wk 23–28 (parallel w/ S3-S6) | LLM gateway breadth | Bedrock + Vertex/Gemini + Mistral + Cohere + Groq + vLLM + generic OpenAI-compat. Semantic cache, BYO keys, model aliases, routing engine, failover, rate-limiting, Decimal cost precision, 50-prompt provider eval. | S700-S714 | Not started |
-| S32 | Wk 29–34 (parallel w/ S7-S10) | MCP production hardening | Tool policy engine, egress allowlist, rate-limit, schema validation, secrets injection, sandbox controller, hot-restart, inbound MCP, version negotiation, resource quotas, signed-tool verification, hostile-tool kill-switch. | S720-S735 | Not started |
-| S33 | Wk 65–68 (after S24) | MCP marketplace scale + community | Quality scoring, community-publish PR flow, reviews/ratings, usage analytics, 12 first-party servers (Calendar, Gmail, GitHub, Linear, Jira, Notion, Asana, Stripe-write, Slack-write, HubSpot-write, web-search), 25-server MVP acceptance gate. | S750-S765 | Not started |
-| S34 | Wk 71–76 (parallel w/ S26-S28) | Cloud-portability proof | Terraform modules for AWS / Azure / GCP / Alibaba / OVH / Hetzner. Protocol parity tests for ObjectStore + KMS + SecretsBackend + EmailSender. Cross-cloud nightly smoke matrix. Live CLOUD_PROOF.md report. | S770-S781 | Not started |
+| S28 | Wk 75–76 | Audit log UI + DPA + on-prem parity | Audit events table+middleware, studio audit UI, SIEM webhook, DPA, GDPR Art-17, CMK, BYO Vault, dedicated single-tenant. | S630-S639 | In progress |
+| S29 | Wk 77–78 | Voice latency + GA polish | Voice ≤700ms p50; design-system audit; a11y WCAG-AA; i18n; support runbook; docs.loop.example v1. | S650-S659 | In progress |
+| S30 | Wk 79–80 | 1.0 launch + Series A | Release notes, pricing page, design-partner conversion, HN/PH launch, Series A data room. | S670-S674 | In progress |
+| S31 | Wk 23–28 (parallel w/ S3-S6) | LLM gateway breadth | Bedrock + Vertex/Gemini + Mistral + Cohere + Groq + vLLM + generic OpenAI-compat. Semantic cache, BYO keys, model aliases, routing engine, failover, rate-limiting, Decimal cost precision, 50-prompt provider eval. | S700-S714 | Done |
+| S32 | Wk 29–34 (parallel w/ S7-S10) | MCP production hardening | Tool policy engine, egress allowlist, rate-limit, schema validation, secrets injection, sandbox controller, hot-restart, inbound MCP, version negotiation, resource quotas, signed-tool verification, hostile-tool kill-switch. | S720-S735 | Done |
+| S33 | Wk 65–68 (after S24) | MCP marketplace scale + community | Quality scoring, community-publish PR flow, reviews/ratings, usage analytics, 12 first-party servers (Calendar, Gmail, GitHub, Linear, Jira, Notion, Asana, Stripe-write, Slack-write, HubSpot-write, web-search), 25-server MVP acceptance gate. | S750-S765 | Done |
+| S34 | Wk 71–76 (parallel w/ S26-S28) | Cloud-portability proof | Terraform modules for AWS / Azure / GCP / Alibaba / OVH / Hetzner. Protocol parity tests for ObjectStore + KMS + SecretsBackend + EmailSender. Cross-cloud nightly smoke matrix. Live CLOUD_PROOF.md report. | S770-S781 | In progress |
 | S35 | Wk 67–72 (overlap w/ S25) | Production security / ops acceptance gates | Continuous fuzz testing, STRIDE PR-gate, SLSA-3 provenance, Falco runtime detection, chaos-eng harness, SLOs + error-budget alerts, incident-response game-days, data-retention enforcement, backup-restore verification, bug bounty. | S800-S809 | Not started |
-| S36 | Wk 59–62 (parallel w/ S21-S22) | Memory providers + KB v2 | Mem0 + Zep adapters, hybrid summarization, per-user isolation tests, PII-redaction-on-write, memory dashboard, ColBERT late-interaction retrieval, structured-data (SQL-on-spreadsheet) retrieval. | S820-S827 | Not started |
-| S37 | Wk 77–80 (overlap w/ S29-S30) | Latency + scale acceptance gates | Hard performance gates: turn p95 <2s, gateway cache-hit >30%, KB p50 <200ms at 1M chunks, tool-host warm <300ms p95, 1000 concurrent turns/pod, cp-api 5000 RPS, perf-regression budget enforced in CI. | S840-S846 | Not started |
+| S36 | Wk 59–62 (parallel w/ S21-S22) | Memory providers + KB v2 | Mem0 + Zep adapters, hybrid summarization, per-user isolation tests, PII-redaction-on-write, memory dashboard, ColBERT late-interaction retrieval, structured-data (SQL-on-spreadsheet) retrieval. | S820-S827 | In progress |
+| S37 | Wk 77–80 (overlap w/ S29-S30) | Latency + scale acceptance gates | Hard performance gates: turn p95 <2s, gateway cache-hit >30%, KB p50 <200ms at 1M chunks, tool-host warm <300ms p95, 1000 concurrent turns/pod, cp-api 5000 RPS, perf-regression budget enforced in CI. | S840-S846 | In progress |
 
 ## Hiring plan
 
@@ -592,19 +592,19 @@ Source of truth: `tools/build_tracker.py`. xlsx companion regenerated separately
 
 | Month | Milestone | Key deliverables | Status |
 |---|---|---|---|
-| M0 | Hire + scope | Hire engineers 1–4; tech-stack lock-in; runtime + SDK started | Not started |
-| M1 | Runtime alpha | Python SDK skeleton; LLM gateway w/ OpenAI + Anthropic; Slack channel | Not started |
-| M2 | Tools + KB | Tool/MCP layer; auto-MCP; KB ingestion v0; web widget | Not started |
-| M3 | Eval + cloud | Eval harness v0 (6 scorers); CLI v0; cloud control plane (auth, deploy) | Not started |
-| M4 | Closed alpha | 10 design partners; WhatsApp; Studio v0 (conversations + traces) | Not started |
-| M5 | Voice MVP | Voice channel MVP; memory tiers; cost dashboard | Not started |
-| M6 | Public beta | OSS the runtime (Apache 2.0); Hub v0; free hobby tier; PUBLIC BETA | Not started |
-| M7 | Episodic + helm | Episodic memory; Helm chart; email + Telegram; multi-agent primitives v0 | Not started |
-| M8 | TS SDK + replay | TS SDK GA; Discord + Teams; replay/time-travel debugging | Not started |
-| M9 | Multi-agent GA | Multi-agent GA (Graph, Parallel, Blackboard); public eval registry; Series A | Not started |
-| M10 | EU + SOC2 | EU region (`eu-west`, cloud-agnostic); SOC2 Type 1 kickoff; Salesforce + Zendesk MCP | Not started |
-| M11 | Voice latency | Voice ≤700ms p50; phone-number provisioning; RCS | Not started |
-| M12 | Enterprise GA | SSO/SAML, audit logs, on-prem parity, SOC2 Type 1 done; ENTERPRISE GA | Not started |
+| M0 | Hire + scope | Hire engineers 1–4; tech-stack lock-in; runtime + SDK started | In progress |
+| M1 | Runtime alpha | Python SDK skeleton; LLM gateway w/ OpenAI + Anthropic; Slack channel | In progress |
+| M2 | Tools + KB | Tool/MCP layer; auto-MCP; KB ingestion v0; web widget | In progress |
+| M3 | Eval + cloud | Eval harness v0 (6 scorers); CLI v0; cloud control plane (auth, deploy) | In progress |
+| M4 | Closed alpha | 10 design partners; WhatsApp; Studio v0 (conversations + traces) | In progress |
+| M5 | Voice MVP | Voice channel MVP; memory tiers; cost dashboard | In progress |
+| M6 | Public beta | OSS the runtime (Apache 2.0); Hub v0; free hobby tier; PUBLIC BETA | In progress |
+| M7 | Episodic + helm | Episodic memory; Helm chart; email + Telegram; multi-agent primitives v0 | In progress |
+| M8 | TS SDK + replay | TS SDK GA; Discord + Teams; replay/time-travel debugging | Done |
+| M9 | Multi-agent GA | Multi-agent GA (Graph, Parallel, Blackboard); public eval registry; Series A | Done |
+| M10 | EU + SOC2 | EU region (`eu-west`, cloud-agnostic); SOC2 Type 1 kickoff; Salesforce + Zendesk MCP | In progress |
+| M11 | Voice latency | Voice ≤700ms p50; phone-number provisioning; RCS | In progress |
+| M12 | Enterprise GA | SSO/SAML, audit logs, on-prem parity, SOC2 Type 1 done; ENTERPRISE GA | In progress |
 
 ## Budgets & metrics
 

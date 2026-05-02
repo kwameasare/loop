@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T04:00:16.936171+00:00",
+    "generated_at": "2026-05-02T04:35:43.101875+00:00",
     "format_version": 2
   },
   "epics": [
@@ -19,7 +19,7 @@
       "name": "LLM Gateway",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "Not started",
+      "status": "In progress",
       "notes": "Multi-provider, semantic cache, cost accounting"
     },
     {
@@ -27,7 +27,7 @@
       "name": "MCP / Tool layer",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "Not started",
+      "status": "In progress",
       "notes": "Auto-MCP, Firecracker sandboxes, allow-lists"
     },
     {
@@ -35,7 +35,7 @@
       "name": "Memory tiers",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "Not started",
+      "status": "In progress",
       "notes": "User/session/scratch + episodic at M7"
     },
     {
@@ -43,7 +43,7 @@
       "name": "KB / RAG engine",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "Not started",
+      "status": "In progress",
       "notes": "PDF/web/Notion + hybrid retrieval + vision"
     },
     {
@@ -51,7 +51,7 @@
       "name": "Channel adapters",
       "owner": "Eng #7",
       "target": "Rolling",
-      "status": "Not started",
+      "status": "In progress",
       "notes": "Web, Slack, WhatsApp, SMS first"
     },
     {
@@ -59,7 +59,7 @@
       "name": "Voice subsystem",
       "owner": "Eng #3",
       "target": "MVP M6",
-      "status": "Not started",
+      "status": "In progress",
       "notes": "WebRTC + STT + TTS + barge-in. Sub-700ms p50"
     },
     {
@@ -67,7 +67,7 @@
       "name": "Eval harness",
       "owner": "Eng #4",
       "target": "MVP M6",
-      "status": "Not started",
+      "status": "Done",
       "notes": "8 scorers, replay, registry"
     },
     {
@@ -75,7 +75,7 @@
       "name": "Observability backend",
       "owner": "Eng #4",
       "target": "MVP M6",
-      "status": "Not started",
+      "status": "In progress",
       "notes": "OTel + ClickHouse + Studio dashboards"
     },
     {
@@ -83,7 +83,7 @@
       "name": "Studio (UI)",
       "owner": "Eng #5",
       "target": "MVP M6",
-      "status": "Not started",
+      "status": "In progress",
       "notes": "Conversations, traces, replay, costs"
     },
     {
@@ -91,7 +91,7 @@
       "name": "CLI & SDKs",
       "owner": "Eng #1+5",
       "target": "MVP M6",
-      "status": "Not started",
+      "status": "Done",
       "notes": "Python core, Go CLI; TS gen later"
     },
     {
@@ -107,7 +107,7 @@
       "name": "Self-host (docker-compose + Helm)",
       "owner": "Eng #2",
       "target": "M7",
-      "status": "Not started",
+      "status": "Done",
       "notes": "Compose at MVP, Helm at M7"
     },
     {
@@ -115,7 +115,7 @@
       "name": "Multi-agent orchestration",
       "owner": "Eng #1",
       "target": "M9",
-      "status": "Not started",
+      "status": "Done",
       "notes": "Supervisor, Pipeline, Parallel, AgentGraph"
     },
     {
@@ -123,7 +123,7 @@
       "name": "HITL / Operator inbox",
       "owner": "Eng #5",
       "target": "M7",
-      "status": "Not started",
+      "status": "Done",
       "notes": "Takeover, shared inbox, CRM connectors"
     },
     {
@@ -131,7 +131,7 @@
       "name": "Security & compliance (SOC2 Type 1)",
       "owner": "Sec eng",
       "target": "M12",
-      "status": "Not started",
+      "status": "In progress",
       "notes": "Vanta, audit log, RLS, KMS"
     },
     {
@@ -139,7 +139,7 @@
       "name": "Docs site & DevRel",
       "owner": "Eng #6",
       "target": "Rolling",
-      "status": "Not started",
+      "status": "In progress",
       "notes": "Quickstart, API ref, examples"
     },
     {
@@ -147,7 +147,7 @@
       "name": "MCP marketplace",
       "owner": "Eng #6",
       "target": "M6",
-      "status": "Not started",
+      "status": "Done",
       "notes": "25 servers at MVP, 200 by M12"
     },
     {
@@ -155,7 +155,7 @@
       "name": "Pricing & billing",
       "owner": "Eng #2",
       "target": "M6",
-      "status": "Not started",
+      "status": "Done",
       "notes": "Stripe + 3-meter + cap rules"
     },
     {
@@ -163,7 +163,7 @@
       "name": "Enterprise (SSO, audit UI, on-prem parity)",
       "owner": "Eng #2+sec",
       "target": "M12",
-      "status": "Not started",
+      "status": "In progress",
       "notes": "SAML, residency, BYOK"
     }
   ],
@@ -5456,7 +5456,7 @@
       "theme": "Bootstrap (closed)",
       "goal": "Foundation: repo, CI, types, docker-compose, migrations, gateway+runtime+memory+tools skeletons. 14/15 closed; S002 blocked on CTO.",
       "stories": "S001-S014, S002",
-      "status": "Done"
+      "status": "In progress"
     },
     {
       "id": "S1",
@@ -5472,7 +5472,7 @@
       "theme": "cp-api basics",
       "goal": "A live cp-api a developer can hit — auth, workspaces, members, API keys, error mapping, integration smoke.",
       "stories": "S100-S122",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S3",
@@ -5480,7 +5480,7 @@
       "theme": "dp-runtime HTTP service",
       "goal": "POST /v1/turns returns SSE TurnEvent stream end-to-end with API-key auth and persistence.",
       "stories": "S130-S143",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S4",
@@ -5488,7 +5488,7 @@
       "theme": "Studio MVP",
       "goal": "User logs in, sees workspaces+agents from real cp-api, runs an emulator turn, manages versions+secrets.",
       "stories": "S150-S164",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S5",
@@ -5496,7 +5496,7 @@
       "theme": "Web channel + first end-to-end demo",
       "goal": "Visitor on a webpage talks to a Loop agent via embedded ChatWidget; demo + smoke test live.",
       "stories": "S170-S181",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S6",
@@ -5504,7 +5504,7 @@
       "theme": "KB engine v0 (productionization)",
       "goal": "Upload a PDF, agent answers from it with citations. Full parser registry, chunkers, embeddings, hybrid retrieval, reranker, studio UI.",
       "stories": "S190-S213",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S7",
@@ -5512,7 +5512,7 @@
       "theme": "Slack channel productionization",
       "goal": "Threaded conversations, signed webhooks, Block Kit, OAuth install, integration tests.",
       "stories": "S220-S229",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S8",
@@ -5520,7 +5520,7 @@
       "theme": "Eval harness productionization",
       "goal": "Real scorers, cassette record/replay, suite runner, regression detector, studio UI.",
       "stories": "S240-S253",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S9",
@@ -5528,7 +5528,7 @@
       "theme": "Deploy controller v0",
       "goal": "Artifact → image → k8s with canary promotion, rollback, deploy events.",
       "stories": "S260-S271",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S10",
@@ -5536,7 +5536,7 @@
       "theme": "Cost / observability v1",
       "goal": "ClickHouse rollups, cost dashboard, trace search + waterfall, alert rules.",
       "stories": "S280-S291",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S11",
@@ -5544,7 +5544,7 @@
       "theme": "HITL operator inbox v0",
       "goal": "Real takeover state machine, queue, conversation viewer, composer, handback.",
       "stories": "S300-S309",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S12",
@@ -5552,7 +5552,7 @@
       "theme": "Billing v0 (Stripe)",
       "goal": "Customer creation, plans, webhooks, metered usage push, suspension, studio billing tab.",
       "stories": "S320-S331",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S13",
@@ -5560,7 +5560,7 @@
       "theme": "WhatsApp channel productionization",
       "goal": "Cloud API webhooks, 24h-window enforcement, templates, media, interactive elements, studio connect.",
       "stories": "S340-S349",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S14",
@@ -5568,7 +5568,7 @@
       "theme": "Voice infrastructure",
       "goal": "Real ASR/TTS/VAD adapters, turn-take FSM, LiveKit room bridge, tracing, web-RTC echo agent.",
       "stories": "S360-S371",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S15",
@@ -5576,7 +5576,7 @@
       "theme": "Voice MVP — phone calls",
       "goal": "Twilio SIP gateway, outbound call API, number provisioning, voice widget, latency benchmark, integration test.",
       "stories": "S380-S389",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S16",
@@ -5584,7 +5584,7 @@
       "theme": "Multi-agent orchestration v0",
       "goal": "AgentGraph types, Supervisor/Pipeline/Parallel patterns, executor with cycle detection, shared memory + cost rollup, integration test.",
       "stories": "S400-S410",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S17",
@@ -5592,7 +5592,7 @@
       "theme": "TS SDK + CLI v0",
       "goal": "Auto-gen TS client, react hooks, full CLI surface (login/init/deploy/logs/eval/secrets), multi-arch release pipeline.",
       "stories": "S420-S433",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S18",
@@ -5600,7 +5600,7 @@
       "theme": "Helm chart for self-host",
       "goal": "Per-service subcharts, dependencies (Postgres/Redis/Qdrant/NATS/ClickHouse/MinIO), ingress + cert-manager, kind smoke test.",
       "stories": "S440-S453",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S19",
@@ -5608,7 +5608,7 @@
       "theme": "Studio flow editor v0",
       "goal": "Visual node-based editor with palette/config/edges/serialize/emulator/templates — Botpress's killer UX.",
       "stories": "S460-S472",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S20",
@@ -5616,7 +5616,7 @@
       "theme": "Trace viewer + replay",
       "goal": "Frame recorder, deterministic replayer, side-by-side diff, prod-failure → eval-case auto-flow.",
       "stories": "S480-S487",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S21",
@@ -5624,7 +5624,7 @@
       "theme": "Episodic memory + KB v1",
       "goal": "Auto-summarize on conv close, retrieval at turn-start, scheduled refresh, layout-aware chunking.",
       "stories": "S490-S497",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S22",
@@ -5632,7 +5632,7 @@
       "theme": "SMS + RCS + Email + Telegram channels",
       "goal": "Twilio SMS w/ STOP compliance, RCS via Jibe/MaaP, SES inbound+outbound w/ DKIM, Telegram polling+webhook.",
       "stories": "S510-S519, S540-S545",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S23",
@@ -5640,7 +5640,7 @@
       "theme": "Discord + Teams channels",
       "goal": "Bot SDK adapters; studio connect flows; cross-channel test fixture.",
       "stories": "S530-S536",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S24",
@@ -5648,7 +5648,7 @@
       "theme": "MCP marketplace v0",
       "goal": "Registry table, signed-manifest verification, install flow, browse/install UI, first 4 first-party MCP servers.",
       "stories": "S550-S559",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S25",
@@ -5656,7 +5656,7 @@
       "theme": "SOC2 Type 1 prep",
       "goal": "Vanta sync, control mapping, backups+DR, pen-test, SBOM, scanning gates, audit-trail review, attestation kickoff.",
       "stories": "S570-S582",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S26",
@@ -5664,7 +5664,7 @@
       "theme": "EU region (data residency)",
       "goal": "Region pinning, EU stack, region-aware routing, cross-region export blocker, smoke test.",
       "stories": "S590-S597",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S27",
@@ -5680,7 +5680,7 @@
       "theme": "Audit log UI + DPA + on-prem parity",
       "goal": "Audit events table+middleware, studio audit UI, SIEM webhook, DPA, GDPR Art-17, CMK, BYO Vault, dedicated single-tenant.",
       "stories": "S630-S639",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S29",
@@ -5688,7 +5688,7 @@
       "theme": "Voice latency + GA polish",
       "goal": "Voice ≤700ms p50; design-system audit; a11y WCAG-AA; i18n; support runbook; docs.loop.example v1.",
       "stories": "S650-S659",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S30",
@@ -5696,7 +5696,7 @@
       "theme": "1.0 launch + Series A",
       "goal": "Release notes, pricing page, design-partner conversion, HN/PH launch, Series A data room.",
       "stories": "S670-S674",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S31",
@@ -5704,7 +5704,7 @@
       "theme": "LLM gateway breadth",
       "goal": "Bedrock + Vertex/Gemini + Mistral + Cohere + Groq + vLLM + generic OpenAI-compat. Semantic cache, BYO keys, model aliases, routing engine, failover, rate-limiting, Decimal cost precision, 50-prompt provider eval.",
       "stories": "S700-S714",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S32",
@@ -5712,7 +5712,7 @@
       "theme": "MCP production hardening",
       "goal": "Tool policy engine, egress allowlist, rate-limit, schema validation, secrets injection, sandbox controller, hot-restart, inbound MCP, version negotiation, resource quotas, signed-tool verification, hostile-tool kill-switch.",
       "stories": "S720-S735",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S33",
@@ -5720,7 +5720,7 @@
       "theme": "MCP marketplace scale + community",
       "goal": "Quality scoring, community-publish PR flow, reviews/ratings, usage analytics, 12 first-party servers (Calendar, Gmail, GitHub, Linear, Jira, Notion, Asana, Stripe-write, Slack-write, HubSpot-write, web-search), 25-server MVP acceptance gate.",
       "stories": "S750-S765",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "id": "S34",
@@ -5728,7 +5728,7 @@
       "theme": "Cloud-portability proof",
       "goal": "Terraform modules for AWS / Azure / GCP / Alibaba / OVH / Hetzner. Protocol parity tests for ObjectStore + KMS + SecretsBackend + EmailSender. Cross-cloud nightly smoke matrix. Live CLOUD_PROOF.md report.",
       "stories": "S770-S781",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S35",
@@ -5744,7 +5744,7 @@
       "theme": "Memory providers + KB v2",
       "goal": "Mem0 + Zep adapters, hybrid summarization, per-user isolation tests, PII-redaction-on-write, memory dashboard, ColBERT late-interaction retrieval, structured-data (SQL-on-spreadsheet) retrieval.",
       "stories": "S820-S827",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S37",
@@ -5752,7 +5752,7 @@
       "theme": "Latency + scale acceptance gates",
       "goal": "Hard performance gates: turn p95 <2s, gateway cache-hit >30%, KB p50 <200ms at 1M chunks, tool-host warm <300ms p95, 1000 concurrent turns/pod, cp-api 5000 RPS, perf-regression budget enforced in CI.",
       "stories": "S840-S846",
-      "status": "Not started"
+      "status": "In progress"
     }
   ],
   "hiring": [
@@ -5944,79 +5944,79 @@
       "month": "M0",
       "milestone": "Hire + scope",
       "deliverables": "Hire engineers 1–4; tech-stack lock-in; runtime + SDK started",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "month": "M1",
       "milestone": "Runtime alpha",
       "deliverables": "Python SDK skeleton; LLM gateway w/ OpenAI + Anthropic; Slack channel",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "month": "M2",
       "milestone": "Tools + KB",
       "deliverables": "Tool/MCP layer; auto-MCP; KB ingestion v0; web widget",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "month": "M3",
       "milestone": "Eval + cloud",
       "deliverables": "Eval harness v0 (6 scorers); CLI v0; cloud control plane (auth, deploy)",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "month": "M4",
       "milestone": "Closed alpha",
       "deliverables": "10 design partners; WhatsApp; Studio v0 (conversations + traces)",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "month": "M5",
       "milestone": "Voice MVP",
       "deliverables": "Voice channel MVP; memory tiers; cost dashboard",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "month": "M6",
       "milestone": "Public beta",
       "deliverables": "OSS the runtime (Apache 2.0); Hub v0; free hobby tier; PUBLIC BETA",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "month": "M7",
       "milestone": "Episodic + helm",
       "deliverables": "Episodic memory; Helm chart; email + Telegram; multi-agent primitives v0",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "month": "M8",
       "milestone": "TS SDK + replay",
       "deliverables": "TS SDK GA; Discord + Teams; replay/time-travel debugging",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "month": "M9",
       "milestone": "Multi-agent GA",
       "deliverables": "Multi-agent GA (Graph, Parallel, Blackboard); public eval registry; Series A",
-      "status": "Not started"
+      "status": "Done"
     },
     {
       "month": "M10",
       "milestone": "EU + SOC2",
       "deliverables": "EU region (`eu-west`, cloud-agnostic); SOC2 Type 1 kickoff; Salesforce + Zendesk MCP",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "month": "M11",
       "milestone": "Voice latency",
       "deliverables": "Voice ≤700ms p50; phone-number provisioning; RCS",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "month": "M12",
       "milestone": "Enterprise GA",
       "deliverables": "SSO/SAML, audit logs, on-prem parity, SOC2 Type 1 done; ENTERPRISE GA",
-      "status": "Not started"
+      "status": "In progress"
     }
   ],
   "perf_budgets": [
