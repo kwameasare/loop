@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:56:53.987281+00:00",
+    "generated_at": "2026-05-02T03:57:30.779168+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3905,8 +3905,8 @@
       "epic": "E16",
       "points": 1,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s574-soc2-backup-automation-minio-cro\nSkill: skills/security/update-threat-model.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T03:54:55Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s574-soc2-backup-automation-minio-cro (merged + deletable)\nSkill: skills/security/update-threat-model.md\nFinal heartbeat: 2026-05-02T03:57:30Z (copilot-thor)\nTests: 6 new tests in tests/test_objstore_integrity_check.py — runbook index, runbook section, DR cross-link, driver dry-run summary/tsv/prom artifacts, repair mode walks manifest, missing-arg handling. Full pytest 1299/1299 (6 new).\nDocs touched: loop_implementation/engineering/RUNBOOKS.md,loop_implementation/engineering/DR.md,scripts/objstore_integrity_check.sh\nFollow-ups: none"
     },
     {
       "id": "S575",
