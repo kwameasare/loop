@@ -2,15 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "generated_at": "2026-05-02T05:22:50.273287+00:00",
-=======
-    "generated_at": "2026-05-02T05:20:03.731481+00:00",
->>>>>>> d206f2a (chore(tracker): claim S594)
-=======
-    "generated_at": "2026-05-02T05:23:14.757731+00:00",
->>>>>>> e538174 (chore(tracker): close S594)
+    "generated_at": "2026-05-02T05:25:14.354741+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4051,27 +4043,13 @@
     {
       "id": "S594",
       "title": "region: studio region selector at workspace creation",
-<<<<<<< HEAD
-      "owner": "copilot-thor",
-=======
       "owner": "copilot-titan",
->>>>>>> d206f2a (chore(tracker): claim S594)
       "sprint": "S26",
       "epic": "E10",
       "points": 1,
       "priority": "P0",
-<<<<<<< HEAD
-<<<<<<< HEAD
       "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s594-region-studio-region-selector-at (merged + deletable)\nSkill: skills/coding/typescript.md\nFinal heartbeat: 2026-05-02T05:22:50Z (copilot-thor)\nTests: 8 vitest tests (opens modal, defaults region to inferred TZ, defaults to us-east-1 for unknown TZ, shows all regions, shows cannot-change-later notice, persists selected region to onSubmit, slug format error, cancel resets). pytest 1341/1341.\nDocs touched: apps/studio/src/lib/regions.ts,apps/studio/src/components/shell/create-workspace-modal.tsx\nFollow-ups: S595"
-=======
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s594-region-studio-region-selector-at\nSkill: skills/api/typescript-frontend.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:20:03Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
->>>>>>> d206f2a (chore(tracker): claim S594)
-=======
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s594-region-studio-region-selector-at (merged + deletable)\nSkill: skills/api/typescript-frontend.md\nFinal heartbeat: 2026-05-02T05:23:14Z (copilot-titan)\nTests: apps/studio src/lib/regions.test.ts (5 passed) + src/components/workspaces/workspace-create-form.test.tsx (5 passed) — 10 total\nDocs touched: inline component docstrings (S594) cite cannot-change-later contract (S593)\nFollow-ups: S023"
->>>>>>> e538174 (chore(tracker): close S594)
+      "notes": "**Done.**\nPR: https://github.com/kwameasare/loop/pull/49 (squash-merged 2026-05-02T05:23Z)\nBranch: copilot-titan/s594-region-studio-region-selector-at (merged + deletable)\nSkill: skills/api/typescript-frontend.md\nFinal heartbeat: 2026-05-02T05:23:14Z (copilot-titan)\nTests: apps/studio src/lib/regions.test.ts (5 passed) + src/components/workspaces/workspace-create-form.test.tsx (5 passed) — 10 total. Validates region catalog ↔ RegionName invariant, TZ-based inference table, default region selection, cannot-change-later notice presence, submit-payload shape, validation, dropdown-driven description swap.\nDocs touched: apps/studio/src/lib/regions.ts, apps/studio/src/lib/regions.test.ts, apps/studio/src/components/workspaces/workspace-create-form.tsx, apps/studio/src/components/workspaces/workspace-create-form.test.tsx, apps/studio/src/app/workspaces/new/page.tsx (inline docstrings cite cannot-change-later contract from S593)\nFollow-ups: S023 (swap stub fetch for generated cp-api client)"
     },
     {
       "id": "S595",
