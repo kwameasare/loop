@@ -31,6 +31,13 @@ from loop_kb_engine.parsers import (
     UnsupportedDocumentType,
     default_registry,
 )
+from loop_kb_engine.perf_fixture import (
+    DEFAULT_CHUNK_COUNT,
+    DEFAULT_TOP_K,
+    TARGET_P50_MS,
+    SyntheticKBHit,
+    SyntheticMillionChunkFixture,
+)
 from loop_kb_engine.qdrant_store import QdrantRestVectorStore, qdrant_collection_name
 from loop_kb_engine.retrieval import (
     ChunkDiff,
@@ -42,6 +49,9 @@ from loop_kb_engine.retrieval import (
 from loop_kb_engine.store import InMemoryVectorStore, VectorStore
 
 __all__ = [
+    "DEFAULT_CHUNK_COUNT",
+    "DEFAULT_TOP_K",
+    "TARGET_P50_MS",
     "Chunk",
     "ChunkDiff",
     "Chunker",
@@ -59,6 +69,8 @@ __all__ = [
     "QdrantRestVectorStore",
     "RetrievalResult",
     "SemanticChunker",
+    "SyntheticKBHit",
+    "SyntheticMillionChunkFixture",
     "TextParser",
     "TombstoneRegistry",
     "UnsupportedDocumentType",

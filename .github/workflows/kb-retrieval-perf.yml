@@ -1,0 +1,71 @@
+name: kb-retrieval-perf
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/kb-retrieval-perf.yml"
+      - "bench/results/kb_retrieval_1m.json"
+      - "docs/perf/kb_retrieval_1m.md"
+      - "packages/kb-engine/**"
+      - "scripts/kb_retrieval_perf.py"
+      - "tests/test_kb_retrieval_perf.py"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/kb-retrieval-perf.yml"
+      - "bench/results/kb_retrieval_1m.json"
+      - "docs/perf/kb_retrieval_1m.md"
+      - "packages/kb-engine/**"
+      - "scripts/kb_retrieval_perf.py"
+      - "tests/test_kb_retrieval_perf.py"
+  workflow_dispatch:
+  schedule:
+    - cron: "23 6 * * *"
+
+jobs:
+  kb-retrieval-perf:
+    name: kb-retrieval-perf
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Run synthetic 1M-chunk retrieval benchmark
+        id: kb_perf
+        continue-on-error: true
+        run: |
+          uv run python scripts/kb_retrieval_perf.py \
+            --output bench/results/kb_retrieval_1m.json \
+            --iterations 120 \
+            --target-p50-ms 200
+      - name: Upload KB retrieval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kb-retrieval-perf
+          path: bench/results/kb_retrieval_1m.json
+          if-no-files-found: error
+      - name: Fail breached KB retrieval budget
+        if: steps.kb_perf.outcome != 'success'
+        run: exit 1
+      - name: Page on-call
+        if: failure()
+        env:
+          LOOP_ONCALL_WEBHOOK_URL: ${{ secrets.LOOP_ONCALL_WEBHOOK_URL }}
+        run: |
+          if [ -z "$LOOP_ONCALL_WEBHOOK_URL" ]; then
+            echo "::error::LOOP_ONCALL_WEBHOOK_URL secret is required to page on-call"
+            exit 1
+          fi
+          python3 - <<'PY' >/tmp/oncall-payload.json
+          import json, os
+          run_url = f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          print(json.dumps({
+              "summary": "Loop KB retrieval p50 breached 200 ms at 1M synthetic chunks",
+              "severity": "critical",
+              "source": "github-actions",
+              "run_url": run_url,
+          }))
+          PY
+          curl -fsS -X POST -H "content-type: application/json" \
+            --data @/tmp/oncall-payload.json "$LOOP_ONCALL_WEBHOOK_URL"
