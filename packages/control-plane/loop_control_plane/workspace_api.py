@@ -27,6 +27,13 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import UUID
 
+from loop_control_plane.audit import (
+    AuditContext,
+    AuditEventInput,
+    AuditLog,
+    InMemoryAuditLog,
+    audit_log_append,
+)
 from loop_control_plane.authorize import (
     AuthorisationError,
     authorize_workspace_access,
@@ -76,6 +83,7 @@ class WorkspaceAPI:
 
     workspaces: WorkspaceService
     region_router: RegionRouter = field(default_factory=RegionRouter)
+    audit_log: AuditLog = field(default_factory=InMemoryAuditLog)
 
     def _require_request_region(self, *, workspace: Workspace, request_region: str | None) -> None:
         if request_region is None:
@@ -88,8 +96,38 @@ class WorkspaceAPI:
         except RegionError as exc:
             raise AuthorisationError(str(exc)) from exc
 
+    def _audit(
+        self,
+        *,
+        context: AuditContext,
+        workspace_id: UUID,
+        action: str,
+        resource_type: str,
+        resource_id: UUID | str | None,
+        before: Mapping[str, Any] | None,
+        after: Mapping[str, Any] | None,
+    ) -> None:
+        audit_log_append(
+            self.audit_log,
+            AuditEventInput(
+                context=context,
+                workspace_id=workspace_id,
+                action=action,
+                resource_type=resource_type,
+                resource_id=resource_id,
+                before=before,
+                after=after,
+            ),
+        )
+
     # -- S108 --------------------------------------------------------------- #
-    async def create(self, *, caller_sub: str, body: dict[str, Any]) -> dict[str, Any]:
+    async def create(
+        self,
+        *,
+        caller_sub: str,
+        body: dict[str, Any],
+        audit_context: AuditContext | None = None,
+    ) -> dict[str, Any]:
         """Create a workspace; the caller becomes the OWNER. Returns 201 body."""
         name = _require_str("name", body.get("name"))
         slug = _require_str("slug", body.get("slug"))
@@ -102,7 +140,17 @@ class WorkspaceAPI:
             owner_sub=caller_sub,
             region=region,
         )
-        return _serialise_ws(ws)
+        body_out = _serialise_ws(ws)
+        self._audit(
+            context=audit_context or AuditContext.internal(actor=caller_sub),
+            workspace_id=ws.id,
+            action="workspace.create",
+            resource_type="workspace",
+            resource_id=ws.id,
+            before=None,
+            after=body_out,
+        )
+        return body_out
 
     # -- S109 --------------------------------------------------------------- #
     async def list_for_caller(
@@ -218,6 +266,7 @@ class WorkspaceAPI:
         workspace_id: UUID,
         body: dict[str, Any],
         request_region: str | None = None,
+        audit_context: AuditContext | None = None,
     ) -> dict[str, Any]:
         """Update a workspace. Owner-only."""
         ws, _ = await authorize_workspace_access(
@@ -240,7 +289,17 @@ class WorkspaceAPI:
             actor_sub=caller_sub,
             name=name_value,
         )
-        return _serialise_ws(new_ws)
+        body_out = _serialise_ws(new_ws)
+        self._audit(
+            context=audit_context or AuditContext.internal(actor=caller_sub),
+            workspace_id=workspace_id,
+            action="workspace.update",
+            resource_type="workspace",
+            resource_id=workspace_id,
+            before=_serialise_ws(ws),
+            after=body_out,
+        )
+        return body_out
 
     # -- S112 --------------------------------------------------------------- #
     async def list_members(
@@ -267,6 +326,7 @@ class WorkspaceAPI:
         workspace_id: UUID,
         body: dict[str, Any],
         request_region: str | None = None,
+        audit_context: AuditContext | None = None,
     ) -> dict[str, Any]:
         """Direct membership add (S112). Owner-only.
 
@@ -293,7 +353,17 @@ class WorkspaceAPI:
         membership = await self.workspaces.add_member(
             workspace_id=workspace_id, user_sub=target_sub, role=role
         )
-        return _serialise_member(membership)
+        body_out = _serialise_member(membership)
+        self._audit(
+            context=audit_context or AuditContext.internal(actor=caller_sub),
+            workspace_id=workspace_id,
+            action="member.invite",
+            resource_type="member",
+            resource_id=target_sub,
+            before=None,
+            after=body_out,
+        )
+        return body_out
 
     async def remove_member(
         self,
@@ -302,6 +372,7 @@ class WorkspaceAPI:
         workspace_id: UUID,
         user_sub: str,
         request_region: str | None = None,
+        audit_context: AuditContext | None = None,
     ) -> dict[str, Any]:
         ws, _ = await authorize_workspace_access(
             workspaces=self.workspaces,
@@ -310,10 +381,21 @@ class WorkspaceAPI:
             required_role=Role.OWNER,
         )
         self._require_request_region(workspace=ws, request_region=request_region)
+        members = await self.workspaces.list_members(workspace_id)
+        before = next((_serialise_member(m) for m in members if m.user_sub == user_sub), None)
         await self.workspaces.remove_member(
             workspace_id=workspace_id,
             user_sub=user_sub,
             actor_sub=caller_sub,
+        )
+        self._audit(
+            context=audit_context or AuditContext.internal(actor=caller_sub),
+            workspace_id=workspace_id,
+            action="member.remove",
+            resource_type="member",
+            resource_id=user_sub,
+            before=before,
+            after=None,
         )
         return {"workspace_id": str(workspace_id), "user_sub": user_sub, "removed": True}
 
@@ -325,6 +407,7 @@ class WorkspaceAPI:
         user_sub: str,
         body: dict[str, Any],
         request_region: str | None = None,
+        audit_context: AuditContext | None = None,
     ) -> dict[str, Any]:
         ws, _ = await authorize_workspace_access(
             workspaces=self.workspaces,
@@ -334,13 +417,25 @@ class WorkspaceAPI:
         )
         self._require_request_region(workspace=ws, request_region=request_region)
         role = _require_role("role", body.get("role"))
+        members = await self.workspaces.list_members(workspace_id)
+        before = next((_serialise_member(m) for m in members if m.user_sub == user_sub), None)
         updated = await self.workspaces.update_role(
             workspace_id=workspace_id,
             user_sub=user_sub,
             role=role,
             actor_sub=caller_sub,
         )
-        return _serialise_member(updated)
+        body_out = _serialise_member(updated)
+        self._audit(
+            context=audit_context or AuditContext.internal(actor=caller_sub),
+            workspace_id=workspace_id,
+            action="member.role_update",
+            resource_type="member",
+            resource_id=user_sub,
+            before=before,
+            after=body_out,
+        )
+        return body_out
 
 
 __all__ = ["AuthorisationError", "WorkspaceAPI"]

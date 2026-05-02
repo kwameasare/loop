@@ -21,7 +21,7 @@ preserves the "shown once" guarantee laid down in
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 from uuid import UUID
 
@@ -30,6 +30,13 @@ from loop_control_plane.api_keys import (
     ApiKeyError,
     ApiKeyService,
     IssuedApiKey,
+)
+from loop_control_plane.audit import (
+    AuditContext,
+    AuditEventInput,
+    AuditLog,
+    InMemoryAuditLog,
+    audit_log_append,
 )
 from loop_control_plane.authorize import authorize_workspace_access
 from loop_control_plane.workspaces import Role, WorkspaceService
@@ -71,6 +78,30 @@ class ApiKeyAPI:
 
     api_keys: ApiKeyService
     workspaces: WorkspaceService
+    audit_log: AuditLog = field(default_factory=InMemoryAuditLog)
+
+    def _audit(
+        self,
+        *,
+        context: AuditContext,
+        workspace_id: UUID,
+        action: str,
+        key_id: UUID,
+        before: dict[str, Any] | None,
+        after: dict[str, Any] | None,
+    ) -> None:
+        audit_log_append(
+            self.audit_log,
+            AuditEventInput(
+                context=context,
+                workspace_id=workspace_id,
+                action=action,
+                resource_type="api_key",
+                resource_id=key_id,
+                before=before,
+                after=after,
+            ),
+        )
 
     # -- S113 --------------------------------------------------------------- #
     async def create(
@@ -79,6 +110,7 @@ class ApiKeyAPI:
         caller_sub: str,
         workspace_id: UUID,
         body: dict[str, Any],
+        audit_context: AuditContext | None = None,
     ) -> dict[str, Any]:
         """Issue a new key. Plaintext is included in the response exactly once."""
         await authorize_workspace_access(
@@ -91,12 +123,19 @@ class ApiKeyAPI:
         issued = await self.api_keys.issue(
             workspace_id=workspace_id, name=name, created_by=caller_sub
         )
-        return _serialise_issued(issued)
+        body_out = _serialise_issued(issued)
+        self._audit(
+            context=audit_context or AuditContext.internal(actor=caller_sub),
+            workspace_id=workspace_id,
+            action="api_key.create",
+            key_id=issued.record.id,
+            before=None,
+            after=_serialise(issued.record),
+        )
+        return body_out
 
     # -- S114 --------------------------------------------------------------- #
-    async def list_for_workspace(
-        self, *, caller_sub: str, workspace_id: UUID
-    ) -> dict[str, Any]:
+    async def list_for_workspace(self, *, caller_sub: str, workspace_id: UUID) -> dict[str, Any]:
         await authorize_workspace_access(
             workspaces=self.workspaces,
             workspace_id=workspace_id,
@@ -113,6 +152,7 @@ class ApiKeyAPI:
         caller_sub: str,
         workspace_id: UUID,
         key_id: UUID,
+        audit_context: AuditContext | None = None,
     ) -> dict[str, Any]:
         """Soft-delete a key. Idempotent: revoking an already-revoked key is fine."""
         await authorize_workspace_access(
@@ -123,10 +163,20 @@ class ApiKeyAPI:
         )
         # Cross-tenant guard: a workspace may only revoke its own keys.
         records = await self.api_keys.list_for_workspace(workspace_id)
-        if not any(r.id == key_id for r in records):
+        before_record = next((r for r in records if r.id == key_id), None)
+        if before_record is None:
             raise ApiKeyError(f"unknown key in workspace: {key_id}")
         revoked = await self.api_keys.revoke(key_id=key_id)
-        return _serialise(revoked)
+        body_out = _serialise(revoked)
+        self._audit(
+            context=audit_context or AuditContext.internal(actor=caller_sub),
+            workspace_id=workspace_id,
+            action="api_key.revoke",
+            key_id=key_id,
+            before=_serialise(before_record),
+            after=body_out,
+        )
+        return body_out
 
 
 __all__ = ["ApiKeyAPI"]

@@ -16,10 +16,17 @@ callers map those to HTTP 400.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 from uuid import UUID
 
+from loop_control_plane.audit import (
+    AuditContext,
+    AuditEventInput,
+    AuditLog,
+    InMemoryAuditLog,
+    audit_log_append,
+)
 from loop_control_plane.inbox import InboxError, InboxItem, InboxQueue
 
 
@@ -53,41 +60,125 @@ class InboxAPI:
     """Thin façade so HTTP routers stay one-liners."""
 
     queue: InboxQueue
+    audit_log: AuditLog = field(default_factory=InMemoryAuditLog)
 
-    def escalate(self, *, workspace_id: UUID, body: dict[str, Any]) -> dict[str, Any]:
+    def _audit(
+        self,
+        *,
+        context: AuditContext,
+        item: InboxItem,
+        action: str,
+        before: dict[str, Any] | None,
+        after: dict[str, Any] | None,
+    ) -> None:
+        audit_log_append(
+            self.audit_log,
+            AuditEventInput(
+                context=context,
+                workspace_id=item.workspace_id,
+                action=action,
+                resource_type="inbox_item",
+                resource_id=item.id,
+                before=before,
+                after=after,
+            ),
+        )
+
+    def escalate(
+        self,
+        *,
+        workspace_id: UUID,
+        body: dict[str, Any],
+        audit_context: AuditContext | None = None,
+    ) -> dict[str, Any]:
         item = self.queue.escalate(
             workspace_id=workspace_id,
             agent_id=_require_uuid("agent_id", body.get("agent_id")),
-            conversation_id=_require_uuid(
-                "conversation_id", body.get("conversation_id")
-            ),
+            conversation_id=_require_uuid("conversation_id", body.get("conversation_id")),
             user_id=_require_str("user_id", body.get("user_id")),
             reason=_require_str("reason", body.get("reason")),
             now_ms=_require_int("now_ms", body.get("now_ms")),
             last_message_excerpt=str(body.get("last_message_excerpt", "")),
         )
-        return _serialise(item)
+        body_out = _serialise(item)
+        actor = _require_str("user_id", body.get("user_id"))
+        self._audit(
+            context=audit_context or AuditContext.internal(actor=actor),
+            item=item,
+            action="hitl.escalate",
+            before=None,
+            after=body_out,
+        )
+        return body_out
 
     def list_pending(self, *, workspace_id: UUID) -> dict[str, Any]:
         items = self.queue.list_pending(workspace_id)
         return {"items": [_serialise(i) for i in items]}
 
-    def claim(self, *, item_id: UUID, body: dict[str, Any]) -> dict[str, Any]:
+    def claim(
+        self,
+        *,
+        item_id: UUID,
+        body: dict[str, Any],
+        audit_context: AuditContext | None = None,
+    ) -> dict[str, Any]:
+        before_item = self.queue.get(item_id)
+        before = _serialise(before_item)
         item = self.queue.claim(
             item_id,
             operator_id=_require_str("operator_id", body.get("operator_id")),
             now_ms=_require_int("now_ms", body.get("now_ms")),
         )
-        return _serialise(item)
-
-    def release(self, *, item_id: UUID) -> dict[str, Any]:
-        return _serialise(self.queue.release(item_id))
-
-    def resolve(self, *, item_id: UUID, body: dict[str, Any]) -> dict[str, Any]:
-        item = self.queue.resolve(
-            item_id, now_ms=_require_int("now_ms", body.get("now_ms"))
+        body_out = _serialise(item)
+        self._audit(
+            context=audit_context or AuditContext.internal(actor=item.operator_id or "unknown"),
+            item=item,
+            action="hitl.claim",
+            before=before,
+            after=body_out,
         )
-        return _serialise(item)
+        return body_out
+
+    def release(
+        self,
+        *,
+        item_id: UUID,
+        audit_context: AuditContext | None = None,
+    ) -> dict[str, Any]:
+        before_item = self.queue.get(item_id)
+        before = _serialise(before_item)
+        item = self.queue.release(item_id)
+        body_out = _serialise(item)
+        self._audit(
+            context=audit_context
+            or AuditContext.internal(actor=before_item.operator_id or "unknown"),
+            item=item,
+            action="hitl.release",
+            before=before,
+            after=body_out,
+        )
+        return body_out
+
+    def resolve(
+        self,
+        *,
+        item_id: UUID,
+        body: dict[str, Any],
+        audit_context: AuditContext | None = None,
+    ) -> dict[str, Any]:
+        before_item = self.queue.get(item_id)
+        before = _serialise(before_item)
+        item = self.queue.resolve(item_id, now_ms=_require_int("now_ms", body.get("now_ms")))
+        body_out = _serialise(item)
+        self._audit(
+            context=audit_context
+            or AuditContext.internal(actor=before_item.operator_id or "unknown"),
+            item=item,
+            action="hitl.resolve",
+            before=before,
+            after=body_out,
+        )
+        return body_out
 
 
 __all__ = ["InboxAPI"]
