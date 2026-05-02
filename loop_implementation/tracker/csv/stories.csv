@@ -677,7 +677,14 @@ Final heartbeat: 2026-05-01T22:45:52Z (codex-orion)
 Tests: GitHub Actions helm-e2e run 25236346387 passed in 1m44s; uv run pytest -q -m 'not integration and not e2e' (1204 passed, 3 skipped, 4 deselected); focused ruff/format/pyright for S453 files; tracker/docs gates passed; full ruff/format/pyright baseline-red outside S453
 Docs touched: infra/helm/loop/README.md
 Follow-ups: none"
-S460,flow: studio React-Flow canvas in /agents/{id}/flow,tbd,S19,E10,2,P0,Not started,AC: blank canvas with pan/zoom; toolbar exists; placeholder until S461.
+S460,flow: studio React-Flow canvas in /agents/{id}/flow,copilot-thor,S19,E10,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s460-flow-studio-react-flow-canvas-in
+Skill: skills/ux/component-design.md
+Last step: 0/4 (just claimed)
+Heartbeat: 2026-05-02T03:18:17Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S461,flow: node palette w/ types start/message/condition/ai-task/http/code/end,tbd,S19,E10,3,P0,Not started,AC: drag-and-drop creates node; each type renders distinct icon.
 S462,flow: node config sidebar (per-type form),tbd,S19,E10,3,P0,Not started,AC: clicking a node opens sidebar; form fields persist on blur; validation surfaces.
 S463,flow: edge editing (connect/disconnect/redirect),tbd,S19,E10,2,P0,Not started,AC: drag-from-handle connects; click edge → delete confirm.

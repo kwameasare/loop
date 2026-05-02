@@ -414,7 +414,7 @@ NEW_STORIES: list[StoryV2] = [
     # =====================================================================
     # Sprint S19 — Studio flow editor v0 (≈13 stories)
     # =====================================================================
-    StoryV2("S460", "flow: studio React-Flow canvas in /agents/{id}/flow", "S19", "E10", 2, "P0", "AC: blank canvas with pan/zoom; toolbar exists; placeholder until S461."),
+    StoryV2("S460", "flow: studio React-Flow canvas in /agents/{id}/flow", "S19", "E10", 2, "P0", "AC: blank canvas with pan/zoom; toolbar exists; placeholder until S461.", owner="copilot-thor", status="In progress", notes_override="**Active.**\nBranch: copilot-thor/s460-flow-studio-react-flow-canvas-in\nSkill: skills/ux/component-design.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T03:18:17Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"),
     StoryV2("S461", "flow: node palette w/ types start/message/condition/ai-task/http/code/end", "S19", "E10", 3, "P0", "AC: drag-and-drop creates node; each type renders distinct icon."),
     StoryV2("S462", "flow: node config sidebar (per-type form)", "S19", "E10", 3, "P0", "AC: clicking a node opens sidebar; form fields persist on blur; validation surfaces."),
     StoryV2("S463", "flow: edge editing (connect/disconnect/redirect)", "S19", "E10", 2, "P0", "AC: drag-from-handle connects; click edge → delete confirm."),
