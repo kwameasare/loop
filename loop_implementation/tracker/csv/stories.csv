@@ -1149,7 +1149,14 @@ Final heartbeat: 2026-05-02T05:54:47Z (codex-vega)
 Tests: touched ruff/format pass; touched pyright pass; voice perf script/workflow tests pass (12); pytest -q -m 'not integration and not e2e' passed (1479 passed, 3 skipped, 4 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests
 Docs touched: docs/perf/voice_perf.md, docs/index.md, loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_perf.json
 Follow-ups: none"
-S655,ga-polish: design-system audit + component refactor,tbd,S29,E10,3,P1,Not started,AC: token map sweep; <5 hardcoded colours/spacings remain; doc'd in design system.
+S655,ga-polish: design-system audit + component refactor,copilot-thor,S29,E10,3,P1,In progress,"**Active.**
+Branch: copilot-thor/s655-ga-polish-design-system-audit-co
+Skill: loop_implementation/skills/_base/skill.md
+Last step: 0/4 (just claimed)
+Heartbeat: 2026-05-02T14:03:20Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S656,ga-polish: a11y audit (WCAG 2.1 AA) on top 10 studio pages,copilot-titan,S29,E10,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-titan/s656-ga-polish-a11y-audit-wcag-2-1-aa (merged + deletable)

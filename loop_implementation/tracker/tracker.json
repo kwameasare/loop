@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T14:03:21.029034+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4351,13 +4351,13 @@
     {
       "id": "S655",
       "title": "ga-polish: design-system audit + component refactor",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S29",
       "epic": "E10",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: token map sweep; <5 hardcoded colours/spacings remain; doc'd in design system."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s655-ga-polish-design-system-audit-co\nSkill: loop_implementation/skills/_base/skill.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T14:03:20Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S656",
