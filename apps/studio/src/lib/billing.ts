@@ -28,6 +28,58 @@ export interface BillingSummary {
   customer_portal_url: string;
 }
 
+export interface Invoice {
+  id: string;
+  number: string;
+  /** Invoice date (UTC midnight ms). */
+  date_ms: number;
+  amount_cents: number;
+  status: "paid" | "open" | "void";
+  /** Stripe-hosted PDF URL. */
+  pdf_url: string;
+}
+
+/** Paginate a sorted list of invoices (newest-first). */
+export function paginateInvoices(
+  invoices: Invoice[],
+  page: number,
+  page_size: number,
+): { items: Invoice[]; total: number; pages: number } {
+  const sorted = [...invoices].sort((a, b) => b.date_ms - a.date_ms);
+  const total = sorted.length;
+  const pages = Math.max(1, Math.ceil(total / page_size));
+  const safePage = Math.max(1, Math.min(page, pages));
+  const start = (safePage - 1) * page_size;
+  return { items: sorted.slice(start, start + page_size), total, pages };
+}
+
+export const FIXTURE_INVOICES: Invoice[] = [
+  {
+    id: "in_001",
+    number: "INV-2026-001",
+    date_ms: Date.UTC(2026, 3, 1),
+    amount_cents: 19_900,
+    status: "paid",
+    pdf_url: "https://billing.stripe.com/invoice/test_001/pdf",
+  },
+  {
+    id: "in_002",
+    number: "INV-2026-002",
+    date_ms: Date.UTC(2026, 2, 1),
+    amount_cents: 19_900,
+    status: "paid",
+    pdf_url: "https://billing.stripe.com/invoice/test_002/pdf",
+  },
+  {
+    id: "in_003",
+    number: "INV-2026-003",
+    date_ms: Date.UTC(2026, 1, 1),
+    amount_cents: 4_900,
+    status: "paid",
+    pdf_url: "https://billing.stripe.com/invoice/test_003/pdf",
+  },
+];
+
 export const PLANS: Record<PlanId, Plan> = {
   free: {
     id: "free",
