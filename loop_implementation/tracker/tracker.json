@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:32:53.586318+00:00",
+    "generated_at": "2026-05-02T05:37:25.808490+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4114,8 +4114,8 @@
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s612-sso-okta-integration-recipe-sand\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T05:32:53Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s612-sso-okta-integration-recipe-sand (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T05:37:25Z (copilot-thor)\nTests: 16 pytest (test_okta_integration.py): parse Okta fixture metadata, entity_id/sso_url/cert extraction, sp_entity_id/acs_url generation, group-role map, issuer mismatch, audience mismatch, expired assertion, malformed XML, missing entityID, missing POST binding; full StubSamlValidator ACS loop (happy path, admin role, editor role, default role, issuer reject, audience reject, expiry reject)\nDocs touched: packages/control-plane/loop_control_plane/saml_okta.py module docstring; packages/control-plane/fixtures/okta_idp_metadata.xml fixture README comment\nFollow-ups: S613 Entra ID recipe; S618 Playwright Okta SP-initiated login e2e"
     },
     {
       "id": "S613",
