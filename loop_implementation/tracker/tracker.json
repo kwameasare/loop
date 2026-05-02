@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:36:45.481653+00:00",
+    "generated_at": "2026-05-02T03:39:28.389025+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3333,8 +3333,8 @@
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s468-flow-emulator-panel-shares-state\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T03:36:45Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s468-flow-emulator-panel-shares-state (merged + deletable)\nSkill: skills/ux/component-design.md\nFinal heartbeat: 2026-05-02T03:39:28Z (copilot-thor)\nTests: emulator-transport unit tests cover fixture stream + extractTokenText; FlowEmulatorPanel renders empty/disabled, streams tokens to chat preview, forwards events to onTurnEvent, surfaces degrade as inline error, Stop cancels in-flight stream, ignores whitespace-only input\nDocs touched: apps/studio/src/components/flow/flow-emulator-panel.tsx,apps/studio/src/lib/emulator-transport.ts\nFollow-ups: none"
     },
     {
       "id": "S469",
