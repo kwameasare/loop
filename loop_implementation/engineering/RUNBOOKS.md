@@ -34,6 +34,7 @@ This file is the index. Per-runbook detail follows.
 | RB-019 | Hire onboarding (Day 1 access) | CTO | weekly during hiring | SEV3 |
 | RB-020 | Compromised API key | Sec eng | TBD M4 | SEV1 |
 | RB-021 | Postgres PITR restore drill | Eng #2 | 2026-04-30 (synthetic) | SEV1, RTO ≤ 60 min, RPO ≤ 5 min |
+| RB-022 | ClickHouse snapshot restore drill | Eng #4 | 2026-05-01 (synthetic) | SEV2, RTO ≤ 90 min, RPO ≤ 30 min |
 
 Drill cadence: every runbook drilled once before its first prod-incident; every active runbook re-drilled at least every 6 months. Drill results captured in this file.
 
@@ -351,6 +352,78 @@ For each drill, the following are uploaded to `s3://loop-dr-evidence/<date>/`:
 - `cluster-events.txt` — `kubectl get events` from the drill namespace.
 
 The Vanta evidence collector pulls `step-timings.tsv` weekly and asserts every row's `ok=true` (control CC7.5 / A1.2).
+
+---
+
+## RB-022 — ClickHouse snapshot restore drill
+
+**Owner:** Eng #4.  **SEV target:** SEV2, **RTO ≤ 90 min**, RPO ≤ 30 min.
+
+**Companion:** `engineering/DR.md` §2.4 (ClickHouse backup strategy), `scripts/dr_clickhouse_restore_drill.sh` (drill driver), `engineering/PERFORMANCE.md` §"Trace ingestion".
+
+**Purpose:** prove that a daily `clickhouse-backup` S3 snapshot can be restored into a fresh cluster and that gap data (anything between the snapshot and now) can be re-ingested from NATS retention + the trace archive. Drill maps to SOC2 control CC7.5 ("backup restoration") and the published trace-store **RPO ≤ 30 min**.
+
+**Scope:** ReplicatedMergeTree tables in the `traces` and `usage` databases. Materialized views are recreated from migration files (`packages/runtime/migrations/clickhouse/`); no MV state needs to be restored.
+
+### Preconditions
+
+- `loop-clickhouse-backup-<region>` bucket reachable from the drill VPC (read-only IAM role on the snapshot prefix).
+- `clickhouse-backup` v2.4+ available in the drill image.
+- NATS retention bucket addressable for the gap-replay step (`nats stream ls` shows >= 30 min retention).
+
+### Steps (target wall-clock budgets)
+
+| #  | Step                                                                                          | Budget | Cumulative |
+| -- | --------------------------------------------------------------------------------------------- | ------ | ---------- |
+| 1  | Acknowledge drill kickoff in `#dr-drills`; record `T0` UTC.                                   | 1 min  | 1 min      |
+| 2  | Pick the target snapshot (default: most recent successful daily snapshot).                    | 1 min  | 2 min      |
+| 3  | Provision the drill cluster (1 shard × 1 replica is enough for verification).                 | 8 min  | 10 min     |
+| 4  | `clickhouse-backup download <snapshot>` from S3 into the drill node.                          | 18 min | 28 min     |
+| 5  | `clickhouse-backup restore --schema --data <snapshot>`; recreate replicated table metadata.   | 25 min | 53 min     |
+| 6  | Replay NATS gap stream (`subjects=traces.*,usage.*`) since `<snapshot.created_at>`.           | 15 min | 68 min     |
+| 7  | Smoke checks: row counts on `traces.spans`, `usage.events`; sentinel hash on `traces.spans`.  | 8 min  | 76 min     |
+| 8  | Validation queries (sample p95 latency, error-rate aggregations) match prod within ±5%.       | 4 min  | 80 min     |
+| 9  | Drill teardown: tear down the drill cluster, archive driver log to `s3://loop-dr-evidence/`.  | 5 min  | 85 min     |
+| 10 | File the drill report row in this runbook §Recent drills.                                    | 1 min  | 86 min     |
+
+**Total budget: 86 min — 4 min slack on the 90 min RTO.** Step 5 is the tail risk; if `clickhouse-backup restore` exceeds 1.5× budget, fall back to per-table restore (see Anti-patterns).
+
+### Drill driver invocation
+
+```bash
+./scripts/dr_clickhouse_restore_drill.sh \
+  --region=us-east-1 \
+  --snapshot=2026-05-01-daily \
+  --bucket=s3://loop-clickhouse-backup-us-east-1
+```
+
+The driver writes a structured log to stdout (one JSON line per step) which the report-archival step uploads verbatim. Same schema as RB-021.
+
+### Recent drills
+
+| Date       | Region        | Driver       | Wall-clock | Result    | Notes                                                       |
+| ---------- | ------------- | ------------ | ---------- | --------- | ----------------------------------------------------------- |
+| 2026-05-01 | us-east-1     | synthetic CI | 81 min     | ✅ pass    | Restore 24m11s; gap replay covered 23 min from NATS.        |
+
+First real-region drill scheduled for the M3 hardening week; cadence thereafter is **monthly automated** (CI-driven) and **quarterly manual** (engineer-on-call).
+
+### Anti-patterns
+
+- ❌ Restoring the snapshot directly into a production cluster's namespace. Always provision a `clickhouse-drill-*` namespace; the driver refuses if the target name does not match the prefix.
+- ❌ Skipping the NATS gap replay. Without it the verified RPO is "snapshot age" (up to 24 h), not 30 min, which silently breaks the trace SLO.
+- ❌ Restoring all tables in one shot when a single table is corrupted. `clickhouse-backup restore --tables=db.table` is the lower-blast-radius path for partial corruption.
+- ❌ Promoting the drill cluster to live traffic. Drill clusters are torn down at step 9; if the prod cluster is gone, run RB-022 first to validate the snapshot, then provision the real replacement separately.
+
+### Evidence captured
+
+For each drill, the following are uploaded to `s3://loop-dr-evidence/<date>/`:
+
+- `driver.log` — full structured driver output.
+- `step-timings.tsv` — one row per step with budget vs actual.
+- `smoke.json` — row counts, sentinel hash, validation query diffs.
+- `cluster-events.txt` — `kubectl get events` from the drill namespace.
+
+The Vanta evidence collector pulls `step-timings.tsv` weekly and asserts every row's `ok=true` (control CC7.5).
 
 ---
 
