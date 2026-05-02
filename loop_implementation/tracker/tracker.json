@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:28:05.634171+00:00",
+    "generated_at": "2026-05-02T03:28:21.710313+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3273,13 +3273,13 @@
     {
       "id": "S463",
       "title": "flow: edge editing (connect/disconnect/redirect)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S19",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: drag-from-handle connects; click edge → delete confirm."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s463-flow-edge-editing-connect-discon\nSkill: skills/ux/component-design.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T03:28:21Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S464",
