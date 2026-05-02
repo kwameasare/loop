@@ -13,6 +13,7 @@ const seed: KbDocument[] = [
     bytes: 5120,
     status: "ready",
     uploadedAt: "2026-04-01T00:00:00Z",
+    lastRefreshedAt: "2026-05-01T08:00:00Z",
   },
 ];
 
@@ -46,6 +47,7 @@ describe("KbList", () => {
         bytes: 100,
         status: "indexing" as const,
         uploadedAt: "2026-05-01T00:00:00Z",
+        lastRefreshedAt: null,
       };
     });
     render(
@@ -135,5 +137,97 @@ describe("KbList", () => {
       fireEvent.submit(screen.getByTestId("kb-upload-submit").closest("form")!);
     });
     expect(screen.getByTestId("kb-toast-error").textContent).toContain("boom");
+  });
+
+  it("shows last-refreshed timestamp when present", () => {
+    render(<KbList agentId="agt_demo" initialDocuments={seed} />);
+    const cell = screen.getByTestId("kb-doc-last-refreshed-doc_a");
+    expect(cell.textContent).toContain("Refreshed");
+  });
+
+  it("shows 'Never refreshed' when lastRefreshedAt is null", () => {
+    const noRefresh = [{ ...seed[0]!, lastRefreshedAt: null }];
+    render(<KbList agentId="agt_demo" initialDocuments={noRefresh} />);
+    expect(screen.getByTestId("kb-doc-last-refreshed-doc_a").textContent).toBe(
+      "Never refreshed",
+    );
+  });
+
+  it("refresh button calls triggerRefresh and updates lastRefreshedAt", async () => {
+    const triggerRefresh = vi.fn(async (_agentId: string, documentId: string) => ({
+      documentId,
+      cadence: "daily" as const,
+      status: "ok" as const,
+      lastRunAt: "2026-06-01T09:00:00Z",
+      nextRunAt: null,
+      runCount: 2,
+      error: null,
+    }));
+    render(
+      <KbList
+        agentId="agt_demo"
+        initialDocuments={seed}
+        triggerRefresh={triggerRefresh}
+      />,
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("kb-doc-refresh-doc_a"));
+    });
+    expect(triggerRefresh).toHaveBeenCalledWith("agt_demo", "doc_a");
+    expect(screen.getByTestId("kb-doc-last-refreshed-doc_a").textContent).toContain(
+      "Refreshed",
+    );
+  });
+
+  it("refresh button is disabled while refresh is in-flight", async () => {
+    let resolve!: () => void;
+    const triggerRefresh = vi.fn(
+      () =>
+        new Promise<ReturnType<typeof import("@/lib/kb").triggerDocRefresh>>((res) => {
+          resolve = () =>
+            res({
+              documentId: "doc_a",
+              cadence: "daily",
+              status: "ok",
+              lastRunAt: "2026-06-01T09:00:00Z",
+              nextRunAt: null,
+              runCount: 2,
+              error: null,
+            });
+        }),
+    );
+    render(
+      <KbList
+        agentId="agt_demo"
+        initialDocuments={seed}
+        triggerRefresh={triggerRefresh}
+      />,
+    );
+    act(() => {
+      fireEvent.click(screen.getByTestId("kb-doc-refresh-doc_a"));
+    });
+    const btn = screen.getByTestId("kb-doc-refresh-doc_a") as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    await act(async () => { resolve(); });
+    expect(btn.disabled).toBe(false);
+  });
+
+  it("refresh error surfaces as toast.error", async () => {
+    const triggerRefresh = vi.fn(async () => {
+      throw new Error("refresh boom");
+    });
+    render(
+      <KbList
+        agentId="agt_demo"
+        initialDocuments={seed}
+        triggerRefresh={triggerRefresh}
+      />,
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("kb-doc-refresh-doc_a"));
+    });
+    expect(screen.getByTestId("kb-toast-error").textContent).toContain(
+      "refresh boom",
+    );
   });
 });

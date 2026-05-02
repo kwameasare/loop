@@ -23,6 +23,8 @@ export interface KbDocument {
   /** Indexing pipeline state. */
   status: "indexing" | "ready" | "error";
   uploadedAt: string;
+  /** ISO-8601 timestamp of the last successful refresh, or null. */
+  lastRefreshedAt: string | null;
 }
 
 export interface KbHelperOptions {
@@ -187,6 +189,7 @@ export async function uploadKbDocument(
       bytes: input.file.size,
       status: "indexing",
       uploadedAt: new Date().toISOString(),
+      lastRefreshedAt: null,
     };
     fixtureFor(input.agentId).push(doc);
     return doc;

@@ -9,16 +9,19 @@ import {
   deleteKbDocument as defaultDelete,
   formatBytes,
   uploadKbDocument as defaultUpload,
+  triggerDocRefresh as defaultTriggerRefresh,
 } from "@/lib/kb";
 
 type UploadFn = (input: UploadKbDocumentInput) => Promise<KbDocument>;
 type DeleteFn = (input: DeleteKbDocumentInput) => Promise<{ documentId: string }>;
+type RefreshFn = typeof defaultTriggerRefresh;
 
 export interface KbListProps {
   agentId: string;
   initialDocuments: KbDocument[];
   upload?: UploadFn;
   remove?: DeleteFn;
+  triggerRefresh?: RefreshFn;
 }
 
 type Toast = { kind: "success" | "error"; message: string } | null;
@@ -38,9 +41,11 @@ export function KbList({
   initialDocuments,
   upload = defaultUpload,
   remove = defaultDelete,
+  triggerRefresh = defaultTriggerRefresh,
 }: KbListProps) {
   const [docs, setDocs] = useState(initialDocuments);
   const [toast, setToast] = useState<Toast>(null);
+  const [refreshingIds, setRefreshingIds] = useState<Set<string>>(new Set());
 
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -94,6 +99,33 @@ export function KbList({
       });
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleRefresh(documentId: string) {
+    if (refreshingIds.has(documentId)) return;
+    setRefreshingIds((prev) => new Set([...prev, documentId]));
+    try {
+      const status = await triggerRefresh(agentId, documentId);
+      setDocs((prev) =>
+        prev.map((d) =>
+          d.id === documentId
+            ? { ...d, lastRefreshedAt: status.lastRunAt }
+            : d,
+        ),
+      );
+      setToast({ kind: "success", message: "Refresh triggered." });
+    } catch (err) {
+      setToast({
+        kind: "error",
+        message: (err as Error).message ?? "Refresh failed.",
+      });
+    } finally {
+      setRefreshingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(documentId);
+        return next;
+      });
     }
   }
 
@@ -163,19 +195,36 @@ export function KbList({
                   <span data-testid={`kb-doc-status-${doc.id}`}>
                     {doc.status}
                   </span>
+                  {" · "}
+                  <span data-testid={`kb-doc-last-refreshed-${doc.id}`}>
+                    {doc.lastRefreshedAt
+                      ? `Refreshed ${new Date(doc.lastRefreshedAt).toLocaleString()}`
+                      : "Never refreshed"}
+                  </span>
                 </span>
               </div>
-              <button
-                className="text-xs text-red-600 hover:underline"
-                data-testid={`kb-doc-delete-${doc.id}`}
-                onClick={() => {
-                  setConfirmDoc(doc);
-                  setConfirmText("");
-                }}
-                type="button"
-              >
-                Delete
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  className="text-xs text-blue-600 hover:underline disabled:opacity-50"
+                  data-testid={`kb-doc-refresh-${doc.id}`}
+                  disabled={refreshingIds.has(doc.id)}
+                  onClick={() => handleRefresh(doc.id)}
+                  type="button"
+                >
+                  {refreshingIds.has(doc.id) ? "Refreshing…" : "Refresh"}
+                </button>
+                <button
+                  className="text-xs text-red-600 hover:underline"
+                  data-testid={`kb-doc-delete-${doc.id}`}
+                  onClick={() => {
+                    setConfirmDoc(doc);
+                    setConfirmText("");
+                  }}
+                  type="button"
+                >
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>
