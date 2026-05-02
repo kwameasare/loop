@@ -1,0 +1,23 @@
+{
+  "baseline_ref": "main@S844",
+  "budgets": {
+    "checks_rate": 0.999,
+    "http_req_failed_rate": 0.001,
+    "memory_bytes": 4294967296,
+    "p95_ms": 3000
+  },
+  "commit": "S844-contract",
+  "host": "github-actions-kind",
+  "name": "runtime_sse_1000_concurrency",
+  "scenario": "runtime_sse_1000",
+  "source": ".github/workflows/runtime-sse-1000.yml",
+  "stats": {
+    "checks_rate": 1.0,
+    "concurrent_turns": 1000,
+    "http_req_failed_rate": 0.0,
+    "memory_bytes": 268435456,
+    "p95_ms": 1.0
+  },
+  "tool": "k6",
+  "ts": "2026-05-02T00:00:00Z"
+}

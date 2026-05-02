@@ -29,6 +29,15 @@ class SmokeHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         length = int(self.headers.get("content-length", "0") or "0")
         body = self.rfile.read(length).decode("utf-8") if length else ""
+        if self.path == "/v1/turns/stream" or "text/event-stream" in self.headers.get("accept", ""):
+            self._send_sse(
+                (
+                    ("delta", {"text": "helm-e2e"}),
+                    ("delta", {"text": "-ok"}),
+                    ("done", {"turn_id": "helm-e2e-smoke", "received": body}),
+                )
+            )
+            return
         self._send_json(
             {
                 "turn_id": "helm-e2e-smoke",
@@ -41,6 +50,18 @@ class SmokeHandler(BaseHTTPRequestHandler):
         data = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("content-type", "application/json")
+        self.send_header("content-length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _send_sse(self, events: tuple[tuple[str, dict[str, object]], ...]) -> None:
+        frames: list[str] = []
+        for event, payload in events:
+            frames.append(f"event: {event}\ndata: {json.dumps(payload)}\n\n")
+        data = "".join(frames).encode("utf-8")
+        self.send_response(200)
+        self.send_header("content-type", "text/event-stream")
+        self.send_header("cache-control", "no-cache")
         self.send_header("content-length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
