@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:28:13.104737+00:00",
+    "generated_at": "2026-05-02T05:30:19.144925+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4087,13 +4087,13 @@
     {
       "id": "S610",
       "title": "sso: SAML SP impl via PySAML2",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S27",
       "epic": "E20",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: ACS endpoint validates assertion; cert-rotation supported. [extends S050]"
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s610-sso-saml-sp-impl-via-pysaml2\nSkill: skills/security/secrets-kms-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:27:10Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S611",
@@ -5672,7 +5672,7 @@
       "theme": "Enterprise SSO/SAML",
       "goal": "PySAML2 SP, SCIM provisioning, Okta/Entra/Google recipes, JIT user provisioning, group→role mapping.",
       "stories": "S610-S618",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S28",
