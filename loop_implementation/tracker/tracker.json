@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T00:26:58.542559+00:00",
+    "generated_at": "2026-05-02T00:27:17.323188+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5137,8 +5137,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s778-portability-secretsbackend-proto\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 5/5\nHeartbeat: 2026-05-02T00:26:58Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: ready to close SecretsBackend parity contract\nLatest checkpoint: focused static tests and SDK scan passed\nLatest checkpoint: tracker docs and checkpoint gates passed\nLatest checkpoint: control-plane and broad pytest passed\nLatest checkpoint: SecretsBackend contract parity suite and docs landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s778-portability-secretsbackend-proto (merged + deletable)\nSkill: skills/architecture/cloud-portability-check.md\nFinal heartbeat: 2026-05-02T00:27:17Z (codex-orion)\nTests: uv run ruff check packages/control-plane/loop_control_plane/secrets.py packages/control-plane/loop_control_plane/__init__.py packages/control-plane/_tests/test_secrets_backend_parity.py; uv run ruff format --check same files; uv run pyright same files; uv run pytest -q packages/control-plane/_tests/test_secrets_backend_parity.py (7 passed); forbidden cloud SDK grep passed for packages/runtime packages/gateway packages/sdk-py packages/channels; uv run pytest -q packages/control-plane/_tests (292 passed); uv run pytest -q -m 'not integration and not e2e' (1265 passed, 3 skipped, 4 deselected); python3 tools/build_tracker.py; python3 tools/check_tracker_notes.py; python3 tools/check_docs_with_code.py; python3 tools/check_checkpoint_discipline.py; full repo ruff/format/pyright remain baseline-red in unrelated files\nDocs touched: loop_implementation/architecture/CLOUD_PORTABILITY.md\nFollow-ups: none"
     },
     {
       "id": "S779",
