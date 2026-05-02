@@ -524,7 +524,7 @@ NEW_STORIES: list[StoryV2] = [
     # Sprint S27 — Enterprise SSO/SAML (≈9 stories)
     # =====================================================================
     StoryV2("S610", "sso: SAML SP impl via PySAML2", "S27", "E20", 3, "P0", "AC: ACS endpoint validates assertion; cert-rotation supported. [extends S050]"),
-    StoryV2("S611", "sso: SCIM provisioning endpoint (RFC 7644)", "S27", "E20", 3, "P0", "AC: Users + Groups create/update/delete from IdP; Postmen schemathesis test."),
+    StoryV2("S611", "sso: SCIM provisioning endpoint (RFC 7644)", "S27", "E20", 3, "P0", "AC: Users + Groups create/update/delete from IdP; Postmen schemathesis test.", owner="copilot-thor", status="In progress", notes_override="**Active.**\nBranch: copilot-thor/s611-sso-scim-provisioning-endpoint-r\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:28:42Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"),
     StoryV2("S612", "sso: Okta integration recipe + sandbox tenant test", "S27", "E20", 2, "P0", "AC: sample IdP metadata in fixtures/; full SP↔IdP loop in integration."),
     StoryV2("S613", "sso: Entra ID recipe + sandbox tenant test", "S27", "E20", 2, "P0", "AC: same as Okta but Entra ID."),
     StoryV2("S614", "sso: Google Workspace recipe + sandbox test", "S27", "E20", 2, "P0", "AC: same."),

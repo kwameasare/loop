@@ -958,7 +958,14 @@ Tests: scripts/eu_smoke.sh against local helm smoke server; uv run ruff check sc
 Docs touched: loop_implementation/engineering/REGIONAL_DEPLOYS.md
 Follow-ups: none"
 S610,sso: SAML SP impl via PySAML2,tbd,S27,E20,3,P0,Not started,AC: ACS endpoint validates assertion; cert-rotation supported. [extends S050]
-S611,sso: SCIM provisioning endpoint (RFC 7644),tbd,S27,E20,3,P0,Not started,AC: Users + Groups create/update/delete from IdP; Postmen schemathesis test.
+S611,sso: SCIM provisioning endpoint (RFC 7644),copilot-thor,S27,E20,3,P0,In progress,"**Active.**
+Branch: copilot-thor/s611-sso-scim-provisioning-endpoint-r
+Skill: skills/api/add-rest-endpoint.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T05:28:42Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S612,sso: Okta integration recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: sample IdP metadata in fixtures/; full SP↔IdP loop in integration.
 S613,sso: Entra ID recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: same as Okta but Entra ID.
 S614,sso: Google Workspace recipe + sandbox test,tbd,S27,E20,2,P0,Not started,AC: same.
