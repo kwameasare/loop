@@ -1020,7 +1020,14 @@ Final heartbeat: 2026-05-02T05:56:01Z (copilot-titan)
 Tests: packages/control-plane/_tests/test_saml_jit.py
 Docs touched: packages/control-plane/loop_control_plane/saml_jit.py
 Follow-ups: S617"
-S617,sso: SAML group → workspace role mapping rules,tbd,S27,E20,2,P0,Not started,AC: rules in workspace_sso_groups table; UI to edit; tested for owner/editor/viewer.
+S617,sso: SAML group → workspace role mapping rules,copilot-titan,S27,E20,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s617-sso-saml-group-workspace-role-ma (merged + deletable)
+Skill: skills/api/api-versioning.md
+Final heartbeat: 2026-05-02T06:01:23Z (copilot-titan)
+Tests: packages/control-plane/_tests/test_saml_group_rules.py
+Docs touched: packages/control-plane/loop_control_plane/saml_group_rules.py
+Follow-ups: none"
 S618,sso: integration test full Okta SP-initiated login → studio session,tbd,S27,E20,2,P0,Not started,AC: Playwright drives Okta sandbox + studio; ends in authenticated session.
 S630,audit: audit_events table cp_0004 + write-only middleware,tbd,S28,E20,2,P0,Not started,AC: every cp-api write endpoint emits an audit_event; integration test.
 S631,"audit: studio audit log page (filterable, paginated)",tbd,S28,E10,3,P0,Not started,"AC: 7 filters: actor, action, resource, time, ip, success/failure."
