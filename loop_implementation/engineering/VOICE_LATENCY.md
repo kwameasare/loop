@@ -67,6 +67,13 @@ keeps the source-region latency matrix under review. Unknown caller
 regions or missing provider endpoints raise instead of silently sending
 live audio across an arbitrary region.
 
+<!-- S654 -->
+`scripts/voice_perf.py` is the release-train acceptance gate for the
+public 700 ms p50 commitment. It writes
+`bench/results/voice_perf.json`, fails non-zero when the synthetic
+end-to-end p50 exceeds 700 ms, and is scheduled nightly by
+`.github/workflows/voice-perf.yml` with on-call paging on failure.
+
 ## Measurement
 
 Every voice turn that flows through `VoiceSession` is timestamped at

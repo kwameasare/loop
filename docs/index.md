@@ -34,6 +34,8 @@ evaluate AI agents that talk to real users on real channels.
   latency report.
 - [Tool-host warm-start](./perf/tool_host_warm_start.md) — nightly WarmPool
   p95 budget gate.
+- [Voice performance](./perf/voice_perf.md) — nightly p50 latency acceptance
+  gate.
 
 ## How docs are organised
 
@@ -55,6 +57,7 @@ docs/
     runtime-baseline.md
     runtime_sse_1000_concurrency.md
     tool_host_warm_start.md
+    voice_perf.md
   cookbook/             # opinionated, end-to-end examples
     support_agent.md
 ```
