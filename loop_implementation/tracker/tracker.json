@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T12:38:30.944932+00:00",
+    "generated_at": "2026-05-02T12:40:24.858489+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1188,8 +1188,8 @@
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s155-studio-settings-drawer-profile-r\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T12:38:30Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s155-studio-settings-drawer-profile-r (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T12:40:24Z (copilot-thor)\nTests: 13 vitest (apps/studio/src/components/shell/settings-drawer.test.tsx): renders nothing when closed, renders the drawer panel when open, shows profile name input with default value, allows editing profile name and saving, displays region as read-only, renders all three theme buttons, marks active theme with aria-pressed=true, persists theme selection to localStorage, calls onClose when backdrop is clicked, calls onClose when close button is clicked, reads persisted theme from localStorage on mount, reads persisted profileName from localStorage on mount, SettingsButton calls onClick when clicked\nDocs touched: apps/studio/src/components/shell/settings-drawer.tsx; apps/studio/src/lib/use-settings.ts\nFollow-ups: Wire theme class onto <html> element; connect profile name to workspace API; add keyboard-escape close handler"
     },
     {
       "id": "S156",
