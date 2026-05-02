@@ -29,6 +29,7 @@ class Workspace(BaseModel):
     name: str = Field(min_length=1, max_length=64)
     slug: str = Field(min_length=1, max_length=64, pattern=r"^[a-z0-9][a-z0-9-]*$")
     region: str = Field(default="na-east", min_length=1)
+    tenant_kms_key_id: str = Field(min_length=1, max_length=512)
     created_at: datetime
     created_by: str = Field(min_length=1)
 
@@ -67,6 +68,7 @@ class WorkspaceService:
         slug: str,
         owner_sub: str,
         region: str | None = None,
+        tenant_kms_key_id: str | None = None,
     ) -> Workspace:
         async with self._lock:
             if slug in self._slugs:
@@ -81,6 +83,7 @@ class WorkspaceService:
                 name=name,
                 slug=slug,
                 region=region_slug,
+                tenant_kms_key_id=tenant_kms_key_id or f"vault://transit/workspace/{slug}",
                 created_at=datetime.now(UTC),
                 created_by=owner_sub,
             )

@@ -153,6 +153,7 @@ We classify every secret.
 - **Key hierarchy:**
   - **Master key:** Stored in Vault (cloud) or cloud-native KMS (hybrid/self-host). Rotated annually on Q1 31st (Jan 31, Apr 30, Jul 31, Oct 31) with zero-downtime re-wrap.
   - **Per-workspace data key:** Generated via `KMS.generate_data_key()`, plaintext returned to runtime once (cached in-memory), ciphertext stored in Postgres (`workspaces.tenant_kms_key_id`). Rotated every 90 days.
+  - **Customer-managed workspace key:** `workspaces.tenant_kms_key_id` may point at a customer-managed cloud KMS key, including an AWS KMS ARN (`S636`). Loop uses that value only as a `KMS` interface `key_ref` for envelope encryption and never imports cloud SDKs in runtime or gateway code.
   - **Per-agent secret key:** Derived from workspace key, used to encrypt agent-scoped secrets in Vault.
 - **Rotation schedule:**
   - Master key: annual, coordinated window (e.g., 2nd Sunday of Q1), with rollback plan.
