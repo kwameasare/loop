@@ -113,7 +113,7 @@ class ZepEpisodicStore:
         embedding: Sequence[float],
         limit: int = 5,
         min_score: float = 0.0,
-    ) -> list[EpisodicEntry]:
+    ) -> list[tuple[EpisodicEntry, float]]:
         if limit <= 0:
             raise ZepError("limit must be positive")
         try:
@@ -122,7 +122,7 @@ class ZepEpisodicStore:
                 embedding=embedding,
                 limit=max(limit * 2, limit),
             )
-            scored = []
+            scored: list[tuple[EpisodicEntry, float]] = []
             for record in records:
                 entry = _entry(record)
                 raw_score = record.get("score")
@@ -131,13 +131,13 @@ class ZepEpisodicStore:
                     entry.embedding,
                 )
                 if float(score) >= min_score:
-                    scored.append((float(score), entry))
+                    scored.append((entry, float(score)))
         except ZepError:
             raise
         except Exception as exc:
             raise ZepError(f"failed to query Zep episodes: {exc}") from exc
-        scored.sort(key=lambda item: (-item[0], -item[1].salience, item[1].ts_ms))
-        return [entry for _, entry in scored[:limit]]
+        scored.sort(key=lambda item: (-item[1], -item[0].salience, item[0].ts_ms))
+        return scored[:limit]
 
     async def list_recent(
         self,
