@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:50:33.740281+00:00",
+    "generated_at": "2026-05-02T05:51:04.736454+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5434,8 +5434,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s845-perf-cp-api-5000-rps-sustained-a\nSkill: skills/testing/perf-check.md\nLast step: 1/5\nHeartbeat: 2026-05-02T05:50:33Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: cp-api 5000 rps k6 workflow report and tests landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s845-perf-cp-api-5000-rps-sustained-a (merged + deletable)\nSkill: skills/testing/perf-check.md\nFinal heartbeat: 2026-05-02T05:51:04Z (codex-orion)\nTests: uv run ruff check/pyright tests/test_cp_api_5000_rps.py; uv run pytest -q tests/test_cp_api_5000_rps.py tests/test_docs_links.py tests/test_helm_e2e_workflow.py; tracker/docs gates pass\nDocs touched: docs/perf/cp_api_5000_rps.md,docs/index.md,bench/results/cp_api_5000_rps.json,.github/workflows/cp-api-5000-rps.yml\nFollow-ups: none"
     },
     {
       "id": "S846",
