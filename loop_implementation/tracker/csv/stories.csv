@@ -957,7 +957,14 @@ Final heartbeat: 2026-05-01T23:34:20Z (codex-orion)
 Tests: scripts/eu_smoke.sh against local helm smoke server; uv run ruff check scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run ruff format --check scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run pyright scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run pytest -q tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py tests/test_helm_e2e_workflow.py; uv run pytest -q -m 'not integration and not e2e' (1228 passed, 3 skipped, 4 deselected); python3 tools/build_tracker.py; python3 tools/check_tracker_notes.py; python3 tools/check_docs_with_code.py; python3 tools/check_checkpoint_discipline.py; full repo ruff/format/pyright remain baseline-red in unrelated files
 Docs touched: loop_implementation/engineering/REGIONAL_DEPLOYS.md
 Follow-ups: none"
-S610,sso: SAML SP impl via PySAML2,tbd,S27,E20,3,P0,Not started,AC: ACS endpoint validates assertion; cert-rotation supported. [extends S050]
+S610,sso: SAML SP impl via PySAML2,copilot-titan,S27,E20,3,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s610-sso-saml-sp-impl-via-pysaml2 (merged + deletable)
+Skill: skills/security/secrets-kms-check.md
+Final heartbeat: 2026-05-02T05:30:06Z (copilot-titan)
+Tests: packages/control-plane/_tests/test_saml.py packages/control-plane/_tests/test_saml_certs.py
+Docs touched: loop_implementation/engineering/SSO_SAML.md
+Follow-ups: S612"
 S611,sso: SCIM provisioning endpoint (RFC 7644),tbd,S27,E20,3,P0,Not started,AC: Users + Groups create/update/delete from IdP; Postmen schemathesis test.
 S612,sso: Okta integration recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: sample IdP metadata in fixtures/; full SP↔IdP loop in integration.
 S613,sso: Entra ID recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: same as Okta but Entra ID.
@@ -998,15 +1005,22 @@ Final heartbeat: 2026-05-01T22:36:18Z (codex-vega)
 Tests: uv run pytest packages/voice/_tests/test_deepgram_dispatch.py packages/voice/_tests/test_voice_pass10.py packages/voice/_tests/test_voice_echo_e2e.py; uv run ruff check/format --check targeted files; uv run pyright packages/voice/loop_voice/asr_deepgram.py packages/voice/_tests/test_deepgram_dispatch.py; tracker/docs gates passed; full close gate blocked by existing repo-wide ruff baseline in tools
 Docs touched: none
 Follow-ups: none"
-S651,voice-perf: TTS pre-warm + sentence-boundary streaming,codex-vega,S29,E7,2,P0,In progress,"**Active.**
-Branch: codex-vega/s651-voice-perf-tts-pre-warm-sentence
+S651,voice-perf: TTS pre-warm + sentence-boundary streaming,codex-vega,S29,E7,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-vega/s651-voice-perf-tts-pre-warm-sentence (merged + deletable)
+Skill: skills/testing/perf-check.md
+Final heartbeat: 2026-05-02T05:32:33Z (codex-vega)
+Tests: touched ruff/format pass; touched pyright pass; packages/voice/_tests 120 passed; pytest -q -m 'not integration and not e2e' passed 1340, 3 skipped, 4 deselected; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff+pyright remain baseline-red in unrelated tools/tests
+Docs touched: loop_implementation/engineering/VOICE_LATENCY.md, bench/results/voice_tts_sentence_streaming.json
+Follow-ups: none"
+S652,voice-perf: model warm-up + connection-pooling for ASR/TTS providers,codex-vega,S29,E7,2,P0,In progress,"**Active.**
+Branch: codex-vega/s652-voice-perf-model-warm-up-connect
 Skill: skills/testing/perf-check.md
 Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-02T05:23:49Z (codex-vega)
+Heartbeat: 2026-05-02T05:34:26Z (codex-vega)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)"
-S652,voice-perf: model warm-up + connection-pooling for ASR/TTS providers,tbd,S29,E7,2,P0,Not started,AC: keep-alive; pre-handshake; idle teardown after N min.
 S653,"voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS",tbd,S29,E7,2,P0,Not started,AC: nearest-region selector; latency map committed.
 S654,voice-perf: latency benchmark ≤700ms p50 acceptance gate,tbd,S29,E7,2,P0,Not started,AC: scripts/voice_perf.py runs nightly; CI alerts if breached.
 S655,ga-polish: design-system audit + component refactor,tbd,S29,E10,3,P1,Not started,AC: token map sweep; <5 hardcoded colours/spacings remain; doc'd in design system.
