@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:54:28.887067+00:00",
+    "generated_at": "2026-05-02T03:57:30.779168+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3900,13 +3900,13 @@
     {
       "id": "S574",
       "title": "soc2: backup automation minio (cross-region replication)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S25",
       "epic": "E16",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: bucket replicated; integrity verified daily."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s574-soc2-backup-automation-minio-cro (merged + deletable)\nSkill: skills/security/update-threat-model.md\nFinal heartbeat: 2026-05-02T03:57:30Z (copilot-thor)\nTests: 6 new tests in tests/test_objstore_integrity_check.py — runbook index, runbook section, DR cross-link, driver dry-run summary/tsv/prom artifacts, repair mode walks manifest, missing-arg handling. Full pytest 1299/1299 (6 new).\nDocs touched: loop_implementation/engineering/RUNBOOKS.md,loop_implementation/engineering/DR.md,scripts/objstore_integrity_check.sh\nFollow-ups: none"
     },
     {
       "id": "S575",

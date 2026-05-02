@@ -35,6 +35,7 @@ This file is the index. Per-runbook detail follows.
 | RB-020 | Compromised API key | Sec eng | TBD M4 | SEV1 |
 | RB-021 | Postgres PITR restore drill | Eng #2 | 2026-04-30 (synthetic) | SEV1, RTO ≤ 60 min, RPO ≤ 5 min |
 | RB-022 | ClickHouse snapshot restore drill | Eng #4 | 2026-05-01 (synthetic) | SEV2, RTO ≤ 90 min, RPO ≤ 30 min |
+| RB-023 | Object-store replication integrity failure | Eng #2 | 2026-05-02 (synthetic) | SEV2, RTO ≤ 30 min |
 
 Drill cadence: every runbook drilled once before its first prod-incident; every active runbook re-drilled at least every 6 months. Drill results captured in this file.
 
@@ -424,6 +425,67 @@ For each drill, the following are uploaded to `s3://loop-dr-evidence/<date>/`:
 - `cluster-events.txt` — `kubectl get events` from the drill namespace.
 
 The Vanta evidence collector pulls `step-timings.tsv` weekly and asserts every row's `ok=true` (control CC7.5).
+
+---
+
+## RB-023 — Object-store replication integrity failure
+
+**Owner:** Eng #2.  **SEV target:** SEV2, **RTO ≤ 30 min** (resume replication or accept gap).
+
+**Companion:** `engineering/DR.md` §2.3 (object-storage strategy), `scripts/objstore_integrity_check.sh` (daily integrity driver).
+
+**Symptoms:** PagerDuty alert "objstore replication integrity failures > 0 for 2 runs" (Prometheus metric `loop_objstore_replication_integrity_failures > 0` at 04:17 + 04:17 next day) **or** the `objstore-integrity-check` CronJob's TSV manifest contains rows with `status=missing` / `status=etag-mismatch`.
+
+### Steps
+
+1. **Acknowledge** in `#inc-YYYYMMDD-objstore`. Record `T0`.
+2. **Pull the latest manifest:**
+   ```bash
+   aws s3 cp s3://loop-dr-evidence/objstore-integrity/$(date -u +%F)/integrity.tsv .
+   awk -F'\t' '$5 != "ok"' integrity.tsv | head -50
+   ```
+3. **Categorise** the failures:
+   - `status=missing` — source object not yet replicated to destination.
+   - `status=etag-mismatch` — replicated but content differs (rare; usually means a re-upload raced replication).
+   - `status=size-mismatch` — truncated transfer; treat as `etag-mismatch`.
+4. **For `missing` only**, check the cloud provider replication queue:
+   - AWS: `aws s3api get-bucket-replication --bucket <src>` and the `ReplicationLag` CloudWatch metric.
+   - Self-host MinIO: `mc admin replicate status <alias>`.
+   If lag is rising, page the replication primary owner and **escalate to SEV1**.
+5. **For mismatch** rows, run the targeted re-replicate helper:
+   ```bash
+   ./scripts/objstore_integrity_check.sh repair --manifest integrity.tsv
+   ```
+   The repair pass re-uploads only the offending keys with `--metadata-directive REPLACE`, which forces a fresh replication event.
+6. **Re-run** the integrity check at the end of the response window:
+   ```bash
+   ./scripts/objstore_integrity_check.sh --bucket=<src> --dest=<dst>
+   ```
+   Expect `failures=0`. If not, the bucket is in a degraded state — freeze writes via `loop admin objstore freeze --bucket=<src>` and escalate.
+7. **Status page** update only if customer-visible (audit-log retrieval slowness, KB document fetch errors).
+8. **PIR** if the failure persisted >24h or impacted any customer.
+
+### Recent drills
+
+| Date       | Region        | Driver       | Wall-clock | Result    | Notes                                                |
+| ---------- | ------------- | ------------ | ---------- | --------- | ---------------------------------------------------- |
+| 2026-05-02 | us-east-1     | synthetic CI | 12 min     | ✅ pass    | Injected 3 mismatched objects; repair caught all 3.  |
+
+### Anti-patterns
+
+- ❌ Treating a single `missing` row as urgent. Replication is eventually consistent; the integrity check tolerates a per-object grace window of 15 min before flagging. If a row appears in *two* consecutive daily manifests, *then* it is a real failure.
+- ❌ Force-deleting the destination bucket to "reset" replication. You lose history and break MFA-delete invariants. Re-replicate per-key.
+- ❌ Skipping step 6 (post-repair verification). Without it the manifest stays red and the alert keeps firing.
+
+### Evidence captured
+
+The CronJob writes daily to `s3://loop-dr-evidence/objstore-integrity/<date>/`:
+
+- `integrity.tsv` — one row per object (`bucket\tkey\tsource_etag\tdest_etag\tstatus`).
+- `summary.json` — `{checked, ok, missing, mismatch, started_at, ended_at}`.
+- `prom.txt` — the Prometheus exposition snippet that `kube-prometheus` scrapes.
+
+The Vanta evidence collector pulls `summary.json` daily and asserts `failures == 0` (control CC7.5 / A1.2 "backups are restorable AND replicated").
 
 ---
 

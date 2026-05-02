@@ -50,6 +50,7 @@ DR is the discipline of "we lost X — what now?" Loop's commitments are explici
 - **Versioning** enabled on every Loop bucket (cloud-native object versioning).
 - **MFA-delete** required for retention-protected paths (recordings, audit-log archives).
 - **Cross-region replication** for `audit-log/` and `kb-originals/` only. Recordings + traces stay in-region for cost reasons; loss bounded by RPO.
+- **Daily integrity verification** of replicated buckets via `scripts/objstore_integrity_check.sh` (run as a Kubernetes `CronJob` named `objstore-integrity-check` at 04:17 UTC). The job lists every object in the source prefix, fetches the object's ETag/size from the destination region, and emits a TSV manifest (`integrity-<date>.tsv`) plus a single Prometheus metric `loop_objstore_replication_integrity_failures{bucket,prefix}` that pages on > 0 lag for two consecutive runs. Runbook: [`RUNBOOKS.md` §RB-023](RUNBOOKS.md#rb-023--object-store-replication-integrity-failure). Replication targets and expected hourly object-count budgets are pinned in `infra/helm/loop/values.yaml` under `objstore.replication`.
 
 ### 2.4 ClickHouse
 
