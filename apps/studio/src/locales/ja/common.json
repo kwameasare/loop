@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "agents": "エージェント",
+    "knowledge": "ナレッジ",
+    "evals": "評価",
+    "cost": "コスト",
+    "settings": "設定"
+  },
+  "actions": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "create": "作成",
+    "close": "閉じる",
+    "confirm": "確認",
+    "back": "戻る",
+    "next": "次へ",
+    "loading": "読み込み中…"
+  },
+  "auth": {
+    "signIn": "サインイン",
+    "signOut": "サインアウト",
+    "profile": "プロフィール"
+  },
+  "errors": {
+    "generic": "エラーが発生しました。もう一度お試しください。",
+    "notFound": "見つかりません。",
+    "unauthorized": "このページを表示する権限がありません。"
+  }
+}

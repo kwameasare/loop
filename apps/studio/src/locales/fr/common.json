@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "agents": "Agents",
+    "knowledge": "Connaissances",
+    "evals": "Évaluations",
+    "cost": "Coût",
+    "settings": "Paramètres"
+  },
+  "actions": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "loading": "Chargement…"
+  },
+  "auth": {
+    "signIn": "Se connecter",
+    "signOut": "Se déconnecter",
+    "profile": "Profil"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue. Veuillez réessayer.",
+    "notFound": "Introuvable.",
+    "unauthorized": "Vous n'êtes pas autorisé à afficher cette page."
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "agents": "Agenten",
+    "knowledge": "Wissen",
+    "evals": "Auswertungen",
+    "cost": "Kosten",
+    "settings": "Einstellungen"
+  },
+  "actions": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "close": "Schließen",
+    "confirm": "Bestätigen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "loading": "Laden…"
+  },
+  "auth": {
+    "signIn": "Anmelden",
+    "signOut": "Abmelden",
+    "profile": "Profil"
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "notFound": "Nicht gefunden.",
+    "unauthorized": "Sie sind nicht berechtigt, diese Seite zu sehen."
+  }
+}

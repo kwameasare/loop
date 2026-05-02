@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T14:10:25.694811+00:00",
+    "generated_at": "2026-05-02T06:51:09.366845+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4373,13 +4373,13 @@
     {
       "id": "S657",
       "title": "ga-polish: i18n scaffolding (en, es, de, fr, ja)",
-      "owner": "copilot-thor",
+      "owner": "tbd",
       "sprint": "S29",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s657-ga-polish-i18n-scaffolding-en-es (merged + deletable)\nSkill: loop_implementation/skills/_base/skill.md\nFinal heartbeat: 2026-05-02T14:10:25Z (copilot-thor)\nTests: 21 vitest (i18n.test.ts: 18, language-switcher.test.tsx: 3): module structure, 5 language coverage, key completeness, initialisation, language switching, fallback, component render+change\nDocs touched: apps/studio/src/lib/i18n.ts; apps/studio/src/locales/{en,es,de,fr,ja}/common.json; apps/studio/src/components/shell/language-switcher.tsx\nFollow-ups: lazy-load per-locale JSON; date/number formatters; RTL support; auto-detect browser language"
+      "status": "Not started",
+      "notes": "AC: react-i18next; en is source; 4 languages stub-translated; switcher works."
     },
     {
       "id": "S658",
