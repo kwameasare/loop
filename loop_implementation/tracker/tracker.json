@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T13:32:58.947281+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3526,13 +3526,13 @@
     {
       "id": "S495",
       "title": "kb-v1: incremental URL crawler (sitemap-aware)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S21",
       "epic": "E5",
       "points": 3,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: crawls sitemap.xml; respects robots.txt; only fetches changed-since."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s495-kb-v1-incremental-url-crawler-si\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T13:32:58Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S496",
