@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T01:02:50.804168+00:00",
+    "generated_at": "2026-05-02T01:04:35.078561+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5374,13 +5374,13 @@
     {
       "id": "S840",
       "title": "perf: turn-latency p95 < 2.0s end-to-end (text path) — acceptance gate",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S37",
       "epic": "E1",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: nightly k6 measures e2e p95; CI alerts if breached."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s840-perf-turn-latency-p95-2-0s-end-t\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T01:04:34Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S841",
