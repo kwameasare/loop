@@ -3,9 +3,31 @@ import {
   FIXTURE_CONVERSATION_ID,
   FIXTURE_TRANSCRIPT,
   fixtureSubscriber,
+  type ConversationMessage,
 } from "@/lib/conversation";
 
 export const dynamic = "force-dynamic";
+
+async function fixtureTakeover() {
+  return { ok: true as const };
+}
+
+async function fixturePostMessage({
+  conversation_id,
+  body,
+}: {
+  conversation_id: string;
+  body: string;
+}) {
+  const message: ConversationMessage = {
+    id: `op-${Date.now()}`,
+    conversation_id,
+    role: "operator",
+    body,
+    created_at_ms: Date.now(),
+  };
+  return { ok: true as const, message };
+}
 
 export default function ConversationPage({
   params,
@@ -20,14 +42,16 @@ export default function ConversationPage({
           Conversation {conversation_id}
         </h1>
         <p className="text-muted-foreground text-xs">
-          Live tail of customer conversation. New messages append in
-          real-time as the data plane streams them.
+          Live tail of customer conversation. Click &ldquo;Takeover&rdquo; to
+          pause the agent and reply as a human operator.
         </p>
       </header>
       <ConversationViewer
         conversation_id={conversation_id}
         initialTranscript={FIXTURE_TRANSCRIPT}
+        postMessage={fixturePostMessage}
         subscribe={fixtureSubscriber}
+        takeover={fixtureTakeover}
       />
     </main>
   );

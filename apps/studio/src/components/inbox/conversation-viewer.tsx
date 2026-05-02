@@ -8,10 +8,23 @@ import {
   type ConversationSubscriber,
 } from "@/lib/conversation";
 
+export type TakeoverFn = (args: {
+  conversation_id: string;
+}) => Promise<{ ok: boolean; error?: string }>;
+
+export type PostMessageFn = (args: {
+  conversation_id: string;
+  body: string;
+}) => Promise<{ ok: boolean; message?: ConversationMessage; error?: string }>;
+
 export interface ConversationViewerProps {
   conversation_id: string;
   initialTranscript: ConversationMessage[];
   subscribe: ConversationSubscriber;
+  operator_id?: string;
+  takeover?: TakeoverFn;
+  postMessage?: PostMessageFn;
+  initialOwnership?: "agent" | "operator";
 }
 
 const ROLE_LABEL: Record<ConversationMessage["role"], string> = {
@@ -50,6 +63,12 @@ export function ConversationViewer(props: ConversationViewerProps) {
     "connecting",
   );
   const [tail, setTail] = useState(true);
+  const [ownership, setOwnership] = useState<"agent" | "operator">(
+    props.initialOwnership ?? "agent",
+  );
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -70,6 +89,48 @@ export function ConversationViewer(props: ConversationViewerProps) {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [transcript, tail]);
+
+  async function handleTakeover() {
+    if (!props.takeover || ownership === "operator" || busy) return;
+    setBusy(true);
+    setErrorMsg(null);
+    try {
+      const res = await props.takeover({
+        conversation_id: props.conversation_id,
+      });
+      if (res.ok) {
+        setOwnership("operator");
+      } else {
+        setErrorMsg(res.error ?? "Takeover failed");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSend() {
+    if (!props.postMessage || ownership !== "operator" || busy) return;
+    const body = draft.trim();
+    if (body.length === 0) return;
+    setBusy(true);
+    setErrorMsg(null);
+    try {
+      const res = await props.postMessage({
+        conversation_id: props.conversation_id,
+        body,
+      });
+      if (res.ok) {
+        if (res.message) {
+          setTranscript((prev) => appendMessage(prev, res.message!));
+        }
+        setDraft("");
+      } else {
+        setErrorMsg(res.error ?? "Post failed");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <section
@@ -100,6 +161,45 @@ export function ConversationViewer(props: ConversationViewerProps) {
           Live tail
         </label>
       </header>
+
+      <div
+        className="flex items-center justify-between rounded border bg-zinc-50 px-3 py-2 text-xs"
+        data-testid="conversation-ownership-bar"
+      >
+        <span data-testid="conversation-ownership">
+          {ownership === "operator"
+            ? "You have taken over this conversation. The agent is paused."
+            : "Agent is handling this conversation."}
+        </span>
+        {ownership === "agent" ? (
+          <button
+            className="rounded bg-blue-600 px-3 py-1 text-white hover:bg-blue-700 disabled:opacity-50"
+            data-testid="conversation-takeover"
+            disabled={busy || !props.takeover}
+            onClick={handleTakeover}
+            type="button"
+          >
+            {busy ? "Taking over…" : "Takeover"}
+          </button>
+        ) : (
+          <span
+            className="rounded bg-emerald-100 px-2 py-0.5 text-emerald-700"
+            data-testid="conversation-owned-badge"
+          >
+            Operator
+          </span>
+        )}
+      </div>
+
+      {errorMsg ? (
+        <p
+          className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700"
+          data-testid="conversation-error"
+          role="alert"
+        >
+          {errorMsg}
+        </p>
+      ) : null}
 
       <div
         className="flex h-[480px] flex-col gap-2 overflow-y-auto rounded-lg border bg-white p-3"
@@ -136,6 +236,45 @@ export function ConversationViewer(props: ConversationViewerProps) {
       >
         {transcript.length} message{transcript.length === 1 ? "" : "s"}
       </footer>
+
+      <form
+        className="flex flex-col gap-2"
+        data-testid="conversation-composer"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void handleSend();
+        }}
+      >
+        <textarea
+          aria-label="Compose a reply"
+          className="rounded border px-3 py-2 text-sm disabled:bg-zinc-100"
+          data-testid="conversation-composer-input"
+          disabled={ownership !== "operator" || busy}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder={
+            ownership === "operator"
+              ? "Type a reply… (Shift+Enter for newline)"
+              : "Take over this conversation to reply."
+          }
+          rows={3}
+          value={draft}
+        />
+        <div className="flex justify-end">
+          <button
+            className="rounded bg-emerald-600 px-3 py-1 text-sm text-white hover:bg-emerald-700 disabled:opacity-50"
+            data-testid="conversation-composer-send"
+            disabled={
+              ownership !== "operator" ||
+              busy ||
+              draft.trim().length === 0 ||
+              !props.postMessage
+            }
+            type="submit"
+          >
+            {busy ? "Sending…" : "Send as operator"}
+          </button>
+        </div>
+      </form>
     </section>
   );
 }

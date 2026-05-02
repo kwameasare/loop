@@ -113,3 +113,117 @@ describe("ConversationViewer", () => {
     expect(screen.getByTestId("conversation-empty")).toBeInTheDocument();
   });
 });
+
+import { fireEvent, waitFor } from "@testing-library/react";
+
+describe("ConversationViewer takeover + composer", () => {
+  it("takeover button calls handler and locks ownership to operator", async () => {
+    const stub = makeSubscriber();
+    let takeoverCalls = 0;
+    const takeover = async () => {
+      takeoverCalls += 1;
+      return { ok: true as const };
+    };
+    render(
+      <ConversationViewer
+        conversation_id={FIXTURE_CONVERSATION_ID}
+        initialTranscript={FIXTURE_TRANSCRIPT}
+        operator_id="op-1"
+        subscribe={stub.subscriber}
+        takeover={takeover}
+      />,
+    );
+    const btn = screen.getByTestId("conversation-takeover");
+    expect(btn).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("conversation-owned-badge")).toBeInTheDocument();
+    });
+    expect(takeoverCalls).toBe(1);
+    expect(screen.queryByTestId("conversation-takeover")).toBeNull();
+  });
+
+  it("composer is disabled until operator owns the conversation", () => {
+    const stub = makeSubscriber();
+    render(
+      <ConversationViewer
+        conversation_id={FIXTURE_CONVERSATION_ID}
+        initialTranscript={FIXTURE_TRANSCRIPT}
+        operator_id="op-1"
+        subscribe={stub.subscriber}
+      />,
+    );
+    expect(screen.getByTestId("conversation-composer-input")).toBeDisabled();
+    expect(screen.getByTestId("conversation-composer-send")).toBeDisabled();
+  });
+
+  it("posts a message as the operator and appends it to the transcript", async () => {
+    const stub = makeSubscriber();
+    const postMessage = async ({
+      conversation_id,
+      body,
+    }: {
+      conversation_id: string;
+      body: string;
+    }) => ({
+      ok: true as const,
+      message: {
+        id: "op-msg-1",
+        conversation_id,
+        role: "operator" as const,
+        body,
+        created_at_ms: Date.UTC(2026, 4, 1, 12, 0),
+      },
+    });
+    render(
+      <ConversationViewer
+        conversation_id={FIXTURE_CONVERSATION_ID}
+        initialOwnership="operator"
+        initialTranscript={FIXTURE_TRANSCRIPT}
+        operator_id="op-1"
+        postMessage={postMessage}
+        subscribe={stub.subscriber}
+      />,
+    );
+    const input = screen.getByTestId(
+      "conversation-composer-input",
+    ) as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: "Hi, real human here." } });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conversation-composer-send"));
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("conversation-message-op-msg-1"),
+      ).toBeInTheDocument();
+    });
+    expect(input.value).toBe("");
+  });
+
+  it("shows an error when the takeover handler fails", async () => {
+    const stub = makeSubscriber();
+    const takeover = async () => ({
+      ok: false as const,
+      error: "already-claimed",
+    });
+    render(
+      <ConversationViewer
+        conversation_id={FIXTURE_CONVERSATION_ID}
+        initialTranscript={FIXTURE_TRANSCRIPT}
+        operator_id="op-1"
+        subscribe={stub.subscriber}
+        takeover={takeover}
+      />,
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conversation-takeover"));
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("conversation-error").textContent).toMatch(
+        /already-claimed/,
+      );
+    });
+  });
+});
