@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:35:11.404264+00:00",
+    "generated_at": "2026-05-02T05:36:26.810499+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5407,13 +5407,13 @@
     {
       "id": "S843",
       "title": "perf: tool-host warm-start < 300ms p95 (vs 8s+ cold-start)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S37",
       "epic": "E3",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: WarmPool tuned; benchmark in CI; alert if breached."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s843-perf-tool-host-warm-start-300ms\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:36:26Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S844",
