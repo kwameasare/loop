@@ -33,6 +33,14 @@ from loop_memory.episodic import (
     cosine_similarity,
 )
 from loop_memory.inmemory import InMemorySessionMemoryStore, InMemoryUserMemoryStore
+from loop_memory.langmem_summary import (
+    LLMSummaryFn,
+    SummaryEvalCase,
+    SummaryFn,
+    SummaryRetrievalAblation,
+    evaluate_summary_retrieval,
+    langmem_summarize,
+)
 from loop_memory.models import MemoryEntry, MemoryScope, SessionEntry
 from loop_memory.postgres import PostgresUserMemoryStore
 from loop_memory.redis_session import RedisSessionMemoryStore
@@ -55,6 +63,7 @@ __all__ = [
     "InMemoryEpisodicStore",
     "InMemorySessionMemoryStore",
     "InMemoryUserMemoryStore",
+    "LLMSummaryFn",
     "MemoryEntry",
     "MemoryNotFoundError",
     "MemoryScope",
@@ -62,6 +71,9 @@ __all__ = [
     "RedisSessionMemoryStore",
     "SessionEntry",
     "SessionMemoryStore",
+    "SummaryEvalCase",
+    "SummaryFn",
+    "SummaryRetrievalAblation",
     "UserMemoryStore",
     "ZepClient",
     "ZepEpisodicStore",
@@ -69,4 +81,6 @@ __all__ = [
     "__version__",
     "auto_summarize",
     "cosine_similarity",
+    "evaluate_summary_retrieval",
+    "langmem_summarize",
 ]

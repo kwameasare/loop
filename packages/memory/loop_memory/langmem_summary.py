@@ -5,9 +5,10 @@ from __future__ import annotations
 import re
 from collections import Counter
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Protocol
 
-from loop_memory.episodic import EpisodicError
+from loop_memory.episodic import EpisodicError, auto_summarize
 
 _TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9_.:-]{1,}", re.IGNORECASE)
 _STOPWORDS = set(re.findall(
@@ -24,6 +25,24 @@ _INTENT_WORDS = set(re.findall(
 
 class LLMSummaryFn(Protocol):
     def __call__(self, messages: Sequence[str], *, max_chars: int) -> str: ...
+
+
+class SummaryFn(Protocol):
+    def __call__(self, messages: Sequence[str], *, max_chars: int = 240) -> str: ...
+
+
+@dataclass(frozen=True, slots=True)
+class SummaryEvalCase:
+    messages: tuple[str, ...]
+    query: str
+
+
+@dataclass(frozen=True, slots=True)
+class SummaryRetrievalAblation:
+    baseline_score: float
+    candidate_score: float
+    relative_improvement: float
+    passed: bool
 
 
 def _clean_messages(messages: Sequence[str]) -> list[str]:
@@ -87,3 +106,45 @@ def langmem_summarize(
     cue_text = f"Cues: {cues}"
     body_budget = max(24, max_chars - len(cue_text) - 3)
     return _fit(f"{_fit(body, body_budget)} | {cue_text}", max_chars)
+
+
+def _query_coverage(summary: str, query: str) -> float:
+    query_tokens = set(_tokens(query))
+    if not query_tokens:
+        raise EpisodicError("summary eval query must contain searchable tokens")
+    return len(query_tokens & set(_tokens(summary))) / len(query_tokens)
+
+
+def evaluate_summary_retrieval(
+    cases: Sequence[SummaryEvalCase],
+    *,
+    summarizer: SummaryFn = langmem_summarize,
+    baseline: SummaryFn = auto_summarize,
+    max_chars: int = 240,
+    min_relative_improvement: float = 0.10,
+) -> SummaryRetrievalAblation:
+    if not cases:
+        raise EpisodicError("summary retrieval eval requires at least one case")
+    if min_relative_improvement < 0:
+        raise EpisodicError("min_relative_improvement must be >= 0")
+    baseline_scores = []
+    candidate_scores = []
+    for case in cases:
+        baseline_scores.append(
+            _query_coverage(baseline(case.messages, max_chars=max_chars), case.query)
+        )
+        candidate_scores.append(
+            _query_coverage(summarizer(case.messages, max_chars=max_chars), case.query)
+        )
+    baseline_score = sum(baseline_scores) / len(baseline_scores)
+    candidate_score = sum(candidate_scores) / len(candidate_scores)
+    if baseline_score == 0:
+        relative = 1.0 if candidate_score > 0 else 0.0
+    else:
+        relative = (candidate_score - baseline_score) / baseline_score
+    return SummaryRetrievalAblation(
+        baseline_score=baseline_score,
+        candidate_score=candidate_score,
+        relative_improvement=relative,
+        passed=relative >= min_relative_improvement,
+    )
