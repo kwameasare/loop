@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T12:41:39.519638+00:00",
+    "generated_at": "2026-05-02T12:43:24.033498+00:00",
     "format_version": 2
   },
   "epics": [
@@ -1232,8 +1232,8 @@
       "epic": "E10",
       "points": 1,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s159-studio-agent-overview-tab-shows\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T12:41:39Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s159-studio-agent-overview-tab-shows (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-02T12:43:23Z (copilot-thor)\nTests: 13 vitest (apps/studio/src/components/agents/agent-overview.test.tsx): renders description text, shows placeholder when description is empty, renders model identifier, shows Not configured when model is empty, renders last-deploy version, renders last-deploy status, renders Never when deployed_at is null, omits version row when version is null, opens edit modal when Edit button is clicked, modal textarea is pre-filled with current description, saves updated description and closes modal, cancel closes modal without updating description, backdrop click closes modal\nDocs touched: apps/studio/src/components/agents/agent-overview.tsx\nFollow-ups: Wire model field to agent API; connect onDescriptionSave to server action; link deploy data to deploys endpoint"
     },
     {
       "id": "S160",

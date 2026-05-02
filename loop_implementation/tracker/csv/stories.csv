@@ -200,14 +200,14 @@ Final heartbeat: 2026-05-01T21:52:14Z (copilot-thor)
 Tests: vitest run (92 passed) covering tab routing, active highlighting, and nested-path matching
 Docs touched: apps/studio/src/app/agents/[agent_id]/layout.tsx
 Follow-ups: none"
-S159,"studio: agent overview tab shows description, model, last-deploy",copilot-thor,S4,E10,1,P1,In progress,"**Active.**
-Branch: copilot-thor/s159-studio-agent-overview-tab-shows
+S159,"studio: agent overview tab shows description, model, last-deploy",copilot-thor,S4,E10,1,P1,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s159-studio-agent-overview-tab-shows (merged + deletable)
 Skill: skills/api/add-rest-endpoint.md
-Last step: 0/3 (just claimed)
-Heartbeat: 2026-05-02T12:41:39Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T12:43:23Z (copilot-thor)
+Tests: 13 vitest (apps/studio/src/components/agents/agent-overview.test.tsx): renders description text, shows placeholder when description is empty, renders model identifier, shows Not configured when model is empty, renders last-deploy version, renders last-deploy status, renders Never when deployed_at is null, omits version row when version is null, opens edit modal when Edit button is clicked, modal textarea is pre-filled with current description, saves updated description and closes modal, cancel closes modal without updating description, backdrop click closes modal
+Docs touched: apps/studio/src/components/agents/agent-overview.tsx
+Follow-ups: Wire model field to agent API; connect onDescriptionSave to server action; link deploy data to deploys endpoint"
 S160,studio: agent-versions tab lists versions with diff-viewer modal,copilot-thor,S4,E10,3,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-thor/s160-studio-agent-versions-tab-lists (merged + deletable)
