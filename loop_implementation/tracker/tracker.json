@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T13:25:44.788481+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3361,13 +3361,13 @@
     {
       "id": "S471",
       "title": "flow: 3 starter templates (FAQ, support-triage, lead-qual)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S19",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: 'New agent from template' picks one of three; each runs out of the box."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s471-flow-3-starter-templates-faq-sup\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T13:25:44Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S472",
