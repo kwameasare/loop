@@ -923,11 +923,12 @@ S827,kb-v2: structured-data retrieval (CSV/Excel/JSON with SQL-on-the-fly),tbd,S
 S840,perf: turn-latency p95 < 2.0s end-to-end (text path) — acceptance gate,codex-orion,S37,E1,2,P0,In progress,"**Active.**
 Branch: codex-orion/s840-perf-turn-latency-p95-2-0s-end-t
 Skill: skills/testing/perf-check.md
-Last step: 4/5
-Heartbeat: 2026-05-02T01:13:56Z (codex-orion)
+Last step: 5/5
+Heartbeat: 2026-05-02T01:14:34Z (codex-orion)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: ready to close turn latency k6 gate
 Latest checkpoint: tracker docs and checkpoint gates passed
 Latest checkpoint: broad hermetic pytest passed
 Latest checkpoint: focused static and workflow tests passed

@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T01:13:56.964792+00:00",
+    "generated_at": "2026-05-02T01:14:34.287377+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5380,7 +5380,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s840-perf-turn-latency-p95-2-0s-end-t\nSkill: skills/testing/perf-check.md\nLast step: 4/5\nHeartbeat: 2026-05-02T01:13:56Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: tracker docs and checkpoint gates passed\nLatest checkpoint: broad hermetic pytest passed\nLatest checkpoint: focused static and workflow tests passed\nLatest checkpoint: turn latency k6 workflow tests and docs landed"
+      "notes": "**Active.**\nBranch: codex-orion/s840-perf-turn-latency-p95-2-0s-end-t\nSkill: skills/testing/perf-check.md\nLast step: 5/5\nHeartbeat: 2026-05-02T01:14:34Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: ready to close turn latency k6 gate\nLatest checkpoint: tracker docs and checkpoint gates passed\nLatest checkpoint: broad hermetic pytest passed\nLatest checkpoint: focused static and workflow tests passed\nLatest checkpoint: turn latency k6 workflow tests and docs landed"
     },
     {
       "id": "S841",
