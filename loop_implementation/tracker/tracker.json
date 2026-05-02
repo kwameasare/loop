@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:09:12.745974+00:00",
+    "generated_at": "2026-05-02T05:11:05.208636+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4065,13 +4065,13 @@
     {
       "id": "S596",
       "title": "region: metadata-only telemetry (no PII) leaving region",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S26",
       "epic": "E16",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: telemetry pipeline filters PII before cross-region; tested with synthetic PII."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s596-region-metadata-only-telemetry-n (merged + deletable)\nSkill: skills/security/secrets-kms-check.md\nFinal heartbeat: 2026-05-02T05:10:49Z (copilot-titan)\nTests: packages/sdk-py/_tests/test_region_pii_filter.py (5 new) + test_observability.py (regression) — 12 passed\nDocs touched: loop_implementation/engineering/SECURITY.md\nFollow-ups: none"
     },
     {
       "id": "S597",
