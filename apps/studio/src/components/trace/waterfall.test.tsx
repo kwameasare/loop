@@ -63,3 +63,58 @@ describe("TraceWaterfall", () => {
     );
   });
 });
+
+import type { Span } from "@/lib/traces";
+
+describe("TraceWaterfall — inline attrs + perf", () => {
+  it("expands inline attributes for the selected span", () => {
+    render(<TraceWaterfall trace={trace} />);
+    fireEvent.click(screen.getAllByTestId("span-row")[1]);
+    expect(screen.getByTestId("span-attrs-inline-child")).toHaveTextContent(
+      "top_k",
+    );
+    // Switching selection moves the inline attrs panel.
+    fireEvent.click(screen.getAllByTestId("span-row")[0]);
+    expect(screen.getByTestId("span-attrs-inline-root")).toBeInTheDocument();
+    expect(screen.queryByTestId("span-attrs-inline-child")).toBeNull();
+  });
+
+  it("renders 200 spans within the perf budget", () => {
+    const spans: Span[] = [
+      {
+        id: "root",
+        parent_id: null,
+        name: "root",
+        kind: "server",
+        service: "runtime",
+        start_ns: 0,
+        end_ns: 200_000,
+        status: "ok",
+        attributes: {},
+        events: [],
+      },
+    ];
+    for (let i = 1; i < 200; i += 1) {
+      spans.push({
+        id: `s${i}`,
+        parent_id: i === 1 || i % 5 === 0 ? "root" : `s${i - 1}`,
+        name: `op_${i}`,
+        kind: "internal",
+        service: "svc",
+        start_ns: i * 1000,
+        end_ns: i * 1000 + 800,
+        status: "ok",
+        attributes: { i },
+        events: [],
+      });
+    }
+    const start = performance.now();
+    render(<TraceWaterfall trace={{ id: "perf", spans }} />);
+    const elapsed = performance.now() - start;
+    // Real DOM target is <=10ms; jsdom is ~5-10x slower so we assert
+    // a generous ceiling (200ms) that still catches O(n^2) regressions.
+    expect(elapsed).toBeLessThan(200);
+    expect(screen.getAllByTestId("span-bar")).toHaveLength(200);
+    expect(screen.getByTestId("trace-waterfall-svg")).toBeInTheDocument();
+  });
+});
