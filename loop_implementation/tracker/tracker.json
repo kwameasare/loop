@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:06:26.965515+00:00",
+    "generated_at": "2026-05-02T06:07:14.094503+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5231,13 +5231,13 @@
     {
       "id": "S805",
       "title": "ops: SLO definitions per service + error-budget burn alerts",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S35",
       "epic": "E9",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: SLOs.yaml committed; per-service availability + latency + error budget; alerts wired to PagerDuty."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s805-ops-slo-definitions-per-service\nSkill: skills/observability/add-metric.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:07:14Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S806",
@@ -5736,7 +5736,7 @@
       "theme": "Production security / ops acceptance gates",
       "goal": "Continuous fuzz testing, STRIDE PR-gate, SLSA-3 provenance, Falco runtime detection, chaos-eng harness, SLOs + error-budget alerts, incident-response game-days, data-retention enforcement, backup-restore verification, bug bounty.",
       "stories": "S800-S809",
-      "status": "Not started"
+      "status": "In progress"
     },
     {
       "id": "S36",
