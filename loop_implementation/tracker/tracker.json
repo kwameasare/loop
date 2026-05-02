@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:32:50.141785+00:00",
+    "generated_at": "2026-05-02T06:33:04.913680+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4433,8 +4433,8 @@
       "epic": "E17",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-titan/s672-launch-design-partners-10-paid-c\nSkill: skills/api/api-versioning.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T06:32:50Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s672-launch-design-partners-10-paid-c (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-02T06:33:04Z (copilot-titan)\nTests: tests/test_launch_ledger.py\nDocs touched: loop_implementation/operations/launch.md\nFollow-ups: none"
     },
     {
       "id": "S673",
