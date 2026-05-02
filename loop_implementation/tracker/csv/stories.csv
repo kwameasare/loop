@@ -1383,14 +1383,7 @@ Final heartbeat: 2026-05-02T06:11:41Z (codex-vega)
 Tests: touched ruff/format pass; touched pyright pass; SLO alert tests pass (3); pytest -q -m 'not integration and not e2e' passed (1554 passed, 3 skipped, 6 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests
 Docs touched: loop_implementation/operations/SLOs.yaml, infra/prometheus/alerts/slo-burn.yaml, infra/prometheus/alertmanager.yaml, loop_implementation/engineering/PERFORMANCE.md
 Follow-ups: none"
-S806,ops: incident-response runbook + game-day cadence (monthly),copilot-thor,S35,E16,2,P0,Done,"**Done.**
-PR: (opened by squash-merge)
-Branch: copilot-thor/s806-ops-incident-response-runbook-ga (merged + deletable)
-Skill: skills/api/add-rest-endpoint.md
-Final heartbeat: 2026-05-02T12:28:29Z (copilot-thor)
-Tests: 13 pytest (packages/control-plane/_tests/test_ir_runbook.py): test_ir_runbook_exists, test_ir_runbook_has_required_sections, test_ir_runbook_defines_all_roles, test_ir_runbook_references_all_severity_levels, test_ir_runbook_includes_rollback_procedure, test_ir_runbook_references_pir, test_ir_runbook_references_game_day_log, test_game_day_log_exists, test_game_day_log_has_at_least_one_session, test_game_day_log_records_outcome, test_game_day_log_has_gap_tracker, test_game_day_log_gaps_have_owners, test_game_day_log_references_ir_runbook
-Docs touched: loop_implementation/engineering/INCIDENT_RESPONSE_RUNBOOK.md; loop_implementation/engineering/GAME_DAY_LOG.md
-Follow-ups: Wire /incident declare Slack command; schedule monthly game-day calendar invite; create pirs/ directory"
+S806,ops: incident-response runbook + game-day cadence (monthly),tbd,S35,E16,2,P0,Not started,AC: runbook checked in; first game-day held; recorded; gaps tracked.
 S807,"ops: data-retention policy enforced by scheduled jobs (per data type, per region)",tbd,S35,E16,2,P0,Not started,AC: jobs delete per policy; deletion audited; user-visible policy page on docs site.
 S808,ops: encrypted backup verification (restore-then-diff weekly),tbd,S35,E16,2,P0,Not started,AC: weekly job restores latest backup to scratch; diff against live; alerts on mismatch.
 S809,security: bug-bounty program launch (HackerOne or YesWeHack),tbd,S35,E16,2,P0,Not started,AC: program live; scope+rules+payouts published; first 3 reports triaged within SLA.
