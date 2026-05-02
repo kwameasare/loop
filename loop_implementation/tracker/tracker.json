@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T13:38:43.091709+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3548,13 +3548,13 @@
     {
       "id": "S497",
       "title": "studio: KB freshness indicators + manual refresh button",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S21",
       "epic": "E10",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: KB list shows last-refreshed; click triggers refresh."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s497-studio-kb-freshness-indicators-m\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T13:38:43Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S510",
