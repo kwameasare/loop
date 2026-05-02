@@ -21,6 +21,8 @@ See also:
   KMS + DCDN).
 * `infra/terraform/envs/prod-ovh-eu-sovereign/` — OVHcloud Terraform
   entry point for a sovereign-EU data plane with Vault Transit KMS.
+* `infra/terraform/envs/prod-hetzner-eu-central/` — Hetzner Terraform
+  entry point for a cost-optimized EU data plane with MinIO + Vault.
 
 ## Available regions
 
@@ -29,6 +31,7 @@ See also:
 | eu-west   | `infra/helm/loop/values-eu-west.yaml`                | GA (S045) | EU        |
 | cn-shanghai | Alibaba Terraform env + enterprise Helm overlay    | Blocked on live credentials (S773) | CN |
 | eu-sovereign | OVHcloud Terraform env + enterprise Helm overlay  | Blocked on live credentials (S774) | EU |
+| eu-cost | Hetzner Terraform env + enterprise Helm overlay        | Blocked on live credentials (S775) | EU |
 | us-east   | (uses base `values.yaml`)                            | GA       | US        |
 | ap-south  | _planned (S0xx)_                                     | —        | —         |
 | us-gov    | _planned (FedRAMP track)_                            | —        | —         |
@@ -137,6 +140,7 @@ migrations. Schema migrations are gated on the migration job
 | Date       | Author       | Change                                            |
 | ---------- | ------------ | ------------------------------------------------- |
 | 2026-05-02 | codex-orion (S774) | Add OVHcloud `eu-sovereign` Terraform module/env; live apply remains blocked on credentials. |
+| 2026-05-02 | codex-orion (S775) | Add Hetzner `eu-cost` Terraform module/env; live apply remains blocked on credentials. |
 | 2026-05-02 | codex-orion (S773) | Add Alibaba Cloud `cn-shanghai` Terraform module/env; live apply remains blocked on credentials. |
 | 2026-05-02 | codex-orion (S780) | Add nightly AWS/Azure/GCP Helm deploy + first-turn smoke matrix. |
 | 2026-05-01 | codex-orion (S597) | Add nightly EU full-turn smoke workflow and `scripts/eu_smoke.sh`. |

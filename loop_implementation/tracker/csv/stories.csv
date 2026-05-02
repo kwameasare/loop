@@ -1291,7 +1291,16 @@ Blockers:
 - Terraform CLI is not installed in this worktree.
 - No OVHcloud credentials/service name, region quota, object storage name, CIDR allowlist, or managed database plan inputs are available; the AC inherits S770's live terraform plan/apply plus deployed smoke test requirement.
 Commits: 8d9cea2 claim; f0399bc inputs; baa8fa2 services; 0033c13 outputs; 498ac42 env; 6b81c53 region; b751d34 tests; 4990300 docs; 28b1dcc checkpoint"
-S775,infra: terraform module — Hetzner (HCloud K8s + managed Postgres + S3-compat MinIO + KMS via Vault),tbd,S34,E12,2,P1,Not started,AC: same against Hetzner; cost-optimized self-hosted alternative.
+S775,infra: terraform module — Hetzner (HCloud K8s + managed Postgres + S3-compat MinIO + KMS via Vault),codex-orion,S34,E12,2,P1,Blocked,"**Blocked.**
+Branch: codex-orion/s775-infra-terraform-module-hetzner-h
+Skill: skills/architecture/cloud-portability-check.md
+Last step: 1/5 (Hetzner module, env, static checks landed; live apply pending)
+Heartbeat: 2026-05-02T06:30:25Z (codex-orion)
+Open questions: none
+Blockers:
+- Terraform CLI is not installed in this worktree.
+- No Hetzner Cloud token, SSH key IDs, server type, managed Postgres plan, or kube/Helm runtime context are available; the AC inherits S770's live terraform plan/apply plus deployed smoke test requirement.
+Commits: 60de1d0 claim; c64afd1 inputs; 61831e3 services; 244e9c1 outputs; b5ed953 env; b0415f5 region; 60c062d tests; 599215e docs; 9c65777 checkpoint"
 S776,portability: ObjectStore Protocol parity tests across all 6 backends,codex-orion,S34,E12,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-orion/s776-portability-objectstore-protocol (merged + deletable)

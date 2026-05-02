@@ -36,3 +36,11 @@ regions:
     data_plane_url: https://runtime.eu-sovereign.loop.example
     concrete:
       ovh: GRA11
+  eu-cost:
+    display_name: Europe Cost Optimized
+    residency: EU
+    primary: false
+    control_plane_url: https://api.eu-cost.loop.example/v1
+    data_plane_url: https://runtime.eu-cost.loop.example
+    concrete:
+      hetzner: fsn1
