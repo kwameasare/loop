@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:40:21.354288+00:00",
+    "generated_at": "2026-05-02T05:41:01.652920+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4120,13 +4120,13 @@
     {
       "id": "S613",
       "title": "sso: Entra ID recipe + sandbox tenant test",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S27",
       "epic": "E20",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: same as Okta but Entra ID."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-titan/s613-sso-entra-id-recipe-sandbox-tena\nSkill: skills/security/secrets-kms-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T05:41:01Z (copilot-titan)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S614",
