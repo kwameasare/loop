@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:07:44.507484+00:00",
+    "generated_at": "2026-05-02T03:08:01.728772+00:00",
     "format_version": 2
   },
   "epics": [
@@ -2404,13 +2404,13 @@
     {
       "id": "S327",
       "title": "studio: billing tab — current plan + usage + change-plan CTA",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S12",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: tab shows plan, MTD usage vs cap, button → Stripe Customer Portal."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s327-studio-billing-tab-current-plan\nSkill: skills/ux/component-design.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T03:08:01Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S328",
