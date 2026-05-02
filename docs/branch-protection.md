@@ -97,3 +97,4 @@ Record the verification date here: `____-__-__` (initial: pending).
 | 2026-04-29 | Initial settings drafted (S001). Awaiting GitHub admin to apply. | GitHub Copilot |
 | 2026-04-30 | Added `docs-with-code` and `checkpoint-discipline` to required-checks. Tightened `tracker-clean` to also lint structured Notes-cell format. | Audit follow-up |
 | 2026-05-01 | Added `cp-api-image` as a required image build, size, and Trivy scan check for the control-plane API image. | codex-orion |
+| 2026-05-02 | Extended `cp-api-image` and `dp-runtime-image` to sign pushed GHCR digests with cosign and verify the OIDC certificate before deploy. | codex-orion |

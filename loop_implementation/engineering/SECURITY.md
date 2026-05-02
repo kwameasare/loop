@@ -437,7 +437,10 @@ For enterprise customers in healthcare:
     workflow artifact. The SOC2 evidence collector pulls the artifact
     from each green run. See `.github/workflows/ci.yml` (S578).
   - Every release additionally re-generates an SBOM at tag time.
-  - Every binary + container signed with Sigstore (cosign); attestations include SLSA provenance.
+  - Every binary + container signed with Sigstore (cosign); the `cp-api`
+    and `dp-runtime` CI image jobs sign the pushed immutable GHCR digest
+    and verify the GitHub OIDC certificate before deploy (S263).
+    Attestations include SLSA provenance.
   - Signatures verified at deployment via policy (Kyverno in k8s).
 - **In-toto link attestations:** Each CI step (build, test, scan, sign) generates a link; chains are verified pre-deployment.
 - **Pre-commit hook:** `detect-secrets` + pattern scan for API keys, PII in code. Blocks commit if secrets detected.
