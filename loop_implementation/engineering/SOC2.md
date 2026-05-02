@@ -15,6 +15,11 @@ See also:
 
 * [SECURITY.md](SECURITY.md) — engineering threat model and
   baseline controls (the *implementation* side).
+* [SOC2_TYPE1_KICKOFF.md](SOC2_TYPE1_KICKOFF.md) — committed audit
+  window, evidence pack, and kickoff agenda (S582). The auditor's
+  day-one entry point.
+* [AUDIT_COVERAGE.md](AUDIT_COVERAGE.md) — write-endpoint → audit
+  event coverage matrix (S581) for CC4.1 evidence.
 * [DR.md](DR.md) — availability and recovery runbook.
 * [REGIONAL_DEPLOYS.md](REGIONAL_DEPLOYS.md) — residency posture.
 
