@@ -521,7 +521,14 @@ Final heartbeat: 2026-05-02T03:16:02Z (copilot-thor)
 Tests: vitest covers VoiceWidget idle render, connect+connected, PTT mic toggle, always-on mic open, transport-rejected error, end-call disconnect
 Docs touched: apps/studio/src/components/voice/voice-widget.tsx,apps/studio/src/lib/voice-transport.ts,apps/studio/src/app/voice/page.tsx
 Follow-ups: none"
-S385,"studio: voice channel config tab (numbers, ASR/TTS provider)",tbd,S15,E10,2,P0,Not started,AC: tab shows connected numbers; provider selectors persisted.
+S385,"studio: voice channel config tab (numbers, ASR/TTS provider)",copilot-thor,S15,E10,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s385-studio-voice-channel-config-tab
+Skill: skills/ux/component-design.md
+Last step: 0/4 (just claimed)
+Heartbeat: 2026-05-02T03:16:19Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S386,voice: latency benchmark suite (target ≤900ms p50),GitHub Copilot,S15,E7,2,P0,Done,"Done. Branch: copilot/s-pass7 (merged). PR: local-merge (ff to main). Skill: skills/observability/structured-logging.md. Last step: 5/5. Heartbeat: 2026-05-26T04:00:00Z. Substance: retro-close — packages/voice/loop_voice/latency.py ships VoiceLatencyBudget (asr_first_partial_ms, llm_first_token_ms, tts_first_audio_ms, end_to_end_p50_ms=900, end_to_end_p95_ms) plus VoiceLatencySamples.percentile(p) and assert_within_budget(samples, budget) helpers. The 900ms p50 target is encoded in the default budget so any test that records a sample list can verify the SLA without reaching for k6. The full k6/locust script lives in loop_implementation/perf/voice/ as a separate ops artefact — the Python budgets module is the assertion-side contract that integration tests bind to. Tests: existing test_latency.py validates percentile math + budget assertions. Open questions: long-tail p99 budget is intentionally not asserted yet (it depends on carrier route and is set in S388-adjacent ops dashboards)."
 S387,voice: integration test phone call → agent → response,codex-vega,S15,E7,2,P0,Blocked,"**Blocked.**
 Branch: codex-vega/s387-voice-integration-test-phone-cal
