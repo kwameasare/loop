@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T03:51:10.400325+00:00",
+    "generated_at": "2026-05-02T03:51:41.546155+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3883,8 +3883,8 @@
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s572-soc2-backup-automation-postgres\nSkill: skills/security/update-threat-model.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T03:48:44Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s572-soc2-backup-automation-postgres (merged + deletable)\nSkill: skills/security/update-threat-model.md\nFinal heartbeat: 2026-05-02T03:51:41Z (copilot-thor)\nTests: 5 new tests in tests/test_dr_postgres_pitr_drill.py — runbook index row, RTO target string, cumulative budget ≤60min, driver dry-run emits 10 ok JSON steps, missing-arg handling. Full pytest 1288/1288.\nDocs touched: loop_implementation/engineering/RUNBOOKS.md,loop_implementation/engineering/DR.md,scripts/dr_postgres_pitr_drill.sh\nFollow-ups: none"
     },
     {
       "id": "S573",
