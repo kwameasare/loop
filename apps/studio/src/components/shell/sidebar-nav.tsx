@@ -18,6 +18,7 @@ interface NavItem {
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/agents", label: "Agents" },
+  { href: "/evals", label: "Evals" },
   { href: "/inbox", label: "Inbox" },
   { href: "/costs", label: "Costs" },
 ];
