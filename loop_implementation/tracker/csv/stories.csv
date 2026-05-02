@@ -1159,14 +1159,14 @@ Tests: apps/studio/src/components/__a11y__/a11y-audit.test.ts
 Docs touched: apps/studio/a11y/AXE_AUDIT.md
 Follow-ups: none"
 S657,"ga-polish: i18n scaffolding (en, es, de, fr, ja)",tbd,S29,E10,2,P1,Not started,AC: react-i18next; en is source; 4 languages stub-translated; switcher works.
-S658,ga-polish: support runbook + ticketing integration (Front),copilot-thor,S29,E17,1,P1,In progress,"**Active.**
-Branch: copilot-thor/s658-ga-polish-support-runbook-ticket
+S658,ga-polish: support runbook + ticketing integration (Front),copilot-thor,S29,E17,1,P1,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s658-ga-polish-support-runbook-ticket (merged + deletable)
 Skill: loop_implementation/skills/_base/skill.md
-Last step: 0/3 (just claimed)
-Heartbeat: 2026-05-02T14:11:09Z (copilot-thor)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)"
+Final heartbeat: 2026-05-02T14:12:28Z (copilot-thor)
+Tests: 24 pytest (test_support_runbook.py): file existence, inbound channels, routing rules SR-001/006, SLA tiers, escalation paths, RB-025 owner/steps/SEV, smoke test curl command
+Docs touched: loop_implementation/engineering/SUPPORT_RUNBOOK.md
+Follow-ups: Front webhook integration test harness; PagerDuty escalation policy API config; CSAT dashboard"
 S659,ga-polish: docs.loop.example v1 (Mintlify) — getting started + 3 tutorials,copilot-titan,S29,E17,3,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-titan/s659-ga-polish-docs-loop-example-v1-m (merged + deletable)

@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T14:11:09.945647+00:00",
+    "generated_at": "2026-05-02T14:12:28.915732+00:00",
     "format_version": 2
   },
   "epics": [
@@ -139,7 +139,7 @@
       "name": "Docs site & DevRel",
       "owner": "Eng #6",
       "target": "Rolling",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Quickstart, API ref, examples"
     },
     {
@@ -4389,8 +4389,8 @@
       "epic": "E17",
       "points": 1,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s658-ga-polish-support-runbook-ticket\nSkill: loop_implementation/skills/_base/skill.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T14:11:09Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s658-ga-polish-support-runbook-ticket (merged + deletable)\nSkill: loop_implementation/skills/_base/skill.md\nFinal heartbeat: 2026-05-02T14:12:28Z (copilot-thor)\nTests: 24 pytest (test_support_runbook.py): file existence, inbound channels, routing rules SR-001/006, SLA tiers, escalation paths, RB-025 owner/steps/SEV, smoke test curl command\nDocs touched: loop_implementation/engineering/SUPPORT_RUNBOOK.md\nFollow-ups: Front webhook integration test harness; PagerDuty escalation policy API config; CSAT dashboard"
     },
     {
       "id": "S659",
