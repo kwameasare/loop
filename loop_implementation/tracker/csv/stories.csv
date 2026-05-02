@@ -1052,11 +1052,12 @@ Follow-ups: none"
 S653,"voice-perf: regional endpoints (eu-west, ap-south) for ASR/TTS",codex-vega,S29,E7,2,P0,In progress,"**Active.**
 Branch: codex-vega/s653-voice-perf-regional-endpoints-eu
 Skill: skills/testing/perf-check.md
-Last step: 1/5
-Heartbeat: 2026-05-02T05:48:27Z (codex-vega)
+Last step: 2/5
+Heartbeat: 2026-05-02T05:49:11Z (codex-vega)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: regional selector tests and latency map landed
 Latest checkpoint: regional selector verified locally"
 S654,voice-perf: latency benchmark ≤700ms p50 acceptance gate,tbd,S29,E7,2,P0,Not started,AC: scripts/voice_perf.py runs nightly; CI alerts if breached.
 S655,ga-polish: design-system audit + component refactor,tbd,S29,E10,3,P1,Not started,AC: token map sweep; <5 hardcoded colours/spacings remain; doc'd in design system.
