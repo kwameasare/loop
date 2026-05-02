@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T00:27:17.323188+00:00",
+    "generated_at": "2026-05-02T00:29:49.582108+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5154,13 +5154,13 @@
     {
       "id": "S780",
       "title": "ci: cross-cloud nightly smoke test matrix (deploy + first-turn on AWS+Azure+GCP)",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S34",
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: GHA matrix workflow nightly; all 3 must pass for green status; on-failure pages on-call."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s780-ci-cross-cloud-nightly-smoke-tes\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-02T00:29:49Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S781",
