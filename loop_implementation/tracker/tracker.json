@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T14:11:09.945647+00:00",
     "format_version": 2
   },
   "epics": [
@@ -4384,13 +4384,13 @@
     {
       "id": "S658",
       "title": "ga-polish: support runbook + ticketing integration (Front)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S29",
       "epic": "E17",
       "points": 1,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: tickets reach support@; routing rules documented."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s658-ga-polish-support-runbook-ticket\nSkill: loop_implementation/skills/_base/skill.md\nLast step: 0/3 (just claimed)\nHeartbeat: 2026-05-02T14:11:09Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S659",
