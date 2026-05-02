@@ -1,0 +1,12 @@
+{
+  "baseline_ref": "main",
+  "hit_ratio": 0.6,
+  "hits": 6,
+  "min_hit_ratio": 0.3,
+  "misses": 4,
+  "name": "gateway_cache_hit_ratio_fixed_eval",
+  "passed": true,
+  "regression_threshold": 0.1,
+  "requests": 10,
+  "ts": "2026-05-02T05:33:35+00:00"
+}
