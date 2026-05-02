@@ -789,7 +789,14 @@ S556,mcp-mkt: zendesk server,Codex,S24,E18,2,P1,Done,"Done. Branch: codex/s-pass
 S557,mcp-mkt: hubspot server (read),Codex,S24,E18,2,P1,Done,"Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party HubSpot read manifest with contacts, companies, and deals listing tools. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
 S558,mcp-mkt: stripe server (read),Codex,S24,E18,2,P1,Done,"Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/implement-mcp-tool.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py registers first-party Stripe read manifest with customers, invoices, and payouts listing tools. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none."
 S559,mcp-mkt: server-publish CLI (`loop tool publish`) signs + uploads,Codex,S24,E11,2,P0,Done,Done. Branch: codex/s-pass13 (merged). PR: local-merge (ff to main). Skill: skills/coding/python-strict.md. Last step: 5/5. Heartbeat: 2026-05-01T09:45:00Z. Substance: packages/control-plane/loop_control_plane/mcp_marketplace.py adds ServerPublishCli seam that signs manifest digests and uploads signed payloads through a protocol client. Tests: packages/control-plane/_tests/test_mcp_marketplace_pass13.py. Open questions: none.
-S570,soc2: vanta integration auth + organization sync,tbd,S25,E16,1,P0,Not started,AC: OAuth complete; vanta-side organization linked. [extends S046]
+S570,soc2: vanta integration auth + organization sync,copilot-thor,S25,E16,1,P0,In progress,"**Active.**
+Branch: copilot-thor/s570-soc2-vanta-integration-auth-orga
+Skill: skills/security/update-threat-model.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T03:46:05Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S571,soc2: control mapping (CC1-CC9) → evidence sources doc,copilot-titan,S25,E16,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-titan/s571-soc2-control-mapping-cc1-cc9-evi (merged + deletable)
