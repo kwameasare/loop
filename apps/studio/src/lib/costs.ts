@@ -190,3 +190,129 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
 
 export const FIXTURE_NOW_MS = Date.UTC(2026, 3, 30);
 export { FIXTURE_WORKSPACE_ID };
+
+/**
+ * Compute the inclusive UTC midnight + exclusive next-day midnight that
+ * bound the day containing ``now_ms``.
+ */
+export function dayBoundsUTC(now_ms: number): {
+  period_start_ms: number;
+  period_end_ms: number;
+} {
+  const d = new Date(now_ms);
+  const start = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  return { period_start_ms: start, period_end_ms: start + DAY_MS };
+}
+
+/**
+ * Bounds of the day exactly one cycle (day or month) before ``now_ms``.
+ */
+export function previousDayBoundsUTC(now_ms: number): {
+  period_start_ms: number;
+  period_end_ms: number;
+} {
+  const today = dayBoundsUTC(now_ms);
+  return {
+    period_start_ms: today.period_start_ms - DAY_MS,
+    period_end_ms: today.period_start_ms,
+  };
+}
+
+export function previousMonthBoundsUTC(now_ms: number): {
+  period_start_ms: number;
+  period_end_ms: number;
+} {
+  const d = new Date(now_ms);
+  const start = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1);
+  const end = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
+  return { period_start_ms: start, period_end_ms: end };
+}
+
+export interface WorkspaceKpis {
+  today_cents: number;
+  yesterday_cents: number;
+  mtd_cents: number;
+  prev_month_cents: number;
+  /** Linear-projection EOM total assuming the MTD daily run-rate holds. */
+  projected_eom_cents: number;
+  /** Days elapsed (1-indexed) used to derive the projection. */
+  days_elapsed: number;
+  /** Total days in the current calendar month. */
+  days_in_month: number;
+}
+
+/**
+ * Compute the workspace KPIs (today, MTD, projected EOM) plus the
+ * comparison values used to render deltas.
+ *
+ * The projection is intentionally simple: ``mtd / days_elapsed * days_in_month``.
+ * It matches the ClickHouse query the control-plane evaluates server-side
+ * so the dashboard agrees with the API to the cent.
+ */
+export function computeWorkspaceKpis(
+  records: UsageRecord[],
+  options: {
+    workspace_id: string;
+    now_ms: number;
+    rates_cents_per_unit?: RatesCentsPerUnit;
+  },
+): WorkspaceKpis {
+  const today = dayBoundsUTC(options.now_ms);
+  const yesterday = previousDayBoundsUTC(options.now_ms);
+  const month = monthBoundsUTC(options.now_ms);
+  const prevMonth = previousMonthBoundsUTC(options.now_ms);
+  const summarise = (start: number, end: number) =>
+    summariseCosts(records, {
+      workspace_id: options.workspace_id,
+      period_start_ms: start,
+      period_end_ms: end,
+      rates_cents_per_unit: options.rates_cents_per_unit,
+    }).total_cents;
+
+  const today_cents = summarise(today.period_start_ms, today.period_end_ms);
+  const yesterday_cents = summarise(
+    yesterday.period_start_ms,
+    yesterday.period_end_ms,
+  );
+  const mtd_cents = summarise(month.period_start_ms, month.period_end_ms);
+  const prev_month_cents = summarise(
+    prevMonth.period_start_ms,
+    prevMonth.period_end_ms,
+  );
+  const days_in_month = Math.round(
+    (month.period_end_ms - month.period_start_ms) / DAY_MS,
+  );
+  const days_elapsed = Math.max(
+    1,
+    Math.floor((options.now_ms - month.period_start_ms) / DAY_MS) + 1,
+  );
+  const projected_eom_cents = Math.round(
+    (mtd_cents / days_elapsed) * days_in_month,
+  );
+  return {
+    today_cents,
+    yesterday_cents,
+    mtd_cents,
+    prev_month_cents,
+    projected_eom_cents,
+    days_elapsed,
+    days_in_month,
+  };
+}
+
+/**
+ * Render a delta as a short string ("+12.3%", "−4.0%", "—" if undefined).
+ */
+export function formatDeltaPercent(
+  current_cents: number,
+  prior_cents: number,
+): string {
+  if (prior_cents === 0) {
+    if (current_cents === 0) return "0%";
+    return "—";
+  }
+  const ratio = (current_cents - prior_cents) / prior_cents;
+  const pct = Math.round(ratio * 1000) / 10;
+  const sign = pct > 0 ? "+" : pct < 0 ? "−" : "";
+  return `${sign}${Math.abs(pct).toFixed(1)}%`;
+}
