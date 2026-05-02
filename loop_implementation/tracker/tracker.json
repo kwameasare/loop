@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:23:56.733541+00:00",
+    "generated_at": "2026-05-02T06:24:39.176371+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5093,8 +5093,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s774-infra-terraform-module-ovhcloud\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1/5\nHeartbeat: 2026-05-02T06:23:56Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: OVH Terraform module and static checks landed"
+      "status": "Blocked",
+      "notes": "**Blocked.**\nBranch: codex-orion/s774-infra-terraform-module-ovhcloud\nSkill: skills/architecture/cloud-portability-check.md\nLast step: 1/5 (OVH module, env, static checks landed; live apply pending)\nHeartbeat: 2026-05-02T06:24:18Z (codex-orion)\nOpen questions: none\nBlockers:\n- Terraform CLI is not installed in this worktree.\n- No OVHcloud credentials/service name, region quota, object storage name, CIDR allowlist, or managed database plan inputs are available; the AC inherits S770's live terraform plan/apply plus deployed smoke test requirement.\nCommits: 8d9cea2 claim; f0399bc inputs; baa8fa2 services; 0033c13 outputs; 498ac42 env; 6b81c53 region; b751d34 tests; 4990300 docs; 28b1dcc checkpoint"
     },
     {
       "id": "S775",
