@@ -286,6 +286,14 @@ Events tracked:
 
 Each entry: actor, action, target, timestamp, IP, user-agent, request_id, before/after diff (if applicable).
 
+The full write-endpoint → audit-event coverage matrix lives in
+[`AUDIT_COVERAGE.md`](AUDIT_COVERAGE.md) (S581). Every control-plane
+write method is enumerated there with its expected action verb and
+current `covered`/`gap`/`n/a` status; gap rows cite **S630** as the
+emitter-wiring follow-up. Adding a new write endpoint REQUIRES a
+matrix row in the same PR — `tests/test_audit_coverage_matrix.py`
+fails the build otherwise.
+
 ### 7.2 Application logs
 
 - Structured JSON.
