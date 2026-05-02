@@ -19,6 +19,11 @@ import {
   nextFlowNodeId,
 } from "@/lib/flow-nodes";
 import { type AnyNodeConfig } from "@/lib/flow-node-config";
+import {
+  addEdge,
+  type FlowEdge,
+  removeEdge,
+} from "@/lib/flow-edges";
 
 import { NodePalette } from "./node-palette";
 import { NodeConfigSidebar } from "./node-config-sidebar";
@@ -26,11 +31,22 @@ import { NodeConfigSidebar } from "./node-config-sidebar";
 export interface FlowEditorProps {
   agentId: string;
   initialNodes?: FlowNode[];
+  initialEdges?: FlowEdge[];
   /**
    * Test seam: when set, drag-from-palette uses this type instead of
    * reading from ``DataTransfer`` (jsdom drops the payload silently).
    */
   pendingDragType?: FlowNodeType | null;
+  /**
+   * Test seam: pre-seed a pending edge connection from this node id so
+   * ``mouseUp`` on a target node creates an edge without needing pointer
+   * capture (which jsdom does not implement).
+   */
+  pendingConnectFromId?: string | null;
+  /**
+   * Test seam: replaces ``window.confirm`` for delete confirmation.
+   */
+  confirmDelete?: (edge: FlowEdge) => boolean;
 }
 
 export function FlowEditor(props: FlowEditorProps) {
@@ -41,6 +57,10 @@ export function FlowEditor(props: FlowEditorProps) {
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [configs, setConfigs] = useState<Record<string, AnyNodeConfig>>({});
+  const [edges, setEdges] = useState<FlowEdge[]>(props.initialEdges ?? []);
+  const [pendingConnect, setPendingConnect] = useState<string | null>(
+    props.pendingConnectFromId ?? null,
+  );
   const dragRef = useRef<{ x: number; y: number } | null>(null);
 
   function onMouseDown(e: React.MouseEvent) {
@@ -95,6 +115,15 @@ export function FlowEditor(props: FlowEditorProps) {
   }
   function reset() {
     setViewport(resetViewport());
+  }
+  function deleteEdge(edge: FlowEdge) {
+    const ok = props.confirmDelete
+      ? props.confirmDelete(edge)
+      : typeof window !== "undefined"
+        ? window.confirm("Delete this edge?")
+        : false;
+    if (!ok) return;
+    setEdges((prev) => removeEdge(prev, edge.id));
   }
 
   const transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`;
@@ -158,6 +187,9 @@ export function FlowEditor(props: FlowEditorProps) {
           aria-label="Flow canvas viewport"
           className="relative flex-1 cursor-grab overflow-hidden active:cursor-grabbing"
           data-testid="flow-viewport"
+          onClick={() => {
+            if (pendingConnect) setPendingConnect(null);
+          }}
           onDragOver={onDragOver}
           onDrop={onDrop}
           onMouseDown={onMouseDown}
@@ -179,31 +211,91 @@ export function FlowEditor(props: FlowEditorProps) {
               backgroundPosition: "0 0",
             }}
           >
+            {edges.length > 0 ? (
+              <svg
+                className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+                data-testid="flow-edges"
+              >
+                {edges.map((edge) => {
+                  const src = nodes.find((n) => n.id === edge.source);
+                  const dst = nodes.find((n) => n.id === edge.target);
+                  if (!src || !dst) return null;
+                  return (
+                    <line
+                      className="pointer-events-auto cursor-pointer"
+                      data-testid={`flow-edge-${edge.id}`}
+                      key={edge.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteEdge(edge);
+                      }}
+                      stroke="#3f3f46"
+                      strokeWidth={2}
+                      x1={src.x}
+                      x2={dst.x}
+                      y1={src.y}
+                      y2={dst.y}
+                    />
+                  );
+                })}
+              </svg>
+            ) : null}
             {nodes.map((n) => {
               const kind = getNodeKind(n.type);
               const isSelected = selectedId === n.id;
+              const isConnectSource = pendingConnect === n.id;
               return (
-                <button
-                  className={`absolute flex min-w-[7rem] -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm shadow-sm hover:bg-zinc-50 ${isSelected ? "ring-2 ring-blue-500" : ""}`}
-                  data-testid={`flow-node-${n.id}`}
-                  data-node-type={n.type}
+                <div
+                  className={`absolute -translate-x-1/2 -translate-y-1/2`}
                   key={n.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedId(n.id);
-                  }}
-                  onMouseDown={(e) => e.stopPropagation()}
                   style={{ left: n.x, top: n.y }}
-                  type="button"
                 >
-                  <span
-                    aria-hidden
-                    className={`flex h-6 w-6 items-center justify-center rounded text-base ${kind.color}`}
+                  <button
+                    className={`flex min-w-[7rem] items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm shadow-sm hover:bg-zinc-50 ${isSelected ? "ring-2 ring-blue-500" : ""}`}
+                    data-testid={`flow-node-${n.id}`}
+                    data-node-type={n.type}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (pendingConnect && pendingConnect !== n.id) {
+                        setEdges((prev) =>
+                          addEdge(prev, pendingConnect, n.id),
+                        );
+                        setPendingConnect(null);
+                        return;
+                      }
+                      setSelectedId(n.id);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseUp={() => {
+                      if (pendingConnect && pendingConnect !== n.id) {
+                        setEdges((prev) =>
+                          addEdge(prev, pendingConnect, n.id),
+                        );
+                        setPendingConnect(null);
+                      }
+                    }}
+                    type="button"
                   >
-                    {kind.icon}
-                  </span>
-                  <span className="font-medium">{kind.label}</span>
-                </button>
+                    <span
+                      aria-hidden
+                      className={`flex h-6 w-6 items-center justify-center rounded text-base ${kind.color}`}
+                    >
+                      {kind.icon}
+                    </span>
+                    <span className="font-medium">{kind.label}</span>
+                  </button>
+                  <button
+                    aria-label={`Connect from ${n.id}`}
+                    className={`absolute -right-2 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-white shadow ${isConnectSource ? "bg-blue-500" : "bg-zinc-400 hover:bg-blue-500"}`}
+                    data-testid={`flow-handle-${n.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      setPendingConnect(n.id);
+                    }}
+                    type="button"
+                  />
+                </div>
               );
             })}
           </div>
