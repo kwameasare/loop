@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T05:16:33.220651+00:00",
+    "generated_at": "2026-05-02T05:19:23.978364+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3988,13 +3988,13 @@
     {
       "id": "S582",
       "title": "soc2: SOC2 Type 1 attestation kickoff with auditor",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S25",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: kickoff meeting held; evidence list + window dates committed."
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s582-soc2-soc2-type-1-attestation-kic (merged + deletable)\nSkill: skills/security/update-threat-model.md\nFinal heartbeat: 2026-05-02T05:19:05Z (copilot-titan)\nTests: tests/test_soc2_type1_kickoff.py (6 passed) — pins audit window, evidence path resolution, prereq story IDs, cross-link from SOC2.md\nDocs touched: loop_implementation/engineering/SOC2_TYPE1_KICKOFF.md, loop_implementation/engineering/SOC2.md (cross-link)\nFollow-ups: S575,S576,S577"
     },
     {
       "id": "S590",
