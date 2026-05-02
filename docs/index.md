@@ -20,6 +20,8 @@ evaluate AI agents that talk to real users on real channels.
 ## Operations
 
 - [Branch protection](./branch-protection.md) — required CI checks for `main`.
+- [Cloud portability proof](./CLOUD_PROOF.md) — capability matrix and nightly
+  GREEN/RED smoke marks.
 - [Gateway provider eval](./perf/gateway_provider_eval.md) — nightly
   provider quality, latency, and cost matrix.
 
@@ -29,6 +31,7 @@ evaluate AI agents that talk to real users on real channels.
 docs/
   index.md              # this file
   quickstart.md         # zero-to-first-turn walkthrough
+  CLOUD_PROOF.md        # cloud portability proof matrix
   concepts/             # the conceptual model
     agents.md
     tools.md

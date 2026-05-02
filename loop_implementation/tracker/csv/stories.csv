@@ -957,15 +957,15 @@ Final heartbeat: 2026-05-01T23:34:20Z (codex-orion)
 Tests: scripts/eu_smoke.sh against local helm smoke server; uv run ruff check scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run ruff format --check scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run pyright scripts/eu_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py; uv run pytest -q tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py tests/test_helm_e2e_workflow.py; uv run pytest -q -m 'not integration and not e2e' (1228 passed, 3 skipped, 4 deselected); python3 tools/build_tracker.py; python3 tools/check_tracker_notes.py; python3 tools/check_docs_with_code.py; python3 tools/check_checkpoint_discipline.py; full repo ruff/format/pyright remain baseline-red in unrelated files
 Docs touched: loop_implementation/engineering/REGIONAL_DEPLOYS.md
 Follow-ups: none"
-S610,sso: SAML SP impl via PySAML2,tbd,S27,E20,3,P0,Not started,AC: ACS endpoint validates assertion; cert-rotation supported. [extends S050]
-S611,sso: SCIM provisioning endpoint (RFC 7644),copilot-thor,S27,E20,3,P0,Done,"**Done.**
-PR: https://github.com/kwameasare/loop/pull/56
-Branch: copilot-thor/s611-sso-scim-provisioning-endpoint-r (merged + deletable)
-Skill: skills/api/add-rest-endpoint.md
-Final heartbeat: 2026-05-02T05:31:18Z (copilot-thor)
-Tests: 25 pytest tests in packages/control-plane/_tests/test_scim.py (user CRUD: create, get, list with eq-filter, replace, patch deactivate, delete; group CRUD: create, get, list, patch add-member, patch remove-member, delete; consistency: group membership reflected in user.groups; cascading delete removes members; to_scim serialisation; ServiceProviderConfig doc; SCIMError.to_dict)
-Docs touched: packages/control-plane/loop_control_plane/scim.py module docstring
-Follow-ups: HTTP router exposing /scim/v2/* via FastAPI; bulk endpoint RFC 7644 §3.7; SCIM etag support; schemathesis fuzzing against live endpoint"
+S610,sso: SAML SP impl via PySAML2,copilot-titan,S27,E20,3,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-titan/s610-sso-saml-sp-impl-via-pysaml2 (merged + deletable)
+Skill: skills/security/secrets-kms-check.md
+Final heartbeat: 2026-05-02T05:30:06Z (copilot-titan)
+Tests: packages/control-plane/_tests/test_saml.py packages/control-plane/_tests/test_saml_certs.py
+Docs touched: loop_implementation/engineering/SSO_SAML.md
+Follow-ups: S612"
+S611,sso: SCIM provisioning endpoint (RFC 7644),tbd,S27,E20,3,P0,Not started,AC: Users + Groups create/update/delete from IdP; Postmen schemathesis test.
 S612,sso: Okta integration recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: sample IdP metadata in fixtures/; full SP↔IdP loop in integration.
 S613,sso: Entra ID recipe + sandbox tenant test,tbd,S27,E20,2,P0,Not started,AC: same as Okta but Entra ID.
 S614,sso: Google Workspace recipe + sandbox test,tbd,S27,E20,2,P0,Not started,AC: same.
@@ -1146,7 +1146,14 @@ Final heartbeat: 2026-05-02T00:40:44Z (codex-orion)
 Tests: uv run ruff check scripts/cross_cloud_smoke.py tests/test_cross_cloud_smoke.py; uv run ruff format --check same files; uv run pyright same files; uv run pytest -q tests/test_cross_cloud_smoke.py (3 passed); bash -n scripts/cross_cloud_smoke.sh; forbidden cloud SDK grep passed for packages/runtime packages/gateway packages/sdk-py packages/channels; uv run pytest -q tests/test_cross_cloud_smoke.py tests/test_eu_smoke.py tests/test_eu_smoke_workflow.py (7 passed); uv run pytest -q -m 'not integration and not e2e' (1268 passed, 3 skipped, 4 deselected); python3 tools/build_tracker.py; python3 tools/check_tracker_notes.py; python3 tools/check_docs_with_code.py; python3 tools/check_checkpoint_discipline.py; full repo ruff/format/pyright remain baseline-red in unrelated files
 Docs touched: loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/engineering/REGIONAL_DEPLOYS.md
 Follow-ups: none"
-S781,docs: cloud-portability proof report (Wk-by-Wk parity matrix shipped to docs/CLOUD_PROOF.md),tbd,S34,E17,1,P0,Not started,AC: matrix lists each capability × cloud; nightly job appends a green/red mark; published live.
+S781,docs: cloud-portability proof report (Wk-by-Wk parity matrix shipped to docs/CLOUD_PROOF.md),codex-orion,S34,E17,1,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-orion/s781-docs-cloud-portability-proof-rep (merged + deletable)
+Skill: skills/architecture/cloud-portability-check.md
+Final heartbeat: 2026-05-02T05:27:19Z (codex-orion)
+Tests: uv run ruff check/pyright on cloud proof files; uv run pytest -q tests/test_cloud_proof_report.py tests/test_cross_cloud_smoke.py tests/test_docs_links.py; tracker/docs gates pass
+Docs touched: docs/CLOUD_PROOF.md,docs/index.md,.github/workflows/cross-cloud-smoke.yml
+Follow-ups: none"
 S800,security: continuous fuzz testing of cp-api + dp-runtime (atheris/restler),tbd,S35,E16,3,P0,Not started,AC: fuzz harness runs in CI nightly; crashes/oom auto-issue; coverage report.
 S801,security: threat-model verification — STRIDE checklist gate per PR touching auth/security paths,tbd,S35,E16,2,P0,Not started,AC: PRs touching auth/RLS/secrets fail without docs/THREAT_MODEL.md update; bot enforces.
 S802,security: SLSA Level 3 build provenance for container images (in-toto attestations),tbd,S35,E16,3,P0,Not started,AC: every image carries SLSA-3 provenance; verified at deploy gate; rejected if missing.

@@ -112,3 +112,26 @@ and are visible in the Audit log UI (S050 Pillar 2):
 
 See [SECURITY.md § Audit Events](SECURITY.md) for the full schema
 each row carries.
+
+## SP implementation status (S610)
+
+The Loop SP module lives in
+`packages/control-plane/loop_control_plane/saml.py` and exposes
+:class:`SamlValidator` as the parse/verify Protocol seam. The
+control-plane unit-test suite drives the boundary with
+:class:`StubSamlValidator`, which accepts a base64'd JSON envelope
+and is gated behind `SamlSpConfig.sandbox_mode = True` so production
+tenants cannot accidentally bypass signature checks.
+
+Cert-rotation primitives live in
+`packages/control-plane/loop_control_plane/saml_certs.py`. A
+:class:`CertificateBundle` always carries an active PEM and may
+carry a *pending* PEM during a configurable grace window (default
+7 days). The validator's `trust_set()` returns both during grace so
+login keeps working across an IdP key roll.
+
+The production binding (PySAML2 / xmlsec1) is **deferred to S612**
+(Okta sandbox loop), where it lands together with the actual IdP
+integration tests. The Protocol seam means S612 is a drop-in: no
+caller of `accept_acs_post()` needs to change.
+
