@@ -1192,7 +1192,14 @@ Final heartbeat: 2026-05-02T06:33:04Z (copilot-titan)
 Tests: tests/test_launch_ledger.py
 Docs touched: loop_implementation/operations/launch.md
 Follow-ups: none"
-S673,launch: HN / Product Hunt launch playbook executed,tbd,S30,E17,2,P0,Not started,"AC: launched, ranked, post-mortem; conversion + churn measured for first 7 days."
+S673,launch: HN / Product Hunt launch playbook executed,copilot-titan,S30,E17,2,P0,In progress,"**Active.**
+Branch: copilot-titan/s673-launch-hn-product-hunt-launch-pl
+Skill: skills/api/api-versioning.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-02T06:34:45Z (copilot-titan)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S674,launch: Series A data room update + investor narrative refresh,codex-orion,S30,E12,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-orion/s674-launch-series-a-data-room-update (merged + deletable)
