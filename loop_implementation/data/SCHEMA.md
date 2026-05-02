@@ -518,6 +518,11 @@ user_id, key)` tuple and emits value-redacted audit events for every
 put/get/list operation. The red-team suite verifies 100k cross-user
 attempts with zero leaks and zero false positives.
 
+S824 extends that write path with per-agent PII redaction. Agents can
+run memory writes in `off`, `regex`, `presidio`, or `llm_classifier`
+mode; the filtered value is what reaches `memory_user`, while audit
+events remain value-redacted.
+
 ### 3.3 Tool calls
 
 ```sql

@@ -308,6 +308,15 @@ PII_PATTERNS = {
 
 Customers can configure additional patterns per workspace via `PATCH /workspaces/{id}/settings` with a `custom_pii_patterns` array (regex strings, validated for performance). Redaction happens at the log handler layer, never in code paths.
 
+Memory writes have an additional runtime filter. S824 adds
+`loop_runtime.memory_redaction.MemoryPIIRedactor`, configurable per
+agent at write time with `off`, `regex`, `presidio`, or `llm_classifier`
+modes. Regex mode uses the built-in email/phone/payment-card patterns,
+Presidio mode accepts a Presidio-compatible analyzer, and
+LLM-classifier mode accepts classifier-produced spans. Memory audit
+events record only action/scope/key metadata, never pre-redaction
+values.
+
 ---
 
 ## 8. Compliance
