@@ -1383,7 +1383,14 @@ Final heartbeat: 2026-05-02T06:11:41Z (codex-vega)
 Tests: touched ruff/format pass; touched pyright pass; SLO alert tests pass (3); pytest -q -m 'not integration and not e2e' passed (1554 passed, 3 skipped, 6 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated tools/control-plane/channels/tests
 Docs touched: loop_implementation/operations/SLOs.yaml, infra/prometheus/alerts/slo-burn.yaml, infra/prometheus/alertmanager.yaml, loop_implementation/engineering/PERFORMANCE.md
 Follow-ups: none"
-S806,ops: incident-response runbook + game-day cadence (monthly),tbd,S35,E16,2,P0,Not started,AC: runbook checked in; first game-day held; recorded; gaps tracked.
+S806,ops: incident-response runbook + game-day cadence (monthly),copilot-thor,S35,E16,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s806-ops-incident-response-runbook-ga
+Skill: skills/api/add-rest-endpoint.md
+Last step: 0/2 (just claimed)
+Heartbeat: 2026-05-02T12:26:29Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S807,"ops: data-retention policy enforced by scheduled jobs (per data type, per region)",tbd,S35,E16,2,P0,Not started,AC: jobs delete per policy; deletion audited; user-visible policy page on docs site.
 S808,ops: encrypted backup verification (restore-then-diff weekly),tbd,S35,E16,2,P0,Not started,AC: weekly job restores latest backup to scratch; diff against live; alerts on mismatch.
 S809,security: bug-bounty program launch (HackerOne or YesWeHack),tbd,S35,E16,2,P0,Not started,AC: program live; scope+rules+payouts published; first 3 reports triaged within SLA.

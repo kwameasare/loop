@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:51:09.366845+00:00",
+    "generated_at": "2026-05-02T12:26:29.643654+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5242,13 +5242,13 @@
     {
       "id": "S806",
       "title": "ops: incident-response runbook + game-day cadence (monthly)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S35",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: runbook checked in; first game-day held; recorded; gaps tracked."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s806-ops-incident-response-runbook-ga\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-02T12:26:29Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S807",
