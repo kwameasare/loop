@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import NAMESPACE_URL, UUID, uuid5
 
+from loop_runtime.memory_redaction import MemoryPIIRedactor, MemoryRedactionMode
+
 __all__ = [
     "MemoryAuditEvent",
     "MemoryIsolationReport",
@@ -54,10 +56,20 @@ class UserMemoryStore:
         default_factory=dict[tuple[UUID, UUID, str, str], Any]
     )
     _audit: list[MemoryAuditEvent] = field(default_factory=list[MemoryAuditEvent])
+    _redactor: MemoryPIIRedactor = field(default_factory=MemoryPIIRedactor)
+    _redaction_by_agent: dict[UUID, MemoryRedactionMode] = field(
+        default_factory=dict[UUID, MemoryRedactionMode]
+    )
+
+    def configure_agent_redaction(self, agent_id: UUID, mode: MemoryRedactionMode) -> None:
+        if mode not in ("off", "regex", "presidio", "llm_classifier"):
+            raise ValueError(f"unsupported memory redaction mode: {mode}")
+        self._redaction_by_agent[agent_id] = mode
 
     def put(self, scope: MemoryScope, key: str, value: Any) -> None:
         self._validate_key(key)
-        self._records[self._entry(scope, key)] = value
+        mode = self._redaction_by_agent.get(scope.agent_id, "off")
+        self._records[self._entry(scope, key)] = self._redactor.redact(value, mode=mode)
         self._record("put", scope, key, allowed=True)
 
     def get(self, scope: MemoryScope, key: str) -> Any | None:
