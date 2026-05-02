@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T04:35:43.101875+00:00",
+    "generated_at": "2026-05-02T05:07:06.131768+00:00",
     "format_version": 2
   },
   "epics": [
@@ -3922,13 +3922,13 @@
     {
       "id": "S576",
       "title": "soc2: pen-test prep (scope + RoE + access creds)",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S25",
       "epic": "E16",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: scope agreed with vendor; staging env stood up; creds rotated post-test."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s576-soc2-pen-test-prep-scope-roe-acc\nSkill: skills/security/update-threat-model.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-02T05:07:06Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S577",
