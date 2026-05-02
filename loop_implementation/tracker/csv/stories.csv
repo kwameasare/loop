@@ -1399,11 +1399,12 @@ Follow-ups: none"
 S822,memory: LangMem-style summarization variant (heuristic + LLM hybrid),codex-orion,S36,E4,2,P1,In progress,"**Active.**
 Branch: codex-orion/s822-memory-langmem-style-summarizati
 Skill: skills/coding/implement-runtime-feature.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-02T06:43:30Z (codex-orion)
+Last step: 3/4
+Heartbeat: 2026-05-02T06:50:32Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: LangMem summarizer, ablation eval, tests, and docs landed"
 S823,memory: per-user memory isolation guarantees + audit,codex-orion,S36,E4,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-orion/s823-memory-per-user-memory-isolation (merged + deletable)

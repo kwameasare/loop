@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T06:43:30.746580+00:00",
+    "generated_at": "2026-05-02T06:50:32.101212+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5314,7 +5314,7 @@
       "points": 2,
       "priority": "P1",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s822-memory-langmem-style-summarizati\nSkill: skills/coding/implement-runtime-feature.md\nLast step: 0/4 (just claimed)\nHeartbeat: 2026-05-02T06:43:30Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: codex-orion/s822-memory-langmem-style-summarizati\nSkill: skills/coding/implement-runtime-feature.md\nLast step: 3/4\nHeartbeat: 2026-05-02T06:50:32Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: LangMem summarizer, ablation eval, tests, and docs landed"
     },
     {
       "id": "S823",
