@@ -1409,9 +1409,10 @@ Follow-ups: none"
 S846,perf: regression budget — any 5%+ p95 regression blocks PR,codex-vega,S37,E9,2,P0,In progress,"**Active.**
 Branch: codex-vega/s846-perf-regression-budget-any-5-p95
 Skill: skills/testing/perf-check.md
-Last step: 1/5
-Heartbeat: 2026-05-02T06:19:51Z (codex-vega)
+Last step: 2/5
+Heartbeat: 2026-05-02T06:20:33Z (codex-vega)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: p95 regression budget gate committed
 Latest checkpoint: perf regression comparator verified locally"
