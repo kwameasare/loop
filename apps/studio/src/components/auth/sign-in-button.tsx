@@ -12,6 +12,7 @@
 
 import { useAuth0 } from "@auth0/auth0-react";
 import { Button } from "@/components/ui/button";
+import { clearSessionToken } from "@/lib/cp-auth-exchange";
 
 export function SignInButton() {
   const { loginWithRedirect, isLoading } = useAuth0();
@@ -31,14 +32,18 @@ export function SignOutButton() {
   return (
     <Button
       variant="outline"
-      onClick={() =>
-        logout({
+      onClick={() => {
+        // S912: drop the cp-api session token before kicking off the
+        // Auth0 logout redirect so a same-tab "Sign In" cannot replay
+        // the prior session.
+        clearSessionToken();
+        void logout({
           logoutParams: {
             returnTo:
               typeof window !== "undefined" ? window.location.origin : undefined,
           },
-        })
-      }
+        });
+      }}
       data-testid="sign-out-button"
     >
       Sign Out
