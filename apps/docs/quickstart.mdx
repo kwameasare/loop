@@ -1,0 +1,55 @@
+---
+title: "Quickstart"
+description: "Run the canonical support agent against a real LLM in five minutes."
+---
+
+# Quickstart
+
+The fastest path from `git clone` to a working Loop agent is the
+support example shipped under
+[`examples/support_agent/`](https://github.com/kwameasare/loop/tree/main/examples/support_agent)
+(known internally as **G7**).
+
+<Steps>
+  <Step title="Clone & install">
+    ```bash
+    git clone https://github.com/kwameasare/loop.git
+    cd loop
+    uv sync
+    ```
+  </Step>
+  <Step title="Set a provider key">
+    Loop reads `OPENAI_API_KEY` first and falls back to
+    `ANTHROPIC_API_KEY`. Set whichever you have:
+
+    ```bash
+    export OPENAI_API_KEY=sk-...
+    # or
+    export ANTHROPIC_API_KEY=sk-ant-...
+    ```
+  </Step>
+  <Step title="Run the agent">
+    ```bash
+    uv run python examples/support_agent/run_local.py \
+      "where is order 4172?"
+    ```
+
+    The agent will pick a provider, stream the answer to your
+    terminal, and call the local `lookup_order` tool. Override the
+    provider with `LOOP_SUPPORT_PROVIDER=openai|anthropic` if you have
+    both keys.
+  </Step>
+  <Step title="Next steps">
+    - Read the [agent concept](/concepts/agents) to understand the
+      Loop runtime.
+    - Walk through the
+      [build-a-support-agent tutorial](/tutorials/build-support-agent)
+      to add a knowledge-base tool.
+    - Wire the [eval harness](/tutorials/run-evals) so a CI failure
+      catches regressions before a deploy.
+  </Step>
+</Steps>
+
+The full quickstart, including troubleshooting and the long-form
+provider configuration matrix, lives at
+[`docs/quickstart.md`](https://github.com/kwameasare/loop/blob/main/docs/quickstart.md).

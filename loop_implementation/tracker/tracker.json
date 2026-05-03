@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T19:32:35.852599+00:00",
+    "generated_at": "2026-05-03T19:37:30.496035+00:00",
     "format_version": 2
   },
   "epics": [
@@ -139,7 +139,7 @@
       "name": "Docs site & DevRel",
       "owner": "Eng #6",
       "target": "Rolling",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Quickstart, API ref, examples"
     },
     {
@@ -5616,13 +5616,13 @@
     {
       "id": "S915",
       "title": "docs: docs.loop.example v1 — Mintlify site live with quickstart + 3 tutorials",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S38",
       "epic": "E17",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: apps/docs/ Mintlify project deployable via mintlify deploy; mint.json indexes 12 pages drawn from loop_implementation/engineering/; quickstart points at G7 example; nav covers concepts/quickstart/tutorials/api-ref/cookbook. [extends S659]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s915-docs-docs-loop-example-v1-mintli (merged + deletable)\nSkill: loop_implementation/skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-03T19:37:30Z (copilot-thor)\nTests: pytest tests/test_docs_mint.py: 7 passed (mint.json, nav coverage, frontmatter, AC checks)\nDocs touched: apps/docs/* (15 MDX pages)\nFollow-ups: none"
     },
     {
       "id": "S916",

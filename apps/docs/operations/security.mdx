@@ -1,0 +1,29 @@
+---
+title: "Security"
+description: "How Loop protects workspace data, secrets, and runtime isolation."
+---
+
+# Security
+
+Loop is built so that a customer's worst-case workload cannot leak
+into another customer's workspace. The full security posture and
+threat model live in
+[`loop_implementation/engineering/SECURITY.md`](https://github.com/kwameasare/loop/blob/main/loop_implementation/engineering/SECURITY.md);
+the highlights are:
+
+- **Tenancy** — every workspace has its own namespace, quota, and
+  network policy on the data-plane cluster.
+- **Runtime isolation** — agent pods run inside Firecracker microVMs
+  on the sandbox node pool with the egress allowlist defined by
+  `LOOP_EGRESS_ALLOWLIST`.
+- **Secrets** — workspace secrets are stored encrypted with a
+  per-workspace KEK; only the runtime mounts them, never the studio.
+- **Auth** — control-plane endpoints require a PASETO session token
+  minted by `/v1/auth/exchange` after an Auth0 PKCE round-trip.
+- **Audit** — every privileged write (deploy, secret rotate, RBAC
+  change) emits an immutable audit log entry.
+
+For the formal threat model see
+[`docs/THREAT_MODEL.md`](https://github.com/kwameasare/loop/blob/main/docs/THREAT_MODEL.md);
+SOC2 controls map at
+[`loop_implementation/engineering/SOC2.md`](https://github.com/kwameasare/loop/blob/main/loop_implementation/engineering/SOC2.md).

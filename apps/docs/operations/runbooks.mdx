@@ -1,0 +1,40 @@
+---
+title: "Runbooks"
+description: "On-call runbooks for the Loop control plane and data plane."
+---
+
+# Runbooks
+
+The canonical on-call runbooks are maintained in
+[`loop_implementation/engineering/RUNBOOKS.md`](https://github.com/kwameasare/loop/blob/main/loop_implementation/engineering/RUNBOOKS.md).
+This page mirrors the index so external SRE partners can navigate
+without a repository checkout.
+
+## Control plane
+
+- **CP-API down** — fail open for read traffic; PagerDuty `cp-api-p0`
+  alarm with the bypass procedure.
+- **Auth0 outage** — degrade to read-only sessions for tokens already
+  in `sessionStorage`; reject new logins; banner via
+  [`docs/branch-protection.md`](https://github.com/kwameasare/loop/blob/main/docs/branch-protection.md).
+- **Database failover** — the SCHEMA notes at
+  [`loop_implementation/data/SCHEMA.md`](https://github.com/kwameasare/loop/blob/main/loop_implementation/data/SCHEMA.md)
+  list the read-replica promotion order.
+
+## Data plane
+
+- **Runtime pod OOM** — escalate to the runtime SRE rota; check
+  `loop_implementation/engineering/PERFORMANCE.md` for the budget
+  matrix.
+- **Voice latency spike** — the dedicated
+  [`loop_implementation/engineering/VOICE_LATENCY.md`](https://github.com/kwameasare/loop/blob/main/loop_implementation/engineering/VOICE_LATENCY.md)
+  runbook lists the codec, jitter buffer, and STT/TTS knobs to
+  diagnose first.
+- **Phone number provisioning failure** — see
+  [`loop_implementation/engineering/PHONE_PROVISIONING.md`](https://github.com/kwameasare/loop/blob/main/loop_implementation/engineering/PHONE_PROVISIONING.md).
+
+## DR
+
+- **Region loss** — full DR plan at
+  [`loop_implementation/engineering/DR.md`](https://github.com/kwameasare/loop/blob/main/loop_implementation/engineering/DR.md);
+  the most recent tabletop is at `DR_TABLETOP.md`.
