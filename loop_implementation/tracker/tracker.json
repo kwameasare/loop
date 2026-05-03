@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T19:33:07.690228+00:00",
+    "generated_at": "2026-05-03T19:37:30.496035+00:00",
     "format_version": 2
   },
   "epics": [
@@ -139,7 +139,7 @@
       "name": "Docs site & DevRel",
       "owner": "Eng #6",
       "target": "Rolling",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Quickstart, API ref, examples"
     },
     {
@@ -5621,8 +5621,8 @@
       "epic": "E17",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s915-docs-docs-loop-example-v1-mintli\nSkill: loop_implementation/skills/api/add-rest-endpoint.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-03T19:33:07Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s915-docs-docs-loop-example-v1-mintli (merged + deletable)\nSkill: loop_implementation/skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-03T19:37:30Z (copilot-thor)\nTests: pytest tests/test_docs_mint.py: 7 passed (mint.json, nav coverage, frontmatter, AC checks)\nDocs touched: apps/docs/* (15 MDX pages)\nFollow-ups: none"
     },
     {
       "id": "S916",
