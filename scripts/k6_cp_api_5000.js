@@ -30,6 +30,6 @@ export default function () {
   });
   check(response, {
     "cp-api health is 200": (res) => res.status === 200,
-    "cp-api health is ok": (res) => String(res.body || "").includes('"ok": true'),
+    "cp-api health is ok": (res) => res.json("ok") === true,
   });
 }

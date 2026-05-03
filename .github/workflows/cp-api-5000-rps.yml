@@ -6,7 +6,7 @@ on:
       - ".github/workflows/cp-api-5000-rps.yml"
       - "bench/results/cp_api_5000_rps.json"
       - "infra/helm/loop/**"
-      - "scripts/helm_e2e_smoke_server.py"
+      - "packages/control-plane/**"
       - "scripts/k6_cp_api_5000.js"
   workflow_dispatch:
   schedule:
@@ -29,23 +29,17 @@ jobs:
         with:
           cluster_name: loop-cp-api-rps
           wait: 60s
-      - name: Build and load smoke image
+      - name: Build and load cp-api image
         run: |
-          cat > /tmp/loop-helm-smoke.Dockerfile <<'DOCKER'
-          FROM python:3.12-alpine
-          COPY scripts/helm_e2e_smoke_server.py /server.py
-          ENV HELM_SMOKE_PORTS=8080
-          CMD ["python", "/server.py"]
-          DOCKER
-          docker build -f /tmp/loop-helm-smoke.Dockerfile -t loop/helm-smoke:ci .
-          kind load docker-image loop/helm-smoke:ci --name loop-cp-api-rps
+          docker build -f packages/control-plane/Dockerfile -t loop/cp-api:perf .
+          kind load docker-image loop/cp-api:perf --name loop-cp-api-rps
       - name: Install control plane
         run: |
           helm dependency build infra/helm/loop
           helm upgrade --install "$LOOP_RELEASE" infra/helm/loop \
             --namespace "$LOOP_NAMESPACE" --create-namespace --wait --timeout 8m \
             --set global.imageRegistry=loop --set global.imagePullPolicy=IfNotPresent \
-            --set controlPlane.image.repository=helm-smoke --set controlPlane.image.tag=ci \
+            --set controlPlane.image.repository=cp-api --set controlPlane.image.tag=perf \
             --set controlPlane.replicaCount=1 --set runtime.enabled=false \
             --set gateway.enabled=false --set kbEngine.enabled=false --set toolHost.enabled=false \
             --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \

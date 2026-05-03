@@ -6,7 +6,12 @@ on:
       - ".github/workflows/runtime-sse-1000.yml"
       - "bench/results/runtime_sse_1000_concurrency.json"
       - "infra/helm/loop/**"
-      - "scripts/helm_e2e_smoke_server.py"
+      - "packages/control-plane/**"
+      - "packages/data-plane/**"
+      - "packages/gateway/**"
+      - "packages/runtime/**"
+      - "packages/sdk-py/**"
+      - "scripts/openai_sse_fixture.py"
       - "scripts/k6_runtime_sse_1000.js"
   workflow_dispatch:
   schedule:
@@ -30,24 +35,45 @@ jobs:
         with:
           cluster_name: loop-runtime-sse
           wait: 60s
-      - name: Build and load smoke image
+      - name: Build and load runtime image
         run: |
-          cat > /tmp/loop-helm-smoke.Dockerfile <<'DOCKER'
+          docker build -f packages/data-plane/Dockerfile -t loop/dp-runtime:perf .
+          kind load docker-image loop/dp-runtime:perf --name loop-runtime-sse
+      - name: Build and load OpenAI SSE fixture
+        run: |
+          cat > /tmp/loop-openai-sse-fixture.Dockerfile <<'DOCKER'
           FROM python:3.12-alpine
-          COPY scripts/helm_e2e_smoke_server.py /server.py
-          ENV HELM_SMOKE_PORTS=8080,8081,8082,8003
+          COPY scripts/openai_sse_fixture.py /server.py
+          ENV LOOP_OPENAI_FIXTURE_PORT=8089
           CMD ["python", "/server.py"]
           DOCKER
-          docker build -f /tmp/loop-helm-smoke.Dockerfile -t loop/helm-smoke:ci .
-          kind load docker-image loop/helm-smoke:ci --name loop-runtime-sse
+          docker build -f /tmp/loop-openai-sse-fixture.Dockerfile -t loop/openai-sse-fixture:perf .
+          kind load docker-image loop/openai-sse-fixture:perf --name loop-runtime-sse
+      - name: Start OpenAI SSE fixture
+        run: |
+          kubectl create namespace "$LOOP_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n "$LOOP_NAMESPACE" create deployment openai-sse-fixture \
+            --image=loop/openai-sse-fixture:perf \
+            --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n "$LOOP_NAMESPACE" expose deployment openai-sse-fixture \
+            --port=8089 --target-port=8089 \
+            --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n "$LOOP_NAMESPACE" rollout status deploy/openai-sse-fixture --timeout=60s
       - name: Install Loop chart
         run: |
           helm dependency build infra/helm/loop
           helm upgrade --install "$LOOP_RELEASE" infra/helm/loop \
             --namespace "$LOOP_NAMESPACE" --create-namespace --wait --timeout 8m \
             --set global.imageRegistry=loop --set global.imagePullPolicy=IfNotPresent \
-            --set runtime.image.repository=helm-smoke --set runtime.image.tag=ci \
-            --set runtime.replicaCount=1 --set toolHost.enabled=false \
+            --set runtime.image.repository=dp-runtime --set runtime.image.tag=perf \
+            --set runtime.replicaCount=1 --set controlPlane.enabled=false \
+            --set gateway.enabled=false --set kbEngine.enabled=false --set toolHost.enabled=false \
+            --set-string runtime.env[0].name=LOOP_DP_OPENAI_BASE_URL \
+            --set-string runtime.env[0].value=http://openai-sse-fixture:8089 \
+            --set-string runtime.env[1].name=LOOP_GATEWAY_OPENAI_API_KEY \
+            --set-string runtime.env[1].value=perf-fixture-key \
+            --set-string runtime.env[2].name=LOOP_DP_DEFAULT_MODEL \
+            --set-string runtime.env[2].value=gpt-4o-mini \
             --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \
             --set nats.enabled=false --set minio.enabled=false \
             --set clickhouse.enabled=false

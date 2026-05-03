@@ -18,6 +18,8 @@ COPY packages/sdk-py/pyproject.toml ./packages/sdk-py/
 COPY packages/sdk-py/loop ./packages/sdk-py/loop
 COPY packages/gateway/pyproject.toml ./packages/gateway/
 COPY packages/gateway/loop_gateway ./packages/gateway/loop_gateway
+COPY packages/control-plane/pyproject.toml ./packages/control-plane/
+COPY packages/control-plane/loop_control_plane ./packages/control-plane/loop_control_plane
 COPY packages/runtime/pyproject.toml ./packages/runtime/
 COPY packages/runtime/loop_runtime ./packages/runtime/loop_runtime
 COPY packages/data-plane/pyproject.toml ./packages/data-plane/
@@ -25,7 +27,8 @@ COPY packages/data-plane/loop_data_plane ./packages/data-plane/loop_data_plane
 
 RUN uv venv "${VIRTUAL_ENV}" \
     && uv pip install --python "${VIRTUAL_ENV}/bin/python" \
-        ./packages/sdk-py ./packages/gateway ./packages/runtime ./packages/data-plane \
+        ./packages/sdk-py ./packages/gateway ./packages/control-plane \
+        ./packages/runtime ./packages/data-plane \
     && mkdir -p /python-libs \
     && for lib in \
         libbz2.so.1.0 \

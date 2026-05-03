@@ -25,6 +25,10 @@ export default function () {
   const response = http.post(
     `${BASE_URL}/v1/turns/stream`,
     JSON.stringify({
+      workspace_id: "11111111-1111-4111-8111-111111111111",
+      conversation_id: "22222222-2222-4222-8222-222222222222",
+      user_id: "runtime-sse-k6",
+      channel: "web",
       input: "hello from S844 runtime SSE concurrency gate",
       metadata: { smoke: "runtime-sse-1000", path: "sse" },
     }),
