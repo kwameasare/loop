@@ -33,6 +33,12 @@ Naming convention: `LOOP_<DOMAIN>_<NAME>` (e.g. `LOOP_RUNTIME_PORT`). Avoid `_` 
 | `LOOP_CP_REDIS_URL` | `packages/control-plane` `cp-api` settings | S101 |
 | `LOOP_CP_REQUEST_ID_HEADER` | `loop_control_plane.app` request-id echo/error envelope header | S901 |
 | `LOOP_CP_VERSION` | `loop_control_plane.app` `/healthz` and `/version` metadata | S901 |
+| `LOOP_DP_ANTHROPIC_BASE_URL` | `loop_data_plane.runtime_app` Anthropic provider base URL override for integration fixtures | S902 |
+| `LOOP_DP_BUILD_TIME` | `loop_data_plane.runtime_app` `/healthz` and `/version` metadata | S902 |
+| `LOOP_DP_COMMIT_SHA` | `loop_data_plane.runtime_app` `/healthz` and `/version` metadata | S902 |
+| `LOOP_DP_DEFAULT_MODEL` | `loop_data_plane.runtime_app` default TurnExecutor model | S902 |
+| `LOOP_DP_OPENAI_BASE_URL` | `loop_data_plane.runtime_app` OpenAI provider base URL override for integration fixtures | S902 |
+| `LOOP_DP_VERSION` | `loop_data_plane.runtime_app` `/healthz` and `/version` metadata | S902 |
 | `LOOP_RUNTIME_DB_URL` | `packages/data-plane` Alembic `env.py` and runtime settings | S006, S008 |
 | `LOOP_GATEWAY_REQUEST_ID_TTL_SECONDS` | `packages/gateway` idempotency cache | S007 |
 | `LOOP_DEV_BIND` | `infra/docker-compose.yml` — host bind address for service ports (default `127.0.0.1`) | S003 |
@@ -100,6 +106,12 @@ update §1–§11.
 | `LOOP_RUNTIME_MAX_MESSAGE_BYTES` | `16777216` | int | 16 MB; reject above. |
 | `LOOP_RUNTIME_MEMORY_TTL_SESSION_SECONDS` | `86400` | int | 24h default; per-agent override possible. |
 | `LOOP_RUNTIME_WARM_POOL_SIZE` | `5` | int | Pre-spawned agent contexts per pod. |
+| `LOOP_DP_VERSION` | package version | string | `/healthz` and `/version` service version. |
+| `LOOP_DP_COMMIT_SHA` | `0000000-local` | string | `/healthz` and `/version` build commit. |
+| `LOOP_DP_BUILD_TIME` | startup time | string | `/healthz` and `/version` build timestamp. |
+| `LOOP_DP_DEFAULT_MODEL` | `gpt-4o-mini` | string | Default TurnExecutor model when a turn request omits `model`. |
+| `LOOP_DP_OPENAI_BASE_URL` | `https://api.openai.com` | URL | Optional OpenAI-compatible base URL override for local integration fixtures. |
+| `LOOP_DP_ANTHROPIC_BASE_URL` | `https://api.anthropic.com` | URL | Optional Anthropic-compatible base URL override for local integration fixtures. |
 | `LOOP_TOOL_HOST_RUNC_LIVE` | `0` | bool (`0`/`1`) | Opt-in flag for `RuncSandbox` integration tests; live tests skip unless set to `1` and `runc` is on PATH (S916). |
 | `LOOP_TOOL_HOST_TEST_ROOTFS` | (none) | path | Pre-staged OCI rootfs used by the `RuncSandbox` live integration tests (S916). |
 
