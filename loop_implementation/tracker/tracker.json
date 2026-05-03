@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T18:48:01.053188+00:00",
+    "generated_at": "2026-05-03T18:50:03.634748+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5561,13 +5561,13 @@
     {
       "id": "S910",
       "title": "voice: Twilio SIP integration test harness — ready for live phone-number sandbox (closes S387)",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S38",
       "epic": "E7",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: tests/test_voice_phone_call_e2e.py harness; SKIPs without LOOP_TWILIO_TEST_NUMBER+LOOP_TWILIO_ACCOUNT_SID; with creds, dials a number, asserts ASR text contains expected utterance and TTS audio frames received; documents how to provision a Twilio test number in PHONE_PROVISIONING.md. [extends S908]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s910-voice-twilio-sip-integration-tes (merged + deletable)\nSkill: skills/testing/write-e2e-test.md\nFinal heartbeat: 2026-05-03T18:49:09Z (codex-vega)\nTests: Twilio phone harness tests pass (42 passed, 1 live skip); live dial skips without LOOP_TWILIO_* sandbox env; targeted ruff/format and pyright pass; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format remain baseline-red in unrelated files\nDocs touched: loop_implementation/engineering/PHONE_PROVISIONING.md,loop_implementation/engineering/ENV_REFERENCE.md\nFollow-ups: none"
     },
     {
       "id": "S911",

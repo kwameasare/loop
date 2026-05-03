@@ -4,7 +4,7 @@ owner,CTO
 sprint_length,2 weeks (Sprint 0 is 6w bootstrap)
 epics_total,20
 stories_total,500
-stories_done,475
+stories_done,476
 stories_in_progress,0
 stories_blocked,11
 sprints_total,39
