@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T18:14:08.019612+00:00",
+    "generated_at": "2026-05-03T18:22:36.844103+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5572,13 +5572,13 @@
     {
       "id": "S911",
       "title": "docs: fix check_docs_links failures — 5 missing refs + broken bug-bounty link",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S38",
       "epic": "E17",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: docs/index.md references THREAT_MODEL.md, site/PARTNER_REVIEWS.md, site/bug-bounty.md, site/data-retention.md, site/pricing-verification.md; site/bug-bounty.md broken link to acknowledgements.md fixed; uv run python tools/check_docs_links.py exits 0; tests/test_docs_links.py passes."
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s911-docs-fix-check-docs-links-failur\nSkill: loop_implementation/skills/_base/skill.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-03T18:22:36Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S912",
