@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T19:20:23.369609+00:00",
+    "generated_at": "2026-05-03T19:25:58.274826+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5528,13 +5528,13 @@
     {
       "id": "S907",
       "title": "examples: support_agent imports + run_local.py wired against G2/G3 + real LLM",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S38",
       "epic": "E11",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: from-loop.sdk import broken paths fixed (use loop.agents.Agent); examples/support_agent/run_local.py 'where is order 4172?' streams a real OpenAI/Anthropic response with lookup_order tool call; docs/quickstart.md updated to reflect the working invocation. [extends S901, S902, S906]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s907-examples-support-agent-imports-r (merged + deletable)\nSkill: loop_implementation/skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-03T19:25:58Z (copilot-thor)\nTests: examples/support_agent/_tests/test_run_local.py (7 passed)\nDocs touched: docs/quickstart.md\nFollow-ups: none"
     },
     {
       "id": "S908",
