@@ -1506,11 +1506,12 @@ Follow-ups: none"
 S903,cli: HttpxControlPlaneTransport replaces _DefaultTransport so loop login/deploy/eval reach cp-api,copilot-thor,S38,E11,2,P0,In progress,"**Active.**
 Branch: copilot-thor/s903-cli-httpxcontrolplanetransport-r
 Skill: loop_implementation/skills/api/add-rest-endpoint.md
-Last step: 2/4
-Heartbeat: 2026-05-03T19:17:30Z (copilot-thor)
+Last step: 3/4
+Heartbeat: 2026-05-03T19:20:10Z (copilot-thor)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: ENV_REFERENCE: LOOP_CP_API_URL + LOOP_CP_API_TIMEOUT
 Latest checkpoint: VCR-style cassette tests via httpx.MockTransport
 Latest checkpoint: HttpxControlPlaneTransport class + LOOP_CP_API_URL default"
 S904,terraform: aws-loop-stack module + envs/staging-aws-us-east-2 (validation blocked by S002),tbd,S38,E12,3,P0,Not started,"AC: infra/terraform/modules/aws-loop-stack/{main,variables,outputs}.tf provisions EKS+RDS+ElastiCache+S3+KMS+CloudFront; tf validate + tflint clean; values-aws-staging.yaml renders helm chart against module outputs. Real apply remains blocked by S002 cloud accounts. [extends S770]"
