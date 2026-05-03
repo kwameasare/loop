@@ -99,6 +99,9 @@ update §1–§11.
 | `LOOP_GATEWAY_PORT` | `8001` | int | HTTP listen port. |
 | `LOOP_GATEWAY_OPENAI_API_KEY` | (per workspace via Vault) | string | Default key if no workspace key set. |
 | `LOOP_GATEWAY_ANTHROPIC_API_KEY` | (per workspace via Vault) | string | Same. |
+| `LOOP_GATEWAY_HTTP_TIMEOUT_SECONDS` | `30` | float | S906 real provider stream timeout for OpenAI/Anthropic `httpx` calls. |
+| `LOOP_GATEWAY_HTTP_MAX_RETRIES` | `2` | int | S906 retry count for provider 429/5xx/timeout failures. |
+| `LOOP_GATEWAY_LIVE_TESTS` | (unset) | bool | Set to `1` to run live OpenAI/Anthropic smoke tests instead of cassette replay. |
 | `LOOP_GATEWAY_BEDROCK_PROFILE` | (none) | string | If using AWS Bedrock. |
 | `LOOP_GATEWAY_VLLM_URL` | (none) | URL | Self-hosted vLLM endpoint. |
 | `LOOP_GATEWAY_CACHE_TTL_SECONDS` | `604800` | int | 7 days for semantic cache. |
