@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T19:38:00.269134+00:00",
+    "generated_at": "2026-05-03T19:41:09.191295+00:00",
     "format_version": 2
   },
   "epics": [
@@ -91,7 +91,7 @@
       "name": "CLI & SDKs",
       "owner": "Eng #1+5",
       "target": "MVP M6",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Python core, Go CLI; TS gen later"
     },
     {
@@ -5610,8 +5610,8 @@
       "epic": "E11",
       "points": 2,
       "priority": "P1",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s914-demo-scripts-demo-5-scripted-dem\nSkill: loop_implementation/skills/api/add-rest-endpoint.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-03T19:38:00Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s914-demo-scripts-demo-5-scripted-dem (merged + deletable)\nSkill: loop_implementation/skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-03T19:41:09Z (copilot-thor)\nTests: pytest tests/test_demo_scripts.py: 12 passed\nDocs touched: scripts/demo/README.md\nFollow-ups: none"
     },
     {
       "id": "S915",

@@ -9,7 +9,7 @@ E7,Voice subsystem,Eng #3,MVP M6,In progress,WebRTC + STT + TTS + barge-in. Sub-
 E8,Eval harness,Eng #4,MVP M6,Done,"8 scorers, replay, registry"
 E9,Observability backend,Eng #4,MVP M6,Done,OTel + ClickHouse + Studio dashboards
 E10,Studio (UI),Eng #5,MVP M6,Done,"Conversations, traces, replay, costs"
-E11,CLI & SDKs,Eng #1+5,MVP M6,In progress,"Python core, Go CLI; TS gen later"
+E11,CLI & SDKs,Eng #1+5,MVP M6,Done,"Python core, Go CLI; TS gen later"
 E12,Cloud control plane,Eng #2,MVP M6,In progress,"Auth, billing, deploy, multi-tenant"
 E13,Self-host (docker-compose + Helm),Eng #2,M7,Done,"Compose at MVP, Helm at M7"
 E14,Multi-agent orchestration,Eng #1,M9,Done,"Supervisor, Pipeline, Parallel, AgentGraph"
