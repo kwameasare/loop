@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T18:30:50.194644+00:00",
+    "generated_at": "2026-05-03T18:40:09.114887+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5539,13 +5539,13 @@
     {
       "id": "S908",
       "title": "voice: Deepgram + ElevenLabs WS clients hit real APIs; existing protocol seams + cassettes",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S38",
       "epic": "E7",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: asr_deepgram.py opens wss to api.deepgram.com with proper auth + audio framing; tts_elevenlabs.py opens wss with proper streaming protocol; cassette-based unit tests + opt-in live test gated on LOOP_VOICE_LIVE_TESTS=1. [extends S651, S652]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s908-voice-deepgram-elevenlabs-ws-cli (merged + deletable)\nSkill: skills/coding/implement-channel-adapter.md\nFinal heartbeat: 2026-05-03T18:39:22Z (codex-vega)\nTests: voice package tests pass (132 passed, 1 live skip); touched ruff/format pass; targeted pyright on voice websocket code/tests pass; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format remain baseline-red in unrelated files\nDocs touched: loop_implementation/architecture/ARCHITECTURE.md,loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/engineering/VOICE_LATENCY.md\nFollow-ups: none"
     },
     {
       "id": "S909",

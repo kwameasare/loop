@@ -1,8 +1,8 @@
 """Deepgram streaming ASR adapter (S361).
 
-Loop never opens a Deepgram websocket directly. Production injects an
-``AsyncWebSocket`` transport (httpx_ws or websockets); tests inject a
-fake. The adapter handles:
+Loop opens a Deepgram websocket through the production ``websockets``
+transport by default. Callers can still inject an ``AsyncWebSocket``
+factory for connection pooling or cassette tests. The adapter handles:
 
 * framing PCM ``AudioFrame``s into Deepgram's binary protocol,
 * parsing JSON transcripts (partials + ``is_final`` + ``speech_final``),
@@ -15,11 +15,12 @@ from __future__ import annotations
 
 import contextlib
 import json
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from dataclasses import dataclass, field
 from typing import Any, Protocol, cast, runtime_checkable
 
 from loop_voice.models import AudioFrame, Transcript
+from loop_voice.ws_transport import open_provider_websocket
 
 
 class DeepgramError(RuntimeError):
@@ -39,7 +40,7 @@ class AsyncWebSocket(Protocol):
     async def aclose(self) -> None: ...
 
 
-WebSocketFactory = Any  # async def (url, headers) -> AsyncWebSocket
+WebSocketFactory = Callable[[str, dict[str, str]], Awaitable[AsyncWebSocket]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,18 +130,19 @@ def parse_deepgram_message(raw: str) -> Transcript | None:
 
 @dataclass(slots=True)
 class DeepgramSpeechToText:
-    """Streaming ASR backed by a caller-supplied websocket factory."""
+    """Streaming ASR backed by Deepgram's websocket API."""
 
     config: DeepgramConfig
-    open_ws: Any  # async (url, headers) -> AsyncWebSocket
+    open_ws: WebSocketFactory | None = None
     base_url: str = "wss://api.deepgram.com"
     _ws: AsyncWebSocket | None = field(default=None, init=False)
 
     async def transcribe(self, audio: AsyncIterator[AudioFrame]) -> AsyncIterator[Transcript]:
         url = deepgram_url(self.config, base=self.base_url)
         headers = {"Authorization": f"Token {self.config.api_key}"}
+        opener = self.open_ws or open_provider_websocket
         try:
-            ws = await self.open_ws(url, headers)
+            ws = await opener(url, headers)
         except Exception as exc:
             raise DeepgramError(f"ws open failed: {exc}") from exc
         self._ws = ws
@@ -182,6 +184,7 @@ __all__ = [
     "DeepgramConfig",
     "DeepgramError",
     "DeepgramSpeechToText",
+    "WebSocketFactory",
     "deepgram_url",
     "parse_deepgram_message",
 ]

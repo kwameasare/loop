@@ -277,6 +277,12 @@ Latency budget p50 ≤ 700 ms total:
    Network:       100 ms
 ```
 
+<!-- S908 -->
+Deepgram STT and ElevenLabs TTS adapters open provider websocket
+connections with the `websockets` runtime dependency by default, sending
+provider auth headers on the real wire path. The adapter-level `open_ws`
+seam remains for warm pooling, cassette replay, and failure injection.
+
 ### 4.3 Eval-gated deploy
 
 ```

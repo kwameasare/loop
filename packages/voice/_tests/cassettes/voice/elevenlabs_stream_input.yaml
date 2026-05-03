@@ -1,0 +1,11 @@
+provider: elevenlabs
+request:
+  url: "wss://api.elevenlabs.io/v1/text-to-speech/voice-cassette/stream-input?model_id=eleven_turbo_v2_5&output_format=pcm_16000&optimize_streaming_latency=3"
+  header_names:
+    - xi-api-key
+  header_prefixes:
+    xi-api-key: ""
+response_frames:
+  - '{"audio":"UENNX0E="}'
+  - '{"audio":"UENNX0I="}'
+  - '{"isFinal":true}'

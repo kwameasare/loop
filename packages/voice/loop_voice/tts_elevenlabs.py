@@ -2,8 +2,8 @@
 
 ElevenLabs streams MP3 / PCM frames over a websocket; we frame them
 into Loop ``AudioFrame``s with monotonically-increasing sequence
-numbers. The transport (ws factory) is injected so unit tests don't
-hit the network.
+numbers. Production uses Loop's real websocket opener, while tests and
+connection pools can still inject a websocket factory.
 """
 
 from __future__ import annotations
@@ -11,10 +11,10 @@ from __future__ import annotations
 import json
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any
 
-from loop_voice.asr_deepgram import AsyncWebSocket
+from loop_voice.asr_deepgram import AsyncWebSocket, WebSocketFactory
 from loop_voice.models import AudioFrame
+from loop_voice.ws_transport import open_provider_websocket
 
 
 class ElevenLabsError(RuntimeError):
@@ -59,14 +59,15 @@ class ElevenLabsTextToSpeech:
     """Streaming TTS over ElevenLabs websocket."""
 
     config: ElevenLabsConfig
-    open_ws: Any  # async (url, headers) -> AsyncWebSocket
+    open_ws: WebSocketFactory | None = None
     base_url: str = "wss://api.elevenlabs.io"
 
     async def synthesize(self, text: str) -> AsyncIterator[AudioFrame]:
         url = elevenlabs_url(self.config, base=self.base_url)
         headers = {"xi-api-key": self.config.api_key}
+        opener = self.open_ws or open_provider_websocket
         try:
-            ws: AsyncWebSocket = await self.open_ws(url, headers)
+            ws: AsyncWebSocket = await opener(url, headers)
         except Exception as exc:
             raise ElevenLabsError(f"ws open failed: {exc}") from exc
 
