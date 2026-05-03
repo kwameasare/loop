@@ -114,9 +114,21 @@ jobs:
             kubectl -n "$LOOP_NAMESPACE" logs job/runtime-sse-k6 || true
             exit 1
           fi
+          # Job condition=complete means k6 thresholds passed (k6 exits non-zero
+          # on breach → Job condition would be `failed`, not `complete`). The
+          # gate is satisfied at this point.
           kubectl -n "$LOOP_NAMESPACE" logs job/runtime-sse-k6
-          pod=$(kubectl -n "$LOOP_NAMESPACE" get pod -l job-name=runtime-sse-k6 -o jsonpath='{.items[0].metadata.name}')
-          kubectl -n "$LOOP_NAMESPACE" cp "$pod:/tmp/runtime-sse-1000-summary.json" /tmp/runtime-sse-1000-summary.json
+          # Best-effort artifact capture. After wait --for=condition=complete the
+          # k6 pod has transitioned to phase=Succeeded which makes kubectl cp /
+          # exec fail with "cannot exec into a container in a completed pod".
+          # Don't let that mask a passing gate; just emit a placeholder.
+          pod=$(kubectl -n "$LOOP_NAMESPACE" get pod -l job-name=runtime-sse-k6 -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+          if [ -n "$pod" ] && kubectl -n "$LOOP_NAMESPACE" cp "$pod:/tmp/runtime-sse-1000-summary.json" /tmp/runtime-sse-1000-summary.json 2>/tmp/cp-err; then
+            echo "captured summary from $pod"
+          else
+            echo "summary not retrievable post-completion ($(cat /tmp/cp-err 2>/dev/null || echo 'no error log'))"
+            echo '{"note":"k6 thresholds passed; summary not retrievable from completed pod","captured_at":"'"$(date -Iseconds)"'"}' > /tmp/runtime-sse-1000-summary.json
+          fi
       - name: Check runtime memory
         run: |
           pod=$(kubectl -n "$LOOP_NAMESPACE" get pod -l app.kubernetes.io/component=runtime -o jsonpath='{.items[0].metadata.name}')
