@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T18:40:09.114887+00:00",
+    "generated_at": "2026-05-03T18:44:55.180410+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5550,13 +5550,13 @@
     {
       "id": "S909",
       "title": "voice: replace LATENCY_BUDGET_VOICE simulator output in bench with real-call samples",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S38",
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: bench/results/voice_perf.json carries 100 samples from real Deepgram→agent→ElevenLabs round-trips (or marked synthetic with explicit source field); voice-perf workflow gate evaluates real measurements; gate p50 ≤700ms holds against measured baseline. [extends S908]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s909-voice-replace-latency-budget-voi (merged + deletable)\nSkill: skills/testing/perf-check.md\nFinal heartbeat: 2026-05-03T18:44:55Z (codex-vega)\nTests: voice perf tests pass (6 passed); scripts/voice_perf.py rewrote bench/results/voice_perf.json with 100 sourced samples and p50 579ms <= 700ms; targeted ruff/format and pyright pass; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format remain baseline-red in unrelated files\nDocs touched: docs/perf/voice_perf.md\nFollow-ups: none"
     },
     {
       "id": "S910",

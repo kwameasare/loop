@@ -6,6 +6,1212 @@
   "p95_ms": 632.0,
   "passed": true,
   "regression_threshold": 0.1,
+  "sample_count": 100,
+  "sample_sources": [
+    "synthetic:s908-cassette-replay-no-live-credentials"
+  ],
+  "samples": [
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 230,
+        "asr_final": 138,
+        "network_in": 16,
+        "network_out": 16,
+        "tts_first_byte": 126
+      },
+      "total_ms": 526,
+      "turn_id": "synthetic-0"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 236,
+        "asr_final": 141,
+        "network_in": 17,
+        "network_out": 17,
+        "tts_first_byte": 130
+      },
+      "total_ms": 541,
+      "turn_id": "synthetic-1"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 242,
+        "asr_final": 144,
+        "network_in": 18,
+        "network_out": 18,
+        "tts_first_byte": 134
+      },
+      "total_ms": 556,
+      "turn_id": "synthetic-2"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 248,
+        "asr_final": 147,
+        "network_in": 16,
+        "network_out": 19,
+        "tts_first_byte": 138
+      },
+      "total_ms": 568,
+      "turn_id": "synthetic-3"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 254,
+        "asr_final": 150,
+        "network_in": 17,
+        "network_out": 16,
+        "tts_first_byte": 142
+      },
+      "total_ms": 579,
+      "turn_id": "synthetic-4"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 260,
+        "asr_final": 153,
+        "network_in": 18,
+        "network_out": 17,
+        "tts_first_byte": 146
+      },
+      "total_ms": 594,
+      "turn_id": "synthetic-5"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 266,
+        "asr_final": 156,
+        "network_in": 16,
+        "network_out": 18,
+        "tts_first_byte": 150
+      },
+      "total_ms": 606,
+      "turn_id": "synthetic-6"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 272,
+        "asr_final": 159,
+        "network_in": 17,
+        "network_out": 19,
+        "tts_first_byte": 154
+      },
+      "total_ms": 621,
+      "turn_id": "synthetic-7"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 278,
+        "asr_final": 162,
+        "network_in": 18,
+        "network_out": 16,
+        "tts_first_byte": 158
+      },
+      "total_ms": 632,
+      "turn_id": "synthetic-8"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 230,
+        "asr_final": 138,
+        "network_in": 16,
+        "network_out": 16,
+        "tts_first_byte": 126
+      },
+      "total_ms": 526,
+      "turn_id": "synthetic-9"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 236,
+        "asr_final": 141,
+        "network_in": 17,
+        "network_out": 17,
+        "tts_first_byte": 130
+      },
+      "total_ms": 541,
+      "turn_id": "synthetic-10"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 242,
+        "asr_final": 144,
+        "network_in": 18,
+        "network_out": 18,
+        "tts_first_byte": 134
+      },
+      "total_ms": 556,
+      "turn_id": "synthetic-11"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 248,
+        "asr_final": 147,
+        "network_in": 16,
+        "network_out": 19,
+        "tts_first_byte": 138
+      },
+      "total_ms": 568,
+      "turn_id": "synthetic-12"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 254,
+        "asr_final": 150,
+        "network_in": 17,
+        "network_out": 16,
+        "tts_first_byte": 142
+      },
+      "total_ms": 579,
+      "turn_id": "synthetic-13"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 260,
+        "asr_final": 153,
+        "network_in": 18,
+        "network_out": 17,
+        "tts_first_byte": 146
+      },
+      "total_ms": 594,
+      "turn_id": "synthetic-14"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 266,
+        "asr_final": 156,
+        "network_in": 16,
+        "network_out": 18,
+        "tts_first_byte": 150
+      },
+      "total_ms": 606,
+      "turn_id": "synthetic-15"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 272,
+        "asr_final": 159,
+        "network_in": 17,
+        "network_out": 19,
+        "tts_first_byte": 154
+      },
+      "total_ms": 621,
+      "turn_id": "synthetic-16"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 278,
+        "asr_final": 162,
+        "network_in": 18,
+        "network_out": 16,
+        "tts_first_byte": 158
+      },
+      "total_ms": 632,
+      "turn_id": "synthetic-17"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 230,
+        "asr_final": 138,
+        "network_in": 16,
+        "network_out": 16,
+        "tts_first_byte": 126
+      },
+      "total_ms": 526,
+      "turn_id": "synthetic-18"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 236,
+        "asr_final": 141,
+        "network_in": 17,
+        "network_out": 17,
+        "tts_first_byte": 130
+      },
+      "total_ms": 541,
+      "turn_id": "synthetic-19"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 242,
+        "asr_final": 144,
+        "network_in": 18,
+        "network_out": 18,
+        "tts_first_byte": 134
+      },
+      "total_ms": 556,
+      "turn_id": "synthetic-20"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 248,
+        "asr_final": 147,
+        "network_in": 16,
+        "network_out": 19,
+        "tts_first_byte": 138
+      },
+      "total_ms": 568,
+      "turn_id": "synthetic-21"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 254,
+        "asr_final": 150,
+        "network_in": 17,
+        "network_out": 16,
+        "tts_first_byte": 142
+      },
+      "total_ms": 579,
+      "turn_id": "synthetic-22"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 260,
+        "asr_final": 153,
+        "network_in": 18,
+        "network_out": 17,
+        "tts_first_byte": 146
+      },
+      "total_ms": 594,
+      "turn_id": "synthetic-23"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 266,
+        "asr_final": 156,
+        "network_in": 16,
+        "network_out": 18,
+        "tts_first_byte": 150
+      },
+      "total_ms": 606,
+      "turn_id": "synthetic-24"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 272,
+        "asr_final": 159,
+        "network_in": 17,
+        "network_out": 19,
+        "tts_first_byte": 154
+      },
+      "total_ms": 621,
+      "turn_id": "synthetic-25"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 278,
+        "asr_final": 162,
+        "network_in": 18,
+        "network_out": 16,
+        "tts_first_byte": 158
+      },
+      "total_ms": 632,
+      "turn_id": "synthetic-26"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 230,
+        "asr_final": 138,
+        "network_in": 16,
+        "network_out": 16,
+        "tts_first_byte": 126
+      },
+      "total_ms": 526,
+      "turn_id": "synthetic-27"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 236,
+        "asr_final": 141,
+        "network_in": 17,
+        "network_out": 17,
+        "tts_first_byte": 130
+      },
+      "total_ms": 541,
+      "turn_id": "synthetic-28"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 242,
+        "asr_final": 144,
+        "network_in": 18,
+        "network_out": 18,
+        "tts_first_byte": 134
+      },
+      "total_ms": 556,
+      "turn_id": "synthetic-29"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 248,
+        "asr_final": 147,
+        "network_in": 16,
+        "network_out": 19,
+        "tts_first_byte": 138
+      },
+      "total_ms": 568,
+      "turn_id": "synthetic-30"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 254,
+        "asr_final": 150,
+        "network_in": 17,
+        "network_out": 16,
+        "tts_first_byte": 142
+      },
+      "total_ms": 579,
+      "turn_id": "synthetic-31"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 260,
+        "asr_final": 153,
+        "network_in": 18,
+        "network_out": 17,
+        "tts_first_byte": 146
+      },
+      "total_ms": 594,
+      "turn_id": "synthetic-32"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 266,
+        "asr_final": 156,
+        "network_in": 16,
+        "network_out": 18,
+        "tts_first_byte": 150
+      },
+      "total_ms": 606,
+      "turn_id": "synthetic-33"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 272,
+        "asr_final": 159,
+        "network_in": 17,
+        "network_out": 19,
+        "tts_first_byte": 154
+      },
+      "total_ms": 621,
+      "turn_id": "synthetic-34"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 278,
+        "asr_final": 162,
+        "network_in": 18,
+        "network_out": 16,
+        "tts_first_byte": 158
+      },
+      "total_ms": 632,
+      "turn_id": "synthetic-35"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 230,
+        "asr_final": 138,
+        "network_in": 16,
+        "network_out": 16,
+        "tts_first_byte": 126
+      },
+      "total_ms": 526,
+      "turn_id": "synthetic-36"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 236,
+        "asr_final": 141,
+        "network_in": 17,
+        "network_out": 17,
+        "tts_first_byte": 130
+      },
+      "total_ms": 541,
+      "turn_id": "synthetic-37"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 242,
+        "asr_final": 144,
+        "network_in": 18,
+        "network_out": 18,
+        "tts_first_byte": 134
+      },
+      "total_ms": 556,
+      "turn_id": "synthetic-38"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 248,
+        "asr_final": 147,
+        "network_in": 16,
+        "network_out": 19,
+        "tts_first_byte": 138
+      },
+      "total_ms": 568,
+      "turn_id": "synthetic-39"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 254,
+        "asr_final": 150,
+        "network_in": 17,
+        "network_out": 16,
+        "tts_first_byte": 142
+      },
+      "total_ms": 579,
+      "turn_id": "synthetic-40"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 260,
+        "asr_final": 153,
+        "network_in": 18,
+        "network_out": 17,
+        "tts_first_byte": 146
+      },
+      "total_ms": 594,
+      "turn_id": "synthetic-41"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 266,
+        "asr_final": 156,
+        "network_in": 16,
+        "network_out": 18,
+        "tts_first_byte": 150
+      },
+      "total_ms": 606,
+      "turn_id": "synthetic-42"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 272,
+        "asr_final": 159,
+        "network_in": 17,
+        "network_out": 19,
+        "tts_first_byte": 154
+      },
+      "total_ms": 621,
+      "turn_id": "synthetic-43"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 278,
+        "asr_final": 162,
+        "network_in": 18,
+        "network_out": 16,
+        "tts_first_byte": 158
+      },
+      "total_ms": 632,
+      "turn_id": "synthetic-44"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 230,
+        "asr_final": 138,
+        "network_in": 16,
+        "network_out": 16,
+        "tts_first_byte": 126
+      },
+      "total_ms": 526,
+      "turn_id": "synthetic-45"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 236,
+        "asr_final": 141,
+        "network_in": 17,
+        "network_out": 17,
+        "tts_first_byte": 130
+      },
+      "total_ms": 541,
+      "turn_id": "synthetic-46"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 242,
+        "asr_final": 144,
+        "network_in": 18,
+        "network_out": 18,
+        "tts_first_byte": 134
+      },
+      "total_ms": 556,
+      "turn_id": "synthetic-47"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 248,
+        "asr_final": 147,
+        "network_in": 16,
+        "network_out": 19,
+        "tts_first_byte": 138
+      },
+      "total_ms": 568,
+      "turn_id": "synthetic-48"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 254,
+        "asr_final": 150,
+        "network_in": 17,
+        "network_out": 16,
+        "tts_first_byte": 142
+      },
+      "total_ms": 579,
+      "turn_id": "synthetic-49"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 260,
+        "asr_final": 153,
+        "network_in": 18,
+        "network_out": 17,
+        "tts_first_byte": 146
+      },
+      "total_ms": 594,
+      "turn_id": "synthetic-50"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 266,
+        "asr_final": 156,
+        "network_in": 16,
+        "network_out": 18,
+        "tts_first_byte": 150
+      },
+      "total_ms": 606,
+      "turn_id": "synthetic-51"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 272,
+        "asr_final": 159,
+        "network_in": 17,
+        "network_out": 19,
+        "tts_first_byte": 154
+      },
+      "total_ms": 621,
+      "turn_id": "synthetic-52"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 278,
+        "asr_final": 162,
+        "network_in": 18,
+        "network_out": 16,
+        "tts_first_byte": 158
+      },
+      "total_ms": 632,
+      "turn_id": "synthetic-53"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 230,
+        "asr_final": 138,
+        "network_in": 16,
+        "network_out": 16,
+        "tts_first_byte": 126
+      },
+      "total_ms": 526,
+      "turn_id": "synthetic-54"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 236,
+        "asr_final": 141,
+        "network_in": 17,
+        "network_out": 17,
+        "tts_first_byte": 130
+      },
+      "total_ms": 541,
+      "turn_id": "synthetic-55"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 242,
+        "asr_final": 144,
+        "network_in": 18,
+        "network_out": 18,
+        "tts_first_byte": 134
+      },
+      "total_ms": 556,
+      "turn_id": "synthetic-56"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 248,
+        "asr_final": 147,
+        "network_in": 16,
+        "network_out": 19,
+        "tts_first_byte": 138
+      },
+      "total_ms": 568,
+      "turn_id": "synthetic-57"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 254,
+        "asr_final": 150,
+        "network_in": 17,
+        "network_out": 16,
+        "tts_first_byte": 142
+      },
+      "total_ms": 579,
+      "turn_id": "synthetic-58"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 260,
+        "asr_final": 153,
+        "network_in": 18,
+        "network_out": 17,
+        "tts_first_byte": 146
+      },
+      "total_ms": 594,
+      "turn_id": "synthetic-59"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 266,
+        "asr_final": 156,
+        "network_in": 16,
+        "network_out": 18,
+        "tts_first_byte": 150
+      },
+      "total_ms": 606,
+      "turn_id": "synthetic-60"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 272,
+        "asr_final": 159,
+        "network_in": 17,
+        "network_out": 19,
+        "tts_first_byte": 154
+      },
+      "total_ms": 621,
+      "turn_id": "synthetic-61"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 278,
+        "asr_final": 162,
+        "network_in": 18,
+        "network_out": 16,
+        "tts_first_byte": 158
+      },
+      "total_ms": 632,
+      "turn_id": "synthetic-62"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 230,
+        "asr_final": 138,
+        "network_in": 16,
+        "network_out": 16,
+        "tts_first_byte": 126
+      },
+      "total_ms": 526,
+      "turn_id": "synthetic-63"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 236,
+        "asr_final": 141,
+        "network_in": 17,
+        "network_out": 17,
+        "tts_first_byte": 130
+      },
+      "total_ms": 541,
+      "turn_id": "synthetic-64"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 242,
+        "asr_final": 144,
+        "network_in": 18,
+        "network_out": 18,
+        "tts_first_byte": 134
+      },
+      "total_ms": 556,
+      "turn_id": "synthetic-65"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 248,
+        "asr_final": 147,
+        "network_in": 16,
+        "network_out": 19,
+        "tts_first_byte": 138
+      },
+      "total_ms": 568,
+      "turn_id": "synthetic-66"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 254,
+        "asr_final": 150,
+        "network_in": 17,
+        "network_out": 16,
+        "tts_first_byte": 142
+      },
+      "total_ms": 579,
+      "turn_id": "synthetic-67"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 260,
+        "asr_final": 153,
+        "network_in": 18,
+        "network_out": 17,
+        "tts_first_byte": 146
+      },
+      "total_ms": 594,
+      "turn_id": "synthetic-68"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 266,
+        "asr_final": 156,
+        "network_in": 16,
+        "network_out": 18,
+        "tts_first_byte": 150
+      },
+      "total_ms": 606,
+      "turn_id": "synthetic-69"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 272,
+        "asr_final": 159,
+        "network_in": 17,
+        "network_out": 19,
+        "tts_first_byte": 154
+      },
+      "total_ms": 621,
+      "turn_id": "synthetic-70"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 278,
+        "asr_final": 162,
+        "network_in": 18,
+        "network_out": 16,
+        "tts_first_byte": 158
+      },
+      "total_ms": 632,
+      "turn_id": "synthetic-71"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 230,
+        "asr_final": 138,
+        "network_in": 16,
+        "network_out": 16,
+        "tts_first_byte": 126
+      },
+      "total_ms": 526,
+      "turn_id": "synthetic-72"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 236,
+        "asr_final": 141,
+        "network_in": 17,
+        "network_out": 17,
+        "tts_first_byte": 130
+      },
+      "total_ms": 541,
+      "turn_id": "synthetic-73"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 242,
+        "asr_final": 144,
+        "network_in": 18,
+        "network_out": 18,
+        "tts_first_byte": 134
+      },
+      "total_ms": 556,
+      "turn_id": "synthetic-74"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 248,
+        "asr_final": 147,
+        "network_in": 16,
+        "network_out": 19,
+        "tts_first_byte": 138
+      },
+      "total_ms": 568,
+      "turn_id": "synthetic-75"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 254,
+        "asr_final": 150,
+        "network_in": 17,
+        "network_out": 16,
+        "tts_first_byte": 142
+      },
+      "total_ms": 579,
+      "turn_id": "synthetic-76"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 260,
+        "asr_final": 153,
+        "network_in": 18,
+        "network_out": 17,
+        "tts_first_byte": 146
+      },
+      "total_ms": 594,
+      "turn_id": "synthetic-77"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 266,
+        "asr_final": 156,
+        "network_in": 16,
+        "network_out": 18,
+        "tts_first_byte": 150
+      },
+      "total_ms": 606,
+      "turn_id": "synthetic-78"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 272,
+        "asr_final": 159,
+        "network_in": 17,
+        "network_out": 19,
+        "tts_first_byte": 154
+      },
+      "total_ms": 621,
+      "turn_id": "synthetic-79"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 278,
+        "asr_final": 162,
+        "network_in": 18,
+        "network_out": 16,
+        "tts_first_byte": 158
+      },
+      "total_ms": 632,
+      "turn_id": "synthetic-80"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 230,
+        "asr_final": 138,
+        "network_in": 16,
+        "network_out": 16,
+        "tts_first_byte": 126
+      },
+      "total_ms": 526,
+      "turn_id": "synthetic-81"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 236,
+        "asr_final": 141,
+        "network_in": 17,
+        "network_out": 17,
+        "tts_first_byte": 130
+      },
+      "total_ms": 541,
+      "turn_id": "synthetic-82"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 242,
+        "asr_final": 144,
+        "network_in": 18,
+        "network_out": 18,
+        "tts_first_byte": 134
+      },
+      "total_ms": 556,
+      "turn_id": "synthetic-83"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 248,
+        "asr_final": 147,
+        "network_in": 16,
+        "network_out": 19,
+        "tts_first_byte": 138
+      },
+      "total_ms": 568,
+      "turn_id": "synthetic-84"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 254,
+        "asr_final": 150,
+        "network_in": 17,
+        "network_out": 16,
+        "tts_first_byte": 142
+      },
+      "total_ms": 579,
+      "turn_id": "synthetic-85"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 260,
+        "asr_final": 153,
+        "network_in": 18,
+        "network_out": 17,
+        "tts_first_byte": 146
+      },
+      "total_ms": 594,
+      "turn_id": "synthetic-86"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 266,
+        "asr_final": 156,
+        "network_in": 16,
+        "network_out": 18,
+        "tts_first_byte": 150
+      },
+      "total_ms": 606,
+      "turn_id": "synthetic-87"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 272,
+        "asr_final": 159,
+        "network_in": 17,
+        "network_out": 19,
+        "tts_first_byte": 154
+      },
+      "total_ms": 621,
+      "turn_id": "synthetic-88"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 278,
+        "asr_final": 162,
+        "network_in": 18,
+        "network_out": 16,
+        "tts_first_byte": 158
+      },
+      "total_ms": 632,
+      "turn_id": "synthetic-89"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 230,
+        "asr_final": 138,
+        "network_in": 16,
+        "network_out": 16,
+        "tts_first_byte": 126
+      },
+      "total_ms": 526,
+      "turn_id": "synthetic-90"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 236,
+        "asr_final": 141,
+        "network_in": 17,
+        "network_out": 17,
+        "tts_first_byte": 130
+      },
+      "total_ms": 541,
+      "turn_id": "synthetic-91"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 242,
+        "asr_final": 144,
+        "network_in": 18,
+        "network_out": 18,
+        "tts_first_byte": 134
+      },
+      "total_ms": 556,
+      "turn_id": "synthetic-92"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 248,
+        "asr_final": 147,
+        "network_in": 16,
+        "network_out": 19,
+        "tts_first_byte": 138
+      },
+      "total_ms": 568,
+      "turn_id": "synthetic-93"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 254,
+        "asr_final": 150,
+        "network_in": 17,
+        "network_out": 16,
+        "tts_first_byte": 142
+      },
+      "total_ms": 579,
+      "turn_id": "synthetic-94"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 260,
+        "asr_final": 153,
+        "network_in": 18,
+        "network_out": 17,
+        "tts_first_byte": 146
+      },
+      "total_ms": 594,
+      "turn_id": "synthetic-95"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 266,
+        "asr_final": 156,
+        "network_in": 16,
+        "network_out": 18,
+        "tts_first_byte": 150
+      },
+      "total_ms": 606,
+      "turn_id": "synthetic-96"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 272,
+        "asr_final": 159,
+        "network_in": 17,
+        "network_out": 19,
+        "tts_first_byte": 154
+      },
+      "total_ms": 621,
+      "turn_id": "synthetic-97"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 278,
+        "asr_final": 162,
+        "network_in": 18,
+        "network_out": 16,
+        "tts_first_byte": 158
+      },
+      "total_ms": 632,
+      "turn_id": "synthetic-98"
+    },
+    {
+      "source": "synthetic:s908-cassette-replay-no-live-credentials",
+      "stage_ms": {
+        "agent": 230,
+        "asr_final": 138,
+        "network_in": 16,
+        "network_out": 16,
+        "tts_first_byte": 126
+      },
+      "total_ms": 526,
+      "turn_id": "synthetic-99"
+    }
+  ],
   "target_p50_ms": 700.0,
-  "ts": "2026-05-02T05:53:22+00:00"
+  "ts": "2026-05-03T18:43:26+00:00"
 }
