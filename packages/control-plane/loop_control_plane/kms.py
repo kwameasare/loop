@@ -70,7 +70,51 @@ class InMemoryKMS:
         return bytes(byte ^ key[index % len(key)] for index, byte in enumerate(body))
 
 
-def build_kms_backend(backend: str) -> KMS:
+def build_kms_backend(backend: str, **kwargs: object) -> KMS:
+    """Construct a KMS backend by name.
+
+    The ``vault_transit`` backend dispatches to
+    :func:`loop_control_plane.vault_transit.build_vault_transit_kms`
+    when called with a ``config=VaultTransitConfig(...)`` kwarg. Without
+    the kwarg we fall back to :class:`InMemoryKMS` so unit tests that
+    don't care about real Vault still get a deterministic backend.
+
+    Other named backends (``aws_kms``, ``azure_key_vault``, ``gcp_kms``,
+    ``alicloud_kms``) currently use :class:`InMemoryKMS`; their real
+    implementations land in S905 + follow-ups.
+    """
     if backend not in KMS_BACKENDS:
         raise KMSError(f"unsupported KMS backend: {backend}")
+    if backend == "vault_transit" and "config" in kwargs:
+        # Lazy import — vault_transit.py imports hvac lazily inside its
+        # own factory, but importing the module itself is free.
+        from .vault_transit import VaultTransitConfig, build_vault_transit_kms
+
+        config = kwargs["config"]
+        if not isinstance(config, VaultTransitConfig):
+            raise KMSError(
+                f"vault_transit config must be a VaultTransitConfig; got "
+                f"{type(config).__name__}"
+            )
+        client = kwargs.get("client")
+        return build_vault_transit_kms(
+            config,
+            client=client,  # type: ignore[arg-type]
+        )
+    if backend == "aws_kms" and "config" in kwargs:
+        # Lazy import — aws_backends.py imports boto3 lazily inside its
+        # own factory, but importing the module itself is free.
+        from .aws_backends import AwsKmsConfig, build_aws_kms_backend
+
+        config = kwargs["config"]
+        if not isinstance(config, AwsKmsConfig):
+            raise KMSError(
+                f"aws_kms config must be an AwsKmsConfig; got "
+                f"{type(config).__name__}"
+            )
+        client = kwargs.get("client")
+        return build_aws_kms_backend(
+            config,
+            client=client,  # type: ignore[arg-type]
+        )
     return InMemoryKMS(backend=backend)

@@ -127,8 +127,14 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"_tests/**" = ["S", "ASYNC", "N"]
-"tests/**" = ["S", "ASYNC", "N", "E402"]
+# `**/_tests/**` matches every package's _tests directory (e.g.
+# `packages/control-plane/_tests/...`). The previous bare `_tests/**`
+# only matched a top-level `_tests/` dir that never existed in the
+# repo — the rules were silently inactive on package tests. RUF043
+# is added because pytest.raises match= patterns are regex-evaluated
+# but rarely use raw strings.
+"**/_tests/**" = ["S", "ASYNC", "N", "RUF043"]
+"tests/**" = ["S", "ASYNC", "N", "E402", "RUF043"]
 # build_tracker.py uses typographic en-dashes ("Wk 1–6", "engineers 1–4")
 # in deliberate display strings that match the HANDBOOK style.
 "tools/build_tracker.py" = ["RUF001"]

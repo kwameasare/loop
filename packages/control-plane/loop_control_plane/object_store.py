@@ -77,7 +77,36 @@ class InMemoryObjectStore:
         return self._uploads[upload_id]
 
 
-def build_object_store_backend(backend: str) -> ObjectStore:
+def build_object_store_backend(backend: str, **kwargs: object) -> ObjectStore:
+    """Construct an object-store backend by name.
+
+    The ``s3`` backend dispatches to
+    :func:`loop_control_plane.aws_backends.build_s3_object_store` when
+    called with a ``config=S3Config(...)`` kwarg. Without the kwarg we
+    fall back to :class:`InMemoryObjectStore` so unit tests get a
+    deterministic backend.
+
+    Other named backends (``azure-blob``, ``gcs``, ``oss``, ``swift``,
+    ``minio``) currently use :class:`InMemoryObjectStore`. Their real
+    implementations land in S38 follow-ups.
+    """
     if backend not in OBJECT_STORE_BACKENDS:
         raise ObjectStoreError(f"unsupported object store backend: {backend}")
-    return InMemoryObjectStore(backend=backend, endpoint=f"https://{backend}.objects.loop.test")
+    if backend == "s3" and "config" in kwargs:
+        # Lazy import — aws_backends.py imports boto3 lazily inside its
+        # own factory, but importing the module itself is free.
+        from .aws_backends import S3Config, build_s3_object_store
+
+        config = kwargs["config"]
+        if not isinstance(config, S3Config):
+            raise ObjectStoreError(
+                f"s3 config must be an S3Config; got {type(config).__name__}"
+            )
+        client = kwargs.get("client")
+        return build_s3_object_store(
+            config,
+            client=client,  # type: ignore[arg-type]
+        )
+    return InMemoryObjectStore(
+        backend=backend, endpoint=f"https://{backend}.objects.loop.test"
+    )

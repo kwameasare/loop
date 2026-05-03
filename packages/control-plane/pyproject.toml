@@ -15,6 +15,22 @@ dependencies = [
     "uvicorn>=0.30",
 ]
 
+[project.optional-dependencies]
+# `vault` extra wires the Vault-transit KMS backend (S918). Install with:
+#   uv pip install -e 'packages/control-plane[vault]'
+# Only required if LOOP_KMS_BACKEND=vault_transit.
+vault = ["hvac>=2.3"]
+# `saml` extra wires the production PySAML2Validator (S917) for real
+# SAML signature verification. Requires the xmlsec1 system package
+# (`brew install libxmlsec1` on macOS, `apt install xmlsec1` on Debian).
+# Only required if LOOP_SAML_USE_PYSAML2=1.
+saml = ["pysaml2>=7.5"]
+# `aws` extra wires the boto3-backed AWS KMS + S3 backends (S905).
+# Required when LOOP_KMS_BACKEND=aws_kms or LOOP_OBJSTORE_BACKEND=s3
+# in production. Install with:
+#   uv pip install -e 'packages/control-plane[aws]'
+aws = ["boto3>=1.35"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

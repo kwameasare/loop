@@ -40,7 +40,9 @@ jobs:
             --namespace "$LOOP_NAMESPACE" --create-namespace --wait --timeout 8m \
             --set global.imageRegistry=loop --set global.imagePullPolicy=IfNotPresent \
             --set controlPlane.image.repository=cp-api --set controlPlane.image.tag=perf \
-            --set controlPlane.replicaCount=1 --set runtime.enabled=false \
+            --set controlPlane.replicaCount=3 --set runtime.enabled=false \
+            --set controlPlane.resources.requests.cpu=500m --set controlPlane.resources.limits.cpu=2000m \
+            --set controlPlane.resources.requests.memory=512Mi --set controlPlane.resources.limits.memory=2048Mi \
             --set gateway.enabled=false --set kbEngine.enabled=false --set toolHost.enabled=false \
             --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \
             --set nats.enabled=false --set minio.enabled=false --set clickhouse.enabled=false

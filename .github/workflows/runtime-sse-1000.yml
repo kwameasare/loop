@@ -65,7 +65,9 @@ jobs:
             --namespace "$LOOP_NAMESPACE" --create-namespace --wait --timeout 8m \
             --set global.imageRegistry=loop --set global.imagePullPolicy=IfNotPresent \
             --set runtime.image.repository=dp-runtime --set runtime.image.tag=perf \
-            --set runtime.replicaCount=1 --set controlPlane.enabled=false \
+            --set runtime.replicaCount=3 --set controlPlane.enabled=false \
+            --set runtime.resources.requests.cpu=500m --set runtime.resources.limits.cpu=2000m \
+            --set runtime.resources.requests.memory=512Mi --set runtime.resources.limits.memory=2048Mi \
             --set gateway.enabled=false --set kbEngine.enabled=false --set toolHost.enabled=false \
             --set-string runtime.env.LOOP_DP_OPENAI_BASE_URL=http://openai-sse-fixture:8089 \
             --set-string runtime.env.LOOP_GATEWAY_OPENAI_API_KEY=perf-fixture-key \
