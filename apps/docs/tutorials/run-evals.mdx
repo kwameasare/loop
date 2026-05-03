@@ -1,0 +1,55 @@
+---
+title: "Run evals in CI"
+description: "Pin agent behaviour with a recorded suite and gate deploys on green evals."
+---
+
+# Run evals in CI
+
+Loop treats evaluation as a tier-1 build artefact. Every agent ships
+with a suite under `evals/` that runs on:
+
+- **Pull requests** — branch protection blocks merge on a red suite.
+- **Pre-deploy** — `loop deploy` refuses to publish an agent whose
+  evals have regressed.
+- **Nightly cron** — drift watchdog catches model-behaviour changes
+  introduced upstream by the provider.
+
+<Steps>
+  <Step title="Author a suite">
+    Create `evals/turns.yaml`:
+
+    ```yaml
+    turns:
+      - name: order_lookup_happy_path
+        input: "where is order 4172?"
+        assert:
+          response_contains: ["in_transit", "2026-05-02"]
+          must_call_tool: lookup_order
+          max_cost_usd: 0.05
+    ```
+  </Step>
+  <Step title="Run locally">
+    ```bash
+    uv run python examples/support_agent/run_eval.py
+    ```
+  </Step>
+  <Step title="Wire CI">
+    Add a workflow step:
+
+    ```yaml
+    - name: Eval support agent
+      run: uv run python examples/support_agent/run_eval.py
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    ```
+  </Step>
+  <Step title="Inspect failures">
+    The studio's
+    [`/evals`](https://studio.loop.example/evals) view renders the
+    full diff: which assertion failed, the model's response, and the
+    trace span tree.
+  </Step>
+</Steps>
+
+The harness internals are documented at
+[`docs/concepts/eval.md`](https://github.com/kwameasare/loop/blob/main/docs/concepts/eval.md).

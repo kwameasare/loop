@@ -1,0 +1,43 @@
+---
+title: "API Reference"
+description: "Loop control-plane API generated from OpenAPI."
+---
+
+# API Reference
+
+The Loop control plane is described by the OpenAPI document at
+[`loop_implementation/api/openapi.yaml`](https://github.com/kwameasare/loop/blob/main/loop_implementation/api/openapi.yaml).
+That file is the single source of truth — both the TypeScript SDK
+under [`apps/studio/src/lib/cp-api/generated`](https://github.com/kwameasare/loop/tree/main/apps/studio/src/lib/cp-api)
+and the Python SDK under
+[`packages/sdk-py/`](https://github.com/kwameasare/loop/tree/main/packages/sdk-py)
+are regenerated from it on every commit via
+`tools/gen_openapi_ts.py` and `tools/gen_ts_sdk.py`.
+
+## Surface highlights
+
+- **`POST /v1/auth/exchange`** — exchange an Auth0 ID token for a
+  short-lived Loop session token. Used by the studio after the PKCE
+  callback.
+- **`POST /v1/agents`** / **`GET /v1/agents/{id}`** — agent CRUD.
+- **`POST /v1/turns`** — invoke an agent for a single turn; streams
+  SSE deltas back.
+- **`GET /v1/traces/{id}`** — fetch a recorded trace span tree.
+- **`POST /v1/evals/{suite_id}/runs`** — kick off an eval run.
+
+## Generating client code
+
+```bash
+# TypeScript (studio):
+pnpm --filter @loop/studio gen:cp-api
+
+# Python (loop CLI + SDK):
+uv run python tools/gen_ts_sdk.py
+```
+
+## Authentication
+
+All non-`/v1/auth/*` endpoints require a `Authorization: Bearer
+<session>` header where `<session>` is the token returned by
+`/v1/auth/exchange`. Tokens expire in one hour; the studio refreshes
+silently via the Auth0 SDK and re-exchanges on rotation.

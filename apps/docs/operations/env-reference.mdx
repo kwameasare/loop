@@ -1,0 +1,27 @@
+---
+title: "Environment reference"
+description: "All LOOP_* environment variables, what consumes them, and where they come from."
+---
+
+# Environment reference
+
+The canonical environment-variable catalogue lives in
+[`loop_implementation/engineering/ENV_REFERENCE.md`](https://github.com/kwameasare/loop/blob/main/loop_implementation/engineering/ENV_REFERENCE.md)
+and is the single source of truth — every new variable must land
+there in the same PR that introduces it.
+
+A high-level summary:
+
+| Prefix | Scope | Examples |
+| --- | --- | --- |
+| `LOOP_CP_*` | Control-plane API | `LOOP_CP_API_URL`, `LOOP_CP_API_TIMEOUT` |
+| `LOOP_AUTH0_*` | Studio Auth0 wiring | `LOOP_AUTH0_DOMAIN`, `LOOP_AUTH0_CLIENT_ID`, `LOOP_AUTH0_AUDIENCE` |
+| `LOOP_DEMO_*` | Nightly demo smoke | `LOOP_DEMO_URL`, `LOOP_DEMO_QUESTION` |
+| `LOOP_DEV_*` | Local dev convenience | `LOOP_DEV_BIND` |
+| `LOOP_EGRESS_*` | Runtime egress policy | `LOOP_EGRESS_ALLOWLIST` |
+| `LOOP_E2E_*` | E2E test config | `LOOP_E2E_BASE_URL` |
+
+Every row in the reference doc has three columns: variable name,
+**file** that consumes it (so you can `cmd-click` to verify), and the
+story ID that introduced it. Do not infer behaviour from the name —
+read the consuming file.

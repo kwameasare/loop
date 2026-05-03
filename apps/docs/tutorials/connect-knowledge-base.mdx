@@ -1,0 +1,45 @@
+---
+title: "Connect a knowledge base"
+description: "Upload documents, hybrid-search them, and let your agent ground answers."
+---
+
+# Connect a knowledge base
+
+Loop's KB engine
+([`packages/kb-engine/`](https://github.com/kwameasare/loop/tree/main/packages/kb-engine))
+is a hybrid (vector + lexical) index governed by the same RBAC as the
+rest of your workspace. This tutorial wires a static document set into
+the support agent from the previous walkthrough.
+
+<Steps>
+  <Step title="Create a KB">
+    ```bash
+    loop kb create support-faq --workspace acme
+    ```
+  </Step>
+  <Step title="Ingest documents">
+    ```bash
+    loop kb ingest support-faq ./support-faq/*.md
+    ```
+    The CLI chunks, embeds, and indexes each file. A receipt prints
+    the chunk count and the document IDs.
+  </Step>
+  <Step title="Add a retrieval tool">
+    ```python
+    from loop.kb import retrieve
+
+    async def find_kb_answer(query: str) -> dict:
+        hits = await retrieve("support-faq", query, top_k=3)
+        return {"snippets": [h.text for h in hits]}
+    ```
+  </Step>
+  <Step title="Wire it into the agent">
+    Register `find_kb_answer` in your agent's tool list and add a hint
+    to the instructions: *"When the user asks a knowledge question,
+    call `find_kb_answer` before responding."*
+  </Step>
+  <Step title="Verify with an eval">
+    Add a turn to your eval suite that asks a known FAQ question and
+    asserts the agent calls `find_kb_answer` before responding.
+  </Step>
+</Steps>

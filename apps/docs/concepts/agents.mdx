@@ -1,0 +1,39 @@
+---
+title: "Agents"
+description: "The unit of work in Loop: a declarative agent class plus a runtime."
+---
+
+# Agents
+
+A **Loop agent** is a declarative class — name, model, instructions,
+budget — paired with a runtime that orchestrates tool calls, memory
+reads/writes, and channel I/O. Agents are defined in Python via the
+`loop` SDK and deployed to the data-plane runtime.
+
+```python
+from loop.agents import Agent
+
+class SupportAgent(Agent):
+    name = "support"
+    model = "gpt-4o-mini"
+    instructions = "Answer order-status questions politely."
+    max_iterations = 4
+    max_cost_usd = 0.10
+```
+
+## Lifecycle
+
+1. **Define** — subclass `Agent`, declare static fields and tool
+   schemas.
+2. **Test locally** — `examples/support_agent/run_local.py` shows the
+   reference loop: provider streams → tool calls → tool results →
+   final answer.
+3. **Deploy** — `loop deploy` packages the agent and uploads it to the
+   control plane, which schedules pods on the data-plane runtime.
+4. **Observe** — every turn emits a trace span; budgets enforce a
+   hard ceiling.
+
+The full architectural deep-dive lives in
+[`loop_implementation/architecture/ARCHITECTURE.md`](https://github.com/kwameasare/loop/blob/main/loop_implementation/architecture/ARCHITECTURE.md)
+and the canonical concept doc is
+[`docs/concepts/agents.md`](https://github.com/kwameasare/loop/blob/main/docs/concepts/agents.md).

@@ -1,0 +1,27 @@
+---
+title: "Channels"
+description: "Web chat, voice, SMS, email, and Slack — one agent across them all."
+---
+
+# Channels
+
+A Loop **channel** is the transport between an end user and the
+runtime. The same agent definition can answer in multiple channels
+because channel adapters normalise inbound messages into the runtime's
+internal `AgentMessage` shape and translate outbound responses back to
+the channel's wire format.
+
+Out of the box Loop ships:
+
+- **Web chat** — first-party widget served from `apps/studio` and the
+  marketing site.
+- **Voice** — bidirectional WebRTC plus PSTN via the `packages/voice`
+  package and a PHONE_PROVISIONING runbook.
+- **SMS / WhatsApp / RCS** — provider-agnostic adapters under
+  `packages/channels`.
+- **Email** — inbound IMAP / SES; outbound SMTP / SES.
+- **Slack** — bot user that posts in-thread; OAuth scope minimised to
+  channel:history + chat:write.
+
+Latency budgets and SLOs per channel are documented in
+[`docs/concepts/channels.md`](https://github.com/kwameasare/loop/blob/main/docs/concepts/channels.md).
