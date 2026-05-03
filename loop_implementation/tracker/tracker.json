@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T18:24:17.841225+00:00",
+    "generated_at": "2026-05-03T18:27:03.713444+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5577,8 +5577,8 @@
       "epic": "E17",
       "points": 1,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s911-docs-fix-check-docs-links-failur\nSkill: loop_implementation/skills/_base/skill.md\nLast step: 1/1\nHeartbeat: 2026-05-03T18:24:17Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: fix docs/index.md missing refs + add acknowledgements.md"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s911-docs-fix-check-docs-links-failur (merged + deletable)\nSkill: (unspecified)\nFinal heartbeat: 2026-05-03T18:27:03Z (copilot-thor)\nTests: uv run python tools/check_docs_links.py (ok); uv run pytest tests/test_docs_links.py (3 passed); ruff baseline pre-existing on main\nDocs touched: docs/index.md, docs/site/acknowledgements.md\nFollow-ups: none"
     },
     {
       "id": "S912",
