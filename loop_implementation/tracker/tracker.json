@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T19:25:29.227262+00:00",
+    "generated_at": "2026-05-03T19:25:43.492643+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5599,8 +5599,8 @@
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-orion/s913-perf-re-baseline-cp-api-5000-rps\nSkill: skills/testing/perf-check.md\nLast step: 3/4\nHeartbeat: 2026-05-03T19:25:29Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: real service-image perf wiring, tests, and baselines landed"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s913-perf-re-baseline-cp-api-5000-rps (merged + deletable)\nSkill: skills/testing/perf-check.md\nFinal heartbeat: 2026-05-03T19:25:43Z (codex-orion)\nTests: Focused S913 gates passed: uv run ruff check/format --check/pyright scripts/openai_sse_fixture.py tests/test_cp_api_5000_rps.py tests/test_runtime_sse_1000.py tests/test_perf_regression_budget.py; uv run pytest -q tests/test_cp_api_5000_rps.py tests/test_runtime_sse_1000.py tests/test_perf_regression_budget.py (13 passed); workflow YAML parse passed; tracker/docs/checkpoint gates passed; full lifecycle ruff remains baseline-red in unrelated files.\nDocs touched: docs/perf/cp_api_5000_rps.md,docs/perf/runtime_sse_1000_concurrency.md,docs/perf/perf_regression_budget.md\nFollow-ups: none"
     },
     {
       "id": "S914",
