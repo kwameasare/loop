@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T17:36:32.950970+00:00",
+    "generated_at": "2026-05-03T18:14:08.019612+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5517,13 +5517,13 @@
     {
       "id": "S906",
       "title": "gateway: HttpxStreamTransport for OpenAI + Anthropic providers — first real upstream call",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S38",
       "epic": "E2",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: loop_gateway.providers.{openai,anthropic}.stream() calls real api.openai.com/api.anthropic.com via httpx with proper headers, BYO-key resolution, and timeout/retry; vcr-py cassettes recorded; integration test runs a real-token-quota-aware live test gated on LOOP_GATEWAY_LIVE_TESTS=1. [extends S700]"
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s906-gateway-httpxstreamtransport-for\nSkill: skills/coding/implement-llm-gateway-change.md\nLast step: 0/7 (just claimed)\nHeartbeat: 2026-05-03T18:14:07Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S907",
@@ -5980,7 +5980,7 @@
       "theme": "Production-readiness wiring",
       "goal": "FastAPI app objects for cp-api + dp-runtime, real httpx gateway transport, real boto3 KMS+S3, real Deepgram/ElevenLabs WS clients, real RuncSandboxFactory, real PySAML2 signature verification, Vault transit BYO key path, Mintlify docs deploy, demo bundle. Closes the architectural-skeleton-vs-runnable-system gap.",
       "stories": "S900-S919",
-      "status": "Not started"
+      "status": "In progress"
     }
   ],
   "hiring": [

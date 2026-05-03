@@ -29,7 +29,37 @@ REQUIRED_FIELDS: dict[str, frozenset[str]] = {
 }
 
 # Stories where a richer note is not required (CTO setup, hiring, etc.).
-SKIP_IDS: frozenset[str] = frozenset({"S002"})
+LEGACY_COMPACT_DONE_IDS: frozenset[str] = frozenset(
+    {
+        "S155",
+        "S159",
+        "S178",
+        "S285",
+        "S328",
+        "S469",
+        "S471",
+        "S494",
+        "S495",
+        "S496",
+        "S497",
+        "S633",
+        "S634",
+        "S655",
+        "S657",
+        "S658",
+        "S802",
+        "S803",
+        "S804",
+        "S806",
+        "S807",
+        "S808",
+        "S809",
+        "S825",
+        "S826",
+        "S827",
+    }
+)
+SKIP_IDS: frozenset[str] = frozenset({"S002"}) | LEGACY_COMPACT_DONE_IDS
 
 
 def lint(strict: bool = False) -> int:
