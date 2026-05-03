@@ -14,7 +14,7 @@ from testcontainers.postgres import PostgresContainer
 
 pytestmark = pytest.mark.integration
 
-CP_INITIAL_REVISION = "cp_0001_initial"
+CP_HEAD_REVISION = "cp_0006_merge_audit_heads"
 DP_INITIAL_REVISION = "dp_0001_initial"
 APP_DB_USER = "loop_app"
 APP_DB_PASSWORD = "loop_app"  # noqa: S105 - ephemeral testcontainers role.
@@ -38,7 +38,7 @@ def migrated_postgres_engine() -> Iterator[Engine]:
                 url,
                 version_table="alembic_version_cp",
             ),
-            CP_INITIAL_REVISION,
+            "head",
         )
         command.upgrade(
             _migration_config(
@@ -87,6 +87,7 @@ def test_fixture_applies_initial_control_and_data_plane_migrations(
     tables = _table_names(migrated_postgres_engine)
 
     assert {"workspaces", "users", "api_keys", "agents"}.issubset(tables)
+    assert {"audit_log", "audit_events"}.issubset(tables)
     assert {"conversations", "turns", "memory_user", "memory_bot", "tool_calls"}.issubset(tables)
     assert {"alembic_version_cp", "alembic_version_dp"}.issubset(tables)
 
@@ -96,7 +97,7 @@ def test_fixture_records_separate_migration_heads(migrated_postgres_engine: Engi
         cp_revision = conn.scalar(text("SELECT version_num FROM alembic_version_cp"))
         dp_revision = conn.scalar(text("SELECT version_num FROM alembic_version_dp"))
 
-    assert cp_revision == CP_INITIAL_REVISION
+    assert cp_revision == CP_HEAD_REVISION
     assert dp_revision == DP_INITIAL_REVISION
 
 
