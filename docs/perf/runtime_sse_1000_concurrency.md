@@ -5,7 +5,9 @@ against a single `dp-runtime` pod. S913 moved the gate off the historical
 `helm_e2e_smoke_server.py` placeholder: the workflow now builds
 `packages/data-plane/Dockerfile`, loads `loop/dp-runtime:perf` into kind,
 and measures the real `loop_data_plane.runtime_app` FastAPI/Uvicorn
-container. A tiny OpenAI-compatible SSE fixture supplies upstream model
+container. k6 runs as an in-cluster Job against `svc/loop-loop-runtime`
+so the 1000-VU gate does not measure a local `kubectl port-forward`
+bottleneck. A tiny OpenAI-compatible SSE fixture supplies upstream model
 frames so the runtime still uses its real httpx gateway path without
 spending live provider quota.
 

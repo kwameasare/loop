@@ -52,13 +52,18 @@ def test_runtime_sse_workflow_runs_k6_and_memory_probe() -> None:
     assert job["env"]["LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES"] == "4294967296"
     assert "packages/data-plane/Dockerfile -t loop/dp-runtime:perf" in runs
     assert "scripts/openai_sse_fixture.py" in runs
+    assert "grafana/k6:0.50.0" in runs
+    assert "http://loop-loop-runtime:8081" in runs
+    assert "runtime-sse-k6" in runs
+    assert 'kubectl -n "$LOOP_NAMESPACE" cp' in runs
     assert "LOOP_DP_OPENAI_BASE_URL" in runs
     assert "LOOP_GATEWAY_OPENAI_API_KEY" in runs
     assert "runtime.env.LOOP_DP_OPENAI_BASE_URL" in runs
     assert "runtime.env[0]" not in runs
     assert "runtime.image.repository=dp-runtime" in runs
     assert "helm_e2e_smoke_server.py" not in WORKFLOW.read_text()
-    assert "k6 run --summary-export /tmp/runtime-sse-1000-summary.json" in runs
+    assert "--summary-export" in runs
+    assert "/tmp/runtime-sse-1000-summary.json" in runs
     assert "scripts/k6_runtime_sse_1000.js" in runs
     assert "memory.current" in runs
     assert "LOOP_ONCALL_WEBHOOK_URL" in runs
@@ -78,6 +83,7 @@ def test_runtime_sse_contract_result_matches_budgets() -> None:
     assert result["name"] == "runtime_sse_1000_concurrency"
     assert result["stats"]["concurrent_turns"] == 1000
     assert result["stats"]["p95_ms"] > 1.0
+    assert result["measurement"]["load_driver"].startswith("in-cluster grafana/k6")
     assert result["measurement"]["target"].startswith("actual loop_data_plane.runtime_app")
     assert result["stats"]["p95_ms"] < result["budgets"]["p95_ms"]
     assert result["stats"]["memory_bytes"] < result["budgets"]["memory_bytes"]

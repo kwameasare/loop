@@ -11,6 +11,7 @@
   "measurement": {
     "image": "loop/dp-runtime:perf",
     "image_source": "packages/data-plane/Dockerfile",
+    "load_driver": "in-cluster grafana/k6 Job against svc/loop-loop-runtime",
     "provider_fixture": "scripts/openai_sse_fixture.py",
     "previous_invalid_target": "scripts/helm_e2e_smoke_server.py",
     "target": "actual loop_data_plane.runtime_app FastAPI/Uvicorn container"

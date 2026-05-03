@@ -30,7 +30,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: azure/setup-helm@v4
-      - uses: grafana/setup-k6-action@v1
       - uses: helm/kind-action@v1.10.0
         with:
           cluster_name: loop-runtime-sse
@@ -77,14 +76,45 @@ jobs:
       - name: Run 1000 SSE turns
         run: |
           kubectl -n "$LOOP_NAMESPACE" rollout status deploy/loop-loop-runtime --timeout=90s
-          kubectl -n "$LOOP_NAMESPACE" port-forward svc/loop-loop-runtime 18082:8081 >/tmp/runtime-sse.log 2>&1 &
-          pf_pid=$!
-          trap 'kill "$pf_pid"' EXIT
-          for _ in $(seq 1 30); do
-            curl -fsS "$LOOP_RUNTIME_SSE_BASE_URL/healthz" >/dev/null && break
-            sleep 1
-          done
-          k6 run --summary-export /tmp/runtime-sse-1000-summary.json scripts/k6_runtime_sse_1000.js
+          kubectl -n "$LOOP_NAMESPACE" create configmap runtime-sse-k6 \
+            --from-file=k6_runtime_sse_1000.js=scripts/k6_runtime_sse_1000.js \
+            --dry-run=client -o yaml | kubectl apply -f -
+          cat <<'YAML' | kubectl -n "$LOOP_NAMESPACE" apply -f -
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: runtime-sse-k6
+          spec:
+            backoffLimit: 0
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: k6
+                    image: grafana/k6:0.50.0
+                    env:
+                      - name: LOOP_RUNTIME_SSE_BASE_URL
+                        value: http://loop-loop-runtime:8081
+                    args:
+                      - run
+                      - --summary-export
+                      - /tmp/runtime-sse-1000-summary.json
+                      - /scripts/k6_runtime_sse_1000.js
+                    volumeMounts:
+                      - name: runtime-sse-script
+                        mountPath: /scripts
+                volumes:
+                  - name: runtime-sse-script
+                    configMap:
+                      name: runtime-sse-k6
+          YAML
+          if ! kubectl -n "$LOOP_NAMESPACE" wait --for=condition=complete job/runtime-sse-k6 --timeout=4m; then
+            kubectl -n "$LOOP_NAMESPACE" logs job/runtime-sse-k6 || true
+            exit 1
+          fi
+          kubectl -n "$LOOP_NAMESPACE" logs job/runtime-sse-k6
+          pod=$(kubectl -n "$LOOP_NAMESPACE" get pod -l job-name=runtime-sse-k6 -o jsonpath='{.items[0].metadata.name}')
+          kubectl -n "$LOOP_NAMESPACE" cp "$pod:/tmp/runtime-sse-1000-summary.json" /tmp/runtime-sse-1000-summary.json
       - name: Check runtime memory
         run: |
           pod=$(kubectl -n "$LOOP_NAMESPACE" get pod -l app.kubernetes.io/component=runtime -o jsonpath='{.items[0].metadata.name}')

@@ -12,6 +12,11 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
+class HighConcurrencyServer(ThreadingHTTPServer):
+    daemon_threads = True
+    request_queue_size = 4096
+
+
 class OpenAISseFixture(BaseHTTPRequestHandler):
     server_version = "loop-openai-sse-fixture/0.1"
 
@@ -52,7 +57,7 @@ class OpenAISseFixture(BaseHTTPRequestHandler):
 
 
 def make_server(port: int) -> ThreadingHTTPServer:
-    return ThreadingHTTPServer(("0.0.0.0", port), OpenAISseFixture)  # noqa: S104
+    return HighConcurrencyServer(("0.0.0.0", port), OpenAISseFixture)  # noqa: S104
 
 
 def main() -> None:
