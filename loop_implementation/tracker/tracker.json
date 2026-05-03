@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T18:30:50.194644+00:00",
+    "generated_at": "2026-05-03T18:39:47.984404+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5539,13 +5539,13 @@
     {
       "id": "S908",
       "title": "voice: Deepgram + ElevenLabs WS clients hit real APIs; existing protocol seams + cassettes",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S38",
       "epic": "E7",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: asr_deepgram.py opens wss to api.deepgram.com with proper auth + audio framing; tts_elevenlabs.py opens wss with proper streaming protocol; cassette-based unit tests + opt-in live test gated on LOOP_VOICE_LIVE_TESTS=1. [extends S651, S652]"
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-vega/s908-voice-deepgram-elevenlabs-ws-cli\nSkill: skills/coding/implement-channel-adapter.md\nLast step: 0/7 (just claimed)\nHeartbeat: 2026-05-03T18:30:38Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S909",
