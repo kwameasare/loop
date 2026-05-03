@@ -44,6 +44,8 @@ Naming convention: `LOOP_<DOMAIN>_<NAME>` (e.g. `LOOP_RUNTIME_PORT`). Avoid `_` 
 | `LOOP_DEV_BIND` | `infra/docker-compose.yml` — host bind address for service ports (default `127.0.0.1`) | S003 |
 | `LOOP_EGRESS_ALLOWLIST` | `infra/k8s/sandbox/pod-template.yaml` — comma-separated CIDR list mounted into Firecracker pods | S014 |
 | `LOOP_CP_API_BASE_URL` | `apps/studio/src/lib/cp-api.ts` — runtime CP API URL (server-side; complements `NEXT_PUBLIC_LOOP_API_URL` for browser-side fetches) | S010 |
+| `LOOP_CP_API_URL` | `packages/sdk-py/loop/cli.py` — `HttpxControlPlaneTransport` base URL the `loop` CLI dials for `login`/`init`/`deploy`/`logs`/`eval`/`secrets`/`release`. When unset the CLI falls back to `OfflineTransport`, which raises `RuntimeError`. | S903 |
+| `LOOP_CP_API_TIMEOUT` | `packages/sdk-py/loop/cli.py` — float seconds for the `HttpxControlPlaneTransport` HTTP timeout (default `30`). | S903 |
 | `LOOP_DEMO_URL` | `scripts/e2e_web_smoke.py` / `.github/workflows/e2e-web-smoke.yml` — published demo base URL for nightly first-chat smoke | S181 |
 | `LOOP_DEMO_CHAT_ENDPOINT` | `scripts/e2e_web_smoke.py` — optional absolute chat endpoint override; defaults to `${LOOP_DEMO_URL}/api/chat` | S181 |
 | `LOOP_DEMO_QUESTION` | `scripts/e2e_web_smoke.py` — visitor question posted by the nightly demo smoke (default `"What is Loop?"`) | S181 |
@@ -52,6 +54,7 @@ Naming convention: `LOOP_<DOMAIN>_<NAME>` (e.g. `LOOP_RUNTIME_PORT`). Avoid `_` 
 | `LOOP_DEMO_TOKEN` | `scripts/e2e_web_smoke.py` — optional bearer token for protected demo environments | S181 |
 | `LOOP_CLOUD` | `.github/workflows/cross-cloud-smoke.yml` — cloud label injected into Helm smoke pods for the AWS/Azure/GCP nightly matrix | S780 |
 | `LOOP_ONCALL_WEBHOOK_URL` | `.github/workflows/cross-cloud-smoke.yml`, `.github/workflows/turn-latency-k6.yml` — GitHub Actions secret receiving JSON page payloads when smoke or performance gates fail | S780, S840 |
+| `LOOP_OPENAI_FIXTURE_PORT` | `scripts/openai_sse_fixture.py` — listen port for the OpenAI-compatible SSE fixture used by the S913 runtime performance workflow | S913 |
 | `LOOP_TURN_LATENCY_BASE_URL` | `scripts/k6_turn_latency.js` / `.github/workflows/turn-latency-k6.yml` — base URL for the S840 text-turn k6 latency gate | S840 |
 
 > Note — **`LOOP_WORKSPACE_ID` is not an env var.** It is a Postgres

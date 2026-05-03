@@ -1,0 +1,13 @@
+request:
+  method: POST
+  path: /v1/workspaces
+  headers:
+    accept: application/json
+    authorization: "Bearer <REDACTED>"
+    content-type: application/json
+  body: '{"name": "acme"}'
+response:
+  status_code: 201
+  headers:
+    content-type: application/json
+  body: '{"id": "ws_42", "name": "acme", "created_at": 1900000000}'

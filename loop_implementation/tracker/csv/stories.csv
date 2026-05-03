@@ -1503,7 +1503,14 @@ Final heartbeat: 2026-05-03T19:03:53Z (codex-orion)
 Tests: Focused S902 gates pass: uv run ruff check/format + pyright on dp runtime app/test/smoke files; uv run pytest -q packages/data-plane/_tests/test_runtime_app.py tests/test_runtime_smoke.py packages/runtime/_tests/test_turn_executor.py packages/runtime/_tests/test_runtime_pass8.py tests/test_runtime_baseline_100rpm.py tests/test_runtime_sse_1000.py (39 passed); tracker/docs/checkpoint gates pass. Full lifecycle ruff remains baseline-red in unrelated control-plane/kb/tools files.
 Docs touched: loop_implementation/api/openapi.yaml,loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/architecture/ARCHITECTURE.md
 Follow-ups: none"
-S903,cli: HttpxControlPlaneTransport replaces _DefaultTransport so loop login/deploy/eval reach cp-api,tbd,S38,E11,2,P0,Not started,AC: loop login/init/deploy/logs/eval/secrets/release each complete against real cp-api; httpx VCR cassettes recorded; existing CLI unit tests still pass. [extends S901]
+S903,cli: HttpxControlPlaneTransport replaces _DefaultTransport so loop login/deploy/eval reach cp-api,copilot-thor,S38,E11,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s903-cli-httpxcontrolplanetransport-r (merged + deletable)
+Skill: loop_implementation/skills/api/add-rest-endpoint.md
+Final heartbeat: 2026-05-03T19:20:23Z (copilot-thor)
+Tests: packages/sdk-py/_tests/test_cli_pass14.py (10 passed); packages/sdk-py/_tests/test_httpx_cli_transport.py (7 passed); ruff baseline pre-existing on main
+Docs touched: loop_implementation/engineering/ENV_REFERENCE.md
+Follow-ups: none"
 S904,terraform: aws-loop-stack module + envs/staging-aws-us-east-2 (validation blocked by S002),tbd,S38,E12,3,P0,Not started,"AC: infra/terraform/modules/aws-loop-stack/{main,variables,outputs}.tf provisions EKS+RDS+ElastiCache+S3+KMS+CloudFront; tf validate + tflint clean; values-aws-staging.yaml renders helm chart against module outputs. Real apply remains blocked by S002 cloud accounts. [extends S770]"
 S905,kms+s3: AwsKmsBackend(boto3) + S3ObjectStore(boto3) implementations behind existing Protocols,tbd,S38,E12,3,P0,Not started,AC: kms.py registers aws_kms in KMS_BACKENDS with real boto3.client('kms') wiring envelope encrypt/decrypt/rotate; object_store.py registers s3 backend with real boto3.client('s3'); localstack-backed integration tests for both. [extends S904]
 S906,gateway: HttpxStreamTransport for OpenAI + Anthropic providers — first real upstream call,codex-vega,S38,E2,3,P0,Done,"**Done.**
@@ -1539,7 +1546,14 @@ Final heartbeat: 2026-05-03T18:49:09Z (codex-vega)
 Tests: Twilio phone harness tests pass (42 passed, 1 live skip); live dial skips without LOOP_TWILIO_* sandbox env; targeted ruff/format and pyright pass; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format remain baseline-red in unrelated files
 Docs touched: loop_implementation/engineering/PHONE_PROVISIONING.md,loop_implementation/engineering/ENV_REFERENCE.md
 Follow-ups: none"
-S911,docs: fix check_docs_links failures — 5 missing refs + broken bug-bounty link,tbd,S38,E17,1,P0,Not started,"AC: docs/index.md references THREAT_MODEL.md, site/PARTNER_REVIEWS.md, site/bug-bounty.md, site/data-retention.md, site/pricing-verification.md; site/bug-bounty.md broken link to acknowledgements.md fixed; uv run python tools/check_docs_links.py exits 0; tests/test_docs_links.py passes."
+S911,docs: fix check_docs_links failures — 5 missing refs + broken bug-bounty link,copilot-thor,S38,E17,1,P0,Done,"**Done.**
+PR: https://github.com/kwameasare/loop/pull/147
+Branch: copilot-thor/s911-docs-fix-check-docs-links-failur (merged + deletable)
+Skill: loop_implementation/skills/_base/skill.md
+Final heartbeat: 2026-05-03T19:30:00Z (copilot-thor)
+Tests: uv run python tools/check_docs_links.py (ok, 25 files, 24 index links); uv run pytest tests/test_docs_links.py (3 passed); ruff baseline pre-existing on main (126 errors, verified across origin/main commits)
+Docs touched: docs/index.md,docs/site/acknowledgements.md
+Follow-ups: ruff-debt: 126 pre-existing ruff errors on origin/main blocking full gate"
 S912,studio: real Auth0 SPA SDK wiring against tenant; first-time-login flow E2E,tbd,S38,E10,2,P0,Not started,AC: pnpm dev studio + LOOP_AUTH0_DOMAIN + LOOP_AUTH0_CLIENT_ID env vars redirects unauthenticated traffic to Auth0 universal login; on-success callback exchanges code for session via /v1/auth/exchange; logout button clears session; Playwright e2e covers happy path. [extends S901]
 S913,perf: re-baseline cp-api-5000-rps + runtime-sse-1000 against real cp-api/dp-runtime images,codex-orion,S38,E12,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
