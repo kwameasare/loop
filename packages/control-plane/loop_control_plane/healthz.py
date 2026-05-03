@@ -1,3 +1,4 @@
+# perf-gate-trigger: see PR #160 for the kind-runner right-sizing.
 """cp-api healthz facade (S100).
 
 The full FastAPI router lives behind the cp-api process. This module
