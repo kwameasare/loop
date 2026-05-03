@@ -44,6 +44,8 @@ Naming convention: `LOOP_<DOMAIN>_<NAME>` (e.g. `LOOP_RUNTIME_PORT`). Avoid `_` 
 | `LOOP_DEV_BIND` | `infra/docker-compose.yml` — host bind address for service ports (default `127.0.0.1`) | S003 |
 | `LOOP_EGRESS_ALLOWLIST` | `infra/k8s/sandbox/pod-template.yaml` — comma-separated CIDR list mounted into Firecracker pods | S014 |
 | `LOOP_CP_API_BASE_URL` | `apps/studio/src/lib/cp-api.ts` — runtime CP API URL (server-side; complements `NEXT_PUBLIC_LOOP_API_URL` for browser-side fetches) | S010 |
+| `LOOP_CP_API_URL` | `packages/sdk-py/loop/cli.py` — `HttpxControlPlaneTransport` base URL the `loop` CLI dials for `login`/`init`/`deploy`/`logs`/`eval`/`secrets`/`release`. When unset the CLI falls back to `OfflineTransport`, which raises `RuntimeError`. | S903 |
+| `LOOP_CP_API_TIMEOUT` | `packages/sdk-py/loop/cli.py` — float seconds for the `HttpxControlPlaneTransport` HTTP timeout (default `30`). | S903 |
 | `LOOP_DEMO_URL` | `scripts/e2e_web_smoke.py` / `.github/workflows/e2e-web-smoke.yml` — published demo base URL for nightly first-chat smoke | S181 |
 | `LOOP_DEMO_CHAT_ENDPOINT` | `scripts/e2e_web_smoke.py` — optional absolute chat endpoint override; defaults to `${LOOP_DEMO_URL}/api/chat` | S181 |
 | `LOOP_DEMO_QUESTION` | `scripts/e2e_web_smoke.py` — visitor question posted by the nightly demo smoke (default `"What is Loop?"`) | S181 |

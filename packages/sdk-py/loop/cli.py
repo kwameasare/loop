@@ -10,6 +10,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import io
+import json
+import os
 import sys
 import zipfile
 from collections.abc import Iterable
@@ -17,6 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol, TextIO
 
+import httpx
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -91,6 +94,115 @@ class OfflineTransport:
         token: str | None = None,
     ) -> Iterable[str]:
         raise RuntimeError(f"no control-plane transport configured for stream {path}")
+
+
+class ControlPlaneTransportError(RuntimeError):
+    """Raised when the cp-api returns a non-2xx response."""
+
+    def __init__(self, status_code: int, method: str, path: str, body: str) -> None:
+        super().__init__(f"{method} {path} -> HTTP {status_code}: {body[:200]}")
+        self.status_code = status_code
+        self.method = method
+        self.path = path
+        self.body = body
+
+
+class HttpxControlPlaneTransport:
+    """Real cp-api transport over httpx (S903).
+
+    Replaces OfflineTransport when LOOP_CP_API_URL is set. Issues JSON
+    requests against the control-plane FastAPI app (S901) and streams
+    SSE/log lines for the ``stream`` contract.
+    """
+
+    def __init__(
+        self,
+        base_url: str,
+        *,
+        timeout: float = 30.0,
+        client: httpx.Client | None = None,
+    ) -> None:
+        if not base_url:
+            raise ValueError("HttpxControlPlaneTransport requires a non-empty base_url")
+        self._base_url = base_url.rstrip("/")
+        self._owns_client = client is None
+        self._client = client or httpx.Client(base_url=self._base_url, timeout=timeout)
+
+    def close(self) -> None:
+        if self._owns_client:
+            self._client.close()
+
+    def __enter__(self) -> HttpxControlPlaneTransport:
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        self.close()
+
+    def _headers(self, token: str | None) -> dict[str, str]:
+        headers: dict[str, str] = {"accept": "application/json"}
+        if token:
+            headers["authorization"] = f"Bearer {token}"
+        return headers
+
+    def request(
+        self,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, Any] | None = None,
+        token: str | None = None,
+    ) -> dict[str, Any]:
+        url = path if path.startswith("http") else path
+        response = self._client.request(
+            method.upper(),
+            url,
+            json=json_body,
+            headers=self._headers(token),
+        )
+        if response.status_code >= 400:
+            raise ControlPlaneTransportError(
+                response.status_code, method.upper(), path, response.text
+            )
+        if not response.content:
+            return {}
+        try:
+            payload = response.json()
+        except json.JSONDecodeError as exc:
+            raise ControlPlaneTransportError(
+                response.status_code, method.upper(), path, response.text
+            ) from exc
+        if not isinstance(payload, dict):
+            return {"data": payload}
+        return payload
+
+    def stream(
+        self,
+        path: str,
+        *,
+        token: str | None = None,
+    ) -> Iterable[str]:
+        with self._client.stream("GET", path, headers=self._headers(token)) as response:
+            if response.status_code >= 400:
+                body = response.read().decode("utf-8", errors="replace")
+                raise ControlPlaneTransportError(
+                    response.status_code, "GET", path, body
+                )
+            for line in response.iter_lines():
+                if line:
+                    yield line
+
+
+def default_transport() -> ControlPlaneTransport:
+    """Return the real httpx transport when LOOP_CP_API_URL is set.
+
+    Falls back to OfflineTransport so unit tests and ``loop init`` (which
+    needs no network) keep working without configuration.
+    """
+    base_url = os.environ.get("LOOP_CP_API_URL")
+    if not base_url:
+        return OfflineTransport()
+    timeout = float(os.environ.get("LOOP_CP_API_TIMEOUT", "30"))
+    return HttpxControlPlaneTransport(base_url, timeout=timeout)
 
 
 @dataclass(frozen=True)
@@ -364,7 +476,7 @@ def main(
         print(completion_script(args.install_completion), file=out, end="")
         return 0
     ctx = CliContext(
-        transport=transport or OfflineTransport(),
+        transport=transport or default_transport(),
         home=home or Path.home(),
         out=out,
     )
@@ -388,14 +500,18 @@ def main(
 
 __all__ = [
     "ControlPlaneTransport",
+    "ControlPlaneTransportError",
     "Credentials",
     "DeployBundle",
+    "HttpxControlPlaneTransport",
+    "OfflineTransport",
     "ReleaseArtifact",
     "ReleaseManifest",
     "build_parser",
     "build_release_manifest",
     "bundle_project",
     "completion_script",
+    "default_transport",
     "load_credentials",
     "main",
     "save_credentials",
