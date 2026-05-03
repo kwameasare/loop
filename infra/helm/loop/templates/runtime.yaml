@@ -44,6 +44,20 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
           {{- end }}
+          # uvicorn --workers 4 on a CPU-constrained pod takes 15-60s to
+          # import + fork all 4 workers. Startup probe gives that phase
+          # up to 2 minutes (24 × 5s); once it succeeds once, readiness
+          # + liveness take over with the production-tight cadence below.
+          # Mirrors the cp-api template; both apps face the same cold-
+          # start vs liveness-deadline race.
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            failureThreshold: 24
+            timeoutSeconds: 3
           readinessProbe:
             httpGet:
               path: /healthz

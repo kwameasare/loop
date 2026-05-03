@@ -44,6 +44,19 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
           {{- end }}
+          # uvicorn --workers 4 on a CPU-constrained pod takes ~15-90s to
+          # import the 13k-LOC cp-api app into all 4 forked workers. The
+          # startup probe gives that import phase up to 2 minutes (24
+          # × 5s); once it succeeds once, readiness + liveness take over
+          # with the production-tight cadence below.
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            failureThreshold: 24
+            timeoutSeconds: 3
           readinessProbe:
             httpGet:
               path: /healthz
