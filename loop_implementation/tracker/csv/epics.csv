@@ -1,21 +1,21 @@
 id,name,owner,target,status,notes
-E1,Agent runtime core,Eng #1,MVP M6,Done,"Hot path: TurnExecutor, streaming, budgets, idempotency"
-E2,LLM Gateway,Eng #1,MVP M6,Done,"Multi-provider, semantic cache, cost accounting"
-E3,MCP / Tool layer,Eng #1,MVP M6,Done,"Auto-MCP, Firecracker sandboxes, allow-lists"
+E1,Agent runtime core,Eng #1,MVP M6,In progress,"Hot path: TurnExecutor, streaming, budgets, idempotency"
+E2,LLM Gateway,Eng #1,MVP M6,In progress,"Multi-provider, semantic cache, cost accounting"
+E3,MCP / Tool layer,Eng #1,MVP M6,In progress,"Auto-MCP, Firecracker sandboxes, allow-lists"
 E4,Memory tiers,Eng #1,MVP M6,Done,User/session/scratch + episodic at M7
 E5,KB / RAG engine,Eng #1,MVP M6,Done,PDF/web/Notion + hybrid retrieval + vision
 E6,Channel adapters,Eng #7,Rolling,Done,"Web, Slack, WhatsApp, SMS first"
 E7,Voice subsystem,Eng #3,MVP M6,In progress,WebRTC + STT + TTS + barge-in. Sub-700ms p50
 E8,Eval harness,Eng #4,MVP M6,Done,"8 scorers, replay, registry"
 E9,Observability backend,Eng #4,MVP M6,Done,OTel + ClickHouse + Studio dashboards
-E10,Studio (UI),Eng #5,MVP M6,Done,"Conversations, traces, replay, costs"
-E11,CLI & SDKs,Eng #1+5,MVP M6,Done,"Python core, Go CLI; TS gen later"
+E10,Studio (UI),Eng #5,MVP M6,In progress,"Conversations, traces, replay, costs"
+E11,CLI & SDKs,Eng #1+5,MVP M6,In progress,"Python core, Go CLI; TS gen later"
 E12,Cloud control plane,Eng #2,MVP M6,In progress,"Auth, billing, deploy, multi-tenant"
 E13,Self-host (docker-compose + Helm),Eng #2,M7,Done,"Compose at MVP, Helm at M7"
 E14,Multi-agent orchestration,Eng #1,M9,Done,"Supervisor, Pipeline, Parallel, AgentGraph"
 E15,HITL / Operator inbox,Eng #5,M7,Done,"Takeover, shared inbox, CRM connectors"
 E16,Security & compliance (SOC2 Type 1),Sec eng,M12,In progress,"Vanta, audit log, RLS, KMS"
-E17,Docs site & DevRel,Eng #6,Rolling,Done,"Quickstart, API ref, examples"
+E17,Docs site & DevRel,Eng #6,Rolling,In progress,"Quickstart, API ref, examples"
 E18,MCP marketplace,Eng #6,M6,Done,"25 servers at MVP, 200 by M12"
 E19,Pricing & billing,Eng #2,M6,Done,Stripe + 3-meter + cap rules
 E20,"Enterprise (SSO, audit UI, on-prem parity)",Eng #2+sec,M12,In progress,"SAML, residency, BYOK"

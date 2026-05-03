@@ -63,6 +63,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 TRACKER_JSON = ROOT / "loop_implementation" / "tracker" / "tracker.json"
 
+# Local import for the per-agent partition.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _agent_assignments import ASSIGNMENTS, HUMAN_ONLY  # noqa: E402
+
 # Files that many stories touch — picking a story that doesn't conflict
 # with the in-flight set reduces wasted work from merge conflicts.
 HOT_FILES = (
@@ -151,8 +155,13 @@ def _eligible(
     by_id: dict[str, dict[str, Any]],
     closed_sprints: set[str],
     avoid_epics: set[str],
+    assigned_set: frozenset[str] | None,
 ) -> bool:
     if story["status"] != "Not started":
+        return False
+    if story["id"] in HUMAN_ONLY:
+        return False
+    if assigned_set is not None and story["id"] not in assigned_set:
         return False
     if story["sprint"] in closed_sprints:
         return False
@@ -206,6 +215,13 @@ def main() -> int:
         "currently in play. Cheap heuristic, not a hard exclusion.",
     )
     ap.add_argument(
+        "--assigned-to",
+        default=None,
+        help="Filter to stories assigned to this agent in "
+        "tools/_agent_assignments.py (e.g. codex-orion, codex-vega, "
+        "copilot-thor, copilot-titan). Unknown ids match the empty set.",
+    )
+    ap.add_argument(
         "--n",
         type=int,
         default=1,
@@ -226,17 +242,35 @@ def main() -> int:
     closed_sprints = {s["id"] for s in sprints if s["status"] == "Done"}
     avoid_epics = set(args.avoid_epic)
 
+    assigned_set: frozenset[str] | None = None
+    if args.assigned_to:
+        assigned_set = ASSIGNMENTS.get(args.assigned_to, frozenset())
+
     eligible = [
-        s for s in stories if _eligible(s, by_id, closed_sprints, avoid_epics)
+        s for s in stories
+        if _eligible(s, by_id, closed_sprints, avoid_epics, assigned_set)
     ]
     if not eligible:
-        print(
-            "pick_next_story: no eligible story matches the current filters. "
-            "Either every backlog story has unshipped deps or the project is "
-            "finished. Try relaxing --avoid-epic or run "
-            "`python tools/build_tracker.py` to refresh the tracker.",
-            file=sys.stderr,
+        msg = (
+            "pick_next_story: no eligible story matches the current filters."
         )
+        if args.assigned_to:
+            msg += (
+                f" --assigned-to={args.assigned_to} narrows the picker to "
+                f"that agent's queue (size: "
+                f"{len(ASSIGNMENTS.get(args.assigned_to, frozenset()))}); "
+                "every story in the queue may already be Done, In progress, "
+                "or Blocked behind unshipped [extends Sxxx] deps. Run "
+                "`python tools/agent_lifecycle.py status` to confirm, then "
+                "exit cleanly via `agent_lifecycle.py teardown`."
+            )
+        else:
+            msg += (
+                " Either every backlog story has unshipped deps or the "
+                "project is finished. Try relaxing --avoid-epic or run "
+                "`python tools/build_tracker.py` to refresh the tracker."
+            )
+        print(msg, file=sys.stderr)
         return 2
 
     # Hot-file conflict heuristic.
