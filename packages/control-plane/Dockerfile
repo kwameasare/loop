@@ -65,4 +65,8 @@ COPY --from=builder /opt/venv /opt/venv
 USER nonroot:nonroot
 EXPOSE 8080
 ENTRYPOINT ["/opt/venv/bin/python"]
-CMD ["-m", "uvicorn", "loop_control_plane.app:app", "--host", "0.0.0.0", "--port", "8080"]
+# `--workers 4` parallelises the cp-api across CPU cores. cp-api requests
+# are lighter than dp-runtime turns (~1-5ms of in-memory work), so each
+# worker sustains hundreds of RPS; combined with replicaCount=3 in the
+# 5000-RPS perf gate this lands well under the 100ms p95 budget.
+CMD ["-m", "uvicorn", "loop_control_plane.app:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "4"]
