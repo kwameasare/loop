@@ -135,6 +135,11 @@ Twilio (SMS / voice):
 LiveKit (voice):
 - `LOOP_CHANNEL_VOICE_LIVEKIT_URL`, `LOOP_CHANNEL_VOICE_LIVEKIT_API_KEY`, `LOOP_CHANNEL_VOICE_LIVEKIT_API_SECRET`, `LOOP_CHANNEL_VOICE_DEEPGRAM_API_KEY`, `LOOP_CHANNEL_VOICE_TTS_PROVIDER` (`elevenlabs|cartesia|piper`), `LOOP_CHANNEL_VOICE_ELEVENLABS_API_KEY`.
 
+Voice provider clients:
+- `LOOP_VOICE_WS_OPEN_TIMEOUT_SECONDS` (default `10`) caps Deepgram / ElevenLabs websocket handshakes.
+- `LOOP_VOICE_LIVE_TESTS=1` enables live Deepgram + ElevenLabs quota-spending tests.
+- `LOOP_VOICE_DEEPGRAM_API_KEY`, `LOOP_VOICE_ELEVENLABS_API_KEY`, `LOOP_VOICE_ELEVENLABS_VOICE_ID` are used by the opt-in live voice test. Production may continue to source provider keys from the channel-scoped `LOOP_CHANNEL_VOICE_*` variables or Vault-backed config.
+
 ## 5. Control plane (`cp-api`, `cp-billing`, `cp-deploy-controller`)
 
 | Variable | Default | Description |
