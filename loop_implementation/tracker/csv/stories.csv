@@ -1512,11 +1512,12 @@ S915,docs: docs.loop.example v1 — Mintlify site live with quickstart + 3 tutor
 S916,tool-host: RuncSandboxFactory implementation behind SandboxFactory Protocol (Kata follow-up),copilot-titan,S38,E3,3,P0,In progress,"**Active.**
 Branch: copilot-titan/s916-tool-host-runcsandboxfactory-imp
 Skill: skills/api/api-versioning.md
-Last step: 0/2 (just claimed)
-Heartbeat: 2026-05-03T18:24:12Z (copilot-titan)
+Last step: 1/2
+Heartbeat: 2026-05-03T18:26:05Z (copilot-titan)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: OCI spec + egress nft rules"
 S917,saml: PySAML2Validator with xmlsec1 signature verification replaces StubSamlValidator in prod path,tbd,S38,E20,2,P0,Not started,"AC: pysaml2 + xmlsec system pkg added to control-plane pyproject; PySAML2Validator class implemented with real XML signature verification + audience/conditions enforcement; cp-api app wires it conditional on env LOOP_SAML_USE_PYSAML2=1; integration test against canned-signed Okta response. [extends S610, S612]"
 S918,secrets: BYO Vault transit client behind KMS Protocol (closes S637 properly),tbd,S38,E20,2,P1,Not started,AC: hvac client wraps Vault transit encrypt/decrypt/rotate; KMS_BACKENDS includes vault_transit with hvac wiring; integration test against vault-in-docker fixture; ENV reference documents LOOP_VAULT_ADDR + LOOP_VAULT_TOKEN. [extends S637]
 S919,soc2: pen-test vendor shortlist + pre-engagement checklist update (S576 prep doc),tbd,S38,E16,1,P1,Not started,"AC: PEN_TEST.md §1 lists 3 candidate CREST-accredited vendors with capabilities + price-range matrix; §3 pre-engagement checklist (NDA template path, scope freeze date, RoE document path, staging-env stand-up steps, credential rotation policy) ready for sign-off; SECURITY.md §pen-testing references this. [extends S576]"
