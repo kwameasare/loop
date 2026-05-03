@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T18:41:10.875742+00:00",
+    "generated_at": "2026-05-03T18:44:29.889422+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5556,7 +5556,7 @@
       "points": 2,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s909-voice-replace-latency-budget-voi\nSkill: skills/testing/perf-check.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-03T18:41:10Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: codex-vega/s909-voice-replace-latency-budget-voi\nSkill: skills/testing/perf-check.md\nLast step: 1/5\nHeartbeat: 2026-05-03T18:44:29Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: sample-based voice perf gate artifact landed"
     },
     {
       "id": "S910",
