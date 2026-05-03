@@ -85,6 +85,11 @@ A "container" here means an independently deployable runtime: a process, a manag
 | `cp-redis` | Redis 7 | Sessions, rate limits, deploy locks |
 | `cp-clickhouse` | ClickHouse | Trace + cost telemetry from all data planes |
 
+S901 wires `cp-api` as `loop_control_plane.app:app`, a FastAPI ASGI process
+served by Uvicorn on port 8080. The image entrypoint runs that app directly;
+health, auth exchange, workspace, agent, and audit routes share the existing
+control-plane service facades.
+
 ### 2.2 Data plane containers
 
 | Container | Tech | Responsibility |
