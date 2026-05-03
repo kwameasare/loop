@@ -56,6 +56,7 @@ from loop_tool_host.models import (
     WarmPoolStats,
 )
 from loop_tool_host.pool import WarmPool
+from loop_tool_host.runc_sandbox import RuncSandbox, RuncSandboxFactory, runc_available
 from loop_tool_host.sandbox import Sandbox, SandboxFactory
 
 __all__ = [
@@ -67,6 +68,8 @@ __all__ = [
     "InboundMcpServer",
     "McpProtocolNegotiator",
     "PoolDemand",
+    "RuncSandbox",
+    "RuncSandboxFactory",
     "Sandbox",
     "SandboxBusyError",
     "SandboxConfig",
@@ -91,4 +94,5 @@ __all__ = [
     "WarmPool",
     "WarmPoolController",
     "WarmPoolStats",
+    "runc_available",
 ]

@@ -40,7 +40,7 @@ For each ``Sandbox.start()`` call we:
 4. ``exec()`` writes a ``tools/call`` JSON-RPC request to the
    container's stdin and reads exactly one response frame from stdout
    (or from the IPC pipe configured during ``start``). A timeout
-   derived from ``cpu_millis`` × 60 caps any single call.
+   derived from ``cpu_millis`` x 60 caps any single call.
 
 5. ``shutdown()`` calls ``runc delete --force`` and ``ip netns del``
    to release the namespace + cgroup. Idempotent.
@@ -73,6 +73,7 @@ the :class:`SubprocessRunner` + :attr:`runtime_binary` pair.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import os
@@ -101,15 +102,11 @@ class SubprocessResult:
     stderr: bytes
 
 
-SubprocessRunner = Callable[
-    [Sequence[str], bytes | None], Awaitable[SubprocessResult]
-]
+SubprocessRunner = Callable[[Sequence[str], bytes | None], Awaitable[SubprocessResult]]
 """Async callable: ``runner(argv, stdin_bytes) -> SubprocessResult``."""
 
 
-async def _real_runner(
-    argv: Sequence[str], stdin_bytes: bytes | None
-) -> SubprocessResult:
+async def _real_runner(argv: Sequence[str], stdin_bytes: bytes | None) -> SubprocessResult:
     """Default runner — invokes the binary via ``asyncio``."""
     proc = await asyncio.create_subprocess_exec(
         *argv,
@@ -178,7 +175,7 @@ def build_oci_spec(
                 "options": ["nosuid", "noexec", "size=64k"],
             },
             {
-                "destination": "/tmp",
+                "destination": "/tmp",  # noqa: S108 -- container-internal tmpfs, not a host path
                 "type": "tmpfs",
                 "source": "tmpfs",
                 "options": ["nosuid", "nodev", "size=16m"],
@@ -192,12 +189,8 @@ def build_oci_spec(
                 {"type": "mount"},
                 {"type": "network", "path": netns_path},
             ],
-            "uidMappings": [
-                {"containerID": 0, "hostID": 100_000, "size": 65_536}
-            ],
-            "gidMappings": [
-                {"containerID": 0, "hostID": 100_000, "size": 65_536}
-            ],
+            "uidMappings": [{"containerID": 0, "hostID": 100_000, "size": 65_536}],
+            "gidMappings": [{"containerID": 0, "hostID": 100_000, "size": 65_536}],
             "resources": {
                 "memory": {
                     "limit": config.memory_mb * 1024 * 1024,
@@ -228,7 +221,7 @@ def build_egress_nft_rules(allowlist: Sequence[str]) -> str:
         "table inet loop_sandbox {",
         "  chain output {",
         "    type filter hook output priority 0; policy drop;",
-        "    oifname \"lo\" accept",
+        '    oifname "lo" accept',
         "    ct state established,related accept",
     ]
     for entry in allowlist:
@@ -239,10 +232,193 @@ def build_egress_nft_rules(allowlist: Sequence[str]) -> str:
     return "\n".join(rules) + "\n"
 
 
+# --- Lifecycle ----------------------------------------------------------------
+
+
+class _RuncFailureError(ToolHostError):
+    """Internal: raised when a runc/ip/nft subprocess returns non-zero."""
+
+    code = "LOOP-TH-010"
+
+
+@dataclass(slots=True)
+class RuncSandbox:
+    """`Sandbox` impl that drives a real ``runc`` container."""
+
+    config: SandboxConfig
+    rootfs: str
+    runtime_binary: str = "runc"
+    state_root: str = field(default_factory=lambda: tempfile.gettempdir())
+    runner: SubprocessRunner = field(default=_real_runner)
+    netns_helper: str = "ip"
+    egress_helper: str = "nft"
+    mcp_argv: tuple[str, ...] = ("/usr/local/bin/mcp-server",)
+    _state: SandboxState = field(default=SandboxState.PENDING, init=False)
+    _id: str = field(default_factory=lambda: f"loop-{uuid.uuid4().hex[:12]}", init=False)
+    _bundle: Path | None = field(default=None, init=False)
+    _netns: str | None = field(default=None, init=False)
+
+    @property
+    def state(self) -> SandboxState:
+        return self._state
+
+    @property
+    def sandbox_id(self) -> str:
+        return self._id
+
+    async def _run(self, argv: Sequence[str], stdin_bytes: bytes | None = None) -> SubprocessResult:
+        result = await self.runner(argv, stdin_bytes)
+        if result.returncode != 0:
+            raise _RuncFailureError(
+                f"{argv[0]} exited {result.returncode}: "
+                f"{result.stderr.decode('utf-8', 'replace').strip()}"
+            )
+        return result
+
+    async def _setup_netns(self) -> str:
+        netns = f"loop-{uuid.uuid4().hex[:8]}"
+        await self._run([self.netns_helper, "netns", "add", netns])
+        rules = build_egress_nft_rules(self.config.egress_allowlist)
+        # Run nft inside the netns so the table lives in the right
+        # namespace. Default-deny applies the moment the container
+        # starts, so a malicious tool's first packet is dropped.
+        await self._run(
+            [self.netns_helper, "netns", "exec", netns, self.egress_helper, "-f", "-"],
+            stdin_bytes=rules.encode("utf-8"),
+        )
+        return netns
+
+    async def start(self) -> None:
+        if self._state is not SandboxState.PENDING:
+            return
+        try:
+            self._netns = await self._setup_netns()
+            bundle = Path(self.state_root) / self._id
+            bundle.mkdir(parents=True, exist_ok=True)
+            spec = build_oci_spec(
+                self.config,
+                rootfs=self.rootfs,
+                netns_path=f"/var/run/netns/{self._netns}",
+                args=self.mcp_argv,
+            )
+            (bundle / "config.json").write_text(json.dumps(spec))
+            self._bundle = bundle
+            await self._run([self.runtime_binary, "create", "--bundle", str(bundle), self._id])
+            await self._run([self.runtime_binary, "start", self._id])
+        except _RuncFailureError as exc:
+            await self._cleanup()
+            raise SandboxStartupError(
+                f"runc sandbox start failed for {self.config.mcp_server}: {exc}"
+            ) from exc
+        self._state = SandboxState.READY
+
+    async def exec(self, *, tool: str, arguments: dict[str, Any]) -> SandboxExecResult:
+        if self._state is not SandboxState.READY:
+            return SandboxExecResult(ok=False, error=f"sandbox not ready: {self._state.value}")
+        self._state = SandboxState.RUNNING
+        request = (
+            json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "tools/call",
+                    "params": {"name": tool, "arguments": arguments},
+                }
+            ).encode("utf-8")
+            + b"\n"
+        )
+        loop = asyncio.get_event_loop()
+        started = loop.time()
+        try:
+            result = await self._run(
+                [self.runtime_binary, "exec", self._id, *self.mcp_argv],
+                stdin_bytes=request,
+            )
+        except _RuncFailureError as exc:
+            self._state = SandboxState.READY
+            return SandboxExecResult(
+                ok=False,
+                error=str(exc),
+                duration_ms=(loop.time() - started) * 1000,
+            )
+        try:
+            payload = json.loads(result.stdout.decode("utf-8") or "{}")
+        except json.JSONDecodeError as exc:
+            self._state = SandboxState.READY
+            return SandboxExecResult(
+                ok=False,
+                error=f"non-JSON MCP frame: {exc}",
+                duration_ms=(loop.time() - started) * 1000,
+            )
+        self._state = SandboxState.READY
+        return SandboxExecResult(
+            ok="error" not in payload,
+            payload=payload.get("result", payload),
+            error=payload.get("error", {}).get("message") if "error" in payload else None,
+            duration_ms=(loop.time() - started) * 1000,
+        )
+
+    async def shutdown(self) -> None:
+        await self._cleanup()
+        self._state = SandboxState.TERMINATED
+
+    async def _cleanup(self) -> None:
+        if self._bundle is not None:
+            try:
+                await self.runner([self.runtime_binary, "delete", "--force", self._id], None)
+            except Exception:
+                _log.exception("runc delete failed for %s", self._id)
+            with contextlib.suppress(OSError):
+                shutil.rmtree(self._bundle, ignore_errors=True)
+            self._bundle = None
+        if self._netns is not None:
+            try:
+                await self.runner([self.netns_helper, "netns", "del", self._netns], None)
+            except Exception:
+                _log.exception("netns del failed for %s", self._netns)
+            self._netns = None
+
+
+@dataclass(slots=True)
+class RuncSandboxFactory:
+    """`SandboxFactory` impl that hands out `RuncSandbox` instances.
+
+    Resolves the rootfs for a given image digest via
+    ``rootfs_resolver`` (a callable injected by the caller — in
+    production this maps the image digest onto a pre-extracted
+    overlay-fs layer). Tests inject a stub that points at a temp dir.
+    """
+
+    rootfs_resolver: Callable[[SandboxConfig], str]
+    runtime_binary: str = "runc"
+    state_root: str = field(default_factory=lambda: tempfile.gettempdir())
+    runner: SubprocessRunner = field(default=_real_runner)
+    mcp_argv: tuple[str, ...] = ("/usr/local/bin/mcp-server",)
+
+    async def create(self, config: SandboxConfig) -> RuncSandbox:
+        rootfs = self.rootfs_resolver(config)
+        return RuncSandbox(
+            config=config,
+            rootfs=rootfs,
+            runtime_binary=self.runtime_binary,
+            state_root=self.state_root,
+            runner=self.runner,
+            mcp_argv=self.mcp_argv,
+        )
+
+
+def runc_available() -> bool:
+    """True iff this host can actually run a `RuncSandbox`."""
+    return os.name == "posix" and shutil.which("runc") is not None
+
+
 __all__ = [
+    "RuncSandbox",
+    "RuncSandboxFactory",
     "SubprocessResult",
     "SubprocessRunner",
     "_real_runner",
-    "build_oci_spec",
     "build_egress_nft_rules",
+    "build_oci_spec",
+    "runc_available",
 ]
