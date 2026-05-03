@@ -1495,11 +1495,12 @@ S905,kms+s3: AwsKmsBackend(boto3) + S3ObjectStore(boto3) implementations behind 
 S906,gateway: HttpxStreamTransport for OpenAI + Anthropic providers — first real upstream call,codex-vega,S38,E2,3,P0,In progress,"**Active.**
 Branch: codex-vega/s906-gateway-httpxstreamtransport-for
 Skill: skills/coding/implement-llm-gateway-change.md
-Last step: 1/7
-Heartbeat: 2026-05-03T18:21:53Z (codex-vega)
+Last step: 2/7
+Heartbeat: 2026-05-03T18:28:32Z (codex-vega)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: gateway httpx transport tests and docs landed
 Latest checkpoint: httpx transport cassette path verified"
 S907,examples: support_agent imports + run_local.py wired against G2/G3 + real LLM,tbd,S38,E11,1,P0,Not started,"AC: from-loop.sdk import broken paths fixed (use loop.agents.Agent); examples/support_agent/run_local.py 'where is order 4172?' streams a real OpenAI/Anthropic response with lookup_order tool call; docs/quickstart.md updated to reflect the working invocation. [extends S901, S902, S906]"
 S908,voice: Deepgram + ElevenLabs WS clients hit real APIs; existing protocol seams + cassettes,tbd,S38,E7,3,P0,Not started,"AC: asr_deepgram.py opens wss to api.deepgram.com with proper auth + audio framing; tts_elevenlabs.py opens wss with proper streaming protocol; cassette-based unit tests + opt-in live test gated on LOOP_VOICE_LIVE_TESTS=1. [extends S651, S652]"
