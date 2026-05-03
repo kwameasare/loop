@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T19:32:35.852599+00:00",
+    "generated_at": "2026-05-03T19:33:07.690228+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5616,13 +5616,13 @@
     {
       "id": "S915",
       "title": "docs: docs.loop.example v1 — Mintlify site live with quickstart + 3 tutorials",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S38",
       "epic": "E17",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: apps/docs/ Mintlify project deployable via mintlify deploy; mint.json indexes 12 pages drawn from loop_implementation/engineering/; quickstart points at G7 example; nav covers concepts/quickstart/tutorials/api-ref/cookbook. [extends S659]"
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s915-docs-docs-loop-example-v1-mintli\nSkill: loop_implementation/skills/api/add-rest-endpoint.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-03T19:33:07Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S916",
