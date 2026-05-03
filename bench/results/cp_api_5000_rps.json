@@ -1,19 +1,25 @@
 {
-  "baseline_ref": "main@S845",
+  "baseline_ref": "main@S913-real-cp-api",
   "budgets": {
     "checks_rate": 0.999,
     "http_req_failed_rate": 0.001,
     "p95_ms": 100
   },
-  "commit": "S845-contract",
+  "commit": "S913-real-image-contract",
   "host": "github-actions-kind",
+  "measurement": {
+    "image": "loop/cp-api:perf",
+    "image_source": "packages/control-plane/Dockerfile",
+    "previous_invalid_target": "scripts/helm_e2e_smoke_server.py",
+    "target": "actual loop_control_plane.app FastAPI/Uvicorn container"
+  },
   "name": "cp_api_5000_rps",
   "scenario": "cp_api_5000_rps",
   "source": ".github/workflows/cp-api-5000-rps.yml",
   "stats": {
     "checks_rate": 1.0,
     "http_req_failed_rate": 0.0,
-    "p95_ms": 1.0,
+    "p95_ms": 34.7,
     "rps": 5000
   },
   "tool": "k6",

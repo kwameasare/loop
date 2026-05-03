@@ -1,7 +1,10 @@
 # cp-api 5000 RPS gate
 
 Loop runs a k6 acceptance gate against the control-plane health path at
-5000 requests per second.
+5000 requests per second. S913 moved the gate off the historical
+`helm_e2e_smoke_server.py` placeholder: the workflow now builds
+`packages/control-plane/Dockerfile`, loads `loop/cp-api:perf` into kind,
+and measures the real `loop_control_plane.app` FastAPI/Uvicorn container.
 
 The gate passes when:
 

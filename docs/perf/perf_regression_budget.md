@@ -20,3 +20,7 @@ The current budget covers:
 
 The workflow writes `bench/results/perf_regression_budget.json` as the compact
 CI contract and uploads it as the `perf-regression-budget` artifact.
+
+S913 re-seeded the 7-day p95 baselines for `cp_api_5000_rps` and
+`runtime_sse_1000_concurrency` after both workflows switched from the Helm
+smoke server to the real cp-api and dp-runtime images.
