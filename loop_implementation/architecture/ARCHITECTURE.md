@@ -110,6 +110,16 @@ control-plane service facades.
 | `dp-objstore` | S3-compatible object storage (any cloud or MinIO) | Code artifacts, recordings, doc originals |
 | `dp-otel-collector` | OpenTelemetry Collector | Traces from runtime → control plane ClickHouse |
 
+S902 wires `dp-runtime` as `loop_data_plane.runtime_app:app`, a FastAPI
+ASGI process served by Uvicorn on port 8081. `/v1/turns` accepts a
+workspace-pinned turn request, normalizes it into the SDK `AgentEvent`,
+and streams the existing `TurnExecutor` through the canonical
+`loop_runtime.sse` encoder. The production dependency is the real
+`loop_gateway.GatewayClient` with OpenAI and Anthropic providers; local
+integration fixtures override only provider base URLs, leaving the httpx
+transport, BYO-key resolution, idempotency cache, and cost accounting on
+the same path.
+
 ### 2.3 Container interaction (high level)
 
 ```

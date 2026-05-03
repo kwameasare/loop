@@ -1,4 +1,4 @@
-"""S143 regression: ``scripts/runtime_smoke.sh`` exits 0.
+"""S143/S902 regression: ``scripts/runtime_smoke.sh`` exits 0.
 
 Runs the dp-runtime end-to-end smoke as a subprocess so the shell
 wrapper itself is exercised — that is the AC artefact CI gates on.

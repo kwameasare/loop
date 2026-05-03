@@ -46,6 +46,8 @@ tags:
     description: Audit logs, API keys, secrets, webhooks
   - name: Health
     description: Operational readiness and version checks
+  - name: Runtime
+    description: Data-plane turn execution and SSE streaming
 
 paths:
 
@@ -364,6 +366,71 @@ paths:
                 type: string
                 description: |
                   SSE stream; each `data:` line is a JSON `TurnEvent`.
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /turns:
+    post:
+      tags: [Runtime]
+      summary: Run a data-plane turn
+      description: |
+        Executes a single turn through the dp-runtime `TurnExecutor`.
+        Set `Accept: text/event-stream` or `?stream=true` to receive
+        framed `TurnEvent` records followed by a `done` frame.
+      security: []
+      parameters:
+        - in: query
+          name: stream
+          schema: { type: boolean, default: false }
+        - in: header
+          name: Accept
+          required: false
+          schema: { type: string }
+        - in: header
+          name: Idempotency-Key
+          schema: { type: string }
+          required: false
+          description: Optional request id; request_id in the JSON body wins when both are present.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RuntimeTurnRequest" }
+      responses:
+        "200":
+          description: Turn response or SSE stream
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RuntimeTurnResponse" }
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE frames carrying `TurnEvent` payloads plus a terminal `done` frame.
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /turns/stream:
+    post:
+      tags: [Runtime]
+      summary: Run a data-plane turn as SSE
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RuntimeTurnRequest" }
+      responses:
+        "200":
+          description: SSE stream of TurnEvent records
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE frames carrying `TurnEvent` payloads plus a terminal `done` frame.
         "429":
           $ref: "#/components/responses/RateLimited"
         "500":
@@ -1079,6 +1146,46 @@ components:
           items: { $ref: "#/components/schemas/ContentPart" }
         metadata: { type: object }
 
+    RuntimeTurnRequest:
+      type: object
+      required: [workspace_id, conversation_id, user_id]
+      description: |
+        dp-runtime turn request. Provide either `content` or `input`; `input`
+        is normalized into a single text content part before TurnExecutor runs.
+      properties:
+        workspace_id: { type: string, format: uuid }
+        conversation_id: { type: string, format: uuid }
+        user_id: { type: string }
+        channel:
+          type: string
+          enum: [web, whatsapp, slack, teams, telegram, sms, email, discord, voice, webhook]
+          default: web
+        content:
+          type: array
+          items: { $ref: "#/components/schemas/ContentPart" }
+        input:
+          type: string
+          nullable: true
+        metadata: { type: object }
+        received_at: { type: string, format: date-time, nullable: true }
+        request_id: { type: string, nullable: true }
+        agent_name: { type: string, default: default }
+        model:
+          type: string
+          nullable: true
+          description: Defaults to LOOP_DP_DEFAULT_MODEL.
+        system_prompt: { type: string }
+        budget: { $ref: "#/components/schemas/TurnBudget" }
+
+    TurnBudget:
+      type: object
+      properties:
+        max_cost_usd: { type: number, default: 0.5 }
+        max_runtime_seconds: { type: number, default: 30 }
+        max_iterations: { type: integer, default: 4 }
+        max_output_tokens_per_iter: { type: integer, default: 2048 }
+        fallback_model: { type: string, nullable: true }
+
     ContentPart:
       type: object
       required: [type]
@@ -1100,6 +1207,30 @@ components:
           type: array
           items: { type: object }
         end_turn: { type: boolean }
+
+    TurnEvent:
+      type: object
+      required: [type, payload, ts]
+      properties:
+        type:
+          type: string
+          enum: [token, tool_call, tool_call_start, tool_call_end, tool_result, retrieval, trace, degrade, complete]
+        payload: { type: object }
+        ts: { type: string, format: date-time }
+
+    RuntimeTurnResponse:
+      type: object
+      required: [turn_id, reply, events]
+      properties:
+        turn_id: { type: string }
+        reply:
+          type: object
+          required: [text]
+          properties:
+            text: { type: string }
+        events:
+          type: array
+          items: { $ref: "#/components/schemas/TurnEvent" }
 
     Conversation:
       type: object

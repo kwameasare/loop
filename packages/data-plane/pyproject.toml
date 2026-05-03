@@ -6,7 +6,13 @@ license = { text = "Apache-2.0" }
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.13",
+    "fastapi>=0.115",
+    "loop",
+    "loop-gateway",
+    "loop-runtime",
+    "pydantic>=2",
     "sqlalchemy>=2.0",
+    "uvicorn>=0.30",
 ]
 
 [build-system]
