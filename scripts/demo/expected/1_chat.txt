@@ -1,0 +1,6 @@
+[loop:demo:dry-run] provider=openai model=gpt-4o-mini
+Refunds typically settle within 5–7 business days once the merchant
+authorises them. If you used a credit card the bank may take an
+additional 2–3 days to surface the credit on your statement. If a
+specific order is involved, share the order ID and I can pull its
+current status.
