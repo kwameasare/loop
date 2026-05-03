@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "k6_runtime_sse_1000.js"
 WORKFLOW = ROOT / ".github" / "workflows" / "runtime-sse-1000.yml"
 RESULT = ROOT / "bench" / "results" / "runtime_sse_1000_concurrency.json"
-SERVER = ROOT / "scripts" / "helm_e2e_smoke_server.py"
+FIXTURE = ROOT / "scripts" / "openai_sse_fixture.py"
 
 
 def _workflow() -> dict[Any, Any]:
@@ -34,6 +34,8 @@ def test_k6_runtime_sse_script_enforces_1000_concurrency_budget() -> None:
     assert "const RUNTIME_SSE_P95_MS = 3000" in script
     assert "vus: CONCURRENT_TURNS" in script
     assert "/v1/turns/stream" in script
+    assert "workspace_id" in script
+    assert "conversation_id" in script
     assert "text/event-stream" in script
     assert "event: done" in script
 
@@ -47,6 +49,12 @@ def test_runtime_sse_workflow_runs_k6_and_memory_probe() -> None:
     assert triggers["schedule"][0]["cron"] == "7 6 * * *"
     assert "workflow_dispatch" in triggers
     assert job["env"]["LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES"] == "4294967296"
+    assert "packages/data-plane/Dockerfile -t loop/dp-runtime:perf" in runs
+    assert "scripts/openai_sse_fixture.py" in runs
+    assert "LOOP_DP_OPENAI_BASE_URL" in runs
+    assert "LOOP_GATEWAY_OPENAI_API_KEY" in runs
+    assert "runtime.image.repository=dp-runtime" in runs
+    assert "helm_e2e_smoke_server.py" not in WORKFLOW.read_text()
     assert "k6 run --summary-export /tmp/runtime-sse-1000-summary.json" in runs
     assert "scripts/k6_runtime_sse_1000.js" in runs
     assert "memory.current" in runs
@@ -58,13 +66,15 @@ def test_runtime_sse_contract_result_matches_budgets() -> None:
 
     assert result["name"] == "runtime_sse_1000_concurrency"
     assert result["stats"]["concurrent_turns"] == 1000
+    assert result["stats"]["p95_ms"] > 1.0
+    assert result["measurement"]["target"].startswith("actual loop_data_plane.runtime_app")
     assert result["stats"]["p95_ms"] < result["budgets"]["p95_ms"]
     assert result["stats"]["memory_bytes"] < result["budgets"]["memory_bytes"]
     assert result["stats"]["http_req_failed_rate"] < result["budgets"]["http_req_failed_rate"]
 
 
-def test_smoke_server_serves_sse_turn_stream() -> None:
-    spec = importlib.util.spec_from_file_location("helm_smoke", SERVER)
+def test_openai_fixture_serves_chat_completion_sse() -> None:
+    spec = importlib.util.spec_from_file_location("openai_fixture", FIXTURE)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -75,16 +85,16 @@ def test_smoke_server_serves_sse_turn_stream() -> None:
     port = server.server_address[1]
     try:
         request = Request(
-            f"http://127.0.0.1:{port}/v1/turns/stream",
-            data=b'{"input":"hello"}',
+            f"http://127.0.0.1:{port}/v1/chat/completions",
+            data=b'{"stream":true}',
             headers={"accept": "text/event-stream"},
             method="POST",
         )
         with urlopen(request, timeout=2) as response:
             body = response.read().decode()
             assert response.headers["content-type"] == "text/event-stream"
-            assert "event: delta" in body
-            assert "event: done" in body
+            assert 'data: {"choices":[{"delta":{"content":"perf"}}]}' in body
+            assert "data: [DONE]" in body
     finally:
         server.shutdown()
         server.server_close()

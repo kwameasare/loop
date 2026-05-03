@@ -32,6 +32,7 @@ def test_k6_cp_api_script_enforces_5000_rps_budget() -> None:
     assert 'executor: "constant-arrival-rate"' in script
     assert "rate: CP_API_TARGET_RPS" in script
     assert "/healthz" in script
+    assert 'res.json("ok") === true' in script
     assert 'http_req_failed: ["rate<0.001"]' in script
 
 
@@ -43,6 +44,10 @@ def test_cp_api_5000_rps_workflow_runs_k6_and_pages() -> None:
 
     assert triggers["schedule"][0]["cron"] == "13 6 * * *"
     assert "workflow_dispatch" in triggers
+    assert "packages/control-plane/Dockerfile -t loop/cp-api:perf" in runs
+    assert "kind load docker-image loop/cp-api:perf" in runs
+    assert "controlPlane.image.repository=cp-api" in runs
+    assert "helm_e2e_smoke_server.py" not in WORKFLOW.read_text()
     assert "svc/loop-loop-control-plane 18080:8080" in runs
     assert "k6 run --summary-export /tmp/cp-api-5000-rps-summary.json" in runs
     assert "scripts/k6_cp_api_5000.js" in runs
@@ -55,6 +60,8 @@ def test_cp_api_5000_rps_contract_result_and_docs_match_budget() -> None:
 
     assert result["name"] == "cp_api_5000_rps"
     assert result["stats"]["rps"] == 5000
+    assert result["stats"]["p95_ms"] > 1.0
+    assert result["measurement"]["target"].startswith("actual loop_control_plane.app")
     assert result["stats"]["p95_ms"] < result["budgets"]["p95_ms"]
     assert result["stats"]["http_req_failed_rate"] < result["budgets"]["http_req_failed_rate"]
     assert "5000 requests per second" in docs
