@@ -1479,7 +1479,14 @@ Final heartbeat: 2026-05-02T06:21:47Z (codex-vega)
 Tests: perf comparator temp run passed; touched ruff/format pass; touched pyright pass; tests/test_perf_regression_budget.py passed (6); pytest -q -m 'not integration and not e2e' passed (1573 passed, 3 skipped, 6 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated files
 Docs touched: docs/perf/perf_regression_budget.md, docs/index.md, loop_implementation/engineering/PERFORMANCE.md, bench/results/perf_7d_baseline.json, bench/results/perf_regression_budget.json
 Follow-ups: none"
-S900,migrations: merge cp_0006 resolves cp_0005_audit_log + cp_0005_audit_events head fork,tbd,S38,E12,1,P0,Not started,AC: alembic upgrade head succeeds against fresh db; tests/test_migrations.py 8 erroring tests turn green; alembic heads returns single revision. [extends S630]
+S900,migrations: merge cp_0006 resolves cp_0005_audit_log + cp_0005_audit_events head fork,codex-orion,S38,E12,1,P0,In progress,"**Active.**
+Branch: codex-orion/s900-migrations-merge-cp-0006-resolve
+Skill: skills/data/add-postgres-migration.md
+Last step: 0/4 (just claimed)
+Heartbeat: 2026-05-03T18:16:29Z (codex-orion)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S901,cp-api: FastAPI ASGI app wires existing handlers into runnable uvicorn process,tbd,S38,E12,3,P0,Not started,"AC: uv run uvicorn loop_control_plane.app:app --port 8080 serves /healthz, /v1/workspaces/*, /v1/auth/exchange, /v1/agents/*, /v1/audit/* end-to-end; integration test starts server and exercises 8 endpoints. [extends S100, S118, S346]"
 S902,dp-runtime: FastAPI POST /v1/turns SSE wires TurnExecutor; replaces __main__ exit-0 stub,tbd,S38,E1,3,P0,Not started,"AC: uv run uvicorn loop_data_plane.runtime_app:app --port 8081 streams TurnEvents end-to-end; integration test posts a turn and asserts SSE deltas + done frame; loop_data_plane/__main__.py removed in favour of uvicorn entrypoint. [extends S130, S140]"
 S903,cli: HttpxControlPlaneTransport replaces _DefaultTransport so loop login/deploy/eval reach cp-api,tbd,S38,E11,2,P0,Not started,AC: loop login/init/deploy/logs/eval/secrets/release each complete against real cp-api; httpx VCR cassettes recorded; existing CLI unit tests still pass. [extends S901]
