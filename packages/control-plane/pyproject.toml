@@ -37,3 +37,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["loop_control_plane"]
+# Bundle data files (region registry, etc.) into the wheel so cp-api
+# starts cleanly in production containers that don't ship the monorepo's
+# infra/ tree. Without this, regions.py raises FileNotFoundError at
+# import time and the cp-api pod CrashLoops.
+[tool.hatch.build.targets.wheel.force-include]
+"loop_control_plane/regions.yaml" = "loop_control_plane/regions.yaml"

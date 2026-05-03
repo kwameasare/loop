@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
@@ -9,7 +10,41 @@ from typing import Any, cast
 
 import yaml
 
-DEFAULT_REGIONS_PATH = Path(__file__).resolve().parents[3] / "infra" / "terraform" / "regions.yaml"
+
+def _resolve_regions_path() -> Path:
+    """Return the path to ``regions.yaml``.
+
+    In production containers the ``infra/`` tree from the monorepo isn't
+    shipped, so we ship a copy of the file inside the Python package
+    (``loop_control_plane/regions.yaml``). Lookup order:
+
+    1. ``LOOP_CP_REGIONS_PATH`` env var (operator override).
+    2. Repo-rooted ``infra/terraform/regions.yaml`` — works in the
+       monorepo dev/test layout.
+    3. Package-local ``regions.yaml`` shipped alongside this module —
+       works in the cp-api Docker image.
+
+    Raises ``FileNotFoundError`` only if no candidate exists, with a
+    message that names every path checked so the operator can fix it
+    via env override.
+    """
+    override = os.environ.get("LOOP_CP_REGIONS_PATH")
+    if override:
+        return Path(override)
+    repo_path = Path(__file__).resolve().parents[3] / "infra" / "terraform" / "regions.yaml"
+    if repo_path.is_file():
+        return repo_path
+    package_path = Path(__file__).resolve().parent / "regions.yaml"
+    if package_path.is_file():
+        return package_path
+    raise FileNotFoundError(
+        "regions.yaml not found. Checked (in order): "
+        f"$LOOP_CP_REGIONS_PATH={override or '(unset)'}, "
+        f"{repo_path}, {package_path}"
+    )
+
+
+DEFAULT_REGIONS_PATH = _resolve_regions_path()
 
 
 class RegionError(ValueError):

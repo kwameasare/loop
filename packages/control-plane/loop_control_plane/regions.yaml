@@ -1,0 +1,46 @@
+default_region: na-east
+regions:
+  na-east:
+    display_name: North America East
+    residency: US
+    primary: true
+    control_plane_url: https://api.na-east.loop.example/v1
+    data_plane_url: https://runtime.na-east.loop.example
+    concrete:
+      aws: us-east-1
+      azure: eastus
+      gcp: us-east1
+  eu-west:
+    display_name: Europe West
+    residency: EU
+    primary: false
+    control_plane_url: https://api.eu-west.loop.example/v1
+    data_plane_url: https://runtime.eu-west.loop.example
+    concrete:
+      aws: eu-central-1
+      azure: westeurope
+      gcp: europe-west1
+  cn-shanghai:
+    display_name: China Shanghai
+    residency: CN
+    primary: false
+    control_plane_url: https://api.cn-shanghai.loop.example/v1
+    data_plane_url: https://runtime.cn-shanghai.loop.example
+    concrete:
+      alibaba: cn-shanghai
+  eu-sovereign:
+    display_name: Europe Sovereign
+    residency: EU
+    primary: false
+    control_plane_url: https://api.eu-sovereign.loop.example/v1
+    data_plane_url: https://runtime.eu-sovereign.loop.example
+    concrete:
+      ovh: GRA11
+  eu-cost:
+    display_name: Europe Cost Optimized
+    residency: EU
+    primary: false
+    control_plane_url: https://api.eu-cost.loop.example/v1
+    data_plane_url: https://runtime.eu-cost.loop.example
+    concrete:
+      hetzner: fsn1
