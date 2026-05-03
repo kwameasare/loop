@@ -1524,11 +1524,12 @@ Follow-ups: none"
 S907,examples: support_agent imports + run_local.py wired against G2/G3 + real LLM,copilot-thor,S38,E11,1,P0,In progress,"**Active.**
 Branch: copilot-thor/s907-examples-support-agent-imports-r
 Skill: loop_implementation/skills/api/add-rest-endpoint.md
-Last step: 2/5
-Heartbeat: 2026-05-03T19:24:41Z (copilot-thor)
+Last step: 3/5
+Heartbeat: 2026-05-03T19:25:33Z (copilot-thor)
 Open questions: none
 Blockers: none
 Commits: (will accumulate)
+Latest checkpoint: MockTransport unit tests cover OpenAI+Anthropic streaming + tool round-trip + 4xx
 Latest checkpoint: run_local.py: real OpenAI/Anthropic streaming with lookup_order tool round-trip
 Latest checkpoint: fix support_agent.agent imports to use loop.agents.Agent"
 S908,voice: Deepgram + ElevenLabs WS clients hit real APIs; existing protocol seams + cassettes,codex-vega,S38,E7,3,P0,Done,"**Done.**
