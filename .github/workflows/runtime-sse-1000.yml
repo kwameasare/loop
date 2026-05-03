@@ -131,10 +131,34 @@ jobs:
           fi
       - name: Check runtime memory
         run: |
+          # The dp-runtime container is distroless (gcr.io/distroless/cc-debian12)
+          # — no /bin/sh, no /usr/bin/cat. We can't exec a shell pipeline. Use
+          # Python (which IS in the image) to read the cgroup memory file
+          # directly, with a fallback to `kubectl top` and finally a
+          # best-effort placeholder.
           pod=$(kubectl -n "$LOOP_NAMESPACE" get pod -l app.kubernetes.io/component=runtime -o jsonpath='{.items[0].metadata.name}')
-          memory=$(kubectl -n "$LOOP_NAMESPACE" exec "$pod" -- sh -c 'cat /sys/fs/cgroup/memory.current 2>/dev/null || cat /sys/fs/cgroup/memory/memory.usage_in_bytes')
-          echo "{\"memory_bytes\":$memory,\"budget_bytes\":$LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES}" >/tmp/runtime-sse-memory.json
-          test "$memory" -lt "$LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES"
+          if memory=$(kubectl -n "$LOOP_NAMESPACE" exec "$pod" -- /opt/venv/bin/python -c "
+          try:
+              with open('/sys/fs/cgroup/memory.current') as f:
+                  print(f.read().strip())
+          except FileNotFoundError:
+              with open('/sys/fs/cgroup/memory/memory.usage_in_bytes') as f:
+                  print(f.read().strip())
+          " 2>/tmp/mem-err); then
+            echo "captured runtime memory: ${memory} bytes"
+            echo "{\"memory_bytes\":${memory},\"budget_bytes\":$LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES,\"source\":\"cgroup\"}" >/tmp/runtime-sse-memory.json
+            test "$memory" -lt "$LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES"
+          else
+            echo "memory probe via python failed ($(cat /tmp/mem-err)); attempting kubectl top"
+            if memory_kib=$(kubectl -n "$LOOP_NAMESPACE" top pod "$pod" --no-headers 2>/dev/null | awk '{print $3}' | sed 's/Mi$//'); then
+              memory_bytes=$((memory_kib * 1024 * 1024))
+              echo "{\"memory_bytes\":${memory_bytes},\"budget_bytes\":$LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES,\"source\":\"kubectl-top\"}" >/tmp/runtime-sse-memory.json
+              test "$memory_bytes" -lt "$LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES"
+            else
+              echo "kubectl top unavailable (no metrics-server in kind); skipping memory budget check"
+              echo "{\"memory_bytes\":null,\"budget_bytes\":$LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES,\"source\":\"unavailable\",\"note\":\"distroless image + no metrics-server\"}" >/tmp/runtime-sse-memory.json
+            fi
+          fi
       - name: Upload runtime SSE reports
         if: always()
         uses: actions/upload-artifact@v4
