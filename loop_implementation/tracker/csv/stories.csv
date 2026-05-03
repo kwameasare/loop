@@ -1506,11 +1506,12 @@ Follow-ups: none"
 S903,cli: HttpxControlPlaneTransport replaces _DefaultTransport so loop login/deploy/eval reach cp-api,copilot-thor,S38,E11,2,P0,In progress,"**Active.**
 Branch: copilot-thor/s903-cli-httpxcontrolplanetransport-r
 Skill: loop_implementation/skills/api/add-rest-endpoint.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-03T19:14:23Z (copilot-thor)
+Last step: 1/4
+Heartbeat: 2026-05-03T19:16:44Z (copilot-thor)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: HttpxControlPlaneTransport class + LOOP_CP_API_URL default"
 S904,terraform: aws-loop-stack module + envs/staging-aws-us-east-2 (validation blocked by S002),tbd,S38,E12,3,P0,Not started,"AC: infra/terraform/modules/aws-loop-stack/{main,variables,outputs}.tf provisions EKS+RDS+ElastiCache+S3+KMS+CloudFront; tf validate + tflint clean; values-aws-staging.yaml renders helm chart against module outputs. Real apply remains blocked by S002 cloud accounts. [extends S770]"
 S905,kms+s3: AwsKmsBackend(boto3) + S3ObjectStore(boto3) implementations behind existing Protocols,tbd,S38,E12,3,P0,Not started,AC: kms.py registers aws_kms in KMS_BACKENDS with real boto3.client('kms') wiring envelope encrypt/decrypt/rotate; object_store.py registers s3 backend with real boto3.client('s3'); localstack-backed integration tests for both. [extends S904]
 S906,gateway: HttpxStreamTransport for OpenAI + Anthropic providers — first real upstream call,codex-vega,S38,E2,3,P0,Done,"**Done.**
