@@ -20,8 +20,8 @@ infra-smoke:
 	./tools/infra_smoke.sh
 
 migrate:
-	$(PY) -m loop.cp_migrations upgrade head
-	$(PY) -m loop.dp_migrations upgrade head
+	$(PY) -m loop_control_plane.migrations upgrade head
+	$(PY) -m loop_data_plane.migrations upgrade head
 
 seed:
 	$(PY) tools/seed_dev.py

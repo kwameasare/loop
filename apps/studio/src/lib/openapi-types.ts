@@ -36,6 +36,10 @@ export interface AgentCreate {
   slug: string;
 }
 
+export interface AgentList {
+  items: Agent[];
+}
+
 export interface AgentResponse {
   content?: ContentPart[];
   conversation_id?: string;
@@ -52,6 +56,24 @@ export interface AgentVersion {
   version?: number;
 }
 
+export interface AuditEvent {
+  action?: string;
+  actor_sub?: string;
+  id?: string;
+  occurred_at?: string;
+  outcome?: "success" | "denied" | "error";
+  payload_hash?: string | null;
+  request_id?: string | null;
+  resource_id?: string | null;
+  resource_type?: string;
+  workspace_id?: string;
+}
+
+export interface AuditEventList {
+  items: AuditEvent[];
+  total: number;
+}
+
 export interface AuditLogEntry {
   action?: string;
   actor_user_id?: string | null;
@@ -64,6 +86,18 @@ export interface AuditLogEntry {
   resource_id?: string | null;
   resource_type?: string;
   user_agent?: string | null;
+}
+
+export interface AuthExchangeRequest {
+  id_token: string;
+}
+
+export interface AuthExchangeResponse {
+  access_expires_at_ms: number;
+  access_token: string;
+  refresh_expires_at_ms: number;
+  refresh_token: string;
+  token_type: "Bearer";
 }
 
 export interface Budget {
@@ -187,6 +221,28 @@ export interface RetrievalChunk {
   source_uri?: string;
 }
 
+export interface RuntimeTurnRequest {
+  agent_name?: string;
+  budget?: TurnBudget;
+  channel?: "web" | "whatsapp" | "slack" | "teams" | "telegram" | "sms" | "email" | "discord" | "voice" | "webhook";
+  content?: ContentPart[];
+  conversation_id: string;
+  input?: string | null;
+  metadata?: Record<string, unknown>;
+  model?: string | null;
+  received_at?: string | null;
+  request_id?: string | null;
+  system_prompt?: string;
+  user_id: string;
+  workspace_id: string;
+}
+
+export interface RuntimeTurnResponse {
+  events: TurnEvent[];
+  reply: { "text": string };
+  turn_id: string;
+}
+
 export interface SecretRef {
   agent_version_id?: string;
   created_at?: string;
@@ -211,6 +267,20 @@ export interface Turn {
   started_at?: string;
   token_in?: number;
   token_out?: number;
+}
+
+export interface TurnBudget {
+  fallback_model?: string | null;
+  max_cost_usd?: number;
+  max_iterations?: number;
+  max_output_tokens_per_iter?: number;
+  max_runtime_seconds?: number;
+}
+
+export interface TurnEvent {
+  payload: Record<string, unknown>;
+  ts: string;
+  type: "token" | "tool_call" | "tool_call_start" | "tool_call_end" | "tool_result" | "retrieval" | "trace" | "degrade" | "complete";
 }
 
 export interface UsageReport {
@@ -249,6 +319,13 @@ export interface WorkspaceCreate {
   slug: string;
 }
 
+export interface WorkspaceList {
+  items: Workspace[];
+  page: number;
+  page_size: number;
+  total: number;
+}
+
 export interface WorkspaceMember {
   email?: string;
   full_name?: string;
@@ -269,7 +346,7 @@ export interface Operations {
     method: "GET";
     path: "/agents";
     request: unknown;
-    response: Agent[];
+    response: AgentList;
   };
   PostAgents: {
     method: "POST";
@@ -311,7 +388,19 @@ export interface Operations {
     method: "GET";
     path: "/audit-events";
     request: unknown;
-    response: AuditLogEntry[];
+    response: AuditEventList;
+  };
+  GetAuditEvents: {
+    method: "GET";
+    path: "/audit/events";
+    request: unknown;
+    response: AuditEventList;
+  };
+  PostAuthExchange: {
+    method: "POST";
+    path: "/auth/exchange";
+    request: AuthExchangeRequest;
+    response: AuthExchangeResponse;
   };
   GetBudgets: {
     method: "GET";
@@ -433,6 +522,18 @@ export interface Operations {
     request: unknown;
     response: Trace;
   };
+  PostTurns: {
+    method: "POST";
+    path: "/turns";
+    request: RuntimeTurnRequest;
+    response: RuntimeTurnResponse;
+  };
+  PostTurnsStream: {
+    method: "POST";
+    path: "/turns/stream";
+    request: RuntimeTurnRequest;
+    response: unknown;
+  };
   GetUsage: {
     method: "GET";
     path: "/usage";
@@ -455,7 +556,7 @@ export interface Operations {
     method: "GET";
     path: "/workspaces";
     request: unknown;
-    response: Workspace[];
+    response: WorkspaceList;
   };
   PostWorkspaces: {
     method: "POST";

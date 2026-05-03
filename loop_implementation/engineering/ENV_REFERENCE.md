@@ -231,12 +231,16 @@ Voice provider clients:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LOOP_KMS_BACKEND` | `vault` | enum: `vault`, `aws_kms`, `azure_key_vault`, `gcp_kms`, `alicloud_kms`. |
+| `LOOP_KMS_BACKEND` | `vault` | enum: `vault`, `vault_transit`, `aws_kms`, `azure_key_vault`, `gcp_kms`, `alicloud_kms`. |
 | `LOOP_KMS_KEY_REF` | (per workspace) | Resolved at runtime from workspace. |
-| `LOOP_VAULT_ADDR` | `https://vault.svc:8200` | URL | Always set even if backend is cloud. |
-| `LOOP_VAULT_ROLE` | `loop-runtime` | string | Workload identity. |
-| `LOOP_VAULT_NAMESPACE` | (none) | Vault Enterprise only. |
+| `LOOP_VAULT_ADDR` | `https://vault.svc:8200` | URL — always set even if backend is cloud. Read by `vault_transit` backend (S918). |
+| `LOOP_VAULT_TOKEN` | (required for `vault_transit` backend, S918) | Vault token with `transit.encrypt`/`decrypt`/`datakey`/`rotate`/`hmac` capabilities on the configured mount. Per the BYO Vault flow (S637), this is fetched at runtime via response-wrapping; for the managed Loop deploy it's mounted via Vault Agent. |
+| `LOOP_VAULT_ROLE` | `loop-runtime` | string — workload identity (AppRole). |
+| `LOOP_VAULT_NAMESPACE` | (none) | Vault Enterprise only. Forwarded to `hvac.Client(namespace=...)`. |
+| `LOOP_VAULT_TRANSIT_MOUNT` | `transit` | Path the transit secrets engine is mounted under (S918). |
+| `LOOP_VAULT_TIMEOUT_SECONDS` | `5` | Per-request HTTP timeout for `vault_transit` calls. |
 | `LOOP_SECRETS_BACKEND` | `vault` | Mirror of KMS_BACKEND for secrets-mgr usage. |
+| `LOOP_VAULT_INTEGRATION` | (unset) | Set to `1` to enable the live vault-in-docker integration test in `tests/test_vault_transit_integration.py`. |
 
 ## 10. Studio (`apps/studio`)
 

@@ -31,7 +31,10 @@ services:
       POSTGRES_DB: loop
       POSTGRES_HOST_AUTH_METHOD: scram-sha-256
     ports:
-      - "${LOOP_DEV_BIND:-127.0.0.1}:5432:5432"
+      # Override LOOP_DEV_POSTGRES_PORT in .env if you have Homebrew Postgres
+      # or another stack already on 5432. Container port stays 5432 inside the
+      # `loop` network so service-to-service config doesn't change.
+      - "${LOOP_DEV_BIND:-127.0.0.1}:${LOOP_DEV_POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -46,7 +49,8 @@ services:
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
     ports:
-      - "${LOOP_DEV_BIND:-127.0.0.1}:6379:6379"
+      # Override LOOP_DEV_REDIS_PORT in .env if Homebrew Redis already owns 6379.
+      - "${LOOP_DEV_BIND:-127.0.0.1}:${LOOP_DEV_REDIS_PORT:-6379}:6379"
     volumes:
       - redisdata:/data
     healthcheck:

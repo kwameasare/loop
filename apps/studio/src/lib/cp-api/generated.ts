@@ -37,6 +37,10 @@ export interface AgentCreate {
   slug: string;
 }
 
+export interface AgentList {
+  items: Agent[];
+}
+
 export interface AgentResponse {
   content?: ContentPart[];
   conversation_id?: string;
@@ -53,6 +57,24 @@ export interface AgentVersion {
   version?: number;
 }
 
+export interface AuditEvent {
+  action?: string;
+  actor_sub?: string;
+  id?: string;
+  occurred_at?: string;
+  outcome?: "success" | "denied" | "error";
+  payload_hash?: string | null;
+  request_id?: string | null;
+  resource_id?: string | null;
+  resource_type?: string;
+  workspace_id?: string;
+}
+
+export interface AuditEventList {
+  items: AuditEvent[];
+  total: number;
+}
+
 export interface AuditLogEntry {
   action?: string;
   actor_user_id?: string | null;
@@ -65,6 +87,18 @@ export interface AuditLogEntry {
   resource_id?: string | null;
   resource_type?: string;
   user_agent?: string | null;
+}
+
+export interface AuthExchangeRequest {
+  id_token: string;
+}
+
+export interface AuthExchangeResponse {
+  access_expires_at_ms: number;
+  access_token: string;
+  refresh_expires_at_ms: number;
+  refresh_token: string;
+  token_type: "Bearer";
 }
 
 export interface Budget {
@@ -188,6 +222,28 @@ export interface RetrievalChunk {
   source_uri?: string;
 }
 
+export interface RuntimeTurnRequest {
+  agent_name?: string;
+  budget?: TurnBudget;
+  channel?: "web" | "whatsapp" | "slack" | "teams" | "telegram" | "sms" | "email" | "discord" | "voice" | "webhook";
+  content?: ContentPart[];
+  conversation_id: string;
+  input?: string | null;
+  metadata?: Record<string, unknown>;
+  model?: string | null;
+  received_at?: string | null;
+  request_id?: string | null;
+  system_prompt?: string;
+  user_id: string;
+  workspace_id: string;
+}
+
+export interface RuntimeTurnResponse {
+  events: TurnEvent[];
+  reply: { "text": string };
+  turn_id: string;
+}
+
 export interface SecretRef {
   agent_version_id?: string;
   created_at?: string;
@@ -212,6 +268,20 @@ export interface Turn {
   started_at?: string;
   token_in?: number;
   token_out?: number;
+}
+
+export interface TurnBudget {
+  fallback_model?: string | null;
+  max_cost_usd?: number;
+  max_iterations?: number;
+  max_output_tokens_per_iter?: number;
+  max_runtime_seconds?: number;
+}
+
+export interface TurnEvent {
+  payload: Record<string, unknown>;
+  ts: string;
+  type: "token" | "tool_call" | "tool_call_start" | "tool_call_end" | "tool_result" | "retrieval" | "trace" | "degrade" | "complete";
 }
 
 export interface UsageReport {
@@ -248,6 +318,13 @@ export interface WorkspaceCreate {
   name: string;
   region?: RegionName;
   slug: string;
+}
+
+export interface WorkspaceList {
+  items: Workspace[];
+  page: number;
+  page_size: number;
+  total: number;
 }
 
 export interface WorkspaceMember {
@@ -310,7 +387,7 @@ export interface CpApiOperations {
     method: "GET";
     path: "/agents";
     request: unknown;
-    response: Agent[];
+    response: AgentList;
   };
   PostAgents: {
     method: "POST";
@@ -352,7 +429,19 @@ export interface CpApiOperations {
     method: "GET";
     path: "/audit-events";
     request: unknown;
-    response: AuditLogEntry[];
+    response: AuditEventList;
+  };
+  GetAuditEvents: {
+    method: "GET";
+    path: "/audit/events";
+    request: unknown;
+    response: AuditEventList;
+  };
+  PostAuthExchange: {
+    method: "POST";
+    path: "/auth/exchange";
+    request: AuthExchangeRequest;
+    response: AuthExchangeResponse;
   };
   GetBudgets: {
     method: "GET";
@@ -474,6 +563,18 @@ export interface CpApiOperations {
     request: unknown;
     response: Trace;
   };
+  PostTurns: {
+    method: "POST";
+    path: "/turns";
+    request: RuntimeTurnRequest;
+    response: RuntimeTurnResponse;
+  };
+  PostTurnsStream: {
+    method: "POST";
+    path: "/turns/stream";
+    request: RuntimeTurnRequest;
+    response: unknown;
+  };
   GetUsage: {
     method: "GET";
     path: "/usage";
@@ -496,7 +597,7 @@ export interface CpApiOperations {
     method: "GET";
     path: "/workspaces";
     request: unknown;
-    response: Workspace[];
+    response: WorkspaceList;
   };
   PostWorkspaces: {
     method: "POST";
@@ -551,14 +652,16 @@ export interface CpApiOperations {
 /* Generated client */
 
 export interface CpApi {
-  GetAgents(args: { body: unknown }): Promise<Agent[]>;
+  GetAgents(args: { body: unknown }): Promise<AgentList>;
   PostAgents(args: { body: AgentCreate }): Promise<Agent>;
   GetAgentsByAgentId(args: { agent_id: string; body: unknown }): Promise<Agent>;
   DeleteAgentsByAgentId(args: { agent_id: string; body: unknown }): Promise<unknown>;
   GetAgentsByAgentIdConversations(args: { agent_id: string; body: unknown }): Promise<{ "items"?: Conversation[]; "next_cursor"?: string | null }>;
   PostAgentsByAgentIdInvoke(args: { agent_id: string; body: InvokeRequest }): Promise<AgentResponse>;
   PostAgentsByAgentIdVersions(args: { agent_id: string; body: unknown }): Promise<AgentVersion>;
-  GetAuditEvents(args: { body: unknown }): Promise<AuditLogEntry[]>;
+  GetAuditEvents(args: { body: unknown }): Promise<AuditEventList>;
+  GetAuditEvents(args: { body: unknown }): Promise<AuditEventList>;
+  PostAuthExchange(args: { body: AuthExchangeRequest }): Promise<AuthExchangeResponse>;
   GetBudgets(args: { body: unknown }): Promise<Budget[]>;
   PostBudgets(args: { body: { "hard_usd"?: number; "scope": "workspace" | "agent" | "conversation" | "day"; "scope_id"?: string | null; "soft_usd"?: number } }): Promise<Budget>;
   GetConversationsByConversationId(args: { conversation_id: string; body: unknown }): Promise<ConversationDetail>;
@@ -579,10 +682,12 @@ export interface CpApi {
   GetReadyz(args: { body: unknown }): Promise<unknown>;
   GetTracesSearch(args: { body: unknown }): Promise<{ "items"?: Trace[]; "next_cursor"?: string | null }>;
   GetTracesByTurnId(args: { turn_id: string; body: unknown }): Promise<Trace>;
+  PostTurns(args: { body: RuntimeTurnRequest }): Promise<RuntimeTurnResponse>;
+  PostTurnsStream(args: { body: RuntimeTurnRequest }): Promise<unknown>;
   GetUsage(args: { body: unknown }): Promise<UsageReport>;
   GetVersion(args: { body: unknown }): Promise<Version>;
   PostWebhooksIncoming(args: { body: { "events": string[]; "secret"?: string; "url": string } }): Promise<WebhookRegistration>;
-  GetWorkspaces(args: { body: unknown }): Promise<Workspace[]>;
+  GetWorkspaces(args: { body: unknown }): Promise<WorkspaceList>;
   PostWorkspaces(args: { body: WorkspaceCreate }): Promise<Workspace>;
   GetWorkspacesByWorkspaceId(args: { workspace_id: string; body: unknown }): Promise<Workspace>;
   PatchWorkspacesByWorkspaceId(args: { workspace_id: string; body: WorkspacePatch }): Promise<Workspace>;
@@ -596,14 +701,16 @@ export interface CpApi {
 export function createCpApi(opts: CpApiClientOptions): CpApi {
   const fetcher = createCpApiFetch(opts);
   return {
-    GetAgents: (args) => fetcher<Agent[]>("GET", `/agents`, args.body),
+    GetAgents: (args) => fetcher<AgentList>("GET", `/agents`, args.body),
     PostAgents: (args) => fetcher<Agent>("POST", `/agents`, args.body),
     GetAgentsByAgentId: (args) => fetcher<Agent>("GET", `/agents/${encodeURIComponent(args.agent_id)}`, args.body),
     DeleteAgentsByAgentId: (args) => fetcher<unknown>("DELETE", `/agents/${encodeURIComponent(args.agent_id)}`, args.body),
     GetAgentsByAgentIdConversations: (args) => fetcher<{ "items"?: Conversation[]; "next_cursor"?: string | null }>("GET", `/agents/${encodeURIComponent(args.agent_id)}/conversations`, args.body),
     PostAgentsByAgentIdInvoke: (args) => fetcher<AgentResponse>("POST", `/agents/${encodeURIComponent(args.agent_id)}/invoke`, args.body),
     PostAgentsByAgentIdVersions: (args) => fetcher<AgentVersion>("POST", `/agents/${encodeURIComponent(args.agent_id)}/versions`, args.body),
-    GetAuditEvents: (args) => fetcher<AuditLogEntry[]>("GET", `/audit-events`, args.body),
+    GetAuditEvents: (args) => fetcher<AuditEventList>("GET", `/audit-events`, args.body),
+    GetAuditEvents: (args) => fetcher<AuditEventList>("GET", `/audit/events`, args.body),
+    PostAuthExchange: (args) => fetcher<AuthExchangeResponse>("POST", `/auth/exchange`, args.body),
     GetBudgets: (args) => fetcher<Budget[]>("GET", `/budgets`, args.body),
     PostBudgets: (args) => fetcher<Budget>("POST", `/budgets`, args.body),
     GetConversationsByConversationId: (args) => fetcher<ConversationDetail>("GET", `/conversations/${encodeURIComponent(args.conversation_id)}`, args.body),
@@ -624,10 +731,12 @@ export function createCpApi(opts: CpApiClientOptions): CpApi {
     GetReadyz: (args) => fetcher<unknown>("GET", `/readyz`, args.body),
     GetTracesSearch: (args) => fetcher<{ "items"?: Trace[]; "next_cursor"?: string | null }>("GET", `/traces/search`, args.body),
     GetTracesByTurnId: (args) => fetcher<Trace>("GET", `/traces/${encodeURIComponent(args.turn_id)}`, args.body),
+    PostTurns: (args) => fetcher<RuntimeTurnResponse>("POST", `/turns`, args.body),
+    PostTurnsStream: (args) => fetcher<unknown>("POST", `/turns/stream`, args.body),
     GetUsage: (args) => fetcher<UsageReport>("GET", `/usage`, args.body),
     GetVersion: (args) => fetcher<Version>("GET", `/version`, args.body),
     PostWebhooksIncoming: (args) => fetcher<WebhookRegistration>("POST", `/webhooks/incoming`, args.body),
-    GetWorkspaces: (args) => fetcher<Workspace[]>("GET", `/workspaces`, args.body),
+    GetWorkspaces: (args) => fetcher<WorkspaceList>("GET", `/workspaces`, args.body),
     PostWorkspaces: (args) => fetcher<Workspace>("POST", `/workspaces`, args.body),
     GetWorkspacesByWorkspaceId: (args) => fetcher<Workspace>("GET", `/workspaces/${encodeURIComponent(args.workspace_id)}`, args.body),
     PatchWorkspacesByWorkspaceId: (args) => fetcher<Workspace>("PATCH", `/workspaces/${encodeURIComponent(args.workspace_id)}`, args.body),
