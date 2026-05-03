@@ -23,6 +23,9 @@ This is the canonical data model for Loop. Every table, collection, and key name
 | `cp_0001_initial` (`packages/control-plane/.../202604300215_cp_0001_initial.py`) | Control plane | S006 | `workspaces`, `users`, `workspace_members`, `api_keys`, `agent_secrets`, `agents`, `agent_versions` |
 | `cp_0003_operator_assignments` (`packages/control-plane/.../202605260400_cp_0003_operator_assignments.py`) | Control plane | S300 | `operator_assignments` |
 | `cp_0004_mcp_marketplace` (`packages/control-plane/.../202605010930_cp_0004_mcp_marketplace.py`) | Control plane | S550-S559, S750-S765 | `mcp_servers`, `mcp_server_versions`, `mcp_agent_installs`, `mcp_server_reviews`, `mcp_server_usage` |
+| `cp_0005_audit_log` (`packages/control-plane/.../202606010000_cp_0005_audit_log.py`) | Control plane | S630 | `audit_log` |
+| `cp_0005_audit_events` (`packages/control-plane/.../202706150900_cp_0005_audit_events.py`) | Control plane | S630 | `audit_events` |
+| `cp_0006_merge_audit_heads` (`packages/control-plane/.../202706150901_cp_0006_merge_audit_heads.py`) | Control plane | S900 | no tables; Alembic merge revision for the two cp_0005 audit heads |
 | `dp_0001_initial` (`packages/data-plane/.../202604300220_dp_0001_initial.py`) | Data plane | S006 | `conversations`, `turns`, `memory_user`, `memory_bot`, `tool_calls` |
 
 Every customer-data table from these migrations has **row-level security
