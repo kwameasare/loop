@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T18:44:55.180410+00:00",
+    "generated_at": "2026-05-03T18:47:06.035094+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5462,13 +5462,13 @@
     {
       "id": "S901",
       "title": "cp-api: FastAPI ASGI app wires existing handlers into runnable uvicorn process",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S38",
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: uv run uvicorn loop_control_plane.app:app --port 8080 serves /healthz, /v1/workspaces/*, /v1/auth/exchange, /v1/agents/*, /v1/audit/* end-to-end; integration test starts server and exercises 8 endpoints. [extends S100, S118, S346]"
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: codex-orion/s901-cp-api-fastapi-asgi-app-wires-ex\nSkill: skills/api/add-rest-endpoint.md\nLast step: 0/6 (just claimed)\nHeartbeat: 2026-05-03T18:25:14Z (codex-orion)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S902",
