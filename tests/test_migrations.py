@@ -17,6 +17,7 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
+from alembic.script import ScriptDirectory
 
 
 def _render(ini_resource: str) -> str:
@@ -30,6 +31,11 @@ def _render(ini_resource: str) -> str:
     with redirect_stdout(buf):
         command.upgrade(cfg, "head", sql=True)
     return buf.getvalue()
+
+
+def _config(ini_resource: str) -> Config:
+    ini_path = Path(str(files(ini_resource).joinpath("alembic.ini")))
+    return Config(file_=str(ini_path), ini_section="alembic")
 
 
 @pytest.fixture
@@ -50,6 +56,11 @@ def dp_sql() -> str:
 # ---------------------------------------------------------------------------
 # Control plane
 # ---------------------------------------------------------------------------
+
+
+def test_cp_migrations_have_single_head() -> None:
+    script = ScriptDirectory.from_config(_config("loop_control_plane.migrations"))
+    assert script.get_heads() == ["cp_0006_merge_audit_heads"]
 
 
 def test_cp_creates_core_identity_tables(cp_sql: str) -> None:
@@ -131,6 +142,7 @@ def test_dp_workspace_id_is_not_null(dp_sql: str) -> None:
 
 def test_cp_creates_audit_log_table(cp_sql: str) -> None:
     assert "CREATE TABLE audit_log" in cp_sql
+    assert "CREATE TABLE audit_events" in cp_sql
 
 
 def test_cp_audit_log_has_required_columns(cp_sql: str) -> None:
