@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T18:22:36.844103+00:00",
+    "generated_at": "2026-05-03T18:24:17.841225+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5578,7 +5578,7 @@
       "points": 1,
       "priority": "P0",
       "status": "In progress",
-      "notes": "**Active.**\nBranch: copilot-thor/s911-docs-fix-check-docs-links-failur\nSkill: loop_implementation/skills/_base/skill.md\nLast step: 0/2 (just claimed)\nHeartbeat: 2026-05-03T18:22:36Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "notes": "**Active.**\nBranch: copilot-thor/s911-docs-fix-check-docs-links-failur\nSkill: loop_implementation/skills/_base/skill.md\nLast step: 1/1\nHeartbeat: 2026-05-03T18:24:17Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)\nLatest checkpoint: fix docs/index.md missing refs + add acknowledgements.md"
     },
     {
       "id": "S912",

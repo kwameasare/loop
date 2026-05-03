@@ -41,6 +41,21 @@ evaluate AI agents that talk to real users on real channels.
 - [Voice performance](./perf/voice_perf.md) — nightly p50 latency acceptance
   gate.
 
+## Security & policy
+
+- [Threat model](./THREAT_MODEL.md) — adversary model, trust boundaries,
+  and per-component mitigations.
+- [Bug bounty program](./site/bug-bounty.md) — scope, severity rewards,
+  and submission workflow.
+- [Security acknowledgements](./site/acknowledgements.md) — researchers
+  credited for accepted reports.
+- [Data retention policy](./site/data-retention.md) — retention windows
+  per data class and deletion guarantees.
+- [Pricing verification](./site/pricing-verification.md) — how published
+  prices map to actual billed line items.
+- [Partner reviews](./site/PARTNER_REVIEWS.md) — design-partner case
+  studies and quoted feedback.
+
 ## How docs are organised
 
 ```
