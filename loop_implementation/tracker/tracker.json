@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T18:29:32.246286+00:00",
+    "generated_at": "2026-05-03T18:30:50.194644+00:00",
     "format_version": 2
   },
   "epics": [
@@ -27,7 +27,7 @@
       "name": "MCP / Tool layer",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Auto-MCP, Firecracker sandboxes, allow-lists"
     },
     {
@@ -5627,13 +5627,13 @@
     {
       "id": "S916",
       "title": "tool-host: RuncSandboxFactory implementation behind SandboxFactory Protocol (Kata follow-up)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S38",
       "epic": "E3",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: real subprocess-based sandbox using runc with cgroup CPU+memory limits + egress allowlist enforced via netns; integration test runs an MCP echo tool in sandbox and asserts output, then runs a malicious tool that tries network egress and asserts it's blocked. Follow-up story files Kata variant. [extends S843]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s916-tool-host-runcsandboxfactory-imp (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-03T18:30:12Z (copilot-titan)\nTests: packages/tool-host/_tests/test_runc_sandbox.py (12 unit tests, 2 live tests gated on Linux+runc); my files clean under ruff/format/pyright\nDocs touched: loop_implementation/engineering/ENV_REFERENCE.md\nFollow-ups: S916-followup: KataSandboxFactory variant behind same SandboxFactory Protocol (per S916 AC); ruff-debt: 126 pre-existing ruff errors on origin/main blocking full gate"
     },
     {
       "id": "S917",

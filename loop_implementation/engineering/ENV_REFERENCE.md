@@ -91,6 +91,8 @@ update §1–§11.
 | `LOOP_RUNTIME_MAX_MESSAGE_BYTES` | `16777216` | int | 16 MB; reject above. |
 | `LOOP_RUNTIME_MEMORY_TTL_SESSION_SECONDS` | `86400` | int | 24h default; per-agent override possible. |
 | `LOOP_RUNTIME_WARM_POOL_SIZE` | `5` | int | Pre-spawned agent contexts per pod. |
+| `LOOP_TOOL_HOST_RUNC_LIVE` | `0` | bool (`0`/`1`) | Opt-in flag for `RuncSandbox` integration tests; live tests skip unless set to `1` and `runc` is on PATH (S916). |
+| `LOOP_TOOL_HOST_TEST_ROOTFS` | (none) | path | Pre-staged OCI rootfs used by the `RuncSandbox` live integration tests (S916). |
 
 ## 3. Gateway (`dp-gateway`)
 

@@ -1,7 +1,7 @@
 id,name,owner,target,status,notes
 E1,Agent runtime core,Eng #1,MVP M6,In progress,"Hot path: TurnExecutor, streaming, budgets, idempotency"
 E2,LLM Gateway,Eng #1,MVP M6,Done,"Multi-provider, semantic cache, cost accounting"
-E3,MCP / Tool layer,Eng #1,MVP M6,In progress,"Auto-MCP, Firecracker sandboxes, allow-lists"
+E3,MCP / Tool layer,Eng #1,MVP M6,Done,"Auto-MCP, Firecracker sandboxes, allow-lists"
 E4,Memory tiers,Eng #1,MVP M6,Done,User/session/scratch + episodic at M7
 E5,KB / RAG engine,Eng #1,MVP M6,Done,PDF/web/Notion + hybrid retrieval + vision
 E6,Channel adapters,Eng #7,Rolling,Done,"Web, Slack, WhatsApp, SMS first"
