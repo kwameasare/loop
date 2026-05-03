@@ -1561,7 +1561,14 @@ Final heartbeat: 2026-05-03T19:30:00Z (copilot-thor)
 Tests: uv run python tools/check_docs_links.py (ok, 25 files, 24 index links); uv run pytest tests/test_docs_links.py (3 passed); ruff baseline pre-existing on main (126 errors, verified across origin/main commits)
 Docs touched: docs/index.md,docs/site/acknowledgements.md
 Follow-ups: ruff-debt: 126 pre-existing ruff errors on origin/main blocking full gate"
-S912,studio: real Auth0 SPA SDK wiring against tenant; first-time-login flow E2E,tbd,S38,E10,2,P0,Not started,AC: pnpm dev studio + LOOP_AUTH0_DOMAIN + LOOP_AUTH0_CLIENT_ID env vars redirects unauthenticated traffic to Auth0 universal login; on-success callback exchanges code for session via /v1/auth/exchange; logout button clears session; Playwright e2e covers happy path. [extends S901]
+S912,studio: real Auth0 SPA SDK wiring against tenant; first-time-login flow E2E,copilot-thor,S38,E10,2,P0,In progress,"**Active.**
+Branch: copilot-thor/s912-studio-real-auth0-spa-sdk-wiring
+Skill: loop_implementation/skills/api/add-rest-endpoint.md
+Last step: 0/5 (just claimed)
+Heartbeat: 2026-05-03T19:26:59Z (copilot-thor)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S913,perf: re-baseline cp-api-5000-rps + runtime-sse-1000 against real cp-api/dp-runtime images,tbd,S38,E12,2,P0,Not started,"AC: bench/results/cp_api_5000_rps.json + runtime_sse_1000_concurrency.json carry numbers measured against the actual cp-api app from G2 (not helm-e2e-smoke-server); CI workflows install loop-cp-api + loop-runtime images via docker build, not the smoke server; perf gates remain blocking. [extends S901, S902]"
 S914,"demo: scripts/demo/ — 5 scripted demos (chat, tools, KB, multi-agent, HITL takeover)",tbd,S38,E11,2,P1,Not started,"AC: scripts/demo/{1_chat.sh,2_tool.sh,3_kb.sh,4_multiagent.sh,5_hitl.sh} each run cleanly against G2/G3/G7 and produce expected output; README in scripts/demo/ documents prerequisites + expected output. [extends S907]"
 S915,docs: docs.loop.example v1 — Mintlify site live with quickstart + 3 tutorials,tbd,S38,E17,3,P0,Not started,AC: apps/docs/ Mintlify project deployable via mintlify deploy; mint.json indexes 12 pages drawn from loop_implementation/engineering/; quickstart points at G7 example; nav covers concepts/quickstart/tutorials/api-ref/cookbook. [extends S659]

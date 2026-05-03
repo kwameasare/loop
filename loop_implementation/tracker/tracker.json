@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T19:25:58.274826+00:00",
+    "generated_at": "2026-05-03T19:26:59.657560+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5583,13 +5583,13 @@
     {
       "id": "S912",
       "title": "studio: real Auth0 SPA SDK wiring against tenant; first-time-login flow E2E",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S38",
       "epic": "E10",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: pnpm dev studio + LOOP_AUTH0_DOMAIN + LOOP_AUTH0_CLIENT_ID env vars redirects unauthenticated traffic to Auth0 universal login; on-success callback exchanges code for session via /v1/auth/exchange; logout button clears session; Playwright e2e covers happy path. [extends S901]"
+      "status": "In progress",
+      "notes": "**Active.**\nBranch: copilot-thor/s912-studio-real-auth0-spa-sdk-wiring\nSkill: loop_implementation/skills/api/add-rest-endpoint.md\nLast step: 0/5 (just claimed)\nHeartbeat: 2026-05-03T19:26:59Z (copilot-thor)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
     },
     {
       "id": "S913",
