@@ -1,0 +1,10 @@
+[loop:demo:dry-run] provider=openai model=gpt-4o-mini
+[agent] I'm not confident I can resolve this refund request without a
+human review. Escalating to an operator.
+
+--- HITL takeover (operator: alex@loop.example) ---
+
+[operator] Thanks for your patience — I see the order in our queue
+and I've manually approved the refund. You should see the credit
+appear within 3–5 business days. Is there anything else I can help
+with?

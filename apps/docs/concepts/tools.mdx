@@ -1,0 +1,37 @@
+---
+title: "Tools"
+description: "Deterministic functions Loop agents call to act on the world."
+---
+
+# Tools
+
+Tools are the deterministic edge of an agent. They are pure Python
+functions with a JSON-schema input contract; the runtime serialises
+their output back into the conversation.
+
+```python
+async def lookup_order(order_id: str) -> dict:
+    return {"status": "in_transit", "estimated_delivery": "2026-05-02"}
+
+LOOKUP_ORDER_TOOL_SCHEMA = {
+    "name": "lookup_order",
+    "description": "Look up the status of a customer order by ID.",
+    "input_schema": {
+        "type": "object",
+        "properties": {"order_id": {"type": "string"}},
+        "required": ["order_id"],
+    },
+}
+```
+
+The runtime guarantees:
+
+- **Deterministic dispatch** — the same arguments always produce the
+  same tool result for a given pin.
+- **Budgeted execution** — each tool call is metered against the
+  agent's `max_cost_usd`.
+- **Transcript safety** — failed tool calls are rolled back so the
+  next turn does not see a half-applied side effect.
+
+Read the canonical concept at
+[`docs/concepts/tools.md`](https://github.com/kwameasare/loop/blob/main/docs/concepts/tools.md).

@@ -1,0 +1,27 @@
+---
+title: "Memory"
+description: "How Loop agents remember (and forget) across turns and sessions."
+---
+
+# Memory
+
+Loop ships three layers of memory, each with its own retention,
+addressing, and isolation rules:
+
+| Layer | Lifetime | Addressed by |
+| --- | --- | --- |
+| **Working** | Single turn | The runtime |
+| **Conversation** | Single session | `session_id` |
+| **Long-term (KB)** | Until evicted | `(workspace, namespace, key)` |
+
+Working memory is just the in-flight transcript the model sees.
+Conversation memory is a workspace-scoped K/V (Postgres) keyed by
+`session_id` — agents store per-user context here. The knowledge-base
+layer is a vector + lexical hybrid index built on top of the
+`packages/kb-engine/` package, governed by the same RBAC the rest of
+the workspace uses.
+
+The full retention/governance model lives in
+[`docs/concepts/memory.md`](https://github.com/kwameasare/loop/blob/main/docs/concepts/memory.md)
+and the engine's design notes are at
+[`packages/kb-engine/`](https://github.com/kwameasare/loop/tree/main/packages/kb-engine).

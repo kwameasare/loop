@@ -1,0 +1,49 @@
+---
+title: "Cookbook: Support agent"
+description: "Production-shape support agent: streaming, tool use, and budget enforcement."
+---
+
+# Cookbook: Support agent
+
+This recipe assembles the primitives from the
+[concepts](/concepts/agents) and the
+[build-a-support-agent tutorial](/tutorials/build-support-agent) into
+a production-shape definition.
+
+```python
+from loop.agents import Agent
+from loop.types import AgentEvent, AgentResponse, ContentPart
+
+
+class SupportAgent(Agent):
+    name = "support"
+    model = "gpt-4o-mini"
+    instructions = (
+        "You are a friendly, accurate customer-support agent. Use the "
+        "lookup_order tool whenever the user asks about a specific "
+        "order. Refuse to answer questions outside the support scope."
+    )
+    max_iterations = 4
+    max_cost_usd = 0.10
+```
+
+The full source — including the `lookup_order` tool, the streaming
+provider loop, and the tests that pin the behaviour — lives at
+[`examples/support_agent/`](https://github.com/kwameasare/loop/tree/main/examples/support_agent).
+
+## What this recipe gets you
+
+- Real-LLM streaming with both OpenAI and Anthropic, selectable via
+  `LOOP_SUPPORT_PROVIDER` or auto-detected from `OPENAI_API_KEY` /
+  `ANTHROPIC_API_KEY`.
+- A Loop tool with a JSON-schema input contract.
+- An eval suite that asserts the tool is called and the cost stays
+  under the agent's budget.
+
+## Customisation hooks
+
+- Swap `lookup_order` for your real OMS client.
+- Add a `find_kb_answer` tool by following the
+  [knowledge-base tutorial](/tutorials/connect-knowledge-base).
+- Tighten the budget — `max_cost_usd = 0.02` is a good production
+  ceiling for short-answer support.

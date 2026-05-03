@@ -1577,8 +1577,22 @@ Final heartbeat: 2026-05-03T19:25:43Z (codex-orion)
 Tests: Focused S913 gates passed: uv run ruff check/format --check/pyright scripts/openai_sse_fixture.py tests/test_cp_api_5000_rps.py tests/test_runtime_sse_1000.py tests/test_perf_regression_budget.py; uv run pytest -q tests/test_cp_api_5000_rps.py tests/test_runtime_sse_1000.py tests/test_perf_regression_budget.py (13 passed); workflow YAML parse passed; tracker/docs/checkpoint gates passed; full lifecycle ruff remains baseline-red in unrelated files.
 Docs touched: docs/perf/cp_api_5000_rps.md,docs/perf/runtime_sse_1000_concurrency.md,docs/perf/perf_regression_budget.md
 Follow-ups: none"
-S914,"demo: scripts/demo/ — 5 scripted demos (chat, tools, KB, multi-agent, HITL takeover)",tbd,S38,E11,2,P1,Not started,"AC: scripts/demo/{1_chat.sh,2_tool.sh,3_kb.sh,4_multiagent.sh,5_hitl.sh} each run cleanly against G2/G3/G7 and produce expected output; README in scripts/demo/ documents prerequisites + expected output. [extends S907]"
-S915,docs: docs.loop.example v1 — Mintlify site live with quickstart + 3 tutorials,tbd,S38,E17,3,P0,Not started,AC: apps/docs/ Mintlify project deployable via mintlify deploy; mint.json indexes 12 pages drawn from loop_implementation/engineering/; quickstart points at G7 example; nav covers concepts/quickstart/tutorials/api-ref/cookbook. [extends S659]
+S914,"demo: scripts/demo/ — 5 scripted demos (chat, tools, KB, multi-agent, HITL takeover)",copilot-thor,S38,E11,2,P1,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s914-demo-scripts-demo-5-scripted-dem (merged + deletable)
+Skill: loop_implementation/skills/api/add-rest-endpoint.md
+Final heartbeat: 2026-05-03T19:41:09Z (copilot-thor)
+Tests: pytest tests/test_demo_scripts.py: 12 passed
+Docs touched: scripts/demo/README.md
+Follow-ups: none"
+S915,docs: docs.loop.example v1 — Mintlify site live with quickstart + 3 tutorials,copilot-thor,S38,E17,3,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s915-docs-docs-loop-example-v1-mintli (merged + deletable)
+Skill: loop_implementation/skills/api/add-rest-endpoint.md
+Final heartbeat: 2026-05-03T19:37:30Z (copilot-thor)
+Tests: pytest tests/test_docs_mint.py: 7 passed (mint.json, nav coverage, frontmatter, AC checks)
+Docs touched: apps/docs/* (15 MDX pages)
+Follow-ups: none"
 S916,tool-host: RuncSandboxFactory implementation behind SandboxFactory Protocol (Kata follow-up),copilot-titan,S38,E3,3,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: copilot-titan/s916-tool-host-runcsandboxfactory-imp (merged + deletable)

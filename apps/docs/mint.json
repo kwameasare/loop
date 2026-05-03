@@ -1,0 +1,83 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Loop",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.png",
+  "colors": {
+    "primary": "#7c5cff",
+    "light": "#a994ff",
+    "dark": "#3f2bb3",
+    "background": {
+      "light": "#ffffff",
+      "dark": "#0b0b14"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/kwameasare/loop"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Open Studio",
+    "url": "https://studio.loop.example"
+  },
+  "anchors": [
+    {
+      "name": "API Reference",
+      "icon": "code",
+      "url": "api-reference"
+    },
+    {
+      "name": "Cookbook",
+      "icon": "book-open",
+      "url": "cookbook"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Get Started",
+      "pages": ["index", "quickstart"]
+    },
+    {
+      "group": "Concepts",
+      "pages": [
+        "concepts/agents",
+        "concepts/tools",
+        "concepts/memory",
+        "concepts/channels",
+        "concepts/eval"
+      ]
+    },
+    {
+      "group": "Tutorials",
+      "pages": [
+        "tutorials/build-support-agent",
+        "tutorials/connect-knowledge-base",
+        "tutorials/run-evals"
+      ]
+    },
+    {
+      "group": "Operations",
+      "pages": [
+        "operations/security",
+        "operations/runbooks",
+        "operations/env-reference"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": ["api-reference/overview"]
+    },
+    {
+      "group": "Cookbook",
+      "pages": ["cookbook/support-agent"]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/kwameasare/loop"
+  }
+}

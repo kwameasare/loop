@@ -1,0 +1,12 @@
+[loop:demo:dry-run] provider=openai model=gpt-4o-mini
+[supervisor] I see two intents: a refund question and an order-status
+lookup. Routing the order-status part to the support specialist.
+
+--- handing off to specialist ---
+
+[loop:demo:dry-run] provider=openai model=gpt-4o-mini
+[tool] lookup_order(order_id="4172")
+[tool result] {"status": "in_transit", "estimated_delivery": "2026-05-02"}
+Order 4172 is in transit and is scheduled to arrive on 2026-05-02.
+For the refund half of your question I'll connect you back to the
+billing agent.

@@ -1,0 +1,30 @@
+---
+title: "Eval"
+description: "Continuous evaluation as a first-class part of every agent."
+---
+
+# Eval
+
+Every Loop agent ships with an **eval suite** — a set of recorded
+turns plus assertions over the agent's response, traces, and cost.
+Suites run in CI, on every deploy, and on a nightly schedule.
+
+```bash
+uv run python examples/support_agent/run_eval.py
+```
+
+The harness lives at
+[`packages/eval-harness/`](https://github.com/kwameasare/loop/tree/main/packages/eval-harness).
+It supports three assertion families:
+
+- **Response** — exact match, regex, semantic similarity, LLM-as-judge.
+- **Trace** — required tool calls, prohibited tool calls, span
+  attribute checks.
+- **Budget** — token, dollar, and wall-clock ceilings.
+
+Failures are surfaced in the studio
+[`/evals`](https://studio.loop.example/evals) view and can gate
+deploys via branch protection.
+
+The architectural notes are in
+[`docs/concepts/eval.md`](https://github.com/kwameasare/loop/blob/main/docs/concepts/eval.md).
