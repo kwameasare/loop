@@ -57,6 +57,7 @@ Naming convention: `LOOP_<DOMAIN>_<NAME>` (e.g. `LOOP_RUNTIME_PORT`). Avoid `_` 
 | `LOOP_DEMO_TOKEN` | `scripts/e2e_web_smoke.py` — optional bearer token for protected demo environments | S181 |
 | `LOOP_CLOUD` | `.github/workflows/cross-cloud-smoke.yml` — cloud label injected into Helm smoke pods for the AWS/Azure/GCP nightly matrix | S780 |
 | `LOOP_ONCALL_WEBHOOK_URL` | `.github/workflows/cross-cloud-smoke.yml`, `.github/workflows/turn-latency-k6.yml` — GitHub Actions secret receiving JSON page payloads when smoke or performance gates fail | S780, S840 |
+| `LOOP_OPENAI_FIXTURE_PORT` | `scripts/openai_sse_fixture.py` — listen port for the OpenAI-compatible SSE fixture used by the S913 runtime performance workflow | S913 |
 | `LOOP_TURN_LATENCY_BASE_URL` | `scripts/k6_turn_latency.js` / `.github/workflows/turn-latency-k6.yml` — base URL for the S840 text-turn k6 latency gate | S840 |
 
 > Note — **`LOOP_WORKSPACE_ID` is not an env var.** It is a Postgres

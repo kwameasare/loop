@@ -1,13 +1,21 @@
 {
-  "baseline_ref": "main@S844",
+  "baseline_ref": "main@S913-real-dp-runtime",
   "budgets": {
     "checks_rate": 0.999,
     "http_req_failed_rate": 0.001,
     "memory_bytes": 4294967296,
     "p95_ms": 3000
   },
-  "commit": "S844-contract",
+  "commit": "S913-real-image-contract",
   "host": "github-actions-kind",
+  "measurement": {
+    "image": "loop/dp-runtime:perf",
+    "image_source": "packages/data-plane/Dockerfile",
+    "load_driver": "in-cluster grafana/k6 Job against svc/loop-loop-runtime",
+    "provider_fixture": "scripts/openai_sse_fixture.py",
+    "previous_invalid_target": "scripts/helm_e2e_smoke_server.py",
+    "target": "actual loop_data_plane.runtime_app FastAPI/Uvicorn container"
+  },
   "name": "runtime_sse_1000_concurrency",
   "scenario": "runtime_sse_1000",
   "source": ".github/workflows/runtime-sse-1000.yml",
@@ -15,8 +23,8 @@
     "checks_rate": 1.0,
     "concurrent_turns": 1000,
     "http_req_failed_rate": 0.0,
-    "memory_bytes": 268435456,
-    "p95_ms": 1.0
+    "memory_bytes": 536870912,
+    "p95_ms": 886.0
   },
   "tool": "k6",
   "ts": "2026-05-02T00:00:00Z"

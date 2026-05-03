@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T19:41:09.191295+00:00",
+    "generated_at": "2026-05-03T19:44:18.138674+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5594,13 +5594,13 @@
     {
       "id": "S913",
       "title": "perf: re-baseline cp-api-5000-rps + runtime-sse-1000 against real cp-api/dp-runtime images",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S38",
       "epic": "E12",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: bench/results/cp_api_5000_rps.json + runtime_sse_1000_concurrency.json carry numbers measured against the actual cp-api app from G2 (not helm-e2e-smoke-server); CI workflows install loop-cp-api + loop-runtime images via docker build, not the smoke server; perf gates remain blocking. [extends S901, S902]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s913-perf-re-baseline-cp-api-5000-rps (merged + deletable)\nSkill: skills/testing/perf-check.md\nFinal heartbeat: 2026-05-03T19:25:43Z (codex-orion)\nTests: Focused S913 gates passed: uv run ruff check/format --check/pyright scripts/openai_sse_fixture.py tests/test_cp_api_5000_rps.py tests/test_runtime_sse_1000.py tests/test_perf_regression_budget.py; uv run pytest -q tests/test_cp_api_5000_rps.py tests/test_runtime_sse_1000.py tests/test_perf_regression_budget.py (13 passed); workflow YAML parse passed; tracker/docs/checkpoint gates passed; full lifecycle ruff remains baseline-red in unrelated files.\nDocs touched: docs/perf/cp_api_5000_rps.md,docs/perf/runtime_sse_1000_concurrency.md,docs/perf/perf_regression_budget.md\nFollow-ups: none"
     },
     {
       "id": "S914",

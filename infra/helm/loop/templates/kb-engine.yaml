@@ -39,7 +39,10 @@ spec:
                 name: {{ include "loop.fullname" . }}-secrets
           {{- with .Values.kbEngine.env }}
           env:
-            {{- toYaml . | nindent 12 }}
+            {{- range $name, $value := . }}
+            - name: {{ $name | quote }}
+              value: {{ $value | quote }}
+            {{- end }}
           {{- end }}
           readinessProbe:
             httpGet:

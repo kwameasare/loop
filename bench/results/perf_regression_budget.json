@@ -4,9 +4,9 @@
   "max_p95_regression_percent": 5.0,
   "metrics": [
     {
-      "baseline_p95_ms": 1.0,
+      "baseline_p95_ms": 34.7,
       "breached": false,
-      "current_p95_ms": 1.0,
+      "current_p95_ms": 34.7,
       "name": "cp_api_5000_rps",
       "regression_percent": 0.0,
       "source": "bench/results/cp_api_5000_rps.json",
@@ -31,9 +31,9 @@
       "threshold_percent": 5.0
     },
     {
-      "baseline_p95_ms": 1.0,
+      "baseline_p95_ms": 886.0,
       "breached": false,
-      "current_p95_ms": 1.0,
+      "current_p95_ms": 886.0,
       "name": "runtime_sse_1000_concurrency",
       "regression_percent": 0.0,
       "source": "bench/results/runtime_sse_1000_concurrency.json",
@@ -69,6 +69,6 @@
   ],
   "name": "perf_regression_budget",
   "passed": true,
-  "ts": "2026-05-02T06:19:22+00:00",
+  "ts": "2026-05-03T19:09:56+00:00",
   "window_days": 7
 }

@@ -22,6 +22,12 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CHART_DIR = REPO_ROOT / "infra" / "helm" / "loop"
 SCHEMA_PATH = CHART_DIR / "values.schema.json"
 BASE_VALUES = CHART_DIR / "values.yaml"
+COMPONENT_TEMPLATES = (
+    CHART_DIR / "templates" / "control-plane.yaml",
+    CHART_DIR / "templates" / "runtime.yaml",
+    CHART_DIR / "templates" / "gateway.yaml",
+    CHART_DIR / "templates" / "kb-engine.yaml",
+)
 
 
 def _load_schema() -> dict[str, object]:
@@ -47,6 +53,14 @@ def test_base_values_validate_against_schema() -> None:
     schema = _load_schema()
     values = _load_yaml(BASE_VALUES)
     jsonschema.validate(values, schema)
+
+
+def test_component_env_maps_render_as_kubernetes_env_lists() -> None:
+    for template_path in COMPONENT_TEMPLATES:
+        template = template_path.read_text(encoding="utf-8")
+        assert "range $name, $value := ." in template
+        assert "- name: {{ $name | quote }}" in template
+        assert "value: {{ $value | quote }}" in template
 
 
 def test_schema_rejects_negative_replica_count() -> None:
