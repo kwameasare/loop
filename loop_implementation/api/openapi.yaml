@@ -24,6 +24,8 @@ security:
   - BearerAuth: []
 
 tags:
+  - name: Auth
+    description: Login exchange and Loop token issuance
   - name: Agents
     description: Agent lifecycle, versioning, and deployment
   - name: Conversations
@@ -47,6 +49,25 @@ tags:
 
 paths:
 
+  /auth/exchange:
+    post:
+      tags: [Auth]
+      summary: Exchange a verified IdP token for Loop bearer credentials
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AuthExchangeRequest" }
+      responses:
+        "200":
+          description: Loop access + refresh tokens
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthExchangeResponse" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   # ──────────────── Workspaces ────────────────
   /workspaces:
     get:
@@ -58,8 +79,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items: { $ref: "#/components/schemas/Workspace" }
+                $ref: "#/components/schemas/WorkspaceList"
     post:
       tags: [Workspaces]
       summary: Create workspace
@@ -200,6 +220,8 @@ paths:
     post:
       tags: [Agents]
       summary: Create an agent
+      parameters:
+        - { $ref: "#/components/parameters/ActiveWorkspaceId" }
       requestBody:
         required: true
         content:
@@ -214,6 +236,8 @@ paths:
     get:
       tags: [Agents]
       summary: List agents in the active workspace
+      parameters:
+        - { $ref: "#/components/parameters/ActiveWorkspaceId" }
       responses:
         "200":
           description: OK
@@ -227,15 +251,16 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items: { $ref: "#/components/schemas/Agent" }
+                $ref: "#/components/schemas/AgentList"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "429":
           $ref: "#/components/responses/RateLimited"
 
   /agents/{agent_id}:
-    parameters: [{ $ref: "#/components/parameters/AgentId" }]
+    parameters:
+      - { $ref: "#/components/parameters/AgentId" }
+      - { $ref: "#/components/parameters/ActiveWorkspaceId" }
     get:
       tags: [Agents]
       summary: Get an agent
@@ -665,11 +690,15 @@ paths:
                     items: { $ref: "#/components/schemas/Trace" }
                   next_cursor: { type: string, nullable: true }
 
-  /audit-events:
+  /audit/events:
     get:
       tags: [Admin]
       summary: Get audit log entries
       parameters:
+        - in: query
+          name: workspace_id
+          required: true
+          schema: { type: string, format: uuid }
         - in: query
           name: action
           schema: { type: string, example: "agent:deploy" }
@@ -691,8 +720,26 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items: { $ref: "#/components/schemas/AuditLogEntry" }
+                $ref: "#/components/schemas/AuditEventList"
+
+  /audit-events:
+    get:
+      tags: [Admin]
+      summary: Get audit log entries (legacy alias)
+      parameters:
+        - in: query
+          name: workspace_id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100, maximum: 1000 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuditEventList" }
 
   /webhooks/incoming:
     post:
@@ -865,6 +912,12 @@ components:
       name: workspace_id
       required: true
       schema: { type: string, format: uuid }
+    ActiveWorkspaceId:
+      in: header
+      name: X-Loop-Workspace-Id
+      required: true
+      schema: { type: string, format: uuid }
+      description: Workspace selected for active agent and audit routes.
     RequestRegion:
       in: header
       name: X-Loop-Region
@@ -904,6 +957,24 @@ components:
 
   schemas:
 
+    AuthExchangeRequest:
+      type: object
+      required: [id_token]
+      properties:
+        id_token:
+          type: string
+          description: Verified local/IdP access token to exchange.
+
+    AuthExchangeResponse:
+      type: object
+      required: [access_token, refresh_token, token_type, access_expires_at_ms, refresh_expires_at_ms]
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        token_type: { type: string, enum: [Bearer] }
+        access_expires_at_ms: { type: integer }
+        refresh_expires_at_ms: { type: integer }
+
     ProblemDetail:
       description: RFC 9457 Problem Details for HTTP APIs
       type: object
@@ -925,6 +996,17 @@ components:
         plan: { type: string, enum: [hobby, pro, team, enterprise] }
         region: { $ref: "#/components/schemas/RegionName" }
         created_at: { type: string, format: date-time }
+
+    WorkspaceList:
+      type: object
+      required: [items, page, page_size, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Workspace" }
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
 
     WorkspaceCreate:
       type: object
@@ -958,6 +1040,14 @@ components:
         description: { type: string }
         active_version: { type: integer, nullable: true }
         created_at: { type: string, format: date-time }
+
+    AgentList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Agent" }
 
     AgentCreate:
       type: object
@@ -1250,6 +1340,29 @@ components:
         user_agent: { type: string, nullable: true }
         request_id: { type: string }
         created_at: { type: string, format: date-time }
+
+    AuditEvent:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        occurred_at: { type: string, format: date-time }
+        workspace_id: { type: string, format: uuid }
+        actor_sub: { type: string }
+        action: { type: string, example: "agent:create" }
+        resource_type: { type: string }
+        resource_id: { type: string, nullable: true }
+        request_id: { type: string, nullable: true }
+        payload_hash: { type: string, nullable: true }
+        outcome: { type: string, enum: [success, denied, error] }
+
+    AuditEventList:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AuditEvent" }
+        total: { type: integer }
 
     WebhookRegistration:
       type: object
