@@ -16,6 +16,7 @@ SCRIPT = ROOT / "scripts" / "k6_runtime_sse_1000.js"
 WORKFLOW = ROOT / ".github" / "workflows" / "runtime-sse-1000.yml"
 RESULT = ROOT / "bench" / "results" / "runtime_sse_1000_concurrency.json"
 FIXTURE = ROOT / "scripts" / "openai_sse_fixture.py"
+RUNTIME_TEMPLATE = ROOT / "infra" / "helm" / "loop" / "templates" / "runtime.yaml"
 
 
 def _workflow() -> dict[Any, Any]:
@@ -53,12 +54,22 @@ def test_runtime_sse_workflow_runs_k6_and_memory_probe() -> None:
     assert "scripts/openai_sse_fixture.py" in runs
     assert "LOOP_DP_OPENAI_BASE_URL" in runs
     assert "LOOP_GATEWAY_OPENAI_API_KEY" in runs
+    assert "runtime.env.LOOP_DP_OPENAI_BASE_URL" in runs
+    assert "runtime.env[0]" not in runs
     assert "runtime.image.repository=dp-runtime" in runs
     assert "helm_e2e_smoke_server.py" not in WORKFLOW.read_text()
     assert "k6 run --summary-export /tmp/runtime-sse-1000-summary.json" in runs
     assert "scripts/k6_runtime_sse_1000.js" in runs
     assert "memory.current" in runs
     assert "LOOP_ONCALL_WEBHOOK_URL" in runs
+
+
+def test_runtime_chart_renders_env_map_as_kubernetes_env_list() -> None:
+    template = RUNTIME_TEMPLATE.read_text()
+
+    assert "range $name, $value := ." in template
+    assert "- name: {{ $name | quote }}" in template
+    assert "value: {{ $value | quote }}" in template
 
 
 def test_runtime_sse_contract_result_matches_budgets() -> None:

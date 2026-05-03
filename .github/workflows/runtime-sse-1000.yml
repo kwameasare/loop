@@ -68,12 +68,9 @@ jobs:
             --set runtime.image.repository=dp-runtime --set runtime.image.tag=perf \
             --set runtime.replicaCount=1 --set controlPlane.enabled=false \
             --set gateway.enabled=false --set kbEngine.enabled=false --set toolHost.enabled=false \
-            --set-string runtime.env[0].name=LOOP_DP_OPENAI_BASE_URL \
-            --set-string runtime.env[0].value=http://openai-sse-fixture:8089 \
-            --set-string runtime.env[1].name=LOOP_GATEWAY_OPENAI_API_KEY \
-            --set-string runtime.env[1].value=perf-fixture-key \
-            --set-string runtime.env[2].name=LOOP_DP_DEFAULT_MODEL \
-            --set-string runtime.env[2].value=gpt-4o-mini \
+            --set-string runtime.env.LOOP_DP_OPENAI_BASE_URL=http://openai-sse-fixture:8089 \
+            --set-string runtime.env.LOOP_GATEWAY_OPENAI_API_KEY=perf-fixture-key \
+            --set-string runtime.env.LOOP_DP_DEFAULT_MODEL=gpt-4o-mini \
             --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \
             --set nats.enabled=false --set minio.enabled=false \
             --set clickhouse.enabled=false
