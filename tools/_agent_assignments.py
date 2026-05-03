@@ -83,6 +83,13 @@ CODEX_ORION: frozenset[str] = frozenset(
         "S638",  # ent: dedicated single-tenant deploy mode
         # --- proof report (depends on the modules above) ---
         "S781",  # docs: cloud-portability proof report
+        # --- S38 production-readiness wiring (G1-G6, G14) ---
+        "S900",  # migrations: merge cp_0006 resolves cp_0005 head fork
+        "S901",  # cp-api: FastAPI ASGI app wires existing handlers
+        "S902",  # dp-runtime: FastAPI POST /v1/turns SSE replaces __main__ stub
+        "S904",  # terraform: aws-loop-stack module + staging env
+        "S905",  # kms+s3: AwsKmsBackend(boto3) + S3ObjectStore(boto3)
+        "S913",  # perf: re-baseline cp-api+runtime gates against real images
     }
 )
 
@@ -112,6 +119,11 @@ CODEX_VEGA: frozenset[str] = frozenset(
         "S805",  # SLO definitions per service + error-budget burn alerts
         "S846",  # 5%+ p95 regression blocks PR (CI gate)
         "S596",  # region: metadata-only telemetry (no PII) leaving region
+        # --- S38 production-readiness wiring (G7, G9-G11) ---
+        "S906",  # gateway: HttpxStreamTransport (OpenAI + Anthropic real upstream)
+        "S908",  # voice: Deepgram + ElevenLabs real WS clients
+        "S909",  # voice: replace simulator output in bench with real samples
+        "S910",  # voice: Twilio SIP integration test harness (closes S387)
     }
 )
 
@@ -144,6 +156,13 @@ COPILOT_THOR: frozenset[str] = frozenset(
         "S659",  # docs.loop.example v1 (Mintlify) — getting started + 3 tutorials
         "S670",  # 1.0 release-notes draft + changelog automation
         "S671",  # pricing page + plan-comparison matrix
+        # --- S38 production-readiness wiring (G4, G8, G12-G13, G15-G16) ---
+        "S903",  # cli: HttpxControlPlaneTransport replaces _DefaultTransport
+        "S907",  # examples: support_agent imports + run_local.py
+        "S911",  # docs: fix check_docs_links failures
+        "S912",  # studio: real Auth0 SPA SDK wiring against tenant
+        "S914",  # demo: scripts/demo/ — 5 scripted demos
+        "S915",  # docs: Mintlify site live deploy
     }
 )
 
@@ -185,6 +204,11 @@ COPILOT_TITAN: frozenset[str] = frozenset(
         "S806",  # ops: incident-response runbook + monthly game-day cadence
         "S807",  # ops: data-retention policy enforced by scheduled jobs
         "S808",  # ops: encrypted backup verification (restore-then-diff weekly)
+        # --- S38 production-readiness wiring (G17-G20) ---
+        "S916",  # tool-host: RuncSandboxFactory real impl (Kata follow-up)
+        "S917",  # saml: PySAML2Validator with xmlsec1 sig verify
+        "S918",  # secrets: BYO Vault transit client behind KMS Protocol
+        "S919",  # soc2: pen-test vendor shortlist + checklist update
     }
 )
 

@@ -2229,6 +2229,22 @@ SPRINTS: list[Sprint] = [
         "S840-S846",
         "Not started",
     ),
+    # ---- Production-readiness gap-close (filed after the post-S37 audit) ----
+    # The post-S37 audit revealed that the cp-api / dp-runtime container
+    # entrypoints just exit 0 (loop_data_plane.__main__ literally prints
+    # version and exits; the cp-api Dockerfile CMD runs the healthz module
+    # only). Every external integration was a Protocol seam with InMemory*
+    # implementations — no httpx-backed gateway transport, no boto3, no
+    # PySAML2, no real microVM. S38 closes that gap so the system actually
+    # runs against real upstreams and real clouds.
+    Sprint(
+        "S38",
+        "Wk 81+ (post-audit gap-close)",
+        "Production-readiness wiring",
+        "FastAPI app objects for cp-api + dp-runtime, real httpx gateway transport, real boto3 KMS+S3, real Deepgram/ElevenLabs WS clients, real RuncSandboxFactory, real PySAML2 signature verification, Vault transit BYO key path, Mintlify docs deploy, demo bundle. Closes the architectural-skeleton-vs-runnable-system gap.",
+        "S900-S919",
+        "Not started",
+    ),
 ]
 _LEGACY_SPRINTS_BELOW: list[Sprint] = [
     Sprint(

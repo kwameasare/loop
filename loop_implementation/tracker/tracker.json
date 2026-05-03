@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-02T14:45:38.661578+00:00",
+    "generated_at": "2026-05-03T17:36:32.950970+00:00",
     "format_version": 2
   },
   "epics": [
@@ -11,7 +11,7 @@
       "name": "Agent runtime core",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "Done",
+      "status": "In progress",
       "notes": "Hot path: TurnExecutor, streaming, budgets, idempotency"
     },
     {
@@ -19,7 +19,7 @@
       "name": "LLM Gateway",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "Done",
+      "status": "In progress",
       "notes": "Multi-provider, semantic cache, cost accounting"
     },
     {
@@ -27,7 +27,7 @@
       "name": "MCP / Tool layer",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "Done",
+      "status": "In progress",
       "notes": "Auto-MCP, Firecracker sandboxes, allow-lists"
     },
     {
@@ -83,7 +83,7 @@
       "name": "Studio (UI)",
       "owner": "Eng #5",
       "target": "MVP M6",
-      "status": "Done",
+      "status": "In progress",
       "notes": "Conversations, traces, replay, costs"
     },
     {
@@ -91,7 +91,7 @@
       "name": "CLI & SDKs",
       "owner": "Eng #1+5",
       "target": "MVP M6",
-      "status": "Done",
+      "status": "In progress",
       "notes": "Python core, Go CLI; TS gen later"
     },
     {
@@ -139,7 +139,7 @@
       "name": "Docs site & DevRel",
       "owner": "Eng #6",
       "target": "Rolling",
-      "status": "Done",
+      "status": "In progress",
       "notes": "Quickstart, API ref, examples"
     },
     {
@@ -5447,6 +5447,226 @@
       "priority": "P0",
       "status": "Done",
       "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s846-perf-regression-budget-any-5-p95 (merged + deletable)\nSkill: skills/testing/perf-check.md\nFinal heartbeat: 2026-05-02T06:21:47Z (codex-vega)\nTests: perf comparator temp run passed; touched ruff/format pass; touched pyright pass; tests/test_perf_regression_budget.py passed (6); pytest -q -m 'not integration and not e2e' passed (1573 passed, 3 skipped, 6 deselected); tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright remain baseline-red in unrelated files\nDocs touched: docs/perf/perf_regression_budget.md, docs/index.md, loop_implementation/engineering/PERFORMANCE.md, bench/results/perf_7d_baseline.json, bench/results/perf_regression_budget.json\nFollow-ups: none"
+    },
+    {
+      "id": "S900",
+      "title": "migrations: merge cp_0006 resolves cp_0005_audit_log + cp_0005_audit_events head fork",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E12",
+      "points": 1,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: alembic upgrade head succeeds against fresh db; tests/test_migrations.py 8 erroring tests turn green; alembic heads returns single revision. [extends S630]"
+    },
+    {
+      "id": "S901",
+      "title": "cp-api: FastAPI ASGI app wires existing handlers into runnable uvicorn process",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E12",
+      "points": 3,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: uv run uvicorn loop_control_plane.app:app --port 8080 serves /healthz, /v1/workspaces/*, /v1/auth/exchange, /v1/agents/*, /v1/audit/* end-to-end; integration test starts server and exercises 8 endpoints. [extends S100, S118, S346]"
+    },
+    {
+      "id": "S902",
+      "title": "dp-runtime: FastAPI POST /v1/turns SSE wires TurnExecutor; replaces __main__ exit-0 stub",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E1",
+      "points": 3,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: uv run uvicorn loop_data_plane.runtime_app:app --port 8081 streams TurnEvents end-to-end; integration test posts a turn and asserts SSE deltas + done frame; loop_data_plane/__main__.py removed in favour of uvicorn entrypoint. [extends S130, S140]"
+    },
+    {
+      "id": "S903",
+      "title": "cli: HttpxControlPlaneTransport replaces _DefaultTransport so loop login/deploy/eval reach cp-api",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E11",
+      "points": 2,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: loop login/init/deploy/logs/eval/secrets/release each complete against real cp-api; httpx VCR cassettes recorded; existing CLI unit tests still pass. [extends S901]"
+    },
+    {
+      "id": "S904",
+      "title": "terraform: aws-loop-stack module + envs/staging-aws-us-east-2 (validation blocked by S002)",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E12",
+      "points": 3,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: infra/terraform/modules/aws-loop-stack/{main,variables,outputs}.tf provisions EKS+RDS+ElastiCache+S3+KMS+CloudFront; tf validate + tflint clean; values-aws-staging.yaml renders helm chart against module outputs. Real apply remains blocked by S002 cloud accounts. [extends S770]"
+    },
+    {
+      "id": "S905",
+      "title": "kms+s3: AwsKmsBackend(boto3) + S3ObjectStore(boto3) implementations behind existing Protocols",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E12",
+      "points": 3,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: kms.py registers aws_kms in KMS_BACKENDS with real boto3.client('kms') wiring envelope encrypt/decrypt/rotate; object_store.py registers s3 backend with real boto3.client('s3'); localstack-backed integration tests for both. [extends S904]"
+    },
+    {
+      "id": "S906",
+      "title": "gateway: HttpxStreamTransport for OpenAI + Anthropic providers — first real upstream call",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E2",
+      "points": 3,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: loop_gateway.providers.{openai,anthropic}.stream() calls real api.openai.com/api.anthropic.com via httpx with proper headers, BYO-key resolution, and timeout/retry; vcr-py cassettes recorded; integration test runs a real-token-quota-aware live test gated on LOOP_GATEWAY_LIVE_TESTS=1. [extends S700]"
+    },
+    {
+      "id": "S907",
+      "title": "examples: support_agent imports + run_local.py wired against G2/G3 + real LLM",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E11",
+      "points": 1,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: from-loop.sdk import broken paths fixed (use loop.agents.Agent); examples/support_agent/run_local.py 'where is order 4172?' streams a real OpenAI/Anthropic response with lookup_order tool call; docs/quickstart.md updated to reflect the working invocation. [extends S901, S902, S906]"
+    },
+    {
+      "id": "S908",
+      "title": "voice: Deepgram + ElevenLabs WS clients hit real APIs; existing protocol seams + cassettes",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E7",
+      "points": 3,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: asr_deepgram.py opens wss to api.deepgram.com with proper auth + audio framing; tts_elevenlabs.py opens wss with proper streaming protocol; cassette-based unit tests + opt-in live test gated on LOOP_VOICE_LIVE_TESTS=1. [extends S651, S652]"
+    },
+    {
+      "id": "S909",
+      "title": "voice: replace LATENCY_BUDGET_VOICE simulator output in bench with real-call samples",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E7",
+      "points": 2,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: bench/results/voice_perf.json carries 100 samples from real Deepgram→agent→ElevenLabs round-trips (or marked synthetic with explicit source field); voice-perf workflow gate evaluates real measurements; gate p50 ≤700ms holds against measured baseline. [extends S908]"
+    },
+    {
+      "id": "S910",
+      "title": "voice: Twilio SIP integration test harness — ready for live phone-number sandbox (closes S387)",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E7",
+      "points": 3,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: tests/test_voice_phone_call_e2e.py harness; SKIPs without LOOP_TWILIO_TEST_NUMBER+LOOP_TWILIO_ACCOUNT_SID; with creds, dials a number, asserts ASR text contains expected utterance and TTS audio frames received; documents how to provision a Twilio test number in PHONE_PROVISIONING.md. [extends S908]"
+    },
+    {
+      "id": "S911",
+      "title": "docs: fix check_docs_links failures — 5 missing refs + broken bug-bounty link",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E17",
+      "points": 1,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: docs/index.md references THREAT_MODEL.md, site/PARTNER_REVIEWS.md, site/bug-bounty.md, site/data-retention.md, site/pricing-verification.md; site/bug-bounty.md broken link to acknowledgements.md fixed; uv run python tools/check_docs_links.py exits 0; tests/test_docs_links.py passes."
+    },
+    {
+      "id": "S912",
+      "title": "studio: real Auth0 SPA SDK wiring against tenant; first-time-login flow E2E",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E10",
+      "points": 2,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: pnpm dev studio + LOOP_AUTH0_DOMAIN + LOOP_AUTH0_CLIENT_ID env vars redirects unauthenticated traffic to Auth0 universal login; on-success callback exchanges code for session via /v1/auth/exchange; logout button clears session; Playwright e2e covers happy path. [extends S901]"
+    },
+    {
+      "id": "S913",
+      "title": "perf: re-baseline cp-api-5000-rps + runtime-sse-1000 against real cp-api/dp-runtime images",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E12",
+      "points": 2,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: bench/results/cp_api_5000_rps.json + runtime_sse_1000_concurrency.json carry numbers measured against the actual cp-api app from G2 (not helm-e2e-smoke-server); CI workflows install loop-cp-api + loop-runtime images via docker build, not the smoke server; perf gates remain blocking. [extends S901, S902]"
+    },
+    {
+      "id": "S914",
+      "title": "demo: scripts/demo/ — 5 scripted demos (chat, tools, KB, multi-agent, HITL takeover)",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E11",
+      "points": 2,
+      "priority": "P1",
+      "status": "Not started",
+      "notes": "AC: scripts/demo/{1_chat.sh,2_tool.sh,3_kb.sh,4_multiagent.sh,5_hitl.sh} each run cleanly against G2/G3/G7 and produce expected output; README in scripts/demo/ documents prerequisites + expected output. [extends S907]"
+    },
+    {
+      "id": "S915",
+      "title": "docs: docs.loop.example v1 — Mintlify site live with quickstart + 3 tutorials",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E17",
+      "points": 3,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: apps/docs/ Mintlify project deployable via mintlify deploy; mint.json indexes 12 pages drawn from loop_implementation/engineering/; quickstart points at G7 example; nav covers concepts/quickstart/tutorials/api-ref/cookbook. [extends S659]"
+    },
+    {
+      "id": "S916",
+      "title": "tool-host: RuncSandboxFactory implementation behind SandboxFactory Protocol (Kata follow-up)",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E3",
+      "points": 3,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: real subprocess-based sandbox using runc with cgroup CPU+memory limits + egress allowlist enforced via netns; integration test runs an MCP echo tool in sandbox and asserts output, then runs a malicious tool that tries network egress and asserts it's blocked. Follow-up story files Kata variant. [extends S843]"
+    },
+    {
+      "id": "S917",
+      "title": "saml: PySAML2Validator with xmlsec1 signature verification replaces StubSamlValidator in prod path",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E20",
+      "points": 2,
+      "priority": "P0",
+      "status": "Not started",
+      "notes": "AC: pysaml2 + xmlsec system pkg added to control-plane pyproject; PySAML2Validator class implemented with real XML signature verification + audience/conditions enforcement; cp-api app wires it conditional on env LOOP_SAML_USE_PYSAML2=1; integration test against canned-signed Okta response. [extends S610, S612]"
+    },
+    {
+      "id": "S918",
+      "title": "secrets: BYO Vault transit client behind KMS Protocol (closes S637 properly)",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E20",
+      "points": 2,
+      "priority": "P1",
+      "status": "Not started",
+      "notes": "AC: hvac client wraps Vault transit encrypt/decrypt/rotate; KMS_BACKENDS includes vault_transit with hvac wiring; integration test against vault-in-docker fixture; ENV reference documents LOOP_VAULT_ADDR + LOOP_VAULT_TOKEN. [extends S637]"
+    },
+    {
+      "id": "S919",
+      "title": "soc2: pen-test vendor shortlist + pre-engagement checklist update (S576 prep doc)",
+      "owner": "tbd",
+      "sprint": "S38",
+      "epic": "E16",
+      "points": 1,
+      "priority": "P1",
+      "status": "Not started",
+      "notes": "AC: PEN_TEST.md §1 lists 3 candidate CREST-accredited vendors with capabilities + price-range matrix; §3 pre-engagement checklist (NDA template path, scope freeze date, RoE document path, staging-env stand-up steps, credential rotation policy) ready for sign-off; SECURITY.md §pen-testing references this. [extends S576]"
     }
   ],
   "sprints": [
@@ -5753,6 +5973,14 @@
       "goal": "Hard performance gates: turn p95 <2s, gateway cache-hit >30%, KB p50 <200ms at 1M chunks, tool-host warm <300ms p95, 1000 concurrent turns/pod, cp-api 5000 RPS, perf-regression budget enforced in CI.",
       "stories": "S840-S846",
       "status": "Done"
+    },
+    {
+      "id": "S38",
+      "window": "Wk 81+ (post-audit gap-close)",
+      "theme": "Production-readiness wiring",
+      "goal": "FastAPI app objects for cp-api + dp-runtime, real httpx gateway transport, real boto3 KMS+S3, real Deepgram/ElevenLabs WS clients, real RuncSandboxFactory, real PySAML2 signature verification, Vault transit BYO key path, Mintlify docs deploy, demo bundle. Closes the architectural-skeleton-vs-runnable-system gap.",
+      "stories": "S900-S919",
+      "status": "Not started"
     }
   ],
   "hiring": [
