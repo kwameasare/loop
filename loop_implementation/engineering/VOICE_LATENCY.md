@@ -67,6 +67,19 @@ keeps the source-region latency matrix under review. Unknown caller
 regions or missing provider endpoints raise instead of silently sending
 live audio across an arbitrary region.
 
+<!-- S908 -->
+Deepgram ASR and ElevenLabs TTS now default to a production
+`websockets` transport that opens provider websocket URLs with auth
+headers and `LOOP_VOICE_WS_OPEN_TIMEOUT_SECONDS`. The existing
+`open_ws` seam remains for `WarmWebSocketPool`, cassette replay, and
+failure injection; production no longer needs a test fake to make the
+provider clients usable.
+
+Provider regression tests replay sanitized websocket cassettes under
+`packages/voice/_tests/cassettes/voice/`. A quota-spending live
+Deepgram -> ElevenLabs smoke test is gated by `LOOP_VOICE_LIVE_TESTS=1`
+plus provider keys and an ElevenLabs voice id.
+
 <!-- S654 -->
 `scripts/voice_perf.py` is the release-train acceptance gate for the
 public 700 ms p50 commitment. It writes

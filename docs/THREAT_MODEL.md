@@ -72,3 +72,19 @@ The gate refuses PRs that touch a protected path without appending a STRIDE entr
 - **I** Reads only the diff metadata (file names) and PR body — no source content extracted.
 - **D** Single python invocation; bounded by GitHub's job timeout (5 min default).
 - **E** None.
+
+### 2026-05-03 — S900 cp_0006 audit migration-head merge
+- **S** No request path or caller changes; this is an Alembic merge revision applied by the deploy migrator's existing database principal.
+- **T** `cp_0006_merge_audit_heads` is DDL-only and preserves both existing append-only audit migrations (`audit_log` and `audit_events`) without altering table contents or integrity rules.
+- **R** The migration itself is tracked in Alembic's version table; runtime repudiation controls remain the two audit tables created by the merged heads.
+- **I** No new data is stored or exposed; the revision has no table or column DDL of its own.
+- **D** The merge revision performs no table scan or data backfill, so it adds no runtime DoS surface beyond normal Alembic version-row updates.
+- **E** No new roles, grants, scopes, or permission boundaries are introduced.
+
+### 2026-05-03 — S901 cp-api FastAPI ASGI app
+- **S** `/v1/auth/exchange` accepts a locally verified HS256 IdP token and returns a Loop PASETO-shaped bearer token; protected workspace, agent, and audit routes require that bearer token.
+- **T** Loop bearer tokens are HMAC-authenticated by `decode_local`; audit rows include payload hashes for write requests.
+- **R** State-changing app routes emit `workspace:create`, `workspace:update`, `agent:create`, and `agent:delete` audit events with the request id.
+- **I** Responses expose workspace and agent metadata only to callers that are workspace members; no token secrets are written to audit payloads.
+- **D** S901 does not add rate limiting; existing deployment ingress limits remain the DoS control until the cp-api rate-limit router lands.
+- **E** No new roles are introduced; agent and audit routes reuse existing workspace membership checks.

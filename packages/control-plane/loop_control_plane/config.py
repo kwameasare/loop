@@ -41,10 +41,17 @@ class Settings(BaseSettings):
     db_url: str = Field(min_length=1)
     redis_url: str = Field(min_length=1)
     auth_provider: AuthProvider = "auth0"
+    auth_issuer: str = Field(default="https://loop.local/", min_length=1)
+    auth_audience: str = Field(default="loop-cp", min_length=1)
+    local_jwt_secret: str | None = Field(default=None, min_length=1)
+    paseto_local_key: str | None = Field(default=None, min_length=32)
     log_level: LogLevel = "INFO"
     region: str = Field(default="us-east-1", min_length=1)
     service_name: str = Field(default="loop-cp-api", min_length=1)
     request_id_header: str = Field(default="X-Request-Id", min_length=1)
+    version: str = Field(default="0.1.0", min_length=1)
+    commit_sha: str = Field(default="0000000-local", min_length=7)
+    build_time: str = Field(default="unknown", min_length=1)
 
 
 __all__ = ["AuthProvider", "LogLevel", "Settings"]

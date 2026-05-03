@@ -85,6 +85,11 @@ A "container" here means an independently deployable runtime: a process, a manag
 | `cp-redis` | Redis 7 | Sessions, rate limits, deploy locks |
 | `cp-clickhouse` | ClickHouse | Trace + cost telemetry from all data planes |
 
+S901 wires `cp-api` as `loop_control_plane.app:app`, a FastAPI ASGI process
+served by Uvicorn on port 8080. The image entrypoint runs that app directly;
+health, auth exchange, workspace, agent, and audit routes share the existing
+control-plane service facades.
+
 ### 2.2 Data plane containers
 
 | Container | Tech | Responsibility |
@@ -104,6 +109,16 @@ A "container" here means an independently deployable runtime: a process, a manag
 | `dp-nats` | NATS JetStream | Async events: tool dispatch, channel events, eval triggers |
 | `dp-objstore` | S3-compatible object storage (any cloud or MinIO) | Code artifacts, recordings, doc originals |
 | `dp-otel-collector` | OpenTelemetry Collector | Traces from runtime → control plane ClickHouse |
+
+S902 wires `dp-runtime` as `loop_data_plane.runtime_app:app`, a FastAPI
+ASGI process served by Uvicorn on port 8081. `/v1/turns` accepts a
+workspace-pinned turn request, normalizes it into the SDK `AgentEvent`,
+and streams the existing `TurnExecutor` through the canonical
+`loop_runtime.sse` encoder. The production dependency is the real
+`loop_gateway.GatewayClient` with OpenAI and Anthropic providers; local
+integration fixtures override only provider base URLs, leaving the httpx
+transport, BYO-key resolution, idempotency cache, and cost accounting on
+the same path.
 
 ### 2.3 Container interaction (high level)
 
@@ -276,6 +291,12 @@ Latency budget p50 ≤ 700 ms total:
    TTS 1st audio: 150 ms
    Network:       100 ms
 ```
+
+<!-- S908 -->
+Deepgram STT and ElevenLabs TTS adapters open provider websocket
+connections with the `websockets` runtime dependency by default, sending
+provider auth headers on the real wire path. The adapter-level `open_ws`
+seam remains for warm pooling, cassette replay, and failure injection.
 
 ### 4.3 Eval-gated deploy
 

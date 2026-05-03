@@ -9,6 +9,8 @@ p50 commitment.
 - Threshold: fail when end-to-end p50 is above 700 ms
 
 The benchmark uses deterministic synthetic turns recorded through
-`loop_voice.LatencyTracker`. This keeps the CI signal stable while still
-exercising the same percentile and budget primitives used by the voice
-runtime.
+`loop_voice.LatencyTracker` when live provider credentials are absent.
+Every report now carries 100 per-turn samples with a `source` field;
+live Deepgram -> agent -> ElevenLabs captures can be evaluated by
+passing `--samples <json>` to `scripts/voice_perf.py`. This keeps the CI
+signal stable while making synthetic provenance explicit.

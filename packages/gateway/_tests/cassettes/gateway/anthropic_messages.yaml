@@ -1,0 +1,19 @@
+provider: anthropic
+request:
+  method: POST
+  uri: https://api.anthropic.com/v1/messages
+  headers:
+    x-api-key: REDACTED
+response:
+  status_code: 200
+  headers:
+    content-type: text/event-stream
+  body: |
+    event: content_block_delta
+    data: {"delta":{"text":"Hello"}}
+
+    event: message_delta
+    data: {"usage":{"input_tokens":7,"output_tokens":3}}
+
+    event: message_stop
+    data: {}

@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T18:27:03.713444+00:00",
+    "generated_at": "2026-05-03T19:13:36.028172+00:00",
     "format_version": 2
   },
   "epics": [
@@ -11,7 +11,7 @@
       "name": "Agent runtime core",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Hot path: TurnExecutor, streaming, budgets, idempotency"
     },
     {
@@ -19,7 +19,7 @@
       "name": "LLM Gateway",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Multi-provider, semantic cache, cost accounting"
     },
     {
@@ -27,7 +27,7 @@
       "name": "MCP / Tool layer",
       "owner": "Eng #1",
       "target": "MVP M6",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Auto-MCP, Firecracker sandboxes, allow-lists"
     },
     {
@@ -5451,35 +5451,35 @@
     {
       "id": "S900",
       "title": "migrations: merge cp_0006 resolves cp_0005_audit_log + cp_0005_audit_events head fork",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S38",
       "epic": "E12",
       "points": 1,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: alembic upgrade head succeeds against fresh db; tests/test_migrations.py 8 erroring tests turn green; alembic heads returns single revision. [extends S630]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s900-migrations-merge-cp-0006-resolve (merged + deletable)\nSkill: skills/data/add-postgres-migration.md\nFinal heartbeat: 2026-05-03T18:20:57Z (codex-orion)\nTests: S900 focused gates pass: uv run ruff check touched migration/test files; uv run pyright touched migration tests; uv run pytest -q tests/test_migrations.py packages/control-plane/_tests_integration/test_postgres_migrations.py (15 passed); uv run alembic -c packages/control-plane/loop_control_plane/migrations/alembic.ini heads -> cp_0006_merge_audit_heads; tracker/docs/checkpoint/no-bulk gates pass. Full lifecycle close without --skip-gates is blocked by unrelated repo-wide ruff baseline in S35/S38 files outside S900.\nDocs touched: loop_implementation/data/SCHEMA.md\nFollow-ups: none"
     },
     {
       "id": "S901",
       "title": "cp-api: FastAPI ASGI app wires existing handlers into runnable uvicorn process",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S38",
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: uv run uvicorn loop_control_plane.app:app --port 8080 serves /healthz, /v1/workspaces/*, /v1/auth/exchange, /v1/agents/*, /v1/audit/* end-to-end; integration test starts server and exercises 8 endpoints. [extends S100, S118, S346]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s901-cp-api-fastapi-asgi-app-wires-ex (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-03T18:46:21Z (codex-orion)\nTests: Focused S901 gates pass: uv run ruff check touched app/config/test files; uv run ruff format --check same; uv run pyright packages/control-plane/_tests/test_cp_api_app.py; uv run pytest -q packages/control-plane/_tests/test_cp_api_app.py packages/control-plane/_tests/test_openapi_schemathesis.py packages/control-plane/_tests/test_cp_pass2.py packages/control-plane/_tests/test_cp_pass7.py packages/control-plane/_tests/test_workspace_api.py packages/control-plane/_tests/test_audit_events.py (98 passed); tracker/docs/checkpoint/no-bulk gates pass. Full lifecycle ruff gate remains blocked by unrelated repo-wide baseline outside S901.\nDocs touched: loop_implementation/api/openapi.yaml,loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/architecture/ARCHITECTURE.md,docs/THREAT_MODEL.md\nFollow-ups: none"
     },
     {
       "id": "S902",
       "title": "dp-runtime: FastAPI POST /v1/turns SSE wires TurnExecutor; replaces __main__ exit-0 stub",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S38",
       "epic": "E1",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: uv run uvicorn loop_data_plane.runtime_app:app --port 8081 streams TurnEvents end-to-end; integration test posts a turn and asserts SSE deltas + done frame; loop_data_plane/__main__.py removed in favour of uvicorn entrypoint. [extends S130, S140]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s902-dp-runtime-fastapi-post-v1-turns (merged + deletable)\nSkill: skills/coding/implement-runtime-feature.md\nFinal heartbeat: 2026-05-03T19:03:53Z (codex-orion)\nTests: Focused S902 gates pass: uv run ruff check/format + pyright on dp runtime app/test/smoke files; uv run pytest -q packages/data-plane/_tests/test_runtime_app.py tests/test_runtime_smoke.py packages/runtime/_tests/test_turn_executor.py packages/runtime/_tests/test_runtime_pass8.py tests/test_runtime_baseline_100rpm.py tests/test_runtime_sse_1000.py (39 passed); tracker/docs/checkpoint gates pass. Full lifecycle ruff remains baseline-red in unrelated control-plane/kb/tools files.\nDocs touched: loop_implementation/api/openapi.yaml,loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/architecture/ARCHITECTURE.md\nFollow-ups: none"
     },
     {
       "id": "S903",
@@ -5522,8 +5522,8 @@
       "epic": "E2",
       "points": 3,
       "priority": "P0",
-      "status": "In progress",
-      "notes": "**Active.**\nBranch: codex-vega/s906-gateway-httpxstreamtransport-for\nSkill: skills/coding/implement-llm-gateway-change.md\nLast step: 0/7 (just claimed)\nHeartbeat: 2026-05-03T18:14:07Z (codex-vega)\nOpen questions: none\nBlockers: none\nCommits: (will accumulate)"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s906-gateway-httpxstreamtransport-for (merged + deletable)\nSkill: skills/coding/implement-llm-gateway-change.md\nFinal heartbeat: 2026-05-03T18:28:47Z (codex-vega)\nTests: gateway cassette/httpx tests pass (74 passed, 1 live skip); touched ruff/format pass; pyright on new transport/test pass; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format/pyright/pytest remain baseline-red in unrelated S38/main files\nDocs touched: loop_implementation/engineering/ENV_REFERENCE.md\nFollow-ups: none"
     },
     {
       "id": "S907",
@@ -5539,35 +5539,35 @@
     {
       "id": "S908",
       "title": "voice: Deepgram + ElevenLabs WS clients hit real APIs; existing protocol seams + cassettes",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S38",
       "epic": "E7",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: asr_deepgram.py opens wss to api.deepgram.com with proper auth + audio framing; tts_elevenlabs.py opens wss with proper streaming protocol; cassette-based unit tests + opt-in live test gated on LOOP_VOICE_LIVE_TESTS=1. [extends S651, S652]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s908-voice-deepgram-elevenlabs-ws-cli (merged + deletable)\nSkill: skills/coding/implement-channel-adapter.md\nFinal heartbeat: 2026-05-03T18:39:22Z (codex-vega)\nTests: voice package tests pass (132 passed, 1 live skip); touched ruff/format pass; targeted pyright on voice websocket code/tests pass; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format remain baseline-red in unrelated files\nDocs touched: loop_implementation/architecture/ARCHITECTURE.md,loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/engineering/VOICE_LATENCY.md\nFollow-ups: none"
     },
     {
       "id": "S909",
       "title": "voice: replace LATENCY_BUDGET_VOICE simulator output in bench with real-call samples",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S38",
       "epic": "E7",
       "points": 2,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: bench/results/voice_perf.json carries 100 samples from real Deepgram→agent→ElevenLabs round-trips (or marked synthetic with explicit source field); voice-perf workflow gate evaluates real measurements; gate p50 ≤700ms holds against measured baseline. [extends S908]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s909-voice-replace-latency-budget-voi (merged + deletable)\nSkill: skills/testing/perf-check.md\nFinal heartbeat: 2026-05-03T18:44:55Z (codex-vega)\nTests: voice perf tests pass (6 passed); scripts/voice_perf.py rewrote bench/results/voice_perf.json with 100 sourced samples and p50 579ms <= 700ms; targeted ruff/format and pyright pass; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format remain baseline-red in unrelated files\nDocs touched: docs/perf/voice_perf.md\nFollow-ups: none"
     },
     {
       "id": "S910",
       "title": "voice: Twilio SIP integration test harness — ready for live phone-number sandbox (closes S387)",
-      "owner": "tbd",
+      "owner": "codex-vega",
       "sprint": "S38",
       "epic": "E7",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: tests/test_voice_phone_call_e2e.py harness; SKIPs without LOOP_TWILIO_TEST_NUMBER+LOOP_TWILIO_ACCOUNT_SID; with creds, dials a number, asserts ASR text contains expected utterance and TTS audio frames received; documents how to provision a Twilio test number in PHONE_PROVISIONING.md. [extends S908]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-vega/s910-voice-twilio-sip-integration-tes (merged + deletable)\nSkill: skills/testing/write-e2e-test.md\nFinal heartbeat: 2026-05-03T18:49:09Z (codex-vega)\nTests: Twilio phone harness tests pass (42 passed, 1 live skip); live dial skips without LOOP_TWILIO_* sandbox env; targeted ruff/format and pyright pass; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format remain baseline-red in unrelated files\nDocs touched: loop_implementation/engineering/PHONE_PROVISIONING.md,loop_implementation/engineering/ENV_REFERENCE.md\nFollow-ups: none"
     },
     {
       "id": "S911",
@@ -5578,7 +5578,7 @@
       "points": 1,
       "priority": "P0",
       "status": "Done",
-      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s911-docs-fix-check-docs-links-failur (merged + deletable)\nSkill: (unspecified)\nFinal heartbeat: 2026-05-03T18:27:03Z (copilot-thor)\nTests: uv run python tools/check_docs_links.py (ok); uv run pytest tests/test_docs_links.py (3 passed); ruff baseline pre-existing on main\nDocs touched: docs/index.md, docs/site/acknowledgements.md\nFollow-ups: none"
+      "notes": "**Done.**\nPR: https://github.com/kwameasare/loop/pull/147\nBranch: copilot-thor/s911-docs-fix-check-docs-links-failur (merged + deletable)\nSkill: loop_implementation/skills/_base/skill.md\nFinal heartbeat: 2026-05-03T19:30:00Z (copilot-thor)\nTests: uv run python tools/check_docs_links.py (ok, 25 files, 24 index links); uv run pytest tests/test_docs_links.py (3 passed); ruff baseline pre-existing on main (126 errors, verified across origin/main commits)\nDocs touched: docs/index.md,docs/site/acknowledgements.md\nFollow-ups: ruff-debt: 126 pre-existing ruff errors on origin/main blocking full gate"
     },
     {
       "id": "S912",
@@ -5627,13 +5627,13 @@
     {
       "id": "S916",
       "title": "tool-host: RuncSandboxFactory implementation behind SandboxFactory Protocol (Kata follow-up)",
-      "owner": "tbd",
+      "owner": "copilot-titan",
       "sprint": "S38",
       "epic": "E3",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: real subprocess-based sandbox using runc with cgroup CPU+memory limits + egress allowlist enforced via netns; integration test runs an MCP echo tool in sandbox and asserts output, then runs a malicious tool that tries network egress and asserts it's blocked. Follow-up story files Kata variant. [extends S843]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-titan/s916-tool-host-runcsandboxfactory-imp (merged + deletable)\nSkill: skills/api/api-versioning.md\nFinal heartbeat: 2026-05-03T18:30:12Z (copilot-titan)\nTests: packages/tool-host/_tests/test_runc_sandbox.py (12 unit tests, 2 live tests gated on Linux+runc); my files clean under ruff/format/pyright\nDocs touched: loop_implementation/engineering/ENV_REFERENCE.md\nFollow-ups: S916-followup: KataSandboxFactory variant behind same SandboxFactory Protocol (per S916 AC); ruff-debt: 126 pre-existing ruff errors on origin/main blocking full gate"
     },
     {
       "id": "S917",

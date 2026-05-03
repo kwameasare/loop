@@ -69,6 +69,31 @@ in-memory tests collapse straight to the terminal state.
 - Idempotency: `buy()` is keyed on `(carrier, e164)`; replays after
   a network failure must not double-provision.
 
+## Twilio live voice sandbox (S910)
+
+The live phone-call harness lives in
+`tests/test_voice_phone_call_e2e.py`. CI runs its unit-mode fakes on
+every PR; the live Twilio dial is skipped unless the sandbox is fully
+configured:
+
+| Variable | Purpose |
+| -------- | ------- |
+| `LOOP_TWILIO_ACCOUNT_SID` | Twilio account used for the live call. |
+| `LOOP_TWILIO_AUTH_TOKEN` | Auth token for the account SID. Never commit it. |
+| `LOOP_TWILIO_FROM_NUMBER` | Twilio-owned E.164 caller id with voice enabled. |
+| `LOOP_TWILIO_TEST_NUMBER` | Verified destination number or test responder. |
+| `LOOP_TWILIO_STREAM_URL` | Public `wss://` Loop Twilio media stream endpoint. |
+| `LOOP_TWILIO_PROBE_URL` | HTTPS probe endpoint returning ASR transcript + TTS frame count by `CallSid`. |
+| `LOOP_TWILIO_PROBE_TOKEN` | Optional bearer token for the probe endpoint. |
+| `LOOP_TWILIO_EXPECTED_UTTERANCE` | Expected ASR text fragment; defaults to `hello loop`. |
+
+Provision a Twilio number in the console with Programmable Voice
+enabled, verify the destination test number if the account is in trial
+mode, and expose the Loop media websocket/probe endpoint over TLS. The
+live test places a Twilio REST `Calls` request, streams media to Loop,
+then fails unless the probe reports the expected ASR utterance and at
+least one outbound TTS audio frame.
+
 ## Out of scope
 
 - **Inbound porting** (`PORT_IN`) — handled by S076 (Q3 deliverable).

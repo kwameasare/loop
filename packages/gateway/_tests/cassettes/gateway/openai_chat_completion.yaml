@@ -1,0 +1,14 @@
+provider: openai
+request:
+  method: POST
+  uri: https://api.openai.com/v1/chat/completions
+  headers:
+    authorization: REDACTED
+response:
+  status_code: 200
+  headers:
+    content-type: text/event-stream
+  body: |
+    data: {"choices":[{"delta":{"content":"Hello"}}]}
+    data: {"usage":{"prompt_tokens":1000,"completion_tokens":1000}}
+    data: [DONE]

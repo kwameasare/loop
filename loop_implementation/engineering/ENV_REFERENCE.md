@@ -24,6 +24,21 @@ Naming convention: `LOOP_<DOMAIN>_<NAME>` (e.g. `LOOP_RUNTIME_PORT`). Avoid `_` 
 | `LOOP_OTEL_ENDPOINT` | observability `Settings` — OTLP HTTP endpoint when `LOOP_OTEL_EXPORTER=otlp`; ClickHouse HTTP base URL when `LOOP_OTEL_EXPORTER=clickhouse` | S009, S286 |
 | `LOOP_OTEL_EXPORTER` | observability `Settings` — exporter selector (`"otlp"` / `"clickhouse"` / `"inmemory"` / `"memory"` / `"none"`); prod defaults to ClickHouse, tests use in-memory | S009, S286 |
 | `LOOP_CP_DB_URL` | `packages/control-plane` Alembic `env.py` and `cp-api` settings | S006, S019 |
+| `LOOP_CP_AUTH_AUDIENCE` | `loop_control_plane.app` local token exchange audience | S901 |
+| `LOOP_CP_AUTH_ISSUER` | `loop_control_plane.app` local token exchange issuer | S901 |
+| `LOOP_CP_BUILD_TIME` | `loop_control_plane.app` `/healthz` and `/version` metadata | S901 |
+| `LOOP_CP_COMMIT_SHA` | `loop_control_plane.app` `/healthz` and `/version` metadata | S901 |
+| `LOOP_CP_LOCAL_JWT_SECRET` | `loop_control_plane.app` local HS256 IdP-token verifier | S901 |
+| `LOOP_CP_PASETO_LOCAL_KEY` | `loop_control_plane.app` local Loop bearer-token signer/verifier | S901 |
+| `LOOP_CP_REDIS_URL` | `packages/control-plane` `cp-api` settings | S101 |
+| `LOOP_CP_REQUEST_ID_HEADER` | `loop_control_plane.app` request-id echo/error envelope header | S901 |
+| `LOOP_CP_VERSION` | `loop_control_plane.app` `/healthz` and `/version` metadata | S901 |
+| `LOOP_DP_ANTHROPIC_BASE_URL` | `loop_data_plane.runtime_app` Anthropic provider base URL override for integration fixtures | S902 |
+| `LOOP_DP_BUILD_TIME` | `loop_data_plane.runtime_app` `/healthz` and `/version` metadata | S902 |
+| `LOOP_DP_COMMIT_SHA` | `loop_data_plane.runtime_app` `/healthz` and `/version` metadata | S902 |
+| `LOOP_DP_DEFAULT_MODEL` | `loop_data_plane.runtime_app` default TurnExecutor model | S902 |
+| `LOOP_DP_OPENAI_BASE_URL` | `loop_data_plane.runtime_app` OpenAI provider base URL override for integration fixtures | S902 |
+| `LOOP_DP_VERSION` | `loop_data_plane.runtime_app` `/healthz` and `/version` metadata | S902 |
 | `LOOP_RUNTIME_DB_URL` | `packages/data-plane` Alembic `env.py` and runtime settings | S006, S008 |
 | `LOOP_GATEWAY_REQUEST_ID_TTL_SECONDS` | `packages/gateway` idempotency cache | S007 |
 | `LOOP_DEV_BIND` | `infra/docker-compose.yml` — host bind address for service ports (default `127.0.0.1`) | S003 |
@@ -91,6 +106,14 @@ update §1–§11.
 | `LOOP_RUNTIME_MAX_MESSAGE_BYTES` | `16777216` | int | 16 MB; reject above. |
 | `LOOP_RUNTIME_MEMORY_TTL_SESSION_SECONDS` | `86400` | int | 24h default; per-agent override possible. |
 | `LOOP_RUNTIME_WARM_POOL_SIZE` | `5` | int | Pre-spawned agent contexts per pod. |
+| `LOOP_DP_VERSION` | package version | string | `/healthz` and `/version` service version. |
+| `LOOP_DP_COMMIT_SHA` | `0000000-local` | string | `/healthz` and `/version` build commit. |
+| `LOOP_DP_BUILD_TIME` | startup time | string | `/healthz` and `/version` build timestamp. |
+| `LOOP_DP_DEFAULT_MODEL` | `gpt-4o-mini` | string | Default TurnExecutor model when a turn request omits `model`. |
+| `LOOP_DP_OPENAI_BASE_URL` | `https://api.openai.com` | URL | Optional OpenAI-compatible base URL override for local integration fixtures. |
+| `LOOP_DP_ANTHROPIC_BASE_URL` | `https://api.anthropic.com` | URL | Optional Anthropic-compatible base URL override for local integration fixtures. |
+| `LOOP_TOOL_HOST_RUNC_LIVE` | `0` | bool (`0`/`1`) | Opt-in flag for `RuncSandbox` integration tests; live tests skip unless set to `1` and `runc` is on PATH (S916). |
+| `LOOP_TOOL_HOST_TEST_ROOTFS` | (none) | path | Pre-staged OCI rootfs used by the `RuncSandbox` live integration tests (S916). |
 
 ## 3. Gateway (`dp-gateway`)
 
@@ -99,6 +122,9 @@ update §1–§11.
 | `LOOP_GATEWAY_PORT` | `8001` | int | HTTP listen port. |
 | `LOOP_GATEWAY_OPENAI_API_KEY` | (per workspace via Vault) | string | Default key if no workspace key set. |
 | `LOOP_GATEWAY_ANTHROPIC_API_KEY` | (per workspace via Vault) | string | Same. |
+| `LOOP_GATEWAY_HTTP_TIMEOUT_SECONDS` | `30` | float | S906 real provider stream timeout for OpenAI/Anthropic `httpx` calls. |
+| `LOOP_GATEWAY_HTTP_MAX_RETRIES` | `2` | int | S906 retry count for provider 429/5xx/timeout failures. |
+| `LOOP_GATEWAY_LIVE_TESTS` | (unset) | bool | Set to `1` to run live OpenAI/Anthropic smoke tests instead of cassette replay. |
 | `LOOP_GATEWAY_BEDROCK_PROFILE` | (none) | string | If using AWS Bedrock. |
 | `LOOP_GATEWAY_VLLM_URL` | (none) | URL | Self-hosted vLLM endpoint. |
 | `LOOP_GATEWAY_CACHE_TTL_SECONDS` | `604800` | int | 7 days for semantic cache. |
@@ -126,9 +152,15 @@ Slack:
 
 Twilio (SMS / voice):
 - `LOOP_CHANNEL_TWILIO_AUTH_TOKEN`, `LOOP_CHANNEL_TWILIO_ACCOUNT_SID`, `LOOP_CHANNEL_TWILIO_VOICE_API_KEY`, `LOOP_CHANNEL_TWILIO_VOICE_API_SECRET`.
+- Live phone E2E harness: `LOOP_TWILIO_ACCOUNT_SID`, `LOOP_TWILIO_AUTH_TOKEN`, `LOOP_TWILIO_FROM_NUMBER`, `LOOP_TWILIO_TEST_NUMBER`, `LOOP_TWILIO_STREAM_URL`, `LOOP_TWILIO_PROBE_URL`, optional `LOOP_TWILIO_PROBE_TOKEN`, optional `LOOP_TWILIO_EXPECTED_UTTERANCE`.
 
 LiveKit (voice):
 - `LOOP_CHANNEL_VOICE_LIVEKIT_URL`, `LOOP_CHANNEL_VOICE_LIVEKIT_API_KEY`, `LOOP_CHANNEL_VOICE_LIVEKIT_API_SECRET`, `LOOP_CHANNEL_VOICE_DEEPGRAM_API_KEY`, `LOOP_CHANNEL_VOICE_TTS_PROVIDER` (`elevenlabs|cartesia|piper`), `LOOP_CHANNEL_VOICE_ELEVENLABS_API_KEY`.
+
+Voice provider clients:
+- `LOOP_VOICE_WS_OPEN_TIMEOUT_SECONDS` (default `10`) caps Deepgram / ElevenLabs websocket handshakes.
+- `LOOP_VOICE_LIVE_TESTS=1` enables live Deepgram + ElevenLabs quota-spending tests.
+- `LOOP_VOICE_DEEPGRAM_API_KEY`, `LOOP_VOICE_ELEVENLABS_API_KEY`, `LOOP_VOICE_ELEVENLABS_VOICE_ID` are used by the opt-in live voice test. Production may continue to source provider keys from the channel-scoped `LOOP_CHANNEL_VOICE_*` variables or Vault-backed config.
 
 ## 5. Control plane (`cp-api`, `cp-billing`, `cp-deploy-controller`)
 
@@ -138,6 +170,14 @@ LiveKit (voice):
 | `LOOP_CP_REDIS_URL` | (required) | Sessions + rate limits. |
 | `LOOP_CP_CLICKHOUSE_URL` | (required) | Trace + cost analytics. |
 | `LOOP_CP_AUTH_PROVIDER` | `auth0` | enum: `auth0`, `kratos`. |
+| `LOOP_CP_AUTH_ISSUER` | `https://loop.local/` | Issuer expected by the local HS256 exchange verifier. |
+| `LOOP_CP_AUTH_AUDIENCE` | `loop-cp` | Audience expected by local exchange verifier and minted Loop tokens. |
+| `LOOP_CP_LOCAL_JWT_SECRET` | (local/dev only) | HS256 secret for local IdP-token exchange tests; do not set in prod Auth0 mode. |
+| `LOOP_CP_PASETO_LOCAL_KEY` | (required for local exchange) | At least 32 bytes; signs/verifies local Loop bearer tokens. |
+| `LOOP_CP_REQUEST_ID_HEADER` | `X-Request-Id` | Header echoed in error envelopes and audit events. |
+| `LOOP_CP_VERSION` | package version | `/healthz` and `/version` service version. |
+| `LOOP_CP_COMMIT_SHA` | `0000000-local` | `/healthz` and `/version` build commit. |
+| `LOOP_CP_BUILD_TIME` | startup time | `/healthz` and `/version` build timestamp. |
 | `LOOP_CP_AUTH0_DOMAIN` | (Auth0) | required if `auth_provider=auth0`. |
 | `LOOP_CP_AUTH0_AUDIENCE` | (Auth0) | required if `auth_provider=auth0`. |
 | `LOOP_CP_KRATOS_URL` | (Kratos) | required if `auth_provider=kratos`. |

@@ -63,5 +63,6 @@ COPY --from=builder /python-libs /usr/local/lib/python-libs
 COPY --from=builder /opt/venv /opt/venv
 
 USER nonroot:nonroot
+EXPOSE 8080
 ENTRYPOINT ["/opt/venv/bin/python"]
-CMD ["-m", "loop_control_plane.healthz"]
+CMD ["-m", "uvicorn", "loop_control_plane.app:app", "--host", "0.0.0.0", "--port", "8080"]

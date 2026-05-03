@@ -1,15 +1,12 @@
-"""S143: end-to-end smoke for the dp-runtime image entrypoint.
+"""S143/S902: end-to-end smoke for the dp-runtime image entrypoint.
 
 The S143 acceptance criterion is *the smoke script exits 0; CI runs
-it after deploy*. The dp-runtime container ships only the entrypoint
-defined in ``loop_data_plane.__main__`` plus the alembic migration
-chain — runtime business logic is being landed in subsequent slices.
+it after deploy*. S902 replaces the old ``python -m loop_data_plane``
+banner stub with a real Uvicorn process serving ``runtime_app:app``.
 
 This script exercises both surfaces:
 
-    1. Boot the entrypoint (``python -m loop_data_plane``) and assert
-       it prints the expected version banner and exits 0 — this is
-       the same call the distroless image runs as ``CMD``.
+    1. Boot the Uvicorn app and assert ``/healthz`` returns 200.
     2. Resolve the migration head revision via alembic so a missing
        or broken migrations directory in the deployed image trips the
        smoke.
@@ -24,26 +21,64 @@ with ``uv run python scripts/runtime_smoke.py``.
 
 from __future__ import annotations
 
+import socket
 import subprocess
 import sys
+import time
 from pathlib import Path
+from urllib.request import urlopen
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
-def _run_entrypoint() -> str:
-    """Run ``python -m loop_data_plane`` and return its stdout."""
-    result = subprocess.run(
-        [sys.executable, "-m", "loop_data_plane"],
+def _free_port() -> int:
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
+
+
+def _probe_runtime() -> None:
+    """Run Uvicorn briefly and assert the health route responds."""
+    port = _free_port()
+    proc = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "uvicorn",
+            "loop_data_plane.runtime_app:app",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(port),
+            "--log-level",
+            "warning",
+        ],
         cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=30,
-        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
-    if result.returncode != 0:
-        raise AssertionError(f"entrypoint exited {result.returncode}: stderr={result.stderr!r}")
-    return result.stdout
+    try:
+        deadline = time.monotonic() + 20
+        last_error = ""
+        while time.monotonic() < deadline:
+            if proc.poll() is not None:
+                stderr = proc.stderr.read().decode() if proc.stderr else ""
+                raise AssertionError(f"uvicorn exited early: {stderr}")
+            try:
+                with urlopen(f"http://127.0.0.1:{port}/healthz", timeout=1) as response:
+                    if response.status == 200:
+                        return
+            except OSError as exc:
+                last_error = str(exc)
+            time.sleep(0.2)
+        raise AssertionError(f"runtime app did not become ready: {last_error}")
+    finally:
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=5)
 
 
 def _resolve_alembic_head() -> str:
@@ -70,9 +105,7 @@ def _resolve_alembic_head() -> str:
 
 def main() -> int:
     try:
-        stdout = _run_entrypoint()
-        if "loop-data-plane" not in stdout:
-            raise AssertionError(f"entrypoint stdout missing banner: {stdout!r}")
+        _probe_runtime()
         head = _resolve_alembic_head()
         if not head:
             raise AssertionError("alembic head was empty")

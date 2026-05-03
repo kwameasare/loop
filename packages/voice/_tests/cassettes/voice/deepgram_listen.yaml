@@ -1,0 +1,11 @@
+provider: deepgram
+request:
+  url: "wss://api.deepgram.com/v1/listen?model=nova-2-phonecall&language=en-US&sample_rate=16000&encoding=linear16&interim_results=true&endpointing=250"
+  header_names:
+    - Authorization
+  header_prefixes:
+    Authorization: "Token "
+response_frames:
+  - '{"type":"Metadata","request_id":"cassette-dg-001"}'
+  - '{"type":"Results","is_final":true,"channel":{"alternatives":[{"transcript":"hello loop","confidence":0.93}]}}'
+  - ""
