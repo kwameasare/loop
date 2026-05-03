@@ -24,6 +24,15 @@ Naming convention: `LOOP_<DOMAIN>_<NAME>` (e.g. `LOOP_RUNTIME_PORT`). Avoid `_` 
 | `LOOP_OTEL_ENDPOINT` | observability `Settings` — OTLP HTTP endpoint when `LOOP_OTEL_EXPORTER=otlp`; ClickHouse HTTP base URL when `LOOP_OTEL_EXPORTER=clickhouse` | S009, S286 |
 | `LOOP_OTEL_EXPORTER` | observability `Settings` — exporter selector (`"otlp"` / `"clickhouse"` / `"inmemory"` / `"memory"` / `"none"`); prod defaults to ClickHouse, tests use in-memory | S009, S286 |
 | `LOOP_CP_DB_URL` | `packages/control-plane` Alembic `env.py` and `cp-api` settings | S006, S019 |
+| `LOOP_CP_AUTH_AUDIENCE` | `loop_control_plane.app` local token exchange audience | S901 |
+| `LOOP_CP_AUTH_ISSUER` | `loop_control_plane.app` local token exchange issuer | S901 |
+| `LOOP_CP_BUILD_TIME` | `loop_control_plane.app` `/healthz` and `/version` metadata | S901 |
+| `LOOP_CP_COMMIT_SHA` | `loop_control_plane.app` `/healthz` and `/version` metadata | S901 |
+| `LOOP_CP_LOCAL_JWT_SECRET` | `loop_control_plane.app` local HS256 IdP-token verifier | S901 |
+| `LOOP_CP_PASETO_LOCAL_KEY` | `loop_control_plane.app` local Loop bearer-token signer/verifier | S901 |
+| `LOOP_CP_REDIS_URL` | `packages/control-plane` `cp-api` settings | S101 |
+| `LOOP_CP_REQUEST_ID_HEADER` | `loop_control_plane.app` request-id echo/error envelope header | S901 |
+| `LOOP_CP_VERSION` | `loop_control_plane.app` `/healthz` and `/version` metadata | S901 |
 | `LOOP_RUNTIME_DB_URL` | `packages/data-plane` Alembic `env.py` and runtime settings | S006, S008 |
 | `LOOP_GATEWAY_REQUEST_ID_TTL_SECONDS` | `packages/gateway` idempotency cache | S007 |
 | `LOOP_DEV_BIND` | `infra/docker-compose.yml` — host bind address for service ports (default `127.0.0.1`) | S003 |
@@ -148,6 +157,14 @@ Voice provider clients:
 | `LOOP_CP_REDIS_URL` | (required) | Sessions + rate limits. |
 | `LOOP_CP_CLICKHOUSE_URL` | (required) | Trace + cost analytics. |
 | `LOOP_CP_AUTH_PROVIDER` | `auth0` | enum: `auth0`, `kratos`. |
+| `LOOP_CP_AUTH_ISSUER` | `https://loop.local/` | Issuer expected by the local HS256 exchange verifier. |
+| `LOOP_CP_AUTH_AUDIENCE` | `loop-cp` | Audience expected by local exchange verifier and minted Loop tokens. |
+| `LOOP_CP_LOCAL_JWT_SECRET` | (local/dev only) | HS256 secret for local IdP-token exchange tests; do not set in prod Auth0 mode. |
+| `LOOP_CP_PASETO_LOCAL_KEY` | (required for local exchange) | At least 32 bytes; signs/verifies local Loop bearer tokens. |
+| `LOOP_CP_REQUEST_ID_HEADER` | `X-Request-Id` | Header echoed in error envelopes and audit events. |
+| `LOOP_CP_VERSION` | package version | `/healthz` and `/version` service version. |
+| `LOOP_CP_COMMIT_SHA` | `0000000-local` | `/healthz` and `/version` build commit. |
+| `LOOP_CP_BUILD_TIME` | startup time | `/healthz` and `/version` build timestamp. |
 | `LOOP_CP_AUTH0_DOMAIN` | (Auth0) | required if `auth_provider=auth0`. |
 | `LOOP_CP_AUTH0_AUDIENCE` | (Auth0) | required if `auth_provider=auth0`. |
 | `LOOP_CP_KRATOS_URL` | (Kratos) | required if `auth_provider=kratos`. |

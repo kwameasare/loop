@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T18:44:55.180410+00:00",
+    "generated_at": "2026-05-03T18:48:01.053188+00:00",
     "format_version": 2
   },
   "epics": [
@@ -5462,13 +5462,13 @@
     {
       "id": "S901",
       "title": "cp-api: FastAPI ASGI app wires existing handlers into runnable uvicorn process",
-      "owner": "tbd",
+      "owner": "codex-orion",
       "sprint": "S38",
       "epic": "E12",
       "points": 3,
       "priority": "P0",
-      "status": "Not started",
-      "notes": "AC: uv run uvicorn loop_control_plane.app:app --port 8080 serves /healthz, /v1/workspaces/*, /v1/auth/exchange, /v1/agents/*, /v1/audit/* end-to-end; integration test starts server and exercises 8 endpoints. [extends S100, S118, S346]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: codex-orion/s901-cp-api-fastapi-asgi-app-wires-ex (merged + deletable)\nSkill: skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-03T18:46:21Z (codex-orion)\nTests: Focused S901 gates pass: uv run ruff check touched app/config/test files; uv run ruff format --check same; uv run pyright packages/control-plane/_tests/test_cp_api_app.py; uv run pytest -q packages/control-plane/_tests/test_cp_api_app.py packages/control-plane/_tests/test_openapi_schemathesis.py packages/control-plane/_tests/test_cp_pass2.py packages/control-plane/_tests/test_cp_pass7.py packages/control-plane/_tests/test_workspace_api.py packages/control-plane/_tests/test_audit_events.py (98 passed); tracker/docs/checkpoint/no-bulk gates pass. Full lifecycle ruff gate remains blocked by unrelated repo-wide baseline outside S901.\nDocs touched: loop_implementation/api/openapi.yaml,loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/architecture/ARCHITECTURE.md,docs/THREAT_MODEL.md\nFollow-ups: none"
     },
     {
       "id": "S902",
