@@ -11,14 +11,21 @@ ENV PATH="/opt/venv/bin:${PATH}" \
     UV_PYTHON_DOWNLOADS=never \
     VIRTUAL_ENV=/opt/venv
 
-WORKDIR /src/packages/data-plane
+WORKDIR /src
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.29 /uv /usr/local/bin/uv
-COPY packages/data-plane/pyproject.toml ./
-COPY packages/data-plane/loop_data_plane ./loop_data_plane
+COPY packages/sdk-py/pyproject.toml ./packages/sdk-py/
+COPY packages/sdk-py/loop ./packages/sdk-py/loop
+COPY packages/gateway/pyproject.toml ./packages/gateway/
+COPY packages/gateway/loop_gateway ./packages/gateway/loop_gateway
+COPY packages/runtime/pyproject.toml ./packages/runtime/
+COPY packages/runtime/loop_runtime ./packages/runtime/loop_runtime
+COPY packages/data-plane/pyproject.toml ./packages/data-plane/
+COPY packages/data-plane/loop_data_plane ./packages/data-plane/loop_data_plane
 
 RUN uv venv "${VIRTUAL_ENV}" \
-    && uv pip install --python "${VIRTUAL_ENV}/bin/python" . \
+    && uv pip install --python "${VIRTUAL_ENV}/bin/python" \
+        ./packages/sdk-py ./packages/gateway ./packages/runtime ./packages/data-plane \
     && mkdir -p /python-libs \
     && for lib in \
         libbz2.so.1.0 \
@@ -65,5 +72,6 @@ COPY --from=builder /python-libs /usr/local/lib/python-libs
 COPY --from=builder /opt/venv /opt/venv
 
 USER nonroot:nonroot
+EXPOSE 8081
 ENTRYPOINT ["/opt/venv/bin/python"]
-CMD ["-m", "loop_data_plane"]
+CMD ["-m", "uvicorn", "loop_data_plane.runtime_app:app", "--host", "0.0.0.0", "--port", "8081"]
