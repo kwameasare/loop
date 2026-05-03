@@ -1,0 +1,6 @@
+[loop:demo:dry-run] provider=openai model=gpt-4o-mini
+[tool] lookup_order(order_id="4172")
+[tool result] {"status": "in_transit", "estimated_delivery": "2026-05-02"}
+Order 4172 is currently in transit and is scheduled to arrive on
+2026-05-02. Let me know if you'd like me to set up delivery
+notifications.

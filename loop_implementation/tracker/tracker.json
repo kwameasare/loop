@@ -2,7 +2,7 @@
   "_meta": {
     "source_file": "tools/build_tracker.py",
     "generated_by": "tools/build_tracker.py",
-    "generated_at": "2026-05-03T19:37:30.496035+00:00",
+    "generated_at": "2026-05-03T19:41:09.191295+00:00",
     "format_version": 2
   },
   "epics": [
@@ -91,7 +91,7 @@
       "name": "CLI & SDKs",
       "owner": "Eng #1+5",
       "target": "MVP M6",
-      "status": "In progress",
+      "status": "Done",
       "notes": "Python core, Go CLI; TS gen later"
     },
     {
@@ -5605,13 +5605,13 @@
     {
       "id": "S914",
       "title": "demo: scripts/demo/ — 5 scripted demos (chat, tools, KB, multi-agent, HITL takeover)",
-      "owner": "tbd",
+      "owner": "copilot-thor",
       "sprint": "S38",
       "epic": "E11",
       "points": 2,
       "priority": "P1",
-      "status": "Not started",
-      "notes": "AC: scripts/demo/{1_chat.sh,2_tool.sh,3_kb.sh,4_multiagent.sh,5_hitl.sh} each run cleanly against G2/G3/G7 and produce expected output; README in scripts/demo/ documents prerequisites + expected output. [extends S907]"
+      "status": "Done",
+      "notes": "**Done.**\nPR: (opened by squash-merge)\nBranch: copilot-thor/s914-demo-scripts-demo-5-scripted-dem (merged + deletable)\nSkill: loop_implementation/skills/api/add-rest-endpoint.md\nFinal heartbeat: 2026-05-03T19:41:09Z (copilot-thor)\nTests: pytest tests/test_demo_scripts.py: 12 passed\nDocs touched: scripts/demo/README.md\nFollow-ups: none"
     },
     {
       "id": "S915",
