@@ -1495,7 +1495,14 @@ Final heartbeat: 2026-05-03T18:46:21Z (codex-orion)
 Tests: Focused S901 gates pass: uv run ruff check touched app/config/test files; uv run ruff format --check same; uv run pyright packages/control-plane/_tests/test_cp_api_app.py; uv run pytest -q packages/control-plane/_tests/test_cp_api_app.py packages/control-plane/_tests/test_openapi_schemathesis.py packages/control-plane/_tests/test_cp_pass2.py packages/control-plane/_tests/test_cp_pass7.py packages/control-plane/_tests/test_workspace_api.py packages/control-plane/_tests/test_audit_events.py (98 passed); tracker/docs/checkpoint/no-bulk gates pass. Full lifecycle ruff gate remains blocked by unrelated repo-wide baseline outside S901.
 Docs touched: loop_implementation/api/openapi.yaml,loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/architecture/ARCHITECTURE.md,docs/THREAT_MODEL.md
 Follow-ups: none"
-S902,dp-runtime: FastAPI POST /v1/turns SSE wires TurnExecutor; replaces __main__ exit-0 stub,tbd,S38,E1,3,P0,Not started,"AC: uv run uvicorn loop_data_plane.runtime_app:app --port 8081 streams TurnEvents end-to-end; integration test posts a turn and asserts SSE deltas + done frame; loop_data_plane/__main__.py removed in favour of uvicorn entrypoint. [extends S130, S140]"
+S902,dp-runtime: FastAPI POST /v1/turns SSE wires TurnExecutor; replaces __main__ exit-0 stub,codex-orion,S38,E1,3,P0,In progress,"**Active.**
+Branch: codex-orion/s902-dp-runtime-fastapi-post-v1-turns
+Skill: skills/coding/implement-runtime-feature.md
+Last step: 0/6 (just claimed)
+Heartbeat: 2026-05-03T18:51:23Z (codex-orion)
+Open questions: none
+Blockers: none
+Commits: (will accumulate)"
 S903,cli: HttpxControlPlaneTransport replaces _DefaultTransport so loop login/deploy/eval reach cp-api,tbd,S38,E11,2,P0,Not started,AC: loop login/init/deploy/logs/eval/secrets/release each complete against real cp-api; httpx VCR cassettes recorded; existing CLI unit tests still pass. [extends S901]
 S904,terraform: aws-loop-stack module + envs/staging-aws-us-east-2 (validation blocked by S002),tbd,S38,E12,3,P0,Not started,"AC: infra/terraform/modules/aws-loop-stack/{main,variables,outputs}.tf provisions EKS+RDS+ElastiCache+S3+KMS+CloudFront; tf validate + tflint clean; values-aws-staging.yaml renders helm chart against module outputs. Real apply remains blocked by S002 cloud accounts. [extends S770]"
 S905,kms+s3: AwsKmsBackend(boto3) + S3ObjectStore(boto3) implementations behind existing Protocols,tbd,S38,E12,3,P0,Not started,AC: kms.py registers aws_kms in KMS_BACKENDS with real boto3.client('kms') wiring envelope encrypt/decrypt/rotate; object_store.py registers s3 backend with real boto3.client('s3'); localstack-backed integration tests for both. [extends S904]
