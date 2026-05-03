@@ -1504,11 +1504,12 @@ S907,examples: support_agent imports + run_local.py wired against G2/G3 + real L
 S908,voice: Deepgram + ElevenLabs WS clients hit real APIs; existing protocol seams + cassettes,codex-vega,S38,E7,3,P0,In progress,"**Active.**
 Branch: codex-vega/s908-voice-deepgram-elevenlabs-ws-cli
 Skill: skills/coding/implement-channel-adapter.md
-Last step: 0/7 (just claimed)
-Heartbeat: 2026-05-03T18:30:38Z (codex-vega)
+Last step: 1/7
+Heartbeat: 2026-05-03T18:33:55Z (codex-vega)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: production websocket opener dependency landed"
 S909,voice: replace LATENCY_BUDGET_VOICE simulator output in bench with real-call samples,tbd,S38,E7,2,P0,Not started,AC: bench/results/voice_perf.json carries 100 samples from real Deepgram→agent→ElevenLabs round-trips (or marked synthetic with explicit source field); voice-perf workflow gate evaluates real measurements; gate p50 ≤700ms holds against measured baseline. [extends S908]
 S910,voice: Twilio SIP integration test harness — ready for live phone-number sandbox (closes S387),tbd,S38,E7,3,P0,Not started,"AC: tests/test_voice_phone_call_e2e.py harness; SKIPs without LOOP_TWILIO_TEST_NUMBER+LOOP_TWILIO_ACCOUNT_SID; with creds, dials a number, asserts ASR text contains expected utterance and TTS audio frames received; documents how to provision a Twilio test number in PHONE_PROVISIONING.md. [extends S908]"
 S911,docs: fix check_docs_links failures — 5 missing refs + broken bug-bounty link,tbd,S38,E17,1,P0,Not started,"AC: docs/index.md references THREAT_MODEL.md, site/PARTNER_REVIEWS.md, site/bug-bounty.md, site/data-retention.md, site/pricing-verification.md; site/bug-bounty.md broken link to acknowledgements.md fixed; uv run python tools/check_docs_links.py exits 0; tests/test_docs_links.py passes."
