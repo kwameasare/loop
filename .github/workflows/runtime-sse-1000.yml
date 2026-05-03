@@ -177,3 +177,4 @@ jobs:
           curl -fsS -X POST -H "content-type: application/json" \
             --data "{\"summary\":\"Loop runtime SSE 1000 concurrency gate failed\",\"severity\":\"critical\",\"source\":\"github-actions\"}" \
             "$LOOP_ONCALL_WEBHOOK_URL"
+

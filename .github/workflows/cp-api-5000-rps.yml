@@ -97,3 +97,4 @@ jobs:
           curl -fsS -X POST -H "content-type: application/json" \
             --data "{\"summary\":\"Loop cp-api 5000 RPS gate failed\",\"severity\":\"critical\",\"source\":\"github-actions\"}" \
             "$LOOP_ONCALL_WEBHOOK_URL"
+
