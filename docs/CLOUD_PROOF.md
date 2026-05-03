@@ -32,6 +32,9 @@ out mark and paged on-call from the same workflow.
 | Checked at (UTC) | Cloud | Region | Mark | Run | Commit |
 |------------------|-------|--------|------|-----|--------|
 <!-- CLOUD_PROOF_HISTORY:BEGIN -->
+| 2026-05-03T06:16:36Z | `aws` | `na-east` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25271742552) | `fc65672cb7b2` |
+| 2026-05-03T06:16:36Z | `azure` | `eu-west` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25271742552) | `fc65672cb7b2` |
+| 2026-05-03T06:16:34Z | `gcp` | `apac-sg` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25271742552) | `fc65672cb7b2` |
 <!-- CLOUD_PROOF_HISTORY:END -->
 
 ## Evidence sources
