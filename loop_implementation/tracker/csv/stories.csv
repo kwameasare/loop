@@ -1524,11 +1524,12 @@ Follow-ups: none"
 S907,examples: support_agent imports + run_local.py wired against G2/G3 + real LLM,copilot-thor,S38,E11,1,P0,In progress,"**Active.**
 Branch: copilot-thor/s907-examples-support-agent-imports-r
 Skill: loop_implementation/skills/api/add-rest-endpoint.md
-Last step: 0/5 (just claimed)
-Heartbeat: 2026-05-03T19:21:29Z (copilot-thor)
+Last step: 1/5
+Heartbeat: 2026-05-03T19:23:25Z (copilot-thor)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: fix support_agent.agent imports to use loop.agents.Agent"
 S908,voice: Deepgram + ElevenLabs WS clients hit real APIs; existing protocol seams + cassettes,codex-vega,S38,E7,3,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-vega/s908-voice-deepgram-elevenlabs-ws-cli (merged + deletable)
