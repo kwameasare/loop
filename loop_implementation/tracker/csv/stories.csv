@@ -1509,15 +1509,14 @@ Final heartbeat: 2026-05-03T18:39:22Z (codex-vega)
 Tests: voice package tests pass (132 passed, 1 live skip); touched ruff/format pass; targeted pyright on voice websocket code/tests pass; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format remain baseline-red in unrelated files
 Docs touched: loop_implementation/architecture/ARCHITECTURE.md,loop_implementation/engineering/ENV_REFERENCE.md,loop_implementation/engineering/VOICE_LATENCY.md
 Follow-ups: none"
-S909,voice: replace LATENCY_BUDGET_VOICE simulator output in bench with real-call samples,codex-vega,S38,E7,2,P0,In progress,"**Active.**
-Branch: codex-vega/s909-voice-replace-latency-budget-voi
+S909,voice: replace LATENCY_BUDGET_VOICE simulator output in bench with real-call samples,codex-vega,S38,E7,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: codex-vega/s909-voice-replace-latency-budget-voi (merged + deletable)
 Skill: skills/testing/perf-check.md
-Last step: 1/5
-Heartbeat: 2026-05-03T18:44:29Z (codex-vega)
-Open questions: none
-Blockers: none
-Commits: (will accumulate)
-Latest checkpoint: sample-based voice perf gate artifact landed"
+Final heartbeat: 2026-05-03T18:44:55Z (codex-vega)
+Tests: voice perf tests pass (6 passed); scripts/voice_perf.py rewrote bench/results/voice_perf.json with 100 sourced samples and p50 579ms <= 700ms; targeted ruff/format and pyright pass; tracker/docs/checkpoint/no-bulk gates pass; full repo ruff/format remain baseline-red in unrelated files
+Docs touched: docs/perf/voice_perf.md
+Follow-ups: none"
 S910,voice: Twilio SIP integration test harness — ready for live phone-number sandbox (closes S387),tbd,S38,E7,3,P0,Not started,"AC: tests/test_voice_phone_call_e2e.py harness; SKIPs without LOOP_TWILIO_TEST_NUMBER+LOOP_TWILIO_ACCOUNT_SID; with creds, dials a number, asserts ASR text contains expected utterance and TTS audio frames received; documents how to provision a Twilio test number in PHONE_PROVISIONING.md. [extends S908]"
 S911,docs: fix check_docs_links failures — 5 missing refs + broken bug-bounty link,tbd,S38,E17,1,P0,Not started,"AC: docs/index.md references THREAT_MODEL.md, site/PARTNER_REVIEWS.md, site/bug-bounty.md, site/data-retention.md, site/pricing-verification.md; site/bug-bounty.md broken link to acknowledgements.md fixed; uv run python tools/check_docs_links.py exits 0; tests/test_docs_links.py passes."
 S912,studio: real Auth0 SPA SDK wiring against tenant; first-time-login flow E2E,tbd,S38,E10,2,P0,Not started,AC: pnpm dev studio + LOOP_AUTH0_DOMAIN + LOOP_AUTH0_CLIENT_ID env vars redirects unauthenticated traffic to Auth0 universal login; on-success callback exchanges code for session via /v1/auth/exchange; logout button clears session; Playwright e2e covers happy path. [extends S901]
