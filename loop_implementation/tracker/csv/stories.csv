@@ -1544,11 +1544,12 @@ S912,studio: real Auth0 SPA SDK wiring against tenant; first-time-login flow E2E
 S913,perf: re-baseline cp-api-5000-rps + runtime-sse-1000 against real cp-api/dp-runtime images,codex-orion,S38,E12,2,P0,In progress,"**Active.**
 Branch: codex-orion/s913-perf-re-baseline-cp-api-5000-rps
 Skill: skills/testing/perf-check.md
-Last step: 0/4 (just claimed)
-Heartbeat: 2026-05-03T19:05:45Z (codex-orion)
+Last step: 3/4
+Heartbeat: 2026-05-03T19:25:29Z (codex-orion)
 Open questions: none
 Blockers: none
-Commits: (will accumulate)"
+Commits: (will accumulate)
+Latest checkpoint: real service-image perf wiring, tests, and baselines landed"
 S914,"demo: scripts/demo/ — 5 scripted demos (chat, tools, KB, multi-agent, HITL takeover)",tbd,S38,E11,2,P1,Not started,"AC: scripts/demo/{1_chat.sh,2_tool.sh,3_kb.sh,4_multiagent.sh,5_hitl.sh} each run cleanly against G2/G3/G7 and produce expected output; README in scripts/demo/ documents prerequisites + expected output. [extends S907]"
 S915,docs: docs.loop.example v1 — Mintlify site live with quickstart + 3 tutorials,tbd,S38,E17,3,P0,Not started,AC: apps/docs/ Mintlify project deployable via mintlify deploy; mint.json indexes 12 pages drawn from loop_implementation/engineering/; quickstart points at G7 example; nav covers concepts/quickstart/tutorials/api-ref/cookbook. [extends S659]
 S916,tool-host: RuncSandboxFactory implementation behind SandboxFactory Protocol (Kata follow-up),copilot-titan,S38,E3,3,P0,Done,"**Done.**
