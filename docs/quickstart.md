@@ -26,26 +26,26 @@ make up
 This brings up Postgres, Redis, the OTel collector, and a tiny stub
 gateway that fakes Claude responses so you can iterate offline.
 
-## 3. Run the support example
+## 3. Run the support example against a real LLM
+
+The reference example streams a real OpenAI or Anthropic response and
+executes the `lookup_order` tool when the model asks for it.
 
 ```sh
-cp examples/support_agent/.env.example examples/support_agent/.env
-# edit .env to set ANTHROPIC_API_KEY (or leave it blank to use the stub gateway)
-uv run loop dev examples/support_agent
-```
+# pick whichever provider you have a key for; OpenAI is preferred when both are set
+export OPENAI_API_KEY=sk-...
+# or
+export ANTHROPIC_API_KEY=...
 
-## 4. Send a message
-
-In another shell:
-
-```sh
-uv run loop chat examples/support_agent "Where is order 4172?"
+uv run python examples/support_agent/run_local.py "where is order 4172?"
 ```
 
 You should see a streamed response that includes a tool call to
-`lookup_order` and a final answer.
+`lookup_order` and a final answer that quotes the (fixture) order
+status. Force a specific provider with `LOOP_SUPPORT_PROVIDER=openai`
+or `LOOP_SUPPORT_PROVIDER=anthropic`.
 
-## 5. Run the eval suite
+## 4. Run the eval suite
 
 ```sh
 uv run python examples/support_agent/run_eval.py
