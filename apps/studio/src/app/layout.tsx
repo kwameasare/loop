@@ -9,14 +9,37 @@ export const metadata: Metadata = {
   description: "Build, deploy, and observe agents.",
 };
 
+/**
+ * S912: read Auth0 tenant configuration from server-side env vars so
+ * the same studio bundle works against dev / staging / prod without a
+ * rebuild. ``LOOP_AUTH0_*`` is the operator-facing name; the
+ * ``NEXT_PUBLIC_AUTH0_*`` aliases remain supported for compatibility
+ * with the older static-build path.
+ */
+function readAuth0ConfigFromEnv() {
+  const domain =
+    process.env.LOOP_AUTH0_DOMAIN || process.env.NEXT_PUBLIC_AUTH0_DOMAIN || "";
+  const clientId =
+    process.env.LOOP_AUTH0_CLIENT_ID ||
+    process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID ||
+    "";
+  const audience =
+    process.env.LOOP_AUTH0_AUDIENCE ||
+    process.env.NEXT_PUBLIC_AUTH0_AUDIENCE ||
+    undefined;
+  if (!domain || !clientId) return undefined;
+  return { domain, clientId, audience };
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const auth0Config = readAuth0ConfigFromEnv();
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen antialiased">
         <ToastProvider>
-          <AuthProvider>
+          <AuthProvider config={auth0Config}>
             <AppErrorBoundary>{children}</AppErrorBoundary>
           </AuthProvider>
         </ToastProvider>

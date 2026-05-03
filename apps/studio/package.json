@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "format": "prettier --write .",
     "gen:cp-api": "cd ../.. && uv run python tools/gen_cp_api_client.py",
     "gen:cp-api:check": "cd ../.. && uv run python tools/gen_cp_api_client.py --check"
@@ -26,6 +27,7 @@
     "tailwind-merge": "2.5.4"
   },
   "devDependencies": {
+    "@playwright/test": "1.48.2",
     "@testing-library/jest-dom": "6.5.0",
     "@testing-library/react": "16.0.1",
     "@types/node": "20.16.10",

@@ -46,6 +46,9 @@ Naming convention: `LOOP_<DOMAIN>_<NAME>` (e.g. `LOOP_RUNTIME_PORT`). Avoid `_` 
 | `LOOP_CP_API_BASE_URL` | `apps/studio/src/lib/cp-api.ts` — runtime CP API URL (server-side; complements `NEXT_PUBLIC_LOOP_API_URL` for browser-side fetches) | S010 |
 | `LOOP_CP_API_URL` | `packages/sdk-py/loop/cli.py` — `HttpxControlPlaneTransport` base URL the `loop` CLI dials for `login`/`init`/`deploy`/`logs`/`eval`/`secrets`/`release`. When unset the CLI falls back to `OfflineTransport`, which raises `RuntimeError`. | S903 |
 | `LOOP_CP_API_TIMEOUT` | `packages/sdk-py/loop/cli.py` — float seconds for the `HttpxControlPlaneTransport` HTTP timeout (default `30`). | S903 |
+| `LOOP_AUTH0_DOMAIN` | `apps/studio/src/app/layout.tsx` — Auth0 tenant domain (e.g. `loop-dev.us.auth0.com`) read server-side and passed to the `<AuthProvider>` so the studio bundle can target dev/staging/prod tenants without a rebuild. Falls back to `NEXT_PUBLIC_AUTH0_DOMAIN` for legacy static builds. | S912 |
+| `LOOP_AUTH0_CLIENT_ID` | `apps/studio/src/app/layout.tsx` — Auth0 SPA client id matching `LOOP_AUTH0_DOMAIN`. Falls back to `NEXT_PUBLIC_AUTH0_CLIENT_ID`. | S912 |
+| `LOOP_AUTH0_AUDIENCE` | `apps/studio/src/app/layout.tsx` — optional Auth0 API audience requested at login so the issued ID/access tokens are valid against the cp-api `/v1/auth/exchange` resource server. Falls back to `NEXT_PUBLIC_AUTH0_AUDIENCE`. | S912 |
 | `LOOP_DEMO_URL` | `scripts/e2e_web_smoke.py` / `.github/workflows/e2e-web-smoke.yml` — published demo base URL for nightly first-chat smoke | S181 |
 | `LOOP_DEMO_CHAT_ENDPOINT` | `scripts/e2e_web_smoke.py` — optional absolute chat endpoint override; defaults to `${LOOP_DEMO_URL}/api/chat` | S181 |
 | `LOOP_DEMO_QUESTION` | `scripts/e2e_web_smoke.py` — visitor question posted by the nightly demo smoke (default `"What is Loop?"`) | S181 |

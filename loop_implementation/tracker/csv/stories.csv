@@ -1561,7 +1561,14 @@ Final heartbeat: 2026-05-03T19:30:00Z (copilot-thor)
 Tests: uv run python tools/check_docs_links.py (ok, 25 files, 24 index links); uv run pytest tests/test_docs_links.py (3 passed); ruff baseline pre-existing on main (126 errors, verified across origin/main commits)
 Docs touched: docs/index.md,docs/site/acknowledgements.md
 Follow-ups: ruff-debt: 126 pre-existing ruff errors on origin/main blocking full gate"
-S912,studio: real Auth0 SPA SDK wiring against tenant; first-time-login flow E2E,tbd,S38,E10,2,P0,Not started,AC: pnpm dev studio + LOOP_AUTH0_DOMAIN + LOOP_AUTH0_CLIENT_ID env vars redirects unauthenticated traffic to Auth0 universal login; on-success callback exchanges code for session via /v1/auth/exchange; logout button clears session; Playwright e2e covers happy path. [extends S901]
+S912,studio: real Auth0 SPA SDK wiring against tenant; first-time-login flow E2E,copilot-thor,S38,E10,2,P0,Done,"**Done.**
+PR: (opened by squash-merge)
+Branch: copilot-thor/s912-studio-real-auth0-spa-sdk-wiring (merged + deletable)
+Skill: loop_implementation/skills/api/add-rest-endpoint.md
+Final heartbeat: 2026-05-03T19:32:35Z (copilot-thor)
+Tests: pnpm test (apps/studio): 89 files / 607 tests pass; 12 new (cp-auth-exchange + callback page)
+Docs touched: loop_implementation/engineering/ENV_REFERENCE.md
+Follow-ups: none"
 S913,perf: re-baseline cp-api-5000-rps + runtime-sse-1000 against real cp-api/dp-runtime images,codex-orion,S38,E12,2,P0,Done,"**Done.**
 PR: (opened by squash-merge)
 Branch: codex-orion/s913-perf-re-baseline-cp-api-5000-rps (merged + deletable)
