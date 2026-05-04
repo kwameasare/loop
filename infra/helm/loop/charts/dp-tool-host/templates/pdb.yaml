@@ -1,0 +1,28 @@
+{{- /*
+PodDisruptionBudget for dp-tool-host. Closes P1 from the infra audit
+("dp-tool-host has no PDB and no HPA"). Without a PDB, a node drain
+can take all replicas down at once and any in-flight tool execution
+gets killed.
+
+Skip-toggle via .Values.podDisruptionBudget.enabled so single-replica
+local-dev installs don't fail with "PDB cannot be satisfied" errors.
+*/}}
+{{- if and .Values.enabled .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "dp-tool-host.fullname" . }}
+  labels:
+    {{- include "dp-tool-host.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  {{- else }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "dp-tool-host.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: dp-tool-host
+{{- end }}

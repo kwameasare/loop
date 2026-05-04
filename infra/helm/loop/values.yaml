@@ -15,6 +15,16 @@ global:
   isolation:
     dedicatedStack: false
 
+# Per-service NetworkPolicies. See `templates/network-policies.yaml`.
+# Default ON; flip to false in CNI-less / no-NetworkPolicy environments.
+# `ingressNamespaceLabels` should match the namespace where your
+# Ingress controller (nginx-ingress, gce, etc.) runs so the studio's
+# external entrypoints reach cp-api / runtime.
+networkPolicies:
+  enabled: true
+  ingressNamespaceLabels:
+    kubernetes.io/metadata.name: ingress-nginx
+
 controlPlane:
   enabled: true
   image:
