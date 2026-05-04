@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import json
 import os
+import random
 from asyncio import sleep
 from collections.abc import AsyncIterator, Mapping
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from typing import Any, Literal
 from uuid import UUID
 
@@ -25,10 +28,18 @@ ProviderName = Literal["openai", "anthropic"]
 class ProviderTransportError(RuntimeError):
     """Transport-level failure already mapped to a public gateway error code."""
 
-    def __init__(self, code: str, message: str, *, retryable: bool = False) -> None:
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        *,
+        retryable: bool = False,
+        retry_after_seconds: float | None = None,
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.retryable = retryable
+        self.retry_after_seconds = retry_after_seconds
 
 
 class EmptyWorkspaceKeyStore:
@@ -75,6 +86,7 @@ class HttpxStreamTransport:
         timeout_seconds: float | None = None,
         max_retries: int | None = None,
         retry_backoff_seconds: float = 0.05,
+        max_retry_delay_ms: int | None = None,
     ) -> None:
         self.provider = provider
         self._resolver = key_resolver or resolver_from_env()
@@ -89,6 +101,10 @@ class HttpxStreamTransport:
             else int(os.environ.get("LOOP_GATEWAY_HTTP_MAX_RETRIES", "2"))
         )
         self._retry_backoff = retry_backoff_seconds
+        self._max_retry_delay_seconds = (
+            (max_retry_delay_ms if max_retry_delay_ms is not None else _max_retry_delay_ms())
+            / 1000
+        )
 
     async def __call__(self, request: GatewayRequest) -> AsyncIterator[str]:
         for attempt in range(self._max_retries + 1):
@@ -99,11 +115,20 @@ class HttpxStreamTransport:
             except ProviderTransportError as exc:
                 if not exc.retryable or attempt >= self._max_retries:
                     raise
-                await sleep(self._retry_backoff * (attempt + 1))
+                await sleep(self._retry_delay(attempt, retry_after_seconds=exc.retry_after_seconds))
             except (httpx.TimeoutException, httpx.TransportError) as exc:
                 if attempt >= self._max_retries:
                     raise ProviderTransportError("LOOP-GW-402", str(exc)) from exc
-                await sleep(self._retry_backoff * (attempt + 1))
+                await sleep(self._retry_delay(attempt))
+
+    def _retry_delay(self, attempt: int, *, retry_after_seconds: float | None = None) -> float:
+        if retry_after_seconds is not None:
+            return min(max(0.0, retry_after_seconds), self._max_retry_delay_seconds)
+        jitter_window = min(
+            self._retry_backoff * (2**attempt),
+            self._max_retry_delay_seconds,
+        )
+        return random.uniform(0.0, jitter_window)  # noqa: S311 - retry jitter is non-crypto
 
     async def _stream_once(self, request: GatewayRequest) -> AsyncIterator[str]:
         try:
@@ -174,9 +199,19 @@ class HttpxStreamTransport:
 async def _raise_for_status(response: httpx.Response) -> None:
     text = (await response.aread()).decode(errors="replace")[:500]
     if response.status_code == 429:
-        raise ProviderTransportError("LOOP-GW-301", text or "provider rate limit", retryable=True)
+        raise ProviderTransportError(
+            "LOOP-GW-301",
+            text or "provider rate limit",
+            retryable=True,
+            retry_after_seconds=_parse_retry_after(response.headers.get("retry-after")),
+        )
     if response.status_code >= 500:
-        raise ProviderTransportError("LOOP-GW-401", text or "provider 5xx", retryable=True)
+        raise ProviderTransportError(
+            "LOOP-GW-401",
+            text or "provider 5xx",
+            retryable=True,
+            retry_after_seconds=_parse_retry_after(response.headers.get("retry-after")),
+        )
     if response.status_code in {401, 403}:
         raise ProviderTransportError("LOOP-GW-101", text or "provider key rejected")
     raise ProviderTransportError("LOOP-GW-401", text or f"provider HTTP {response.status_code}")
@@ -186,6 +221,28 @@ def _default_base_url(provider: ProviderName) -> str:
     if provider == "openai":
         return "https://api.openai.com"
     return "https://api.anthropic.com"
+
+
+def _max_retry_delay_ms() -> int:
+    return int(os.environ.get("LOOP_GATEWAY_HTTP_MAX_RETRY_DELAY_MS", "30000"))
+
+
+def _parse_retry_after(value: str | None, *, now: datetime | None = None) -> float | None:
+    if not value:
+        return None
+    value = value.strip()
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        pass
+    try:
+        retry_at = parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    if retry_at.tzinfo is None:
+        retry_at = retry_at.replace(tzinfo=UTC)
+    now = now or datetime.now(UTC)
+    return max(0.0, (retry_at - now).total_seconds())
 
 
 def _openai_message(message: GatewayMessage) -> dict[str, Any]:
