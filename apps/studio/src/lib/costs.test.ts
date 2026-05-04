@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   computeWorkspaceKpis,
   dayBoundsUTC,
+  fetchUsageRecords,
   formatDeltaPercent,
   formatUSD,
   monthBoundsUTC,
@@ -169,5 +170,116 @@ describe("formatDeltaPercent", () => {
     expect(formatDeltaPercent(100, 100)).toBe("0.0%");
     expect(formatDeltaPercent(0, 0)).toBe("0%");
     expect(formatDeltaPercent(50, 0)).toBe("—");
+  });
+});
+
+describe("fetchUsageRecords", () => {
+  const ORIG_BASE = process.env.LOOP_CP_API_BASE_URL;
+  beforeEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+  });
+  afterEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = ORIG_BASE;
+    vi.restoreAllMocks();
+  });
+
+  it("GETs /v1/workspaces/{id}/usage with the start/end window", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ items: [] }),
+    });
+    await fetchUsageRecords(
+      "ws1",
+      { start_ms: 100, end_ms: 200 },
+      { fetcher, token: "t" },
+    );
+    const [url, init] = fetcher.mock.calls[0];
+    expect(url).toBe(
+      "https://cp.test/v1/workspaces/ws1/usage?start_ms=100&end_ms=200",
+    );
+    expect(init.method).toBe("GET");
+    expect(init.headers.authorization).toBe("Bearer t");
+  });
+
+  it("converts cp UsageEvent shape into the studio UsageRecord shape", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        items: [
+          {
+            workspace_id: "ws1",
+            metric: "tokens.in",
+            quantity: 12_000,
+            timestamp_ms: Date.UTC(2026, 4, 1, 10, 0, 0),
+          },
+          {
+            workspace_id: "ws1",
+            metric: "tokens.out",
+            quantity: 4_000,
+            timestamp_ms: Date.UTC(2026, 4, 1, 11, 0, 0),
+            agent_id: "agt_a",
+            agent_name: "Support",
+            channel: "web",
+            model: "gpt-4o",
+          },
+        ],
+      }),
+    });
+    const records = await fetchUsageRecords(
+      "ws1",
+      { start_ms: 0, end_ms: Number.MAX_SAFE_INTEGER },
+      { fetcher },
+    );
+    expect(records).toHaveLength(2);
+    expect(records[0].metric).toBe("tokens.in");
+    // day_ms collapses to UTC midnight of the timestamp.
+    expect(records[0].day_ms).toBe(Date.UTC(2026, 4, 1));
+    // The first event has no agent metadata; downstream filtering
+    // handles empty strings.
+    expect(records[0].agent_id).toBe("");
+    // The second carries the dimensions through.
+    expect(records[1].channel).toBe("web");
+    expect(records[1].agent_name).toBe("Support");
+  });
+
+  it("drops events with unknown metric strings", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        items: [
+          {
+            workspace_id: "ws1",
+            metric: "tokens.in",
+            quantity: 1,
+            timestamp_ms: 0,
+          },
+          {
+            workspace_id: "ws1",
+            metric: "made.up.metric",
+            quantity: 999,
+            timestamp_ms: 0,
+          },
+        ],
+      }),
+    });
+    const records = await fetchUsageRecords(
+      "ws1",
+      { start_ms: 0, end_ms: Number.MAX_SAFE_INTEGER },
+      { fetcher },
+    );
+    expect(records).toHaveLength(1);
+    expect(records[0].metric).toBe("tokens.in");
+  });
+
+  it("propagates non-2xx as an error", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 403, json: async () => ({}) });
+    await expect(
+      fetchUsageRecords("ws1", { start_ms: 0, end_ms: 1 }, { fetcher }),
+    ).rejects.toThrow(/403/);
   });
 });

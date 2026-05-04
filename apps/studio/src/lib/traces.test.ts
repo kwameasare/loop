@@ -1,5 +1,11 @@
-import { describe, it, expect } from "vitest";
-import { layoutTrace, formatDurationNs, type Trace } from "./traces";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  fetchTraceByTurnId,
+  formatDurationNs,
+  layoutTrace,
+  searchTraces,
+  type Trace,
+} from "./traces";
 
 const trace: Trace = {
   id: "t",
@@ -142,5 +148,127 @@ describe("listTraces", () => {
 describe("formatTraceTimestamp", () => {
   it("renders MMM D HH:MM UTC", () => {
     expect(formatTraceTimestamp(Date.UTC(2026, 3, 15, 9, 5))).toBe("Apr 15 09:05 UTC");
+  });
+});
+
+describe("searchTraces", () => {
+  const ORIG_BASE = process.env.LOOP_CP_API_BASE_URL;
+  beforeEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+  });
+  afterEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = ORIG_BASE;
+    vi.restoreAllMocks();
+  });
+
+  it("GETs /v1/workspaces/{id}/traces with the encoded query", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ items: [], next_cursor: null }),
+    });
+    await searchTraces(
+      "ws1",
+      {
+        agent_id: "agt_a",
+        only_errors: true,
+        page_size: 25,
+        cursor: "abc",
+      },
+      { fetcher, token: "t" },
+    );
+    const [url, init] = fetcher.mock.calls[0];
+    const u = new URL(String(url));
+    expect(u.pathname).toBe("/v1/workspaces/ws1/traces");
+    expect(u.searchParams.get("agent_id")).toBe("agt_a");
+    expect(u.searchParams.get("only_errors")).toBe("true");
+    expect(u.searchParams.get("page_size")).toBe("25");
+    expect(u.searchParams.get("cursor")).toBe("abc");
+    expect(init.headers.authorization).toBe("Bearer t");
+  });
+
+  it("converts cp TraceSummary → studio TraceSummary", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        items: [
+          {
+            workspace_id: "ws1",
+            trace_id: "0123456789abcdef0123456789abcdef",
+            turn_id: "11111111-2222-3333-4444-555555555555",
+            conversation_id: "ccccc-...",
+            agent_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            started_at: "2026-05-01T10:00:00Z",
+            duration_ms: 850,
+            span_count: 6,
+            error: false,
+          },
+          {
+            workspace_id: "ws1",
+            trace_id: "fedcba9876543210fedcba9876543210",
+            turn_id: "22222222-3333-4444-5555-666666666666",
+            conversation_id: "x",
+            agent_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+            started_at: "2026-05-01T11:30:00Z",
+            duration_ms: 120,
+            span_count: 3,
+            error: true,
+          },
+        ],
+        next_cursor: "next",
+      }),
+    });
+    const res = await searchTraces("ws1", {}, { fetcher });
+    expect(res.next_cursor).toBe("next");
+    expect(res.traces).toHaveLength(2);
+    expect(res.traces[0]).toMatchObject({
+      id: "0123456789abcdef0123456789abcdef",
+      status: "ok",
+      duration_ns: 850_000_000,
+      span_count: 6,
+    });
+    expect(res.traces[0].started_at_ms).toBe(Date.UTC(2026, 4, 1, 10, 0, 0));
+    expect(res.traces[1].status).toBe("error");
+    // root_name falls back to a short turn label until cp emits a real one.
+    expect(res.traces[1].root_name).toMatch(/^turn /);
+  });
+
+  it("propagates non-2xx errors", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 503, json: async () => ({}) });
+    await expect(searchTraces("ws1", {}, { fetcher })).rejects.toThrow(/503/);
+  });
+});
+
+describe("fetchTraceByTurnId", () => {
+  const ORIG_BASE = process.env.LOOP_CP_API_BASE_URL;
+  beforeEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+  });
+  afterEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = ORIG_BASE;
+    vi.restoreAllMocks();
+  });
+
+  it("returns the trace on 200", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: "t1", spans: [] }),
+    });
+    const res = await fetchTraceByTurnId("turn-1", { fetcher });
+    expect(res?.id).toBe("t1");
+    const [url] = fetcher.mock.calls[0];
+    expect(url).toBe("https://cp.test/v1/traces/turn-1");
+  });
+
+  it("returns null on 404 (route not yet shipped)", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
+    const res = await fetchTraceByTurnId("turn-1", { fetcher });
+    expect(res).toBeNull();
   });
 });

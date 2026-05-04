@@ -119,6 +119,131 @@ export function formatRelativeMs(now_ms: number, then_ms: number): string {
   return `${day}d ago`;
 }
 
+// ---------------------------------------------------------------- cp-api
+
+export interface InboxClientOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+function cpApiBaseUrl(override?: string): string {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) {
+    throw new Error("LOOP_CP_API_BASE_URL is required for inbox calls");
+  }
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+async function cpFetch<T>(
+  method: string,
+  path: string,
+  opts: InboxClientOptions,
+  body?: unknown,
+): Promise<T> {
+  const fetcher = opts.fetcher ?? fetch;
+  const headers: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  const init: RequestInit = { method, headers, cache: "no-store" };
+  if (body !== undefined) {
+    headers["content-type"] = "application/json";
+    init.body = JSON.stringify(body);
+  }
+  const res = await fetcher(`${cpApiBaseUrl(opts.baseUrl)}${path}`, init);
+  if (!res.ok) throw new Error(`cp-api ${method} ${path} -> ${res.status}`);
+  if (res.status === 204) return undefined as T;
+  return (await res.json()) as T;
+}
+
+/**
+ * Fetch the operator inbox for a workspace.
+ *
+ * Blocked on cp-api PR: ``/v1/workspaces/{id}/inbox`` is not yet
+ * mounted in ``packages/control-plane/loop_control_plane/app.py`` —
+ * the underlying ``InboxAPI`` class is implemented but no FastAPI
+ * router exists. Until that ships, callers receive an empty list on
+ * 404 and the screen renders the empty state cleanly. When the
+ * route lands the studio side requires no further changes (the path
+ * matches what the audit doc names).
+ */
+export async function listInbox(
+  workspace_id: string,
+  opts: InboxClientOptions = {},
+): Promise<{ items: InboxItem[] }> {
+  try {
+    return await cpFetch<{ items: InboxItem[] }>(
+      "GET",
+      `/workspaces/${encodeURIComponent(workspace_id)}/inbox`,
+      opts,
+    );
+  } catch (err) {
+    if (err instanceof Error && /-> 404/.test(err.message)) {
+      return { items: [] };
+    }
+    throw err;
+  }
+}
+
+/** Claim an inbox item — escalates to the operator. */
+export async function claimInboxItem(
+  item_id: string,
+  operator_id: string,
+  opts: InboxClientOptions = {},
+): Promise<InboxItem> {
+  return cpFetch<InboxItem>("POST", `/inbox/${encodeURIComponent(item_id)}/claim`, opts, {
+    operator_id,
+  });
+}
+
+/** Release a claim — drops back into the pending queue. */
+export async function releaseInboxItem(
+  item_id: string,
+  opts: InboxClientOptions = {},
+): Promise<InboxItem> {
+  return cpFetch<InboxItem>(
+    "POST",
+    `/inbox/${encodeURIComponent(item_id)}/release`,
+    opts,
+  );
+}
+
+/** Resolve a claim — closes the escalation. */
+export async function resolveInboxItem(
+  item_id: string,
+  opts: InboxClientOptions = {},
+): Promise<InboxItem> {
+  return cpFetch<InboxItem>(
+    "POST",
+    `/inbox/${encodeURIComponent(item_id)}/resolve`,
+    opts,
+  );
+}
+
+/**
+ * Take over an active conversation. Uses the conversation
+ * ``/v1/conversations/{id}/takeover`` endpoint, which IS wired in cp
+ * (see ``_routes_workspaces.py`` companion in OpenAPI). The runtime
+ * stops issuing turns from the agent and routes new user messages to
+ * the operator until handback.
+ */
+export async function takeoverConversation(
+  conversation_id: string,
+  reason: string,
+  opts: InboxClientOptions = {},
+): Promise<unknown> {
+  return cpFetch(
+    "POST",
+    `/conversations/${encodeURIComponent(conversation_id)}/takeover`,
+    opts,
+    { reason },
+  );
+}
+
 // ---------------------------------------------------------------- fixtures
 
 export const FIXTURE_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
