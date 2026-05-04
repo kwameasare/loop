@@ -7,10 +7,12 @@ from fastapi import FastAPI
 from loop_control_plane._app_common import domain_error, package_version
 from loop_control_plane._app_state import CpApiState
 from loop_control_plane._routes_agents import router as agents_router
+from loop_control_plane._routes_api_keys import router as api_keys_router
 from loop_control_plane._routes_audit import router as audit_router
 from loop_control_plane._routes_auth import router as auth_router
 from loop_control_plane._routes_dsr import router as dsr_router
 from loop_control_plane._routes_health import router as health_router
+from loop_control_plane._routes_secrets import router as secrets_router
 from loop_control_plane._routes_workspaces import router as workspaces_router
 from loop_control_plane.auth import AuthError
 from loop_control_plane.auth_exchange import AuthExchangeError
@@ -43,9 +45,11 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         workspaces_router,
         agents_router,
         audit_router,
-        # P0.8b: GDPR DSR (Art-17 erasure) endpoints. Wires the
-        # existing data_deletion service module into FastAPI routes.
+        # P0.8b: GDPR DSR (Art-17 erasure) endpoints.
         dsr_router,
+        # P0.4: workspace API-key + secrets routes.
+        api_keys_router,
+        secrets_router,
     ):
         app.include_router(router)
     # P0.7b: Prometheus middleware + /metrics endpoint. The

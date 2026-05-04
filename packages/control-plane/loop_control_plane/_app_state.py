@@ -6,6 +6,8 @@ import os
 from dataclasses import dataclass, field
 
 from loop_control_plane._app_agents import AgentRegistry
+from loop_control_plane.api_keys import ApiKeyService
+from loop_control_plane.api_keys_api import ApiKeyAPI
 from loop_control_plane.audit_events import InMemoryAuditEventStore
 from loop_control_plane.auth_exchange import InMemoryRefreshTokenStore
 from loop_control_plane.data_deletion import (
@@ -17,6 +19,7 @@ from loop_control_plane.data_deletion import (
     RecordingDataDeletionEmailNotifier,
 )
 from loop_control_plane.saml import SamlValidator, StubSamlValidator
+from loop_control_plane.secrets import InMemorySecretsBackend, SecretsBackend
 from loop_control_plane.workspace_api import WorkspaceAPI
 from loop_control_plane.workspaces import WorkspaceService
 
@@ -60,6 +63,14 @@ class CpApiState:
     data_deletion_notifier: DataDeletionEmailNotifier = field(
         default_factory=RecordingDataDeletionEmailNotifier
     )
+    # P0.4 (api-keys + secrets):
+    api_keys: ApiKeyService = field(default_factory=ApiKeyService)
+    secrets_backend: SecretsBackend = field(
+        default_factory=lambda: InMemorySecretsBackend(backend="loop-dev")
+    )
 
     def __post_init__(self) -> None:
         self.workspace_api = WorkspaceAPI(workspaces=self.workspaces)
+        self.api_key_api = ApiKeyAPI(
+            api_keys=self.api_keys, workspaces=self.workspaces
+        )
