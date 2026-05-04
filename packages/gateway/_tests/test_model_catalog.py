@@ -556,6 +556,14 @@ def test_classify_tier_is_mutually_exclusive() -> None:
     assert classify_tier("claude-opus-4-7") == "best"
 
 
+def test_fallback_model_first_entry_matches_profile() -> None:
+    """The bundled fallback default must not contradict tier classification."""
+    for vendor, profiles in FALLBACK_MODELS.items():
+        for profile, models in profiles.items():
+            assert models, f"{vendor}/{profile} fallback list is empty"
+            assert classify_tier(models[0]) == profile
+
+
 def test_vendor_for_recognises_openai_and_anthropic_ids() -> None:
     """Used by ``loop_gateway.cost`` to assign tier-fallback rates to
     discovered-but-uncatalogued models."""

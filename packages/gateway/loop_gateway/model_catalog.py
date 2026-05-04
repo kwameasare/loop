@@ -135,8 +135,8 @@ class ModelInfo:
 FALLBACK_MODELS: dict[Vendor, dict[Profile, list[str]]] = {
     "openai": {
         "cheap": ["gpt-4o-mini", "gpt-4.1-mini", "gpt-3.5-turbo"],
-        "balanced": ["gpt-4o", "gpt-4.1", "gpt-4-turbo"],
-        "best": ["gpt-4o", "gpt-4.1", "gpt-4-turbo"],
+        "balanced": ["gpt-4o", "gpt-4.1"],
+        "best": ["o3", "gpt-4-turbo", "gpt-5.5-pro", "gpt-4o", "gpt-4.1"],
     },
     "anthropic": {
         "cheap": ["claude-3-5-haiku-latest", "claude-3-haiku-20240307"],
