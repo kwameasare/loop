@@ -13,6 +13,7 @@ from loop_control_plane._routes_agents import router as agents_router
 from loop_control_plane._routes_api_keys import router as api_keys_router
 from loop_control_plane._routes_audit import router as audit_router
 from loop_control_plane._routes_auth import router as auth_router
+from loop_control_plane._routes_budgets import router as budgets_router
 from loop_control_plane._routes_conversations import (
     router_agents_conv as agent_conversations_router,
 )
@@ -67,6 +68,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         # P0.4: conversation list + read + takeover.
         agent_conversations_router,
         conversations_router,
+        # P0.4: workspace budgets (daily/hard limits).
+        budgets_router,
     ):
         app.include_router(router)
     # P0.7b: Prometheus middleware + /metrics endpoint. The

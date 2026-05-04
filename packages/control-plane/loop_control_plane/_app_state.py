@@ -9,6 +9,7 @@ from loop_control_plane._app_agents import AgentRegistry
 from loop_control_plane.agent_versions import AgentVersionService
 from loop_control_plane.api_keys import ApiKeyService
 from loop_control_plane.api_keys_api import ApiKeyAPI
+from loop_control_plane.budgets import BudgetService
 from loop_control_plane.conversations import ConversationService
 from loop_control_plane.audit_events import InMemoryAuditEventStore
 from loop_control_plane.auth_exchange import InMemoryRefreshTokenStore
@@ -81,6 +82,8 @@ class CpApiState:
     usage_ledger: UsageLedger = field(default_factory=UsageLedger)
     # P0.4 (conversations + takeover):
     conversations: ConversationService = field(default_factory=ConversationService)
+    # P0.4 (budgets):
+    budgets: BudgetService = field(default_factory=BudgetService)
 
     def __post_init__(self) -> None:
         self.workspace_api = WorkspaceAPI(workspaces=self.workspaces)
