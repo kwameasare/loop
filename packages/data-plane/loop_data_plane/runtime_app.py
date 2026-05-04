@@ -110,7 +110,11 @@ async def post_turn(
     try:
         return JSONResponse(await collect_turn(executor, body))
     except TurnExecutionError as exc:
-        return _error_response(exc.code, str(exc), 502)
+        # vega #6: each TurnExecutionError subclass carries its own
+        # http_status (401/402/429/500/502) so the route layer fans
+        # out the right HTTP code instead of mapping every failure
+        # to 502.
+        return _error_response(exc.code, str(exc), exc.http_status)
 
 
 @router.post("/v1/turns/stream", response_model=None)

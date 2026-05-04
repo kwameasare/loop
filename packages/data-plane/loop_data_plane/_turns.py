@@ -29,15 +29,87 @@ class _DisconnectProbe(Protocol):
 __all__ = [
     "RuntimeTurnRequest",
     "TurnExecutionError",
+    "TurnAuthError",
+    "TurnBudgetError",
+    "TurnGatewayError",
+    "TurnInternalError",
+    "TurnRateLimitedError",
     "collect_turn",
     "stream_turn_sse",
 ]
 
 
 class TurnExecutionError(RuntimeError):
-    """Raised when a non-streaming turn fails before a complete event."""
+    """Base class for turn-time runtime failures (vega #6).
+
+    Each subclass below carries a stable error-code so the route layer
+    can surface a structured envelope (and metrics + alerts) instead
+    of mapping every failure to a generic ``LOOP-RT-501``.
+
+    Order of specificity (most → least): auth, budget, rate-limit,
+    upstream gateway, internal. The route layer should match the most
+    specific subclass first.
+    """
 
     code = "LOOP-RT-501"
+    http_status = 502
+
+
+class TurnAuthError(TurnExecutionError):
+    """Caller's auth/identity failed during turn execution.
+
+    Distinct from a request-time 401 because it can fire after the
+    body is already accepted (e.g. expired token mid-turn for a long-
+    running tool dispatch). Maps to HTTP 401 so callers can refresh.
+    """
+
+    code = "LOOP-RT-401"
+    http_status = 401
+
+
+class TurnBudgetError(TurnExecutionError):
+    """Workspace plan / daily budget tripped mid-turn.
+
+    Differs from rate-limit: budget is a *spend* ceiling, not a *rate*
+    ceiling. The right caller behaviour is to surface a Stripe-link
+    upgrade CTA, not to retry."""
+
+    code = "LOOP-RT-402"
+    http_status = 402
+
+
+class TurnRateLimitedError(TurnExecutionError):
+    """Workspace or agent token-bucket rejected the turn.
+
+    Mirrors the HTTP-level rate-limit envelope (LOOP-RL-001) but at
+    the turn-admission layer. Clients should back off using
+    ``Retry-After``."""
+
+    code = "LOOP-RT-403"
+    http_status = 429
+
+
+class TurnGatewayError(TurnExecutionError):
+    """The upstream LLM gateway returned a structured failure (5xx,
+    rate-limit, transport) that we couldn't recover from via failover.
+
+    The original ``GatewayError.code`` (LOOP-GW-301/401/402) is preserved
+    on the instance for telemetry — the http_status here defaults to
+    502 because the hop that failed is upstream-of-us."""
+
+    code = "LOOP-RT-404"
+    http_status = 502
+
+
+class TurnInternalError(TurnExecutionError):
+    """Catch-all for unexpected runtime failures (bugs, panics).
+
+    This is the only subclass that should ever leak a stack trace into
+    structured logs — every other subclass means *we know what
+    happened* and the message is part of the contract."""
+
+    code = "LOOP-RT-501"
+    http_status = 500
 
 
 _STREAM_ERROR_MESSAGES: dict[str, str] = {
@@ -45,6 +117,10 @@ _STREAM_ERROR_MESSAGES: dict[str, str] = {
     "LOOP-GW-301": "Provider rate limit exceeded.",
     "LOOP-GW-401": "Provider request failed.",
     "LOOP-GW-402": "Provider transport failed.",
+    "LOOP-RT-401": "Turn auth failed.",
+    "LOOP-RT-402": "Workspace budget exceeded.",
+    "LOOP-RT-403": "Turn rate limit exceeded.",
+    "LOOP-RT-404": "Upstream gateway failed.",
     "LOOP-RT-501": "Turn execution failed.",
 }
 
