@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 
-from loop_control_plane._app_agents import AgentRegistry
+from loop_control_plane._app_agents import AgentRegistry, PostgresAgentRegistry
 from loop_control_plane.agent_versions import AgentVersionService
 from loop_control_plane.api_keys import ApiKeyService
 from loop_control_plane.api_keys_api import ApiKeyAPI
@@ -100,6 +100,18 @@ def _default_workspace_service() -> WorkspaceService | PostgresWorkspaceService:
     return PostgresWorkspaceService.from_url(db_url)
 
 
+def _default_agent_registry() -> AgentRegistry | PostgresAgentRegistry:
+    """Pick between in-memory and Postgres-backed agent registries [P0.2]."""
+    if os.environ.get("LOOP_CP_USE_POSTGRES") != "1":
+        return AgentRegistry()
+    db_url = os.environ.get("LOOP_CP_DB_URL")
+    if not db_url:
+        raise RuntimeError(
+            "LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set"
+        )
+    return PostgresAgentRegistry.from_url(db_url)
+
+
 def _default_saml_validator() -> SamlValidator:
     """Pick between Stub and PySAML2 validators per ``LOOP_SAML_USE_PYSAML2``.
 
@@ -126,7 +138,9 @@ class CpApiState:
         default_factory=_default_workspace_service
     )
     audit_events: AuditEventStore = field(default_factory=_default_audit_event_store)
-    agents: AgentRegistry = field(default_factory=AgentRegistry)
+    agents: AgentRegistry | PostgresAgentRegistry = field(
+        default_factory=_default_agent_registry
+    )
     refresh_store: RefreshTokenStore = field(default_factory=_default_refresh_token_store)
     saml_validator: SamlValidator = field(default_factory=_default_saml_validator)
     # P0.8b: GDPR DSR (Data Subject Request) infra. Default impls are
