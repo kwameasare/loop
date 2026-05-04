@@ -20,6 +20,12 @@ from loop_control_plane.data_deletion import (
 )
 from loop_control_plane.saml import SamlValidator, StubSamlValidator
 from loop_control_plane.secrets import InMemorySecretsBackend, SecretsBackend
+from loop_control_plane.trace_search import (
+    InMemoryTraceStore,
+    TraceSearchService,
+    TraceStore,
+)
+from loop_control_plane.usage import UsageLedger, UsageRollup
 from loop_control_plane.workspace_api import WorkspaceAPI
 from loop_control_plane.workspaces import WorkspaceService
 
@@ -68,9 +74,13 @@ class CpApiState:
     secrets_backend: SecretsBackend = field(
         default_factory=lambda: InMemorySecretsBackend(backend="loop-dev")
     )
+    # P0.4 (traces + usage):
+    trace_store: TraceStore = field(default_factory=InMemoryTraceStore)
+    usage_ledger: UsageLedger = field(default_factory=UsageLedger)
 
     def __post_init__(self) -> None:
         self.workspace_api = WorkspaceAPI(workspaces=self.workspaces)
         self.api_key_api = ApiKeyAPI(
             api_keys=self.api_keys, workspaces=self.workspaces
         )
+        self.trace_search = TraceSearchService(self.trace_store)

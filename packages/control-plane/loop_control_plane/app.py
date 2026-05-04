@@ -13,6 +13,7 @@ from loop_control_plane._routes_auth import router as auth_router
 from loop_control_plane._routes_dsr import router as dsr_router
 from loop_control_plane._routes_health import router as health_router
 from loop_control_plane._routes_secrets import router as secrets_router
+from loop_control_plane._routes_traces_usage import router as telemetry_router
 from loop_control_plane._routes_workspaces import router as workspaces_router
 from loop_control_plane.auth import AuthError
 from loop_control_plane.auth_exchange import AuthExchangeError
@@ -50,6 +51,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         # P0.4: workspace API-key + secrets routes.
         api_keys_router,
         secrets_router,
+        # P0.4: traces search + usage list routes.
+        telemetry_router,
     ):
         app.include_router(router)
     # P0.7b: Prometheus middleware + /metrics endpoint. The
