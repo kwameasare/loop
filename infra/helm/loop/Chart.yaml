@@ -11,12 +11,12 @@ keywords:
   - loop
   - agent-platform
   - llm
-home: https://example.invalid/loop
+home: https://github.com/kwameasare/loop
 sources:
-  - https://example.invalid/loop
+  - https://github.com/kwameasare/loop
 maintainers:
   - name: Loop Engineering
-    email: eng@example.invalid
+    email: engineering@loop.local
 dependencies:
   # Bitnami PostgreSQL pinned for reproducible deploys; bypass via
   # externals.postgresUrl + postgresql.enabled=false to point at an

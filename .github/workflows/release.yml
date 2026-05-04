@@ -13,6 +13,11 @@ permissions:
 jobs:
   python-packages:
     runs-on: ubuntu-latest
+    # The `pypi` environment must require a manual reviewer approval in
+    # repo settings → Environments. Without that, a misfired tag push
+    # would publish globally with no human-in-the-loop. See
+    # https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#environment-protection-rules
+    environment: pypi
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v4
@@ -36,18 +41,117 @@ jobs:
           name: cli-${{ matrix.os }}
           path: cli/dist/
 
-  docker-images:
+  # Tag-release versioned images. Mirrors the cp-api-image / dp-runtime-image
+  # jobs in ci.yml (which publish :sha + :main on push to main); this job
+  # publishes the same two images tagged with the semver tag (e.g. v1.2.3),
+  # signed with cosign and verified end-to-end. Image digests are pinned
+  # via crane so the signed digest matches the pushed digest exactly.
+  cp-api-image:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    env:
+      CP_API_IMAGE: ghcr.io/loop-ai/cp-api:${{ github.ref_name }}
+      CP_API_MAX_BYTES: "120000000"
+      COSIGN_CERT_IDENTITY_REGEXP: https://github.com/${{ github.repository }}/.github/workflows/release.yml@refs/tags/.*
+      COSIGN_OIDC_ISSUER: https://token.actions.githubusercontent.com
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+      - uses: sigstore/cosign-installer@v3
+      - uses: imjasonh/setup-crane@v0.4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build cp-api image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/control-plane/Dockerfile
+          load: true
+          tags: ${{ env.CP_API_IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Enforce image size budget
+        run: |
+          size="$(docker image inspect "$CP_API_IMAGE" --format '{{.Size}}')"
+          echo "cp-api image size: ${size} bytes"
+          test "$size" -lt "$CP_API_MAX_BYTES"
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ env.CP_API_IMAGE }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          vuln-type: os,library
+          exit-code: "1"
+      - name: Login to GHCR
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
+      - name: Push, sign, and verify cp-api image
+        run: |
+          set -euo pipefail
+          docker push "$CP_API_IMAGE"
+          digest="$(crane digest "$CP_API_IMAGE")"
+          ref="ghcr.io/loop-ai/cp-api@${digest}"
+          cosign sign --yes "$ref"
+          cosign verify "$ref" \
+            --certificate-identity-regexp "$COSIGN_CERT_IDENTITY_REGEXP" \
+            --certificate-oidc-issuer "$COSIGN_OIDC_ISSUER" >/dev/null
+
+  dp-runtime-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    env:
+      DP_RUNTIME_IMAGE: ghcr.io/loop-ai/dp-runtime:${{ github.ref_name }}
+      DP_RUNTIME_MAX_BYTES: "150000000"
+      COSIGN_CERT_IDENTITY_REGEXP: https://github.com/${{ github.repository }}/.github/workflows/release.yml@refs/tags/.*
+      COSIGN_OIDC_ISSUER: https://token.actions.githubusercontent.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: sigstore/cosign-installer@v3
+      - uses: imjasonh/setup-crane@v0.4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build dp-runtime image
+        uses: docker/build-push-action@v6
         with:
           context: .
-          file: packages/runtime/Dockerfile
-          tags: ghcr.io/loop-ai/runtime:${{ github.ref_name }}
-          push: true
+          file: packages/data-plane/Dockerfile
+          load: true
+          tags: ${{ env.DP_RUNTIME_IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Enforce image size budget
+        run: |
+          size="$(docker image inspect "$DP_RUNTIME_IMAGE" --format '{{.Size}}')"
+          echo "dp-runtime image size: ${size} bytes"
+          test "$size" -lt "$DP_RUNTIME_MAX_BYTES"
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ env.DP_RUNTIME_IMAGE }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          vuln-type: os,library
+          exit-code: "1"
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push, sign, and verify dp-runtime image
+        run: |
+          set -euo pipefail
+          docker push "$DP_RUNTIME_IMAGE"
+          digest="$(crane digest "$DP_RUNTIME_IMAGE")"
+          ref="ghcr.io/loop-ai/dp-runtime@${digest}"
+          cosign sign --yes "$ref"
+          cosign verify "$ref" \
+            --certificate-identity-regexp "$COSIGN_CERT_IDENTITY_REGEXP" \
+            --certificate-oidc-issuer "$COSIGN_OIDC_ISSUER" >/dev/null
