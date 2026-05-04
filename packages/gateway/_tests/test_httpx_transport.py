@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import UTC, datetime, timedelta
+from email.utils import format_datetime
 from pathlib import Path
 from typing import Any, cast
 from uuid import UUID, uuid4
@@ -13,6 +15,7 @@ import pytest
 import yaml
 from loop_gateway.byo_keys import InMemoryWorkspaceKeyStore, Vendor, WorkspaceKeyResolver
 from loop_gateway.providers import AnthropicProvider, OpenAIProvider
+from loop_gateway.providers import httpx_transport as transport_module
 from loop_gateway.types import (
     GatewayDelta,
     GatewayDone,
@@ -136,6 +139,95 @@ async def test_httpx_transport_retries_provider_5xx_then_streams() -> None:
 
     assert calls == 2
     assert [event.text for event in events if isinstance(event, GatewayDelta)] == ["ok"]
+
+
+@pytest.mark.asyncio
+async def test_httpx_transport_honors_retry_after_seconds(monkeypatch: pytest.MonkeyPatch) -> None:
+    workspace_id = uuid4()
+    calls = 0
+    sleeps: list[float] = []
+
+    async def fake_sleep(delay: float) -> None:
+        sleeps.append(delay)
+
+    async def handler(_request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return httpx.Response(429, headers={"Retry-After": "5"}, text="slow down")
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/event-stream"},
+            text='data: {"choices":[{"delta":{"content":"ok"}}]}\n'
+            'data: {"usage":{"prompt_tokens":1,"completion_tokens":1}}\n'
+            "data: [DONE]\n",
+        )
+
+    monkeypatch.setattr(transport_module, "sleep", fake_sleep)
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        provider = OpenAIProvider(
+            key_resolver=_resolver(workspace_id, Vendor.OPENAI, "workspace-openai-key"),
+            client=client,
+        )
+        events = [event async for event in provider.stream(_request(workspace_id, "gpt-4o-mini"))]
+
+    assert calls == 2
+    assert sleeps == [5.0]
+    assert [event.text for event in events if isinstance(event, GatewayDelta)] == ["ok"]
+
+
+@pytest.mark.asyncio
+async def test_httpx_transport_uses_exponential_full_jitter(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_id = uuid4()
+    calls = 0
+    sleeps: list[float] = []
+    jitter_windows: list[tuple[float, float]] = []
+
+    async def fake_sleep(delay: float) -> None:
+        sleeps.append(delay)
+
+    def fake_uniform(low: float, high: float) -> float:
+        jitter_windows.append((low, high))
+        return high
+
+    async def handler(_request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls <= 2:
+            return httpx.Response(429, text="slow down")
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/event-stream"},
+            text='data: {"choices":[{"delta":{"content":"ok"}}]}\n'
+            'data: {"usage":{"prompt_tokens":1,"completion_tokens":1}}\n'
+            "data: [DONE]\n",
+        )
+
+    monkeypatch.setattr(transport_module, "sleep", fake_sleep)
+    monkeypatch.setattr(transport_module.random, "uniform", fake_uniform)
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        provider = OpenAIProvider(
+            key_resolver=_resolver(workspace_id, Vendor.OPENAI, "workspace-openai-key"),
+            client=client,
+            max_retries=2,
+            retry_backoff_seconds=0.1,
+            max_retry_delay_ms=1_000,
+        )
+        events = [event async for event in provider.stream(_request(workspace_id, "gpt-4o-mini"))]
+
+    assert calls == 3
+    assert jitter_windows == [(0.0, 0.1), (0.0, 0.2)]
+    assert sleeps == [0.1, 0.2]
+    assert [event.text for event in events if isinstance(event, GatewayDelta)] == ["ok"]
+
+
+def test_parse_retry_after_accepts_http_dates() -> None:
+    now = datetime(2026, 5, 4, 16, 0, tzinfo=UTC)
+    retry_at = now + timedelta(seconds=7)
+    header = format_datetime(retry_at, usegmt=True)
+    assert transport_module._parse_retry_after(header, now=now) == pytest.approx(7.0)
 
 
 @pytest.mark.asyncio
