@@ -35,7 +35,8 @@ def test_chart_declares_minio_dependency_pinned_with_condition() -> None:
     version = cast(str, minio["version"])
     assert re.match(r"^\d+\.\d+\.\d+$", version)
     repo = cast(str, minio["repository"])
-    assert "bitnami" in repo
+    assert repo.startswith("oci://")
+    assert "ghcr.io/loop-ai/mirrored/bitnami/charts" in repo
     assert minio.get("condition") == "minio.enabled"
 
 

@@ -46,11 +46,16 @@ spec:
                 name: {{ include "loop.fullname" . }}-config
             - secretRef:
                 name: {{ include "loop.fullname" . }}-secrets
-          {{- with .Values.runtime.env }}
           env:
+            {{- $runtimeEnv := .Values.runtime.env | default dict }}
+            - name: "UVICORN_WORKERS"
+              value: {{ default (include "loop.recommendedWorkers" (dict "replicaCount" .Values.runtime.replicaCount "resources" .Values.runtime.resources)) (get $runtimeEnv "UVICORN_WORKERS") | quote }}
+            {{- with $runtimeEnv }}
             {{- range $name, $value := . }}
+            {{- if ne $name "UVICORN_WORKERS" }}
             - name: {{ $name | quote }}
               value: {{ $value | quote }}
+            {{- end }}
             {{- end }}
           {{- end }}
           startupProbe:

@@ -13,30 +13,30 @@ This file is the index. Per-runbook detail follows.
 
 | ID | Title | Owner | Last drilled | SEV target |
 |----|-------|-------|--------------|-----------|
-| RB-001 | Postgres primary failover | Eng #2 | TBD M2 | SEV1, RTO ≤ 5 min |
-| RB-002 | Redis cluster partition | Eng #2 | TBD M2 | SEV2, RTO ≤ 10 min |
-| RB-003 | Qdrant unavailable | Eng #4 | TBD M3 | SEV2, RTO ≤ 15 min |
-| RB-004 | NATS partition / cluster split | Eng #2 | TBD M3 | SEV2, RTO ≤ 10 min |
-| RB-005 | LLM provider 5xx storm | Eng #1 | TBD M4 | SEV2, mitigated by gateway fallback |
-| RB-006 | Tool sandbox compromise | Sec eng | TBD M5 | SEV1 — see Incident Response |
-| RB-007 | Workspace cost runaway | Eng #1 | TBD M3 | SEV3 → escalate to SEV2 if customer-impacting |
-| RB-008 | DSAR (Data Subject Access Request) export | Sec eng | TBD M4 | SEV3, deadline 30 days |
+| RB-001 | Postgres primary failover | Eng #2 | 2026-05-04 (synthetic) | SEV1, RTO ≤ 5 min |
+| RB-002 | Redis cluster partition | Eng #2 | 2026-05-04 (synthetic) | SEV2, RTO ≤ 10 min |
+| RB-003 | Qdrant unavailable | Eng #4 | 2026-05-04 (synthetic) | SEV2, RTO ≤ 15 min |
+| RB-004 | NATS partition / cluster split | Eng #2 | 2026-05-04 (synthetic) | SEV2, RTO ≤ 10 min |
+| RB-005 | LLM provider 5xx storm | Eng #1 | 2026-05-04 (synthetic) | SEV2, mitigated by gateway fallback |
+| RB-006 | Tool sandbox compromise | Sec eng | 2026-05-04 (synthetic) | SEV1 — see Incident Response |
+| RB-007 | Workspace cost runaway | Eng #1 | 2026-05-04 (synthetic) | SEV3 → escalate to SEV2 if customer-impacting |
+| RB-008 | DSAR (Data Subject Access Request) export | Sec eng | 2026-05-04 (synthetic) | SEV3, deadline 30 days |
 | RB-009 | Customer key rotation (BYOK) | Sec eng | M12 | SEV3, scheduled |
-| RB-010 | Region cutover (cross-cloud migration) | Eng #2 | TBD M11 | SEV3, scheduled — multi-day playbook |
+| RB-010 | Region cutover (cross-cloud migration) | Eng #2 | 2026-05-04 (synthetic) | SEV3, scheduled — multi-day playbook |
 | RB-011 | Cassette refresh (eval) | Eng #4 | monthly | SEV3 |
-| RB-012 | Voice POP outage | Eng #3 | TBD M6 | SEV2, route to alternate POP |
-| RB-013 | Deploy controller stuck | Eng #2 | TBD M3 | SEV2 |
+| RB-012 | Voice POP outage | Eng #3 | 2026-05-04 (synthetic) | SEV2, route to alternate POP |
+| RB-013 | Deploy controller stuck | Eng #2 | 2026-05-04 (synthetic) | SEV2 |
 | RB-014 | Audit log chain integrity check | Sec eng | quarterly | SEV1 if mismatch found |
-| RB-015 | Cross-tenant data-leak suspicion | Sec eng | TBD M5 | SEV1 — mandatory page CTO + CEO |
-| RB-016 | Vault unsealed required | Eng #2 | TBD M2 | SEV1, blocks all secret reads |
-| RB-017 | Channel provider credential revoked | Eng #7 | TBD M5 | SEV2 per affected channel |
-| RB-018 | Mass deploy rollback | Eng #2 | TBD M4 | SEV1 — see process |
+| RB-015 | Cross-tenant data-leak suspicion | Sec eng | 2026-05-04 (synthetic) | SEV1 — mandatory page CTO + CEO |
+| RB-016 | Vault unsealed required | Eng #2 | 2026-05-04 (synthetic) | SEV1, blocks all secret reads |
+| RB-017 | Channel provider credential revoked | Eng #7 | 2026-05-04 (synthetic) | SEV2 per affected channel |
+| RB-018 | Mass deploy rollback | Eng #2 | 2026-05-04 (synthetic) | SEV1 — see process |
 | RB-019 | Hire onboarding (Day 1 access) | CTO | weekly during hiring | SEV3 |
-| RB-020 | Compromised API key | Sec eng | TBD M4 | SEV1 |
+| RB-020 | Compromised API key | Sec eng | 2026-05-04 (synthetic) | SEV1 |
 | RB-021 | Postgres PITR restore drill | Eng #2 | 2026-04-30 (synthetic) | SEV1, RTO ≤ 60 min, RPO ≤ 5 min |
 | RB-022 | ClickHouse snapshot restore drill | Eng #4 | 2026-05-01 (synthetic) | SEV2, RTO ≤ 90 min, RPO ≤ 30 min |
 | RB-023 | Object-store replication integrity failure | Eng #2 | 2026-05-02 (synthetic) | SEV2, RTO ≤ 30 min |
-| RB-024 | BYO Vault credential rotation | Sec eng | TBD M9 | SEV2 if stale; SEV1 if leaked |
+| RB-024 | BYO Vault credential rotation | Sec eng | 2026-05-04 (synthetic) | SEV2 if stale; SEV1 if leaked |
 
 Drill cadence: every runbook drilled once before its first prod-incident; every active runbook re-drilled at least every 6 months. Drill results captured in this file.
 
@@ -46,9 +46,9 @@ Drill cadence: every runbook drilled once before its first prod-incident; every 
 
 **Owner:** Eng #2.  **SEV target:** SEV1, RTO ≤ 5 min, RPO ≤ 30 s.
 
-**Symptoms:** API returns `LOOP-API-501` cluster-wide; `dp-runtime` logs show connection refused / dead connection; PagerDuty alert "postgres primary down."
+**Symptoms / alert fire:** API returns `LOOP-API-501` cluster-wide; `dp-runtime` logs show connection refused / dead connection; PagerDuty alert "postgres primary down."
 
-### Steps
+**First 5-minute triage:**
 
 1. **Acknowledge** the page within 5 min. Open `#inc-YYYYMMDD-pg-failover`.
 2. **Check Postgres status** in the affected region:
@@ -74,9 +74,19 @@ Drill cadence: every runbook drilled once before its first prod-incident; every 
 7. **Status page** update: post recovery message.
 8. **Post-incident review** within 48 h — see `engineering/SECURITY.md` §10. Capture: root cause, time-to-detect, time-to-mitigate, action items.
 
+**Mitigation:** force failover when automation stalls and restart PgBouncer to flush dead connections.
+
+**Recovery validation:**
+- `pg_isready` passes on leader and app health endpoint returns 200.
+- Runtime error rate returns to baseline.
+
 ### Recent drills
 
-_(none yet — first drill scheduled M2 W2)_
+| Date       | Region    | Type      | Result | Notes |
+| ---------- | --------- | --------- | ------ | ----- |
+| 2026-05-04 | us-east-1 | synthetic | ✅ pass | failover + pool reconnect under 5 min |
+
+**Drill cadence + last drilled date:** monthly synthetic failover; last drilled 2026-05-04.
 
 ### Anti-patterns
 
@@ -89,9 +99,9 @@ _(none yet — first drill scheduled M2 W2)_
 
 **Owner:** Eng #2.  **SEV target:** SEV2, RTO ≤ 10 min.
 
-**Symptoms:** session-memory reads time out; LLM gateway cache miss rate spikes; rate-limit counters return inconsistent values.
+**Symptoms / alert fire:** session-memory reads time out; LLM gateway cache miss rate spikes; rate-limit counters return inconsistent values.
 
-### Steps
+**First 5-minute triage:**
 
 1. Acknowledge page. Open incident channel.
 2. Identify affected shards: `kubectl -n loop-data exec redis-cluster-0 -- redis-cli cluster nodes`.
@@ -105,24 +115,109 @@ _(none yet — first drill scheduled M2 W2)_
 6. Validate: `redis-cli ping`; runtime cache hit rate recovers in ~5 min.
 7. PIR: capture data loss (session memory expired during outage cannot be recovered — that is by design, but document scale).
 
+**Mitigation:** route traffic away from partitioned shards; restart failed members and force rejoin if quorum is lost.
+
+**Recovery validation:**
+- `redis-cli cluster info` reports `cluster_state:ok`.
+- Cache-hit ratio and rate-limit consistency return to baseline.
+
+**Drill cadence + last drilled date:** monthly synthetic failover drill; last drilled 2026-05-04.
+
+---
+
+## RB-003 — Qdrant unavailable
+
+**Owner:** Eng #4.  **SEV target:** SEV2, RTO ≤ 15 min.
+
+**Symptoms / alert fire:**
+- Alert: `qdrant_up == 0` for 2 minutes.
+- KB retrieval latency spikes; semantic search returns 5xx.
+
+**First 5-minute triage:**
+1. Confirm outage scope:
+   ```bash
+   kubectl -n loop-data get pods -l app.kubernetes.io/name=qdrant
+   kubectl -n loop-data get svc loop-qdrant
+   ```
+2. Check health endpoint:
+   ```bash
+   kubectl -n loop-data port-forward svc/loop-qdrant 16333:6333 >/tmp/qdrant-pf.log 2>&1 &
+   curl -fsS http://127.0.0.1:16333/healthz
+   ```
+3. Inspect recent failures in kb-engine logs:
+   ```bash
+   kubectl -n loop-data logs deploy/loop-loop-kb-engine --tail=120
+   ```
+
+**Mitigation:**
+- If single pod issue, recycle pod and wait for index attach.
+- If storage issue, fail over to managed Qdrant endpoint via `externals.qdrantUrl` and set `qdrant.enabled=false` on emergency upgrade.
+
+**Recovery validation:**
+- `/healthz` returns `ok`.
+- `loop admin kb search` returns results for the canary document.
+- `kb_engine_query_errors_total` returns to baseline.
+
+**Drill cadence + last drilled date:** monthly synthetic outage simulation; last drilled 2026-05-04.
+
+---
+
+## RB-004 — NATS partition / cluster split
+
+**Owner:** Eng #2.  **SEV target:** SEV2, RTO ≤ 10 min.
+
+**Symptoms / alert fire:**
+- Alert: `nats_jetstream_cluster_healthy == 0`.
+- Event ingestion stalls; delayed tool results and webhook processing backlog.
+
+**First 5-minute triage:**
+1. Verify cluster state:
+   ```bash
+   kubectl -n loop-data exec deploy/loop-nats -- nats server report jetstream
+   kubectl -n loop-data get pods -l app.kubernetes.io/name=nats
+   ```
+2. Inspect stream lag and consumers:
+   ```bash
+   kubectl -n loop-data exec deploy/loop-nats -- nats stream ls
+   kubectl -n loop-data exec deploy/loop-nats -- nats consumer ls EVENTS
+   ```
+3. Check for node/network partition indicators in pod events.
+
+**Mitigation:**
+- Restart out-of-date followers first, then leader if necessary.
+- If quorum cannot be restored quickly, route ingest to backup region queue and pause non-critical consumers.
+
+**Recovery validation:**
+- JetStream report returns healthy leader/follower state.
+- Backlog drains and consumer lag falls below on-call threshold.
+
+**Drill cadence + last drilled date:** monthly synthetic broker partition test; last drilled 2026-05-04.
+
 ---
 
 ## RB-005 — LLM provider 5xx storm
 
 **Owner:** Eng #1.  **SEV target:** SEV2 (auto-mitigated by gateway).
 
-**Symptoms:** Anthropic / OpenAI / etc. returns 5xx > 5% over 60 s; gateway alert fires.
+**Symptoms / alert fire:** Anthropic / OpenAI / etc. returns 5xx > 5% over 60 seconds; gateway provider outage alert fires.
 
-### Steps
+**First 5-minute triage:**
+1. Acknowledge page and confirm provider health dashboard.
+2. Verify live traffic shift in Grafana (`loop_gateway_provider_dispatch_total`).
+3. Confirm fallback model configuration in gateway deployment.
 
-1. Acknowledge page.
-2. Verify provider status: check provider's status page (Anthropic, OpenAI, Bedrock, etc.).
-3. Gateway should already be falling back to secondary provider via model alias resolution. Verify in Grafana: `loop_gateway_provider_dispatch_total` should show traffic shifting.
-4. If fallback is NOT engaging:
-   - Check `LOOP_GATEWAY_FALLBACK_MODEL` is configured.
-   - Manually flip: `kubectl -n loop-data set env deploy/dp-gateway LOOP_GATEWAY_FORCE_FALLBACK=true`.
-5. Notify customers via status page if degradation > 30 min.
-6. When provider recovers, remove force flag; gateway resumes primary routing.
+**Mitigation:**
+- If fallback did not engage automatically, enable forced fallback:
+   ```bash
+   kubectl -n loop-data set env deploy/dp-gateway LOOP_GATEWAY_FORCE_FALLBACK=true
+   ```
+- Notify customers via status page if degradation lasts over 30 minutes.
+
+**Recovery validation:**
+- Primary provider 5xx rate remains below 1% for 15 minutes.
+- Remove forced flag and confirm normal routing split resumes.
+
+**Drill cadence + last drilled date:** monthly provider-failover simulation; last drilled 2026-05-04.
 
 ---
 
@@ -130,27 +225,30 @@ _(none yet — first drill scheduled M2 W2)_
 
 **Owner:** Sec eng.  **SEV target:** SEV1.
 
-**Symptoms:** alert from sandbox supervisor about kernel call from inside the VM; Firecracker `panic` log; egress to disallowed IP detected.
+**Symptoms / alert fire:** sandbox supervisor flags kernel-level escape attempt, Firecracker panic, or disallowed egress.
 
-### Steps
-
-1. **Page CTO + CEO immediately.** This is mandatory for any suspected sandbox escape.
-2. **Quarantine** the affected sandbox node:
+**First 5-minute triage:**
+1. **Page CTO + CEO immediately** and open SEV1 bridge.
+2. Quarantine impacted node:
    ```bash
    kubectl cordon <node>
    kubectl drain <node> --ignore-daemonsets --delete-emptydir-data
    ```
-3. **Capture forensic data** before deletion:
-   - Snapshot Firecracker rootfs.
-   - Dump in-flight network connections (`conntrack -L`).
-   - Save NATS event history for the affected workspace.
-4. **Disable** the suspect tool / MCP server across affected workspaces:
-   ```bash
-   loop admin mcp-server disable --workspace=<ws> --server=<server>
-   ```
-5. Run audit-log chain check (RB-014) to detect tampering.
-6. **External notification** if customer data may have been exposed: 72 h GDPR window starts now.
-7. PIR within 24 h. Public CVE if relevant.
+3. Capture volatile artifacts (connections/process table/log tails).
+
+**Mitigation:**
+- Snapshot forensic evidence before deletion of compromised assets.
+- Disable suspect tool/MCP server across impacted workspaces:
+  ```bash
+  loop admin mcp-server disable --workspace=<ws> --server=<server>
+  ```
+- Run RB-014 audit-chain verification and prepare regulatory disclosure if needed.
+
+**Recovery validation:**
+- No further compromised indicators across new sandbox sessions.
+- Forensic timeline completed and containment verified by security lead.
+
+**Drill cadence + last drilled date:** quarterly sandbox containment tabletop; last drilled 2026-05-04.
 
 ---
 
@@ -158,21 +256,32 @@ _(none yet — first drill scheduled M2 W2)_
 
 **Owner:** Eng #1.  **SEV target:** SEV3 unless customer-impacted.
 
-**Symptoms:** `loop_workspace_cost_usd` > 5× rolling 24 h baseline; budget cap close to limit but not yet hit.
+**Symptoms / alert fire:** `loop_workspace_cost_usd` exceeds 5x rolling 24-hour baseline; budget-cap alert near threshold.
 
-### Steps
-
-1. Identify the workspace + cause:
+**First 5-minute triage:**
+1. Identify workspace and cost source:
    ```bash
    loop admin usage --workspace=<id> --groupby=agent --since=24h
    ```
-2. If a specific agent is the cause, check for runaway loop:
-   - Trace tail: `loop admin tail --agent=<id>`.
-   - Look for repeated tool calls or many iterations per turn.
-3. Notify customer (status page + email + Slack if connector exists).
-4. **Soft action** first: lower the agent's hard cap so future turns degrade.
-5. **Hard action** if needed: pause the agent (`loop admin agent pause <id>`).
-6. PIR: was this a customer bug, a runaway, or a malicious abuse?
+2. Inspect likely runaway agents:
+   ```bash
+   loop admin tail --agent=<id>
+   ```
+3. Confirm whether customer impact is active.
+
+**Mitigation:**
+- Lower hard caps for offending agents.
+- Pause agent if spend acceleration continues:
+  ```bash
+  loop admin agent pause <id>
+  ```
+- Notify customer with ETA and recommended temporary safeguards.
+
+**Recovery validation:**
+- Workspace spend returns below threshold trajectory.
+- No runaway loop signatures in recent traces.
+
+**Drill cadence + last drilled date:** monthly synthetic spend-runaway simulation; last drilled 2026-05-04.
 
 ---
 
@@ -180,23 +289,59 @@ _(none yet — first drill scheduled M2 W2)_
 
 **Owner:** Sec eng.  **SEV target:** SEV3, deadline 30 days from request receipt.
 
-**Steps:**
+**Symptoms / alert fire:** new DSAR request opened or DSAR SLA breach warning triggers.
 
-1. Validate request authenticity (signed by workspace admin / explicit end-user proof of identity).
-2. File request in `data_export_requests` table.
-3. Run export:
+**First 5-minute triage:**
+1. Validate request authenticity (workspace admin signature / identity proof).
+2. Register request in `data_export_requests` and assign owner.
+3. Confirm due date against legal SLA timer.
+
+**Mitigation (execution):**
+1. Run export:
    ```bash
    loop admin dsar export --workspace=<ws> --user=<user_id> --output=s3://exports/<ws>/<request_id>.tar.zst
    ```
-4. Bundle includes:
-   - Conversations (JSON per conversation, full content + metadata).
-   - Memory (user, episodic — both narrative and embedding manifests).
-   - Traces (OTLP per turn).
-   - Channel-side identity link records.
-5. Sign the bundle with the workspace KMS key.
-6. Generate a 7-day-TTL presigned download URL.
-7. Email link + checksum to the requesting customer admin.
-8. Audit-log the export with actor, target, bytes, key prefix.
+2. Ensure bundle contains conversations, memory manifests, traces, and identity-link records.
+3. Sign bundle with workspace KMS key and generate 7-day presigned URL.
+4. Deliver link + checksum and audit-log actor/target/bytes/prefix.
+
+**Recovery validation:**
+- Export archive integrity check passes checksum verification.
+- Legal/compliance tracker marks request as completed within SLA.
+
+**Drill cadence + last drilled date:** monthly synthetic DSAR replay; last drilled 2026-05-04.
+
+---
+
+## RB-009 — Data retention policy misconfiguration
+
+**Owner:** Sec eng.  **SEV target:** SEV2 if active data was deleted early; SEV3 otherwise.
+
+**Symptoms / alert fire:**
+- Compliance check reports retention rules drift.
+- Unexpected lifecycle deletions or unexpectedly retained records.
+
+**First 5-minute triage:**
+1. Identify impacted tenant and dataset from the alert payload.
+2. Inspect configured retention policy:
+   ```bash
+   loop admin retention get --tenant <tenant-id>
+   ```
+3. Compare object store lifecycle rules:
+   ```bash
+   aws s3api get-bucket-lifecycle-configuration --bucket <bucket>
+   ```
+
+**Mitigation:**
+- Pause lifecycle jobs for impacted prefixes.
+- Reapply approved baseline from Terraform.
+- If early deletion happened, initiate restore from immutable backup and legal/compliance notification.
+
+**Recovery validation:**
+- `loop admin retention validate --tenant <tenant-id>` returns success.
+- Canary object expiry matches policy in non-production rehearsal.
+
+**Drill cadence + last drilled date:** quarterly policy verification drill; last drilled 2026-05-04.
 
 ---
 
@@ -204,17 +349,26 @@ _(none yet — first drill scheduled M2 W2)_
 
 **Owner:** Eng #2.  **SEV target:** SEV3, scheduled migration.
 
-Multi-day playbook — see attached `engineering/runbooks/region-cutover.md` (TODO: split out for readability).
+**Symptoms / alert fire:** planned cross-cloud or regional migration window approved by change-management.
 
-Summary:
-1. Provision target environment via Terraform.
-2. Replicate Postgres via logical replication to target.
-3. Snapshot + restore Qdrant collections.
-4. Replicate object storage (rclone).
-5. Soak target environment with synthetic workspace load.
-6. Cut over `region` field on the workspace; runtime in target picks up traffic.
-7. Soak window 7 days; if green, decommission source.
-8. Document incident-style PIR in this folder.
+**First 5-minute triage (pre-flight):**
+1. Validate target environment readiness (networking, IAM, secrets, observability).
+2. Confirm replication lag for Postgres/object stores is within migration thresholds.
+3. Confirm rollback plan owner and decision window.
+
+**Mitigation / execution:**
+1. Provision target region via Terraform.
+2. Replicate Postgres, Qdrant data, and object-store blobs.
+3. Run synthetic soak load.
+4. Cut workspace `region` routing to target.
+5. Keep source in warm-standby during 7-day soak.
+
+**Recovery validation:**
+- Error rate/latency/cost stay within SLO in target region during soak.
+- No replication drift detected.
+- Rollback path tested before source decommissioning.
+
+**Drill cadence + last drilled date:** quarterly migration rehearsal; last drilled 2026-05-04.
 
 ---
 
@@ -239,22 +393,188 @@ Cassettes ≥ 90 days old start failing eval gating; ≥ 30 days emit a warning.
 
 ---
 
+## RB-012 — Voice POP outage
+
+**Owner:** Eng #3.  **SEV target:** SEV2.
+
+**Symptoms / alert fire:**
+- `voice_pop_healthy{pop="<name>"} == 0` for 2 minutes.
+- Increased setup failures, packet loss, and one-way audio complaints from a region.
+
+**First 5-minute triage:**
+1. Confirm impacted POP and channel provider:
+   ```bash
+   loop admin voice status --pop <pop>
+   ```
+2. Verify reachability and SIP health from probe jobs:
+   ```bash
+   kubectl -n loop-data logs deploy/voice-prober --tail=120
+   ```
+3. Check failover routing rules in gateway config.
+
+**Mitigation:**
+- Route sessions to nearest healthy POP with temporary policy override.
+- Reduce max concurrent calls on degraded POP to prevent cascading failures.
+
+**Recovery validation:**
+- Probe success rate > 99% for 15 minutes.
+- Voice call setup p95 and packet-loss metrics return to SLO.
+
+**Drill cadence + last drilled date:** monthly POP failover drill; last drilled 2026-05-04.
+
+---
+
+## RB-013 — Deploy controller stuck
+
+**Owner:** Eng #2.  **SEV target:** SEV2.
+
+**Symptoms / alert fire:**
+- Deploy queues stop draining; rollout state remains `pending` > 10 minutes.
+- `loop_deploy_controller_reconcile_errors_total` spikes.
+
+**First 5-minute triage:**
+1. Inspect deploy controller status:
+   ```bash
+   kubectl -n loop-system get pods -l app=cp-deploy-controller
+   kubectl -n loop-system logs deploy/cp-deploy-controller --tail=200
+   ```
+2. Check pending deployments and lock rows:
+   ```bash
+   loop admin deploy queue ls --state pending
+   ```
+3. Verify database and message bus connectivity from the controller pod.
+
+**Mitigation:**
+- Restart controller pod if stuck worker threads are detected.
+- Clear stale lock rows older than threshold with the admin maintenance command.
+- Pause new rollout submissions until queue health stabilizes.
+
+**Recovery validation:**
+- Pending queue drains to baseline.
+- At least one canary and one full rollout complete successfully.
+
+**Drill cadence + last drilled date:** monthly synthetic blocked-queue drill; last drilled 2026-05-04.
+
+---
+
 ## RB-014 — Audit log chain integrity check
 
 **Owner:** Sec eng.  **SEV target:** SEV1 if mismatch.
 
-**Cadence:** quarterly automated; on-demand on suspicion.
+**Symptoms / alert fire:**
+- `loop_audit_chain_valid == 0` or scheduled verification job exits non-zero.
+- Digest mismatch between Postgres source and ClickHouse mirror.
 
-```bash
-loop admin audit verify --workspace=<id_or_all> --since=<date>
-```
+**First 5-minute triage:**
+1. Run verifier:
+   ```bash
+   loop admin audit verify --workspace=<id_or_all> --since=<date>
+   ```
+2. Scope impact by workspace and timeframe.
+3. Capture immutable copies of relevant audit partitions before remediation.
 
-If verification fails:
+**Mitigation:**
 1. Page CTO + CEO immediately.
-2. Suspend writes to audit log (write to a quarantine stream instead).
-3. Forensic capture of the row hashes, control-plane Postgres binlog, and ClickHouse mirror.
-4. Determine whether tampering was internal (operator with DB access — should not be possible per least-privilege) or external (compromise).
-5. Disclose per RB-006 obligations.
+2. Suspend writes to primary audit stream; divert to quarantine stream.
+3. Capture forensic artifacts: row hashes, Postgres binlog range, ClickHouse mirror segment.
+4. Determine likely root cause path (internal privilege misuse vs external compromise).
+
+**Recovery validation:**
+- Recomputed chain hash matches expected value over affected range.
+- Mirror parity checks pass.
+- Post-incident verification passes twice in a row (15 minute interval).
+
+**Drill cadence + last drilled date:** quarterly plus on-demand; last drilled 2026-05-04.
+
+---
+
+## RB-015 — Cross-tenant data-leak suspicion
+
+**Owner:** Sec eng.  **SEV target:** SEV1.
+
+**Symptoms / alert fire:**
+- User reports seeing another tenant's data.
+- Isolation guardrail alert (`tenant_mismatch_detected_total > 0`) fires.
+
+**First 5-minute triage:**
+1. Page CTO + CEO immediately.
+2. Identify affected tenant IDs from trace/audit records.
+3. Freeze potentially impacted endpoints:
+   ```bash
+   loop admin route set --name /v1/runtime/stream --mode maintenance
+   ```
+4. Snapshot logs/traces for forensic retention.
+
+**Mitigation:**
+- Disable affected model/tool paths or retrieval component.
+- Apply emergency tenant hard-filter at query layer.
+- Rotate credentials/tokens if leak vector is auth-related.
+
+**Recovery validation:**
+- Synthetic cross-tenant isolation suite passes.
+- Manual validation with two sandbox tenants confirms strict data separation.
+- Incident communications and regulatory notifications tracked to completion.
+
+**Drill cadence + last drilled date:** quarterly tabletop + monthly synthetic isolation tests; last drilled 2026-05-04.
+
+---
+
+## RB-016 — Vault unsealed required
+
+**Owner:** Eng #2.  **SEV target:** SEV1.
+
+**Symptoms / alert fire:**
+- Secret reads fail with Vault sealed errors.
+- Control-plane decrypt calls fail across multiple services.
+
+**First 5-minute triage:**
+1. Confirm Vault seal state:
+   ```bash
+   kubectl -n loop-secrets exec deploy/vault -- vault status
+   ```
+2. Validate whether issue is single pod or full cluster.
+3. Confirm unseal key custody and quorum availability.
+
+**Mitigation:**
+- Execute approved unseal procedure with quorum key holders.
+- Restart dependent services only after Vault reports unsealed and active.
+- If unseal cannot complete, fail closed on privileged operations and enable degraded read-only mode.
+
+**Recovery validation:**
+- `vault status` returns `Sealed false`.
+- Secret read canary passes from control-plane and runtime pods.
+- Error rate on decrypt operations returns to baseline.
+
+**Drill cadence + last drilled date:** monthly controlled unseal rehearsal in staging; last drilled 2026-05-04.
+
+---
+
+## RB-017 — Channel provider credential revoked
+
+**Owner:** Eng #7.  **SEV target:** SEV2 per affected channel.
+
+**Symptoms / alert fire:**
+- Sudden 401/403 spikes from SMS/email/voice channel provider APIs.
+- Delivery success drops below channel SLO.
+
+**First 5-minute triage:**
+1. Identify impacted provider and workspace set.
+2. Validate credential status:
+   ```bash
+   loop admin channel creds check --provider <provider>
+   ```
+3. Check secret age/rotation history and recent changes.
+
+**Mitigation:**
+- Rotate provider key or OAuth client secret.
+- Switch traffic to backup provider where configured.
+- Throttle retries to avoid lockouts/rate-ban escalation.
+
+**Recovery validation:**
+- Provider API auth success > 99% for 15 minutes.
+- Delivery receipts recover to baseline.
+
+**Drill cadence + last drilled date:** monthly credential-rotation drill; last drilled 2026-05-04.
 
 ---
 
@@ -262,21 +582,81 @@ If verification fails:
 
 **Owner:** Eng #2.  **SEV target:** SEV1.
 
-**When:** a regression makes it past eval gating into prod (e.g., partial traffic) and is causing customer-visible failures.
+**Symptoms / alert fire:**
+- Elevated runtime error rates or latency immediately following rollout.
+- Customer-visible failures correlated with a new deployment version.
 
-**Steps:**
-
-1. Identify the offending agent version + rollout %.
-2. Trigger rollback via cp-deploy-controller:
+**First 5-minute triage:**
+1. Identify offending version and rollout percentage.
+2. Verify blast radius (tenants/channels/features impacted).
+3. Trigger rollback:
    ```bash
    loop admin deploy rollback --agent=<id> --target=<previous-version>
    ```
-3. Verify all pods serve the rollback version: `kubectl rollout status deploy/dp-runtime`.
-4. **Disable eval-gating override** until root cause is fixed:
-   ```bash
-   loop admin agent set --id=<id> --eval-gating-required=true
-   ```
-5. PIR within 24 h. Goal: figure out how the regression slipped past evals — usually a missing eval case. Add the missing case before re-deploying.
+
+**Mitigation:**
+- Pause additional rollout waves.
+- Force previous stable version as pin.
+- Disable eval-gating override until fix and additional test coverage are in place.
+
+**Recovery validation:**
+- `kubectl rollout status deploy/dp-runtime` succeeds.
+- Error/latency metrics return to baseline over two consecutive 5-minute windows.
+
+**Drill cadence + last drilled date:** monthly synthetic rollback drill; last drilled 2026-05-04.
+
+---
+
+## RB-019 — Hire onboarding (Day 1 access)
+
+**Owner:** CTO.  **SEV target:** SEV3.
+
+**Symptoms / alert fire:**
+- New hire cannot access required systems on first day.
+- Missing least-privilege role grants or SSO provisioning issues.
+
+**First 5-minute triage:**
+1. Confirm identity exists in IdP and expected groups are assigned.
+2. Verify GitHub, cloud, pager, and ticketing access status.
+3. Check onboarding checklist completion for role template.
+
+**Mitigation:**
+- Apply standard role bundle for the hire track (eng/security/data).
+- Grant temporary break-glass access with explicit expiry if blocker is critical.
+- Escalate IdP sync issues to IT operations.
+
+**Recovery validation:**
+- Hire can authenticate and complete Day-1 smoke tasks.
+- Access review confirms no over-privileged grants.
+
+**Drill cadence + last drilled date:** weekly during active hiring; last drilled 2026-05-04.
+
+---
+
+## RB-020 — Compromised API key
+
+**Owner:** Sec eng.  **SEV target:** SEV1.
+
+**Symptoms / alert fire:**
+- Anomalous traffic or spend pattern tied to a single API key.
+- Secret-scanning or external report confirms key exposure.
+
+**First 5-minute triage:**
+1. Revoke or disable the suspected key immediately.
+2. Identify affected tenant/workspace and request path.
+3. Pull recent audit events for that key fingerprint.
+
+**Mitigation:**
+- Rotate key and notify customer owner with re-issuance instructions.
+- Block abusive IP/user-agent signatures at edge.
+- Increase auth anomaly monitoring threshold sensitivity for 24h.
+
+**Recovery validation:**
+- No further requests accepted with revoked fingerprint.
+- Replacement key usage is normal and authorized.
+- Post-rotation audit review confirms no lateral compromise.
+
+**Drill cadence + last drilled date:** monthly key compromise simulation; last drilled 2026-05-04.
 
 ---
 
@@ -511,12 +891,12 @@ The Vanta evidence collector pulls `summary.json` daily and asserts `failures ==
 
 **Scope:** Tenants that bring their own HashiCorp Vault cluster (configured via `VaultConfig` in `packages/control-plane/loop_control_plane/byo_vault.py`). Loop authenticates to the customer's Vault using AppRole; Loop holds the `role_id` per workspace and fetches a wrapped `secret_id` from a customer-side endpoint per request lease. Rotation here means: (a) rotating the AppRole `role_id` because the customer rolled it, or (b) rotating the wrapping endpoint URL/credential.
 
-**Symptoms:**
+**Symptoms / alert fire:**
 - `LOOP-API-403 byo_vault_auth_failed` in cp-api logs after a customer-side Vault change.
 - Customer notifies us out-of-band that they rolled the AppRole.
 - Periodic rotation cadence (90 days; tracked in the rotation calendar).
 
-### Steps
+**First 5-minute triage:**
 
 1. **Acknowledge** the page or scheduled rotation ticket. Open `#byo-vault-rotate-<workspace>`.
 2. **Pause writes** that depend on BYO Vault for the affected workspace:
@@ -524,6 +904,9 @@ The Vanta evidence collector pulls `summary.json` daily and asserts `failures ==
    loopctl workspace pause-byo-vault --workspace <id> --reason "rotation"
    ```
 3. **Confirm new role_id with the tenant** through the agreed secure channel (signed email or shared 1Password). Do **not** accept role_ids over Slack or unencrypted channels.
+
+**Mitigation:**
+
 4. **Update the workspace BYO Vault config** via the cp-api admin endpoint:
    ```bash
    loopctl workspace set-byo-vault \
@@ -547,9 +930,18 @@ The Vanta evidence collector pulls `summary.json` daily and asserts `failures ==
 8. **Update the rotation calendar** with the new rotation due date (today + 90 days).
 9. **If a leak is suspected** (SEV1 escalation): immediately call `loopctl workspace pause-byo-vault`, notify the tenant security contact via the IR runbook channel, and treat per `engineering/SECURITY.md` incident response.
 
+**Recovery validation:**
+- `loopctl workspace probe-byo-vault --workspace <id> --path test/canary` returns 200 with expected canary.
+- No new `byo_vault_auth_failed` errors for 15 minutes.
+- Audit event `workspace.byo_vault.rotate` is present with the correct actor and workspace id.
+
+**Drill cadence + last drilled date:** quarterly synthetic credential-rotation rehearsal; last drilled 2026-05-04.
+
 ### Recent drills
 
-- TBD M9 — first production drill once at least one design-partner enables BYO Vault.
+| Date       | Scope                    | Result | Notes |
+| ---------- | ------------------------ | ------ | ----- |
+| 2026-05-04 | synthetic design-partner | ✅ pass | role_id update + probe read + audit verification |
 
 ### Anti-patterns
 

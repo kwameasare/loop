@@ -1,0 +1,228 @@
+global:
+  clusterName: loop
+
+kube-prometheus-stack:
+  grafana:
+    enabled: true
+    adminPassword: admin
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        labelValue: "1"
+        searchNamespace: ALL
+  kubeStateMetrics:
+    enabled: true
+  nodeExporter:
+    enabled: true
+  prometheusOperator:
+    enabled: true
+  prometheus:
+    enabled: true
+    prometheusSpec:
+      retention: 15d
+      enableRemoteWriteReceiver: true
+      podMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorSelectorNilUsesHelmValues: false
+  alertmanager:
+    enabled: true
+    alertmanagerSpec:
+      replicas: 1
+    config:
+      route:
+        receiver: default
+        group_by: [alertname, service]
+        routes:
+          - matchers:
+              - pagerduty="true"
+            receiver: pagerduty-slo
+            continue: false
+          - matchers:
+              - source="falco"
+            receiver: falco-events
+            continue: false
+      receivers:
+        - name: default
+        - name: pagerduty-slo
+          pagerduty_configs:
+            - routing_key: "${PAGERDUTY_SLO_ROUTING_KEY}"
+              severity: '{{ .CommonLabels.severity }}'
+              description: '{{ .CommonAnnotations.summary }}'
+        - name: falco-events
+
+loki:
+  enabled: true
+  deploymentMode: SingleBinary
+  singleBinary:
+    replicas: 1
+  loki:
+    auth_enabled: false
+
+tempo:
+  enabled: true
+  tempo:
+    metricsGenerator:
+      enabled: true
+    reportingEnabled: false
+  traces:
+    otlp:
+      grpc:
+        enabled: true
+      http:
+        enabled: true
+
+falco:
+  tty: true
+  customRules:
+    loop_rules.yaml: |
+      # Falco runtime-threat-detection rules for Loop — S803
+      #
+      # Deployed via: helm upgrade falco falcosecurity/falco \
+      #   --set-file customRules.loop_rules\\.yaml=infra/falco/loop_rules.yaml
+      #
+      # These rules cover three anomaly families specified by AC:
+      #   1. Shell exec inside a container (sandbox or cp-api)
+      #   2. Unexpected / unauthorised syscall (ptrace, execve from non-init process, etc.)
+      #   3. Unexpected egress (network outbound to a destination outside the allow-list)
+      #
+      # Priority ladder used: EMERGENCY > CRITICAL > ERROR > WARNING > NOTICE > INFO
+      #
+      # ---------------------------------------------------------------------------
+
+      # ---------------------------------------------------------------------------
+      # Macros — reusable filter fragments
+      # ---------------------------------------------------------------------------
+
+      - macro: loop_sandbox_container
+        condition: >
+          container.image.repository contains "loop/sandbox" or
+          container.image.repository contains "ghcr.io/loop/sandbox"
+
+      - macro: loop_cp_api_container
+        condition: >
+          container.image.repository contains "loop/cp-api" or
+          container.image.repository contains "ghcr.io/loop/cp-api"
+
+      - macro: loop_managed_container
+        condition: loop_sandbox_container or loop_cp_api_container
+
+      - macro: shell_binary
+        condition: >
+          proc.name in (sh, bash, zsh, fish, dash, ksh, tcsh, csh)
+
+      # Egress allow-list: production HTTPS, internal cluster DNS, OTLP collector.
+      # All other outbound TCP/UDP is unexpected.
+      - macro: allowed_egress_dest
+        condition: >
+          fd.sip in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16") or
+          fd.sport in (443, 53, 4317, 4318)
+
+      # ---------------------------------------------------------------------------
+      # Lists — sets referenced by rules
+      # ---------------------------------------------------------------------------
+
+      - list: known_init_processes
+        items: [tini, dumb-init, s6-svscan, supervisord, node, python3, python, uvicorn, gunicorn]
+
+      # ---------------------------------------------------------------------------
+      # Rule 1 — Shell exec inside Loop containers
+      # ---------------------------------------------------------------------------
+
+      - rule: Loop Shell Spawned in Container
+        desc: >
+          A shell binary was executed inside a Loop sandbox or cp-api container.
+          Legitimate containers never start a shell; this indicates an adversary
+          with container exec access or a compromised workload.
+        condition: >
+          spawned_process and
+          shell_binary and
+          loop_managed_container
+        output: >
+          Shell spawned in Loop container
+          (user=%user.name container=%container.id image=%container.image.repository
+           cmd=%proc.cmdline ppid=%proc.ppid pname=%proc.pname)
+        priority: CRITICAL
+        tags: [loop, shell_exec, red_team_trigger]
+
+      # Rule used only for CI smoke validation in ephemeral kind clusters.
+      - rule: shell-spawned-in-pod
+        desc: >
+          Smoke validation rule used by CI to ensure Falco to Alertmanager wiring
+          is functioning end-to-end.
+        condition: >
+          spawned_process and
+          shell_binary and
+          k8s.ns.name = default and
+          k8s.pod.name startswith "falco-smoke"
+        output: >
+          shell spawned in smoke pod
+          (pod=%k8s.pod.name container=%container.id cmd=%proc.cmdline)
+        priority: WARNING
+        tags: [loop, smoke, red_team_trigger]
+
+      # ---------------------------------------------------------------------------
+      # Rule 2a — ptrace attach (indicates process inspection / debugging)
+      # ---------------------------------------------------------------------------
+
+      - rule: Loop Container ptrace Attach
+        desc: >
+          A process inside a Loop container used ptrace to attach to another process.
+          This is a strong indicator of a privilege-escalation or breakout attempt.
+        condition: >
+          evt.type = ptrace and
+          evt.dir = > and
+          evt.arg.request = PTRACE_ATTACH and
+          loop_managed_container
+        output: >
+          ptrace attach inside Loop container
+          (user=%user.name container=%container.id image=%container.image.repository
+           pid=%proc.pid cmd=%proc.cmdline)
+        priority: EMERGENCY
+        tags: [loop, syscall, red_team_trigger]
+
+      # ---------------------------------------------------------------------------
+      # Rule 2b — execve from a non-init process in cp-api
+      # ---------------------------------------------------------------------------
+
+      - rule: Loop CP-API Unexpected execve
+        desc: >
+          An execve syscall was observed from a process that is not the known
+          init/entrypoint in a cp-api container. cp-api should never fork
+          external processes.
+        condition: >
+          evt.type = execve and
+          loop_cp_api_container and
+          not proc.name in (known_init_processes)
+        output: >
+          Unexpected execve in cp-api container
+          (user=%user.name container=%container.id image=%container.image.repository
+           proc=%proc.name cmd=%proc.cmdline)
+        priority: ERROR
+        tags: [loop, syscall, red_team_trigger]
+
+      # ---------------------------------------------------------------------------
+      # Rule 3 — Unexpected egress from Loop containers
+      # ---------------------------------------------------------------------------
+
+      - rule: Loop Container Unexpected Egress
+        desc: >
+          A Loop sandbox or cp-api container opened an outbound TCP/UDP connection
+          to a destination outside the approved egress allow-list. This may
+          indicate a command-and-control beacon or data-exfiltration attempt.
+        condition: >
+          (evt.type = connect or evt.type = sendto) and
+          loop_managed_container and
+          fd.typechar = 4 and
+          not allowed_egress_dest
+        output: >
+          Unexpected egress from Loop container
+          (user=%user.name container=%container.id image=%container.image.repository
+           src=%fd.sip:%fd.sport dst=%fd.dip:%fd.dport cmd=%proc.cmdline)
+        priority: CRITICAL
+        tags: [loop, egress, red_team_trigger]
+  falcosidekick:
+    enabled: true
+    config:
+      customfields: "source:falco"
+      alertmanager:
+        hostport: loop-observability-kube-prometheus-stack-alertmanager:9093

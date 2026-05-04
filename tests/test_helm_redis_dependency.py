@@ -25,7 +25,8 @@ def test_chart_declares_redis_dependency_pinned_with_condition() -> None:
     version = cast(str, redis["version"])
     assert re.match(r"^\d+\.\d+\.\d+$", version)
     repo = cast(str, redis["repository"])
-    assert "bitnami" in repo
+    assert repo.startswith("oci://")
+    assert "ghcr.io/loop-ai/mirrored/bitnami/charts" in repo
     assert redis.get("condition") == "redis.enabled"
 
 

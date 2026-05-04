@@ -5,12 +5,14 @@ on:
     paths:
       - ".github/workflows/helm-e2e.yml"
       - "infra/helm/loop/**"
+      - "scripts/Dockerfile.smoke"
       - "scripts/helm_e2e_smoke_server.py"
   push:
     branches: [main]
     paths:
       - ".github/workflows/helm-e2e.yml"
       - "infra/helm/loop/**"
+      - "scripts/Dockerfile.smoke"
       - "scripts/helm_e2e_smoke_server.py"
   workflow_dispatch:
   schedule:
@@ -30,13 +32,10 @@ jobs:
           wait: 60s
       - name: Build and load smoke image
         run: |
-          cat > /tmp/loop-helm-smoke.Dockerfile <<'DOCKER'
-          FROM python:3.12-alpine
-          COPY scripts/helm_e2e_smoke_server.py /server.py
-          ENV HELM_SMOKE_PORTS=8080,8081,8082,8003
-          CMD ["python", "/server.py"]
-          DOCKER
-          docker build -f /tmp/loop-helm-smoke.Dockerfile -t loop/helm-smoke:ci .
+          docker build -f scripts/Dockerfile.smoke \
+            --build-arg SMOKE_SCRIPT=scripts/helm_e2e_smoke_server.py \
+            --build-arg SMOKE_PORTS=8080,8081,8082,8003 \
+            -t loop/helm-smoke:ci .
           kind load docker-image loop/helm-smoke:ci --name loop-helm-e2e
       - name: Install Loop chart
         run: |
@@ -64,6 +63,41 @@ jobs:
             --set nats.enabled=false \
             --set minio.enabled=false \
             --set clickhouse.enabled=false
+      - name: Verify atomic rollback after broken upgrade
+        run: |
+          set +e
+          helm upgrade loop infra/helm/loop \
+            --wait --timeout 3m --atomic \
+            --set global.imageRegistry=loop \
+            --set global.imagePullPolicy=IfNotPresent \
+            --set controlPlane.image.repository=helm-smoke \
+            --set controlPlane.image.tag=ci \
+            --set controlPlane.replicaCount=1 \
+            --set runtime.image.repository=helm-smoke \
+            --set runtime.image.tag=does-not-exist \
+            --set runtime.replicaCount=1 \
+            --set gateway.image.repository=helm-smoke \
+            --set gateway.image.tag=ci \
+            --set gateway.replicaCount=1 \
+            --set kbEngine.image.repository=helm-smoke \
+            --set kbEngine.image.tag=ci \
+            --set kbEngine.replicaCount=1 \
+            --set toolHost.enabled=false \
+            --set postgresql.enabled=false \
+            --set redis.enabled=false \
+            --set qdrant.enabled=false \
+            --set nats.enabled=false \
+            --set minio.enabled=false \
+            --set clickhouse.enabled=false >/tmp/helm-broken-upgrade.log 2>&1
+          upgrade_rc=$?
+          set -e
+          if [ "$upgrade_rc" -eq 0 ]; then
+            echo "::error::broken upgrade unexpectedly succeeded"
+            exit 1
+          fi
+          image="$(kubectl get deploy/loop-loop-runtime -o jsonpath='{.spec.template.spec.containers[0].image}')"
+          echo "runtime image after rollback: $image"
+          echo "$image" | grep -q ":ci$"
       - name: Send a turn through dp-runtime
         run: |
           kubectl rollout status deploy/loop-loop-runtime --timeout=90s

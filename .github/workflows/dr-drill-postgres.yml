@@ -1,0 +1,59 @@
+name: dr-drill-postgres
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "5 4 * * 1"
+
+permissions:
+  contents: write
+
+jobs:
+  dr-drill-postgres:
+    name: dr-drill-postgres
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: loop-dr-postgres
+          wait: 60s
+      - name: Run Postgres PITR drill driver (synthetic)
+        run: |
+          scripts/dr_postgres_pitr_drill.sh \
+            --region=us-east-1 \
+            --workspace-id=ws_drill_synthetic \
+            --rt=2026-04-30T12:00:00Z \
+            --bucket=s3://loop-wal-archive-us-east-1 \
+            --dry-run | tee /tmp/dr-postgres.jsonl
+      - name: Assert drill completed with 10 successful steps
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          lines = [line for line in Path('/tmp/dr-postgres.jsonl').read_text().splitlines() if line.startswith('{')]
+          if len(lines) != 10:
+            raise SystemExit(f"expected 10 drill steps, got {len(lines)}")
+          parsed = [json.loads(line) for line in lines]
+          if [item["step"] for item in parsed] != list(range(1, 11)):
+            raise SystemExit("unexpected step sequence")
+          if not all(item.get("ok") is True for item in parsed):
+            raise SystemExit("one or more drill steps failed")
+          PY
+      - name: Stamp RB-021 last-drilled date
+        run: |
+          python tools/stamp_runbook_drill_date.py \
+            --runbook-id RB-021 \
+            --date "$(date -u +%F)"
+      - name: Commit runbook timestamp update
+        run: |
+          if git diff --quiet loop_implementation/engineering/RUNBOOKS.md; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add loop_implementation/engineering/RUNBOOKS.md
+          git commit -m "runbooks(dr): stamp RB-021 last-drilled date"
+          git push

@@ -28,7 +28,8 @@ def test_chart_declares_postgresql_dependency_pinned() -> None:
     version = cast(str, pg["version"])
     assert re.match(r"^\d+\.\d+\.\d+$", version), f"pinned exact semver expected, got {version!r}"
     repo = cast(str, pg["repository"])
-    assert "bitnami" in repo, "must use Bitnami chart per S446 AC"
+    assert repo.startswith("oci://"), "mirror repository must be OCI-backed"
+    assert "ghcr.io/loop-ai/mirrored/bitnami/charts" in repo
 
 
 def test_chart_postgres_dependency_has_condition() -> None:

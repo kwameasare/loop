@@ -9,6 +9,10 @@ from pathlib import Path
 import yaml
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "tools"))
+
+import check_threat_model  # type: ignore[import-not-found]
+
 GATE = REPO / "tools" / "check_threat_model.py"
 DOC = REPO / "docs" / "THREAT_MODEL.md"
 WORKFLOW = REPO / ".github" / "workflows" / "threat-model-gate.yml"
@@ -57,6 +61,38 @@ def test_passes_with_skip_token_in_pr_body() -> None:
     assert "logged bypass" in proc.stdout
 
 
+def test_mutating_route_gate_fails_when_namespace_missing(monkeypatch) -> None:
+    monkeypatch.setattr(
+        check_threat_model,
+        "_audit_action_namespaces",
+        lambda _: {"brand:new_namespace"},
+    )
+
+    code, log = check_threat_model.evaluate(
+        changed=["packages/control-plane/loop_control_plane/_routes_workspaces.py"],
+        mutating_route_files=["packages/control-plane/loop_control_plane/_routes_workspaces.py"],
+    )
+
+    assert code == 2
+    assert any("missing STRIDE coverage for audit-action namespaces" in line for line in log)
+
+
+def test_mutating_route_gate_passes_when_namespace_documented(monkeypatch) -> None:
+    monkeypatch.setattr(
+        check_threat_model,
+        "_audit_action_namespaces",
+        lambda _: {"workspace:member"},
+    )
+
+    code, log = check_threat_model.evaluate(
+        changed=["packages/control-plane/loop_control_plane/_routes_workspaces.py"],
+        mutating_route_files=["packages/control-plane/loop_control_plane/_routes_workspaces.py"],
+    )
+
+    assert code == 0
+    assert any("required STRIDE coverage present" in line for line in log)
+
+
 def test_detects_secrets_and_audit_paths() -> None:
     for path in (
         "packages/control-plane/loop_control_plane/byo_vault.py",
@@ -92,3 +128,5 @@ def test_workflow_runs_on_pull_request_to_main() -> None:
     cmds = " ".join(s.get("run", "") for s in job["steps"])
     assert "tools/check_threat_model.py" in cmds
     assert "gh pr diff" in cmds
+    assert "--base" in cmds
+    assert "--head" in cmds

@@ -1,0 +1,85 @@
+# US-East region values overlay.
+#
+# Apply on top of the base chart:
+#
+#   helm install loop ./infra/helm/loop \
+#     -f ./infra/helm/loop/values-us-east.yaml
+
+global:
+  region: us-east
+  dataResidency: us
+  imagePullPolicy: IfNotPresent
+  imageRegistry: registry.us-east.loop.local
+
+controlPlane:
+  replicaCount: 3
+  env:
+    LOOP_REGION: "us-east"
+    LOOP_DATA_RESIDENCY: "us"
+    LOOP_DISABLE_CROSS_REGION_REPLICATION: "true"
+
+runtime:
+  replicaCount: 6
+  env:
+    LOOP_REGION: "us-east"
+    LOOP_DATA_RESIDENCY: "us"
+
+externals:
+  postgresUrl: "postgresql://loop@postgres.us-east.svc:5432/loop"
+  redisUrl: "redis://redis.us-east.svc:6379/0"
+  qdrantUrl: "http://qdrant.us-east.svc:6333"
+  natsUrl: "nats://nats.us-east.svc:4222"
+  clickhouseUrl: "http://clickhouse.us-east.svc:8123"
+  s3Endpoint: "https://objects.us-east.loop.local"
+  otelEndpoint: "https://otel-collector.us-east.loop.local:4318"
+
+postgresql:
+  enabled: true
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: us-east-retain
+
+qdrant:
+  enabled: true
+  persistence:
+    size: 100Gi
+    storageClassName: us-east-retain
+
+nats:
+  enabled: true
+  config:
+    jetstream:
+      enabled: true
+      fileStore:
+        enabled: true
+        pvc:
+          size: 100Gi
+          storageClassName: us-east-retain
+
+clickhouse:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 200Gi
+    storageClass: us-east-retain
+  backup:
+    enabled: true
+    schedule: "15 1 * * *"
+    retentionDays: 35
+
+networkPolicy:
+  enforceRegionPin: true
+  allowedRegions:
+    - us-east
+
+audit:
+  enabled: true
+  hotRetentionDays: 365
+  coldRetentionDays: 2190
+
+telemetry:
+  metricsEndpoint: "https://metrics.us-east.loop.local"
+  logsEndpoint: "https://logs.us-east.loop.local"
+  tracesEndpoint: "https://traces.us-east.loop.local"

@@ -32,6 +32,8 @@ from __future__ import annotations
 import argparse
 import fnmatch
 import os
+import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Iterable
@@ -58,6 +60,8 @@ PROTECTED_GLOBS: tuple[str, ...] = (
 
 THREAT_MODEL_DOC = "docs/THREAT_MODEL.md"
 SKIP_TOKEN = "threat-model: skip"
+MUTATING_DECORATOR_RE = re.compile(r"^\+\s*@router\.(post|put|patch|delete)\(")
+AUDIT_ACTION_RE = re.compile(r"action\s*=\s*[\"']([^\"']+)[\"']")
 
 
 def _matches_protected(path: str) -> str | None:
@@ -99,8 +103,63 @@ def _gather_paths(args: argparse.Namespace) -> list[str]:
     return []
 
 
+def _is_route_module(path: str) -> bool:
+    if not path.endswith(".py"):
+        return False
+    if "_tests/" in path:
+        return False
+    return "_routes_" in Path(path).name
+
+
+def _new_mutating_route_files(
+    changed: Iterable[str], *, base: str, head: str
+) -> list[str]:
+    hits: list[str] = []
+    for path in changed:
+        if not _is_route_module(path):
+            continue
+
+        diff = ""
+        try:
+            proc = subprocess.run(
+                ["git", "diff", "--unified=0", f"{base}...{head}", "--", path],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if proc.returncode == 0:
+                diff = proc.stdout
+        except OSError:
+            diff = ""
+
+        if MUTATING_DECORATOR_RE.search(diff):
+            hits.append(path)
+    return hits
+
+
+def _audit_action_namespaces(route_files: Iterable[str]) -> set[str]:
+    namespaces: set[str] = set()
+    for route_file in route_files:
+        file_path = Path(route_file)
+        if not file_path.is_file():
+            continue
+        text = file_path.read_text(encoding="utf-8")
+        for action in AUDIT_ACTION_RE.findall(text):
+            parts = action.split(":")
+            if len(parts) >= 2:
+                namespaces.add(":".join(parts[:2]))
+            else:
+                namespaces.add(action)
+    return namespaces
+
+
 def evaluate(
-    *, changed: Iterable[str], pr_body: str = ""
+    *,
+    changed: Iterable[str],
+    pr_body: str = "",
+    base: str = "origin/main",
+    head: str = "HEAD",
+    mutating_route_files: Iterable[str] | None = None,
 ) -> tuple[int, list[str]]:
     """Pure helper used by the CLI and by tests."""
     changed_list = list(changed)
@@ -110,25 +169,46 @@ def evaluate(
         if glob is not None and path != THREAT_MODEL_DOC:
             protected_hits.append((path, glob))
 
+    route_hits = (
+        list(mutating_route_files)
+        if mutating_route_files is not None
+        else _new_mutating_route_files(changed_list, base=base, head=head)
+    )
+    route_namespaces = _audit_action_namespaces(route_hits)
+
     log: list[str] = []
-    if not protected_hits:
+    if protected_hits:
+        log.append(
+            f"threat-model gate: {len(protected_hits)} protected path(s) touched:"
+        )
+        for path, glob in protected_hits:
+            log.append(f"  - {path} (matches {glob})")
+
+    if route_hits:
+        log.append(
+            "threat-model gate: detected newly added mutating route decorator(s) in:"
+        )
+        for route_file in route_hits:
+            log.append(f"  - {route_file}")
+
+    if not protected_hits and not route_hits:
         log.append("threat-model gate: no protected paths touched; passing.")
         return 0, log
 
-    log.append(
-        f"threat-model gate: {len(protected_hits)} protected path(s) touched:"
-    )
-    for path, glob in protected_hits:
-        log.append(f"  - {path} (matches {glob})")
-
     doc_updated = THREAT_MODEL_DOC in changed_list
     skip_present = SKIP_TOKEN in (pr_body or "")
+    doc_text = ""
+    if Path(THREAT_MODEL_DOC).is_file():
+        doc_text = Path(THREAT_MODEL_DOC).read_text(encoding="utf-8")
 
-    if doc_updated:
+    missing_namespaces = sorted(ns for ns in route_namespaces if ns not in doc_text)
+
+    if route_namespaces:
         log.append(
-            f"threat-model gate: {THREAT_MODEL_DOC} updated in this PR; passing."
+            "threat-model gate: mutating route audit-action namespaces in scope: "
+            + ", ".join(sorted(route_namespaces))
         )
-        return 0, log
+
     if skip_present:
         log.append(
             "threat-model gate: PR body contains "
@@ -136,12 +216,26 @@ def evaluate(
         )
         return 0, log
 
-    log.append(
-        "threat-model gate: FAIL — update "
-        f"{THREAT_MODEL_DOC} with a STRIDE entry, or add "
-        f"'{SKIP_TOKEN}' to the PR body if the change genuinely does "
-        "not affect the threat model."
-    )
+    errors: list[str] = []
+    if protected_hits and not doc_updated:
+        errors.append(
+            "update docs/THREAT_MODEL.md when STRIDE-protected paths are touched"
+        )
+    if missing_namespaces:
+        errors.append(
+            "missing STRIDE coverage for audit-action namespaces: "
+            + ", ".join(missing_namespaces)
+        )
+
+    if not errors:
+        if protected_hits and doc_updated:
+            log.append(
+                f"threat-model gate: {THREAT_MODEL_DOC} updated in this PR; passing."
+            )
+        log.append("threat-model gate: required STRIDE coverage present; passing.")
+        return 0, log
+
+    log.append("threat-model gate: FAIL — " + "; ".join(errors) + ".")
     return 2, log
 
 
@@ -156,9 +250,24 @@ def main(argv: list[str] | None = None) -> int:
         default=os.environ.get("LOOP_GATE_PR_BODY", ""),
         help="PR body text (used to look for the skip token).",
     )
+    parser.add_argument(
+        "--base",
+        default=os.environ.get("LOOP_GATE_BASE_REF", "origin/main"),
+        help="Git base ref used to detect newly added mutating decorators.",
+    )
+    parser.add_argument(
+        "--head",
+        default=os.environ.get("LOOP_GATE_HEAD_REF", "HEAD"),
+        help="Git head ref used to detect newly added mutating decorators.",
+    )
     args = parser.parse_args(argv)
     paths = _gather_paths(args)
-    code, log = evaluate(changed=paths, pr_body=args.pr_body)
+    code, log = evaluate(
+        changed=paths,
+        pr_body=args.pr_body,
+        base=args.base,
+        head=args.head,
+    )
     for line in log:
         print(line)
     return code

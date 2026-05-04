@@ -4,11 +4,19 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any, cast
+
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "k6_runtime_baseline_100rpm.js"
 RESULT = ROOT / "bench" / "results" / "runtime_baseline_100rpm.json"
 DOC = ROOT / "docs" / "perf" / "runtime-baseline.md"
+WORKFLOW = ROOT / ".github" / "workflows" / "perf-baseline-100rpm.yml"
+
+
+def _workflow() -> dict[Any, Any]:
+    return cast(dict[Any, Any], yaml.safe_load(WORKFLOW.read_text()))
 
 
 def test_runtime_baseline_k6_script_uses_100rpm_for_5_minutes() -> None:
@@ -33,3 +41,19 @@ def test_runtime_baseline_report_contains_required_latency_stats() -> None:
     assert "| p95 latency |" in docs
     assert "| p99 latency |" in docs
     assert "| error rate |" in docs
+
+
+def test_runtime_baseline_workflow_runs_nightly_and_asserts_budget() -> None:
+    data = _workflow()
+    triggers = cast(dict[Any, Any], data.get(True, data.get("on", {})))
+    job = cast(dict[str, Any], data["jobs"]["perf-baseline-100rpm"])
+    runs = "\n".join(str(step.get("run", "")) for step in cast(list[dict[str, Any]], job["steps"]))
+
+    assert triggers["schedule"][0]["cron"] == "23 6 * * *"
+    assert "workflow_dispatch" in triggers
+    assert "helm/kind-action@v1.10.0" in WORKFLOW.read_text()
+    assert "scripts/Dockerfile.smoke" in runs
+    assert "scripts/k6_runtime_baseline_100rpm.js" in runs
+    assert "bench/results/runtime_baseline_100rpm.json" in runs
+    assert "Assert baseline budget contract" in WORKFLOW.read_text()
+    assert "LOOP_ONCALL_WEBHOOK_URL" in runs

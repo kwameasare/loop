@@ -1,0 +1,21 @@
+team: loop-infra
+timezone: UTC
+rotations:
+  - name: primary
+    start: "2026-05-04T00:00:00Z"
+    turn_length_hours: 24
+    users:
+      - infra-primary-1@loop.local
+      - infra-primary-2@loop.local
+      - infra-primary-3@loop.local
+  - name: secondary
+    start: "2026-05-04T00:00:00Z"
+    turn_length_hours: 24
+    users:
+      - infra-secondary-1@loop.local
+      - infra-secondary-2@loop.local
+escalation:
+  - delay_minutes: 0
+    target: primary
+  - delay_minutes: 15
+    target: secondary

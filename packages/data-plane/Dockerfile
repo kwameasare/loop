@@ -77,9 +77,4 @@ COPY --from=builder /opt/venv /opt/venv
 USER nonroot:nonroot
 EXPOSE 8081
 ENTRYPOINT ["/opt/venv/bin/python"]
-# `--workers 4` parallelises across CPU cores so a single pod can absorb
-# the ~130ms-per-turn CPU work the runtime does. The S913 SSE-concurrency
-# perf gate measured ~7 RPS per worker, so 4 workers ≈ 30 RPS per pod;
-# combined with replicaCount=3 in the perf workflow that lands well under
-# the 3000ms p95 budget on the kind cluster runner.
-CMD ["-m", "uvicorn", "loop_data_plane.runtime_app:app", "--host", "0.0.0.0", "--port", "8081", "--workers", "4"]
+CMD ["-m", "loop_data_plane.run_uvicorn"]

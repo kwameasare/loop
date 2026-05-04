@@ -168,3 +168,33 @@ Mounted at /tmp by every service.
   emptyDir:
     sizeLimit: 32Mi
 {{- end -}}
+
+{{/*
+loop.cpuMillicores — parse a CPU quantity into millicores for
+lightweight worker-count heuristics. Supports values like "500m" and
+"2" (cores).
+*/}}
+{{- define "loop.cpuMillicores" -}}
+{{- $raw := toString . -}}
+{{- if hasSuffix "m" $raw -}}
+{{- trimSuffix "m" $raw -}}
+{{- else -}}
+{{- mul (atoi $raw) 1000 -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+loop.recommendedWorkers — derive a per-pod UVICORN_WORKERS value from
+resource limits and replica count. This keeps worker fan-out aligned
+with requested compute and avoids over-subscribing small pods.
+*/}}
+{{- define "loop.recommendedWorkers" -}}
+{{- $replicas := int (default 1 .replicaCount) -}}
+{{- $limits := .resources.limits | default dict -}}
+{{- $cpu := get $limits "cpu" | default "1000m" -}}
+{{- $millicores := int (include "loop.cpuMillicores" $cpu) -}}
+{{- $fromCpu := max 1 (div $millicores 500) -}}
+{{- $clusterTarget := max 4 (mul $replicas 2) -}}
+{{- $fromReplicas := max 1 (div $clusterTarget $replicas) -}}
+{{- max $fromCpu $fromReplicas -}}
+{{- end -}}

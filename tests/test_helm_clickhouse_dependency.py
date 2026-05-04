@@ -31,7 +31,9 @@ def test_chart_declares_clickhouse_dependency_pinned_with_condition() -> None:
     assert ch is not None, "clickhouse dependency must be declared"
     version = cast(str, ch["version"])
     assert re.match(r"^\d+\.\d+\.\d+$", version)
-    assert "bitnami" in cast(str, ch["repository"])
+    repo = cast(str, ch["repository"])
+    assert repo.startswith("oci://")
+    assert "ghcr.io/loop-ai/mirrored/bitnami/charts" in repo
     assert ch.get("condition") == "clickhouse.enabled"
 
 

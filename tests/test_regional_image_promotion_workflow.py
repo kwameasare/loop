@@ -46,6 +46,13 @@ def test_promotes_same_digest_to_na_and_eu_regions() -> None:
     assert "regional-image-digests.txt" in text
 
 
+def test_workflow_requires_production_approval_environment() -> None:
+    workflow = _workflow()
+    job = cast(dict[str, Any], workflow["jobs"]["promote"])
+
+    assert job["environment"] == "production-image-promotion"
+
+
 def test_policy_rejects_workflow_without_digest_equality_check() -> None:
     workflow = _workflow()
     job = cast(dict[str, Any], workflow["jobs"]["promote"])

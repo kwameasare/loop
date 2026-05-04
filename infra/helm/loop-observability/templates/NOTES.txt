@@ -1,0 +1,10 @@
+Loop observability stack installed.
+
+Key endpoints:
+- Grafana: kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-kube-prometheus-stack-grafana 3000:80
+- Prometheus: kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-kube-prometheus-stack-prometheus 9090:9090
+- Alertmanager: kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-kube-prometheus-stack-alertmanager 9093:9093
+
+Falco smoke trigger command:
+- kubectl run falco-smoke --image=busybox:1.36 --restart=Never --command -- sleep 120
+- kubectl exec falco-smoke -- sh -lc 'echo falco-smoke'

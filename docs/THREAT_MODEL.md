@@ -115,3 +115,21 @@ Touches: `packages/control-plane/loop_control_plane/aws_backends.py` (new), `kms
 - **I** P0 (envelope keys) never persisted anywhere outside KMS or the wrapped ciphertext. P2 (object store keys) are workspace-scoped paths; signed-URL TTLs are caller-controlled and validated to be positive. No object content is logged. The factory rejects unknown methods (anything other than GET/PUT/DELETE) on `signed_url` to prevent abuse via boto3's broader API surface.
 - **D** boto3 client `timeout_seconds` (default 5s) on KMS; S3 inherits the same. boto3 is lazy-imported so workloads on other backends pay no install cost. Multipart-upload `_parts` tracking is per-instance in-memory; `complete_multipart_upload` rejects unknown upload IDs so a forged ID cannot exhaust memory.
 - **E** No new roles. The AWS policies bound to the runtime IAM role bound the operations available; nothing in this module can call AWS APIs outside KMS / S3.
+
+### 2026-05-04 — Backfill mutating-route STRIDE coverage (#182, #185-195)
+Touches: `packages/control-plane/loop_control_plane/_routes_*.py` mutating endpoints. This entry backfills STRIDE coverage so every mutating route namespace used by the cp-api routers is represented before the mutating-route gate became blocking.
+
+Audit-action namespaces covered by this entry:
+- `agent:create`, `agent:delete`, `agent:version`
+- `workspace:create`, `workspace:delete`, `workspace:update`, `workspace:member`, `workspace:api_key`, `workspace:budget`, `workspace:secret`, `workspace:data_deletion`
+- `kb:document`, `kb:refresh_all`
+- `webhook:incoming`
+- `eval:suite`, `eval:run`
+- `conversation:takeover`
+
+- **S** All mutating routes remain authenticated with workspace-scoped bearer credentials (or channel webhook secrets for `webhook:incoming`); no anonymous mutating path is introduced.
+- **T** Every namespace above keeps integrity controls in place: write paths execute through validated Pydantic models and either RLS-protected SQL writes or idempotent channel/webhook guards.
+- **R** Each namespace emits explicit `record_audit_event` actions, preserving repudiation evidence for state changes (`workspace:*`, `agent:*`, `kb:*`, `eval:*`, `webhook:*`, `conversation:*`).
+- **I** No namespace broadens data exposure: mutating handlers remain workspace-scoped, redact secret material, and keep export/deletion controls constrained to authorized actors.
+- **D** Existing quotas and rate-limit controls continue to apply to mutating paths; webhook and eval/start paths preserve idempotency and bounded retry behavior.
+- **E** No additional privilege boundary is introduced. Role checks used by mutating handlers remain owner/admin scoped and do not grant cross-workspace authority.
