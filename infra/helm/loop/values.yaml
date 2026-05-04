@@ -25,6 +25,22 @@ networkPolicies:
   ingressNamespaceLabels:
     kubernetes.io/metadata.name: ingress-nginx
 
+# Pre-install / pre-upgrade Helm hook that runs both alembic
+# migrations before any service pod boots. See
+# `templates/migration-job.yaml`. Disable for environments where the
+# migrations are run out-of-band (Argo Application sync waves, etc.).
+migrations:
+  enabled: true
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
 controlPlane:
   enabled: true
   image:
