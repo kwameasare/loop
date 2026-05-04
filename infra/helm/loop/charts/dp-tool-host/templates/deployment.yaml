@@ -20,6 +20,34 @@ spec:
         app.kubernetes.io/component: dp-tool-host
     spec:
       serviceAccountName: {{ include "dp-tool-host.serviceAccountName" . }}
+      # Closes P0.6g + P1 (graceful drain). Same posture as the sibling
+      # service deployments in the parent chart — see infra/helm/loop/
+      # templates/_helpers.tpl `loop.podSecurityContext` /
+      # `loop.containerSecurityContext`. Inlined here because subchart
+      # templates can't `include` parent helpers.
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: dp-tool-host
+                topologyKey: topology.kubernetes.io/zone
+            - weight: 50
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: dp-tool-host
+                topologyKey: kubernetes.io/hostname
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -28,6 +56,21 @@ spec:
         - name: dp-tool-host
           image: {{ include "dp-tool-host.image" . }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 10"]
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
@@ -38,6 +81,13 @@ spec:
             - name: {{ $name }}
               value: {{ $value | quote }}
           {{- end }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            failureThreshold: 30
+            periodSeconds: 3
+            timeoutSeconds: 2
           readinessProbe:
             httpGet:
               path: /healthz
@@ -52,6 +102,18 @@ spec:
             periodSeconds: 20
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: home-cache
+              mountPath: /home/nonroot/.cache
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+        - name: home-cache
+          emptyDir:
+            sizeLimit: 32Mi
 ---
 apiVersion: v1
 kind: Service

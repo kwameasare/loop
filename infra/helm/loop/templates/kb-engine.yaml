@@ -21,6 +21,11 @@ spec:
         app.kubernetes.io/component: kb-engine
     spec:
       serviceAccountName: {{ include "loop.serviceAccountName" . }}
+      {{- include "loop.gracefulShutdown" . | nindent 6 }}
+      securityContext:
+        {{- include "loop.podSecurityContext" . | nindent 8 }}
+      affinity:
+        {{- include "loop.podAntiAffinity" "kb-engine" | nindent 8 }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -29,6 +34,10 @@ spec:
         - name: kb-engine
           image: {{ include "loop.image" (list . .Values.kbEngine) }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          securityContext:
+            {{- include "loop.containerSecurityContext" . | nindent 12 }}
+          lifecycle:
+            {{- include "loop.preStopHook" . | nindent 12 }}
           ports:
             - name: http
               containerPort: {{ .Values.kbEngine.service.port }}
@@ -44,6 +53,8 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
           {{- end }}
+          startupProbe:
+            {{- include "loop.startupProbe" . | nindent 12 }}
           readinessProbe:
             httpGet:
               path: /healthz
@@ -58,6 +69,10 @@ spec:
             periodSeconds: 20
           resources:
             {{- toYaml .Values.kbEngine.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "loop.writableTmpVolumeMounts" . | nindent 12 }}
+      volumes:
+        {{- include "loop.writableTmpVolumes" . | nindent 8 }}
 ---
 apiVersion: v1
 kind: Service

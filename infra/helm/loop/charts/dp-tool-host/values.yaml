@@ -30,3 +30,17 @@ resources:
     cpu: "500m"
     memory: "512Mi"
 env: {}
+
+# Closes P1 from the prod-readiness audit: dp-tool-host had no PDB
+# and no HPA. Both off-by-default for single-replica dev installs;
+# production overlays should flip both to true.
+podDisruptionBudget:
+  enabled: false
+  minAvailable: null
+  maxUnavailable: 1
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80

@@ -1,0 +1,309 @@
+{{- /*
+Per-service NetworkPolicies. Closes P0.6h from the prod-readiness audit
+("ZERO NetworkPolicies on the 5 main service Deployments — a compromised
+gateway pod has unrestricted DB reach").
+
+Each service gets:
+- ingress: only the components that actually need to talk to it.
+- egress: kube-dns + the listed downstream services + (gateway only)
+  external HTTPS to LLM providers.
+
+Default-deny is implied by Kubernetes NetworkPolicy semantics: once a
+pod is *selected* by any NetworkPolicy, anything not explicitly
+allowed is dropped.
+
+Skip-toggle via .Values.networkPolicies.enabled so customers running
+in CNI-less / non-NetworkPolicy clusters (Docker Desktop's old kube,
+some on-prem setups) can opt out. Default ON.
+*/}}
+{{- if .Values.networkPolicies.enabled }}
+{{- $loopName := include "loop.name" . }}
+{{- $instance := .Release.Name }}
+{{- $fullname := include "loop.fullname" . }}
+
+# control-plane: accepts traffic from the studio (via ingress only),
+# from runtime (for cp-internal calls during turn execution), and
+# from kb-engine (for tenant lookups). Egress: postgres, redis, dns,
+# clickhouse (audit), object store.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $fullname }}-control-plane
+  labels:
+    {{- include "loop.labels" . | nindent 4 }}
+    app.kubernetes.io/component: control-plane
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $loopName }}
+      app.kubernetes.io/instance: {{ $instance }}
+      app.kubernetes.io/component: control-plane
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $loopName }}
+              app.kubernetes.io/instance: {{ $instance }}
+              app.kubernetes.io/component: runtime
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $loopName }}
+              app.kubernetes.io/instance: {{ $instance }}
+              app.kubernetes.io/component: kb-engine
+        # NB: external traffic reaches cp via the Ingress controller —
+        # add the Ingress's namespace+labels here for your environment.
+        {{- with .Values.networkPolicies.ingressNamespaceLabels }}
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml . | nindent 14 }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.controlPlane.service.port }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: clickhouse
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: minio
+      ports:
+        - protocol: TCP
+        - protocol: UDP
+    # CoreDNS / kube-dns
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # External egress for IdP exchange (Auth0 JWKS), Stripe, otel
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+
+# runtime: accepts traffic from cp-api (turn lifecycle) + ingress
+# (for direct /v1/turns/stream once auth lands). Egress: postgres,
+# redis, gateway (LLM), nats, qdrant, kb-engine.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $fullname }}-runtime
+  labels:
+    {{- include "loop.labels" . | nindent 4 }}
+    app.kubernetes.io/component: runtime
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $loopName }}
+      app.kubernetes.io/instance: {{ $instance }}
+      app.kubernetes.io/component: runtime
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $loopName }}
+              app.kubernetes.io/instance: {{ $instance }}
+              app.kubernetes.io/component: control-plane
+        {{- with .Values.networkPolicies.ingressNamespaceLabels }}
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml . | nindent 14 }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.runtime.service.port }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $loopName }}
+              app.kubernetes.io/instance: {{ $instance }}
+              app.kubernetes.io/component: gateway
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $loopName }}
+              app.kubernetes.io/instance: {{ $instance }}
+              app.kubernetes.io/component: control-plane
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $loopName }}
+              app.kubernetes.io/instance: {{ $instance }}
+              app.kubernetes.io/component: kb-engine
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nats
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: qdrant
+      ports:
+        - protocol: TCP
+        - protocol: UDP
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+
+# gateway: ingress only from runtime. Egress: external HTTPS to LLM
+# providers (OpenAI, Anthropic, Google, AWS Bedrock). No DB reach —
+# the gateway is stateless other than its idempotency cache (Redis).
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $fullname }}-gateway
+  labels:
+    {{- include "loop.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $loopName }}
+      app.kubernetes.io/instance: {{ $instance }}
+      app.kubernetes.io/component: gateway
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $loopName }}
+              app.kubernetes.io/instance: {{ $instance }}
+              app.kubernetes.io/component: runtime
+      ports:
+        - protocol: TCP
+          port: {{ .Values.gateway.service.port }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - protocol: TCP
+        - protocol: UDP
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    # External LLM providers
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+
+# kb-engine: ingress from runtime + cp-api (kb document CRUD). Egress:
+# postgres (metadata), qdrant (vectors), object store (raw docs),
+# external HTTPS for crawl/embedding providers (Voyage, Cohere,
+# Jina). DNS.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $fullname }}-kb-engine
+  labels:
+    {{- include "loop.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kb-engine
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $loopName }}
+      app.kubernetes.io/instance: {{ $instance }}
+      app.kubernetes.io/component: kb-engine
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $loopName }}
+              app.kubernetes.io/instance: {{ $instance }}
+              app.kubernetes.io/component: runtime
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $loopName }}
+              app.kubernetes.io/instance: {{ $instance }}
+              app.kubernetes.io/component: control-plane
+      ports:
+        - protocol: TCP
+          port: {{ .Values.kbEngine.service.port }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: qdrant
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: minio
+      ports:
+        - protocol: TCP
+        - protocol: UDP
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+{{- end }}
