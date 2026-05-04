@@ -22,6 +22,21 @@ from loop_channels_core.frames import (
     OutboundFrame,
     OutboundFrameKind,
 )
+from loop_channels_core.idempotency import (
+    DEFAULT_TTL_SECONDS,
+    InboundIdempotencyStore,
+    MemoryIdempotencyStore,
+    make_dedup_key,
+    provider_event_id_for_discord,
+    provider_event_id_for_email,
+    provider_event_id_for_rcs,
+    provider_event_id_for_slack,
+    provider_event_id_for_teams,
+    provider_event_id_for_telegram,
+    provider_event_id_for_twilio,
+    provider_event_id_for_web,
+    provider_event_id_for_whatsapp,
+)
 from loop_channels_core.protocol import (
     Channel,
     ChannelDispatcher,
@@ -33,6 +48,7 @@ from loop_channels_core.protocol import (
 from loop_channels_core.translate import from_turn_event
 
 __all__ = [
+    "DEFAULT_TTL_SECONDS",
     "AgentChannelMatrix",
     "Channel",
     "ChannelCapability",
@@ -41,11 +57,23 @@ __all__ = [
     "DispatcherFn",
     "InboundEvent",
     "InboundEventKind",
+    "InboundIdempotencyStore",
+    "MemoryIdempotencyStore",
     "OutboundFrame",
     "OutboundFrameKind",
     "default_channel_profiles",
     "from_async_generator",
     "from_list_factory",
     "from_turn_event",
+    "make_dedup_key",
+    "provider_event_id_for_discord",
+    "provider_event_id_for_email",
+    "provider_event_id_for_rcs",
+    "provider_event_id_for_slack",
+    "provider_event_id_for_teams",
+    "provider_event_id_for_telegram",
+    "provider_event_id_for_twilio",
+    "provider_event_id_for_web",
+    "provider_event_id_for_whatsapp",
     "to_dispatcher",
 ]
