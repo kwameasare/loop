@@ -413,6 +413,101 @@ def test_pick_default_best_prefers_opus(cache_path: Path) -> None:
         del os.environ["ANTHROPIC_API_KEY"]
 
 
+def test_pick_default_balanced_excludes_pro_tier(cache_path: Path) -> None:
+    """Regression: ``-pro`` is the frontier tier (e.g. ``gpt-5.5-pro``),
+    not a balanced workhorse. Balanced must never pick a pro-tier id
+    when an unmarked workhorse (``gpt-4o``, ``gpt-5-chat-latest``) is
+    available."""
+    catalog = ModelCatalog(
+        fetch_openai=lambda *_a, **_kw: [
+            ModelInfo(id="gpt-4o", vendor="openai", created_at=1721260800),
+            ModelInfo(id="gpt-4o-mini", vendor="openai", created_at=1721260800),
+            ModelInfo(id="gpt-5-chat-latest", vendor="openai", created_at=1745000000),
+            # The frontier id we don't want as the balanced default
+            ModelInfo(id="gpt-5.5-pro-2026-04-23", vendor="openai", created_at=1746000000),
+        ],
+        fetch_anthropic=lambda *_a, **_kw: [],
+        cache_path=cache_path,
+    )
+    os.environ["OPENAI_API_KEY"] = "sk-test"
+    try:
+        balanced = catalog.pick_default("openai", profile="balanced")
+        best = catalog.pick_default("openai", profile="best")
+        cheap = catalog.pick_default("openai", profile="cheap")
+    finally:
+        del os.environ["OPENAI_API_KEY"]
+    # Balanced gets the unmarked workhorse, NOT the pro tier
+    assert balanced != "gpt-5.5-pro-2026-04-23"
+    assert balanced in {"gpt-4o", "gpt-5-chat-latest"}
+    # Best gets the pro tier
+    assert best == "gpt-5.5-pro-2026-04-23"
+    # Cheap gets the mini
+    assert cheap == "gpt-4o-mini"
+
+
+def test_pick_default_best_includes_pro_and_turbo_and_o_series(cache_path: Path) -> None:
+    """All three frontier markers (``-pro``, ``-turbo``, o-series prefix)
+    should classify as ``best`` and the most recent wins within the tier."""
+    catalog = ModelCatalog(
+        fetch_openai=lambda *_a, **_kw: [
+            ModelInfo(id="gpt-4-turbo-2024-04-09", vendor="openai", created_at=1712620800),
+            ModelInfo(id="o3", vendor="openai", created_at=1738000000),
+            ModelInfo(id="gpt-5.5-pro-2026-04-23", vendor="openai", created_at=1745366400),
+        ],
+        fetch_anthropic=lambda *_a, **_kw: [],
+        cache_path=cache_path,
+    )
+    os.environ["OPENAI_API_KEY"] = "sk-test"
+    try:
+        # Newest of the three frontier ids wins
+        assert catalog.pick_default("openai", profile="best") == "gpt-5.5-pro-2026-04-23"
+    finally:
+        del os.environ["OPENAI_API_KEY"]
+
+
+def test_pick_default_o_series_mini_classifies_as_cheap(cache_path: Path) -> None:
+    """``o4-mini`` and ``o3-mini`` should classify as cheap despite the
+    o-series prefix — the ``-mini`` cheap marker takes precedence."""
+    catalog = ModelCatalog(
+        fetch_openai=lambda *_a, **_kw: [
+            ModelInfo(id="o3", vendor="openai", created_at=1738000000),
+            ModelInfo(id="o3-mini", vendor="openai", created_at=1738000000),
+            ModelInfo(id="o4-mini", vendor="openai", created_at=1740000000),
+        ],
+        fetch_anthropic=lambda *_a, **_kw: [],
+        cache_path=cache_path,
+    )
+    os.environ["OPENAI_API_KEY"] = "sk-test"
+    try:
+        assert catalog.pick_default("openai", profile="cheap") == "o4-mini"  # newest mini wins
+        assert catalog.pick_default("openai", profile="best") == "o3"  # only non-mini frontier
+    finally:
+        del os.environ["OPENAI_API_KEY"]
+
+
+def test_pick_default_balanced_falls_back_when_no_balanced_models_in_catalog(
+    cache_path: Path,
+) -> None:
+    """Live catalog has models but none classify as balanced (only mini +
+    pro). We must NOT silently down/up-grade — fall through to the
+    bundled balanced list instead."""
+    catalog = ModelCatalog(
+        fetch_openai=lambda *_a, **_kw: [
+            ModelInfo(id="gpt-5.4-mini", vendor="openai", created_at=1745000000),
+            ModelInfo(id="gpt-5.5-pro-2026-04-23", vendor="openai", created_at=1746000000),
+        ],
+        fetch_anthropic=lambda *_a, **_kw: [],
+        cache_path=cache_path,
+    )
+    os.environ["OPENAI_API_KEY"] = "sk-test"
+    try:
+        result = catalog.pick_default("openai", profile="balanced")
+    finally:
+        del os.environ["OPENAI_API_KEY"]
+    # Bundled balanced list, NOT one of the live models
+    assert result == FALLBACK_MODELS["openai"]["balanced"][0]
+
+
 def test_pick_default_falls_back_when_discovery_returns_empty(cache_path: Path) -> None:
     catalog = ModelCatalog(
         fetch_openai=lambda *_a, **_kw: [],
