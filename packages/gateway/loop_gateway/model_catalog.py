@@ -46,16 +46,33 @@ short turns are the common case and we want to default-spend the
 operator's budget conservatively. A higher profile is opt-in via
 agent config or per-turn metadata.
 
-Pattern ranking (highest → lowest priority within each profile):
+Classification is *mutually exclusive*: every model is exactly one
+of cheap / balanced / best. We don't want a frontier model like
+``gpt-5.5-pro-2026-04-23`` accidentally landing in ``balanced``
+because the legacy ``-pro`` suffix overlapped multiple tiers.
 
-* ``cheap``    → ``*-mini`` / ``*-haiku`` / ``*-flash`` / ``*-nano``
-* ``balanced`` → ``*-sonnet`` / ``*-4o`` / ``*-pro``
-* ``best``     → ``*-opus`` / ``*-5`` / ``*-pro-max`` / ``*-turbo``
+* ``cheap``    → id contains ``-mini`` / ``-haiku`` / ``-flash`` / ``-nano``
+* ``best``     → id contains ``-opus`` / ``-pro`` / ``-turbo`` / ``-ultra``,
+  *or* it's an o-series reasoning model (``o1*``, ``o3*``, ``o4*``,
+  ``o5*``…) without one of the cheap markers above (so ``o4-mini``
+  still classifies as cheap, but bare ``o4`` is best)
+* ``balanced`` → everything else (the unmarked workhorse — ``gpt-4o``,
+  ``gpt-4.1``, ``gpt-5-chat-latest``, ``claude-sonnet-*``)
+
+Cheap precedence is checked first so a name like ``o4-mini`` lands
+in ``cheap`` despite the o-series prefix.
 
 Within a tier, ``*-latest`` aliases beat dated IDs (Anthropic ships
-those; OpenAI does not). Among dated IDs, the lexicographically
-largest suffix wins — provider date-stamp conventions (YYYYMMDD or
-YYYY-MM-DD) make string sort = chronological sort.
+those; OpenAI does not). Among dated IDs, the larger ``created_at``
+wins, then lexicographically larger id breaks final ties — provider
+date-stamp conventions (YYYYMMDD or YYYY-MM-DD) make string sort =
+chronological sort.
+
+If the live catalog has zero models classifying into the requested
+tier (e.g. a vendor only returned mini-variants), the bundled
+:data:`FALLBACK_MODELS` list is used. We never silently down- or
+up-grade the tier, since the resulting cost / capability surprise
+is worse than a slightly-stale fallback id.
 """
 
 from __future__ import annotations
@@ -243,34 +260,43 @@ def fetch_anthropic_models(
 # --------------------------------------------------------------------------- #
 
 
-_PROFILE_PATTERNS: dict[Profile, tuple[str, ...]] = {
-    "cheap": ("-mini", "-haiku", "-flash", "-nano"),
-    "balanced": ("-sonnet", "-4o", "-pro", "-4.1"),
-    "best": ("-opus", "-pro-max", "-turbo", "-5", "o1", "o3"),
-}
+# Tier classification — see module docstring for design rationale.
+# Order matters in :func:`_classify`: cheap markers win first so e.g.
+# ``o4-mini`` doesn't get caught by the o-series best-prefix rule.
+_CHEAP_MARKERS: tuple[str, ...] = ("-mini", "-haiku", "-flash", "-nano")
+_BEST_MARKERS: tuple[str, ...] = ("-opus", "-pro", "-turbo", "-ultra")
+# o-series reasoning prefixes. ``o2`` is intentionally absent (OpenAI
+# skipped the name); ``o4`` is included so a future bare ``o4`` model
+# resolves to best (``o4-mini`` still hits cheap via _CHEAP_MARKERS).
+_BEST_PREFIXES: tuple[str, ...] = ("o1", "o3", "o4", "o5", "o6", "o7", "o8", "o9")
 
 
-def _profile_score(model: ModelInfo, profile: Profile) -> tuple[int, int, str]:
-    """Lower score == better match for the profile.
+def _classify(model_id: str) -> Profile:
+    """Map a model id to exactly one tier.
 
-    Tier 0: model id contains a profile-pattern AND is a ``-latest`` alias.
-    Tier 1: model id contains a profile-pattern.
-    Tier 2: doesn't match the profile pattern at all.
-
-    Within a tier we prefer the most recently created model (negate
-    ``created_at`` so smaller = newer in the sort). Final tiebreaker is
-    lexicographic id descending so `-2024-12-01` beats `-2024-07-18`.
+    Mutually exclusive — every model lands in cheap / balanced / best.
+    Unknown shapes default to ``balanced`` (the safest unknown-tier
+    choice for runtime defaults).
     """
-    patterns = _PROFILE_PATTERNS[profile]
+    mid = model_id.lower()
+    if any(marker in mid for marker in _CHEAP_MARKERS):
+        return "cheap"
+    if any(marker in mid for marker in _BEST_MARKERS):
+        return "best"
+    if any(mid.startswith(prefix) for prefix in _BEST_PREFIXES):
+        return "best"
+    return "balanced"
+
+
+def _score_within_tier(model: ModelInfo) -> tuple[int, int, str]:
+    """Sort key for models that already match the requested tier.
+
+    Lower wins. Tier 0 = ``-latest`` alias; tier 1 = dated id. Within
+    tier, most recent ``created_at`` wins, then lexicographic id
+    descending so ``-2024-12-01`` beats ``-2024-07-18``.
+    """
     is_latest = "-latest" in model.id
-    matches_profile = any(p in model.id for p in patterns)
-    if matches_profile and is_latest:
-        tier = 0
-    elif matches_profile:
-        tier = 1
-    else:
-        tier = 2
-    return (tier, -model.created_at, model.id[::-1])
+    return (0 if is_latest else 1, -model.created_at, model.id[::-1])
 
 
 # --------------------------------------------------------------------------- #
@@ -329,8 +355,16 @@ class ModelCatalog:
         models = self.list(vendor)
         if not models:
             return _fallback_pick(vendor, profile)
-        ranked = sorted(models, key=lambda m: _profile_score(m, profile))
-        return ranked[0].id
+        matches = [m for m in models if _classify(m.id) == profile]
+        if not matches:
+            # Live catalog has models but none classify into the requested
+            # tier (e.g. only mini-variants returned). The bundled list is
+            # the right "no surprise" answer — we never silently up- or
+            # down-grade a tier, since the cost / capability surprise is
+            # worse than a slightly-stale fallback id.
+            return _fallback_pick(vendor, profile)
+        matches.sort(key=_score_within_tier)
+        return matches[0].id
 
     def refresh(self) -> dict[Vendor, list[ModelInfo]]:
         """Force a fresh fetch from each vendor. Updates the disk cache."""
