@@ -11,6 +11,9 @@ requires-python = ">=3.12"
 dependencies = [
     "loop-channels-core",
     "pydantic>=2",
+    # SNS message-signature verification (P0.5d) + DKIM verification
+    # on inbound (P0.5e) both need RSA-SHA256 + X.509 cert handling.
+    "cryptography>=42",
 ]
 
 [tool.hatch.build.targets.wheel]
