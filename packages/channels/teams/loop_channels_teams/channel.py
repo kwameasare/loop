@@ -6,7 +6,7 @@ import asyncio
 from typing import Any
 from uuid import UUID, uuid4
 
-from loop_channels_core import ChannelDispatcher
+from loop_channels_core import ChannelDispatcher, PostgresConversationIndex
 
 from loop_channels_teams.messages import to_reply_activity
 from loop_channels_teams.parser import parse_activity
@@ -33,6 +33,17 @@ class TeamsConversationIndex:
             return self._by_ref.get(conversation_ref)
 
 
+class TeamsPostgresConversationIndex:
+    def __init__(self, inner: PostgresConversationIndex) -> None:
+        self._inner = inner
+
+    async def get_or_create(self, *, conversation_ref: str) -> UUID:
+        return await self._inner.get_or_create(provider_user_id=conversation_ref)
+
+    async def get(self, *, conversation_ref: str) -> UUID | None:
+        return await self._inner.get(provider_user_id=conversation_ref)
+
+
 class TeamsChannel:
     """Bridges a Teams Bot Framework activity to a dispatcher."""
 
@@ -44,10 +55,22 @@ class TeamsChannel:
         workspace_id: UUID,
         agent_id: UUID,
         conversations: TeamsConversationIndex | None = None,
+        conversation_index_engine: Any | None = None,
     ) -> None:
         self._workspace_id = workspace_id
         self._agent_id = agent_id
-        self._conversations = conversations or TeamsConversationIndex()
+        if conversations is not None:
+            self._conversations = conversations
+        elif conversation_index_engine is not None:
+            self._conversations = TeamsPostgresConversationIndex(
+                PostgresConversationIndex(
+                    conversation_index_engine,
+                    workspace_id=workspace_id,
+                    channel=self.name,
+                )
+            )
+        else:
+            self._conversations = TeamsConversationIndex()
         self._dispatcher: ChannelDispatcher | None = None
 
     async def start(self, dispatcher: ChannelDispatcher) -> None:
@@ -91,4 +114,4 @@ class TeamsChannel:
         return out
 
 
-__all__ = ["TeamsChannel", "TeamsConversationIndex"]
+__all__ = ["TeamsChannel", "TeamsConversationIndex", "TeamsPostgresConversationIndex"]

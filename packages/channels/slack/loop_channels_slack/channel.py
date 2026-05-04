@@ -9,6 +9,7 @@ from uuid import UUID, uuid4
 from loop_channels_core import (
     ChannelDispatcher,
     InboundEvent,
+    PostgresConversationIndex,
 )
 
 from loop_channels_slack.blocks import to_blocks
@@ -39,6 +40,17 @@ class ThreadIndex:
             return self._by_thread.get((slack_team, thread_ts))
 
 
+class SlackPostgresThreadIndex:
+    def __init__(self, inner: PostgresConversationIndex) -> None:
+        self._inner = inner
+
+    async def get_or_create(self, *, slack_team: str, thread_ts: str) -> UUID:
+        return await self._inner.get_or_create(provider_user_id=f"{slack_team}:{thread_ts}")
+
+    async def get(self, *, slack_team: str, thread_ts: str) -> UUID | None:
+        return await self._inner.get(provider_user_id=f"{slack_team}:{thread_ts}")
+
+
 class SlackChannel:
     """Bridges Slack Events API + slash commands to a dispatcher.
 
@@ -56,10 +68,22 @@ class SlackChannel:
         workspace_id: UUID,
         agent_id: UUID,
         threads: ThreadIndex | None = None,
+        conversation_index_engine: Any | None = None,
     ) -> None:
         self._workspace_id = workspace_id
         self._agent_id = agent_id
-        self._threads = threads or ThreadIndex()
+        if threads is not None:
+            self._threads = threads
+        elif conversation_index_engine is not None:
+            self._threads = SlackPostgresThreadIndex(
+                PostgresConversationIndex(
+                    conversation_index_engine,
+                    workspace_id=workspace_id,
+                    channel=self.name,
+                )
+            )
+        else:
+            self._threads = ThreadIndex()
         self._dispatcher: ChannelDispatcher | None = None
 
     async def start(self, dispatcher: ChannelDispatcher) -> None:
@@ -109,4 +133,4 @@ class SlackChannel:
         return out
 
 
-__all__ = ["SlackChannel", "ThreadIndex"]
+__all__ = ["SlackChannel", "SlackPostgresThreadIndex", "ThreadIndex"]

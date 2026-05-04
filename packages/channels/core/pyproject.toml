@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Loop channel-layer abstractions: Channel Protocol, inbound/outbound frame types."
 license = { text = "Apache-2.0" }
 requires-python = ">=3.12"
-dependencies = ["pydantic>=2"]
+dependencies = ["pydantic>=2", "sqlalchemy>=2.0"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["loop_channels_core"]
