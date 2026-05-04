@@ -45,6 +45,7 @@ from loop_voice.phone import (
     PhoneProvisioningError,
     validate_e164,
 )
+from loop_voice.postgres_rooms import PostgresRoomManager
 from loop_voice.protocols import (
     InMemoryRealtimeTransport,
     InMemorySpeechToText,
@@ -110,6 +111,7 @@ __all__ = [
     "PhoneNumberStatus",
     "PhoneProvisioningError",
     "PooledWebSocket",
+    "PostgresRoomManager",
     "PrewarmableTextToSpeech",
     "ProviderEndpointMap",
     "ProviderName",
