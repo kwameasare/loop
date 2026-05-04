@@ -153,6 +153,34 @@ def test_cp_audit_log_has_required_columns(cp_sql: str) -> None:
         assert col in body, f"audit_log missing column {col!r}"
 
 
+def test_per_plane_version_tables_differ() -> None:
+    """Regression: cp + dp must use distinct ``version_table`` names so
+    they can share a single Postgres database (the dev / kind /
+    helm-shared-DB path) without colliding on the default
+    ``alembic_version`` table.
+
+    The bug we shipped before this test existed: cp's alembic.ini had
+    no ``version_table`` line, so cp fell back to the default
+    ``alembic_version`` while dp used ``dp_alembic_version``. Running
+    ``make migrate`` against a shared DB would crash dp with "Can't
+    locate revision 'cp_0006_merge_audit_heads'" because the second
+    plane's alembic saw the other plane's head row.
+    """
+    cp_cfg = _config("loop_control_plane.migrations")
+    dp_cfg = _config("loop_data_plane.migrations")
+
+    cp_table = cp_cfg.get_main_option("version_table")
+    dp_table = dp_cfg.get_main_option("version_table")
+
+    assert cp_table == "cp_alembic_version", (
+        f"cp must declare version_table=cp_alembic_version; got {cp_table!r}"
+    )
+    assert dp_table == "dp_alembic_version", (
+        f"dp must declare version_table=dp_alembic_version; got {dp_table!r}"
+    )
+    assert cp_table != dp_table
+
+
 def test_cp_audit_log_indexes(cp_sql: str) -> None:
     for idx_name in (
         "idx_audit_workspace_action",
