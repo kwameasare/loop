@@ -11,6 +11,12 @@ and conversation indexing.
 """
 
 from loop_channels_email.channel import EmailChannel, EmailConversationIndex
+from loop_channels_email.dkim_inbound import (
+    DnsTxtLookup,
+    InboundDkimResult,
+    InboundDkimStatus,
+    verify_dkim_inbound,
+)
 from loop_channels_email.messages import to_send_email_body
 from loop_channels_email.parser import parse_ses_inbound
 from loop_channels_email.sns_verify import (
@@ -20,11 +26,15 @@ from loop_channels_email.sns_verify import (
 )
 
 __all__ = [
+    "DnsTxtLookup",
     "EmailChannel",
     "EmailConversationIndex",
+    "InboundDkimResult",
+    "InboundDkimStatus",
     "SigningCertFetcher",
     "SnsSignatureError",
     "parse_ses_inbound",
     "to_send_email_body",
+    "verify_dkim_inbound",
     "verify_sns_signature",
 ]
