@@ -59,8 +59,22 @@ def dp_sql() -> str:
 
 
 def test_cp_migrations_have_single_head() -> None:
+    """Track the most recent head as the cp migration chain advances.
+    The Postgres-services PRs (#193/#196/#199/#200/#205) chained
+    cp_0007 (audit payloads) → cp_0008 (refresh tokens) →
+    cp_0009 (members align) → cp_0010 (workspaces align) →
+    cp_0011 (agents align) → cp_0012 (api-keys align). Multiple heads
+    = a merge migration is missing — that's the bug this test catches.
+    """
     script = ScriptDirectory.from_config(_config("loop_control_plane.migrations"))
-    assert script.get_heads() == ["cp_0007_audit_event_payloads"]
+    heads = script.get_heads()
+    assert len(heads) == 1, f"expected single head, got {heads}"
+    # The current head is the latest migration. When a new migration
+    # lands on top of cp_0012, this assertion will fail and the
+    # author should bump it.
+    assert heads == ["cp_0012_api_keys_align"], (
+        f"head changed; bump this assertion when adding a migration: {heads}"
+    )
 
 
 def test_cp_creates_core_identity_tables(cp_sql: str) -> None:

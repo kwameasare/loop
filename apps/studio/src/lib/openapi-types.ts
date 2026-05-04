@@ -390,7 +390,7 @@ export interface Operations {
     request: unknown;
     response: AuditEventList;
   };
-  GetAuditEventsLegacy: {
+  GetAuditEvents: {
     method: "GET";
     path: "/audit/events";
     request: unknown;
