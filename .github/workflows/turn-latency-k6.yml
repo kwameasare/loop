@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: azure/setup-helm@v4
       - uses: grafana/setup-k6-action@v1
-      - uses: helm/kind-action@v1.10.0
+      - uses: helm/kind-action@v1.14.0
         with:
           cluster_name: loop-turn-latency
           wait: 60s
