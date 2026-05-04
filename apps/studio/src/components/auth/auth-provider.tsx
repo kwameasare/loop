@@ -8,10 +8,12 @@
  * environment variables so the same bundle ships against dev /
  * staging / prod tenants.
  *
- * If the configuration is missing (e.g. in unit tests or the public
- * marketing build) the provider degrades gracefully by rendering
- * children without an Auth0 context — `useUser()` then returns the
- * anonymous shape (`isAuthenticated: false`).
+ * If the configuration is missing the provider degrades gracefully in
+ * dev/test/preview by rendering children without an Auth0 context —
+ * `useUser()` then returns the anonymous shape (`isAuthenticated:
+ * false`). In **production** (NODE_ENV === "production") missing
+ * config raises so a misconfigured deploy fails loudly at boot rather
+ * than silently shipping an unauthenticated studio.
  */
 
 import { Auth0Provider, type AppState } from "@auth0/auth0-react";
@@ -26,6 +28,12 @@ export interface AuthProviderProps {
     audience?: string;
     redirectUri?: string;
   };
+  /**
+   * Override the env used to gate the production fail-loud check.
+   * Tests pass ``"production"`` to assert the gate; production
+   * deploys leave this unset so it falls back to ``process.env``.
+   */
+  envName?: string;
 }
 
 function readConfig(override?: AuthProviderProps["config"]) {
@@ -42,9 +50,18 @@ function readConfig(override?: AuthProviderProps["config"]) {
   return { domain, clientId, audience, redirectUri };
 }
 
-export function AuthProvider({ children, config }: AuthProviderProps) {
+export function AuthProvider({ children, config, envName }: AuthProviderProps) {
   const { domain, clientId, audience, redirectUri } = readConfig(config);
   if (!domain || !clientId) {
+    const env = envName ?? process.env.NODE_ENV;
+    if (env === "production") {
+      // Fail loud: production must boot with Auth0 wired or no studio
+      // at all. The previous silent fallthrough shipped an
+      // unauthenticated studio when env vars were missing.
+      throw new Error(
+        "AuthProvider: NEXT_PUBLIC_AUTH0_DOMAIN and NEXT_PUBLIC_AUTH0_CLIENT_ID are required in production",
+      );
+    }
     // Allow the studio to render without Auth0 wired (tests, preview).
     return <>{children}</>;
   }
