@@ -7,6 +7,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCKERFILE = ROOT / "packages" / "control-plane" / "Dockerfile"
+DP_DOCKERFILE = ROOT / "packages" / "data-plane" / "Dockerfile"
 WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 BRANCH_PROTECTION = ROOT / "docs" / "branch-protection.md"
 
@@ -93,6 +94,16 @@ def test_cp_api_dockerfile_is_distroless_nonroot() -> None:
     assert "FROM python:3.12-slim-bookworm AS builder" in dockerfile
     assert "COPY --from=builder /opt/venv /opt/venv" in dockerfile
     assert _dockerfile_policy_errors(dockerfile) == []
+
+
+def test_service_dockerfiles_install_local_channel_core_dependency() -> None:
+    """The local loop-channels-core package must be installed before
+    loop-control-plane, otherwise image builds try to resolve it from PyPI."""
+    for dockerfile_path in (DOCKERFILE, DP_DOCKERFILE):
+        dockerfile = dockerfile_path.read_text()
+        assert "COPY packages/channels/core/pyproject.toml" in dockerfile
+        assert "COPY packages/channels/core/loop_channels_core" in dockerfile
+        assert "./packages/channels/core" in dockerfile
 
 
 def test_cp_api_dockerfile_policy_rejects_insecure_runtime() -> None:

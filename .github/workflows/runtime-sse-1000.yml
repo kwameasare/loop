@@ -72,9 +72,11 @@ jobs:
             --set-string runtime.env.LOOP_DP_OPENAI_BASE_URL=http://openai-sse-fixture:8089 \
             --set-string runtime.env.LOOP_GATEWAY_OPENAI_API_KEY=perf-fixture-key \
             --set-string runtime.env.LOOP_DP_DEFAULT_MODEL=gpt-4o-mini \
+            --set-string runtime.env.LOOP_DP_AUTH_DISABLE=1 \
             --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \
             --set nats.enabled=false --set minio.enabled=false \
-            --set clickhouse.enabled=false
+            --set clickhouse.enabled=false \
+            --set migrations.enabled=false
       - name: Run 1000 SSE turns
         run: |
           kubectl -n "$LOOP_NAMESPACE" rollout status deploy/loop-loop-runtime --timeout=90s

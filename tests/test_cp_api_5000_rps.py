@@ -48,6 +48,7 @@ def test_cp_api_5000_rps_workflow_runs_k6_and_pages() -> None:
     assert "kind load docker-image loop/cp-api:perf" in runs
     assert "controlPlane.image.repository=cp-api" in runs
     assert "helm_e2e_smoke_server.py" not in WORKFLOW.read_text()
+    assert "--set migrations.enabled=false" in runs
     assert "svc/loop-loop-control-plane 18080:8080" in runs
     assert "k6 run --summary-export /tmp/cp-api-5000-rps-summary.json" in runs
     assert "scripts/k6_cp_api_5000.js" in runs

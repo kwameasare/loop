@@ -14,6 +14,8 @@ ENV PATH="/opt/venv/bin:${PATH}" \
 WORKDIR /src
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.29 /uv /usr/local/bin/uv
+COPY packages/channels/core/pyproject.toml ./packages/channels/core/
+COPY packages/channels/core/loop_channels_core ./packages/channels/core/loop_channels_core
 COPY packages/sdk-py/pyproject.toml ./packages/sdk-py/
 COPY packages/sdk-py/loop ./packages/sdk-py/loop
 COPY packages/gateway/pyproject.toml ./packages/gateway/
@@ -27,7 +29,7 @@ COPY packages/data-plane/loop_data_plane ./packages/data-plane/loop_data_plane
 
 RUN uv venv "${VIRTUAL_ENV}" \
     && uv pip install --python "${VIRTUAL_ENV}/bin/python" \
-        ./packages/sdk-py ./packages/gateway ./packages/control-plane \
+        ./packages/channels/core ./packages/sdk-py ./packages/gateway ./packages/control-plane \
         ./packages/runtime ./packages/data-plane \
     && mkdir -p /python-libs \
     && for lib in \
