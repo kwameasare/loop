@@ -9,7 +9,9 @@ description = "Loop voice pipeline: STT, TTS, and realtime transport orchestrate
 license = { text = "Apache-2.0" }
 requires-python = ">=3.12"
 dependencies = [
+    "livekit-api>=1.0",
     "pydantic>=2",
+    "sqlalchemy>=2.0",
     "websockets>=15.0",
 ]
 

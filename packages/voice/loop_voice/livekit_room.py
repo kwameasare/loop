@@ -13,7 +13,7 @@ from __future__ import annotations
 import secrets
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Protocol, runtime_checkable
 from uuid import UUID
 
@@ -63,6 +63,55 @@ class LiveKitClient(Protocol):
     async def delete_room(self, *, name: str) -> None: ...
 
     def mint_token(self, grant: RoomGrant, *, api_key: str, api_secret: str) -> str: ...
+
+
+class LiveKitAPIClient:
+    """LiveKit Server API adapter using the official ``livekit-api`` package."""
+
+    def __init__(self, *, url: str, api_key: str, api_secret: str) -> None:
+        self._url = url
+        self._api_key = api_key
+        self._api_secret = api_secret
+
+    async def create_room(
+        self, *, name: str, empty_timeout_seconds: int, max_participants: int
+    ) -> str:
+        from livekit import api
+
+        async with api.LiveKitAPI(self._url, self._api_key, self._api_secret) as lkapi:
+            room = await lkapi.room.create_room(
+                api.CreateRoomRequest(
+                    name=name,
+                    empty_timeout=empty_timeout_seconds,
+                    max_participants=max_participants,
+                )
+            )
+        return str(room.sid)
+
+    async def delete_room(self, *, name: str) -> None:
+        from livekit import api
+
+        async with api.LiveKitAPI(self._url, self._api_key, self._api_secret) as lkapi:
+            await lkapi.room.delete_room(api.DeleteRoomRequest(room=name))
+
+    def mint_token(self, grant: RoomGrant, *, api_key: str, api_secret: str) -> str:
+        from livekit import api
+
+        ttl = max(1, int((grant.valid_until_ms - now_ms_default()) / 1000))
+        return (
+            api.AccessToken(api_key, api_secret)
+            .with_identity(grant.identity)
+            .with_grants(
+                api.VideoGrants(
+                    room_join=True,
+                    room=grant.room,
+                    can_publish=grant.can_publish,
+                    can_subscribe=grant.can_subscribe,
+                )
+            )
+            .with_ttl(timedelta(seconds=ttl))
+            .to_jwt()
+        )
 
 
 def now_ms_default() -> int:
@@ -152,6 +201,11 @@ class RoomManager:
             raise RoomNotFound(f"unknown room {room_name!r}")
         return self.now_ms() - room.created_at_ms > room.ttl_seconds * 1000
 
+    def list_recent(self, *, workspace_id: UUID, limit: int = 20) -> list[Room]:
+        rows = [room for room in self.rooms.values() if room.workspace_id == workspace_id]
+        rows.sort(key=lambda room: room.created_at_ms, reverse=True)
+        return rows[:limit]
+
 
 def _build_room_name(workspace_id: UUID, agent_id: UUID) -> str:
     """LiveKit room names must be url-safe; use a workspace+agent prefix
@@ -163,6 +217,7 @@ def _build_room_name(workspace_id: UUID, agent_id: UUID) -> str:
 __all__ = [
     "DEFAULT_PARTICIPANT_TTL_SECONDS",
     "DEFAULT_ROOM_TTL_SECONDS",
+    "LiveKitAPIClient",
     "LiveKitClient",
     "LiveKitError",
     "Room",
