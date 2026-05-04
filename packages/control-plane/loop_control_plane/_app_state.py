@@ -40,7 +40,7 @@ from loop_control_plane.trace_search import (
 )
 from loop_control_plane.usage import UsageLedger, UsageRollup
 from loop_control_plane.workspace_api import WorkspaceAPI
-from loop_control_plane.workspaces import WorkspaceService
+from loop_control_plane.workspaces import PostgresWorkspaceService, WorkspaceService
 
 
 def _default_audit_event_store() -> AuditEventStore:
@@ -80,6 +80,26 @@ def _default_refresh_token_store() -> RefreshTokenStore:
     return PostgresRefreshTokenStore.from_url(db_url)
 
 
+def _default_workspace_service() -> WorkspaceService | PostgresWorkspaceService:
+    """Pick between in-memory and Postgres-backed workspace services [P0.2].
+
+    Same env-var dispatch as the audit + refresh-token factories.
+    The two return types share the async surface (create / get /
+    list_for_user / add_member / role_of / list_members /
+    remove_member / update_role / update / delete /
+    require_same_region) so route handlers don't care which one is
+    wired in.
+    """
+    if os.environ.get("LOOP_CP_USE_POSTGRES") != "1":
+        return WorkspaceService()
+    db_url = os.environ.get("LOOP_CP_DB_URL")
+    if not db_url:
+        raise RuntimeError(
+            "LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set"
+        )
+    return PostgresWorkspaceService.from_url(db_url)
+
+
 def _default_saml_validator() -> SamlValidator:
     """Pick between Stub and PySAML2 validators per ``LOOP_SAML_USE_PYSAML2``.
 
@@ -102,7 +122,9 @@ def _default_saml_validator() -> SamlValidator:
 
 @dataclass
 class CpApiState:
-    workspaces: WorkspaceService = field(default_factory=WorkspaceService)
+    workspaces: WorkspaceService | PostgresWorkspaceService = field(
+        default_factory=_default_workspace_service
+    )
     audit_events: AuditEventStore = field(default_factory=_default_audit_event_store)
     agents: AgentRegistry = field(default_factory=AgentRegistry)
     refresh_store: RefreshTokenStore = field(default_factory=_default_refresh_token_store)
