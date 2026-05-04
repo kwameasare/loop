@@ -13,6 +13,12 @@ from loop_control_plane._routes_agents import router as agents_router
 from loop_control_plane._routes_api_keys import router as api_keys_router
 from loop_control_plane._routes_audit import router as audit_router
 from loop_control_plane._routes_auth import router as auth_router
+from loop_control_plane._routes_conversations import (
+    router_agents_conv as agent_conversations_router,
+)
+from loop_control_plane._routes_conversations import (
+    router_conversations as conversations_router,
+)
 from loop_control_plane._routes_dsr import router as dsr_router
 from loop_control_plane._routes_health import router as health_router
 from loop_control_plane._routes_secrets import router as secrets_router
@@ -58,6 +64,9 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         telemetry_router,
         # P0.4: agent version create/list/promote.
         agent_versions_router,
+        # P0.4: conversation list + read + takeover.
+        agent_conversations_router,
+        conversations_router,
     ):
         app.include_router(router)
     # P0.7b: Prometheus middleware + /metrics endpoint. The
