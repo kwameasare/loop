@@ -75,10 +75,9 @@ from __future__ import annotations
 import argparse
 import os
 import re
-import shlex
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # ─────────────────────────────────────────────────────────────────────
@@ -91,7 +90,7 @@ STORIES_V2 = SCRIPT_DIR / "_stories_v2.py"
 
 
 def _now_utc_iso() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _run(

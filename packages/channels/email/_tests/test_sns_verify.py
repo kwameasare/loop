@@ -7,7 +7,7 @@ trip to AWS sns.* domains.
 from __future__ import annotations
 
 import base64
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from cryptography import x509
@@ -33,8 +33,8 @@ def _make_self_signed_cert() -> tuple[rsa.RSAPrivateKey, bytes]:
         .issuer_name(issuer)
         .public_key(priv.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime(2024, 1, 1, tzinfo=timezone.utc))
-        .not_valid_after(datetime(2030, 1, 1, tzinfo=timezone.utc))
+        .not_valid_before(datetime(2024, 1, 1, tzinfo=UTC))
+        .not_valid_after(datetime(2030, 1, 1, tzinfo=UTC))
         .sign(priv, hashes.SHA256())
     )
     return priv, cert.public_bytes(Encoding.PEM)

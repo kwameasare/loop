@@ -49,7 +49,7 @@ def _make_header(secret: str, ts: int, payload: bytes) -> str:
 
 
 def test_stripe_signature_round_trip() -> None:
-    secret = "whsec_test_123"  # noqa: S105
+    secret = "whsec_test_123"
     payload = b'{"id":"evt_1","type":"ping","created":1700000000,"data":{"object":{}}}'
     ts = 1_700_000_000
     header = _make_header(secret, ts, payload)
@@ -62,7 +62,7 @@ def test_stripe_signature_round_trip() -> None:
 
 
 def test_stripe_signature_rejects_tamper() -> None:
-    secret = "whsec_test_123"  # noqa: S105
+    secret = "whsec_test_123"
     payload = b'{"hello":"world"}'
     ts = 1_700_000_000
     header = _make_header(secret, ts, payload)
@@ -76,7 +76,7 @@ def test_stripe_signature_rejects_tamper() -> None:
 
 
 def test_stripe_signature_rejects_stale() -> None:
-    secret = "whsec"  # noqa: S105
+    secret = "whsec"
     payload = b"{}"
     ts = 1_700_000_000
     header = _make_header(secret, ts, payload)
@@ -90,7 +90,7 @@ def test_stripe_signature_rejects_stale() -> None:
 
 
 def test_stripe_dispatcher_routes_subscription_event() -> None:
-    secret = "whsec_xyz"  # noqa: S105
+    secret = "whsec_xyz"
     dispatcher = StripeWebhookDispatcher(secret=secret)
     seen: list[str] = []
     dispatcher.on(
@@ -128,7 +128,7 @@ def test_stripe_dispatcher_routes_subscription_event() -> None:
 
 
 def test_stripe_dispatcher_invoice_event_parses() -> None:
-    secret = "whsec"  # noqa: S105
+    secret = "whsec"
     dispatcher = StripeWebhookDispatcher(secret=secret)
     captured: list[int] = []
     dispatcher.on(

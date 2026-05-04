@@ -5,7 +5,6 @@ from __future__ import annotations
 import uuid
 
 import pytest
-
 from loop_control_plane.byo_vault import (
     ByoVaultError,
     InMemoryByoVaultStore,
@@ -13,7 +12,6 @@ from loop_control_plane.byo_vault import (
     VaultConfig,
     fetch_secret,
 )
-
 
 WS_A = uuid.UUID("11111111-1111-4111-8111-111111111111")
 WS_B = uuid.UUID("22222222-2222-4222-8222-222222222222")

@@ -1,6 +1,5 @@
 """Tests for pass10 telegram webhook (S518)."""
 
-# ruff: noqa: S106
 
 from __future__ import annotations
 

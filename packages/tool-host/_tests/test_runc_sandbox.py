@@ -65,7 +65,7 @@ class _RecordingRunner:
 def test_oci_spec_enforces_security_posture() -> None:
     spec = build_oci_spec(
         _BASE_CONFIG,
-        rootfs="/tmp/rfs",  # noqa: S108
+        rootfs="/tmp/rfs",
         netns_path="/var/run/netns/x",
         args=("/bin/echo",),
     )
@@ -81,7 +81,7 @@ def test_oci_spec_enforces_security_posture() -> None:
 def test_oci_spec_user_remap_drops_root_to_unprivileged_host_uid() -> None:
     spec = build_oci_spec(
         _BASE_CONFIG,
-        rootfs="/tmp/rfs",  # noqa: S108
+        rootfs="/tmp/rfs",
         netns_path="/var/run/netns/x",
         args=("/x",),
     )
@@ -106,7 +106,7 @@ def _make_sandbox(runner: _RecordingRunner, allowlist: tuple[str, ...] = ()) -> 
     cfg = _BASE_CONFIG.model_copy(update={"egress_allowlist": allowlist})
     return RuncSandbox(
         config=cfg,
-        rootfs="/tmp/rootfs-stub",  # noqa: S108
+        rootfs="/tmp/rootfs-stub",
         state_root=tempfile.mkdtemp(prefix="loop-test-"),
         runner=runner,
         mcp_argv=("/bin/echo-mcp",),

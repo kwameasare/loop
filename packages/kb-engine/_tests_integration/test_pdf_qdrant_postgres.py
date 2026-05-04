@@ -29,7 +29,7 @@ pytestmark = pytest.mark.integration
 
 DP_KB_REVISION = "dp_0002_kb"
 APP_DB_USER = "loop_kb_app"
-APP_DB_PASSWORD = "loop_kb_app"  # noqa: S105 - ephemeral testcontainers role.
+APP_DB_PASSWORD = "loop_kb_app"
 PDF_BYTES = b"%PDF-1.4\n% Loop S213 fixture\n"
 SOURCE_URI = "s3://loop-fixtures/support-policy.pdf"
 
@@ -166,7 +166,7 @@ def _wait_for_qdrant(base_url: str) -> None:
     deadline = time.monotonic() + 30
     while time.monotonic() < deadline:
         try:
-            with urlopen(f"{base_url}/collections", timeout=2) as response:  # noqa: S310
+            with urlopen(f"{base_url}/collections", timeout=2) as response:
                 if response.status == 200:
                     return
         except OSError:

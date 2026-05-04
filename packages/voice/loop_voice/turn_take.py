@@ -33,7 +33,7 @@ class TurnTakeState(StrEnum):
 class TurnTakeEvent(StrEnum):
     USER_STARTED_TALKING = "user_started_talking"
     VAD_SILENCE = "vad_silence"
-    LLM_FIRST_TOKEN = "llm_first_token"  # noqa: S105 -- event name, not a secret
+    LLM_FIRST_TOKEN = "llm_first_token"
     TTS_COMPLETE = "tts_complete"
     BARGE_IN = "barge_in"
     """User started speaking while agent was speaking — cut TTS, restart listen."""

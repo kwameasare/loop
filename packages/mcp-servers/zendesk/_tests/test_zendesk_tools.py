@@ -46,7 +46,7 @@ def test_config_base_url() -> None:
     cfg = ZendeskConfig(
         subdomain="loop",
         email="ops@loop.dev",
-        api_token="t",  # noqa: S106
+        api_token="t",
     )
     assert cfg.base_url == "https://loop.zendesk.com/api/v2"
 

@@ -36,9 +36,9 @@ import hashlib
 import hmac
 import json
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 from loop_control_plane.audit_log import AuditEvent, AuditStore
 
@@ -55,7 +55,7 @@ SiemTarget = Literal["datadog", "splunk", "generic"]
 # In-memory registry (tests / dev)
 # ---------------------------------------------------------------------------
 
-_REGISTRY: dict[uuid.UUID, "SiemWebhookConfig"] = {}
+_REGISTRY: dict[uuid.UUID, SiemWebhookConfig] = {}
 
 
 # ---------------------------------------------------------------------------

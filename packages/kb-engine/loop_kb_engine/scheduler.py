@@ -8,13 +8,13 @@ fast and wired to any event loop or cron framework by the caller.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Callable
+from collections.abc import Callable
+from dataclasses import dataclass
+from enum import StrEnum
 from uuid import UUID
 
 
-class RefreshStatus(str, Enum):
+class RefreshStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
     OK = "ok"
@@ -134,7 +134,7 @@ class RefreshScheduler:
             self._ingest(document_id)
             rec.status = RefreshStatus.OK
             rec.error = None
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             rec.status = RefreshStatus.ERROR
             rec.error = str(exc)
         finally:

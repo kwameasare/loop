@@ -20,7 +20,7 @@ from loop_control_plane import (
 
 def _verifier() -> HS256Verifier:
     return HS256Verifier(
-        secret="dev-secret",  # noqa: S106
+        secret="dev-secret",
         issuer="https://test.auth0.com/",
         audience="https://api.loop.test",
     )

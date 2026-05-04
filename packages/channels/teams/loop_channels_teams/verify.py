@@ -85,7 +85,7 @@ def _rsa_public_key_from_jwk(jwk: JwksKey) -> Any:
         raise TeamsAuthError("invalid bot token") from exc
     n = int.from_bytes(n_b, "big")
     e = int.from_bytes(e_b, "big")
-    if "x5c" in jwk and jwk["x5c"]:
+    if jwk.get("x5c"):
         # When an x5c chain is provided, prefer it (matches what Microsoft
         # ships); fall back to (n, e) otherwise.
         try:
@@ -203,9 +203,8 @@ def verify_teams_activity_jwt(
     aud = claims.get("aud")
     if aud != expected_app_id:
         raise TeamsAuthError("invalid bot token")
-    if expected_service_url is not None:
-        if claims.get("serviceUrl") != expected_service_url:
-            raise TeamsAuthError("invalid bot token")
+    if expected_service_url is not None and claims.get("serviceUrl") != expected_service_url:
+        raise TeamsAuthError("invalid bot token")
     current = now if now is not None else time.time()
     exp = claims.get("exp")
     if not isinstance(exp, (int, float)) or current > exp + clock_skew_seconds:

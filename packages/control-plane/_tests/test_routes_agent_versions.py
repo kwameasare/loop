@@ -112,7 +112,7 @@ def test_promote_sets_active_version(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:
     headers = {"authorization": _bearer_for("owner-1")}
-    v1 = client.post(
+    client.post(
         f"/v1/agents/{agent_id}/versions", headers=headers, json={"spec": {}}
     ).json()
     v2 = client.post(

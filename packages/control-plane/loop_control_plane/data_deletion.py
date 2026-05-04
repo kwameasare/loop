@@ -35,7 +35,7 @@ from __future__ import annotations
 import enum
 import uuid
 from collections.abc import Iterable
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from typing import Protocol
 
@@ -55,7 +55,7 @@ __all__ = [
 ]
 
 
-class DataDeletionState(str, enum.Enum):
+class DataDeletionState(enum.StrEnum):
     PENDING = "pending"
     COMPLETED = "completed"
     FAILED = "failed"

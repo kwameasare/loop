@@ -114,9 +114,7 @@ def _calls_authorize_workspace_access_with_role(
         # Resolve the called name: bare ``authorize_workspace_access(...)``
         # or ``module.authorize_workspace_access(...)``.
         callee = child.func
-        if isinstance(callee, ast.Name) and callee.id == "authorize_workspace_access":
-            pass
-        elif (
+        if (isinstance(callee, ast.Name) and callee.id == "authorize_workspace_access") or (
             isinstance(callee, ast.Attribute)
             and callee.attr == "authorize_workspace_access"
         ):
@@ -127,9 +125,7 @@ def _calls_authorize_workspace_access_with_role(
         for kw in child.keywords:
             if kw.arg != "required_role":
                 continue
-            if isinstance(kw.value, ast.Constant) and kw.value.value is None:
-                return False
-            return True
+            return not (isinstance(kw.value, ast.Constant) and kw.value.value is None)
     return False
 
 

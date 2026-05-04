@@ -1,6 +1,5 @@
 """Tests for pass10 WhatsApp interactive + media download (S347, S344)."""
 
-# ruff: noqa: S106
 
 from __future__ import annotations
 

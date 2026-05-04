@@ -1,4 +1,3 @@
-# ruff: noqa: S105,S106
 """Pass12 Telegram Studio connect tests."""
 
 from __future__ import annotations

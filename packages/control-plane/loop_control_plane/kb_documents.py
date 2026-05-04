@@ -15,14 +15,14 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field
 
 
-class KbDocumentState(str, Enum):
+class KbDocumentState(StrEnum):
     PENDING = "pending"
     INGESTING = "ingesting"
     READY = "ready"

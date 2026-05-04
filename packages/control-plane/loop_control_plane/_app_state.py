@@ -21,8 +21,6 @@ from loop_control_plane.auth_exchange import (
 )
 from loop_control_plane.budgets import BudgetService
 from loop_control_plane.conversations import ConversationService
-from loop_control_plane.eval_suites import EvalSuiteService
-from loop_control_plane.kb_documents import KbDocumentService
 from loop_control_plane.data_deletion import (
     DataDeletionEmailNotifier,
     DataDeletionJobQueue,
@@ -31,6 +29,8 @@ from loop_control_plane.data_deletion import (
     InMemoryDataDeletionStore,
     RecordingDataDeletionEmailNotifier,
 )
+from loop_control_plane.eval_suites import EvalSuiteService
+from loop_control_plane.kb_documents import KbDocumentService
 from loop_control_plane.saml import SamlValidator, StubSamlValidator
 from loop_control_plane.secrets import InMemorySecretsBackend, SecretsBackend
 from loop_control_plane.trace_search import (
@@ -38,7 +38,7 @@ from loop_control_plane.trace_search import (
     TraceSearchService,
     TraceStore,
 )
-from loop_control_plane.usage import UsageLedger, UsageRollup
+from loop_control_plane.usage import UsageLedger
 from loop_control_plane.workspace_api import WorkspaceAPI
 from loop_control_plane.workspaces import PostgresWorkspaceService, WorkspaceService
 

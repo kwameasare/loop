@@ -166,7 +166,7 @@ def upgrade() -> None:
                        WHERE workspace_id = current_setting('loop.workspace_id', true)::uuid
                     )
                   )
-                """  # noqa: S608  -- {table} is a hardcoded literal, not user input
+                """
             )
         else:
             op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")

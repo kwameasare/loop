@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
-
 from loop_control_plane.saml_certs import (
     DEFAULT_GRACE,
     CertificateBundle,
@@ -15,7 +14,6 @@ from loop_control_plane.saml_certs import (
     stage_certificate,
     trust_set,
 )
-
 
 PEM_A = "-----BEGIN CERTIFICATE-----\nAAA\n-----END CERTIFICATE-----"
 PEM_B = "-----BEGIN CERTIFICATE-----\nBBB\n-----END CERTIFICATE-----"

@@ -366,10 +366,7 @@ def main(argv: list[str] | None = None) -> int:
     import asyncio
 
     args = list(argv if argv is not None else sys.argv[1:])
-    if not args:
-        question = "where is order 4172?"
-    else:
-        question = " ".join(args)
+    question = "where is order 4172?" if not args else " ".join(args)
     cfg = select_provider()
     sys.stdout.write(f"[{cfg.name}:{cfg.model}] {question}\n")
     sys.stdout.flush()

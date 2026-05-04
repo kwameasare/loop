@@ -1,4 +1,3 @@
-# ruff: noqa: S106
 """Pass12 Slack connect-flow tests."""
 
 from __future__ import annotations

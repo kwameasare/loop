@@ -23,10 +23,8 @@ allow-list to zero.
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
-import pytest
 import yaml
 
 # Paths that exist in cp/dp for ops/probe reasons but are NOT part of

@@ -46,8 +46,8 @@ from starlette.routing import Match
 from loop_control_plane.rate_limit import RateLimiter
 
 __all__ = [
-    "RateLimitMiddleware",
     "RateLimitConfig",
+    "RateLimitMiddleware",
     "default_principal",
 ]
 

@@ -21,16 +21,15 @@ Each chunk's ``metadata`` carries:
 from __future__ import annotations
 
 import re
-from enum import Enum
+from enum import StrEnum
 
 from loop_kb_engine.models import Chunk, Document
-
 
 # ---------------------------------------------------------------------------
 # Chunk type tag
 # ---------------------------------------------------------------------------
 
-class ChunkType(str, Enum):
+class ChunkType(StrEnum):
     PROSE = "prose"
     CODE = "code"
     TABLE = "table"

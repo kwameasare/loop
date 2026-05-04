@@ -50,7 +50,6 @@ from loop_channels_core.idempotency import (
 
 from loop_control_plane._app_common import request_id
 from loop_control_plane.audit_events import record_audit_event
-from loop_control_plane.secrets import SecretsBackendError
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/v1/webhooks/incoming", tags=["WebhooksIncoming"])
@@ -203,4 +202,4 @@ async def list_supported_channels() -> dict[str, Any]:
     return {"channels": sorted(SUPPORTED_CHANNELS)}
 
 
-__all__ = ["router", "SUPPORTED_CHANNELS"]
+__all__ = ["SUPPORTED_CHANNELS", "router"]

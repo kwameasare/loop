@@ -15,7 +15,6 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from loop_kb_engine.structured_retrieval import (
     DatasetError,
     StructuredStore,

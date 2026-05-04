@@ -20,8 +20,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from loop_control_plane._app_agents import AgentRegistry, AgentRecord
-from loop_control_plane.workspaces import WorkspaceError
+from loop_control_plane._app_agents import AgentRecord, AgentRegistry
 
 
 class AgentVersionCreate(BaseModel):

@@ -117,6 +117,6 @@ async def test_guard_reports_bad_token() -> None:
         tokens=v,
         limiter=RateLimiter(capacity=10, refill_per_sec=0, clock_ms=lambda: 0),
     )
-    decision = await guard.admit(origin="https://app", token="garbage")  # noqa: S106
+    decision = await guard.admit(origin="https://app", token="garbage")
     assert not decision.allowed
     assert "token" in decision.reason or "malformed" in decision.reason

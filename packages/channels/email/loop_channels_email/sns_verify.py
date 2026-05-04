@@ -202,7 +202,12 @@ def verify_sns_signature(
     except (ValueError, TypeError) as exc:
         raise SnsSignatureError("invalid sns message") from exc
 
-    hash_algorithm = hashes.SHA256() if sig_version == "2" else hashes.SHA1()
+    # SHA1 only used for legacy SignatureVersion=1 SNS messages (AWS
+    # signs them with SHA1+RSA). New AWS regions emit version 2 with
+    # SHA256. We can't dictate the SNS signing alg from our side, so
+    # we accept v1 signatures with SHA1 verify only — the message
+    # contents are not under our control either way.
+    hash_algorithm = hashes.SHA256() if sig_version == "2" else hashes.SHA1()  # noqa: S303
     try:
         public_key.verify(  # type: ignore[union-attr]
             signature,

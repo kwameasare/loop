@@ -27,7 +27,7 @@ class OutboundFrameKind(StrEnum):
     channel adapter can serialise without an extra translation layer.
     """
 
-    AGENT_TOKEN = "agent_token"  # noqa: S105 -- not a credential
+    AGENT_TOKEN = "agent_token"
     AGENT_MESSAGE = "agent_message"
     TOOL_CALL_START = "tool_call_start"
     TOOL_CALL_END = "tool_call_end"

@@ -6,7 +6,6 @@ token so we don't have to spin up the full IdP exchange flow.
 
 from __future__ import annotations
 
-import os
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
@@ -15,7 +14,6 @@ from fastapi.testclient import TestClient
 from loop_control_plane.app import create_app
 from loop_control_plane.data_deletion import DataDeletionState
 from loop_control_plane.paseto import encode_local
-from loop_control_plane.workspaces import WorkspaceService
 
 # 32-byte test PASETO key (cp requires len>=32).
 _TEST_KEY = b"x" * 32

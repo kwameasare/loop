@@ -59,25 +59,6 @@ from loop_control_plane.deploy import (
     InMemoryKubeClient,
     KubeClient,
 )
-from loop_control_plane.slsa_provenance import (
-    InMemoryProvenanceStore,
-    ProvenanceError,
-    ProvenancePolicy,
-    ProvenanceVerifier,
-    SlsaProvenance,
-    StubProvenanceVerifier,
-)
-from loop_control_plane.retention import (
-    DataClass,
-    DataRecord,
-    DataStore,
-    DeletionBatch,
-    InMemoryAuditSink,
-    InMemoryDataStore as InMemoryRetentionStore,
-    RetentionError,
-    RetentionJob,
-    RetentionPolicy,
-)
 from loop_control_plane.errors import (
     LoopApiError,
     map_to_loop_api_error,
@@ -141,6 +122,19 @@ from loop_control_plane.object_store import (
     ObjectStoreError,
     build_object_store_backend,
 )
+from loop_control_plane.retention import (
+    DataClass,
+    DataRecord,
+    DataStore,
+    DeletionBatch,
+    InMemoryAuditSink,
+    RetentionError,
+    RetentionJob,
+    RetentionPolicy,
+)
+from loop_control_plane.retention import (
+    InMemoryDataStore as InMemoryRetentionStore,
+)
 from loop_control_plane.secrets import (
     SECRETS_BACKENDS,
     InMemorySecretsBackend,
@@ -148,6 +142,14 @@ from loop_control_plane.secrets import (
     SecretsBackend,
     SecretsBackendError,
     build_secrets_backend,
+)
+from loop_control_plane.slsa_provenance import (
+    InMemoryProvenanceStore,
+    ProvenanceError,
+    ProvenancePolicy,
+    ProvenanceVerifier,
+    SlsaProvenance,
+    StubProvenanceVerifier,
 )
 from loop_control_plane.usage import (
     DAY_MS,
@@ -205,6 +207,7 @@ __all__ = [
     "InMemoryKubeClient",
     "InMemoryMarketplaceStore",
     "InMemoryObjectStore",
+    "InMemoryProvenanceStore",
     "InMemorySecretsBackend",
     "InMemoryStripe",
     "InboxAPI",
@@ -217,7 +220,6 @@ __all__ = [
     "IssuedApiKey",
     "KMSError",
     "KubeClient",
-    "InMemoryProvenanceStore",
     "LoopApiError",
     "ManifestSignatureVerifier",
     "MarketplaceAcceptanceGate",
@@ -225,11 +227,6 @@ __all__ = [
     "MarketplaceBrowseItem",
     "MarketplaceBrowser",
     "MarketplaceError",
-    "ProvenanceError",
-    "ProvenancePolicy",
-    "ProvenanceVerifier",
-    "SlsaProvenance",
-    "StubProvenanceVerifier",
     "MarketplaceInstall",
     "MarketplaceInstaller",
     "MarketplacePublisher",
@@ -243,6 +240,9 @@ __all__ = [
     "Membership",
     "ObjectStore",
     "ObjectStoreError",
+    "ProvenanceError",
+    "ProvenancePolicy",
+    "ProvenanceVerifier",
     "PublishClient",
     "PublishResult",
     "QualityBreakdown",
@@ -255,10 +255,12 @@ __all__ = [
     "ServerNotFoundError",
     "ServerPublishCli",
     "SigningKey",
+    "SlsaProvenance",
     "StripeClient",
     "StripeCustomer",
     "StripeInvoice",
     "StripeUsageRecord",
+    "StubProvenanceVerifier",
     "TokenVerifier",
     "TrustedPublisherVerifier",
     "UnknownVersionError",

@@ -33,7 +33,6 @@ from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
-    SimpleSpanProcessor,
 )
 
 DEFAULT_OTLP_ENDPOINT: Final[str] = "http://localhost:4318/v1/traces"
@@ -93,4 +92,4 @@ def install_tracing(app: object, *, service_name: str = SERVICE_NAME_DEFAULT) ->
     app.state.tracer_provider = provider  # type: ignore[attr-defined]
 
 
-__all__ = ["install_tracing", "SERVICE_NAME_DEFAULT", "DEFAULT_OTLP_ENDPOINT"]
+__all__ = ["DEFAULT_OTLP_ENDPOINT", "SERVICE_NAME_DEFAULT", "install_tracing"]

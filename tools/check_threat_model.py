@@ -35,8 +35,8 @@ import os
 import re
 import subprocess
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 # Globs MUST mirror the table in docs/THREAT_MODEL.md §STRIDE-protected paths.
 PROTECTED_GLOBS: tuple[str, ...] = (

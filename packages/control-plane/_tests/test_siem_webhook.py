@@ -5,10 +5,8 @@ import hashlib
 import hmac
 import json
 import uuid
-from typing import Any
 
 import pytest
-
 from loop_control_plane.audit_log import AuditEvent, AuditLogger, InMemoryAuditStore
 from loop_control_plane.siem_webhook import (
     SiemWebhookConfig,
@@ -114,7 +112,7 @@ class TestDelivery:
         d, calls = make_dispatcher()
         d.deliver(event)
         assert len(calls) == 1
-        url, body, headers = calls[0]
+        url, body, _headers = calls[0]
         assert url == "https://siem.example.com/ingest"
         parsed = json.loads(body)
         assert parsed["id"] == str(event.id)

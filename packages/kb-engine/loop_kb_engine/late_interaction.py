@@ -22,14 +22,14 @@ in memory as plain Python dicts.  A production deployment would persist
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from uuid import UUID
 
 from loop_kb_engine.models import Chunk
 
 __all__ = [
-    "TokenEmbedding",
     "LateInteractionIndex",
+    "TokenEmbedding",
     "late_interaction_retrieve",
     "maxsim",
 ]
@@ -68,7 +68,7 @@ def _dot(a: tuple[float, ...], b: tuple[float, ...]) -> float:
     """Dot product of two equal-length tuples."""
     if len(a) != len(b):
         raise ValueError(f"dimension mismatch: {len(a)} vs {len(b)}")
-    return sum(x * y for x, y in zip(a, b))
+    return sum(x * y for x, y in zip(a, b, strict=False))
 
 
 def _norm(v: tuple[float, ...]) -> float:

@@ -12,7 +12,6 @@ from loop_gateway.types import (
     GatewayError,
     GatewayEvent,
     GatewayRequest,
-    Provider,
     Usage,
 )
 
