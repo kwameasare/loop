@@ -1,33 +1,92 @@
-import { IdpConnectPanel } from "@/components/enterprise/idp-connect-panel";
-import {
-  FIXTURE_IDP_NOT_CONFIGURED,
-  postIdpMetadata,
-  type IdpMetadataSource,
-} from "@/lib/enterprise";
-
-export const dynamic = "force-dynamic";
+"use client";
 
 /**
- * Fixture submit action — used by the dev server and screenshot tests.
+ * P0.3: ``/enterprise`` — workspace SAML setup.
  *
- * In production this would call postIdpMetadata with a server-side
- * token; the panel's `onConnect` prop keeps the real call out of the
- * component so the component stays testable.
+ * Wires the IdpConnectPanel to ``GET/POST /v1/workspaces/{id}/enterprise/saml``.
+ * The cp-api shim isn't mounted yet (see lib/enterprise.ts
+ * fetchSamlConfig); on 404 the panel renders an explicit
+ * ``not_configured`` state — no more hardcoded ACS URL fixture.
  */
-async function fixtureConnect(source: IdpMetadataSource) {
-  "use server";
-  // In the dev fixture we return the pending state without hitting the
-  // real API.  A production page would pass a real token here.
-  void source;
-  return {
-    status: "pending_verification" as const,
-    entity_id: "https://dev.okta.com/app/fixture/entity",
-    acs_url: "https://app.loop.dev/auth/saml/acs/ws-fixture",
-    connected_at: null,
-  };
-}
+
+import { useEffect, useState } from "react";
+
+import { RequireAuth } from "@/components/auth/require-auth";
+import { IdpConnectPanel } from "@/components/enterprise/idp-connect-panel";
+import {
+  fetchSamlConfig,
+  postSamlConfig,
+  type IdpMetadataSource,
+  type SamlConfigResponse,
+} from "@/lib/enterprise";
+import { useActiveWorkspace } from "@/lib/use-active-workspace";
 
 export default function EnterprisePage(): JSX.Element {
+  return (
+    <RequireAuth>
+      <EnterprisePageBody />
+    </RequireAuth>
+  );
+}
+
+function EnterprisePageBody(): JSX.Element {
+  const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const [config, setConfig] = useState<SamlConfigResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    void fetchSamlConfig(active.id)
+      .then((c) => {
+        if (cancelled) return;
+        setConfig(c);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Could not load SAML config");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [active]);
+
+  async function handleConnect(source: IdpMetadataSource) {
+    if (!active) {
+      throw new Error("No active workspace");
+    }
+    const body =
+      "url" in source
+        ? { metadata_url: source.url }
+        : { metadata_xml: source.xml };
+    const next = await postSamlConfig(active.id, body);
+    setConfig(next);
+    return {
+      status: next.status,
+      entity_id: next.entity_id,
+      acs_url: next.acs_url,
+      connected_at: next.connected_at,
+    };
+  }
+
+  if (wsLoading || !active || (!config && !error)) {
+    return (
+      <main className="container mx-auto p-6">
+        <p className="text-sm text-muted-foreground" data-testid="enterprise-loading">
+          Loading SAML configuration…
+        </p>
+      </main>
+    );
+  }
+  if (error) {
+    return (
+      <main className="container mx-auto p-6">
+        <p className="text-sm text-red-600" role="alert">
+          {error}
+        </p>
+      </main>
+    );
+  }
   return (
     <main className="container mx-auto p-6">
       <header className="mb-6">
@@ -39,10 +98,7 @@ export default function EnterprisePage(): JSX.Element {
           move the status to Connected.
         </p>
       </header>
-      <IdpConnectPanel
-        connection={FIXTURE_IDP_NOT_CONFIGURED}
-        onConnect={fixtureConnect}
-      />
+      <IdpConnectPanel connection={config!} onConnect={handleConnect} />
     </main>
   );
 }

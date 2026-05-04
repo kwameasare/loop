@@ -58,3 +58,87 @@ export const FIXTURE_VOICE_CONFIG: VoiceConfig = {
 export type SaveVoiceConfigFn = (
   next: Pick<VoiceConfig, "asr_provider" | "tts_provider">,
 ) => Promise<{ ok: boolean; error?: string }>;
+
+// ---------------------------------------------------------------- cp-api
+
+export interface VoiceConfigClientOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+function _voiceConfigBase(override?: string): string {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw)
+    throw new Error("LOOP_CP_API_BASE_URL is required for voice-config calls");
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+/**
+ * Fetch the voice config for a workspace.
+ *
+ * Blocked on cp-api PR. Until the route ships, returns a default
+ * empty config so the panel renders cleanly.
+ */
+export async function fetchVoiceConfig(
+  workspace_id: string,
+  opts: VoiceConfigClientOptions = {},
+): Promise<VoiceConfig> {
+  const fetcher = opts.fetcher ?? fetch;
+  const headers: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  const url = `${_voiceConfigBase(opts.baseUrl)}/workspaces/${encodeURIComponent(
+    workspace_id,
+  )}/voice/config`;
+  const res = await fetcher(url, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+  if (res.status === 404) {
+    return {
+      workspace_id,
+      numbers: [],
+      asr_provider: "deepgram",
+      tts_provider: "elevenlabs",
+    };
+  }
+  if (!res.ok) throw new Error(`cp-api GET voice/config -> ${res.status}`);
+  return (await res.json()) as VoiceConfig;
+}
+
+/** Save provider selections. Returns the updated config. Blocked on cp-api PR. */
+export async function saveVoiceConfig(
+  workspace_id: string,
+  next: Pick<VoiceConfig, "asr_provider" | "tts_provider">,
+  opts: VoiceConfigClientOptions = {},
+): Promise<{ ok: boolean; error?: string }> {
+  const fetcher = opts.fetcher ?? fetch;
+  const headers: Record<string, string> = {
+    accept: "application/json",
+    "content-type": "application/json",
+  };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  const url = `${_voiceConfigBase(opts.baseUrl)}/workspaces/${encodeURIComponent(
+    workspace_id,
+  )}/voice/config`;
+  const res = await fetcher(url, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(next),
+    cache: "no-store",
+  });
+  if (res.status === 404) {
+    return { ok: false, error: "Voice config API not yet available" };
+  }
+  if (!res.ok) {
+    return { ok: false, error: `cp-api PATCH voice/config -> ${res.status}` };
+  }
+  return { ok: true };
+}

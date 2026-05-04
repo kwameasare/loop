@@ -4,7 +4,7 @@
  * Covers type guards, fixture values, and the postIdpMetadata API helper.
  */
 
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   FIXTURE_GROUP_RULES_EMPTY,
@@ -13,7 +13,9 @@ import {
   FIXTURE_IDP_NOT_CONFIGURED,
   FIXTURE_IDP_PENDING,
   WORKSPACE_ROLES,
+  fetchSamlConfig,
   postIdpMetadata,
+  postSamlConfig,
   putGroupRules,
 } from "./enterprise";
 
@@ -250,5 +252,79 @@ describe("putGroupRules", () => {
         baseUrl: "https://api.example.com/v1",
       }),
     ).rejects.toThrow("403");
+  });
+});
+
+describe("fetchSamlConfig / postSamlConfig", () => {
+  const ORIG_BASE = process.env.LOOP_CP_API_BASE_URL;
+  beforeEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+  });
+  afterEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = ORIG_BASE;
+    vi.restoreAllMocks();
+  });
+
+  it("fetchSamlConfig returns the config on 200", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        status: "connected",
+        entity_id: "https://idp/entity",
+        acs_url: "https://app/acs",
+        connected_at: "2026-05-01T00:00:00Z",
+      }),
+    });
+    const cfg = await fetchSamlConfig("ws1", { fetcher });
+    expect(cfg.status).toBe("connected");
+    const [url] = fetcher.mock.calls[0];
+    expect(url).toBe("https://cp.test/v1/workspaces/ws1/enterprise/saml");
+  });
+
+  it("fetchSamlConfig returns not_configured on 404 (route blocked)", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
+    const cfg = await fetchSamlConfig("ws1", { fetcher });
+    expect(cfg.status).toBe("not_configured");
+    expect(cfg.acs_url).toBeNull();
+  });
+
+  it("postSamlConfig POSTs the body and returns the response", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        status: "pending_verification",
+        entity_id: "x",
+        acs_url: "y",
+        connected_at: null,
+      }),
+    });
+    const res = await postSamlConfig(
+      "ws1",
+      { metadata_url: "https://idp/metadata" },
+      { fetcher },
+    );
+    expect(res.status).toBe("pending_verification");
+    const [, init] = fetcher.mock.calls[0];
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body)).toEqual({
+      metadata_url: "https://idp/metadata",
+    });
+  });
+
+  it("postSamlConfig surfaces a clear error on 404", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
+    await expect(
+      postSamlConfig(
+        "ws1",
+        { metadata_url: "https://idp/metadata" },
+        { fetcher },
+      ),
+    ).rejects.toThrow(/blocked on cp-api PR/);
   });
 });
