@@ -9,14 +9,17 @@ ENV PATH="/opt/venv/bin:${PATH}" \
     UV_PYTHON_DOWNLOADS=never \
     VIRTUAL_ENV=/opt/venv
 
-WORKDIR /src/packages/control-plane
+WORKDIR /src
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.29 /uv /usr/local/bin/uv
-COPY packages/control-plane/pyproject.toml ./
-COPY packages/control-plane/loop_control_plane ./loop_control_plane
+COPY packages/channels/core/pyproject.toml ./packages/channels/core/
+COPY packages/channels/core/loop_channels_core ./packages/channels/core/loop_channels_core
+COPY packages/control-plane/pyproject.toml ./packages/control-plane/
+COPY packages/control-plane/loop_control_plane ./packages/control-plane/loop_control_plane
 
 RUN uv venv "${VIRTUAL_ENV}" \
-    && uv pip install --python "${VIRTUAL_ENV}/bin/python" . \
+    && uv pip install --python "${VIRTUAL_ENV}/bin/python" \
+        ./packages/channels/core ./packages/control-plane \
     && mkdir -p /python-libs \
     && for lib in \
         libbz2.so.1.0 \
