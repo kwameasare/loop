@@ -27,6 +27,7 @@ from loop_data_plane._turns import (
     collect_turn,
     stream_turn_sse,
 )
+from loop_control_plane.rate_limit_middleware import install_rate_limit
 from loop_data_plane.metrics import install_metrics
 from loop_data_plane.tracing import install_tracing
 
@@ -141,6 +142,11 @@ def create_app(state: RuntimeAppState | None = None) -> FastAPI:
     # P0.7c: OpenTelemetry tracing — every request gets a span
     # propagated from cp-api / through to gateway / upstream LLM.
     install_tracing(app, service_name="dp-runtime")
+    # vega #8 (block-prod): per-(principal, route_template) HTTP
+    # rate limiter. dp-runtime is the hot path for inbound turns;
+    # without this a single misbehaving caller can starve every
+    # other workspace's stream.
+    install_rate_limit(app)
     return app
 
 

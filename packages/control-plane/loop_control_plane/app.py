@@ -40,6 +40,7 @@ from loop_control_plane.auth_exchange import AuthExchangeError
 from loop_control_plane.authorize import AuthorisationError
 from loop_control_plane.metrics import install_metrics
 from loop_control_plane.paseto import PasetoError
+from loop_control_plane.rate_limit_middleware import install_rate_limit
 from loop_control_plane.tracing import install_tracing
 from loop_control_plane.workspaces import WorkspaceError
 
@@ -99,6 +100,12 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
     # propagated to dp-runtime + gateway + upstream LLM via
     # traceparent. Skipped when LOOP_OTEL_ENDPOINT=disabled.
     install_tracing(app, service_name="cp-api")
+    # vega #8 (block-prod): per-(principal, route_template) HTTP
+    # rate limiter on the public boundary. The bucket is keyed on
+    # workspace_id when ApiKeyMiddleware has resolved one, falling
+    # back to client IP for unauthenticated paths so credential-
+    # stuffing on /v1/auth/login is bounded too.
+    install_rate_limit(app)
     return app
 
 
