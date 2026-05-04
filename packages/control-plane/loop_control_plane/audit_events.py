@@ -33,7 +33,10 @@ import uuid
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
+
+if TYPE_CHECKING:
+    from sqlalchemy.engine import Engine
 
 from loop_control_plane.audit_redaction import redact_for_audit
 
@@ -42,6 +45,7 @@ __all__ = [
     "AuditEventError",
     "AuditEventStore",
     "InMemoryAuditEventStore",
+    "PostgresAuditEventStore",
     "audited",
     "fetch_payload",
     "hash_payload",
@@ -296,3 +300,158 @@ def audited(
         return wrapper
 
     return decorator
+
+
+# ---------------------------------------------------------------------------
+# Postgres-backed store [P0.2]
+# ---------------------------------------------------------------------------
+
+
+class PostgresAuditEventStore:
+    """Postgres-backed audit store — INSERTs into the ``audit_events`` table.
+
+    The append-only contract is enforced at three layers:
+
+    1. The Python class deliberately exposes no ``update`` / ``delete``
+       methods (same as :class:`InMemoryAuditEventStore`).
+    2. The ``audit_events`` table has rules ``DO INSTEAD NOTHING`` on
+       UPDATE / DELETE (see migration ``cp_0005_audit_events``).
+    3. Tenant-scoped RLS: ``list_for_workspace`` sets the
+       ``app.workspace_id`` GUC inside the same transaction so a
+       leaked credential can only read its own audit trail.
+
+    Wraps a synchronous SQLAlchemy :class:`~sqlalchemy.engine.Engine`
+    because the existing :class:`AuditEventStore` Protocol is sync —
+    every cp-api write endpoint already calls
+    :func:`record_audit_event` synchronously from inside an async
+    handler. A single audit-row INSERT is fast enough that we accept
+    the brief event-loop block; a future PR can introduce an async
+    Protocol and an :class:`AsyncEngine`-backed store if profiling
+    shows it matters.
+    """
+
+    def __init__(self, engine: Engine) -> None:
+        # Lazy import keeps the SQLAlchemy import off the hot path for
+        # in-memory tests that never construct this class.
+        self._engine = engine
+
+    @classmethod
+    def from_url(cls, database_url: str, *, echo: bool = False) -> PostgresAuditEventStore:
+        """Build a store from a SQLAlchemy URL.
+
+        ``database_url`` should use the psycopg driver, e.g.
+        ``postgresql+psycopg://user:pw@host/db``. ``pool_pre_ping`` is
+        on so that a long-idle connection that the DB has terminated
+        gets refreshed before the next INSERT, instead of surfacing a
+        ``DisconnectionError`` to a route handler.
+        """
+        from sqlalchemy import create_engine
+
+        engine = create_engine(
+            database_url,
+            echo=echo,
+            future=True,
+            pool_pre_ping=True,
+        )
+        return cls(engine)
+
+    def insert(self, event: AuditEvent) -> None:
+        from sqlalchemy import text
+        from sqlalchemy.exc import IntegrityError
+
+        try:
+            with self._engine.begin() as conn:
+                # The ``audit_events`` policy is ``USING(...)`` only —
+                # without an explicit WITH CHECK, Postgres uses the
+                # USING expression for INSERT too. Set the GUC inside
+                # the same transaction as the INSERT so the policy
+                # admits the new row.
+                conn.execute(
+                    text("SELECT set_config('app.workspace_id', :ws, true)"),
+                    {"ws": str(event.workspace_id)},
+                )
+                conn.execute(
+                    text(
+                        """
+                        INSERT INTO audit_events (
+                            id, occurred_at, workspace_id, actor_sub,
+                            action, resource_type, resource_id,
+                            request_id, payload_hash, outcome
+                        ) VALUES (
+                            :id, :occurred_at, :workspace_id, :actor_sub,
+                            :action, :resource_type, :resource_id,
+                            :request_id, :payload_hash, :outcome
+                        )
+                        """
+                    ),
+                    {
+                        "id": event.id,
+                        "occurred_at": event.occurred_at,
+                        "workspace_id": event.workspace_id,
+                        "actor_sub": event.actor_sub,
+                        "action": event.action,
+                        "resource_type": event.resource_type,
+                        "resource_id": event.resource_id,
+                        "request_id": event.request_id,
+                        "payload_hash": event.payload_hash,
+                        "outcome": event.outcome,
+                    },
+                )
+        except IntegrityError as exc:
+            # The audit_events PK is the event id; a duplicate insert
+            # raises IntegrityError. Translate to AuditEventError so
+            # callers see the same failure mode as the in-memory store.
+            raise AuditEventError(
+                f"audit event id {event.id} already recorded"
+            ) from exc
+
+    def list_for_workspace(
+        self, workspace_id: uuid.UUID
+    ) -> tuple[AuditEvent, ...]:
+        from sqlalchemy import text
+
+        with self._engine.begin() as conn:
+            # Set the RLS GUC so the policy on ``audit_events`` lets
+            # this transaction read its own workspace's rows.
+            conn.execute(
+                text("SELECT set_config('app.workspace_id', :ws, true)"),
+                {"ws": str(workspace_id)},
+            )
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT id, occurred_at, workspace_id, actor_sub,
+                           action, resource_type, resource_id,
+                           request_id, payload_hash, outcome
+                      FROM audit_events
+                     WHERE workspace_id = :ws
+                     ORDER BY occurred_at ASC, id ASC
+                    """
+                ),
+                {"ws": workspace_id},
+            ).all()
+        return tuple(
+            AuditEvent(
+                id=_coerce_uuid(row.id),
+                occurred_at=row.occurred_at,
+                workspace_id=_coerce_uuid(row.workspace_id),
+                actor_sub=row.actor_sub,
+                action=row.action,
+                resource_type=row.resource_type,
+                resource_id=row.resource_id,
+                request_id=row.request_id,
+                payload_hash=row.payload_hash,
+                outcome=row.outcome,
+            )
+            for row in rows
+        )
+
+
+def _coerce_uuid(value: uuid.UUID | str) -> uuid.UUID:
+    """Driver-neutral UUID coercion.
+
+    psycopg returns UUID objects natively, but other drivers (and some
+    older versions) return strings. Normalise so the dataclass field
+    type is honoured.
+    """
+    return value if isinstance(value, uuid.UUID) else uuid.UUID(str(value))
