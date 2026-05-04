@@ -6,6 +6,7 @@ import os
 from dataclasses import dataclass, field
 
 from loop_control_plane._app_agents import AgentRegistry
+from loop_control_plane.agent_versions import AgentVersionService
 from loop_control_plane.api_keys import ApiKeyService
 from loop_control_plane.api_keys_api import ApiKeyAPI
 from loop_control_plane.audit_events import InMemoryAuditEventStore
@@ -84,3 +85,6 @@ class CpApiState:
             api_keys=self.api_keys, workspaces=self.workspaces
         )
         self.trace_search = TraceSearchService(self.trace_store)
+        # P0.4: agent versions service depends on AgentRegistry; built
+        # in __post_init__ so it shares the same agent storage map.
+        self.agent_versions = AgentVersionService(self.agents)

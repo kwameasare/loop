@@ -6,6 +6,9 @@ from fastapi import FastAPI
 
 from loop_control_plane._app_common import domain_error, package_version
 from loop_control_plane._app_state import CpApiState
+from loop_control_plane._routes_agent_versions import (
+    router as agent_versions_router,
+)
 from loop_control_plane._routes_agents import router as agents_router
 from loop_control_plane._routes_api_keys import router as api_keys_router
 from loop_control_plane._routes_audit import router as audit_router
@@ -53,6 +56,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         secrets_router,
         # P0.4: traces search + usage list routes.
         telemetry_router,
+        # P0.4: agent version create/list/promote.
+        agent_versions_router,
     ):
         app.include_router(router)
     # P0.7b: Prometheus middleware + /metrics endpoint. The
