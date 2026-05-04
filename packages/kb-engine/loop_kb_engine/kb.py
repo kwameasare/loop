@@ -18,6 +18,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from loop_kb_engine.chunker import Chunker, SemanticChunker
+from loop_kb_engine.cost_tracking import KbCostTracker
 from loop_kb_engine.embeddings import EmbeddingService
 from loop_kb_engine.models import Chunk, Document
 from loop_kb_engine.store import VectorStore
@@ -43,10 +44,12 @@ class KnowledgeBase:
         chunker: Chunker | None = None,
         embedder: EmbeddingService,
         vector_store: VectorStore,
+        cost_tracker: KbCostTracker | None = None,
     ) -> None:
         self._chunker: Chunker = chunker or SemanticChunker()
         self._embedder = embedder
         self._store = vector_store
+        self._cost_tracker = cost_tracker
         # Per-workspace lexical index for BM25 -- a tiny, dependency-free
         # implementation that fits the v0 scope. Real corpora swap in
         # Tantivy/OpenSearch later.
@@ -58,7 +61,13 @@ class KnowledgeBase:
         chunks = self._chunker.chunk(document)
         if not chunks:
             return []
-        vectors = await self._embedder.embed([c.text for c in chunks])
+        texts = [c.text for c in chunks]
+        vectors = await self._embedder.embed(texts)
+        if self._cost_tracker is not None:
+            self._cost_tracker.record_embedding_texts(
+                workspace_id=document.workspace_id,
+                texts=texts,
+            )
         await self._store.upsert(
             workspace_id=document.workspace_id,
             chunks=chunks,
