@@ -2,6 +2,12 @@
 
 import { SectionError } from "@/components/section-states";
 
-export default function EvalsError({ reset }: { reset: () => void }) {
-  return <SectionError title="Evals" reset={reset} />;
+export default function EvalsError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string; request_id?: string; requestId?: string };
+  reset: () => void;
+}) {
+  return <SectionError title="Evals" reset={reset} error={error} />;
 }

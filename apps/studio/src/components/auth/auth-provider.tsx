@@ -58,9 +58,7 @@ export function AuthProvider({ children, config, envName }: AuthProviderProps) {
       // Fail loud: production must boot with Auth0 wired or no studio
       // at all. The previous silent fallthrough shipped an
       // unauthenticated studio when env vars were missing.
-      throw new Error(
-        "AuthProvider: NEXT_PUBLIC_AUTH0_DOMAIN and NEXT_PUBLIC_AUTH0_CLIENT_ID are required in production",
-      );
+      throw new Error("Auth0 config required in production");
     }
     // Allow the studio to render without Auth0 wired (tests, preview).
     return <>{children}</>;

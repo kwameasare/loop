@@ -10,32 +10,63 @@
  */
 
 import { useId, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { createEvalSuite } from "@/lib/evals";
+import {
+  createEvalSuite,
+  type CreateEvalSuiteInput,
+} from "@/lib/evals";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const SLUG_RE = /^[a-z][a-z0-9_\-]{1,63}$/;
 
 export interface NewSuiteModalProps {
   /** Existing suite names (to surface duplicate-name errors before POST). */
   existingNames: string[];
-  /** Default agent id; the input may be empty if the user has none. */
-  agentIds: string[];
+  createSuite?: (input: CreateEvalSuiteInput) => Promise<{ id: string }>;
 }
 
-export function NewSuiteModal({ existingNames, agentIds }: NewSuiteModalProps) {
+const METRIC_OPTIONS = [
+  { value: "accuracy", label: "Accuracy" },
+  { value: "latency_p95", label: "Latency p95" },
+  { value: "cost", label: "Cost" },
+  { value: "toxicity", label: "Toxicity" },
+] as const;
+
+export function NewSuiteModal({
+  existingNames,
+  createSuite = createEvalSuite,
+}: NewSuiteModalProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [agentId, setAgentId] = useState(agentIds[0] ?? "");
+  const [datasetRef, setDatasetRef] = useState("");
+  const [metrics, setMetrics] = useState<string[]>(["accuracy"]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const formId = useId();
 
   function reset() {
     setName("");
-    setAgentId(agentIds[0] ?? "");
+    setDatasetRef("");
+    setMetrics(["accuracy"]);
     setError(null);
     setSubmitting(false);
+  }
+
+  function toggleMetric(metric: string) {
+    setMetrics((current) =>
+      current.includes(metric)
+        ? current.filter((m) => m !== metric)
+        : [...current, metric],
+    );
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -52,20 +83,24 @@ export function NewSuiteModal({ existingNames, agentIds }: NewSuiteModalProps) {
       setError("A suite with this name already exists.");
       return;
     }
-    if (!agentId) {
-      setError("Pick the agent this suite grades.");
+    if (!datasetRef.trim()) {
+      setError("Dataset ref is required.");
+      return;
+    }
+    if (metrics.length === 0) {
+      setError("Select at least one metric.");
       return;
     }
     setSubmitting(true);
     try {
-      await createEvalSuite({ name: trimmed, agentId });
+      const created = await createSuite({
+        name: trimmed,
+        dataset_ref: datasetRef.trim(),
+        metrics,
+      });
       setOpen(false);
       reset();
-      // The /evals page is force-dynamic, so a router refresh is the
-      // canonical way to pick up the new row without losing scroll.
-      if (typeof window !== "undefined") {
-        window.location.reload();
-      }
+      router.push(`/evals/suites/${created.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create suite");
     } finally {
@@ -73,84 +108,110 @@ export function NewSuiteModal({ existingNames, agentIds }: NewSuiteModalProps) {
     }
   }
 
-  if (!open) {
-    return (
-      <Button
-        onClick={() => setOpen(true)}
-        data-testid="new-suite-open"
-        type="button"
-      >
-        New suite
-      </Button>
-    );
-  }
-
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-3 rounded-lg border p-4"
-      data-testid="new-suite-form"
-      aria-labelledby={`${formId}-title`}
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen && !submitting) {
+          reset();
+        }
+      }}
     >
-      <h3 id={`${formId}-title`} className="text-sm font-medium">
-        New suite
-      </h3>
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-muted-foreground" htmlFor={`${formId}-name`}>
-          Suite name
-        </label>
-        <input
-          id={`${formId}-name`}
-          className="rounded border border-border bg-background px-2 py-1 text-sm"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="support-smoke"
-          disabled={submitting}
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-muted-foreground" htmlFor={`${formId}-agent`}>
-          Agent
-        </label>
-        <select
-          id={`${formId}-agent`}
-          className="rounded border border-border bg-background px-2 py-1 text-sm"
-          value={agentId}
-          onChange={(e) => setAgentId(e.target.value)}
-          disabled={submitting || agentIds.length === 0}
-        >
-          {agentIds.length === 0 ? (
-            <option value="">No agents available</option>
-          ) : (
-            agentIds.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))
-          )}
-        </select>
-      </div>
-      {error ? (
-        <p className="text-sm text-red-600" role="alert">
-          {error}
-        </p>
-      ) : null}
-      <div className="flex gap-2">
-        <Button type="submit" disabled={submitting} data-testid="new-suite-submit">
-          {submitting ? "Creating…" : "Create"}
-        </Button>
+      <DialogTrigger asChild>
         <Button
           type="button"
-          variant="outline"
-          onClick={() => {
-            setOpen(false);
-            reset();
-          }}
-          disabled={submitting}
+          onClick={() => setOpen(true)}
+          data-testid="new-suite-open"
         >
-          Cancel
+          New suite
         </Button>
-      </div>
-    </form>
+      </DialogTrigger>
+      <DialogContent className="max-w-md" data-testid="new-suite-modal">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-3"
+          data-testid="new-suite-form"
+          aria-labelledby={`${formId}-title`}
+        >
+          <DialogHeader>
+            <DialogTitle id={`${formId}-title`}>New suite</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted-foreground" htmlFor={`${formId}-name`}>
+              Name
+            </label>
+            <input
+              autoFocus
+              id={`${formId}-name`}
+              className="rounded border border-border bg-background px-2 py-1 text-sm"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="support-smoke"
+              disabled={submitting}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted-foreground" htmlFor={`${formId}-dataset-ref`}>
+              Dataset ref
+            </label>
+            <input
+              id={`${formId}-dataset-ref`}
+              className="rounded border border-border bg-background px-2 py-1 text-sm"
+              value={datasetRef}
+              onChange={(e) => setDatasetRef(e.target.value)}
+              placeholder="datasets/support-smoke-v1"
+              disabled={submitting}
+              data-testid="new-suite-dataset-ref"
+            />
+          </div>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="text-xs text-muted-foreground">Metrics</legend>
+            <div className="grid grid-cols-2 gap-2">
+              {METRIC_OPTIONS.map((metric) => {
+                const checked = metrics.includes(metric.value);
+                return (
+                  <label
+                    key={metric.value}
+                    className="flex items-center gap-2 rounded border px-2 py-1 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleMetric(metric.value)}
+                      disabled={submitting}
+                      data-testid={`new-suite-metric-${metric.value}`}
+                    />
+                    {metric.label}
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+          {error ? (
+            <p className="text-sm text-red-600" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className="flex gap-2">
+            <Button
+              type="submit"
+              disabled={submitting}
+              data-testid="new-suite-submit"
+            >
+              {submitting ? "Creating…" : "Create"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

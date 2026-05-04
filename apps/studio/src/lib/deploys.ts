@@ -102,6 +102,7 @@ function applyAction(
   const idx = deployments.findIndex((d) => d.id === depId);
   if (idx === -1) throw new Error(`deployment ${depId} not found`);
   const target = deployments[idx];
+  if (!target) throw new Error(`deployment ${depId} not found`);
   const now = new Date().toISOString();
   let next: Deployment;
   if (action === "promote") {
@@ -114,9 +115,11 @@ function applyAction(
     };
     deployments[idx] = next;
     for (let i = 0; i < deployments.length; i += 1) {
-      if (i !== idx && deployments[i].status === "live") {
+      const current = deployments[i];
+      if (!current) continue;
+      if (i !== idx && current.status === "live") {
         deployments[i] = {
-          ...deployments[i],
+          ...current,
           status: "superseded",
           trafficPercent: 0,
         };
@@ -136,7 +139,9 @@ function applyAction(
     const prevLive = deployments.find((d) => d.status === "superseded");
     if (prevLive) {
       const i = deployments.indexOf(prevLive);
-      deployments[i] = { ...prevLive, status: "live", trafficPercent: 100 };
+      if (i >= 0) {
+        deployments[i] = { ...prevLive, status: "live", trafficPercent: 100 };
+      }
     }
   }
   return next;

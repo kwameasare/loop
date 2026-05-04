@@ -7,6 +7,7 @@ import {
   getEvalRun,
   getEvalSuite,
   listEvalSuites,
+  triggerEvalSuiteRun,
   type EvalRunDetail,
 } from "./evals";
 
@@ -102,10 +103,11 @@ describe("createEvalSuite", () => {
   it("returns an in-memory suite when no baseUrl is configured", async () => {
     const created = await createEvalSuite({
       name: "smoke",
-      agentId: "agt_a",
+      dataset_ref: "datasets/support-smoke-v1",
+      metrics: ["accuracy"],
     });
     expect(created.name).toBe("smoke");
-    expect(created.agentId).toBe("agt_a");
+    expect(created.agentId).toBe("");
     expect(created.id).toMatch(/^evs_/);
   });
 
@@ -119,14 +121,22 @@ describe("createEvalSuite", () => {
       }),
     });
     const created = await createEvalSuite(
-      { name: "smoke", agentId: "agt_a" },
+      {
+        name: "smoke",
+        dataset_ref: "datasets/support-smoke-v1",
+        metrics: ["accuracy", "latency_p95"],
+      },
       { fetcher, baseUrl: "https://cp.test" },
     );
     expect(created.id).toBe("evs_42");
     const [url, init] = fetcher.mock.calls[0];
     expect(url).toBe("https://cp.test/v1/eval-suites");
     expect(init.method).toBe("POST");
-    expect(JSON.parse(init.body)).toEqual({ name: "smoke" });
+    expect(JSON.parse(init.body)).toEqual({
+      name: "smoke",
+      dataset_ref: "datasets/support-smoke-v1",
+      metrics: ["accuracy", "latency_p95"],
+    });
   });
 
   it("propagates non-2xx as an error", async () => {
@@ -135,9 +145,48 @@ describe("createEvalSuite", () => {
       .mockResolvedValue({ ok: false, status: 409, json: async () => ({}) });
     await expect(
       createEvalSuite(
-        { name: "smoke", agentId: "agt_a" },
+        {
+          name: "smoke",
+          dataset_ref: "datasets/support-smoke-v1",
+          metrics: ["accuracy"],
+        },
         { fetcher, baseUrl: "https://cp.test" },
       ),
     ).rejects.toThrow(/409/);
+  });
+});
+
+describe("triggerEvalSuiteRun", () => {
+  it("returns in-memory run id in fixture mode", async () => {
+    const result = await triggerEvalSuiteRun("evs_1");
+    expect(result.id).toMatch(/^evr_/);
+  });
+
+  it("POSTs to /v1/eval-suites/{id}/runs", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({ id: "evr_42" }),
+    });
+    const result = await triggerEvalSuiteRun("evs_1", {
+      fetcher,
+      baseUrl: "https://cp.test",
+    });
+    expect(result.id).toBe("evr_42");
+    const [url, init] = fetcher.mock.calls[0];
+    expect(url).toBe("https://cp.test/v1/eval-suites/evs_1/runs");
+    expect(init.method).toBe("POST");
+  });
+
+  it("throws on non-2xx", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 503, json: async () => ({}) });
+    await expect(
+      triggerEvalSuiteRun("evs_1", {
+        fetcher,
+        baseUrl: "https://cp.test",
+      }),
+    ).rejects.toThrow(/503/);
   });
 });

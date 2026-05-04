@@ -88,7 +88,7 @@ describe("WebChannelCard", () => {
   });
 
   it("copies the snippet to the clipboard", async () => {
-    const copy = vi.fn(async () => undefined);
+    const copy = vi.fn<(snippet: string) => Promise<void>>(async () => undefined);
     render(
       <WebChannelCard
         agentId="agt_demo"

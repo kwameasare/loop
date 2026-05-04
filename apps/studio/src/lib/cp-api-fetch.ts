@@ -30,31 +30,63 @@ import {
   replaceSessionTokens,
 } from "./cp-auth-exchange";
 
-let inflightRefresh: Promise<string | null> | null = null;
+interface RefreshResult {
+  accessToken: string | null;
+  failedWith401: boolean;
+}
+
+let inflightRefresh: Promise<RefreshResult> | null = null;
 
 /** Reset the in-flight-refresh latch. Used by tests; not a public API. */
 export function __resetInflightRefreshForTests(): void {
   inflightRefresh = null;
 }
 
-async function runRefresh(baseUrl?: string, fetcher?: typeof fetch) {
+async function runRefresh(
+  baseUrl?: string,
+  fetcher?: typeof fetch,
+): Promise<RefreshResult> {
   const session = readSessionToken();
   const refreshToken = session?.refresh_token;
-  if (!refreshToken) return null;
+  if (!refreshToken) {
+    return { accessToken: null, failedWith401: false };
+  }
   try {
     const next = await refreshSessionToken(refreshToken, {
-      baseUrl,
-      fetcher,
+      ...(baseUrl ? { baseUrl } : {}),
+      ...(fetcher ? { fetcher } : {}),
     });
     replaceSessionTokens(next);
-    return next.access_token;
+    return { accessToken: next.access_token, failedWith401: false };
   } catch (err) {
     if (err instanceof AuthExchangeError && err.status === 401) {
       // Reuse-detection or expired refresh -> drop the session so the
       // app routes to /login on the next render.
       clearSessionToken();
+      return { accessToken: null, failedWith401: true };
     }
-    return null;
+    return { accessToken: null, failedWith401: false };
+  }
+}
+
+function defaultAuthFailureRedirect(): void {
+  if (typeof window === "undefined") return;
+  try {
+    // Clear any in-tab auth/session state before forcing a fresh login.
+    window.sessionStorage.clear();
+  } catch {
+    // Ignore storage failures (private mode, disabled storage, etc.)
+  }
+  const returnTo =
+    `${window.location.pathname}${window.location.search}${window.location.hash}` ||
+    "/";
+  const target = `/login?returnTo=${encodeURIComponent(returnTo)}`;
+  if (window.location.pathname === "/login") return;
+  try {
+    window.location.replace(target);
+  } catch {
+    // jsdom and some locked-down browser contexts don't implement
+    // full navigation; ignore while still clearing session state.
   }
 }
 
@@ -63,6 +95,11 @@ export interface CpApiFetchOptions {
   refreshBaseUrl?: string;
   /** Override the fetch implementation (used by tests). */
   fetcher?: typeof fetch;
+  /**
+   * Override redirect behavior when refresh returns 401 (token reuse / revoked).
+   * Primarily used by tests.
+   */
+  onAuthFailureRedirect?: () => void;
 }
 
 /**
@@ -75,6 +112,8 @@ export function createAuthedCpApiFetch(
   opts: CpApiFetchOptions = {},
 ): typeof fetch {
   const inner = opts.fetcher ?? fetch;
+  const onAuthFailureRedirect =
+    opts.onAuthFailureRedirect ?? defaultAuthFailureRedirect;
   return async function authedFetch(
     input: RequestInfo | URL,
     init?: RequestInit,
@@ -93,8 +132,14 @@ export function createAuthedCpApiFetch(
         inflightRefresh = null;
       });
     }
-    const newAccess = await inflightRefresh;
-    if (!newAccess) return response;
+    const refresh = await inflightRefresh;
+    const newAccess = refresh.accessToken;
+    if (!newAccess) {
+      if (refresh.failedWith401) {
+        onAuthFailureRedirect();
+      }
+      return response;
+    }
     response = await inner(input, withBearer(init, newAccess));
     return response;
   };

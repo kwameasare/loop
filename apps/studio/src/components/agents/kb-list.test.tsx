@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { KbList } from "./kb-list";
-import type { KbDocument } from "@/lib/kb";
+import type { DocRefreshStatus, KbDocument } from "@/lib/kb";
 
 const seed: KbDocument[] = [
   {
@@ -183,7 +183,7 @@ describe("KbList", () => {
     let resolve!: () => void;
     const triggerRefresh = vi.fn(
       () =>
-        new Promise<ReturnType<typeof import("@/lib/kb").triggerDocRefresh>>((res) => {
+        new Promise<DocRefreshStatus>((res) => {
           resolve = () =>
             res({
               documentId: "doc_a",

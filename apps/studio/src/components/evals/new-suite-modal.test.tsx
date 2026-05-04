@@ -1,11 +1,28 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const push = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push,
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}));
 
 import { NewSuiteModal } from "./new-suite-modal";
 
 describe("NewSuiteModal", () => {
+  beforeEach(() => {
+    push.mockReset();
+  });
+
   it("renders just the trigger button when closed", () => {
-    render(<NewSuiteModal existingNames={[]} agentIds={["agt_a"]} />);
+    render(<NewSuiteModal existingNames={[]} />);
     expect(
       screen.getByRole("button", { name: "New suite" }),
     ).toBeInTheDocument();
@@ -13,50 +30,90 @@ describe("NewSuiteModal", () => {
   });
 
   it("opens the form on click", () => {
-    render(<NewSuiteModal existingNames={[]} agentIds={["agt_a"]} />);
+    render(<NewSuiteModal existingNames={[]} />);
     fireEvent.click(screen.getByTestId("new-suite-open"));
     expect(screen.getByTestId("new-suite-form")).toBeInTheDocument();
   });
 
-  it("rejects invalid slugs", async () => {
-    render(<NewSuiteModal existingNames={[]} agentIds={["agt_a"]} />);
+  it("rejects invalid names", async () => {
+    render(<NewSuiteModal existingNames={[]} />);
     fireEvent.click(screen.getByTestId("new-suite-open"));
-    fireEvent.change(screen.getByLabelText(/suite name/i), {
+    fireEvent.change(screen.getByLabelText(/name/i), {
       target: { value: "Bad Name!" },
+    });
+    fireEvent.change(screen.getByTestId("new-suite-dataset-ref"), {
+      target: { value: "datasets/support-smoke-v1" },
     });
     fireEvent.submit(screen.getByTestId("new-suite-form"));
     expect(await screen.findByRole("alert")).toHaveTextContent(/lowercase/);
   });
 
   it("rejects duplicate names client-side", async () => {
-    render(
-      <NewSuiteModal existingNames={["smoke"]} agentIds={["agt_a"]} />,
-    );
+    render(<NewSuiteModal existingNames={["smoke"]} />);
     fireEvent.click(screen.getByTestId("new-suite-open"));
-    fireEvent.change(screen.getByLabelText(/suite name/i), {
+    fireEvent.change(screen.getByLabelText(/name/i), {
       target: { value: "smoke" },
+    });
+    fireEvent.change(screen.getByTestId("new-suite-dataset-ref"), {
+      target: { value: "datasets/support-smoke-v1" },
     });
     fireEvent.submit(screen.getByTestId("new-suite-form"));
     expect(await screen.findByRole("alert")).toHaveTextContent(/already/);
   });
 
-  it("blocks submit when no agent ids are available", async () => {
-    render(<NewSuiteModal existingNames={[]} agentIds={[]} />);
+  it("requires dataset_ref", async () => {
+    render(<NewSuiteModal existingNames={[]} />);
     fireEvent.click(screen.getByTestId("new-suite-open"));
-    fireEvent.change(screen.getByLabelText(/suite name/i), {
+    fireEvent.change(screen.getByLabelText(/name/i), {
       target: { value: "smoke" },
     });
     fireEvent.submit(screen.getByTestId("new-suite-form"));
-    expect(await screen.findByRole("alert")).toHaveTextContent(/Pick the agent/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Dataset ref/);
   });
 
-  it("shows the submit button label while disabled in submitting state", async () => {
-    // We can't easily trigger the success path without window.location.reload,
-    // but the form's submitting state is observable via the button label.
-    render(<NewSuiteModal existingNames={[]} agentIds={["agt_a"]} />);
+  it("requires at least one metric", async () => {
+    render(<NewSuiteModal existingNames={[]} />);
     fireEvent.click(screen.getByTestId("new-suite-open"));
-    expect(
-      screen.getByRole("button", { name: "Create" }),
-    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/name/i), {
+      target: { value: "smoke" },
+    });
+    fireEvent.change(screen.getByTestId("new-suite-dataset-ref"), {
+      target: { value: "datasets/support-smoke-v1" },
+    });
+
+    // "accuracy" is selected by default; uncheck it to test validation.
+    fireEvent.click(screen.getByTestId("new-suite-metric-accuracy"));
+    fireEvent.submit(screen.getByTestId("new-suite-form"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /Select at least one metric/,
+    );
+  });
+
+  it("submits and navigates to suite detail", async () => {
+    const createSuite = vi.fn().mockResolvedValue({ id: "evs_42" });
+    render(
+      <NewSuiteModal existingNames={[]} createSuite={createSuite} />,
+    );
+
+    fireEvent.click(screen.getByTestId("new-suite-open"));
+    fireEvent.change(screen.getByLabelText(/name/i), {
+      target: { value: "smoke" },
+    });
+    fireEvent.change(screen.getByTestId("new-suite-dataset-ref"), {
+      target: { value: "datasets/support-smoke-v1" },
+    });
+    fireEvent.click(screen.getByTestId("new-suite-metric-latency_p95"));
+
+    fireEvent.submit(screen.getByTestId("new-suite-form"));
+
+    await waitFor(() => {
+      expect(createSuite).toHaveBeenCalledWith({
+        name: "smoke",
+        dataset_ref: "datasets/support-smoke-v1",
+        metrics: ["accuracy", "latency_p95"],
+      });
+    });
+    expect(push).toHaveBeenCalledWith("/evals/suites/evs_42");
   });
 });

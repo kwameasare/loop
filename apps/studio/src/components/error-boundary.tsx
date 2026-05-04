@@ -33,11 +33,12 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     const meta = error as ErrorWithMeta;
+    const requestId = meta.requestId ?? meta.request_id;
     toast.error({
       title: "Something broke while rendering this view.",
       description: error.message,
-      code: meta.code,
-      requestId: meta.requestId ?? meta.request_id,
+      ...(meta.code ? { code: meta.code } : {}),
+      ...(requestId ? { requestId } : {}),
     });
     if (process.env.NODE_ENV !== "production") {
       console.error("[AppErrorBoundary]", error, info);

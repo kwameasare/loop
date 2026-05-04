@@ -368,8 +368,16 @@ jobs:
           version: 9
       - run: pnpm -C apps/studio install --frozen-lockfile
       - run: pnpm -C apps/studio lint
+      - run: pnpm -C apps/studio typecheck
+      - run: pnpm -C apps/studio typecheck:tests
       - run: pnpm -C apps/studio test
       - run: pnpm -C apps/studio build
+      - run: pnpm -C apps/studio build:analyze
+      - run: pnpm -C apps/studio bundle:budget
+      - run: pnpm -C packages/channels/web-js install --frozen-lockfile
+      - run: pnpm -C packages/channels/web-js build
+      - run: pnpm -C apps/studio exec playwright install --with-deps chromium
+      - run: LOOP_E2E_BASE_URL=http://127.0.0.1 pnpm -C apps/studio exec playwright test --project=chromium e2e/web-widget-demo.spec.ts
 
   cli:
     name: cli

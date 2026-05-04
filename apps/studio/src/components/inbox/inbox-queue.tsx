@@ -58,8 +58,8 @@ export function InboxQueue(props: InboxQueueProps) {
     () =>
       listInboxQueue(props.items, {
         workspace_id: props.workspace_id,
-        team_id: teamId || undefined,
-        agent_id: agentId || undefined,
+        ...(teamId ? { team_id: teamId } : {}),
+        ...(agentId ? { agent_id: agentId } : {}),
         channel,
         status,
         sort_by: sortBy,

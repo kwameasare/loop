@@ -2,10 +2,6 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
 import enCommon from "@/locales/en/common.json";
-import deCommon from "@/locales/de/common.json";
-import esCommon from "@/locales/es/common.json";
-import frCommon from "@/locales/fr/common.json";
-import jaCommon from "@/locales/ja/common.json";
 
 export const SUPPORTED_LANGUAGES = ["en", "es", "de", "fr", "ja"] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
@@ -20,10 +16,13 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
 
 const resources = {
   en: { common: enCommon },
-  es: { common: esCommon },
-  de: { common: deCommon },
-  fr: { common: frCommon },
-  ja: { common: jaCommon },
+};
+
+const localeLoaders: Record<Exclude<Language, "en">, () => Promise<unknown>> = {
+  es: () => import("@/locales/es/common.json"),
+  de: () => import("@/locales/de/common.json"),
+  fr: () => import("@/locales/fr/common.json"),
+  ja: () => import("@/locales/ja/common.json"),
 };
 
 if (!i18n.isInitialized) {
@@ -36,6 +35,24 @@ if (!i18n.isInitialized) {
       escapeValue: false, // React already escapes
     },
   });
+}
+
+export async function ensureLanguageLoaded(lang: Language): Promise<void> {
+  if (lang === "en") return;
+  if (i18n.hasResourceBundle(lang, "common")) return;
+
+  const loaded = await localeLoaders[lang]();
+  const common =
+    loaded && typeof loaded === "object" && "default" in loaded
+      ? (loaded as { default: unknown }).default
+      : loaded;
+
+  i18n.addResourceBundle(lang, "common", common, true, true);
+}
+
+export async function setLanguage(lang: Language): Promise<void> {
+  await ensureLanguageLoaded(lang);
+  await i18n.changeLanguage(lang);
 }
 
 export default i18n;

@@ -114,14 +114,19 @@ describe("createAuthedCpApiFetch", () => {
 
   it("clears the session on a 401 from /v1/auth/refresh (reuse detection)", async () => {
     seedSession({ access_token: "old-access", refresh_token: "rt-stolen" });
+    const onAuthFailureRedirect = vi.fn();
     const inner = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({ error: "expired" }, 401))
       .mockResolvedValueOnce(jsonResponse({ error: "reuse" }, 401));
-    const f = createAuthedCpApiFetch({ fetcher: inner as never });
+    const f = createAuthedCpApiFetch({
+      fetcher: inner as never,
+      onAuthFailureRedirect,
+    });
     const res = await f("https://cp.test/v1/agents");
     expect(res.status).toBe(401);
     expect(readSessionToken()).toBeNull();
+    expect(onAuthFailureRedirect).toHaveBeenCalledTimes(1);
   });
 
   it("does not retry non-401 responses", async () => {

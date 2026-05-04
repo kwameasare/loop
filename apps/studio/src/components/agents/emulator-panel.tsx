@@ -268,8 +268,10 @@ function applyEvent(state: PanelState, event: TurnEvent): PanelState {
       const realIdx = state.toolCalls.length - 1 - idx;
       const updated = state.toolCalls.slice();
       const failed = e.error !== undefined && e.error !== null;
+      const current = updated[realIdx];
+      if (!current) return state;
       updated[realIdx] = {
-        ...updated[realIdx],
+        ...current,
         status: failed ? "error" : "ok",
         resultPreview: failed
           ? summarize(e.error)

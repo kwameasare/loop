@@ -431,7 +431,7 @@ export interface CpApiOperations {
     request: unknown;
     response: AuditEventList;
   };
-  GetAuditEvents: {
+  GetAuditEventsLegacy: {
     method: "GET";
     path: "/audit/events";
     request: unknown;
@@ -659,7 +659,7 @@ export interface CpApi {
   GetAgentsByAgentIdConversations(args: { agent_id: string; body: unknown }): Promise<{ "items"?: Conversation[]; "next_cursor"?: string | null }>;
   PostAgentsByAgentIdInvoke(args: { agent_id: string; body: InvokeRequest }): Promise<AgentResponse>;
   PostAgentsByAgentIdVersions(args: { agent_id: string; body: unknown }): Promise<AgentVersion>;
-  GetAuditEvents(args: { body: unknown }): Promise<AuditEventList>;
+  GetAuditEventsLegacy(args: { body: unknown }): Promise<AuditEventList>;
   GetAuditEvents(args: { body: unknown }): Promise<AuditEventList>;
   PostAuthExchange(args: { body: AuthExchangeRequest }): Promise<AuthExchangeResponse>;
   GetBudgets(args: { body: unknown }): Promise<Budget[]>;
@@ -709,7 +709,7 @@ export function createCpApi(opts: CpApiClientOptions): CpApi {
     PostAgentsByAgentIdInvoke: (args) => fetcher<AgentResponse>("POST", `/agents/${encodeURIComponent(args.agent_id)}/invoke`, args.body),
     PostAgentsByAgentIdVersions: (args) => fetcher<AgentVersion>("POST", `/agents/${encodeURIComponent(args.agent_id)}/versions`, args.body),
     GetAuditEvents: (args) => fetcher<AuditEventList>("GET", `/audit-events`, args.body),
-    GetAuditEvents: (args) => fetcher<AuditEventList>("GET", `/audit/events`, args.body),
+    GetAuditEventsLegacy: (args) => fetcher<AuditEventList>("GET", `/audit/events`, args.body),
     PostAuthExchange: (args) => fetcher<AuthExchangeResponse>("POST", `/auth/exchange`, args.body),
     GetBudgets: (args) => fetcher<Budget[]>("GET", `/budgets`, args.body),
     PostBudgets: (args) => fetcher<Budget>("POST", `/budgets`, args.body),

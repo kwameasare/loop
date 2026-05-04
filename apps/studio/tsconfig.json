@@ -5,6 +5,8 @@
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -20,6 +22,15 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", ".next"]
+  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    ".next",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "e2e/**",
+    "playwright.config.ts",
+    "vitest.config.ts",
+    "vitest.setup.ts"
+  ]
 }

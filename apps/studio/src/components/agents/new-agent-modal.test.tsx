@@ -112,4 +112,22 @@ describe("NewAgentModal", () => {
     expect(screen.getByTestId("new-agent-modal")).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
   });
+
+  it("autofocuses the first field and restores focus to trigger on Escape", async () => {
+    render(<NewAgentModal existingSlugs={[]} createAgent={makeCreate()} />);
+
+    const trigger = screen.getByTestId("new-agent-button");
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    const nameInput = await screen.findByTestId("new-agent-name");
+    expect(nameInput).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("new-agent-modal")).not.toBeInTheDocument();
+    });
+    expect(trigger).toHaveFocus();
+  });
 });

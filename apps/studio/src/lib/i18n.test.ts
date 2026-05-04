@@ -107,10 +107,10 @@ describe("i18n initialisation", () => {
   });
 
   it("can look up a key after switching to es", async () => {
-    const { default: i18n } = await import("@/lib/i18n");
-    await i18n.changeLanguage("es");
+    const { default: i18n, setLanguage } = await import("@/lib/i18n");
+    await setLanguage("es");
     expect(i18n.t("actions.save")).toBe("Guardar");
-    await i18n.changeLanguage("en"); // reset
+    await setLanguage("en"); // reset
   });
 
   it("falls back to en for unknown language", async () => {

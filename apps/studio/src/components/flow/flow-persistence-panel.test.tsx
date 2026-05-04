@@ -83,11 +83,16 @@ describe("FlowPersistencePanel", () => {
       },
       async save(_agent, body) {
         if (body.baseVersionTag !== currentTag) {
-          return {
-            ok: false,
-            error: "stale_version_tag",
-            serverVersionTag: currentTag ?? undefined,
-          };
+          return currentTag
+            ? {
+                ok: false,
+                error: "stale_version_tag",
+                serverVersionTag: currentTag,
+              }
+            : {
+                ok: false,
+                error: "stale_version_tag",
+              };
         }
         currentTag = "v-server-2";
         return { ok: true, versionTag: "v-server-2" };
@@ -129,11 +134,16 @@ describe("FlowPersistencePanel", () => {
       },
       async save(_agent, body) {
         if (body.baseVersionTag !== currentTag) {
-          return {
-            ok: false,
-            error: "stale_version_tag",
-            serverVersionTag: currentTag ?? undefined,
-          };
+          return currentTag
+            ? {
+                ok: false,
+                error: "stale_version_tag",
+                serverVersionTag: currentTag,
+              }
+            : {
+                ok: false,
+                error: "stale_version_tag",
+              };
         }
         return { ok: true, versionTag: "v-next" };
       },

@@ -1,4 +1,5 @@
 import { type Agent, createCpApi } from "@/lib/cp-api/generated";
+import { createAuthedCpApiFetch } from "@/lib/cp-api-fetch";
 
 export type AgentSummary = {
   id: string;
@@ -45,6 +46,34 @@ function noStoreFetch(fetcher: typeof fetch): typeof fetch {
   return (input, init) => fetcher(input, { ...init, cache: "no-store" });
 }
 
+function cpApiFetch(opts: {
+  fetcher?: typeof fetch;
+  baseUrl: string;
+}): typeof fetch {
+  const authed = createAuthedCpApiFetch({
+    ...(opts.fetcher ? { fetcher: opts.fetcher } : {}),
+    // refreshSessionToken appends /v1/auth/refresh; pass origin-ish base.
+    refreshBaseUrl: opts.baseUrl.replace(/\/v1$/, ""),
+  });
+  return noStoreFetch(authed);
+}
+
+function createApiClient(opts: {
+  baseUrl: string;
+  fetcher: typeof fetch | undefined;
+  token: string | undefined;
+}) {
+  return createCpApi({
+    baseUrl: opts.baseUrl,
+    fetch: cpApiFetch(
+      opts.fetcher
+        ? { fetcher: opts.fetcher, baseUrl: opts.baseUrl }
+        : { baseUrl: opts.baseUrl },
+    ),
+    ...(opts.token !== undefined ? { token: opts.token } : {}),
+  });
+}
+
 /**
  * Returns the agents visible to the current workspace.
  *
@@ -55,13 +84,14 @@ function noStoreFetch(fetcher: typeof fetch): typeof fetch {
 export async function listAgents(
   opts: ListAgentsOptions = {},
 ): Promise<ListAgentsResponse> {
-  const api = createCpApi({
-    baseUrl: cpApiBaseUrl(),
-    fetch: noStoreFetch(opts.fetcher ?? fetch),
-    token: opts.token ?? process.env.LOOP_TOKEN,
-  });
+  const baseUrl = cpApiBaseUrl();
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  const api = createApiClient({ baseUrl, fetcher: opts.fetcher, token });
   const agents = await api.GetAgents({ body: undefined });
-  return { agents: agents.map(toAgentSummary) };
+  const items: Agent[] = Array.isArray(agents)
+    ? (agents as Agent[])
+    : (agents.items ?? []);
+  return { agents: items.map(toAgentSummary) };
 }
 
 export interface CreateAgentInput {
@@ -86,9 +116,10 @@ export async function createAgent(
   input: CreateAgentInput,
   opts: CreateAgentOptions = {},
 ): Promise<AgentSummary> {
-  const api = createCpApi({
-    baseUrl: opts.baseUrl ?? cpApiBaseUrl(),
-    fetch: opts.fetcher ?? fetch,
+  const baseUrl = opts.baseUrl ?? cpApiBaseUrl();
+  const api = createApiClient({
+    baseUrl,
+    fetcher: opts.fetcher,
     token: opts.token,
   });
   const payload = {
@@ -116,11 +147,9 @@ export async function getAgent(
   agentId: string,
   opts: GetAgentOptions = {},
 ): Promise<AgentSummary> {
-  const api = createCpApi({
-    baseUrl: opts.baseUrl ?? cpApiBaseUrl(),
-    fetch: noStoreFetch(opts.fetcher ?? fetch),
-    token: opts.token ?? process.env.LOOP_TOKEN,
-  });
+  const baseUrl = opts.baseUrl ?? cpApiBaseUrl();
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  const api = createApiClient({ baseUrl, fetcher: opts.fetcher, token });
   const agent = await api.GetAgentsByAgentId({
     agent_id: agentId,
     body: undefined,

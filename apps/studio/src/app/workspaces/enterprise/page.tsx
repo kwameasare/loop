@@ -72,8 +72,8 @@ function EnterpriseSsoBody() {
     setStatus("pending");
     try {
       const next = await postSamlConfig(active.id, {
-        metadata_url: payload.metadataUrl,
-        metadata_xml: payload.metadataXml,
+        ...(payload.metadataUrl ? { metadata_url: payload.metadataUrl } : {}),
+        ...(payload.metadataXml ? { metadata_xml: payload.metadataXml } : {}),
       });
       setStatus(toSsoStatus(next.status));
     } catch (err) {
@@ -103,7 +103,7 @@ function EnterpriseSsoBody() {
       <EnterpriseSsoForm
         status={status}
         onSubmit={handleSubmit}
-        errorMessage={errorMessage}
+        {...(errorMessage ? { errorMessage } : {})}
       />
     </main>
   );

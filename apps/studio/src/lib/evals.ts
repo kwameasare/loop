@@ -254,13 +254,8 @@ export function formatPassRate(rate: number | null): string {
 
 export interface CreateEvalSuiteInput {
   name: string;
-  agentId: string;
-  /**
-   * Optional initial cases. cp's POST accepts ``{cases?: EvalCase[],
-   * name: string}``; the studio surfaces just name+agentId on this
-   * form so the user can iterate after creation.
-   */
-  cases?: { name: string; expected: string }[];
+  dataset_ref: string;
+  metrics: string[];
 }
 
 /**
@@ -279,8 +274,8 @@ export async function createEvalSuite(
     return {
       id: `evs_${Math.random().toString(36).slice(2, 10)}`,
       name: input.name,
-      agentId: input.agentId,
-      cases: input.cases?.length ?? 0,
+      agentId: "",
+      cases: 0,
       lastRunAt: null,
       passRate: null,
     };
@@ -295,7 +290,8 @@ export async function createEvalSuite(
     headers,
     body: JSON.stringify({
       name: input.name,
-      cases: input.cases,
+      dataset_ref: input.dataset_ref,
+      metrics: input.metrics,
     }),
     cache: "no-store",
   });
@@ -306,9 +302,48 @@ export async function createEvalSuite(
   return {
     id: body.id ?? "",
     name: body.name ?? input.name,
-    agentId: body.agentId ?? input.agentId,
-    cases: body.cases ?? input.cases?.length ?? 0,
+    agentId: body.agentId ?? "",
+    cases: body.cases ?? 0,
     lastRunAt: body.lastRunAt ?? null,
     passRate: body.passRate ?? null,
   };
+}
+
+export interface TriggerEvalSuiteRunResult {
+  id: string;
+}
+
+/**
+ * Trigger a new eval run for a suite.
+ */
+export async function triggerEvalSuiteRun(
+  suiteId: string,
+  opts: EvalsHelperOptions = {},
+): Promise<TriggerEvalSuiteRunResult> {
+  const base = resolveBase(opts);
+  if (!base) {
+    return { id: `evr_${Math.random().toString(36).slice(2, 10)}` };
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const headers = {
+    ...authHeaders(opts),
+    "content-type": "application/json",
+  };
+  const res = await fetcher(
+    `${base}/eval-suites/${encodeURIComponent(suiteId)}/runs`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({}),
+      cache: "no-store",
+    },
+  );
+  if (!res.ok) {
+    throw new Error(`triggerEvalSuiteRun failed: ${res.status}`);
+  }
+  const body = (await res.json()) as { id?: string };
+  if (!body.id) {
+    throw new Error("triggerEvalSuiteRun failed: missing run id");
+  }
+  return { id: body.id };
 }

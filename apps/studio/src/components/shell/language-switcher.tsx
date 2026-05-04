@@ -2,14 +2,20 @@
 
 import { useTranslation } from "react-i18next";
 
-import { LANGUAGE_LABELS, SUPPORTED_LANGUAGES, type Language } from "@/lib/i18n";
+import {
+  LANGUAGE_LABELS,
+  SUPPORTED_LANGUAGES,
+  setLanguage,
+  type Language,
+} from "@/lib/i18n";
 
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
   const current = i18n.language as Language;
 
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    void i18n.changeLanguage(e.target.value);
+    const next = e.target.value as Language;
+    void setLanguage(next);
   }
 
   return (

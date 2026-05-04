@@ -73,12 +73,20 @@ export function flowFromYaml(text: string): FlowDoc {
     if (itemMatch) {
       flush();
       current = {};
-      current[itemMatch[1]] = parseScalar(itemMatch[2]);
+      const key = itemMatch[1];
+      const value = itemMatch[2];
+      if (key && value !== undefined) {
+        current[key] = parseScalar(value);
+      }
       continue;
     }
     const fieldMatch = /^ {4}(\w+):\s*(.+)$/.exec(line);
     if (fieldMatch && current) {
-      current[fieldMatch[1]] = parseScalar(fieldMatch[2]);
+      const key = fieldMatch[1];
+      const value = fieldMatch[2];
+      if (key && value !== undefined) {
+        current[key] = parseScalar(value);
+      }
     }
   }
   flush();
@@ -155,11 +163,16 @@ export function makeMemoryFlowApi(seed?: {
       const current = store.get(agentId) ?? null;
       const currentTag = current?.versionTag ?? null;
       if ((body.baseVersionTag ?? null) !== currentTag) {
-        return {
-          ok: false,
-          error: "stale_version_tag",
-          serverVersionTag: currentTag ?? undefined,
-        };
+        return currentTag
+          ? {
+              ok: false,
+              error: "stale_version_tag",
+              serverVersionTag: currentTag,
+            }
+          : {
+              ok: false,
+              error: "stale_version_tag",
+            };
       }
       counter += 1;
       const next: FlowVersion = {
