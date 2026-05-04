@@ -15,7 +15,7 @@ import json
 from collections.abc import AsyncIterator
 from typing import Any
 
-from loop_gateway.cost import cost_for, with_markup
+from loop_gateway.cost import cost_for_decimal, with_markup_decimal
 from loop_gateway.providers.base import ProviderBase, StreamTransport
 from loop_gateway.providers.httpx_transport import HttpxStreamTransport, ProviderTransportError
 from loop_gateway.types import (
@@ -72,5 +72,9 @@ class AnthropicProvider(ProviderBase):
         except ProviderTransportError as exc:
             yield GatewayError(code=exc.code, message=str(exc))
             return
-        pass_through = cost_for(request.model, usage.input_tokens, usage.output_tokens)
-        yield GatewayDone(usage=usage, cost_usd=with_markup(pass_through))
+        # vega #2: Decimal arithmetic up to the wire boundary; see
+        # the OpenAI provider for the rationale.
+        pass_through = cost_for_decimal(
+            request.model, usage.input_tokens, usage.output_tokens
+        )
+        yield GatewayDone(usage=usage, cost_usd=float(with_markup_decimal(pass_through)))

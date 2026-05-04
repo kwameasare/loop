@@ -26,8 +26,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
+from decimal import ROUND_HALF_EVEN, Decimal, getcontext
 
 from loop_gateway.model_catalog import Profile, Vendor, classify_tier, vendor_for
+
+# Bump the Decimal arithmetic precision a little above default so cost
+# computation across the full token-count range (up to ~10^7 tokens)
+# stays exact through the markup multiplication. The default 28 is
+# already enough; we set it explicitly here so a change elsewhere in
+# the process can't silently degrade billing accuracy.
+getcontext().prec = 28
 
 # Provider-disclosed markup applied on top of pass-through cost.
 DISCLOSED_MARKUP_PCT = 5.0
@@ -179,27 +187,82 @@ def _resolve_rate(model: str) -> ModelRate | None:
     return _FALLBACK_TIER_RATES[(vendor, classify_tier(model))]
 
 
-def cost_for(model: str, input_tokens: int, output_tokens: int) -> float:
-    """Pass-through cost (no markup).
+_PER_MILLION = Decimal(1_000_000)
+_BILLING_QUANT = Decimal("0.00001")  # 5 decimal places (ADR-028)
 
-    Resolution order: exact match in :data:`COST_TABLE` first, then a
-    tier-default rate if the id looks like a supported vendor. Raises
-    ``KeyError`` only when both fail (e.g. a Mistral / Gemini id we
-    don't have a hand-bound entry for).
+
+def cost_for_decimal(
+    model: str, input_tokens: int, output_tokens: int
+) -> Decimal:
+    """Pass-through cost in :class:`Decimal` USD (no markup).
+
+    Closes vega #2 (block-prod): provider hot paths used to multiply
+    floats (rate * tokens / 1_000_000), accumulating IEEE-754 rounding
+    errors that showed up as ±1¢ drift between dp's metered cost and
+    the cp billing reconciler. Internal arithmetic is now exact via
+    Decimal; the float boundary is preserved at the wire surface
+    where the GatewayDone event is serialised.
     """
     if input_tokens < 0 or output_tokens < 0:
         raise ValueError("token counts must be non-negative")
     rate = _resolve_rate(model)
     if rate is None:
         raise KeyError(f"unknown model: {model!r}")
+    # ``Decimal(str(...))`` is the canonical way to introduce a float
+    # rate without binary-precision contamination. The rates come from
+    # citation-bearing pricing pages typed as Python floats — going
+    # through ``str`` keeps the literal value intact.
+    in_rate = Decimal(str(rate.input_per_million))
+    out_rate = Decimal(str(rate.output_per_million))
     return (
-        input_tokens * rate.input_per_million / 1_000_000
-        + output_tokens * rate.output_per_million / 1_000_000
+        Decimal(input_tokens) * in_rate / _PER_MILLION
+        + Decimal(output_tokens) * out_rate / _PER_MILLION
     )
 
 
-def with_markup(pass_through_usd: float, markup_pct: float = DISCLOSED_MARKUP_PCT) -> float:
-    """Apply the disclosed markup. Always rounded to 5 decimals (ADR-028)."""
-    if pass_through_usd < 0:
+def with_markup_decimal(
+    pass_through_usd: Decimal | float,
+    markup_pct: float = DISCLOSED_MARKUP_PCT,
+) -> Decimal:
+    """Apply the disclosed markup, returning :class:`Decimal` quantised
+    to 5 decimal places (ADR-028).
+
+    Accepts a Decimal or a float pass-through; the float path goes
+    through ``str`` to avoid binary-precision contamination, matching
+    :func:`cost_for_decimal`.
+    """
+    if isinstance(pass_through_usd, Decimal):
+        base = pass_through_usd
+    else:
+        if pass_through_usd < 0:
+            raise ValueError("pass-through cost must be non-negative")
+        base = Decimal(str(pass_through_usd))
+    if base < 0:
         raise ValueError("pass-through cost must be non-negative")
-    return round(pass_through_usd * (1 + markup_pct / 100), 5)
+    multiplier = Decimal(1) + Decimal(str(markup_pct)) / Decimal(100)
+    return (base * multiplier).quantize(_BILLING_QUANT, rounding=ROUND_HALF_EVEN)
+
+
+def cost_for(model: str, input_tokens: int, output_tokens: int) -> float:
+    """Pass-through cost (no markup) — float façade over
+    :func:`cost_for_decimal`.
+
+    Resolution order: exact match in :data:`COST_TABLE` first, then a
+    tier-default rate if the id looks like a supported vendor. Raises
+    ``KeyError`` only when both fail (e.g. a Mistral / Gemini id we
+    don't have a hand-bound entry for).
+
+    The internal computation runs in :class:`Decimal` so accumulating
+    a turn's worth of token costs produces a deterministic answer; the
+    return value is converted to float at the boundary because the
+    wire shape (``GatewayDone.cost_usd: float``) hasn't changed.
+    """
+    return float(cost_for_decimal(model, input_tokens, output_tokens))
+
+
+def with_markup(pass_through_usd: float, markup_pct: float = DISCLOSED_MARKUP_PCT) -> float:
+    """Apply the disclosed markup. Always rounded to 5 decimals (ADR-028).
+
+    Float façade over :func:`with_markup_decimal` for back-compat.
+    """
+    return float(with_markup_decimal(pass_through_usd, markup_pct))
