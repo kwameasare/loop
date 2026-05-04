@@ -127,7 +127,11 @@ services:
       - "${LOOP_DEV_BIND:-127.0.0.1}:8123:8123"   # HTTP
       # Native protocol mapped to host 19000 to avoid the MinIO console (9001)
       # collision the previous version had. In-cluster clients keep using 9000.
-      - "${LOOP_DEV_BIND:-127.0.0.1}:19000:9000"
+      # ClickHouse native protocol; mapped to host 19000 to avoid the MinIO
+      # console (9001) collision. Override LOOP_DEV_CLICKHOUSE_NATIVE_PORT
+      # if your Docker Desktop has a stuck proxy on 19000 from a prior
+      # failed up-attempt.
+      - "${LOOP_DEV_BIND:-127.0.0.1}:${LOOP_DEV_CLICKHOUSE_NATIVE_PORT:-19000}:9000"
     volumes:
       - chdata:/var/lib/clickhouse
     ulimits:

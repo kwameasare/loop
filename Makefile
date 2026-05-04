@@ -3,6 +3,15 @@
 PY := uv run python
 NODE := pnpm
 
+# Auto-load .env so `make migrate` (and anyone reading LOOP_*_URL etc.) sees
+# the operator's port overrides and DB credentials. Without this, sub-commands
+# fall back to the in-source defaults (port 5432 / 6379) and collide with
+# Homebrew services on a developer laptop.
+ifneq (,$(wildcard ./.env))
+include .env
+export
+endif
+
 bootstrap:
 	uv sync --all-packages
 	$(NODE) -C apps/studio install
@@ -10,11 +19,14 @@ bootstrap:
 	pre-commit install
 
 up:
-	docker compose -f infra/docker-compose.yml up -d --wait
-	@docker compose -f infra/docker-compose.yml ps
+	# Pass --env-file explicitly. With `-f infra/docker-compose.yml`,
+	# docker compose's "project directory" is `infra/`, so it would
+	# normally look for `infra/.env` and miss the repo-root `.env`.
+	docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
+	@docker compose --env-file .env -f infra/docker-compose.yml ps
 
 down:
-	docker compose -f infra/docker-compose.yml down
+	docker compose --env-file .env -f infra/docker-compose.yml down
 
 infra-smoke:
 	./tools/infra_smoke.sh
@@ -46,7 +58,7 @@ format:
 	$(NODE) -C apps/studio format
 
 logs:
-	docker compose -f infra/docker-compose.yml logs -f $(SERVICE)
+	docker compose --env-file .env -f infra/docker-compose.yml logs -f $(SERVICE)
 
 clean:
 	rm -rf .venv node_modules **/__pycache__ .pytest_cache .ruff_cache
