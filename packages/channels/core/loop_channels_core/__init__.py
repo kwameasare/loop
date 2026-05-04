@@ -10,6 +10,7 @@ Concrete channels live in sibling packages
 (`loop_channels_web`, `loop_channels_slack`, `loop_channels_whatsapp`).
 """
 
+from loop_channels_core.conversation_index_postgres import PostgresConversationIndex
 from loop_channels_core.feature_matrix import (
     AgentChannelMatrix,
     ChannelCapability,
@@ -61,6 +62,7 @@ __all__ = [
     "MemoryIdempotencyStore",
     "OutboundFrame",
     "OutboundFrameKind",
+    "PostgresConversationIndex",
     "default_channel_profiles",
     "from_async_generator",
     "from_list_factory",

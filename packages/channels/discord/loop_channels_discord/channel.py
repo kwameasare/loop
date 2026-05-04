@@ -6,7 +6,7 @@ import asyncio
 from typing import Any
 from uuid import UUID, uuid4
 
-from loop_channels_core import ChannelDispatcher
+from loop_channels_core import ChannelDispatcher, PostgresConversationIndex
 
 from loop_channels_discord.messages import to_followup_body
 from loop_channels_discord.parser import parse_interaction
@@ -33,6 +33,17 @@ class DiscordConversationIndex:
             return self._by_channel.get(channel_id)
 
 
+class DiscordPostgresConversationIndex:
+    def __init__(self, inner: PostgresConversationIndex) -> None:
+        self._inner = inner
+
+    async def get_or_create(self, *, channel_id: str) -> UUID:
+        return await self._inner.get_or_create(provider_user_id=channel_id)
+
+    async def get(self, *, channel_id: str) -> UUID | None:
+        return await self._inner.get(provider_user_id=channel_id)
+
+
 class DiscordChannel:
     """Bridges Discord Interactions API webhooks to a dispatcher.
 
@@ -50,10 +61,22 @@ class DiscordChannel:
         workspace_id: UUID,
         agent_id: UUID,
         conversations: DiscordConversationIndex | None = None,
+        conversation_index_engine: Any | None = None,
     ) -> None:
         self._workspace_id = workspace_id
         self._agent_id = agent_id
-        self._conversations = conversations or DiscordConversationIndex()
+        if conversations is not None:
+            self._conversations = conversations
+        elif conversation_index_engine is not None:
+            self._conversations = DiscordPostgresConversationIndex(
+                PostgresConversationIndex(
+                    conversation_index_engine,
+                    workspace_id=workspace_id,
+                    channel=self.name,
+                )
+            )
+        else:
+            self._conversations = DiscordConversationIndex()
         self._dispatcher: ChannelDispatcher | None = None
 
     async def start(self, dispatcher: ChannelDispatcher) -> None:
@@ -89,4 +112,4 @@ class DiscordChannel:
         return out
 
 
-__all__ = ["DiscordChannel", "DiscordConversationIndex"]
+__all__ = ["DiscordChannel", "DiscordConversationIndex", "DiscordPostgresConversationIndex"]

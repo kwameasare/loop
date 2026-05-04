@@ -9,6 +9,7 @@ from uuid import UUID, uuid4
 from loop_channels_core import (
     ChannelDispatcher,
     InboundEvent,
+    PostgresConversationIndex,
 )
 
 from loop_channels_whatsapp.messages import to_messages
@@ -50,6 +51,19 @@ class ConversationIndex:
             return self._by_pair.get((phone_number_id, msisdn))
 
 
+class WhatsAppPostgresConversationIndex:
+    def __init__(self, inner: PostgresConversationIndex) -> None:
+        self._inner = inner
+
+    async def get_or_create(self, *, phone_number_id: str, msisdn: str) -> UUID:
+        return await self._inner.get_or_create(
+            provider_user_id=f"{phone_number_id}:{msisdn}",
+        )
+
+    async def get(self, *, phone_number_id: str, msisdn: str) -> UUID | None:
+        return await self._inner.get(provider_user_id=f"{phone_number_id}:{msisdn}")
+
+
 class WhatsAppChannel:
     """Bridges the WhatsApp Cloud API webhook to a dispatcher.
 
@@ -67,10 +81,22 @@ class WhatsAppChannel:
         workspace_id: UUID,
         agent_id: UUID,
         conversations: ConversationIndex | None = None,
+        conversation_index_engine: Any | None = None,
     ) -> None:
         self._workspace_id = workspace_id
         self._agent_id = agent_id
-        self._conversations = conversations or ConversationIndex()
+        if conversations is not None:
+            self._conversations = conversations
+        elif conversation_index_engine is not None:
+            self._conversations = WhatsAppPostgresConversationIndex(
+                PostgresConversationIndex(
+                    conversation_index_engine,
+                    workspace_id=workspace_id,
+                    channel=self.name,
+                )
+            )
+        else:
+            self._conversations = ConversationIndex()
         self._dispatcher: ChannelDispatcher | None = None
 
     async def start(self, dispatcher: ChannelDispatcher) -> None:
@@ -132,4 +158,4 @@ def _extract_pair(payload: dict[str, Any]) -> tuple[str, str] | None:
     return None
 
 
-__all__ = ["ConversationIndex", "WhatsAppChannel"]
+__all__ = ["ConversationIndex", "WhatsAppChannel", "WhatsAppPostgresConversationIndex"]

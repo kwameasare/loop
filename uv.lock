@@ -765,10 +765,14 @@ version = "0.1.0"
 source = { editable = "packages/channels/core" }
 dependencies = [
     { name = "pydantic" },
+    { name = "sqlalchemy" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pydantic", specifier = ">=2" }]
+requires-dist = [
+    { name = "pydantic", specifier = ">=2" },
+    { name = "sqlalchemy", specifier = ">=2.0" },
+]
 
 [[package]]
 name = "loop-channels-discord"
