@@ -93,6 +93,16 @@ def runtime_server() -> Iterator[tuple[str, list[dict[str, Any]]]]:
             "LOOP_DP_OPENAI_BASE_URL": f"http://127.0.0.1:{provider.server_address[1]}",
             "LOOP_DP_VERSION": "0.1.0-test",
             "LOOP_GATEWAY_OPENAI_API_KEY": "s902-test-key",
+            # P0.1: dp now requires bearer auth on /v1/turns. The
+            # integration test against the live uvicorn process
+            # uses the dev-bypass env so we can keep exercising the
+            # streaming path without minting a PASETO. The new auth
+            # path is covered separately by tests in
+            # `_tests/test_dp_auth.py`.
+            "LOOP_DP_AUTH_DISABLE": "1",
+            # OTel exporter would otherwise spam the logs trying to
+            # reach a non-existent collector during the test boot.
+            "LOOP_OTEL_ENDPOINT": "disabled",
         }
     )
     proc = subprocess.Popen(

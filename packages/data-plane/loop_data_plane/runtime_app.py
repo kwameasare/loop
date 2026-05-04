@@ -9,6 +9,11 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from loop_runtime import TurnExecutor
 from loop_runtime.healthz import build_runtime_healthz
 
+from loop_data_plane._auth import (
+    AUTH_CALLER,
+    DpAuthError,
+    enforce_workspace_match,
+)
 from loop_data_plane._runtime_config import (
     build_gateway,
     package_version,
@@ -85,7 +90,15 @@ async def post_turn(
     body: RuntimeTurnRequest,
     accept: str | None = Header(default=None, alias="Accept"),
     stream: bool = Query(default=False),
+    claims: dict[str, object] = AUTH_CALLER,
 ) -> JSONResponse | StreamingResponse:
+    # P0.1: every inbound turn must be authenticated AND match the
+    # body's claimed identity, otherwise the dp is an open relay.
+    enforce_workspace_match(
+        claims=claims,
+        body_workspace_id=str(body.workspace_id),
+        body_user_id=body.user_id,
+    )
     executor = _state(request).executor
     if _wants_sse(accept, stream):
         return StreamingResponse(
@@ -103,7 +116,13 @@ async def post_turn(
 async def post_turn_stream(
     request: Request,
     body: RuntimeTurnRequest,
+    claims: dict[str, object] = AUTH_CALLER,
 ) -> StreamingResponse:
+    enforce_workspace_match(
+        claims=claims,
+        body_workspace_id=str(body.workspace_id),
+        body_user_id=body.user_id,
+    )
     return StreamingResponse(
         stream_turn_sse(_state(request).executor, body),
         media_type="text/event-stream",
