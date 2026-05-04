@@ -3,9 +3,17 @@
 from __future__ import annotations
 
 import math
+from datetime import date
 
 import pytest
-from loop_gateway.cost import COST_TABLE, DISCLOSED_MARKUP_PCT, cost_for, with_markup
+from loop_gateway.cost import (
+    COST_TABLE,
+    COST_TABLE_REFRESHED_AT,
+    DISCLOSED_MARKUP_PCT,
+    cost_for,
+    cost_health_check,
+    with_markup,
+)
 
 
 def test_cost_for_known_model_uses_published_rate() -> None:
@@ -75,3 +83,19 @@ def test_every_model_in_table_has_source_url() -> None:
         assert rate.source_url.startswith("https://"), name
         assert rate.input_per_million >= 0
         assert rate.output_per_million >= 0
+
+
+def test_cost_table_refreshed_at_uses_iso_date_format() -> None:
+    refreshed_at = date.fromisoformat(COST_TABLE_REFRESHED_AT)
+    assert refreshed_at.isoformat() == COST_TABLE_REFRESHED_AT
+
+
+def test_cost_health_check_flags_stale_table_entries() -> None:
+    health = cost_health_check(today=date(2026, 6, 30), max_age_days=90)
+    assert health.is_stale is False
+    assert health.stale_models == ()
+
+    stale = cost_health_check(today=date(2026, 7, 1), max_age_days=90)
+    assert stale.is_stale is True
+    assert stale.age_days == 91
+    assert stale.stale_models == tuple(sorted(COST_TABLE))

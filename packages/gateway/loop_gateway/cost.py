@@ -25,6 +25,7 @@ right to bill.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, date, datetime
 
 from loop_gateway.model_catalog import Profile, Vendor, classify_tier, vendor_for
 
@@ -42,6 +43,9 @@ class ModelRate:
 
 
 # Rates current as of 2026-04. Update with the provider's pricing page URL.
+COST_TABLE_REFRESHED_AT = "2026-04-01"
+
+
 COST_TABLE: dict[str, ModelRate] = {
     # OpenAI -- https://openai.com/api/pricing/
     "gpt-4o-mini": ModelRate(0.15, 0.60, "https://openai.com/api/pricing/"),
@@ -92,6 +96,52 @@ COST_TABLE: dict[str, ModelRate] = {
     "replicate-llama": ModelRate(0.65, 2.75, "https://replicate.com/pricing"),
     "fireworks-qwen": ModelRate(0.30, 0.30, "https://fireworks.ai/pricing"),
 }
+
+
+@dataclass(frozen=True, slots=True)
+class CostTableHealth:
+    """Freshness status for the static pricing table."""
+
+    refreshed_at: date
+    age_days: int
+    max_age_days: int
+    stale_models: tuple[str, ...]
+
+    @property
+    def is_stale(self) -> bool:
+        return bool(self.stale_models)
+
+
+def _parse_refreshed_at(value: str) -> date:
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError("COST_TABLE_REFRESHED_AT must use YYYY-MM-DD format") from exc
+
+
+def cost_health_check(
+    *,
+    today: date | None = None,
+    max_age_days: int = 90,
+) -> CostTableHealth:
+    """Return whether the static cost table is past its freshness budget.
+
+    ``COST_TABLE_REFRESHED_AT`` is table-level because the current table is
+    maintained as one citation-bearing bundle. When it goes stale, every row
+    needs a pricing-page review before we trust billing estimates again.
+    """
+    if max_age_days < 0:
+        raise ValueError("max_age_days must be non-negative")
+    refreshed_at = _parse_refreshed_at(COST_TABLE_REFRESHED_AT)
+    today = today or datetime.now(UTC).date()
+    age_days = (today - refreshed_at).days
+    stale_models = tuple(sorted(COST_TABLE)) if age_days > max_age_days else ()
+    return CostTableHealth(
+        refreshed_at=refreshed_at,
+        age_days=age_days,
+        max_age_days=max_age_days,
+        stale_models=stale_models,
+    )
 
 
 # Conservative tier-default rates used when a model id isn't in
