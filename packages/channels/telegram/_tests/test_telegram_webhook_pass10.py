@@ -42,9 +42,56 @@ def test_parse_webhook_body_text_message():
         workspace_id=uuid4(),
         agent_id=uuid4(),
         conversation_id=uuid4(),
+        # P0.5f replay defense triggers on `date: 1` (epoch=1970); opt
+        # out for this parser test. Replay path covered by
+        # test_parse_webhook_body_rejects_replayed_event below.
+        verify_event_timestamp=False,
     )
     assert upd.update_id == 42
     assert upd.chat_id == 1234
+    assert upd.event is not None
+    assert upd.event.text == "hello"
+
+
+def test_parse_webhook_body_rejects_replayed_event():
+    """P0.5f: a captured update with an old `date` is replayable
+    forever unless we gate on the embedded timestamp."""
+    payload = {
+        "update_id": 42,
+        "message": {
+            "chat": {"id": 1234},
+            "from": {"id": 99, "username": "user"},
+            "text": "hello",
+            "date": 1700000000,  # ~Nov 2023
+        },
+    }
+    with pytest.raises(TelegramWebhookError, match="replay"):
+        parse_webhook_body(
+            json.dumps(payload).encode("utf-8"),
+            workspace_id=uuid4(),
+            agent_id=uuid4(),
+            conversation_id=uuid4(),
+            now=1700000000 + 7200,  # 2h later — outside default 600s window
+        )
+
+
+def test_parse_webhook_body_accepts_recent_event():
+    payload = {
+        "update_id": 42,
+        "message": {
+            "chat": {"id": 1234},
+            "from": {"id": 99, "username": "user"},
+            "text": "hello",
+            "date": 1700000000,
+        },
+    }
+    upd = parse_webhook_body(
+        json.dumps(payload).encode("utf-8"),
+        workspace_id=uuid4(),
+        agent_id=uuid4(),
+        conversation_id=uuid4(),
+        now=1700000000 + 60,  # 1 minute later — well within window
+    )
     assert upd.event is not None
     assert upd.event.text == "hello"
 
@@ -112,6 +159,8 @@ async def test_handler_dispatches_text_message():
         agent_id=uuid4(),
         conversation_id=uuid4(),
         on_event=on_event,
+        # Test fixture uses date=1; opt out of replay window check.
+        verify_event_timestamp=False,
     )
     payload = {
         "update_id": 7,
