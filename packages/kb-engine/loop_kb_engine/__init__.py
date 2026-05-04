@@ -17,11 +17,18 @@ from loop_kb_engine.chunker import (
     HeadingChunker,
     SemanticChunker,
 )
+from loop_kb_engine.crawler import (
+    CrawlResult,
+    CrawlStats,
+    SitemapCrawler,
+)
 from loop_kb_engine.embeddings import (
     DeterministicEmbeddingService,
     EmbeddingService,
 )
 from loop_kb_engine.kb import KnowledgeBase, RetrievalResult
+from loop_kb_engine.layout_chunker import ChunkType, LayoutAwareChunker
+from loop_kb_engine.lexical_postgres import LexicalHit, PostgresLexicalIndex
 from loop_kb_engine.models import Chunk, Document, EmbeddingVector
 from loop_kb_engine.parsers import (
     DocumentParseError,
@@ -39,18 +46,6 @@ from loop_kb_engine.perf_fixture import (
     SyntheticMillionChunkFixture,
 )
 from loop_kb_engine.qdrant_store import QdrantRestVectorStore, qdrant_collection_name
-from loop_kb_engine.layout_chunker import ChunkType, LayoutAwareChunker
-from loop_kb_engine.crawler import (
-    CrawlResult,
-    CrawlStats,
-    SitemapCrawler,
-)
-from loop_kb_engine.scheduler import (
-    DocRefreshConfig,
-    DocRefreshRecord,
-    RefreshScheduler,
-    RefreshStatus,
-)
 from loop_kb_engine.retrieval import (
     ChunkDiff,
     TombstoneRegistry,
@@ -58,25 +53,27 @@ from loop_kb_engine.retrieval import (
     diff_chunks,
     rrf_combine,
 )
+from loop_kb_engine.scheduler import (
+    DocRefreshConfig,
+    DocRefreshRecord,
+    RefreshScheduler,
+    RefreshStatus,
+)
 from loop_kb_engine.store import InMemoryVectorStore, VectorStore
 
 __all__ = [
-    "ChunkType",
-    "LayoutAwareChunker",
-    "CrawlResult",
-    "CrawlStats",
-    "SitemapCrawler",
-    "DocRefreshConfig",
-    "DocRefreshRecord",
-    "RefreshScheduler",
-    "RefreshStatus",
     "DEFAULT_CHUNK_COUNT",
     "DEFAULT_TOP_K",
     "TARGET_P50_MS",
     "Chunk",
     "ChunkDiff",
+    "ChunkType",
     "Chunker",
+    "CrawlResult",
+    "CrawlStats",
     "DeterministicEmbeddingService",
+    "DocRefreshConfig",
+    "DocRefreshRecord",
     "Document",
     "DocumentParseError",
     "EmbeddingService",
@@ -85,11 +82,17 @@ __all__ = [
     "HeadingChunker",
     "InMemoryVectorStore",
     "KnowledgeBase",
+    "LayoutAwareChunker",
+    "LexicalHit",
     "Parser",
     "ParserRegistry",
+    "PostgresLexicalIndex",
     "QdrantRestVectorStore",
+    "RefreshScheduler",
+    "RefreshStatus",
     "RetrievalResult",
     "SemanticChunker",
+    "SitemapCrawler",
     "SyntheticKBHit",
     "SyntheticMillionChunkFixture",
     "TextParser",

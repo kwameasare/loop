@@ -1,0 +1,65 @@
+name: Cost table staleness
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  cost-table-staleness:
+    name: cost-table-staleness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+      - run: uv sync --all-packages
+      - name: Check COST_TABLE freshness
+        id: health
+        run: |
+          uv run python - <<'PY'
+          import os
+
+          from loop_gateway.cost import cost_health_check
+
+          health = cost_health_check(max_age_days=60)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              print(f"stale={'true' if health.is_stale else 'false'}", file=output)
+              print(f"age_days={health.age_days}", file=output)
+              print(f"refreshed_at={health.refreshed_at.isoformat()}", file=output)
+              print("stale_models<<EOF", file=output)
+              print("\n".join(health.stale_models), file=output)
+              print("EOF", file=output)
+          PY
+      - name: Open refresh issue
+        if: steps.health.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGE_DAYS: ${{ steps.health.outputs.age_days }}
+          REFRESHED_AT: ${{ steps.health.outputs.refreshed_at }}
+          STALE_MODELS: ${{ steps.health.outputs.stale_models }}
+        run: |
+          set -euo pipefail
+          existing="$(gh issue list --state open --search 'Cost table stale: refresh provider pricing in:title' --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            echo "Existing cost-table staleness issue: #$existing"
+            exit 0
+          fi
+          {
+            echo "COST_TABLE was last refreshed on ${REFRESHED_AT} (${AGE_DAYS} days ago)."
+            echo
+            echo "Refresh provider pricing citations and update COST_TABLE_REFRESHED_AT."
+            echo
+            echo "Stale models:"
+            echo '```'
+            echo "${STALE_MODELS}"
+            echo '```'
+          } > issue_body.md
+          gh issue create \
+            --title "Cost table stale: refresh provider pricing" \
+            --body-file issue_body.md
