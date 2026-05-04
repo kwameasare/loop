@@ -17,9 +17,11 @@ from loop_control_plane.audit_events import (
     AuditEventError,
     InMemoryAuditEventStore,
     audited,
+    fetch_payload,
     hash_payload,
     record_audit_event,
 )
+from loop_control_plane.audit_redaction import REDACTED, redact_for_audit
 
 _NOW = datetime(2027, 6, 15, 12, 0, tzinfo=UTC)
 
@@ -88,6 +90,89 @@ def test_payload_hash_is_stable_and_order_independent() -> None:
     b = hash_payload({"slug": "d", "name": "demo"})
     assert a == b
     assert a != hash_payload({"name": "demo", "slug": "e"})
+
+
+def test_record_audit_event_persists_payload_for_replay() -> None:
+    store = InMemoryAuditEventStore()
+    payload = {"name": "demo", "version": 3}
+    event = record_audit_event(
+        workspace_id=uuid.uuid4(),
+        actor_sub="auth0|alice",
+        action="workspace.secret.set",
+        resource_type="secret",
+        store=store,
+        payload=payload,
+    )
+    assert event.payload_hash == hash_payload(payload)
+    assert event.payload_hash is not None
+    assert fetch_payload(store, event.payload_hash) == payload
+
+
+def test_record_audit_event_payload_persistence_is_hash_idempotent() -> None:
+    store = InMemoryAuditEventStore()
+    payload = {"name": "demo", "version": 3}
+    first = record_audit_event(
+        workspace_id=uuid.uuid4(),
+        actor_sub="auth0|alice",
+        action="workspace.secret.set",
+        resource_type="secret",
+        store=store,
+        payload=payload,
+    )
+    second = record_audit_event(
+        workspace_id=uuid.uuid4(),
+        actor_sub="auth0|bob",
+        action="workspace.secret.rotate",
+        resource_type="secret",
+        store=store,
+        payload={"version": 3, "name": "demo"},
+    )
+    assert first.payload_hash == second.payload_hash
+    assert len(store._payloads) == 1
+
+
+def test_record_audit_event_redacts_payload_before_hash_and_persist() -> None:
+    store = InMemoryAuditEventStore()
+    payload = {"name": "OPENAI_API_KEY", "request": {"value": "sk-live"}}
+    event = record_audit_event(
+        workspace_id=uuid.uuid4(),
+        actor_sub="auth0|alice",
+        action="workspace.secret.set",
+        resource_type="secret",
+        store=store,
+        payload=payload,
+    )
+    redacted = {"name": "OPENAI_API_KEY", "request": {"value": REDACTED}}
+    assert event.payload_hash == hash_payload(redacted)
+    assert event.payload_hash is not None
+    assert fetch_payload(store, event.payload_hash) == redacted
+
+
+def test_redaction_registry_covers_secret_api_key_and_voice_payloads() -> None:
+    payload = {
+        "secret": {"name": "OPENAI_API_KEY", "value": "sk-live"},
+        "api_key": {
+            "id": "key_123",
+            "prefix": "abcdef123456",
+            "plaintext": "loop_sk_supersecret",
+        },
+        "voice": {
+            "recording_url": "https://signed.example/recording.wav?sig=secret",
+            "duration_ms": 1200,
+        },
+    }
+    assert redact_for_audit(payload) == {
+        "secret": {"name": "OPENAI_API_KEY", "value": REDACTED},
+        "api_key": {
+            "id": "key_123",
+            "prefix": "abcdef123456",
+            "plaintext": REDACTED,
+        },
+        "voice": {
+            "recording_url": REDACTED,
+            "duration_ms": 1200,
+        },
+    }
 
 
 def test_in_memory_store_rejects_duplicate_id() -> None:

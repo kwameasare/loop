@@ -27,6 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
+from loop_control_plane.audit_redaction import redact_for_audit
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.secrets import SecretsBackendError
 
@@ -87,8 +88,9 @@ async def set_secret(
         store=cp.audit_events,
         resource_id=name,
         request_id=request_id(request),
-        # NEVER log the value.
-        payload={"name": name, "version": version},
+        payload=redact_for_audit(
+            {"name": name, "version": version, "request": body.model_dump()}
+        ),
     )
     return {"name": name, "version": version}
 
@@ -157,7 +159,9 @@ async def rotate_secret(
         store=cp.audit_events,
         resource_id=name,
         request_id=request_id(request),
-        payload={"name": name, "version": version},
+        payload=redact_for_audit(
+            {"name": name, "version": version, "request": body.model_dump()}
+        ),
     )
     return {"name": name, "version": version}
 

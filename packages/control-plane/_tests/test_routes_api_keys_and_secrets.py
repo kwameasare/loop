@@ -8,6 +8,8 @@ from uuid import UUID
 import pytest
 from fastapi.testclient import TestClient
 from loop_control_plane.app import create_app
+from loop_control_plane.audit_events import fetch_payload
+from loop_control_plane.audit_redaction import REDACTED
 from loop_control_plane.paseto import encode_local
 
 _TEST_KEY = b"x" * 32
@@ -143,6 +145,12 @@ def test_api_key_routes_emit_audit_events(
     rows = list(state.audit_events.list_for_workspace(workspace_id))
     api_key_rows = [r for r in rows if r.action.startswith("workspace:api_key:")]
     assert all(r.payload_hash for r in api_key_rows)
+    create_row = next(r for r in api_key_rows if r.action == "workspace:api_key:create")
+    assert create_row.payload_hash is not None
+    payload = fetch_payload(state.audit_events, create_row.payload_hash)
+    assert payload is not None
+    assert payload["plaintext"] == REDACTED
+    assert issued["plaintext"] not in repr(payload)
 
 
 # --------------------------------------------------------------------------- #
@@ -313,14 +321,9 @@ def test_secret_routes_emit_audit_events(
     assert "workspace:secret:delete" in actions
 
 
-def test_secret_audit_payload_hash_excludes_plaintext_by_design(
+def test_secret_audit_payload_is_persisted_without_plaintext(
     client: TestClient, workspace_id: UUID
 ) -> None:
-    """`AuditEvent` schema stores `payload_hash` only — the raw
-    payload is structurally inaccessible from the audit row, so the
-    plaintext can NEVER be recovered from the audit log even if a
-    future caller forgot the redaction discipline. This test pins
-    that invariant."""
     headers = {"authorization": _bearer_for("owner-1")}
     client.put(
         f"/v1/workspaces/{workspace_id}/secrets/X",
@@ -335,3 +338,9 @@ def test_secret_audit_payload_hash_excludes_plaintext_by_design(
     secret_rows = [r for r in rows if r.action.startswith("workspace:secret:")]
     assert secret_rows
     assert all(r.payload_hash for r in secret_rows)
+    set_row = next(r for r in secret_rows if r.action == "workspace:secret:set")
+    assert set_row.payload_hash is not None
+    payload = fetch_payload(state.audit_events, set_row.payload_hash)
+    assert payload is not None
+    assert payload["request"]["value"] == REDACTED
+    assert "ultra-secret-do-not-log" not in repr(payload)

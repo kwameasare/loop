@@ -60,7 +60,7 @@ def dp_sql() -> str:
 
 def test_cp_migrations_have_single_head() -> None:
     script = ScriptDirectory.from_config(_config("loop_control_plane.migrations"))
-    assert script.get_heads() == ["cp_0006_merge_audit_heads"]
+    assert script.get_heads() == ["cp_0007_audit_event_payloads"]
 
 
 def test_cp_creates_core_identity_tables(cp_sql: str) -> None:
@@ -143,6 +143,10 @@ def test_dp_workspace_id_is_not_null(dp_sql: str) -> None:
 def test_cp_creates_audit_log_table(cp_sql: str) -> None:
     assert "CREATE TABLE audit_log" in cp_sql
     assert "CREATE TABLE audit_events" in cp_sql
+    assert "CREATE TABLE audit_event_payloads" in cp_sql
+    payloads = cp_sql[cp_sql.index("CREATE TABLE audit_event_payloads") :][:800]
+    assert "payload_hash" in payloads and "BYTEA PRIMARY KEY" in payloads
+    assert "payload_json" in payloads and "JSONB NOT NULL" in payloads
 
 
 def test_cp_audit_log_has_required_columns(cp_sql: str) -> None:
