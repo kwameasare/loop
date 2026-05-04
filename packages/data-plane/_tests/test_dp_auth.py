@@ -7,10 +7,7 @@ auth tests.
 
 from __future__ import annotations
 
-import os
 import time
-from collections.abc import AsyncIterator
-from dataclasses import dataclass
 
 import pytest
 from fastapi.testclient import TestClient
@@ -110,11 +107,10 @@ def test_enforce_match_skips_when_auth_disabled() -> None:
 # --------------------------------------------------------------------------- #
 
 
-def _build_app_with_stub_executor() -> tuple["TestClient", list[dict[str, object]]]:
+def _build_app_with_stub_executor() -> tuple[TestClient, list[dict[str, object]]]:
     """Build a minimal dp app with a dict body type + the real auth
     dependency so we test the auth path without LLM calls."""
     from fastapi import Body, FastAPI
-
     from loop_data_plane._auth import AUTH_CALLER, enforce_workspace_match
 
     app = FastAPI()

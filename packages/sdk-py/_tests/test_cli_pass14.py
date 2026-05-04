@@ -94,7 +94,7 @@ def test_login_persists_credentials_with_secure_mode(tmp_path: Path) -> None:
     assert "https://loop.test/device" in output
     assert fake.requests[0][1] == "/auth/device-code"
     assert fake.requests[1][2] == {"device_code": "dev_123"}
-    assert load_credentials(creds_path).access_token == "access_123"  # noqa: S105
+    assert load_credentials(creds_path).access_token == "access_123"
     assert creds_path.stat().st_mode & 0o777 == 0o600
 
 
@@ -130,7 +130,7 @@ def test_deploy_bundles_project_and_calls_control_plane(
     method, path, body, token = fake.requests[-1]
     assert method == "POST"
     assert path == "/agents/deployments"
-    assert token == "access_123"  # noqa: S105
+    assert token == "access_123"
     assert body is not None
     assert len(body["sha256"]) == 64
     assert body["size_bytes"] > 0

@@ -10,14 +10,10 @@ Validates:
 - Findings are appended correctly
 """
 
-import json
 import os
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
-
-import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CHAOS_DIR = REPO_ROOT / "loop_implementation" / "engineering" / "chaos"
@@ -92,7 +88,7 @@ def test_assess_sla_pass_within_limit():
 
 def test_assess_sla_fail_over_limit():
     import harness as h
-    passed, msg = h.assess_sla({"scenario": "nats_outage", "rto_s": 120})
+    passed, _msg = h.assess_sla({"scenario": "nats_outage", "rto_s": 120})
     assert not passed
 
 

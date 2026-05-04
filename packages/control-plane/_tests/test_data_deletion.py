@@ -6,7 +6,6 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
-
 from loop_control_plane.data_deletion import (
     DataDeletionError,
     DataDeletionState,
@@ -16,7 +15,6 @@ from loop_control_plane.data_deletion import (
     complete_data_deletion,
     enqueue_data_deletion,
 )
-
 
 WS = uuid.UUID("11111111-1111-4111-8111-111111111111")
 

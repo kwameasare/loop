@@ -36,7 +36,7 @@ def _load_mint() -> dict:
 def test_mint_json_parses() -> None:
     cfg = _load_mint()
     assert cfg["name"] == "Loop"
-    assert "navigation" in cfg and cfg["navigation"]
+    assert cfg.get("navigation")
 
 
 def test_navigation_lists_every_required_page() -> None:

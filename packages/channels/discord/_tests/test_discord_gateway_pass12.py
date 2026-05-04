@@ -1,4 +1,3 @@
-# ruff: noqa: S105,S106
 """Pass12 Discord gateway and connect tests."""
 
 from __future__ import annotations

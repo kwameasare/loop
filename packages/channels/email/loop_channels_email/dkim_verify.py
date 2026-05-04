@@ -19,7 +19,7 @@ DnsLookup = Callable[[str, str], Awaitable[list[str]]]
 
 
 class SpfStatus(StrEnum):
-    PASS = "pass"  # noqa: S105
+    PASS = "pass"
     FAIL = "fail"
     SOFTFAIL = "softfail"
     NEUTRAL = "neutral"
@@ -27,7 +27,7 @@ class SpfStatus(StrEnum):
 
 
 class DkimStatus(StrEnum):
-    PASS = "pass"  # noqa: S105
+    PASS = "pass"
     FAIL = "fail"
     NONE = "none"
 

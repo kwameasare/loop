@@ -301,7 +301,7 @@ _classify = classify_tier
 # OpenAI prefixes used both by ``fetch_openai_models`` (filter) and
 # ``vendor_for`` (cost lookup). Kept in sync; if OpenAI ships a new
 # family prefix (e.g. ``oN`` for some new N), update both call sites.
-_OPENAI_PREFIXES: tuple[str, ...] = ("gpt-",) + tuple(f"o{n}" for n in range(1, 10))
+_OPENAI_PREFIXES: tuple[str, ...] = ("gpt-", *tuple(f"o{n}" for n in range(1, 10)))
 
 
 def vendor_for(model_id: str) -> Vendor | None:

@@ -20,7 +20,7 @@ def _make_poller(updates_batches, handler=None):
 
     iter_batches = iter(updates_batches)
 
-    async def fake_get_updates(offset, timeout):  # noqa: ASYNC109
+    async def fake_get_updates(offset, timeout):
         try:
             return next(iter_batches)
         except StopIteration:
@@ -73,7 +73,7 @@ async def test_error_increments_backoff_counter_and_keeps_offset():
     raises = [True, False]
     batches = iter([[{"update_id": 1}]])
 
-    async def fake_get_updates(offset, timeout):  # noqa: ASYNC109
+    async def fake_get_updates(offset, timeout):
         if raises and raises.pop(0):
             raise RuntimeError("boom")
         return next(batches)
@@ -118,7 +118,7 @@ async def test_handler_runs_for_every_update_in_order():
 
 @pytest.mark.asyncio
 async def test_run_stops_when_stop_called():
-    async def fake_get_updates(offset, timeout):  # noqa: ASYNC109
+    async def fake_get_updates(offset, timeout):
         return []
 
     async def handler(u):

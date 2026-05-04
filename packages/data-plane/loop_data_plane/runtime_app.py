@@ -6,12 +6,12 @@ from dataclasses import dataclass, field
 
 from fastapi import APIRouter, FastAPI, Header, Query, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
+from loop_control_plane.rate_limit_middleware import install_rate_limit
 from loop_runtime import TurnExecutor
 from loop_runtime.healthz import build_runtime_healthz
 
 from loop_data_plane._auth import (
     AUTH_CALLER,
-    DpAuthError,
     enforce_workspace_match,
 )
 from loop_data_plane._runtime_config import (
@@ -27,7 +27,6 @@ from loop_data_plane._turns import (
     collect_turn,
     stream_turn_sse,
 )
-from loop_control_plane.rate_limit_middleware import install_rate_limit
 from loop_data_plane.metrics import install_metrics
 from loop_data_plane.tracing import install_tracing
 

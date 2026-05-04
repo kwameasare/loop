@@ -98,7 +98,7 @@ async def test_invite_unknown_token_rejected() -> None:
     workspaces = WorkspaceService()
     inv = InviteService(workspaces=workspaces, clock_ms=lambda: 0)
     with pytest.raises(InviteError):
-        await inv.accept(token="not-a-real-token-xxxxxxxxxxxxxxxxxxx", user_sub="u")  # noqa: S106
+        await inv.accept(token="not-a-real-token-xxxxxxxxxxxxxxxxxxx", user_sub="u")
 
 
 @pytest.mark.asyncio

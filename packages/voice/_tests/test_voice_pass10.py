@@ -1,6 +1,6 @@
 """Tests for pass10 voice adapters (S361-S365, S368, S369, S380, S383)."""
 
-# ruff: noqa: S106, RUF012
+# ruff: noqa: RUF012
 
 from __future__ import annotations
 

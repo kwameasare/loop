@@ -11,7 +11,7 @@ Validates:
 """
 
 from pathlib import Path
-import re
+
 import pytest
 
 RUNBOOK_PATH = Path("loop_implementation/engineering/SUPPORT_RUNBOOK.md")

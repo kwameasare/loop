@@ -36,7 +36,7 @@ MAX_INBOUND_BYTES: Final[int] = 50 * 1024 * 1024
 
 
 class InboundDkimStatus(StrEnum):
-    PASS = "pass"  # noqa: S105
+    PASS = "pass"
     FAIL = "fail"
     NONE = "none"  # no DKIM-Signature header
     ERROR = "error"  # transient (DNS / parse failure)
@@ -168,7 +168,7 @@ def verify_dkim_inbound(
             selector=selector,
             reason=f"dkim error: {exc.__class__.__name__}",
         )
-    except Exception as exc:  # noqa: BLE001 - dkimpy raises a wide tree
+    except Exception as exc:
         return InboundDkimResult(
             status=InboundDkimStatus.ERROR,
             domain=domain,

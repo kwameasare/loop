@@ -65,7 +65,7 @@ TRACKER_JSON = ROOT / "loop_implementation" / "tracker" / "tracker.json"
 
 # Local import for the per-agent partition.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _agent_assignments import ASSIGNMENTS, HUMAN_ONLY  # noqa: E402
+from _agent_assignments import ASSIGNMENTS, HUMAN_ONLY
 
 # Files that many stories touch — picking a story that doesn't conflict
 # with the in-flight set reduces wasted work from merge conflicts.

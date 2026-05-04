@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from collections.abc import AsyncIterator, Mapping
 from datetime import UTC, datetime
@@ -28,9 +29,9 @@ class _DisconnectProbe(Protocol):
 
 __all__ = [
     "RuntimeTurnRequest",
-    "TurnExecutionError",
     "TurnAuthError",
     "TurnBudgetError",
+    "TurnExecutionError",
     "TurnGatewayError",
     "TurnInternalError",
     "TurnRateLimitedError",
@@ -213,7 +214,7 @@ async def stream_turn_sse(
                 # swallowed because the client is already gone.
                 try:
                     await agen.aclose()
-                except Exception:  # noqa: BLE001
+                except Exception:
                     logger.exception(
                         "executor failed to close cleanly after disconnect",
                         extra={"request_id": turn_id},
@@ -238,10 +239,8 @@ async def stream_turn_sse(
         # Belt-and-braces: if we exit through any path other than the
         # disconnect branch above (clean done, exception, generator
         # GC), make sure the executor's resources are released.
-        try:
+        with contextlib.suppress(Exception):
             await agen.aclose()
-        except Exception:  # noqa: BLE001
-            pass
 
 
 async def collect_turn(

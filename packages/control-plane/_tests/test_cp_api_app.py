@@ -18,7 +18,7 @@ from loop_control_plane.auth import HS256Verifier
 ROOT = Path(__file__).resolve().parents[3]
 ISSUER = "https://test.auth0.loop.example/"
 AUDIENCE = "https://api.loop.test"
-JWT_SECRET = "s901-local-jwt-secret"  # noqa: S105
+JWT_SECRET = "s901-local-jwt-secret"
 PASETO_KEY = "s901-local-paseto-key-32-bytes!!"
 
 

@@ -16,16 +16,14 @@ import math
 from uuid import uuid4
 
 import pytest
-
-from loop_kb_engine.models import Chunk
 from loop_kb_engine.late_interaction import (
-    TokenEmbedding,
     LateInteractionIndex,
+    TokenEmbedding,
     cosine_sim,
-    maxsim,
     late_interaction_retrieve,
+    maxsim,
 )
-
+from loop_kb_engine.models import Chunk
 
 # ── helpers ────────────────────────────────────────────────────────────────
 
@@ -239,7 +237,7 @@ def test_late_interaction_recall_improvement_over_dense():
 
     q_dense = avg_vec([q1, q2])
     doc_dense_vecs: list[tuple[float, ...]] = []
-    for i, c in enumerate(chunks):
+    for i, _c in enumerate(chunks):
         if i == 0:
             doc_dense_vecs.append(avg_vec([q1, rand_unit()]))
         else:

@@ -40,7 +40,7 @@ def _signature(crash: dict[str, Any]) -> str:
         for line in trace.splitlines()
     )
     return hashlib.sha256(
-        f"{crash.get('kind', '')}\n{normalised}".encode("utf-8")
+        f"{crash.get('kind', '')}\n{normalised}".encode()
     ).hexdigest()[:12]
 
 
@@ -103,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
             if dry_run or shutil.which("gh") is None:
                 print("[dry-run]", " ".join(repr(c) for c in cmd))
             else:
-                subprocess.run(cmd, check=True)  # noqa: S603 — args fully built.
+                subprocess.run(cmd, check=True)
             filed += 1
 
     print(f"filed {filed} fuzz issue(s); {len(seen)} unique signatures")

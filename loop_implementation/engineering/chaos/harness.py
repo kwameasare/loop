@@ -27,7 +27,7 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -102,7 +102,7 @@ def assess_sla(result: dict) -> tuple[bool, str]:
 
 
 def append_findings(results: list[dict]) -> None:
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
     lines = [f"\n## Drill run — {now}\n\n"]
     for r in results:
         name = r.get("scenario", "unknown")
@@ -129,7 +129,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Loop chaos engineering harness")
     parser.add_argument(
         "--scenario",
-        choices=list(SCRIPT_MAP.keys()) + ["all"],
+        choices=[*list(SCRIPT_MAP.keys()), "all"],
         default="all",
     )
     parser.add_argument("--dry-run", action="store_true", help="skip real faults; measure harness plumbing only")

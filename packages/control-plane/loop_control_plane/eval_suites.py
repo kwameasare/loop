@@ -14,14 +14,14 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class EvalRunState(str, Enum):
+class EvalRunState(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"

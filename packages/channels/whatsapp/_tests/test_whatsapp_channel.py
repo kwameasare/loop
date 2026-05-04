@@ -25,8 +25,8 @@ from loop_channels_whatsapp import (
     verify_signature,
 )
 
-APP_SECRET = "shh-secret"  # noqa: S105 -- test fixture
-VERIFY_TOKEN = "verify-tok"  # noqa: S105 -- test fixture
+APP_SECRET = "shh-secret"
+VERIFY_TOKEN = "verify-tok"
 
 
 def _sign(body: bytes, secret: str = APP_SECRET) -> str:

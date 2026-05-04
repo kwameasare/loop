@@ -66,7 +66,7 @@ def test_parse_application_command() -> None:
     assert event.user_id == "user-7"
     assert event.metadata["channel_id"] == "chan-1"
     assert event.metadata["guild_id"] == "guild-1"
-    assert event.metadata["interaction_token"] == "tok-1"  # noqa: S105
+    assert event.metadata["interaction_token"] == "tok-1"
     assert event.metadata["application_id"] == "app-1"
 
 

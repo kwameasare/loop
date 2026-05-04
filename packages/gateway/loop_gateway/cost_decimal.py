@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from decimal import ROUND_HALF_EVEN, Decimal, getcontext
 
-from loop_gateway.cost import COST_TABLE, DISCLOSED_MARKUP_PCT, _resolve_rate
+from loop_gateway.cost import DISCLOSED_MARKUP_PCT, _resolve_rate
 
 #: 7 decimal-place quantum used for all internal Decimal math.
 COST_QUANTUM: Decimal = Decimal("0.0000001")

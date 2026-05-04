@@ -38,9 +38,9 @@ from typing import Protocol
 from .audit_events import AuditEvent
 
 __all__ = [
+    "CSV_HEADER",
     "AuditExportFilters",
     "AuditExportSource",
-    "CSV_HEADER",
     "export_audit_csv",
     "stream_audit_csv",
 ]
@@ -95,9 +95,7 @@ def _matches(event: AuditEvent, f: AuditExportFilters) -> bool:
         return False
     if f.time_from is not None and event.occurred_at < f.time_from:
         return False
-    if f.time_to is not None and event.occurred_at > f.time_to:
-        return False
-    return True
+    return not (f.time_to is not None and event.occurred_at > f.time_to)
 
 
 def _row(event: AuditEvent) -> tuple[str, ...]:

@@ -8,7 +8,6 @@ order, and per-(principal, route_template) isolation.
 
 from __future__ import annotations
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from loop_control_plane.rate_limit import RateLimiter

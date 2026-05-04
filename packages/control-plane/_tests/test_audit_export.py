@@ -9,7 +9,6 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
-
 from loop_control_plane.audit_events import (
     AuditEvent,
     InMemoryAuditEventStore,
@@ -20,7 +19,6 @@ from loop_control_plane.audit_export import (
     export_audit_csv,
     stream_audit_csv,
 )
-
 
 WS = uuid.UUID("11111111-1111-4111-8111-111111111111")
 WS_OTHER = uuid.UUID("22222222-2222-4222-8222-222222222222")

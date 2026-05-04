@@ -17,7 +17,6 @@ from typing import Any, cast
 import httpx
 import pytest
 import yaml
-
 from loop.cli import (
     ControlPlaneTransportError,
     HttpxControlPlaneTransport,
@@ -57,7 +56,7 @@ def test_httpx_transport_request_serialises_json_and_attaches_bearer() -> None:
             "POST",
             "/v1/workspaces",
             json_body={"name": "acme"},
-            token="token-abc",  # noqa: S106 — fixture token
+            token="token-abc",
         )
 
     assert result["id"] == "ws_42"

@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 from loop_control_plane.app import create_app
 from loop_control_plane.paseto import encode_local
-from loop_control_plane.trace_search import InMemoryTraceStore, TraceSummary
+from loop_control_plane.trace_search import TraceSummary
 from loop_control_plane.usage import UsageEvent
 
 _TEST_KEY = b"x" * 32
@@ -73,7 +73,7 @@ def test_search_traces_filters_by_workspace(
             turn_id=uuid4(),
             conversation_id=uuid4(),
             agent_id=uuid4(),
-            started_at=datetime(2026, 5, 4, 10, 0, tzinfo=timezone.utc),
+            started_at=datetime(2026, 5, 4, 10, 0, tzinfo=UTC),
             duration_ms=100,
             span_count=3,
         )
@@ -85,7 +85,7 @@ def test_search_traces_filters_by_workspace(
             turn_id=uuid4(),
             conversation_id=uuid4(),
             agent_id=uuid4(),
-            started_at=datetime(2026, 5, 4, 11, 0, tzinfo=timezone.utc),
+            started_at=datetime(2026, 5, 4, 11, 0, tzinfo=UTC),
             duration_ms=100,
             span_count=3,
         )
@@ -112,7 +112,7 @@ def test_search_traces_supports_only_errors_filter(
                 turn_id=uuid4(),
                 conversation_id=uuid4(),
                 agent_id=uuid4(),
-                started_at=datetime(2026, 5, 4, 10 + i, 0, tzinfo=timezone.utc),
+                started_at=datetime(2026, 5, 4, 10 + i, 0, tzinfo=UTC),
                 duration_ms=100,
                 span_count=3,
                 error=has_error,

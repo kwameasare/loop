@@ -70,4 +70,4 @@ OVERRIDE_LOG: list[Override] = [
 ]
 
 
-__all__ = ["Override", "OVERRIDE_LOG"]
+__all__ = ["OVERRIDE_LOG", "Override"]

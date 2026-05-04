@@ -1,4 +1,3 @@
-# ruff: noqa: S105
 """Pass11 tool-host tests: MCP governance and runtime orchestration."""
 
 from __future__ import annotations

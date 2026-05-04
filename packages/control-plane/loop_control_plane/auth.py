@@ -316,7 +316,7 @@ class RS256Verifier:
         filtered = {k: v for k, v in payload.items() if k in keep}
         try:
             return IdentityClaims(**filtered)  # type: ignore[arg-type]
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise AuthError(f"invalid claims: {exc}") from exc
 
 

@@ -6,8 +6,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-
-from loop_kb_engine.layout_chunker import ChunkType, LayoutAwareChunker
+from loop_kb_engine.layout_chunker import LayoutAwareChunker
 from loop_kb_engine.models import Document
 
 WS = uuid4()

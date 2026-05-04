@@ -29,7 +29,6 @@ from loop_control_plane.saml_jit import (
     jit_provision,
 )
 
-
 _NOW = datetime(2027, 4, 1, 12, 0, 0, tzinfo=UTC)
 
 
@@ -265,7 +264,7 @@ def test_entra_wsfed_email_claim_shape_recognized() -> None:
 def test_invalid_role_raises() -> None:
     store = InMemoryUserStore()
     workspace_id = uuid.uuid4()
-    sp = _sp()
+    _sp()
     acs = AcsResult(assertion=_assertion(), role="superuser")
     with pytest.raises(JitProvisionError, match="not a valid workspace role"):
         jit_provision(

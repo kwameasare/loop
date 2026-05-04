@@ -32,11 +32,8 @@ import base64
 import json
 import pathlib
 import uuid
-from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Awaitable, Callable
 
-import pytest
 from loop_control_plane.auth_exchange import (
     AuthExchange,
     InMemoryRefreshTokenStore,

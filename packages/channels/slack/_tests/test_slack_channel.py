@@ -30,7 +30,7 @@ def _sign(secret: str, ts: str, body: bytes) -> str:
 
 
 def test_verify_request_accepts_valid_signature() -> None:
-    secret = "shh"  # noqa: S105 -- test-only fixture
+    secret = "shh"
     ts = str(int(time.time()))
     body = b'{"hello":"world"}'
     sig = _sign(secret, ts, body)
@@ -45,7 +45,7 @@ def test_verify_request_rejects_bad_signature() -> None:
     ts = str(int(time.time()))
     with pytest.raises(SignatureError):
         verify_request(
-            signing_secret="shh",  # noqa: S106
+            signing_secret="shh",
             headers={
                 "X-Slack-Request-Timestamp": ts,
                 "X-Slack-Signature": "v0=deadbeef",
@@ -55,7 +55,7 @@ def test_verify_request_rejects_bad_signature() -> None:
 
 
 def test_verify_request_rejects_replay() -> None:
-    secret = "shh"  # noqa: S105
+    secret = "shh"
     ts = "1000000000"
     body = b"{}"
     sig = _sign(secret, ts, body)
@@ -70,7 +70,7 @@ def test_verify_request_rejects_replay() -> None:
 
 def test_verify_request_rejects_missing_headers() -> None:
     with pytest.raises(SignatureError):
-        verify_request(signing_secret="shh", headers={}, body=b"{}")  # noqa: S106
+        verify_request(signing_secret="shh", headers={}, body=b"{}")
 
 
 # ------------------------------------------------------------------ parse

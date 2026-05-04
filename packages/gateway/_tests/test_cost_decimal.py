@@ -42,7 +42,7 @@ def test_with_markup_decimal_quantises_to_5_decimals() -> None:
     out = with_markup_decimal(Decimal("1.234567890123"))
     # Either the value has at most 5 decimal places, or it's the
     # quantised tail of a larger number.
-    sign, digits, exponent = out.as_tuple()
+    _sign, _digits, exponent = out.as_tuple()
     assert isinstance(exponent, int) and exponent == -5
 
 

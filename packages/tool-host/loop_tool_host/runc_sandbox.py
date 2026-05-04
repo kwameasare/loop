@@ -175,7 +175,7 @@ def build_oci_spec(
                 "options": ["nosuid", "noexec", "size=64k"],
             },
             {
-                "destination": "/tmp",  # noqa: S108 -- container-internal tmpfs, not a host path
+                "destination": "/tmp",
                 "type": "tmpfs",
                 "source": "tmpfs",
                 "options": ["nosuid", "nodev", "size=16m"],

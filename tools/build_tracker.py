@@ -36,9 +36,9 @@ import csv
 import json
 import sys
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-UTC = timezone.utc  # python<=3.10 compat (datetime.UTC arrived in 3.11)
+UTC = UTC  # python<=3.10 compat (datetime.UTC arrived in 3.11)
 
 UTC = UTC  # python<=3.10 compat (datetime.UTC arrived in 3.11)
 from pathlib import Path
@@ -1888,7 +1888,7 @@ del _story
 # is loaded by absolute path so this works whether run as `python
 # tools/build_tracker.py` (no package context) or `python -m
 # tools.build_tracker` (package context).
-import importlib.util as _ilu  # noqa: E402
+import importlib.util as _ilu
 
 _v2_path = Path(__file__).with_name("_stories_v2.py")
 _v2_spec = _ilu.spec_from_file_location("_stories_v2", _v2_path)

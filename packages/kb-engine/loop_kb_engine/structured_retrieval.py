@@ -28,12 +28,11 @@ import sqlite3
 from typing import Any
 
 __all__ = [
+    "DatasetError",
     "StructuredStore",
-    "sql_query",
     "load_csv",
     "load_json",
-    "load_excel",
-    "DatasetError",
+    "sql_query",
 ]
 
 _NAME_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]{0,63}$")
@@ -109,7 +108,11 @@ class StructuredStore:
         placeholders = ", ".join("?" for _ in cols)
         for row in rows:
             values = [_coerce(row.get(c, "")) for c in cols]
-            self._conn.execute(f'INSERT INTO "{name}" VALUES ({placeholders})', values)
+            # `name` is validated by ``_validate_name`` against ``_NAME_RE``
+            # before reaching this line; ``placeholders`` is a static comma-
+            # separated string of ``?`` markers. Values bind through the
+            # standard parameterised path. S608 false positive.
+            self._conn.execute(f'INSERT INTO "{name}" VALUES ({placeholders})', values)  # noqa: S608
         self._conn.commit()
         self._tables.add(name)
         return len(rows)
@@ -133,7 +136,11 @@ class StructuredStore:
         placeholders = ", ".join("?" for _ in cols)
         for record in records:
             values = [record.get(c) for c in cols]
-            self._conn.execute(f'INSERT INTO "{name}" VALUES ({placeholders})', values)
+            # `name` is validated by ``_validate_name`` against ``_NAME_RE``
+            # before reaching this line; ``placeholders`` is a static comma-
+            # separated string of ``?`` markers. Values bind through the
+            # standard parameterised path. S608 false positive.
+            self._conn.execute(f'INSERT INTO "{name}" VALUES ({placeholders})', values)  # noqa: S608
         self._conn.commit()
         self._tables.add(name)
         return len(records)
@@ -144,7 +151,7 @@ class StructuredStore:
         Requires ``openpyxl``.  Returns the number of rows loaded.
         """
         try:
-            import openpyxl  # noqa: PLC0415
+            import openpyxl
         except ImportError as exc:
             raise ImportError(
                 "openpyxl is required for Excel support. "
@@ -153,10 +160,7 @@ class StructuredStore:
 
         _validate_name(name)
         wb = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
-        if isinstance(sheet, int):
-            ws = wb.worksheets[sheet]
-        else:
-            ws = wb[sheet]
+        ws = wb.worksheets[sheet] if isinstance(sheet, int) else wb[sheet]
         rows_iter = ws.iter_rows(values_only=True)
         headers = [str(h) for h in next(rows_iter)]
         col_defs = ", ".join(f'"{c}" TEXT' for c in headers)
@@ -165,7 +169,8 @@ class StructuredStore:
         placeholders = ", ".join("?" for _ in headers)
         count = 0
         for row in rows_iter:
-            self._conn.execute(f'INSERT INTO "{name}" VALUES ({placeholders})', list(row))
+            # See INSERT comment above: name is _validate_name'd; values bind via ?.
+            self._conn.execute(f'INSERT INTO "{name}" VALUES ({placeholders})', list(row))  # noqa: S608
             count += 1
         self._conn.commit()
         self._tables.add(name)
@@ -186,7 +191,7 @@ class StructuredStore:
         cursor = self._conn.execute(sql)
         rows = cursor.fetchall()
         cols = [desc[0] for desc in cursor.description or []]
-        return [dict(zip(cols, row)) for row in rows]
+        return [dict(zip(cols, row, strict=False)) for row in rows]
 
     @property
     def tables(self) -> frozenset[str]:
@@ -211,14 +216,14 @@ def _assert_select(sql: str) -> None:
         )
 
 
-def load_csv(name: str, data: bytes | str) -> "StructuredStore":
+def load_csv(name: str, data: bytes | str) -> StructuredStore:
     """Convenience: create a fresh store and load a single CSV dataset."""
     store = StructuredStore()
     store.load_csv(name, data)
     return store
 
 
-def load_json(name: str, data: bytes | str) -> "StructuredStore":
+def load_json(name: str, data: bytes | str) -> StructuredStore:
     """Convenience: create a fresh store and load a single JSON dataset."""
     store = StructuredStore()
     store.load_json(name, data)

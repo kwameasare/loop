@@ -27,16 +27,17 @@ to swap the ``_iterate`` loop for the Atheris callback.
 
 from __future__ import annotations
 
+import contextlib
 import json
-import os
 import random
 import resource  # POSIX-only; the harness asserts POSIX up front.
 import string
 import time
 import traceback
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any
 
 # --- Memory cap ----------------------------------------------------------------
 
@@ -51,10 +52,8 @@ def _apply_memory_cap() -> None:
     new_hard = min(hard, _MEM_BYTES) if hard != resource.RLIM_INFINITY else _MEM_BYTES
     if new_soft < soft or soft == resource.RLIM_INFINITY:
         # Some CI runners refuse RLIMIT_AS adjustments; treat as best-effort.
-        try:
+        with contextlib.suppress(ValueError, OSError):
             resource.setrlimit(resource.RLIMIT_AS, (new_soft, new_hard))
-        except (ValueError, OSError):
-            pass
 
 
 # --- Mutation primitives -------------------------------------------------------
@@ -120,7 +119,7 @@ def _run_campaign(c: Campaign, *, seed: int) -> CampaignResult:
             crashes.append(
                 {"iteration": i, "kind": "oom", "trace": traceback.format_exc()}
             )
-        except BaseException as exc:  # noqa: BLE001 — fuzzers catch everything.
+        except BaseException as exc:
             crashes.append(
                 {
                     "iteration": i,

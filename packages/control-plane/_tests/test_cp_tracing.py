@@ -14,7 +14,6 @@ from unittest.mock import patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from loop_control_plane.tracing import install_tracing
-from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 
 

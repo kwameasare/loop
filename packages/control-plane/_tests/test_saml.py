@@ -7,7 +7,6 @@ import json
 from datetime import UTC, datetime, timedelta
 
 import pytest
-
 from loop_control_plane.saml import (
     AcsResult,
     GroupRoleMapping,
@@ -19,7 +18,6 @@ from loop_control_plane.saml import (
     project_role,
 )
 from loop_control_plane.saml_certs import CertificateBundle
-
 
 PEM_A = "-----BEGIN CERTIFICATE-----\nAAA\n-----END CERTIFICATE-----"
 NOW = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)

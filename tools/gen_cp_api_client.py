@@ -22,7 +22,6 @@ import sys
 from pathlib import Path
 
 import yaml
-
 from gen_openapi_ts import (  # type: ignore[import-not-found]
     OPENAPI_PATH,
     _operation_name,

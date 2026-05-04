@@ -1,4 +1,3 @@
-# ruff: noqa: S106
 """Pass12 Teams connect and adaptive card tests."""
 
 from __future__ import annotations
