@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 
 from loop_control_plane._app_agents import AgentRegistry, PostgresAgentRegistry
 from loop_control_plane.agent_versions import AgentVersionService
-from loop_control_plane.api_keys import ApiKeyService
+from loop_control_plane.api_keys import ApiKeyService, PostgresApiKeyService
 from loop_control_plane.api_keys_api import ApiKeyAPI
 from loop_control_plane.audit_events import (
     AuditEventStore,
@@ -112,6 +112,18 @@ def _default_agent_registry() -> AgentRegistry | PostgresAgentRegistry:
     return PostgresAgentRegistry.from_url(db_url)
 
 
+def _default_api_key_service() -> ApiKeyService | PostgresApiKeyService:
+    """Pick between in-memory and Postgres-backed api-key services [P0.2]."""
+    if os.environ.get("LOOP_CP_USE_POSTGRES") != "1":
+        return ApiKeyService()
+    db_url = os.environ.get("LOOP_CP_DB_URL")
+    if not db_url:
+        raise RuntimeError(
+            "LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set"
+        )
+    return PostgresApiKeyService.from_url(db_url)
+
+
 def _default_saml_validator() -> SamlValidator:
     """Pick between Stub and PySAML2 validators per ``LOOP_SAML_USE_PYSAML2``.
 
@@ -156,7 +168,9 @@ class CpApiState:
         default_factory=RecordingDataDeletionEmailNotifier
     )
     # P0.4 (api-keys + secrets):
-    api_keys: ApiKeyService = field(default_factory=ApiKeyService)
+    api_keys: ApiKeyService | PostgresApiKeyService = field(
+        default_factory=_default_api_key_service
+    )
     secrets_backend: SecretsBackend = field(
         default_factory=lambda: InMemorySecretsBackend(backend="loop-dev")
     )
