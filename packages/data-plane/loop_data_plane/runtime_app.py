@@ -102,7 +102,7 @@ async def post_turn(
     executor = _state(request).executor
     if _wants_sse(accept, stream):
         return StreamingResponse(
-            stream_turn_sse(executor, body),
+            stream_turn_sse(executor, body, request=request),
             media_type="text/event-stream",
             headers={"cache-control": "no-cache", "x-accel-buffering": "no"},
         )
@@ -124,7 +124,7 @@ async def post_turn_stream(
         body_user_id=body.user_id,
     )
     return StreamingResponse(
-        stream_turn_sse(_state(request).executor, body),
+        stream_turn_sse(_state(request).executor, body, request=request),
         media_type="text/event-stream",
         headers={"cache-control": "no-cache", "x-accel-buffering": "no"},
     )
