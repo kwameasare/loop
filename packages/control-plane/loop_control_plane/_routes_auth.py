@@ -11,7 +11,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_common import env, now_ms, paseto_key
 from loop_control_plane.auth import HS256Verifier
-from loop_control_plane.auth_exchange import AuthExchange
+from loop_control_plane.auth_exchange import (
+    ACCESS_TTL_MS,
+    REFRESH_TTL_MS,
+    AuthExchange,
+)
 from loop_control_plane.jwks import JwtClaims
 from loop_control_plane.paseto import encode_local
 
@@ -82,11 +86,11 @@ async def auth_refresh(
     exchange (full Auth0 redirect) every hour.
 
     Implements **rotation with reuse-detection**: every successful
-    refresh revokes the supplied token and mints a new pair. If the
-    same refresh token is presented twice (= replay or theft), the
-    SECOND attempt finds nothing in the store and 401s. Production
-    callers should treat any 401 from this route as a likely
-    compromise and force a full re-auth on the user.
+    refresh revokes the supplied token and mints a new pair in the
+    same family. If the same refresh token is presented twice (=
+    replay or theft), the SECOND attempt revokes the entire family
+    and 401s. Production callers should treat any 401 from this route
+    as a likely compromise and force a full re-auth on the user.
     """
     runtime = request.app.state.cp
     audience = env("LOOP_CP_AUTH_AUDIENCE", "loop-cp")
@@ -97,40 +101,46 @@ async def auth_refresh(
         raise HTTPException(
             status_code=401, detail={"code": "LOOP-API-101", "message": "invalid refresh token"}
         )
-    user_sub, expires_at_ms = record
+    if record.revoked_at_ms is not None:
+        await runtime.refresh_store.revoke_family(record.family_id)
+        raise HTTPException(
+            status_code=401, detail={"code": "LOOP-API-101", "message": "invalid refresh token"}
+        )
     current_ms = now_ms()
-    if expires_at_ms <= current_ms:
-        # Expired — revoke and reject.
-        await runtime.refresh_store.revoke(token_hash)
+    if record.expires_at_ms <= current_ms or record.family_expires_at_ms <= current_ms:
+        # Expired token or expired chain — revoke the family and reject.
+        await runtime.refresh_store.revoke_family(record.family_id)
         raise HTTPException(
             status_code=401, detail={"code": "LOOP-API-101", "message": "invalid refresh token"}
         )
 
-    # Rotate: revoke the supplied token and mint a fresh pair. Any
-    # subsequent presentation of the OLD token will hit the
-    # `record is None` branch above (reuse detection).
+    # Rotate: revoke the supplied token and mint a fresh pair in the
+    # same family. Any subsequent presentation of the OLD token hits
+    # the revoked-record branch above and revokes the full family.
     await runtime.refresh_store.revoke(token_hash)
 
-    access_ttl_ms = 60 * 60 * 1000  # 1h, matches AuthExchange default
-    refresh_ttl_ms = 30 * 24 * 60 * 60 * 1000  # 30d
     new_access = encode_local(
-        {"sub": user_sub, "iss": "loop", "aud": audience},
+        {"sub": record.user_sub, "iss": "loop", "aud": audience},
         key=paseto_key(),
         now_ms=current_ms,
-        expires_in_ms=access_ttl_ms,
+        expires_in_ms=ACCESS_TTL_MS,
     )
     new_refresh = secrets.token_urlsafe(32)
     new_refresh_hash = sha256(new_refresh.encode("ascii")).hexdigest()
-    new_refresh_expires_at = current_ms + refresh_ttl_ms
+    new_refresh_expires_at = min(
+        current_ms + REFRESH_TTL_MS, record.family_expires_at_ms
+    )
     await runtime.refresh_store.put(
-        user_sub=user_sub,
+        user_sub=record.user_sub,
         token_hash=new_refresh_hash,
         expires_at_ms=new_refresh_expires_at,
+        family_id=record.family_id,
+        family_expires_at_ms=record.family_expires_at_ms,
     )
     return {
         "access_token": new_access,
         "refresh_token": new_refresh,
         "token_type": "Bearer",
-        "access_expires_at_ms": current_ms + access_ttl_ms,
+        "access_expires_at_ms": current_ms + ACCESS_TTL_MS,
         "refresh_expires_at_ms": new_refresh_expires_at,
     }
