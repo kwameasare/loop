@@ -14,6 +14,10 @@ dependencies = [
     # SNS message-signature verification (P0.5d) + DKIM verification
     # on inbound (P0.5e) both need RSA-SHA256 + X.509 cert handling.
     "cryptography>=42",
+    # RFC 6376 DKIM verification on inbound MIME (P0.5e). dkimpy is
+    # the canonical Python DKIM library, MIT-licensed, maintained.
+    "dkimpy>=1.1",
+    "dnspython>=2",
 ]
 
 [tool.hatch.build.targets.wheel]
