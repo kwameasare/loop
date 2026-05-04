@@ -8,7 +8,7 @@ from sqlalchemy.engine import Engine
 
 pytestmark = pytest.mark.integration
 
-CP_HEAD_REVISION = "cp_0008_refresh_tokens"
+CP_HEAD_REVISION = "cp_0010_audit_log_no_ws_fk"
 DP_INITIAL_REVISION = "dp_0001_initial"
 
 
