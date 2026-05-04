@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator, Mapping
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any, Protocol, cast
 from uuid import UUID, uuid4
 
 from loop.types import AgentEvent, ChannelType, ContentPart, TurnEvent
@@ -16,6 +16,15 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from loop_data_plane._runtime_config import default_agent_model
 
 logger = logging.getLogger(__name__)
+
+
+class _DisconnectProbe(Protocol):
+    """Anything with the same ``is_disconnected()`` shape as
+    :class:`starlette.requests.Request`. We type against the protocol
+    so unit tests can pass an in-memory stub instead of a real ASGI
+    Request."""
+
+    async def is_disconnected(self) -> bool: ...
 
 __all__ = [
     "RuntimeTurnRequest",
@@ -94,15 +103,46 @@ class RuntimeTurnRequest(BaseModel):
 async def stream_turn_sse(
     executor: TurnExecutor,
     body: RuntimeTurnRequest,
+    request: _DisconnectProbe | None = None,
 ) -> AsyncIterator[bytes]:
+    """Stream a turn over SSE.
+
+    If ``request`` is provided, we poll ``request.is_disconnected()``
+    on every event boundary. When the client drops the connection
+    (browser closed, mobile backgrounded, gateway timeout, …) we
+    ``aclose()`` the executor's async generator so it can release
+    upstream provider sockets, stop spending tokens, and surface a
+    structured cancellation in the audit log instead of letting
+    work continue invisibly. Closes vega #4 (block-prod): cancelled
+    SSE clients used to keep burning provider quota.
+    """
     encoder = SseEncoder()
     turn_id = body.turn_id()
+    agen = executor.execute(
+        body.agent(),
+        body.event(),
+        request_id=turn_id,
+    )
     try:
-        async for event in executor.execute(
-            body.agent(),
-            body.event(),
-            request_id=turn_id,
-        ):
+        async for event in agen:
+            if request is not None and await request.is_disconnected():
+                logger.info(
+                    "client disconnected mid-stream; cancelling turn",
+                    extra={"request_id": turn_id},
+                )
+                # ``aclose`` raises ``GeneratorExit`` inside the
+                # executor's coroutine, which propagates to the
+                # provider stream and causes the underlying httpx
+                # stream to be cancelled. Errors during teardown are
+                # swallowed because the client is already gone.
+                try:
+                    await agen.aclose()
+                except Exception:  # noqa: BLE001
+                    logger.exception(
+                        "executor failed to close cleanly after disconnect",
+                        extra={"request_id": turn_id},
+                    )
+                return
             yield encode_turn_event(encoder, event)
         yield encode_done(encoder, turn_id=turn_id)
     except Exception as exc:
@@ -118,6 +158,14 @@ async def stream_turn_sse(
             message=envelope["message"],
             request_id=envelope["request_id"],
         )
+    finally:
+        # Belt-and-braces: if we exit through any path other than the
+        # disconnect branch above (clean done, exception, generator
+        # GC), make sure the executor's resources are released.
+        try:
+            await agen.aclose()
+        except Exception:  # noqa: BLE001
+            pass
 
 
 async def collect_turn(
