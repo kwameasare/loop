@@ -812,12 +812,14 @@ name = "loop-channels-teams"
 version = "0.1.0"
 source = { editable = "packages/channels/teams" }
 dependencies = [
+    { name = "cryptography" },
     { name = "loop-channels-core" },
     { name = "pydantic" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "cryptography", specifier = ">=42" },
     { name = "loop-channels-core", editable = "packages/channels/core" },
     { name = "pydantic", specifier = ">=2" },
 ]
