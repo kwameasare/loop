@@ -31,6 +31,9 @@ from loop_control_plane._routes_health import router as health_router
 from loop_control_plane._routes_kb import router as kb_router
 from loop_control_plane._routes_secrets import router as secrets_router
 from loop_control_plane._routes_traces_usage import router as telemetry_router
+from loop_control_plane._routes_webhooks_incoming import (
+    router as webhooks_incoming_router,
+)
 from loop_control_plane._routes_workspaces import router as workspaces_router
 from loop_control_plane.auth import AuthError
 from loop_control_plane.auth_exchange import AuthExchangeError
@@ -82,6 +85,9 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         # P0.4: eval suites + runs.
         workspace_evals_router,
         eval_suites_router,
+        # P0.4 final: inbound webhook dispatcher (per-channel
+        # verification handled by the channels-* packages).
+        webhooks_incoming_router,
     ):
         app.include_router(router)
     # P0.7b: Prometheus middleware + /metrics endpoint. The
