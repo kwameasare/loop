@@ -22,6 +22,7 @@ from loop_data_plane._turns import (
     collect_turn,
     stream_turn_sse,
 )
+from loop_data_plane.metrics import install_metrics
 
 
 @dataclass
@@ -113,6 +114,10 @@ def create_app(state: RuntimeAppState | None = None) -> FastAPI:
     app = FastAPI(title="Loop Data Plane Runtime", version=package_version())
     app.state.runtime = state or RuntimeAppState()
     app.include_router(router)
+    # P0.7b: Prometheus middleware + /metrics endpoint. Closes the
+    # gap where SLO alerts in slo-burn.yaml referenced series no
+    # service emitted.
+    install_metrics(app)
     return app
 
 

@@ -10,6 +10,9 @@ dependencies = [
     # hand-rolled XOR-stream construction. See workspace_encryption.py.
     "cryptography>=42",
     "fastapi>=0.115",
+    # Prometheus middleware (P0.7b). The `slo-burn.yaml` alerts target
+    # the metrics this client emits.
+    "prometheus-client>=0.20",
     "pydantic>=2",
     "pydantic-settings>=2.5",
     "pyyaml>=6.0",

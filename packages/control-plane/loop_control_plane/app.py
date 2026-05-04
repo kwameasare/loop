@@ -13,6 +13,7 @@ from loop_control_plane._routes_health import router as health_router
 from loop_control_plane._routes_workspaces import router as workspaces_router
 from loop_control_plane.auth import AuthError
 from loop_control_plane.auth_exchange import AuthExchangeError
+from loop_control_plane.metrics import install_metrics
 from loop_control_plane.paseto import PasetoError
 from loop_control_plane.workspaces import WorkspaceError
 
@@ -24,6 +25,11 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         app.add_exception_handler(exc, domain_error)
     for router in (health_router, auth_router, workspaces_router, agents_router, audit_router):
         app.include_router(router)
+    # P0.7b: Prometheus middleware + /metrics endpoint. The
+    # `slo-burn.yaml` alerts target the metrics this emits; before
+    # this wiring shipped, those alerts had no input series and
+    # PagerDuty would never fire.
+    install_metrics(app)
     return app
 
 
