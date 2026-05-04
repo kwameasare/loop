@@ -48,9 +48,16 @@ def resolver_from_env(
 ) -> WorkspaceKeyResolver:
     env = environ or os.environ
     defaults: dict[Vendor, str] = {}
-    if openai_key := env.get("LOOP_GATEWAY_OPENAI_API_KEY"):
+    # Accept the LOOP_GATEWAY_*-prefixed names (production canonical) and
+    # the bare OPENAI_API_KEY / ANTHROPIC_API_KEY (the names every other
+    # tool in the ecosystem uses, including .env.example here). Prefixed
+    # names win when both are set, so an operator can override the bare
+    # default for a specific gateway tenant.
+    openai_key = env.get("LOOP_GATEWAY_OPENAI_API_KEY") or env.get("OPENAI_API_KEY")
+    if openai_key:
         defaults[Vendor.OPENAI] = openai_key
-    if anthropic_key := env.get("LOOP_GATEWAY_ANTHROPIC_API_KEY"):
+    anthropic_key = env.get("LOOP_GATEWAY_ANTHROPIC_API_KEY") or env.get("ANTHROPIC_API_KEY")
+    if anthropic_key:
         defaults[Vendor.ANTHROPIC] = anthropic_key
     return WorkspaceKeyResolver(key_store or EmptyWorkspaceKeyStore(), platform_defaults=defaults)
 
