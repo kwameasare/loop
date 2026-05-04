@@ -33,7 +33,7 @@ def _truncate_audit_events(engine: Engine) -> None:
     requirements when run as the table owner. We connect as the
     superuser specifically for this teardown.
     """
-    admin_url = engine.url.set(username="test", password="test")  # noqa: S106 - testcontainers default
+    admin_url = engine.url.set(username="test", password="test")
     from sqlalchemy import create_engine
 
     admin_engine = create_engine(admin_url)

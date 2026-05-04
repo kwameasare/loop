@@ -17,10 +17,14 @@ import secrets
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, replace
 from hashlib import sha256
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from loop_control_plane.jwks import JwtClaims
 from loop_control_plane.paseto import encode_local
+
+if TYPE_CHECKING:
+    from sqlalchemy.engine import Engine
+    from sqlalchemy.ext.asyncio import AsyncEngine
 
 __all__ = [
     "REFRESH_FAMILY_TTL_MS",
@@ -28,6 +32,8 @@ __all__ = [
     "AuthExchange",
     "AuthExchangeError",
     "ExchangeResult",
+    "InMemoryRefreshTokenStore",
+    "PostgresRefreshTokenStore",
     "RefreshTokenRecord",
     "RefreshTokenStore",
     "UnknownIdpUser",
@@ -171,3 +177,156 @@ class InMemoryRefreshTokenStore:
 
     def lookup(self, token_hash: str) -> RefreshTokenRecord | None:
         return self._rows.get(token_hash)
+
+
+# ---------------------------------------------------------------------------
+# Postgres-backed store [P0.2]
+# ---------------------------------------------------------------------------
+
+
+class PostgresRefreshTokenStore:
+    """Postgres-backed refresh-token store — drop-in for InMemoryRefreshTokenStore.
+
+    Schema lives in ``cp_0007_refresh_tokens``. The token_hash is the
+    primary key, so :meth:`lookup` and :meth:`revoke` are O(1) PK
+    operations.
+
+    Mixed sync/async surface, mirroring the Protocol exactly:
+
+    * :meth:`put`, :meth:`revoke`, :meth:`revoke_family` are async
+      (called from the async route handlers; use an
+      :class:`AsyncEngine` under the hood).
+    * :meth:`lookup` is sync because the route handler at
+      ``_routes_auth.auth_refresh`` calls it synchronously — the
+      existing in-memory store made it sync, and the route's
+      reuse-detection branching reads cleaner without intermediate
+      ``await``\\ s. Uses a separate sync :class:`Engine` to avoid
+      mixing sync calls into the async event loop's connection pool.
+
+    Soft-delete revoke matches :class:`InMemoryRefreshTokenStore`:
+    revoked rows stay in the table with ``revoked_at_ms`` set so the
+    route can distinguish "never existed" (lookup → None) from
+    "was once valid, now revoked" (lookup → record with
+    ``revoked_at_ms``). The latter triggers family-wide revocation.
+    """
+
+    def __init__(self, async_engine: AsyncEngine, sync_engine: Engine) -> None:
+        self._async_engine = async_engine
+        self._sync_engine = sync_engine
+
+    @classmethod
+    def from_url(
+        cls, database_url: str, *, echo: bool = False
+    ) -> PostgresRefreshTokenStore:
+        """Build a store from a SQLAlchemy URL.
+
+        Constructs both an async and a sync engine off the same
+        ``postgresql+psycopg://`` URL — psycopg3's dialect supports
+        both.
+        """
+        from sqlalchemy import create_engine
+        from sqlalchemy.ext.asyncio import create_async_engine
+
+        async_engine = create_async_engine(
+            database_url, echo=echo, future=True, pool_pre_ping=True
+        )
+        sync_engine = create_engine(
+            database_url, echo=echo, future=True, pool_pre_ping=True
+        )
+        return cls(async_engine, sync_engine)
+
+    async def put(
+        self,
+        *,
+        user_sub: str,
+        token_hash: str,
+        expires_at_ms: int,
+        family_id: str,
+        family_expires_at_ms: int,
+    ) -> None:
+        from sqlalchemy import text
+
+        async with self._async_engine.begin() as conn:
+            await conn.execute(
+                text(
+                    """
+                    INSERT INTO refresh_tokens (
+                        token_hash, user_sub, expires_at_ms,
+                        family_id, family_expires_at_ms
+                    ) VALUES (
+                        :token_hash, :user_sub, :expires_at_ms,
+                        :family_id, :family_expires_at_ms
+                    )
+                    ON CONFLICT (token_hash) DO UPDATE
+                       SET user_sub = EXCLUDED.user_sub,
+                           expires_at_ms = EXCLUDED.expires_at_ms,
+                           family_id = EXCLUDED.family_id,
+                           family_expires_at_ms = EXCLUDED.family_expires_at_ms,
+                           revoked_at_ms = NULL
+                    """
+                ),
+                {
+                    "token_hash": token_hash,
+                    "user_sub": user_sub,
+                    "expires_at_ms": expires_at_ms,
+                    "family_id": family_id,
+                    "family_expires_at_ms": family_expires_at_ms,
+                },
+            )
+
+    async def revoke(self, token_hash: str) -> None:
+        from sqlalchemy import text
+
+        async with self._async_engine.begin() as conn:
+            await conn.execute(
+                text(
+                    """
+                    UPDATE refresh_tokens
+                       SET revoked_at_ms = 0
+                     WHERE token_hash = :token_hash
+                       AND revoked_at_ms IS NULL
+                    """
+                ),
+                {"token_hash": token_hash},
+            )
+
+    async def revoke_family(self, family_id: str) -> None:
+        from sqlalchemy import text
+
+        async with self._async_engine.begin() as conn:
+            await conn.execute(
+                text(
+                    """
+                    UPDATE refresh_tokens
+                       SET revoked_at_ms = 0
+                     WHERE family_id = :family_id
+                       AND revoked_at_ms IS NULL
+                    """
+                ),
+                {"family_id": family_id},
+            )
+
+    def lookup(self, token_hash: str) -> RefreshTokenRecord | None:
+        from sqlalchemy import text
+
+        with self._sync_engine.connect() as conn:
+            row = conn.execute(
+                text(
+                    """
+                    SELECT user_sub, expires_at_ms, family_id,
+                           family_expires_at_ms, revoked_at_ms
+                      FROM refresh_tokens
+                     WHERE token_hash = :token_hash
+                    """
+                ),
+                {"token_hash": token_hash},
+            ).first()
+        if row is None:
+            return None
+        return RefreshTokenRecord(
+            user_sub=row.user_sub,
+            expires_at_ms=row.expires_at_ms,
+            family_id=row.family_id,
+            family_expires_at_ms=row.family_expires_at_ms,
+            revoked_at_ms=row.revoked_at_ms,
+        )

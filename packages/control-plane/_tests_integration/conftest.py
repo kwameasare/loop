@@ -27,7 +27,7 @@ from testcontainers.postgres import PostgresContainer
 
 DP_INITIAL_REVISION = "dp_0001_initial"
 APP_DB_USER = "loop_app"
-APP_DB_PASSWORD = "loop_app"  # noqa: S105 - ephemeral testcontainers role.
+APP_DB_PASSWORD = "loop_app"
 
 
 def _migration_config(resource: str, url: str, *, version_table: str) -> Config:
