@@ -298,8 +298,38 @@ async def test_channel_returns_empty_for_status_payload() -> None:
 def test_signature_round_trip_with_canonical_body() -> None:
     payload = _text_payload()
     body = json.dumps(payload).encode("utf-8")
+    # _text_payload uses a frozen 2023 timestamp; opt out of the
+    # replay-window check (P0.5f) since this test is about signature
+    # verification specifically. test_verify_signature_replay_window_*
+    # below cover the replay path.
     verify_signature(
         app_secret=APP_SECRET,
         headers={"x-hub-signature-256": _sign(body)},
         body=body,
+        verify_event_timestamps=False,
+    )
+
+
+def test_verify_signature_rejects_replayed_old_event() -> None:
+    """P0.5f: a captured webhook with a 2-day-old `timestamp` must be
+    rejected even though the HMAC signature is valid."""
+    payload = _text_payload()  # contains timestamp=1700000000 (~Nov 2023)
+    body = json.dumps(payload).encode("utf-8")
+    with pytest.raises(SignatureError, match="replay"):
+        verify_signature(
+            app_secret=APP_SECRET,
+            headers={"x-hub-signature-256": _sign(body)},
+            body=body,
+            now=1700000000 + 7200,  # 2h later — outside default 600s window
+        )
+
+
+def test_verify_signature_accepts_event_inside_window() -> None:
+    payload = _text_payload()
+    body = json.dumps(payload).encode("utf-8")
+    verify_signature(
+        app_secret=APP_SECRET,
+        headers={"x-hub-signature-256": _sign(body)},
+        body=body,
+        now=1700000000 + 60,  # 1 min later — within default 600s window
     )

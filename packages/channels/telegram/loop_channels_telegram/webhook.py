@@ -20,14 +20,22 @@ from __future__ import annotations
 
 import hmac
 import json
+import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Final
 from uuid import UUID
 
 from loop_channels_core import InboundEvent
 
 from loop_channels_telegram.parser import parse_update
+
+# Closes P0.5f: Telegram's secret-token header proves provenance but
+# the payload has no timestamp in the verified surface. We gate on the
+# embedded `message.date` (unix seconds) instead. Default 10 min skew
+# accommodates Telegram's webhook retry behaviour (which can land
+# minutes late on transient failures).
+DEFAULT_MAX_EVENT_SKEW_SECONDS: Final[int] = 600
 
 
 class TelegramWebhookError(ValueError):
@@ -58,14 +66,58 @@ class WebhookUpdate:
     raw: dict[str, Any]
 
 
+def _walk_event_timestamps(payload: dict[str, Any]) -> list[int]:
+    """Yield unix-second timestamps from any event-bearing sub-object
+    in a Telegram update.
+
+    Telegram updates can carry one of `message`, `edited_message`,
+    `channel_post`, `callback_query`, etc. Each of those nests a
+    `date` (unix seconds) we can gate on for replay protection.
+    """
+    out: list[int] = []
+    candidate_keys = (
+        "message",
+        "edited_message",
+        "channel_post",
+        "edited_channel_post",
+        "callback_query",
+        "my_chat_member",
+        "chat_member",
+    )
+    for key in candidate_keys:
+        sub = payload.get(key)
+        if not isinstance(sub, dict):
+            continue
+        # callback_query.message.date / message.date / etc.
+        for path in (("date",), ("message", "date")):
+            cur: Any = sub
+            for k in path:
+                if not isinstance(cur, dict):
+                    cur = None
+                    break
+                cur = cur.get(k)
+            if isinstance(cur, int):
+                out.append(cur)
+                break
+    return out
+
+
 def parse_webhook_body(
     body: bytes,
     *,
     workspace_id: UUID,
     agent_id: UUID,
     conversation_id: UUID,
+    verify_event_timestamp: bool = True,
+    max_event_skew_seconds: int = DEFAULT_MAX_EVENT_SKEW_SECONDS,
+    now: float | None = None,
 ) -> WebhookUpdate:
-    """Decode + parse a single webhook POST body."""
+    """Decode + parse a single webhook POST body.
+
+    Closes P0.5f: when ``verify_event_timestamp`` is True (default),
+    rejects updates whose embedded `date` is older than
+    ``max_event_skew_seconds`` so a captured webhook can't be replayed.
+    """
     if not body:
         raise TelegramWebhookError("empty webhook body")
     try:
@@ -77,6 +129,17 @@ def parse_webhook_body(
     update_id = payload.get("update_id")
     if not isinstance(update_id, int):
         raise TelegramWebhookError("update_id missing or not int")
+
+    if verify_event_timestamp:
+        timestamps = _walk_event_timestamps(payload)
+        if timestamps:
+            newest = max(timestamps)
+            current = now if now is not None else time.time()
+            if current - newest > max_event_skew_seconds:
+                raise TelegramWebhookError(
+                    "event timestamp outside replay window"
+                )
+
     parsed = parse_update(
         payload,
         workspace_id=workspace_id,
@@ -95,13 +158,21 @@ def parse_webhook_body(
 
 @dataclass(slots=True)
 class TelegramWebhookHandler:
-    """Production webhook entrypoint."""
+    """Production webhook entrypoint.
+
+    Replay defense (P0.5f) is on by default via the embedded
+    `message.date` timestamp. Operators backfilling historical
+    updates can disable per-handler with
+    ``verify_event_timestamp=False``.
+    """
 
     expected_secret: str
     workspace_id: UUID
     agent_id: UUID
     conversation_id: UUID
     on_event: Callable[[InboundEvent, int], Awaitable[None]]
+    verify_event_timestamp: bool = True
+    max_event_skew_seconds: int = DEFAULT_MAX_EVENT_SKEW_SECONDS
 
     async def handle(self, *, body: bytes, secret_header: str | None) -> WebhookUpdate:
         if not verify_secret_token(
@@ -113,6 +184,8 @@ class TelegramWebhookHandler:
             workspace_id=self.workspace_id,
             agent_id=self.agent_id,
             conversation_id=self.conversation_id,
+            verify_event_timestamp=self.verify_event_timestamp,
+            max_event_skew_seconds=self.max_event_skew_seconds,
         )
         if update.event is not None and update.chat_id is not None:
             await self.on_event(update.event, update.chat_id)
