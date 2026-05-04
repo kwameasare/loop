@@ -35,12 +35,15 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
+from loop_control_plane.audit_redaction import redact_for_audit
+
 __all__ = [
     "AuditEvent",
     "AuditEventError",
     "AuditEventStore",
     "InMemoryAuditEventStore",
     "audited",
+    "fetch_payload",
     "hash_payload",
     "record_audit_event",
 ]
@@ -73,6 +76,10 @@ class AuditEventStore(Protocol):
 
     def insert(self, event: AuditEvent) -> None: ...
 
+    def insert_payload(self, payload_hash: str, payload: object) -> None: ...
+
+    def fetch_payload(self, payload_hash: str) -> object | None: ...
+
     def list_for_workspace(
         self, workspace_id: uuid.UUID
     ) -> Iterable[AuditEvent]: ...
@@ -83,6 +90,7 @@ class InMemoryAuditEventStore:
     """Reference implementation used by tests and offline tooling."""
 
     _rows: list[AuditEvent] = field(default_factory=list)
+    _payloads: dict[str, object] = field(default_factory=dict)
 
     def insert(self, event: AuditEvent) -> None:
         # Append-only — even the in-memory implementation refuses to
@@ -103,6 +111,12 @@ class InMemoryAuditEventStore:
             )
         )
 
+    def insert_payload(self, payload_hash: str, payload: object) -> None:
+        self._payloads.setdefault(payload_hash, payload)
+
+    def fetch_payload(self, payload_hash: str) -> object | None:
+        return self._payloads.get(payload_hash)
+
     def all(self) -> tuple[AuditEvent, ...]:
         return tuple(self._rows)
 
@@ -113,6 +127,15 @@ def hash_payload(payload: object) -> str:
         payload, sort_keys=True, separators=(",", ":"), default=str
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def fetch_payload(store: AuditEventStore, payload_hash: str) -> dict[str, Any] | None:
+    """Fetch a persisted audit payload by its SHA-256 hex hash."""
+    fetch = getattr(store, "fetch_payload", None)
+    if fetch is None:
+        return None
+    payload = fetch(payload_hash)
+    return payload if isinstance(payload, dict) else None
 
 
 def _validate_field(name: str, value: str) -> None:
@@ -152,7 +175,8 @@ def record_audit_event(
         raise AuditEventError("resource_id must be a string when provided")
     if request_id is not None and not isinstance(request_id, str):
         raise AuditEventError("request_id must be a string when provided")
-    payload_hash = hash_payload(payload) if payload is not None else None
+    redacted_payload = redact_for_audit(payload) if payload is not None else None
+    payload_hash = hash_payload(redacted_payload) if redacted_payload is not None else None
     event = AuditEvent(
         id=uuid.uuid4(),
         occurred_at=now or datetime.now(UTC),
@@ -165,6 +189,10 @@ def record_audit_event(
         payload_hash=payload_hash,
         outcome=outcome,
     )
+    if payload_hash is not None:
+        insert_payload = getattr(store, "insert_payload", None)
+        if insert_payload is not None:
+            insert_payload(payload_hash, redacted_payload)
     store.insert(event)
     return event
 

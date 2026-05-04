@@ -16,6 +16,7 @@ from fastapi import APIRouter, HTTPException, Request
 from loop_control_plane._app_common import CALLER, JSON_BODY, request_id
 from loop_control_plane.api_keys import ApiKeyError
 from loop_control_plane.audit_events import record_audit_event
+from loop_control_plane.audit_redaction import redact_for_audit
 
 router = APIRouter(prefix="/v1/workspaces", tags=["ApiKeys"])
 
@@ -52,12 +53,14 @@ async def create_api_key(
         store=runtime.audit_events,
         resource_id=str(issued.get("id", "")),
         request_id=request_id(request),
-        # NEVER log the plaintext — only its surface metadata.
-        payload={
-            "id": issued.get("id"),
-            "name": issued.get("name"),
-            "prefix": issued.get("prefix"),
-        },
+        payload=redact_for_audit(
+            {
+                "id": issued.get("id"),
+                "name": issued.get("name"),
+                "prefix": issued.get("prefix"),
+                "plaintext": issued.get("plaintext"),
+            }
+        ),
     )
     return issued
 
