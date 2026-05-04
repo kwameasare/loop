@@ -3,11 +3,30 @@
 The 5% disclosed margin is non-negotiable (ADR-012). Rates below are the
 provider list prices in USD per 1M tokens, cited inline. When a vendor
 publishes new rates, update the entry, the citation URL, and the unit tests.
+
+Two-tier resolution
+===================
+
+1. **Exact match** in :data:`COST_TABLE` — the canonical, citation-bearing
+   rate. Always preferred when available.
+2. **Tier fallback** in :data:`_FALLBACK_TIER_RATES` — kicks in when the
+   model id is recognisably from a supported vendor (OpenAI / Anthropic
+   per :func:`loop_gateway.model_catalog.vendor_for`) but isn't yet
+   bound to an exact rate. Conservative upper-bound rates; preflight
+   stays pessimistic so we never undercharge.
+
+This decoupling matters because the live model catalog discovers ids
+straight from the provider's ``/v1/models`` endpoint — those ids land
+in production faster than COST_TABLE entries can be hand-maintained.
+The fallback keeps the runtime working without silently losing the
+right to bill.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+
+from loop_gateway.model_catalog import Profile, Vendor, classify_tier, vendor_for
 
 # Provider-disclosed markup applied on top of pass-through cost.
 DISCLOSED_MARKUP_PCT = 5.0
@@ -75,13 +94,54 @@ COST_TABLE: dict[str, ModelRate] = {
 }
 
 
+# Conservative tier-default rates used when a model id isn't in
+# COST_TABLE but its shape matches a supported vendor. Pessimistic on
+# purpose — preflight is meant to over-estimate, not under-estimate.
+# Numbers track current OpenAI / Anthropic public list prices for a
+# representative model in each tier (gpt-4o-mini / gpt-4o / gpt-4-turbo
+# for OpenAI; haiku / sonnet / opus for Anthropic). Refresh when a
+# vendor's pricing page meaningfully shifts.
+_FALLBACK_CITATION = (
+    "fallback-tier-rate: model id not bound to an exact rate in "
+    "loop_gateway.cost.COST_TABLE; see _FALLBACK_TIER_RATES."
+)
+_FALLBACK_TIER_RATES: dict[tuple[Vendor, Profile], ModelRate] = {
+    ("openai", "cheap"): ModelRate(0.15, 0.60, _FALLBACK_CITATION),
+    ("openai", "balanced"): ModelRate(2.50, 10.00, _FALLBACK_CITATION),
+    ("openai", "best"): ModelRate(15.00, 60.00, _FALLBACK_CITATION),
+    ("anthropic", "cheap"): ModelRate(0.80, 4.00, _FALLBACK_CITATION),
+    ("anthropic", "balanced"): ModelRate(3.00, 15.00, _FALLBACK_CITATION),
+    ("anthropic", "best"): ModelRate(15.00, 75.00, _FALLBACK_CITATION),
+}
+
+
+def _resolve_rate(model: str) -> ModelRate | None:
+    """Look up a rate, with tier-fallback for OpenAI / Anthropic ids.
+
+    Returns ``None`` when neither lookup succeeds — the caller should
+    raise ``KeyError`` to preserve the existing public contract.
+    """
+    if model in COST_TABLE:
+        return COST_TABLE[model]
+    vendor = vendor_for(model)
+    if vendor is None:
+        return None
+    return _FALLBACK_TIER_RATES[(vendor, classify_tier(model))]
+
+
 def cost_for(model: str, input_tokens: int, output_tokens: int) -> float:
-    """Pass-through cost (no markup)."""
+    """Pass-through cost (no markup).
+
+    Resolution order: exact match in :data:`COST_TABLE` first, then a
+    tier-default rate if the id looks like a supported vendor. Raises
+    ``KeyError`` only when both fail (e.g. a Mistral / Gemini id we
+    don't have a hand-bound entry for).
+    """
     if input_tokens < 0 or output_tokens < 0:
         raise ValueError("token counts must be non-negative")
-    if model not in COST_TABLE:
+    rate = _resolve_rate(model)
+    if rate is None:
         raise KeyError(f"unknown model: {model!r}")
-    rate = COST_TABLE[model]
     return (
         input_tokens * rate.input_per_million / 1_000_000
         + output_tokens * rate.output_per_million / 1_000_000

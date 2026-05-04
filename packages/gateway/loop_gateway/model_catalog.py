@@ -93,9 +93,11 @@ __all__ = [
     "ModelInfo",
     "Profile",
     "Vendor",
+    "classify_tier",
     "default_model",
     "fetch_anthropic_models",
     "fetch_openai_models",
+    "vendor_for",
 ]
 
 log = logging.getLogger(__name__)
@@ -271,12 +273,15 @@ _BEST_MARKERS: tuple[str, ...] = ("-opus", "-pro", "-turbo", "-ultra")
 _BEST_PREFIXES: tuple[str, ...] = ("o1", "o3", "o4", "o5", "o6", "o7", "o8", "o9")
 
 
-def _classify(model_id: str) -> Profile:
+def classify_tier(model_id: str) -> Profile:
     """Map a model id to exactly one tier.
 
     Mutually exclusive — every model lands in cheap / balanced / best.
     Unknown shapes default to ``balanced`` (the safest unknown-tier
     choice for runtime defaults).
+
+    Public API: also used by ``loop_gateway.cost`` to assign a fallback
+    rate to discovered-but-uncatalogued models.
     """
     mid = model_id.lower()
     if any(marker in mid for marker in _CHEAP_MARKERS):
@@ -286,6 +291,32 @@ def _classify(model_id: str) -> Profile:
     if any(mid.startswith(prefix) for prefix in _BEST_PREFIXES):
         return "best"
     return "balanced"
+
+
+# Back-compat private alias — pre-existing call sites and the testing
+# recipes documented during the catalog rollout used `_classify`.
+_classify = classify_tier
+
+
+# OpenAI prefixes used both by ``fetch_openai_models`` (filter) and
+# ``vendor_for`` (cost lookup). Kept in sync; if OpenAI ships a new
+# family prefix (e.g. ``oN`` for some new N), update both call sites.
+_OPENAI_PREFIXES: tuple[str, ...] = ("gpt-",) + tuple(f"o{n}" for n in range(1, 10))
+
+
+def vendor_for(model_id: str) -> Vendor | None:
+    """Infer which vendor advertises ``model_id`` from its id shape.
+
+    Returns ``None`` for ids that don't look like either supported
+    vendor (e.g. Bedrock-prefixed ids, Mistral, Gemini, Cohere — those
+    must be looked up in :data:`loop_gateway.cost.COST_TABLE` directly).
+    """
+    mid = model_id.lower()
+    if any(mid.startswith(prefix) for prefix in _OPENAI_PREFIXES):
+        return "openai"
+    if mid.startswith("claude-"):
+        return "anthropic"
+    return None
 
 
 def _score_within_tier(model: ModelInfo) -> tuple[int, int, str]:

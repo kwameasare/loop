@@ -18,9 +18,39 @@ def test_cost_for_zero_tokens_is_zero() -> None:
     assert cost_for("claude-3-5-haiku", 0, 0) == 0.0
 
 
-def test_cost_for_unknown_model_raises() -> None:
+def test_cost_for_unknown_vendor_raises() -> None:
+    """Ids that don't match a supported vendor prefix still raise.
+    Tier fallback only applies to OpenAI- / Anthropic-shaped ids."""
     with pytest.raises(KeyError):
         cost_for("does-not-exist", 100, 100)
+    with pytest.raises(KeyError):
+        cost_for("mistral-fake-model", 100, 100)
+
+
+def test_cost_for_discovered_openai_model_uses_tier_fallback() -> None:
+    """Regression for the live-catalog → cost-table coupling: a model id
+    discovered from OpenAI's ``/v1/models`` (e.g. ``gpt-5.4-mini``) that
+    isn't yet bound to an exact rate now resolves via tier fallback
+    rather than raising. Cheap-tier rate matches gpt-4o-mini's."""
+    discovered = cost_for("gpt-5.4-mini", 1_000_000, 0)
+    catalogued = cost_for("gpt-4o-mini", 1_000_000, 0)
+    assert discovered == pytest.approx(catalogued)
+
+
+def test_cost_for_discovered_pro_model_uses_best_tier_fallback() -> None:
+    """Frontier id resolves to a high-rate fallback so we don't
+    undercharge for premium output."""
+    pro_cost = cost_for("gpt-5.5-pro-2026-04-23", 0, 1_000_000)
+    mini_cost = cost_for("gpt-5.4-mini", 0, 1_000_000)
+    # Best tier ($60/M out) vs cheap tier ($0.60/M out) — 100x apart.
+    assert pro_cost > mini_cost * 50
+
+
+def test_cost_for_discovered_claude_model_uses_anthropic_fallback() -> None:
+    """Anthropic-shaped discovered ids hit anthropic-tier fallbacks."""
+    haiku_new = cost_for("claude-haiku-4-5-20251001", 1_000_000, 0)
+    haiku_old = cost_for("claude-3-5-haiku", 1_000_000, 0)
+    assert haiku_new == pytest.approx(haiku_old)
 
 
 def test_cost_for_negative_tokens_raises() -> None:
