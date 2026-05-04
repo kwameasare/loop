@@ -159,8 +159,17 @@ def encode_done(encoder: SseEncoder, *, turn_id: str) -> bytes:
     return encoder.encode(SseEventKind.DONE, {"turn_id": turn_id})
 
 
-def encode_error(encoder: SseEncoder, *, code: str, message: str) -> bytes:
-    return encoder.encode(SseEventKind.ERROR, {"code": code, "message": message})
+def encode_error(
+    encoder: SseEncoder,
+    *,
+    code: str,
+    message: str,
+    request_id: str | None = None,
+) -> bytes:
+    payload = {"code": code, "message": message}
+    if request_id is not None:
+        payload["request_id"] = request_id
+    return encoder.encode(SseEventKind.ERROR, payload)
 
 
 def encode_keepalive(encoder: SseEncoder) -> bytes:

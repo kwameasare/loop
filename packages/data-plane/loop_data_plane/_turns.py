@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncIterator, Mapping
 from datetime import UTC, datetime
 from typing import Any, cast
@@ -13,6 +14,8 @@ from loop_runtime.sse import SseEncoder, encode_done, encode_error, encode_turn_
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from loop_data_plane._runtime_config import default_agent_model
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "RuntimeTurnRequest",
@@ -26,6 +29,15 @@ class TurnExecutionError(RuntimeError):
     """Raised when a non-streaming turn fails before a complete event."""
 
     code = "LOOP-RT-501"
+
+
+_STREAM_ERROR_MESSAGES: dict[str, str] = {
+    "LOOP-GW-101": "Provider credentials were rejected.",
+    "LOOP-GW-301": "Provider rate limit exceeded.",
+    "LOOP-GW-401": "Provider request failed.",
+    "LOOP-GW-402": "Provider transport failed.",
+    "LOOP-RT-501": "Turn execution failed.",
+}
 
 
 class RuntimeTurnRequest(BaseModel):
@@ -94,10 +106,17 @@ async def stream_turn_sse(
             yield encode_turn_event(encoder, event)
         yield encode_done(encoder, turn_id=turn_id)
     except Exception as exc:
+        envelope = _stream_error_envelope(exc, request_id=turn_id)
+        logger.error(
+            "streaming turn failed",
+            extra={"code": envelope["code"], "request_id": turn_id},
+            exc_info=True,
+        )
         yield encode_error(
             encoder,
-            code=getattr(exc, "code", "LOOP-RT-501"),
-            message=str(exc),
+            code=envelope["code"],
+            message=envelope["message"],
+            request_id=envelope["request_id"],
         )
 
 
@@ -133,4 +152,15 @@ async def collect_turn(
         "turn_id": turn_id,
         "reply": {"text": text},
         "events": [event.model_dump(mode="json") for event in events],
+    }
+
+
+def _stream_error_envelope(exc: BaseException, *, request_id: str) -> dict[str, str]:
+    code = getattr(exc, "code", "LOOP-RT-501")
+    if not isinstance(code, str) or not code:
+        code = "LOOP-RT-501"
+    return {
+        "code": code,
+        "message": _STREAM_ERROR_MESSAGES.get(code, _STREAM_ERROR_MESSAGES["LOOP-RT-501"]),
+        "request_id": request_id,
     }
