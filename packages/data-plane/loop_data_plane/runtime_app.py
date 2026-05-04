@@ -23,6 +23,7 @@ from loop_data_plane._turns import (
     stream_turn_sse,
 )
 from loop_data_plane.metrics import install_metrics
+from loop_data_plane.tracing import install_tracing
 
 
 @dataclass
@@ -118,6 +119,9 @@ def create_app(state: RuntimeAppState | None = None) -> FastAPI:
     # gap where SLO alerts in slo-burn.yaml referenced series no
     # service emitted.
     install_metrics(app)
+    # P0.7c: OpenTelemetry tracing — every request gets a span
+    # propagated from cp-api / through to gateway / upstream LLM.
+    install_tracing(app, service_name="dp-runtime")
     return app
 
 

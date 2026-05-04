@@ -14,6 +14,7 @@ from loop_control_plane._routes_workspaces import router as workspaces_router
 from loop_control_plane.auth import AuthError
 from loop_control_plane.auth_exchange import AuthExchangeError
 from loop_control_plane.metrics import install_metrics
+from loop_control_plane.tracing import install_tracing
 from loop_control_plane.paseto import PasetoError
 from loop_control_plane.workspaces import WorkspaceError
 
@@ -30,6 +31,10 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
     # this wiring shipped, those alerts had no input series and
     # PagerDuty would never fire.
     install_metrics(app)
+    # P0.7c: OpenTelemetry tracing — every request gets a span,
+    # propagated to dp-runtime + gateway + upstream LLM via
+    # traceparent. Skipped when LOOP_OTEL_ENDPOINT=disabled.
+    install_tracing(app, service_name="cp-api")
     return app
 
 

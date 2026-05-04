@@ -10,6 +10,12 @@ dependencies = [
     # hand-rolled XOR-stream construction. See workspace_encryption.py.
     "cryptography>=42",
     "fastapi>=0.115",
+    # OpenTelemetry tracing (P0.7c). Auto-instruments FastAPI so every
+    # request becomes a span propagated to dp-runtime via traceparent.
+    "opentelemetry-api>=1.27",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-instrumentation-fastapi>=0.48b0",
+    "opentelemetry-exporter-otlp-proto-http>=1.27",
     # Prometheus middleware (P0.7b). The `slo-burn.yaml` alerts target
     # the metrics this client emits.
     "prometheus-client>=0.20",
