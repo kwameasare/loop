@@ -177,6 +177,32 @@ export async function getTrace(id: string): Promise<Trace | null> {
   return null;
 }
 
+/**
+ * Fetch a single trace by turn id from cp.
+ *
+ * Blocked on cp-api PR: ``GET /v1/traces/{turn_id}`` is in the OpenAPI
+ * spec but not yet routed in cp's app.py. Returns null on 404 so the
+ * inspector renders the "trace not found" empty state cleanly.
+ */
+export async function fetchTraceByTurnId(
+  turn_id: string,
+  opts: TracesClientOptions = {},
+): Promise<Trace | null> {
+  const fetcher = opts.fetcher ?? fetch;
+  const headers: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  const url = `${cpApiBaseUrl(opts.baseUrl)}/traces/${encodeURIComponent(turn_id)}`;
+  const res = await fetcher(url, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`cp-api GET trace -> ${res.status}`);
+  return (await res.json()) as Trace;
+}
+
 export const FIXTURE_TRACE_ID = FIXTURE_TRACE.id;
 
 /** Lightweight row shown on the trace list page. */
@@ -212,6 +238,114 @@ export interface ListTracesResult {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TRACE_BASE_MS = Date.UTC(2026, 3, 30, 12, 0, 0);
+
+// ---------------------------------------------------------------- cp-api
+
+export interface TracesClientOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+function cpApiBaseUrl(override?: string): string {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) {
+    throw new Error("LOOP_CP_API_BASE_URL is required for trace calls");
+  }
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+interface CpTraceItem {
+  workspace_id: string;
+  trace_id: string;
+  turn_id: string;
+  conversation_id: string;
+  agent_id: string;
+  started_at: string;
+  duration_ms: number;
+  span_count: number;
+  error: boolean;
+}
+
+export interface SearchTracesQuery {
+  agent_id?: string;
+  conversation_id?: string;
+  turn_id?: string;
+  started_at_from?: string;
+  started_at_to?: string;
+  only_errors?: boolean;
+  page_size?: number;
+  cursor?: string;
+}
+
+/**
+ * Search persisted traces via ``GET /v1/workspaces/{id}/traces``.
+ *
+ * cp returns a sparser shape than the studio's ``TraceSummary`` —
+ * agent_name and root_name aren't tracked at the cp layer yet, so we
+ * fall back to the agent_id / a short trace label respectively. When
+ * cp begins emitting display labels the mapper here is the only thing
+ * that needs to update.
+ */
+export async function searchTraces(
+  workspace_id: string,
+  query: SearchTracesQuery = {},
+  opts: TracesClientOptions = {},
+): Promise<{ traces: TraceSummary[]; next_cursor: string | null }> {
+  const fetcher = opts.fetcher ?? fetch;
+  const headers: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  const params = new URLSearchParams();
+  if (query.agent_id) params.set("agent_id", query.agent_id);
+  if (query.conversation_id)
+    params.set("conversation_id", query.conversation_id);
+  if (query.turn_id) params.set("turn_id", query.turn_id);
+  if (query.started_at_from) params.set("started_at_from", query.started_at_from);
+  if (query.started_at_to) params.set("started_at_to", query.started_at_to);
+  if (query.only_errors) params.set("only_errors", "true");
+  if (query.page_size) params.set("page_size", String(query.page_size));
+  if (query.cursor) params.set("cursor", query.cursor);
+  const qs = params.toString();
+  const url = `${cpApiBaseUrl(opts.baseUrl)}/workspaces/${encodeURIComponent(
+    workspace_id,
+  )}/traces${qs ? `?${qs}` : ""}`;
+  const res = await fetcher(url, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`cp-api GET /traces -> ${res.status}`);
+  const body = (await res.json()) as {
+    items?: CpTraceItem[];
+    next_cursor?: string | null;
+  };
+  return {
+    traces: (body.items ?? []).map(toTraceSummary),
+    next_cursor: body.next_cursor ?? null,
+  };
+}
+
+function toTraceSummary(item: CpTraceItem): TraceSummary {
+  return {
+    id: item.trace_id,
+    agent_id: item.agent_id,
+    // cp doesn't store the human-readable agent name yet; the list
+    // page falls back to the id so the row is still clickable.
+    agent_name: item.agent_id,
+    root_name: `turn ${item.turn_id.slice(0, 8)}`,
+    status: item.error ? "error" : "ok",
+    duration_ns: item.duration_ms * 1_000_000,
+    started_at_ms: Date.parse(item.started_at),
+    span_count: item.span_count,
+  };
+}
+
+// ---------------------------------------------------------------- fixtures
 
 /** Synthetic fixture set so the list page renders deterministically. */
 export const FIXTURE_TRACES: TraceSummary[] = (() => {

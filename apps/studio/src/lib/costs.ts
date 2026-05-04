@@ -179,6 +179,94 @@ export function monthBoundsUTC(now_ms: number): {
 const DAY_MS = 24 * 60 * 60 * 1000;
 const FIXTURE_WORKSPACE_ID = "ws_demo_001";
 
+// ---------------------------------------------------------------- cp-api
+
+export interface UsageClientOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+function cpApiBaseUrl(override?: string): string {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) {
+    throw new Error("LOOP_CP_API_BASE_URL is required for usage calls");
+  }
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+interface CpUsageEvent {
+  workspace_id: string;
+  metric: string;
+  quantity: number;
+  timestamp_ms: number;
+  agent_id?: string;
+  agent_name?: string;
+  channel?: string;
+  model?: string;
+}
+
+function dayBucketMs(ts_ms: number): number {
+  return Math.floor(ts_ms / DAY_MS) * DAY_MS;
+}
+
+function isUsageMetric(s: string): s is UsageMetric {
+  return (
+    s === "tokens.in" ||
+    s === "tokens.out" ||
+    s === "tool_calls" ||
+    s === "retrievals"
+  );
+}
+
+/**
+ * Fetch raw usage events from
+ * ``GET /v1/workspaces/{id}/usage?start_ms&end_ms`` and convert them
+ * to the studio's ``UsageRecord`` shape used by the dashboard
+ * reducers. cp returns the minimal {workspace_id, metric, quantity,
+ * timestamp_ms}; the fuller (agent_id, agent_name, channel, model)
+ * fields fall back to empty strings until cp's runtime emits them
+ * (the openapi spec already has them, the storage layer doesn't yet).
+ *
+ * Unknown metric strings are dropped — the dashboard only knows about
+ * the four canonical metrics and would otherwise compute $0 against
+ * unrecognised buckets.
+ */
+export async function fetchUsageRecords(
+  workspace_id: string,
+  args: { start_ms: number; end_ms: number },
+  opts: UsageClientOptions = {},
+): Promise<UsageRecord[]> {
+  const fetcher = opts.fetcher ?? fetch;
+  const headers: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  const url = `${cpApiBaseUrl(opts.baseUrl)}/workspaces/${encodeURIComponent(
+    workspace_id,
+  )}/usage?start_ms=${args.start_ms}&end_ms=${args.end_ms}`;
+  const res = await fetcher(url, { method: "GET", headers, cache: "no-store" });
+  if (!res.ok) throw new Error(`cp-api GET /usage -> ${res.status}`);
+  const body = (await res.json()) as { items?: CpUsageEvent[] };
+  return (body.items ?? [])
+    .filter((e): e is CpUsageEvent => isUsageMetric(e.metric))
+    .map((e) => ({
+      workspace_id: e.workspace_id,
+      agent_id: e.agent_id ?? "",
+      agent_name: e.agent_name ?? "",
+      channel: e.channel,
+      model: e.model,
+      metric: e.metric as UsageMetric,
+      quantity: e.quantity,
+      day_ms: dayBucketMs(e.timestamp_ms),
+    }));
+}
+
+// ---------------------------------------------------------------- fixtures
+
 export const FIXTURE_USAGE: UsageRecord[] = (() => {
   const now = Date.UTC(2026, 3, 15); // April 15, 2026 UTC
   const day = (offset: number) => now - offset * DAY_MS;

@@ -17,6 +17,14 @@ export interface AuthExchangeResponse {
   session_token?: string;
 }
 
+export interface AuthRefreshResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type?: string;
+  access_expires_at_ms?: number;
+  refresh_expires_at_ms?: number;
+}
+
 export class AuthExchangeError extends Error {
   status: number;
   body: string;
@@ -94,6 +102,63 @@ export async function exchangeAuth0Token(
   return parsed as AuthExchangeResponse;
 }
 
+/**
+ * POST a refresh token to ``/v1/auth/refresh`` and return the rotated
+ * pair. cp-api implements rotation-with-reuse-detection, so the caller
+ * MUST replace the stored refresh token with the new one on success
+ * and force a full re-auth on a 401 (which signals reuse / theft).
+ */
+export async function refreshSessionToken(
+  refreshToken: string,
+  options: ExchangeOptions = {},
+): Promise<AuthRefreshResponse> {
+  const fetcher = options.fetcher ?? fetch;
+  const url = `${resolveBaseUrl(options.baseUrl)}/v1/auth/refresh`;
+  const response = await fetcher(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+    cache: "no-store",
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new AuthExchangeError(
+      `cp-api /v1/auth/refresh returned ${response.status}`,
+      response.status,
+      text,
+    );
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new AuthExchangeError(
+      "cp-api /v1/auth/refresh returned non-JSON body",
+      response.status,
+      text,
+    );
+  }
+  if (!parsed || typeof parsed !== "object") {
+    throw new AuthExchangeError(
+      "cp-api /v1/auth/refresh returned non-object body",
+      response.status,
+      text,
+    );
+  }
+  const obj = parsed as Record<string, unknown>;
+  if (
+    typeof obj.access_token !== "string" ||
+    typeof obj.refresh_token !== "string"
+  ) {
+    throw new AuthExchangeError(
+      "cp-api /v1/auth/refresh missing access/refresh token",
+      response.status,
+      text,
+    );
+  }
+  return obj as unknown as AuthRefreshResponse;
+}
+
 export function storeSessionToken(payload: AuthExchangeResponse): void {
   if (typeof window === "undefined") return;
   try {
@@ -102,6 +167,7 @@ export function storeSessionToken(payload: AuthExchangeResponse): void {
       JSON.stringify({
         access_token: payload.access_token,
         session_token: payload.session_token ?? payload.access_token,
+        refresh_token: payload.refresh_token ?? null,
         expires_in: payload.expires_in ?? null,
         token_type: payload.token_type ?? "Bearer",
         stored_at: Date.now(),
@@ -110,6 +176,32 @@ export function storeSessionToken(payload: AuthExchangeResponse): void {
   } catch {
     // sessionStorage unavailable (e.g. private mode); ignore -- the
     // SPA will simply re-exchange on the next callback.
+  }
+}
+
+/**
+ * Replace the access token (and rotated refresh token) in
+ * sessionStorage after a successful ``/v1/auth/refresh`` round-trip.
+ * Called by the cp-api 401 interceptor so subsequent requests in the
+ * same tab pick up the freshly minted access token.
+ */
+export function replaceSessionTokens(payload: AuthRefreshResponse): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = readSessionToken();
+    window.sessionStorage.setItem(
+      SESSION_STORAGE_KEY,
+      JSON.stringify({
+        access_token: payload.access_token,
+        session_token: payload.access_token,
+        refresh_token: payload.refresh_token,
+        expires_in: existing?.expires_in ?? null,
+        token_type: payload.token_type ?? existing?.token_type ?? "Bearer",
+        stored_at: Date.now(),
+      }),
+    );
+  } catch {
+    /* ignore */
   }
 }
 
@@ -125,6 +217,7 @@ export function clearSessionToken(): void {
 export function readSessionToken(): {
   access_token: string;
   session_token: string;
+  refresh_token?: string | null;
   expires_in: number | null;
   token_type: string;
   stored_at: number;

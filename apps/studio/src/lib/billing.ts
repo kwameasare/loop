@@ -53,6 +53,107 @@ export function paginateInvoices(
   return { items: sorted.slice(start, start + page_size), total, pages };
 }
 
+// ---------------------------------------------------------------- cp-api
+
+export interface BillingClientOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+function cpApiBaseUrl(override?: string): string {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) {
+    throw new Error("LOOP_CP_API_BASE_URL is required for billing calls");
+  }
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+async function cpFetch<T>(
+  method: string,
+  path: string,
+  opts: BillingClientOptions,
+  body?: unknown,
+): Promise<T | null> {
+  const fetcher = opts.fetcher ?? fetch;
+  const headers: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  const init: RequestInit = { method, headers, cache: "no-store" };
+  if (body !== undefined) {
+    headers["content-type"] = "application/json";
+    init.body = JSON.stringify(body);
+  }
+  const res = await fetcher(`${cpApiBaseUrl(opts.baseUrl)}${path}`, init);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`cp-api ${method} ${path} -> ${res.status}`);
+  if (res.status === 204) return null;
+  return (await res.json()) as T;
+}
+
+/**
+ * Fetch the workspace's billing summary.
+ *
+ * Blocked on cp-api PR: ``/v1/workspaces/{id}/billing`` is not yet
+ * mounted in cp's app.py. The studio code calls the (eventual)
+ * endpoint and renders a "billing not yet provisioned" empty state on
+ * 404 so the page is usable today and seamlessly upgrades when the
+ * route lands. ``billing_stripe_export.py`` already exists; only the
+ * FastAPI shim is missing.
+ */
+export async function fetchBillingSummary(
+  workspace_id: string,
+  opts: BillingClientOptions = {},
+): Promise<BillingSummary | null> {
+  return cpFetch<BillingSummary>(
+    "GET",
+    `/workspaces/${encodeURIComponent(workspace_id)}/billing`,
+    opts,
+  );
+}
+
+/** Likewise blocked on cp-api PR. */
+export async function fetchInvoices(
+  workspace_id: string,
+  opts: BillingClientOptions = {},
+): Promise<Invoice[]> {
+  const res = await cpFetch<{ items: Invoice[] }>(
+    "GET",
+    `/workspaces/${encodeURIComponent(workspace_id)}/billing/invoices`,
+    opts,
+  );
+  return res?.items ?? [];
+}
+
+/**
+ * Update the customer's payment method via Stripe Setup Intent. The
+ * cp-api responds with the new last-4 on success. Blocked on the
+ * cp-api PR; until then the call just 404s and the form surfaces an
+ * "unavailable" error.
+ */
+export async function updatePaymentMethod(
+  workspace_id: string,
+  args: { cardholderName: string; setup_intent_id?: string },
+  opts: BillingClientOptions = {},
+): Promise<{ ok: true; last4: string } | { ok: false; reason: string }> {
+  const res = await cpFetch<{ last4: string }>(
+    "POST",
+    `/workspaces/${encodeURIComponent(workspace_id)}/billing/payment-method`,
+    opts,
+    args,
+  );
+  if (res === null) {
+    return { ok: false, reason: "Billing API not yet available" };
+  }
+  return { ok: true, last4: res.last4 };
+}
+
+// ---------------------------------------------------------------- fixtures
+
 export const FIXTURE_INVOICES: Invoice[] = [
   {
     id: "in_001",

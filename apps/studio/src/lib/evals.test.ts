@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  createEvalSuite,
   diffAgainstBaseline,
   formatPassRate,
   getEvalRun,
@@ -94,5 +95,49 @@ describe("formatPassRate", () => {
     expect(formatPassRate(0.917)).toBe("91.7%");
     expect(formatPassRate(1)).toBe("100%");
     expect(formatPassRate(null)).toBe("—");
+  });
+});
+
+describe("createEvalSuite", () => {
+  it("returns an in-memory suite when no baseUrl is configured", async () => {
+    const created = await createEvalSuite({
+      name: "smoke",
+      agentId: "agt_a",
+    });
+    expect(created.name).toBe("smoke");
+    expect(created.agentId).toBe("agt_a");
+    expect(created.id).toMatch(/^evs_/);
+  });
+
+  it("POSTs to /v1/eval-suites when baseUrl is set", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({
+        id: "evs_42",
+        name: "smoke",
+      }),
+    });
+    const created = await createEvalSuite(
+      { name: "smoke", agentId: "agt_a" },
+      { fetcher, baseUrl: "https://cp.test" },
+    );
+    expect(created.id).toBe("evs_42");
+    const [url, init] = fetcher.mock.calls[0];
+    expect(url).toBe("https://cp.test/v1/eval-suites");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body)).toEqual({ name: "smoke" });
+  });
+
+  it("propagates non-2xx as an error", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 409, json: async () => ({}) });
+    await expect(
+      createEvalSuite(
+        { name: "smoke", agentId: "agt_a" },
+        { fetcher, baseUrl: "https://cp.test" },
+      ),
+    ).rejects.toThrow(/409/);
   });
 });

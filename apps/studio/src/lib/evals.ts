@@ -249,3 +249,66 @@ export function formatPassRate(rate: number | null): string {
   if (rate === null) return "—";
   return `${Math.round(rate * 1000) / 10}%`;
 }
+
+// ---------------------------------------------------------------- create
+
+export interface CreateEvalSuiteInput {
+  name: string;
+  agentId: string;
+  /**
+   * Optional initial cases. cp's POST accepts ``{cases?: EvalCase[],
+   * name: string}``; the studio surfaces just name+agentId on this
+   * form so the user can iterate after creation.
+   */
+  cases?: { name: string; expected: string }[];
+}
+
+/**
+ * POST a new eval suite to ``/v1/eval-suites``. Returns the created
+ * suite summary so the page can refresh in place. Throws on non-2xx
+ * so the form can surface the cp-side validation message.
+ */
+export async function createEvalSuite(
+  input: CreateEvalSuiteInput,
+  opts: EvalsHelperOptions = {},
+): Promise<EvalSuite> {
+  const base = resolveBase(opts);
+  if (!base) {
+    // The fixture mode used in dev/tests can't really create rows;
+    // we return an in-memory shape so the form smoke-passes.
+    return {
+      id: `evs_${Math.random().toString(36).slice(2, 10)}`,
+      name: input.name,
+      agentId: input.agentId,
+      cases: input.cases?.length ?? 0,
+      lastRunAt: null,
+      passRate: null,
+    };
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const headers = {
+    ...authHeaders(opts),
+    "content-type": "application/json",
+  };
+  const res = await fetcher(`${base}/eval-suites`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      name: input.name,
+      cases: input.cases,
+    }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`createEvalSuite failed: ${res.status}`);
+  }
+  const body = (await res.json()) as Partial<EvalSuite> & { id?: string; name?: string };
+  return {
+    id: body.id ?? "",
+    name: body.name ?? input.name,
+    agentId: body.agentId ?? input.agentId,
+    cases: body.cases ?? input.cases?.length ?? 0,
+    lastRunAt: body.lastRunAt ?? null,
+    passRate: body.passRate ?? null,
+  };
+}

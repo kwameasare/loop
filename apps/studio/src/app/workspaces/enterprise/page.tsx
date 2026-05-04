@@ -1,45 +1,95 @@
 "use client";
 
 /**
- * S615: Enterprise SSO settings page.
+ * P0.3: ``/workspaces/enterprise`` — workspace-scoped SAML config.
  *
- * Hosts the ``EnterpriseSsoForm`` and is responsible for the cp-api
- * round-trip. The form is intentionally pure UI; the page owns the
- * client and the polling loop that flips the status to
- * ``connected`` after a successful ACS round-trip.
- *
- * cp-api SSO endpoints land in S617; until then this page renders
- * the form with a stub submit handler that surfaces the request
- * payload so the user can preview what would be POSTed. Once the
- * generated client lands the stub is dropped without a UI change.
+ * Replaces the previous ``console.info("[sso] would POST", ...)``
+ * stub with a real cp-api round-trip via ``postSamlConfig``. Until
+ * the cp shim ships the call 404s and the form surfaces the
+ * "blocked on cp-api PR" error so customers don't think it's
+ * silently working.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { RequireAuth } from "@/components/auth/require-auth";
 import {
   EnterpriseSsoForm,
   type EnterpriseSsoSubmitPayload,
   type SsoStatus,
 } from "@/components/workspaces/enterprise-sso-form";
+import {
+  fetchSamlConfig,
+  postSamlConfig,
+  type SamlConfigResponse,
+} from "@/lib/enterprise";
+import { useActiveWorkspace } from "@/lib/use-active-workspace";
+
+function toSsoStatus(s: SamlConfigResponse["status"]): SsoStatus {
+  if (s === "connected") return "connected";
+  if (s === "pending_verification") return "pending";
+  return "not_connected";
+}
 
 export default function EnterpriseSsoPage() {
+  return (
+    <RequireAuth>
+      <EnterpriseSsoBody />
+    </RequireAuth>
+  );
+}
+
+function EnterpriseSsoBody() {
+  const { active, isLoading: wsLoading } = useActiveWorkspace();
   const [status, setStatus] = useState<SsoStatus>("not_connected");
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(
+    undefined,
+  );
+
+  useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    void fetchSamlConfig(active.id)
+      .then((c) => {
+        if (cancelled) return;
+        setStatus(toSsoStatus(c.status));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setErrorMessage(
+          err instanceof Error ? err.message : "Could not load SSO config",
+        );
+        setStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [active]);
 
   async function handleSubmit(payload: EnterpriseSsoSubmitPayload) {
+    if (!active) return;
     setErrorMessage(undefined);
     setStatus("pending");
     try {
-      // Stubbed cp-api call. S617 swaps this for a generated client
-      // call to ``POST /v1/workspaces/{id}/sso``. The pending → connected
-      // transition is driven by an ACS round-trip from the IdP, so the
-      // status will remain ``pending`` here until the auth callback
-      // route posts back via a server-sent event or a polled GET.
-      console.info("[sso] would POST", payload);
+      const next = await postSamlConfig(active.id, {
+        metadata_url: payload.metadataUrl,
+        metadata_xml: payload.metadataXml,
+      });
+      setStatus(toSsoStatus(next.status));
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Failed to connect IdP.");
+      setErrorMessage(
+        err instanceof Error ? err.message : "Failed to connect IdP.",
+      );
       setStatus("error");
     }
+  }
+
+  if (wsLoading || !active) {
+    return (
+      <main className="flex flex-col gap-4 p-6">
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      </main>
+    );
   }
 
   return (

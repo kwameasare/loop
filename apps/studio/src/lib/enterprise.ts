@@ -169,6 +169,110 @@ export interface PutGroupRulesOptions {
   baseUrl?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Workspace-scoped SAML configuration (P0.3)
+// ---------------------------------------------------------------------------
+//
+// The audit doc identifies ``/v1/workspaces/{id}/enterprise/saml`` as
+// the canonical workspace-scoped SSO route. cp-api has the underlying
+// ``saml*.py`` service modules but no FastAPI shim is mounted yet, so
+// these helpers degrade on 404: GET returns ``not_configured`` so the
+// page can render the "set me up" panel, POST surfaces a clear error
+// telling the user the route hasn't shipped.
+
+export interface SamlConfigResponse {
+  status: IdpConnectionStatus;
+  entity_id: string | null;
+  /** Workspace-specific ACS URL the IdP will POST SAMLResponses to. */
+  acs_url: string | null;
+  connected_at: string | null;
+}
+
+export interface PostSamlConfigBody {
+  metadata_url?: string;
+  metadata_xml?: string;
+}
+
+interface SamlClientOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+function _samlBase(override?: string): string {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) throw new Error("LOOP_CP_API_BASE_URL is required for SAML calls");
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+/**
+ * Read the SAML config for a workspace.
+ *
+ * Blocked on cp-api PR. Returns ``not_configured`` on 404 so the
+ * page renders cleanly today and lights up automatically when
+ * cp ships ``/v1/workspaces/{id}/enterprise/saml``.
+ */
+export async function fetchSamlConfig(
+  workspace_id: string,
+  opts: SamlClientOptions = {},
+): Promise<SamlConfigResponse> {
+  const fetcher = opts.fetcher ?? fetch;
+  const headers: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  const url = `${_samlBase(opts.baseUrl)}/workspaces/${encodeURIComponent(
+    workspace_id,
+  )}/enterprise/saml`;
+  const res = await fetcher(url, { method: "GET", headers, cache: "no-store" });
+  if (res.status === 404) {
+    return {
+      status: "not_configured",
+      entity_id: null,
+      acs_url: null,
+      connected_at: null,
+    };
+  }
+  if (!res.ok) throw new Error(`cp-api GET enterprise/saml -> ${res.status}`);
+  return (await res.json()) as SamlConfigResponse;
+}
+
+/** Save SAML config. Returns the cp response or throws on non-2xx. */
+export async function postSamlConfig(
+  workspace_id: string,
+  body: PostSamlConfigBody,
+  opts: SamlClientOptions = {},
+): Promise<SamlConfigResponse> {
+  const fetcher = opts.fetcher ?? fetch;
+  const headers: Record<string, string> = {
+    accept: "application/json",
+    "content-type": "application/json",
+  };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  const url = `${_samlBase(opts.baseUrl)}/workspaces/${encodeURIComponent(
+    workspace_id,
+  )}/enterprise/saml`;
+  const res = await fetcher(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(
+      `cp-api POST enterprise/saml -> ${res.status}` +
+        (res.status === 404
+          ? " (route not yet shipped; blocked on cp-api PR)"
+          : ""),
+    );
+  }
+  return (await res.json()) as SamlConfigResponse;
+}
+
 /**
  * Persist group→role rules to the control plane.
  *

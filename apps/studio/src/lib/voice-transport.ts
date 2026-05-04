@@ -30,6 +30,67 @@ export interface VoiceTransport {
   disconnect(): Promise<void>;
 }
 
+// ---------------------------------------------------------------- cp-api
+
+export interface MintVoiceTokenResponse {
+  /** Short-lived JWT the LiveKit client uses to join the room. */
+  token: string;
+  /** wss:// URL the LiveKit client connects to. */
+  url: string;
+  /** Room the agent will be present in. */
+  room: string;
+  /** Identity to publish under (mirrored back from the request, plus a salt). */
+  identity: string;
+}
+
+export interface MintVoiceTokenOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+function _voiceBase(override?: string): string {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) throw new Error("LOOP_CP_API_BASE_URL is required for voice calls");
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+/**
+ * Mint a LiveKit access token for the given agent.
+ *
+ * Blocked on cp-api PR: ``POST /v1/voice/mint_token`` is not yet
+ * mounted on cp. Until it ships the call returns null and the page
+ * renders the "voice unavailable" empty state. When it lands the
+ * studio's WebRTC transport can swap from the fixture to a real
+ * LiveKit-room transport.
+ */
+export async function mintVoiceToken(
+  args: { agent_id: string; identity?: string },
+  opts: MintVoiceTokenOptions = {},
+): Promise<MintVoiceTokenResponse | null> {
+  const fetcher = opts.fetcher ?? fetch;
+  const headers: Record<string, string> = {
+    accept: "application/json",
+    "content-type": "application/json",
+  };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  const url = `${_voiceBase(opts.baseUrl)}/voice/mint_token`;
+  const res = await fetcher(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(args),
+    cache: "no-store",
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`cp-api POST voice/mint_token -> ${res.status}`);
+  return (await res.json()) as MintVoiceTokenResponse;
+}
+
 /**
  * Inert in-process transport used by the studio fixture page and
  * by tests that need a default. It stays in ``connecting`` until
