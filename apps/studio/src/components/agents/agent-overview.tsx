@@ -38,7 +38,9 @@ export interface AgentOverviewProps {
 }
 
 // ---------------------------------------------------------------------------
-// Edit-description modal (headless, no external dialog lib)
+// Edit-description modal — wraps @/components/ui/dialog (Radix Dialog
+// primitive) so we get focus-trap, Escape-to-close, and trigger-refocus
+// for free. Closes thor #4 (P1 a11y).
 // ---------------------------------------------------------------------------
 
 interface EditDescriptionModalProps {
