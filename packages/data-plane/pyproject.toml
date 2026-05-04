@@ -10,6 +10,9 @@ dependencies = [
     "loop",
     "loop-gateway",
     "loop-runtime",
+    # Prometheus middleware (P0.7b). The `slo-burn.yaml` dp-runtime
+    # SLOs target the series this client emits.
+    "prometheus-client>=0.20",
     "pydantic>=2",
     "sqlalchemy>=2.0",
     "uvicorn>=0.30",
