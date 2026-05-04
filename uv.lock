@@ -901,6 +901,7 @@ version = "0.1.0"
 source = { editable = "packages/control-plane" }
 dependencies = [
     { name = "alembic" },
+    { name = "cryptography" },
     { name = "fastapi" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -925,6 +926,7 @@ vault = [
 requires-dist = [
     { name = "alembic", specifier = ">=1.13" },
     { name = "boto3", marker = "extra == 'aws'", specifier = ">=1.35" },
+    { name = "cryptography", specifier = ">=42" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "hvac", marker = "extra == 'vault'", specifier = ">=2.3" },
     { name = "pydantic", specifier = ">=2" },

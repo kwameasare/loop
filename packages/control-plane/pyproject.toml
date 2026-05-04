@@ -6,6 +6,9 @@ license = { text = "Apache-2.0" }
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.13",
+    # AES-GCM workspace envelope encryption (P0.8a) replaced the
+    # hand-rolled XOR-stream construction. See workspace_encryption.py.
+    "cryptography>=42",
     "fastapi>=0.115",
     "pydantic>=2",
     "pydantic-settings>=2.5",
