@@ -21,7 +21,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from loop_gateway.cost import COST_TABLE, cost_for
+from loop_gateway.cost import cost_for
 
 Verdict = Literal["allow", "swap", "deny"]
 
@@ -46,14 +46,17 @@ def estimate_upper_bound_cost(
 ) -> float:
     """Worst-case pass-through cost for an iteration.
 
-    Raises ``KeyError`` for an unknown model (the caller is expected to
-    have resolved aliases first).
+    Delegates rate resolution to :func:`loop_gateway.cost.cost_for`,
+    which prefers the exact-match :data:`~loop_gateway.cost.COST_TABLE`
+    entry and falls back to a tier-default rate for OpenAI / Anthropic
+    ids the live catalog discovered but we haven't bound to an exact
+    rate yet. ``KeyError`` only fires when both lookups fail (i.e. an
+    id we genuinely can't price — typically a non-OpenAI / non-Anthropic
+    vendor that hasn't been hand-added to the table).
     """
 
     if input_tokens < 0 or max_output_tokens < 0:
         raise ValueError("token counts must be non-negative")
-    if model not in COST_TABLE:
-        raise KeyError(f"unknown model: {model!r}")
     return cost_for(model, input_tokens, max_output_tokens)
 
 

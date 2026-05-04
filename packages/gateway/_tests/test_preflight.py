@@ -23,11 +23,47 @@ def test_estimate_rejects_negative_tokens() -> None:
         )
 
 
-def test_estimate_rejects_unknown_model() -> None:
+def test_estimate_rejects_unknown_vendor_model() -> None:
+    """Models that don't look like a supported vendor (no ``gpt-`` /
+    ``oN`` / ``claude-`` prefix and not in COST_TABLE) still raise.
+    The rate fallback only covers OpenAI / Anthropic shaped ids."""
     with pytest.raises(KeyError):
         estimate_upper_bound_cost(
-            "gpt-9000", input_tokens=10, max_output_tokens=10
+            "made-up-vendor-foo", input_tokens=10, max_output_tokens=10
         )
+
+
+def test_estimate_falls_back_to_tier_rate_for_discovered_openai_model() -> None:
+    """Regression: catalog discovers ``gpt-5.4-mini`` from OpenAI's
+    ``/v1/models`` but COST_TABLE doesn't have an exact entry. Used to
+    raise ``KeyError`` (LOOP-RT-501 in the runtime); now resolves to
+    the OpenAI-cheap fallback rate so the runtime can still serve the
+    turn."""
+    cost = estimate_upper_bound_cost(
+        "gpt-5.4-mini", input_tokens=1_000, max_output_tokens=2_000
+    )
+    # Falls into OpenAI cheap tier ($0.15 / $0.60 per 1M).
+    assert cost == pytest.approx(0.001 * 0.15 + 0.002 * 0.60)
+
+
+def test_estimate_falls_back_to_tier_rate_for_frontier_pro_model() -> None:
+    """Discovered ``gpt-5.5-pro-...`` resolves to OpenAI-best fallback —
+    pessimistic upper-bound rate, NOT the cheap rate, so preflight
+    doesn't accidentally undercharge for frontier output."""
+    cost = estimate_upper_bound_cost(
+        "gpt-5.5-pro-2026-04-23", input_tokens=1_000, max_output_tokens=2_000
+    )
+    # OpenAI best tier ($15.00 / $60.00 per 1M).
+    assert cost == pytest.approx(0.001 * 15.00 + 0.002 * 60.00)
+
+
+def test_estimate_falls_back_to_tier_rate_for_discovered_anthropic_model() -> None:
+    """Anthropic-shaped ids hit the anthropic-tier fallbacks."""
+    cost = estimate_upper_bound_cost(
+        "claude-haiku-4-5-20251001", input_tokens=1_000, max_output_tokens=2_000
+    )
+    # Anthropic cheap tier ($0.80 / $4.00 per 1M).
+    assert cost == pytest.approx(0.001 * 0.80 + 0.002 * 4.00)
 
 
 def test_preflight_allows_when_under_budget() -> None:

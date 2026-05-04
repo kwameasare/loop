@@ -18,9 +18,11 @@ from loop_gateway.model_catalog import (
     FALLBACK_MODELS,
     ModelCatalog,
     ModelInfo,
+    classify_tier,
     default_model,
     fetch_anthropic_models,
     fetch_openai_models,
+    vendor_for,
 )
 
 # --------------------------------------------------------------------------- #
@@ -535,6 +537,41 @@ def test_default_model_honors_pinned_env_override(cache_path: Path) -> None:
         assert default_model("anthropic", profile="best") == "my-pinned-model"
     finally:
         del os.environ["LOOP_DP_DEFAULT_MODEL"]
+
+
+def test_classify_tier_is_mutually_exclusive() -> None:
+    """Every well-formed id classifies into exactly one tier — no
+    overlap between cheap / balanced / best."""
+    assert classify_tier("gpt-5.4-mini") == "cheap"
+    assert classify_tier("o4-mini") == "cheap"  # cheap precedence over o-series
+    assert classify_tier("claude-haiku-4-5-20251001") == "cheap"
+
+    assert classify_tier("gpt-4o") == "balanced"
+    assert classify_tier("gpt-5-chat-latest") == "balanced"
+    assert classify_tier("claude-sonnet-4-6") == "balanced"
+
+    assert classify_tier("gpt-5.5-pro-2026-04-23") == "best"
+    assert classify_tier("gpt-4-turbo") == "best"
+    assert classify_tier("o3") == "best"
+    assert classify_tier("claude-opus-4-7") == "best"
+
+
+def test_vendor_for_recognises_openai_and_anthropic_ids() -> None:
+    """Used by ``loop_gateway.cost`` to assign tier-fallback rates to
+    discovered-but-uncatalogued models."""
+    assert vendor_for("gpt-4o") == "openai"
+    assert vendor_for("gpt-5.4-mini") == "openai"
+    assert vendor_for("o1-preview") == "openai"
+    assert vendor_for("o3-mini") == "openai"
+    assert vendor_for("o4") == "openai"
+    assert vendor_for("claude-3-5-sonnet-latest") == "anthropic"
+    assert vendor_for("claude-haiku-4-5") == "anthropic"
+
+    # Non-supported vendors return None — caller decides what to do
+    # (cost.py raises KeyError; runtime maps to LOOP-RT-501).
+    assert vendor_for("mistral-large-latest") is None
+    assert vendor_for("gemini-1.5-pro") is None
+    assert vendor_for("does-not-exist") is None
 
 
 def test_default_model_uses_fallback_when_nothing_configured(

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from decimal import ROUND_HALF_EVEN, Decimal, getcontext
 
-from loop_gateway.cost import COST_TABLE, DISCLOSED_MARKUP_PCT
+from loop_gateway.cost import COST_TABLE, DISCLOSED_MARKUP_PCT, _resolve_rate
 
 #: 7 decimal-place quantum used for all internal Decimal math.
 COST_QUANTUM: Decimal = Decimal("0.0000001")
@@ -32,9 +32,9 @@ def _ensure_precision() -> None:
 
 
 def _rate_decimal(model: str, *, output: bool) -> Decimal:
-    if model not in COST_TABLE:
+    rate = _resolve_rate(model)
+    if rate is None:
         raise KeyError(f"unknown model: {model!r}")
-    rate = COST_TABLE[model]
     raw = rate.output_per_million if output else rate.input_per_million
     # Convert via str() so we don't carry float artefacts into Decimal.
     return Decimal(str(raw))
