@@ -21,9 +21,20 @@ from loop_channels_teams.connect import (
 )
 from loop_channels_teams.messages import to_reply_activity
 from loop_channels_teams.parser import parse_activity
+from loop_channels_teams.verify import (
+    JWKS_URL,
+    JwksFetcher,
+    JwksKey,
+    TeamsAuthError,
+    verify_teams_activity_jwt,
+)
 
 __all__ = [
+    "JWKS_URL",
+    "JwksFetcher",
+    "JwksKey",
     "TeamsAppManifest",
+    "TeamsAuthError",
     "TeamsChannel",
     "TeamsConnectFlow",
     "TeamsConnectRequest",
@@ -32,4 +43,5 @@ __all__ = [
     "parse_activity",
     "render_adaptive_card",
     "to_reply_activity",
+    "verify_teams_activity_jwt",
 ]
