@@ -17,6 +17,14 @@ from loop_kb_engine.chunker import (
     HeadingChunker,
     SemanticChunker,
 )
+from loop_kb_engine.cost_tracking import (
+    METRIC_EMBEDDING_TOKENS,
+    METRIC_EMBEDDING_USD_CENTS,
+    METRIC_PAGES_CRAWLED,
+    KbCostTracker,
+    KbUsageMetrics,
+    estimate_embedding_tokens,
+)
 from loop_kb_engine.crawler import (
     CrawlResult,
     CrawlStats,
@@ -64,6 +72,9 @@ from loop_kb_engine.store import InMemoryVectorStore, VectorStore
 __all__ = [
     "DEFAULT_CHUNK_COUNT",
     "DEFAULT_TOP_K",
+    "METRIC_EMBEDDING_TOKENS",
+    "METRIC_EMBEDDING_USD_CENTS",
+    "METRIC_PAGES_CRAWLED",
     "TARGET_P50_MS",
     "Chunk",
     "ChunkDiff",
@@ -81,6 +92,8 @@ __all__ = [
     "FixedSizeChunker",
     "HeadingChunker",
     "InMemoryVectorStore",
+    "KbCostTracker",
+    "KbUsageMetrics",
     "KnowledgeBase",
     "LayoutAwareChunker",
     "LexicalHit",
@@ -102,6 +115,7 @@ __all__ = [
     "chunk_content_hash",
     "default_registry",
     "diff_chunks",
+    "estimate_embedding_tokens",
     "qdrant_collection_name",
     "rrf_combine",
 ]

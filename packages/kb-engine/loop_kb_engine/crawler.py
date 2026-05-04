@@ -21,6 +21,9 @@ from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from uuid import UUID
+
+from loop_kb_engine.cost_tracking import KbCostTracker
 
 # ---------------------------------------------------------------------------
 # Types
@@ -254,6 +257,8 @@ class SitemapCrawler:
         sleep: Callable[[float], None] = time.sleep,
         jitter: Callable[[], float] | None = None,
         clock: Callable[[], float] = time.monotonic,
+        cost_tracker: KbCostTracker | None = None,
+        workspace_id: UUID | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.changed_since = changed_since
@@ -273,6 +278,8 @@ class SitemapCrawler:
             ttl_seconds=robots_ttl_seconds,
             clock=clock,
         )
+        self._cost_tracker = cost_tracker
+        self._workspace_id = workspace_id
 
     # ---------------------------------------------------------------- public
 
@@ -307,6 +314,11 @@ class SitemapCrawler:
             if stats.fetched >= self._max_pages:
                 break
 
+        if self._cost_tracker is not None and self._workspace_id is not None:
+            self._cost_tracker.record_pages_crawled(
+                workspace_id=self._workspace_id,
+                count=stats.fetched,
+            )
         return results, stats
 
     # ---------------------------------------------------------------- private
