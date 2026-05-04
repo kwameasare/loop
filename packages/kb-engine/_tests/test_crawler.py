@@ -1,16 +1,14 @@
-"""
-S495 – unit tests for SitemapCrawler (incremental, robots.txt-aware).
-"""
+"""S495 - unit tests for SitemapCrawler (incremental, robots.txt-aware)."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
 from typing import Any
 
-import pytest
-
+import httpx
 from loop_kb_engine.crawler import (
-    CrawlResult,
-    CrawlStats,
     SitemapCrawler,
     _parse_sitemap,
 )
@@ -87,7 +85,7 @@ class TestParseSitemap:
 
 
 # ---------------------------------------------------------------------------
-# 2. SitemapCrawler – full crawl without changed_since
+# 2. SitemapCrawler - full crawl without changed_since
 # ---------------------------------------------------------------------------
 
 class TestSitemapCrawlerBasic:
@@ -132,8 +130,8 @@ class TestRobotsCompliance:
 class TestChangedSince:
     def test_skips_pages_older_than_cutoff(self) -> None:
         # page1 = 2026-05-01, page2 = 2026-04-01, page3 = no lastmod
-        # cutoff = 2026-04-15 → page2 skipped; page1 and page3 fetched
-        cutoff = datetime(2026, 4, 15, tzinfo=timezone.utc)
+        # cutoff = 2026-04-15 -> page2 skipped; page1 and page3 fetched
+        cutoff = datetime(2026, 4, 15, tzinfo=UTC)
         crawler = SitemapCrawler(
             "https://example.com",
             changed_since=cutoff,
@@ -146,16 +144,16 @@ class TestChangedSince:
         assert "https://example.com/page2" not in urls
 
     def test_all_pages_skipped_when_none_newer(self) -> None:
-        cutoff = datetime(2026, 12, 31, tzinfo=timezone.utc)
-        # page3 has no lastmod → still fetched
+        cutoff = datetime(2026, 12, 31, tzinfo=UTC)
+        # page3 has no lastmod -> still fetched
         crawler = SitemapCrawler(
             "https://example.com",
             changed_since=cutoff,
             fetcher=make_fetcher(),
         )
-        results, stats = crawler.crawl()
+        _, stats = crawler.crawl()
         assert stats.skipped_unchanged == 2      # page1 + page2
-        assert stats.fetched == 1                 # page3 (no lastmod → not filtered)
+        assert stats.fetched == 1                 # page3 (no lastmod -> not filtered)
 
     def test_no_filter_when_changed_since_is_none(self) -> None:
         crawler = SitemapCrawler("https://example.com", fetcher=make_fetcher())
@@ -221,7 +219,122 @@ class TestMaxPagesCap:
 
 
 # ---------------------------------------------------------------------------
-# 7. CrawlResult fields
+# 7. hardening constraints
+# ---------------------------------------------------------------------------
+
+def _httpx_fetcher(client: httpx.Client) -> Any:
+    def fetcher(url: str) -> tuple[int, dict[str, str], str]:
+        response = client.get(url)
+        return response.status_code, dict(response.headers), response.text
+
+    return fetcher
+
+
+class TestCrawlerHardening:
+    def test_per_host_concurrency_cap_uses_httpx_mock_transport(self) -> None:
+        active = 0
+        max_active = 0
+        lock = threading.Lock()
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal active, max_active
+            with lock:
+                active += 1
+                max_active = max(max_active, active)
+            time.sleep(0.03)
+            with lock:
+                active -= 1
+            return httpx.Response(200, text="ok")
+
+        client = httpx.Client(transport=httpx.MockTransport(handler))
+        crawler = SitemapCrawler(
+            "https://example.com",
+            fetcher=_httpx_fetcher(client),
+            max_concurrent_per_host=2,
+        )
+
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            list(
+                pool.map(
+                    crawler._fetch_page,
+                    [f"https://example.com/page-{i}" for i in range(4)],
+                )
+            )
+
+        assert max_active <= 2
+
+    def test_robots_cache_respects_ttl(self) -> None:
+        now = 0.0
+        robots_requests = 0
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal robots_requests
+            if request.url.path == "/robots.txt":
+                robots_requests += 1
+                return httpx.Response(200, text=ROBOTS_ALLOW)
+            if request.url.path == "/sitemap.xml":
+                return httpx.Response(200, text=SITEMAP_XML)
+            return httpx.Response(200, text=PAGE_HTML)
+
+        client = httpx.Client(transport=httpx.MockTransport(handler))
+        crawler = SitemapCrawler(
+            "https://example.com",
+            fetcher=_httpx_fetcher(client),
+            robots_ttl_seconds=60,
+            clock=lambda: now,
+        )
+
+        crawler.crawl()
+        crawler.crawl()
+        now = 61.0
+        crawler.crawl()
+
+        assert robots_requests == 2
+
+    def test_5xx_retries_with_exponential_jitter(self) -> None:
+        statuses = iter([500, 502, 200])
+        sleeps: list[float] = []
+
+        def handler(_request: httpx.Request) -> httpx.Response:
+            return httpx.Response(next(statuses), text="eventually ok")
+
+        client = httpx.Client(transport=httpx.MockTransport(handler))
+        crawler = SitemapCrawler(
+            "https://example.com",
+            fetcher=_httpx_fetcher(client),
+            retry_base_delay_seconds=0.5,
+            sleep=sleeps.append,
+            jitter=lambda: 0.1,
+        )
+
+        result = crawler._fetch_page("https://example.com/page")
+
+        assert result.status == 200
+        assert sleeps == [0.6, 1.1]
+
+    def test_content_cap_rejects_large_responses(self) -> None:
+        def handler(_request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                headers={"content-length": "11"},
+                text="hello world",
+            )
+
+        client = httpx.Client(transport=httpx.MockTransport(handler))
+        crawler = SitemapCrawler(
+            "https://example.com",
+            fetcher=_httpx_fetcher(client),
+            max_content_bytes=10,
+        )
+
+        result = crawler._fetch_page("https://example.com/large")
+
+        assert result.status == 0
+        assert result.error == "content exceeds maximum size"
+
+
+# ---------------------------------------------------------------------------
+# 8. CrawlResult fields
 # ---------------------------------------------------------------------------
 
 class TestCrawlResultFields:
