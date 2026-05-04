@@ -19,6 +19,10 @@ from loop_channels_sms.twilio import (
     TwilioSmsAdapter,
     TwilioSmsClient,
 )
+from loop_channels_sms.verify import (
+    TwilioSignatureError,
+    verify_twilio_signature,
+)
 
 __all__ = [
     "ComplianceDecision",
@@ -32,6 +36,8 @@ __all__ = [
     "TwilioConnectResult",
     "TwilioNumberCandidate",
     "TwilioSendResult",
+    "TwilioSignatureError",
     "TwilioSmsAdapter",
     "TwilioSmsClient",
+    "verify_twilio_signature",
 ]
