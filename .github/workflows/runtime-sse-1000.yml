@@ -11,6 +11,7 @@ on:
       - "packages/gateway/**"
       - "packages/runtime/**"
       - "packages/sdk-py/**"
+      - "scripts/Dockerfile.smoke"
       - "scripts/openai_sse_fixture.py"
       - "scripts/k6_runtime_sse_1000.js"
   workflow_dispatch:
@@ -40,13 +41,10 @@ jobs:
           kind load docker-image loop/dp-runtime:perf --name loop-runtime-sse
       - name: Build and load OpenAI SSE fixture
         run: |
-          cat > /tmp/loop-openai-sse-fixture.Dockerfile <<'DOCKER'
-          FROM python:3.12-alpine
-          COPY scripts/openai_sse_fixture.py /server.py
-          ENV LOOP_OPENAI_FIXTURE_PORT=8089
-          CMD ["python", "/server.py"]
-          DOCKER
-          docker build -f /tmp/loop-openai-sse-fixture.Dockerfile -t loop/openai-sse-fixture:perf .
+          docker build -f scripts/Dockerfile.smoke \
+            --build-arg SMOKE_SCRIPT=scripts/openai_sse_fixture.py \
+            --build-arg SMOKE_PORTS=8089 \
+            -t loop/openai-sse-fixture:perf .
           kind load docker-image loop/openai-sse-fixture:perf --name loop-runtime-sse
       - name: Start OpenAI SSE fixture
         run: |

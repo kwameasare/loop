@@ -45,9 +45,18 @@ def test_helm_e2e_installs_chart_and_sends_turn() -> None:
     assert "--wait --timeout 8m" in runs
     assert "toolHost.enabled=false" in runs
     assert "postgresql.enabled=false" in runs
+    assert "--wait --timeout 3m --atomic" in runs
+    assert "runtime.image.tag=does-not-exist" in runs
+    assert "runtime image after rollback" in runs
     assert "kubectl port-forward svc/loop-loop-runtime 18081:8081" in runs
     assert "POST http://127.0.0.1:18081/v1/turns" in runs
     assert "helm-e2e-ok" in runs
+
+
+def test_helm_e2e_uses_shared_smoke_dockerfile() -> None:
+    text = WORKFLOW.read_text()
+    assert "scripts/Dockerfile.smoke" in text
+    assert "cat > /tmp/loop-helm-smoke.Dockerfile" not in text
 
 
 def test_smoke_server_health_turn_and_not_found_paths() -> None:

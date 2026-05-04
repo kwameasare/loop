@@ -1,0 +1,3 @@
+# vuln_id|expires|reason
+# Example:
+# CVE-2026-0001|2026-08-31|Unfixable in upstream package; tracked in SEC-1234

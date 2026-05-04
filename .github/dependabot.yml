@@ -1,0 +1,267 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+    labels: [dependencies, python]
+    groups:
+      pip-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: pip
+    directory: /packages/control-plane
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/data-plane
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/runtime
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/gateway
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/memory
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/kb-engine
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/sdk-py
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/tool-host
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/voice
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/eval-harness
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/channels/core
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/channels/discord
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/channels/email
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/channels/rcs
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/channels/slack
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/channels/sms
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/channels/teams
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/channels/telegram
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/channels/web
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/channels/whatsapp
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/mcp-client
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/mcp-servers/salesforce
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: pip
+    directory: /packages/mcp-servers/zendesk
+    schedule: { interval: weekly, day: monday, time: "04:00" }
+    labels: [dependencies, python]
+    groups: { pip-minor-patch: { patterns: ["*"], update-types: [minor, patch] } }
+    ignore: [{ dependency-name: "*", update-types: [version-update:semver-major] }]
+
+  - package-ecosystem: npm
+    directory: /apps/studio
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+    labels: [dependencies, npm]
+    groups:
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: npm
+    directory: /packages/channels/web-js
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+    labels: [dependencies, npm]
+    groups:
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+    labels: [dependencies, go]
+    groups:
+      gomod-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: docker
+    directory: /packages/control-plane
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+    labels: [dependencies, docker]
+    groups:
+      docker-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: docker
+    directory: /packages/data-plane
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+    labels: [dependencies, docker]
+    groups:
+      docker-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+    labels: [dependencies, github-actions]
+    groups:
+      github-actions-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]

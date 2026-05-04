@@ -286,11 +286,31 @@ jobs:
         with:
           python-version: "3.12"
       - run: uv sync --all-packages
-      - name: Python dep audit (pip-audit)
-        # Sprint 0: surface findings without blocking the merge while the
-        # dependency surface is still small. Flip to blocking once S046
-        # (SOC2 kickoff) starts.
-        run: uv tool run --from pip-audit pip-audit || echo "pip-audit reported findings (non-blocking during Sprint 0)."
+      - name: Validate audit allowlist expiry
+        run: |
+          python tools/check_audit_allowlist_expiry.py \
+            --pip-allowlist pip_audit_allow.txt \
+            --npm-allowlist tools/npm_audit_allow.json
+      - name: Python dep audit (pip-audit, blocking)
+        run: |
+          uv tool run --from pip-audit pip-audit --format json --output /tmp/pip-audit.json || true
+          python tools/check_audit_allowlist_expiry.py \
+            --pip-allowlist pip_audit_allow.txt \
+            --npm-allowlist tools/npm_audit_allow.json \
+            --pip-report /tmp/pip-audit.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Studio dependencies for npm audit
+        run: npm install --prefix apps/studio --package-lock-only --ignore-scripts
+      - name: Node dep audit (npm audit, blocking on high+)
+        run: |
+          npm audit --prefix apps/studio --audit-level=high --json >/tmp/npm-audit.json || true
+          python tools/check_audit_allowlist_expiry.py \
+            --pip-allowlist pip_audit_allow.txt \
+            --npm-allowlist tools/npm_audit_allow.json \
+            --npm-report /tmp/npm-audit.json \
+            --npm-audit-level high
       - name: Filesystem vuln scan (trivy)
         uses: aquasecurity/trivy-action@0.24.0
         with:
@@ -336,6 +356,27 @@ jobs:
           artifact-name: sbom-cyclonedx
           upload-artifact: true
           upload-release-assets: false
+
+  license-compliance:
+    name: license-compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anchore/sbom-action@v0.17.7
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Block banned licenses in distributable dependencies
+        run: |
+          python tools/license_check.py \
+            --sbom sbom.cdx.json \
+            --allowlist tools/license_allowlist.json
 
   integration:
     name: integration

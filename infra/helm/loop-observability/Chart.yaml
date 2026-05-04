@@ -1,0 +1,36 @@
+apiVersion: v2
+name: loop-observability
+description: |
+  Loop observability stack chart: Prometheus, Alertmanager, Grafana,
+  Loki, Tempo, and Falco runtime threat detection.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.27.0-0"
+keywords:
+  - loop
+  - observability
+  - prometheus
+  - grafana
+  - loki
+  - tempo
+  - falco
+home: https://github.com/kwameasare/loop
+sources:
+  - https://github.com/kwameasare/loop
+maintainers:
+  - name: Loop Engineering
+    email: engineering@loop.local
+dependencies:
+  - name: kube-prometheus-stack
+    version: 61.7.2
+    repository: https://prometheus-community.github.io/helm-charts
+  - name: loki
+    version: 6.9.1
+    repository: https://grafana.github.io/helm-charts
+  - name: tempo
+    version: 1.10.3
+    repository: https://grafana.github.io/helm-charts
+  - name: falco
+    version: 4.19.0
+    repository: https://falcosecurity.github.io/charts

@@ -1,0 +1,61 @@
+name: helm-chart-validation
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/helm-chart-validation.yml"
+      - "infra/helm/**"
+      - "tools/check_helm_chart.py"
+  workflow_dispatch:
+
+jobs:
+  helm-chart-validation:
+    name: helm-chart-validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HELM_VERSION: v3.16.2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - name: Cache Helm binary
+        id: helm-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/loop-tools/helm/${{ env.HELM_VERSION }}
+          key: helm-${{ runner.os }}-${{ env.HELM_VERSION }}
+      - name: Install Helm
+        if: steps.helm-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.cache/loop-tools/helm/${HELM_VERSION}
+          curl -fsSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" -o /tmp/helm.tar.gz
+          tar -C ~/.cache/loop-tools/helm/${HELM_VERSION} -xzf /tmp/helm.tar.gz
+      - name: Add Helm to PATH
+        run: echo "$HOME/.cache/loop-tools/helm/${HELM_VERSION}/linux-amd64" >> "$GITHUB_PATH"
+      - name: Validate chart structure
+        run: |
+          uv sync --all-packages
+          uv run python tools/check_helm_chart.py
+      - name: Build dependencies and lint base chart
+        run: |
+          helm dependency build infra/helm/loop
+          helm lint infra/helm/loop
+          helm template loop infra/helm/loop >/tmp/loop-default.yaml
+      - name: Validate regional overlays render
+        run: |
+          set -euo pipefail
+          for overlay in values-eu-west.yaml values-us-east.yaml values-apac-sg.yaml; do
+            helm lint infra/helm/loop -f "infra/helm/loop/${overlay}"
+            helm template loop infra/helm/loop -f "infra/helm/loop/${overlay}" >/tmp/"${overlay}".rendered.yaml
+          done
+      - name: Enforce residency preflight failure on missing telemetry endpoints
+        run: |
+          set -euo pipefail
+          if helm template loop infra/helm/loop --set global.dataResidency=eu >/tmp/loop-eu-preflight.out 2>&1; then
+            echo "::error::Expected NOTES.txt preflight to fail when EU residency is requested without telemetry endpoints"
+            exit 1
+          fi
+          grep -q "regional preflight failed" /tmp/loop-eu-preflight.out

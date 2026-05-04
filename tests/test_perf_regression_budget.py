@@ -111,6 +111,8 @@ def test_perf_regression_budget_workflow_runs_on_pr_and_pages() -> None:
     assert "pull_request" in triggers
     assert "scripts/perf_regression_budget.py" in runs
     assert "bench/results/perf_7d_baseline.json" in runs
+    assert "continue-on-error" not in yaml.safe_dump(job)
+    assert not any(step.get("name") == "Fail breached p95 regression budget" for step in steps)
     assert any(step.get("name") == "Upload perf regression report" for step in steps)
     assert any(
         step.get("name") == "Page on-call" and step.get("if") == "failure()" for step in steps

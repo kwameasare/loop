@@ -1,0 +1,85 @@
+# APAC Singapore region values overlay.
+#
+# Apply on top of the base chart:
+#
+#   helm install loop ./infra/helm/loop \
+#     -f ./infra/helm/loop/values-apac-sg.yaml
+
+global:
+  region: apac-sg
+  dataResidency: apac
+  imagePullPolicy: IfNotPresent
+  imageRegistry: registry.apac-sg.loop.local
+
+controlPlane:
+  replicaCount: 3
+  env:
+    LOOP_REGION: "apac-sg"
+    LOOP_DATA_RESIDENCY: "apac"
+    LOOP_DISABLE_CROSS_REGION_REPLICATION: "true"
+
+runtime:
+  replicaCount: 6
+  env:
+    LOOP_REGION: "apac-sg"
+    LOOP_DATA_RESIDENCY: "apac"
+
+externals:
+  postgresUrl: "postgresql://loop@postgres.apac-sg.svc:5432/loop"
+  redisUrl: "redis://redis.apac-sg.svc:6379/0"
+  qdrantUrl: "http://qdrant.apac-sg.svc:6333"
+  natsUrl: "nats://nats.apac-sg.svc:4222"
+  clickhouseUrl: "http://clickhouse.apac-sg.svc:8123"
+  s3Endpoint: "https://objects.apac-sg.loop.local"
+  otelEndpoint: "https://otel-collector.apac-sg.loop.local:4318"
+
+postgresql:
+  enabled: true
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: apac-sg-retain
+
+qdrant:
+  enabled: true
+  persistence:
+    size: 100Gi
+    storageClassName: apac-sg-retain
+
+nats:
+  enabled: true
+  config:
+    jetstream:
+      enabled: true
+      fileStore:
+        enabled: true
+        pvc:
+          size: 100Gi
+          storageClassName: apac-sg-retain
+
+clickhouse:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 200Gi
+    storageClass: apac-sg-retain
+  backup:
+    enabled: true
+    schedule: "15 1 * * *"
+    retentionDays: 35
+
+networkPolicy:
+  enforceRegionPin: true
+  allowedRegions:
+    - apac-sg
+
+audit:
+  enabled: true
+  hotRetentionDays: 365
+  coldRetentionDays: 2190
+
+telemetry:
+  metricsEndpoint: "https://metrics.apac-sg.loop.local"
+  logsEndpoint: "https://logs.apac-sg.loop.local"
+  tracesEndpoint: "https://traces.apac-sg.loop.local"

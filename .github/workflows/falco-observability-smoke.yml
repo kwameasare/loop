@@ -1,0 +1,52 @@
+name: falco-observability-smoke
+
+on:
+  pull_request:
+    paths:
+      - infra/helm/loop-observability/**
+      - infra/falco/**
+      - infra/prometheus/**
+      - .github/workflows/falco-observability-smoke.yml
+  workflow_dispatch:
+
+jobs:
+  falco-observability-smoke:
+    name: falco-observability-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: loop-observability-smoke
+          wait: 60s
+      - name: Install loop-observability stack
+        run: |
+          helm dependency update infra/helm/loop-observability
+          helm upgrade --install loop-observability infra/helm/loop-observability \
+            --namespace loop-observability \
+            --create-namespace \
+            --wait \
+            --timeout 12m
+      - name: Trigger Falco shell-spawned-in-pod rule
+        run: |
+          kubectl run falco-smoke --image=busybox:1.36 --restart=Never --command -- sleep 240
+          kubectl wait --for=condition=Ready pod/falco-smoke --timeout=120s
+          kubectl exec falco-smoke -- sh -lc 'echo smoke-rule'
+      - name: Assert Falco alert reaches Alertmanager
+        run: |
+          kubectl -n loop-observability port-forward svc/loop-observability-kube-prometheus-stack-alertmanager 39093:9093 >/tmp/am-port-forward.log 2>&1 &
+
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:39093/api/v2/alerts | grep -q 'shell-spawned-in-pod'; then
+              echo "Falco alert reached Alertmanager"
+              exit 0
+            fi
+            sleep 6
+          done
+
+          echo "Expected Falco alert was not observed in Alertmanager"
+          kubectl -n loop-observability logs daemonset/loop-observability-falco --tail=200 || true
+          kubectl -n loop-observability logs deploy/loop-observability-falco-falcosidekick --tail=200 || true
+          exit 1

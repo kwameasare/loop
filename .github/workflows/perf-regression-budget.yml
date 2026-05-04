@@ -31,8 +31,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - name: Compare p95 reports to 7-day baseline
-        id: perf_budget
-        continue-on-error: true
         run: |
           uv run python scripts/perf_regression_budget.py \
             --baseline bench/results/perf_7d_baseline.json \
@@ -44,9 +42,6 @@ jobs:
           name: perf-regression-budget
           path: bench/results/perf_regression_budget.json
           if-no-files-found: error
-      - name: Fail breached p95 regression budget
-        if: steps.perf_budget.outcome != 'success'
-        run: exit 1
       - name: Page on-call
         if: failure()
         env:

@@ -1,0 +1,16 @@
+{{- $files := .Files.Glob "files/dashboards/*.json" -}}
+{{- range $path, $_ := $files }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-%s" (include "loop-observability.fullname" $) ((base $path | trimSuffix ".json") | replace "_" "-" | lower) | trunc 63 | trimSuffix "-" }}
+  labels:
+    app.kubernetes.io/name: {{ include "loop-observability.name" $ }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/part-of: loop-observability
+    grafana_dashboard: "1"
+data:
+  {{ base $path }}: |
+{{ $.Files.Get $path | indent 4 }}
+---
+{{- end }}

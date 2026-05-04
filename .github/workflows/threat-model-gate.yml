@@ -39,4 +39,6 @@ jobs:
           LOOP_GATE_PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           python tools/check_threat_model.py \
-            --changed-files changed-files.txt
+            --changed-files changed-files.txt \
+            --base "origin/${{ github.base_ref }}" \
+            --head "HEAD"

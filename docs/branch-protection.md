@@ -29,6 +29,7 @@ pattern `main`:
     - `CI / runtime-smoke`
     - `CI / tracker-clean`
     - `CI / security`
+    - `CI / license-compliance`
     - `CI / docs-with-code`
     - `CI / checkpoint-discipline`
   - **Conditionally required** (added once the corresponding code lands):
@@ -36,6 +37,7 @@ pattern `main`:
     - `CI / studio` — once `apps/studio` exists (S005).
     - `CI / cli` — once `cli/` exists (later milestone).
     - `CI / evals` — once `tests/evals/runtime` exists (S021).
+    - `helm-chart-validation / helm-chart-validation` — when `infra/helm/**` or `tools/check_helm_chart.py` changes.
 - [x] **Require conversation resolution before merging.**
 - [x] **Require signed commits.**
 - [x] **Require linear history.** (Aligned with squash-merge policy in `engineering/HANDBOOK.md` §3.)
@@ -98,3 +100,5 @@ Record the verification date here: `____-__-__` (initial: pending).
 | 2026-04-30 | Added `docs-with-code` and `checkpoint-discipline` to required-checks. Tightened `tracker-clean` to also lint structured Notes-cell format. | Audit follow-up |
 | 2026-05-01 | Added `cp-api-image` as a required image build, size, and Trivy scan check for the control-plane API image. | codex-orion |
 | 2026-05-02 | Extended `cp-api-image` and `dp-runtime-image` to sign pushed GHCR digests with cosign and verify the OIDC certificate before deploy. | codex-orion |
+| 2026-05-04 | Added the path-scoped `helm-chart-validation / helm-chart-validation` check for every Helm chart mutation (`infra/helm/**`) and chart validator changes. | copilot-titan |
+| 2026-05-04 | Added `CI / license-compliance` as a required check and upgraded dependency-audit policy to block on pip/npm high-severity findings with expiring allowlists. | copilot-titan |

@@ -1,0 +1,13 @@
+# syntax=docker/dockerfile:1.7
+
+FROM python:3.12-alpine
+
+ARG SMOKE_SCRIPT=scripts/helm_e2e_smoke_server.py
+ARG SMOKE_PORTS=8080,8081,8082,8003
+
+COPY ${SMOKE_SCRIPT} /server.py
+
+ENV HELM_SMOKE_PORTS=${SMOKE_PORTS}
+ENV LOOP_OPENAI_FIXTURE_PORT=${SMOKE_PORTS}
+
+CMD ["python", "/server.py"]

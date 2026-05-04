@@ -28,6 +28,7 @@ jobs:
   promote:
     name: sign and verify regional image digests
     runs-on: ubuntu-latest
+    environment: production-image-promotion
     steps:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@v3

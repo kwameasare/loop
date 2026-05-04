@@ -1,3 +1,17 @@
+{{- $global := .Values.global | default dict -}}
+{{- $telemetry := .Values.telemetry | default dict -}}
+{{- $region := get $global "region" | default "" -}}
+{{- $residency := get $global "dataResidency" | default "" -}}
+{{- $metricsEndpoint := get $telemetry "metricsEndpoint" | default "" -}}
+{{- $logsEndpoint := get $telemetry "logsEndpoint" | default "" -}}
+{{- $tracesEndpoint := get $telemetry "tracesEndpoint" | default "" -}}
+{{- $regionalPreflight := or (eq $region "eu-west") (eq $region "us-east") (eq $region "apac-sg") (eq $residency "eu") -}}
+{{- if $regionalPreflight }}
+{{- if or (eq $metricsEndpoint "") (eq $logsEndpoint "") (eq $tracesEndpoint "") }}
+{{- fail "regional preflight failed: set telemetry.metricsEndpoint, telemetry.logsEndpoint, and telemetry.tracesEndpoint for EU/US/APAC residency deploys" -}}
+{{- end }}
+{{- end }}
+
 Loop {{ .Chart.AppVersion }} self-host install -- release {{ .Release.Name }}.
 
 To access the API gateway from inside the cluster:

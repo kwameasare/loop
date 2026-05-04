@@ -1,0 +1,12 @@
+{{- $rules := fromYaml (.Files.Get "files/prometheus/slo-burn.yaml") -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "loop-observability.fullname" . }}-slo-burn
+  labels:
+    app.kubernetes.io/name: {{ include "loop-observability.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/part-of: loop-observability
+spec:
+  groups:
+{{ toYaml $rules.groups | indent 4 }}

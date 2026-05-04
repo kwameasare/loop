@@ -6,6 +6,7 @@ on:
       - ".github/workflows/cross-cloud-smoke.yml"
       - "infra/helm/loop/**"
       - "docs/CLOUD_PROOF.md"
+      - "scripts/Dockerfile.smoke"
       - "scripts/cross_cloud_smoke.*"
       - "scripts/cloud_proof_report.py"
       - "scripts/helm_e2e_smoke_server.py"
@@ -15,6 +16,7 @@ on:
       - ".github/workflows/cross-cloud-smoke.yml"
       - "infra/helm/loop/**"
       - "docs/CLOUD_PROOF.md"
+      - "scripts/Dockerfile.smoke"
       - "scripts/cross_cloud_smoke.*"
       - "scripts/cloud_proof_report.py"
       - "scripts/helm_e2e_smoke_server.py"
@@ -60,13 +62,10 @@ jobs:
           wait: 60s
       - name: Build and load smoke image
         run: |
-          cat > /tmp/loop-helm-smoke.Dockerfile <<'DOCKER'
-          FROM python:3.12-alpine
-          COPY scripts/helm_e2e_smoke_server.py /server.py
-          ENV HELM_SMOKE_PORTS=8080,8081,8082,8003
-          CMD ["python", "/server.py"]
-          DOCKER
-          docker build -f /tmp/loop-helm-smoke.Dockerfile -t loop/helm-smoke:ci .
+          docker build -f scripts/Dockerfile.smoke \
+            --build-arg SMOKE_SCRIPT=scripts/helm_e2e_smoke_server.py \
+            --build-arg SMOKE_PORTS=8080,8081,8082,8003 \
+            -t loop/helm-smoke:ci .
           kind load docker-image loop/helm-smoke:ci --name "${{ matrix.cluster }}"
       - name: Install Loop chart for ${{ matrix.cloud }}
         run: |

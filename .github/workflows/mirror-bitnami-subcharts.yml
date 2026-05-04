@@ -1,0 +1,76 @@
+name: mirror-bitnami-subcharts
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "11 3 * * 1"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  mirror-bitnami-subcharts:
+    name: mirror-bitnami-subcharts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - uses: imjasonh/setup-crane@v0.4
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Mirror pinned Bitnami charts and runtime images
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/bitnami
+          : > /tmp/bitnami/mirror-manifest.txt
+
+          for chart_and_version in postgresql:15.5.38 redis:20.3.0 minio:14.10.5 clickhouse:6.2.18; do
+            chart="${chart_and_version%%:*}"
+            version="${chart_and_version##*:}"
+
+            helm pull "bitnami/${chart}" \
+              --repo https://charts.bitnami.com/bitnami \
+              --version "${version}" \
+              --destination /tmp/bitnami
+
+            chart_archive="/tmp/bitnami/${chart}-${version}.tgz"
+            chart_ref="ghcr.io/loop-ai/mirrored/bitnami/charts/${chart}:${version}"
+            helm chart save "${chart_archive}" "${chart_ref}"
+            helm chart push "${chart_ref}"
+
+            values_file="/tmp/bitnami/${chart}-${version}.values.yaml"
+            helm show values "bitnami/${chart}" \
+              --repo https://charts.bitnami.com/bitnami \
+              --version "${version}" > "${values_file}"
+
+            image_registry="$(awk '/^image:/{found=1;next} found && /registry:/{print $2; exit}' "${values_file}")"
+            image_repo="$(awk '/^image:/{found=1;next} found && /repository:/{print $2; exit}' "${values_file}")"
+            image_tag="$(awk '/^image:/{found=1;next} found && /tag:/{print $2; exit}' "${values_file}" | tr -d '"')"
+
+            if [ -z "${image_registry}" ]; then
+              image_registry="docker.io"
+            fi
+            if [ -z "${image_repo}" ]; then
+              image_repo="bitnami/${chart}"
+            fi
+            if [ -z "${image_tag}" ]; then
+              image_tag="${version}"
+            fi
+
+            source_image="${image_registry}/${image_repo}:${image_tag}"
+            mirror_image="ghcr.io/loop-ai/mirrored/bitnami/${chart}:${image_tag}"
+            crane copy "${source_image}" "${mirror_image}"
+
+            printf "%s\t%s\t%s\n" "${chart}" "${chart_ref}" "${mirror_image}" >> /tmp/bitnami/mirror-manifest.txt
+          done
+      - name: Upload mirror manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitnami-mirror-manifest
+          path: /tmp/bitnami/mirror-manifest.txt

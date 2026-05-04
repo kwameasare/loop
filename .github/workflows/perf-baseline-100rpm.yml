@@ -1,0 +1,157 @@
+name: perf-baseline-100rpm
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 6 * * *"
+
+jobs:
+  perf-baseline-100rpm:
+    name: perf-baseline-100rpm
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      LOOP_NAMESPACE: loop-runtime-baseline
+      LOOP_RELEASE: loop
+      LOOP_RUNTIME_BASELINE_URL: http://127.0.0.1:18081
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - uses: grafana/setup-k6-action@v1
+      - uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: loop-runtime-baseline
+          wait: 60s
+      - name: Build and load smoke image
+        run: |
+          docker build -f scripts/Dockerfile.smoke \
+            --build-arg SMOKE_SCRIPT=scripts/helm_e2e_smoke_server.py \
+            --build-arg SMOKE_PORTS=8080,8081,8082,8003 \
+            -t loop/helm-smoke:ci .
+          kind load docker-image loop/helm-smoke:ci --name loop-runtime-baseline
+      - name: Install cp-api and dp-runtime via Helm
+        run: |
+          helm dependency build infra/helm/loop
+          helm upgrade --install "$LOOP_RELEASE" infra/helm/loop \
+            --namespace "$LOOP_NAMESPACE" --create-namespace \
+            --wait --timeout 8m \
+            --set global.imageRegistry=loop \
+            --set global.imagePullPolicy=IfNotPresent \
+            --set controlPlane.image.repository=helm-smoke \
+            --set controlPlane.image.tag=ci \
+            --set controlPlane.replicaCount=1 \
+            --set runtime.image.repository=helm-smoke \
+            --set runtime.image.tag=ci \
+            --set runtime.replicaCount=1 \
+            --set gateway.enabled=false \
+            --set kbEngine.enabled=false \
+            --set toolHost.enabled=false \
+            --set postgresql.enabled=false \
+            --set redis.enabled=false \
+            --set qdrant.enabled=false \
+            --set nats.enabled=false \
+            --set minio.enabled=false \
+            --set clickhouse.enabled=false
+      - name: Run 100 RPM runtime baseline
+        run: |
+          kubectl -n "$LOOP_NAMESPACE" rollout status deploy/loop-loop-runtime --timeout=90s
+          kubectl -n "$LOOP_NAMESPACE" port-forward svc/loop-loop-runtime 18081:8081 >/tmp/runtime-baseline.log 2>&1 &
+          pf_pid=$!
+          trap 'kill "$pf_pid"' EXIT
+          for _ in $(seq 1 30); do
+            if curl -fsS "$LOOP_RUNTIME_BASELINE_URL/healthz" >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          k6 run --summary-export /tmp/runtime-baseline-100rpm-summary.json \
+            scripts/k6_runtime_baseline_100rpm.js
+      - name: Assert baseline budget contract
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          baseline = json.loads(Path("bench/results/runtime_baseline_100rpm.json").read_text())
+          summary = json.loads(Path("/tmp/runtime-baseline-100rpm-summary.json").read_text())
+
+          metrics = summary.get("metrics", {})
+          duration = metrics.get("http_req_duration", {}).get("values", {})
+          req_failed = metrics.get("http_req_failed", {}).get("values", {})
+          reqs = metrics.get("http_reqs", {}).get("values", {})
+
+          current_p95 = float(duration.get("p(95)", 0.0))
+          current_error_rate = float(req_failed.get("rate", 0.0))
+          current_rpm = float(reqs.get("rate", 0.0)) * 60.0
+
+          baseline_stats = baseline["stats"]
+          baseline_p95 = float(baseline_stats["p95_ms"])
+          baseline_error = float(baseline_stats["error_rate"])
+          baseline_rpm = float(baseline_stats["turns_per_minute"])
+
+          allowed_p95 = max(baseline_p95 * 1.5, baseline_p95 + 50.0)
+          allowed_error_rate = max(baseline_error + 0.005, 0.005)
+          min_rpm = baseline_rpm * 0.95
+
+          failures = []
+          if current_p95 > allowed_p95:
+              failures.append(
+                  f"p95 regression: current={current_p95:.2f}ms allowed={allowed_p95:.2f}ms"
+              )
+          if current_error_rate > allowed_error_rate:
+              failures.append(
+                  "error-rate regression: "
+                  f"current={current_error_rate:.6f} allowed={allowed_error_rate:.6f}"
+              )
+          if current_rpm < min_rpm:
+              failures.append(
+                  f"throughput regression: current={current_rpm:.1f}rpm minimum={min_rpm:.1f}rpm"
+              )
+
+          if failures:
+              for failure in failures:
+                  print(f"::error::{failure}")
+              raise SystemExit(1)
+
+          print(
+              "baseline contract passed: "
+              f"p95={current_p95:.2f}ms error_rate={current_error_rate:.6f} rpm={current_rpm:.1f}"
+          )
+          PY
+      - name: Upload baseline report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-baseline-100rpm
+          path: /tmp/runtime-baseline-100rpm-summary.json
+          if-no-files-found: ignore
+      - name: Page on-call on regression
+        if: failure()
+        env:
+          LOOP_ONCALL_WEBHOOK_URL: ${{ secrets.LOOP_ONCALL_WEBHOOK_URL }}
+        run: |
+          if [ -z "$LOOP_ONCALL_WEBHOOK_URL" ]; then
+            echo "::error::LOOP_ONCALL_WEBHOOK_URL secret is required to page on-call"
+            exit 1
+          fi
+          python3 - <<'PY' >/tmp/oncall-payload.json
+          import json
+          import os
+
+          run_url = (
+              f"{os.environ['GITHUB_SERVER_URL']}/"
+              f"{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          )
+          print(
+              json.dumps(
+                  {
+                      "summary": "Loop runtime baseline 100rpm gate regressed",
+                      "severity": "critical",
+                      "source": "github-actions",
+                      "run_url": run_url,
+                  }
+              )
+          )
+          PY
+          curl -fsS -X POST -H "content-type: application/json" \
+            --data @/tmp/oncall-payload.json "$LOOP_ONCALL_WEBHOOK_URL"
