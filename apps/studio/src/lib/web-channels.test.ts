@@ -35,7 +35,10 @@ describe("web-channels (fixture mode)", () => {
 
 describe("web-channels (cp-api mode)", () => {
   it("enableWebChannel POSTs the right URL and parses response", async () => {
-    const fetcher = vi.fn(async () =>
+    const fetcher = vi.fn<(
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => Promise<Response>>(async () =>
       new Response(
         JSON.stringify({
           agentId: "agt_demo",
@@ -53,8 +56,9 @@ describe("web-channels (cp-api mode)", () => {
       token: "studio-token",
     });
     expect(binding.token).toBe("wct_real");
-    const [url, init] = fetcher.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe(
+    const [url, init] = fetcher.mock.calls[0]!;
+    if (!init) throw new Error("missing fetch init");
+    expect(String(url)).toBe(
       "https://api.example.com/v1/agents/agt_demo/channels/web/enable",
     );
     expect(init.method).toBe("POST");

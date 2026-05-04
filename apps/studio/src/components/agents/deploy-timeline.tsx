@@ -67,8 +67,10 @@ export function DeployTimeline({
         const next = prev.map((d) => (d.id === updated.id ? updated : d));
         if (action === "promote") {
           for (let i = 0; i < next.length; i += 1) {
-            if (next[i].id !== updated.id && next[i].status === "live") {
-              next[i] = { ...next[i], status: "superseded", trafficPercent: 0 };
+            const item = next[i];
+            if (!item) continue;
+            if (item.id !== updated.id && item.status === "live") {
+              next[i] = { ...item, status: "superseded", trafficPercent: 0 };
             }
           }
         }

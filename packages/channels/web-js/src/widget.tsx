@@ -266,6 +266,7 @@ export function ChatWidget(props: ChatWidgetProps) {
   );
 
   const isEmpty = messages.length === 0 && errorBanner === null;
+  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : undefined;
 
   return (
     <section
@@ -338,7 +339,7 @@ export function ChatWidget(props: ChatWidgetProps) {
           </li>
         ))}
         {/* S178: typing indicator while server is streaming and no text yet */}
-        {streaming && messages.at(-1)?.role === "assistant" && messages.at(-1)?.text === "" ? (
+        {streaming && lastMessage?.role === "assistant" && lastMessage.text === "" ? (
           <TypingIndicator />
         ) : null}
       </ol>

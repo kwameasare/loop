@@ -46,13 +46,38 @@ export interface SectionErrorProps {
   reset: () => void;
   /** Optional override for the body copy. */
   description?: string;
+  /** Error object from Next.js route boundary (may include request_id). */
+  error?: unknown;
+}
+
+function requestIdFromError(error: unknown): string {
+  if (!error || typeof error !== "object") return "unknown";
+  const record = error as Record<string, unknown>;
+  const requestId =
+    record.request_id ?? record.requestId ?? record.digest ?? record.requestid;
+  return typeof requestId === "string" && requestId.length > 0
+    ? requestId
+    : "unknown";
+}
+
+function reportHref(title: string, requestId: string): string {
+  const body = [
+    `section=${title}`,
+    `request_id=${requestId}`,
+    "please include what you were doing when this happened",
+  ].join("\n");
+  return `mailto:support@loop.dev?subject=${encodeURIComponent(
+    `[Studio] ${title} load failure`,
+  )}&body=${encodeURIComponent(body)}`;
 }
 
 export function SectionError({
   title,
   reset,
   description,
+  error,
 }: SectionErrorProps) {
+  const requestId = requestIdFromError(error);
   return (
     <main
       className="container mx-auto flex max-w-3xl flex-col gap-4 p-6"
@@ -64,9 +89,21 @@ export function SectionError({
           {description ??
             "The cp-api request failed. Retry, or sign back in if the session expired."}
         </p>
-        <Button className="mt-4" onClick={reset} variant="outline">
-          Retry
-        </Button>
+        <p className="mt-2 text-xs text-muted-foreground" data-testid="section-error-request-id">
+          request_id: {requestId}
+        </p>
+        <div className="mt-4 flex items-center gap-2">
+          <Button onClick={reset} variant="outline">
+            Retry
+          </Button>
+          <a
+            className="text-sm underline underline-offset-2"
+            data-testid="section-error-report"
+            href={reportHref(title, requestId)}
+          >
+            Report
+          </a>
+        </div>
       </div>
     </main>
   );

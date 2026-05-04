@@ -66,6 +66,7 @@ export function useFlowHistory(
   const undo = useCallback(() => {
     if (pastRef.current.length === 0) return;
     const target = pastRef.current[pastRef.current.length - 1];
+    if (!target) return;
     futureRef.current = [{ ...currentRef.current }, ...futureRef.current];
     pastRef.current = pastRef.current.slice(0, -1);
     currentRef.current = { ...target };
@@ -77,6 +78,7 @@ export function useFlowHistory(
   const redo = useCallback(() => {
     if (futureRef.current.length === 0) return;
     const target = futureRef.current[0];
+    if (!target) return;
     pastRef.current = [...pastRef.current, { ...currentRef.current }];
     futureRef.current = futureRef.current.slice(1);
     currentRef.current = { ...target };

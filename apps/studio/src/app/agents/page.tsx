@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  * validate uniqueness before round-tripping POST /v1/agents.
  */
 export default async function AgentsPage() {
-  const { agents } = await listAgents();
+  const { agents } = await listAgents().catch(() => ({ agents: [] }));
   const existingSlugs = agents.map((a) => a.slug).filter(Boolean);
   return (
     <main className="container mx-auto flex max-w-3xl flex-col gap-6 py-10">

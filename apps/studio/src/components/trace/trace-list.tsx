@@ -41,7 +41,7 @@ export function TraceList(props: TraceListProps) {
       listTraces(props.traces, {
         q,
         status,
-        agent_id: agentId || undefined,
+        ...(agentId ? { agent_id: agentId } : {}),
         page,
         page_size: pageSize,
       }),

@@ -33,9 +33,9 @@ export function useUser(): UseUserResult {
   return {
     user: {
       sub: user.sub,
-      email: user.email,
-      name: user.name,
-      picture: user.picture,
+      ...(user.email ? { email: user.email } : {}),
+      ...(user.name ? { name: user.name } : {}),
+      ...(user.picture ? { picture: user.picture } : {}),
     },
     isAuthenticated,
     isLoading,

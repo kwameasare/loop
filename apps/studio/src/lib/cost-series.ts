@@ -73,7 +73,9 @@ export function buildDailyCostSeries(
       workspace_id: options.workspace_id,
       period_start_ms: day,
       period_end_ms: day + DAY_MS,
-      rates_cents_per_unit: options.rates_cents_per_unit,
+      ...(options.rates_cents_per_unit
+        ? { rates_cents_per_unit: options.rates_cents_per_unit }
+        : {}),
     });
     const byAgent: Record<string, number> = {};
     let total = 0;

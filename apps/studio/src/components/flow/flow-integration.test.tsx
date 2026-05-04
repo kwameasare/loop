@@ -116,7 +116,7 @@ function nodeIdsFromEvents(events: TurnEvent[]): string[] {
 
 describe("S472 flow integration — build → save → run → branch hit", () => {
   it("conditional node routes to branch_a for matching input", async () => {
-    const api = makeMemoryFlowApi({ agentId: "agt_x" });
+    const api = makeMemoryFlowApi();
     const seen: TurnEvent[] = [];
     render(
       <Harness
@@ -169,7 +169,7 @@ describe("S472 flow integration — build → save → run → branch hit", () =
   });
 
   it("the same saved graph routes to branch_b for non-matching input", async () => {
-    const api = makeMemoryFlowApi({ agentId: "agt_y" });
+    const api = makeMemoryFlowApi();
     const seen: TurnEvent[] = [];
     render(
       <Harness

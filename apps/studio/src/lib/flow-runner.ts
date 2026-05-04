@@ -46,7 +46,9 @@ export function runFlow(
     const outgoing = doc.edges.filter((e) => e.source === node.id);
     if (outgoing.length === 0) return { visited, reason: "complete" };
     if (outgoing.length === 1) {
-      cursor = outgoing[0].target;
+      const edge = outgoing[0];
+      if (!edge) return { visited, reason: "no-outgoing" };
+      cursor = edge.target;
       continue;
     }
     const next = decide(node, outgoing);

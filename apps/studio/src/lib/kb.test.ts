@@ -43,7 +43,10 @@ describe("kb (fixture mode)", () => {
 
 describe("kb (cp-api mode)", () => {
   it("listKbDocuments fetches the canonical URL", async () => {
-    const fetcher = vi.fn(async () =>
+    const fetcher = vi.fn<(
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => Promise<Response>>(async () =>
       new Response(JSON.stringify({ items: [] }), { status: 200 }),
     );
     await listKbDocuments("agt_z", {
@@ -51,8 +54,9 @@ describe("kb (cp-api mode)", () => {
       baseUrl: "https://api.example.com",
       token: "studio",
     });
-    const [url, init] = fetcher.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("https://api.example.com/v1/agents/agt_z/kb/documents");
+    const [url, init] = fetcher.mock.calls[0]!;
+    if (!init) throw new Error("missing fetch init");
+    expect(String(url)).toBe("https://api.example.com/v1/agents/agt_z/kb/documents");
     const headers = init.headers as Record<string, string>;
     expect(headers.authorization).toBe("Bearer studio");
   });
@@ -67,6 +71,7 @@ describe("kb (cp-api mode)", () => {
       bytes: 3,
       status: "indexing",
       uploadedAt: "2026-05-01T00:00:00Z",
+      lastRefreshedAt: null,
     };
     const uploader = vi.fn<UploaderFn>(async () => stub);
     const doc = await uploadKbDocument(

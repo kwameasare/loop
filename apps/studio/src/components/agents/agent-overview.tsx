@@ -9,7 +9,13 @@
  * passes the serialised agent + deploy summary as props.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export interface DeploySummary {
   /** ISO 8601 timestamp of the most recent deploy. */
@@ -40,10 +46,23 @@ interface EditDescriptionModalProps {
   initial: string;
   onSave: (value: string) => void;
   onClose: () => void;
+  triggerRef: RefObject<HTMLButtonElement>;
 }
 
-function EditDescriptionModal({ open, initial, onSave, onClose }: EditDescriptionModalProps) {
+function EditDescriptionModal({
+  open,
+  initial,
+  onSave,
+  onClose,
+  triggerRef,
+}: EditDescriptionModalProps) {
   const [value, setValue] = useState(initial);
+
+  useEffect(() => {
+    if (open) {
+      setValue(initial);
+    }
+  }, [open, initial]);
 
   if (!open) return null;
 
@@ -53,52 +72,51 @@ function EditDescriptionModal({ open, initial, onSave, onClose }: EditDescriptio
   }
 
   return (
-    <>
-      <div
-        aria-hidden="true"
-        className="fixed inset-0 bg-black/40 z-40"
-        onClick={onClose}
-        data-testid="edit-desc-backdrop"
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="edit-desc-title"
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DialogContent
+        aria-describedby={undefined}
         data-testid="edit-desc-modal"
+        className="max-w-md"
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          setTimeout(() => {
+            triggerRef.current?.focus();
+          }, 0);
+        }}
       >
-        <div className="flex w-full max-w-md flex-col gap-4 rounded-lg bg-background p-6 shadow-xl">
-          <h2 className="text-base font-semibold" id="edit-desc-title">
+        <DialogHeader>
+          <DialogTitle id="edit-desc-title" className="text-base">
             Edit description
-          </h2>
-          <textarea
-            rows={4}
-            className="w-full rounded border bg-background px-2 py-1 text-sm"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            data-testid="edit-desc-textarea"
-          />
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className="rounded border px-3 py-1 text-sm hover:bg-muted"
-              onClick={onClose}
-              data-testid="edit-desc-cancel"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground"
-              onClick={handleSave}
-              data-testid="edit-desc-save"
-            >
-              Save
-            </button>
-          </div>
+          </DialogTitle>
+        </DialogHeader>
+        <textarea
+          autoFocus
+          rows={4}
+          className="w-full rounded border bg-background px-2 py-1 text-sm"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          data-testid="edit-desc-textarea"
+        />
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            className="rounded border px-3 py-1 text-sm hover:bg-muted"
+            onClick={onClose}
+            data-testid="edit-desc-cancel"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground"
+            onClick={handleSave}
+            data-testid="edit-desc-save"
+          >
+            Save
+          </button>
         </div>
-      </div>
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -126,6 +144,18 @@ export function AgentOverview({
 }: AgentOverviewProps) {
   const [description, setDescription] = useState(initialDescription);
   const [editOpen, setEditOpen] = useState(false);
+  const editButtonRef = useRef<HTMLButtonElement>(null);
+
+  function closeEditModal() {
+    setEditOpen(false);
+    if (typeof window === "undefined") {
+      editButtonRef.current?.focus();
+      return;
+    }
+    setTimeout(() => {
+      editButtonRef.current?.focus();
+    }, 0);
+  }
 
   function handleSave(value: string) {
     setDescription(value);
@@ -141,6 +171,7 @@ export function AgentOverview({
             Description
           </h3>
           <button
+            ref={editButtonRef}
             type="button"
             className="rounded px-2 py-0.5 text-xs hover:bg-muted"
             onClick={() => setEditOpen(true)}
@@ -198,7 +229,8 @@ export function AgentOverview({
         open={editOpen}
         initial={description}
         onSave={handleSave}
-        onClose={() => setEditOpen(false)}
+        onClose={closeEditModal}
+        triggerRef={editButtonRef}
       />
     </div>
   );

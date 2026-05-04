@@ -148,11 +148,12 @@ export function snapshotAt(trace: ReplayTrace, cursor: number): ReplaySnapshot {
   const last = trace.events.length - 1;
   const clamped = Math.max(0, Math.min(last, Math.floor(cursor)));
   const window = trace.events.slice(0, clamped + 1);
+  const current = trace.events[clamped] ?? null;
   return {
     trace,
     cursor: clamped,
     bubbles: collapseToBubbles(window),
-    current: trace.events[clamped],
+    current,
   };
 }
 
@@ -162,7 +163,9 @@ export function previousBoundary(trace: ReplayTrace, cursor: number): number {
   const last = trace.events.length - 1;
   const clamped = Math.max(0, Math.min(last, Math.floor(cursor)));
   for (let i = clamped - 1; i >= 0; i--) {
-    const k = trace.events[i].kind;
+    const event = trace.events[i];
+    if (!event) continue;
+    const k = event.kind;
     if (
       k === "user_message" ||
       k === "agent_message" ||
@@ -182,7 +185,9 @@ export function nextBoundary(trace: ReplayTrace, cursor: number): number {
   const last = trace.events.length - 1;
   const clamped = Math.max(0, Math.min(last, Math.floor(cursor)));
   for (let i = clamped + 1; i <= last; i++) {
-    const k = trace.events[i].kind;
+    const event = trace.events[i];
+    if (!event) continue;
+    const k = event.kind;
     if (
       k === "user_message" ||
       k === "agent_message" ||

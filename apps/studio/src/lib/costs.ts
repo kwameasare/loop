@@ -257,8 +257,8 @@ export async function fetchUsageRecords(
       workspace_id: e.workspace_id,
       agent_id: e.agent_id ?? "",
       agent_name: e.agent_name ?? "",
-      channel: e.channel,
-      model: e.model,
+      ...(e.channel ? { channel: e.channel } : {}),
+      ...(e.model ? { model: e.model } : {}),
       metric: e.metric as UsageMetric,
       quantity: e.quantity,
       day_ms: dayBucketMs(e.timestamp_ms),
@@ -412,7 +412,9 @@ export function computeWorkspaceKpis(
       workspace_id: options.workspace_id,
       period_start_ms: start,
       period_end_ms: end,
-      rates_cents_per_unit: options.rates_cents_per_unit,
+      ...(options.rates_cents_per_unit
+        ? { rates_cents_per_unit: options.rates_cents_per_unit }
+        : {}),
     }).total_cents;
 
   const today_cents = summarise(today.period_start_ms, today.period_end_ms);

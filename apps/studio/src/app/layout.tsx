@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { AppErrorBoundary } from "@/components/error-boundary";
+import { WorkspaceMembersLink } from "@/components/shell/workspace-members-link";
+import { WorkspaceSwitcher } from "@/components/shell/workspace-switcher";
 import { ToastProvider } from "@/lib/toast";
 
 /**
@@ -25,6 +28,14 @@ const NAV_LINKS: ReadonlyArray<{ href: string; label: string }> = [
 export const metadata: Metadata = {
   title: "Loop Studio",
   description: "Build, deploy, and observe agents.",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
 };
 
 /**
@@ -46,7 +57,11 @@ function readAuth0ConfigFromEnv() {
     process.env.NEXT_PUBLIC_AUTH0_AUDIENCE ||
     undefined;
   if (!domain || !clientId) return undefined;
-  return { domain, clientId, audience };
+  return {
+    domain,
+    clientId,
+    ...(audience ? { audience } : {}),
+  };
 }
 
 export default function RootLayout({
@@ -57,7 +72,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen antialiased" suppressHydrationWarning>
         <ToastProvider>
-          <AuthProvider config={auth0Config}>
+          <AuthProvider {...(auth0Config ? { config: auth0Config } : {})}>
             <AppErrorBoundary>
               <header className="border-border bg-background sticky top-0 z-10 border-b">
                 <nav
@@ -70,6 +85,14 @@ export default function RootLayout({
                   >
                     Loop Studio
                   </Link>
+                  <Suspense
+                    fallback={<div className="mr-2 h-9 w-56" aria-hidden="true" />}
+                  >
+                    <div className="mr-2 flex items-center gap-2">
+                      <WorkspaceSwitcher />
+                      <WorkspaceMembersLink />
+                    </div>
+                  </Suspense>
                   {NAV_LINKS.map(({ href, label }) => (
                     <Link
                       key={href}

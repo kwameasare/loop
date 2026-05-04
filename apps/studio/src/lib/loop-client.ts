@@ -54,11 +54,14 @@ export class LoopClient {
       headers.set("accept", "application/json");
       if (body !== undefined) headers.set("content-type", "application/json");
       if (this.token) headers.set("authorization", `Bearer ${this.token}`);
-      const response = await this.fetcher(`${this.baseUrl}${path}`, {
+      const requestInit: RequestInit = {
         ...init,
         method,
         headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      };
+      const response = await this.fetcher(`${this.baseUrl}${path}`, {
+        ...requestInit,
       });
       if (response.ok) {
         if (response.status === 204) return undefined as TResponse;
@@ -72,7 +75,11 @@ export class LoopClient {
       throw new LoopHttpError(
         `Loop API ${method} ${path} failed: ${response.status}`,
         response.status,
-        { requestId: response.headers.get("x-request-id") ?? undefined },
+        {
+          ...(response.headers.get("x-request-id")
+            ? { requestId: response.headers.get("x-request-id") ?? "" }
+            : {}),
+        },
       );
     }
   }
@@ -109,7 +116,11 @@ export class LoopClient {
       throw new LoopHttpError(
         `Loop API POST /turns stream failed: ${response.status}`,
         response.status,
-        { requestId: response.headers.get("x-request-id") ?? undefined },
+        {
+          ...(response.headers.get("x-request-id")
+            ? { requestId: response.headers.get("x-request-id") ?? "" }
+            : {}),
+        },
       );
     }
     const text = await response.text();

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { EvalRunList } from "@/components/evals/eval-run-list";
+import { RunNowButton } from "@/components/evals/run-now-button";
 import { formatPassRate, getEvalSuite } from "@/lib/evals";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,9 @@ export default async function EvalSuitePage({ params }: SuitePageProps) {
           agent {detail.agentId} · {detail.cases} cases · pass{" "}
           {formatPassRate(detail.passRate)}
         </p>
+        <div className="mt-3">
+          <RunNowButton suiteId={detail.id} />
+        </div>
       </header>
       <EvalRunList detail={detail} />
     </main>

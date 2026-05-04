@@ -32,7 +32,7 @@ describe("AuthProvider", () => {
           <div>child</div>
         </AuthProvider>,
       ),
-    ).toThrow(/AuthProvider/);
+    ).toThrow("Auth0 config required in production");
   });
 
   it("does not throw in production when config is supplied", () => {

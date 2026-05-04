@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Loop Web Widget Demo</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@18.3.1",
+          "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
+          "react-dom/client": "https://esm.sh/react-dom@18.3.1/client"
+        }
+      }
+    </script>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f7f3;
+        --card: #ffffff;
+        --ink: #1f2937;
+        --muted: #64748b;
+        --line: #d4d4d8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 15% 20%, #e8f7ff 0%, transparent 36%),
+          radial-gradient(circle at 90% 10%, #fff2e6 0%, transparent 34%),
+          var(--bg);
+        color: var(--ink);
+        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      }
+
+      .page {
+        margin: 0 auto;
+        max-width: 1100px;
+        padding: 2rem 1rem 3rem;
+        display: grid;
+        gap: 1rem;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--card);
+        box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+      }
+
+      .config {
+        padding: 1rem;
+        display: grid;
+        gap: 0.8rem;
+      }
+
+      .row {
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+
+      input {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0.55rem 0.7rem;
+        font-size: 0.95rem;
+      }
+
+      button {
+        border: 0;
+        border-radius: 10px;
+        padding: 0.65rem 0.95rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #fff;
+        background: #0f172a;
+        cursor: pointer;
+      }
+
+      .widget-shell {
+        min-height: 420px;
+        padding: 1rem;
+      }
+
+      #widget-mount {
+        min-height: 380px;
+      }
+
+      .hint {
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      @media (min-width: 920px) {
+        .page {
+          grid-template-columns: 320px minmax(0, 1fr);
+          align-items: start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="panel config">
+        <h1 style="margin: 0; font-size: 1.2rem">Web Widget Demo</h1>
+        <p class="hint" style="margin: 0">
+          Point the demo at your local CP/DP endpoints and reload the widget.
+        </p>
+
+        <div class="row">
+          <label for="cp-url">Control Plane URL</label>
+          <input id="cp-url" value="http://127.0.0.1:8080/v1" />
+        </div>
+
+        <div class="row">
+          <label for="dp-url">Data Plane URL (optional)</label>
+          <input id="dp-url" value="http://127.0.0.1:8081/v1" />
+        </div>
+
+        <div class="row">
+          <label for="agent-id">Agent ID</label>
+          <input id="agent-id" value="agt_demo_support" />
+        </div>
+
+        <div class="row">
+          <label for="token">Bearer Token (optional)</label>
+          <input id="token" placeholder="paste token" />
+        </div>
+
+        <button id="render-widget" type="button">Render widget</button>
+      </section>
+
+      <section class="panel widget-shell">
+        <div id="widget-mount" data-testid="widget-mount"></div>
+      </section>
+    </main>
+
+    <script type="module">
+      import React from "react";
+      import { createRoot } from "react-dom/client";
+      import { ChatWidget } from "../../packages/channels/web-js/dist/index.js";
+
+      const cpInput = document.getElementById("cp-url");
+      const dpInput = document.getElementById("dp-url");
+      const agentInput = document.getElementById("agent-id");
+      const tokenInput = document.getElementById("token");
+      const renderButton = document.getElementById("render-widget");
+      const mount = document.getElementById("widget-mount");
+
+      const root = createRoot(mount);
+
+      function currentBaseUrl() {
+        const cp = cpInput.value.trim();
+        const dp = dpInput.value.trim();
+        // For local demos, CP often proxies invoke calls to DP; if DP is set
+        // explicitly we let users point directly at it.
+        return dp || cp;
+      }
+
+      function renderWidget() {
+        root.render(
+          React.createElement(ChatWidget, {
+            title: "Loop support demo",
+            historyKey: "loop-demo-widget-history",
+            connect: {
+              baseUrl: currentBaseUrl(),
+              agentId: agentInput.value.trim(),
+              token: tokenInput.value.trim() || undefined,
+            },
+          }),
+        );
+      }
+
+      renderButton.addEventListener("click", renderWidget);
+      renderWidget();
+    </script>
+  </body>
+</html>

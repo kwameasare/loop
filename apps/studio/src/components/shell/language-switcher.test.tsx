@@ -5,16 +5,19 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { LANGUAGE_LABELS, SUPPORTED_LANGUAGES } from "@/lib/i18n";
+import {
+  LANGUAGE_LABELS,
+  SUPPORTED_LANGUAGES,
+} from "@/lib/i18n";
+import * as i18nModule from "@/lib/i18n";
 
 // Lightweight mock for react-i18next (must include all exports used by i18n.ts)
-const mockChangeLanguage = vi.fn();
 vi.mock("react-i18next", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-i18next")>();
   return {
     ...actual,
     useTranslation: () => ({
-      i18n: { language: "en", changeLanguage: mockChangeLanguage },
+      i18n: { language: "en" },
     }),
   };
 });
@@ -34,9 +37,12 @@ describe("LanguageSwitcher", () => {
     }
   });
 
-  it("calls changeLanguage when a new option is selected", () => {
+  it("calls setLanguage when a new option is selected", () => {
+    const setLanguageSpy = vi
+      .spyOn(i18nModule, "setLanguage")
+      .mockResolvedValue(undefined);
     render(<LanguageSwitcher />);
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "fr" } });
-    expect(mockChangeLanguage).toHaveBeenCalledWith("fr");
+    expect(setLanguageSpy).toHaveBeenCalledWith("fr");
   });
 });

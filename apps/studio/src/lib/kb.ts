@@ -64,6 +64,7 @@ function fixtureFor(agentId: string): KbDocument[] {
         bytes: 12_345,
         status: "ready",
         uploadedAt: "2026-04-01T12:00:00Z",
+        lastRefreshedAt: null,
       },
     ];
   }

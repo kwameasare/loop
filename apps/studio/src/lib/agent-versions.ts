@@ -83,7 +83,7 @@ export function priorVersion(
   const sorted = [...versions].sort((a, b) => a.version - b.version);
   const idx = sorted.findIndex((v) => v.id === target.id);
   if (idx <= 0) return null;
-  return sorted[idx - 1];
+  return sorted[idx - 1] ?? null;
 }
 
 function fixtureVersions(agentId: string): AgentVersionDetail[] {

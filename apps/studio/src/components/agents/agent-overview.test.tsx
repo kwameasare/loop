@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { waitFor } from "@testing-library/react";
 
 import {
   AgentOverview,
@@ -120,10 +121,16 @@ describe("AgentOverview", () => {
     );
   });
 
-  it("backdrop click closes modal", () => {
+  it("autofocuses textarea and closes on Escape, restoring trigger focus", () => {
     render(<AgentOverview {...BASE_PROPS} />);
-    fireEvent.click(screen.getByTestId("overview-edit-desc-button"));
-    fireEvent.click(screen.getByTestId("edit-desc-backdrop"));
+    const trigger = screen.getByTestId("overview-edit-desc-button");
+    trigger.focus();
+    fireEvent.click(trigger);
+    expect(screen.getByTestId("edit-desc-textarea")).toHaveFocus();
+    fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByTestId("edit-desc-modal")).toBeNull();
+    return waitFor(() => {
+      expect(trigger).toHaveFocus();
+    });
   });
 });

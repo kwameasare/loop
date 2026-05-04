@@ -37,10 +37,11 @@ export function SignOutButton() {
         // Auth0 logout redirect so a same-tab "Sign In" cannot replay
         // the prior session.
         clearSessionToken();
+        const returnTo =
+          typeof window !== "undefined" ? window.location.origin : undefined;
         void logout({
           logoutParams: {
-            returnTo:
-              typeof window !== "undefined" ? window.location.origin : undefined,
+            ...(returnTo ? { returnTo } : {}),
           },
         });
       }}

@@ -40,7 +40,10 @@ export function WorkspaceCreateForm({ onSubmit, initialRegion }: WorkspaceCreate
     setRegion(inferRegion());
   }, [initialRegion]);
 
-  const selected = REGIONS.find((r) => r.value === region) ?? REGIONS[0];
+  const selected =
+    REGIONS.find((r) => r.value === region) ??
+    REGIONS[0] ??
+    { value: region, label: region, description: "" };
 
   return (
     <form

@@ -35,6 +35,7 @@ export function useActiveWorkspace(): UseActiveWorkspaceResult {
   const params = useSearchParams();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [storedSlug, setStoredSlug] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,12 +49,23 @@ export function useActiveWorkspace(): UseActiveWorkspaceResult {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setStoredSlug(window.localStorage.getItem(STORAGE_KEY));
+
+    function onStorage(event: StorageEvent) {
+      if (event.key !== STORAGE_KEY) return;
+      setStoredSlug(event.newValue);
+    }
+
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
   const urlSlug = params.get("ws");
-  const stored =
-    typeof window !== "undefined"
-      ? window.localStorage.getItem(STORAGE_KEY)
-      : null;
-  const targetSlug = urlSlug || stored;
+  const targetSlug = urlSlug || storedSlug;
   const active =
     workspaces.find((w) => w.slug === targetSlug) || workspaces[0] || null;
 
@@ -61,6 +73,7 @@ export function useActiveWorkspace(): UseActiveWorkspaceResult {
     (workspace: Workspace) => {
       if (typeof window !== "undefined") {
         window.localStorage.setItem(STORAGE_KEY, workspace.slug);
+        setStoredSlug(workspace.slug);
       }
       const next = new URLSearchParams(params.toString());
       next.set("ws", workspace.slug);

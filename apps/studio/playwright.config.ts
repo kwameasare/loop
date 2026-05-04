@@ -14,26 +14,40 @@ const baseURL = process.env.LOOP_E2E_BASE_URL || "http://127.0.0.1:3001";
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
-  retries: 0,
+  retries: process.env.CI ? 2 : 0,
   reporter: "list",
   use: {
     baseURL,
     headless: true,
     trace: "retain-on-failure",
   },
-  webServer: process.env.LOOP_E2E_BASE_URL
-    ? undefined
+  ...(process.env.LOOP_E2E_BASE_URL
+    ? {}
     : {
-        command:
-          "LOOP_AUTH0_DOMAIN=auth0.test LOOP_AUTH0_CLIENT_ID=client-test NEXT_PUBLIC_LOOP_API_URL=http://127.0.0.1:3001/__cp pnpm dev",
-        url: baseURL,
-        reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
-      },
+        webServer: {
+          command:
+            "LOOP_AUTH0_DOMAIN=auth0.test LOOP_AUTH0_CLIENT_ID=client-test NEXT_PUBLIC_LOOP_API_URL=http://127.0.0.1:3001/__cp pnpm dev",
+          url: baseURL,
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+        },
+      }),
   projects: [
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
+    },
+    {
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
+    },
+    {
+      name: "mobile-chrome",
+      use: { ...devices["Pixel 7"] },
     },
   ],
 });

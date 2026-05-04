@@ -362,12 +362,15 @@ export const FIXTURE_TRACES: TraceSummary[] = (() => {
   ];
   const list: TraceSummary[] = [];
   for (let i = 0; i < 47; i += 1) {
-    const agent = agents[i % agents.length];
+    const agent = agents[i % agents.length] ?? { id: "agt_unknown", name: "Unknown Agent" };
+    const root_name =
+      rootNames[i % rootNames.length] ??
+      "POST /v1/agents/{id}/turns";
     list.push({
       id: `trc_demo_${String(i + 1).padStart(3, "0")}`,
       agent_id: agent.id,
       agent_name: agent.name,
-      root_name: rootNames[i % rootNames.length],
+      root_name,
       status: i % 11 === 0 ? "error" : "ok",
       duration_ns: 100_000_000 + ((i * 37_000_000) % 1_500_000_000),
       started_at_ms: TRACE_BASE_MS - i * (DAY_MS / 12),

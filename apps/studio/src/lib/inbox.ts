@@ -327,13 +327,16 @@ export const FIXTURE_QUEUE: InboxItem[] = (() => {
   const statuses: InboxStatus[] = ["pending", "claimed", "resolved"];
   const items: InboxItem[] = [...FIXTURE_INBOX];
   for (let i = 0; i < 60; i += 1) {
-    const status = statuses[i % statuses.length];
+    const status = statuses[i % statuses.length] ?? "pending";
+    const team_id = teams[i % teams.length] ?? teams[0] ?? "team-care";
+    const agent_id = agents[i % agents.length] ?? agents[0] ?? "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+    const channel = channels[i % channels.length] ?? channels[0] ?? "web";
     items.push({
       id: `q-${String(i).padStart(3, "0")}`,
       workspace_id: FIXTURE_WORKSPACE_ID,
-      team_id: teams[i % teams.length],
-      agent_id: agents[i % agents.length],
-      channel: channels[i % channels.length],
+      team_id,
+      agent_id,
+      channel,
       conversation_id: `conv-${i}`,
       user_id: `user-${1000 + i}`,
       status,

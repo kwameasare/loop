@@ -40,4 +40,26 @@ describe("WorkspaceSwitcher", () => {
     );
     expect(window.localStorage.getItem("loop:active-workspace")).toBe("globex");
   });
+
+  it("updates active workspace when another tab writes storage", async () => {
+    params.delete("ws");
+    render(<WorkspaceSwitcher />);
+    const select = (await screen.findByTestId(
+      "workspace-switcher-select",
+    )) as HTMLSelectElement;
+
+    expect(select.value).toBe("acme");
+
+    fireEvent(
+      window,
+      new StorageEvent("storage", {
+        key: "loop:active-workspace",
+        newValue: "globex",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(select.value).toBe("globex");
+    });
+  });
 });
