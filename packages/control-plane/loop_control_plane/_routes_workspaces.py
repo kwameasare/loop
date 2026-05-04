@@ -9,6 +9,7 @@ from fastapi import APIRouter, Header, Request
 
 from loop_control_plane._app_common import CALLER, JSON_BODY, request_id
 from loop_control_plane.audit_events import record_audit_event
+from loop_control_plane.workspaces import WorkspaceError
 
 router = APIRouter(prefix="/v1/workspaces", tags=["Workspaces"])
 
@@ -58,6 +59,59 @@ async def get_workspace(
         workspace_id=workspace_id,
         request_region=x_loop_region,
     )
+
+
+@router.delete("/{workspace_id}", status_code=204)
+async def delete_workspace(
+    request: Request,
+    workspace_id: UUID,
+    caller_sub: str = CALLER,
+    x_loop_region: str | None = Header(default=None, alias="X-Loop-Region"),
+) -> None:
+    """Delete a workspace. OWNER-only.
+
+    For GDPR Art-17 hard-erasure of tenant data (members, api_keys,
+    agent rows, conversations, secrets, KB docs), enqueue a separate
+    request via ``POST /v1/workspaces/{id}/data-deletion`` (P0.8b).
+    This endpoint removes the *workspace registration* — once the row
+    is gone the routes return 404 and no new turns can be billed
+    against it. The DSR worker handles the cascading data purge
+    asynchronously.
+
+    Idempotency: deleting an already-deleted workspace returns 404
+    rather than 204 (preserves the "deleted" state report).
+    """
+    runtime = request.app.state.cp
+    # Service-layer `delete` enforces owner-only; we still call
+    # `authorize_workspace_access` first so the caller gets a clean
+    # 401/403 envelope before the service-layer error path triggers.
+    from loop_control_plane.authorize import Role, authorize_workspace_access
+
+    await authorize_workspace_access(
+        workspaces=runtime.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=Role.OWNER,
+    )
+    if x_loop_region is not None:
+        ws = await runtime.workspaces.get(workspace_id)
+        if ws.region != x_loop_region:
+            raise WorkspaceError("X-Loop-Region must match workspace region")
+    await runtime.workspaces.delete(
+        workspace_id=workspace_id, actor_sub=caller_sub
+    )
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="workspace:delete",
+        resource_type="workspace",
+        store=runtime.audit_events,
+        resource_id=str(workspace_id),
+        request_id=request_id(request),
+        # Body is empty for DELETE; record the action only.
+        payload={"workspace_id": str(workspace_id)},
+    )
+    # 204 No Content
 
 
 @router.patch("/{workspace_id}")
