@@ -11,6 +11,11 @@ requires-python = ">=3.12"
 dependencies = [
     "loop-channels-core",
     "pydantic>=2",
+    # ed25519 signature verification on inbound Discord interactions
+    # (P0.5a). `cryptography`'s Ed25519PublicKey is the standard
+    # high-level binding for libsodium and provides constant-time
+    # signature comparison via OpenSSL.
+    "cryptography>=42",
 ]
 
 [tool.hatch.build.targets.wheel]

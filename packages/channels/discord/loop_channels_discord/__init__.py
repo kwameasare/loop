@@ -4,14 +4,19 @@ Translates Discord Interactions-API webhook payloads (slash command
 or message component) and Bot Gateway message events into
 :class:`InboundEvent` envelopes, and translates the runtime's
 :class:`OutboundFrame` stream into Discord followup-message HTTP
-bodies. The host service owns the HTTPS endpoint, signature
-verification, and outbound HTTP client.
+bodies. The host service owns the HTTPS endpoint and outbound HTTP
+client; this package supplies the parser, the conversation index,
+and (since P0.5a) the ed25519 webhook signature verifier.
 
 Inbound shape supported:
   * ``type == 2`` (APPLICATION_COMMAND, e.g. ``/ask <text>``); the
     first option's string value is taken as the prompt.
   * ``type == 3`` (MESSAGE_COMPONENT) -- ``custom_id`` becomes the
     prompt text.
+
+Always call :func:`verify_discord_signature` BEFORE parsing the body
+or doing anything else with the request. Discord recommends rejecting
+the request entirely if any verification step fails.
 """
 
 from loop_channels_discord.channel import (
@@ -27,6 +32,11 @@ from loop_channels_discord.gateway import (
 )
 from loop_channels_discord.messages import to_followup_body
 from loop_channels_discord.parser import parse_interaction
+from loop_channels_discord.verify import (
+    DiscordSignatureError,
+    constant_time_eq,
+    verify_discord_signature,
+)
 
 __all__ = [
     "DiscordBotProfile",
@@ -36,6 +46,9 @@ __all__ = [
     "DiscordConnectResult",
     "DiscordConversationIndex",
     "DiscordGatewayMessageParser",
+    "DiscordSignatureError",
+    "constant_time_eq",
     "parse_interaction",
     "to_followup_body",
+    "verify_discord_signature",
 ]
