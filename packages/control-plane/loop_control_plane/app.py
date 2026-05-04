@@ -21,6 +21,12 @@ from loop_control_plane._routes_conversations import (
     router_conversations as conversations_router,
 )
 from loop_control_plane._routes_dsr import router as dsr_router
+from loop_control_plane._routes_evals import (
+    router_suites as eval_suites_router,
+)
+from loop_control_plane._routes_evals import (
+    router_workspaces as workspace_evals_router,
+)
 from loop_control_plane._routes_health import router as health_router
 from loop_control_plane._routes_kb import router as kb_router
 from loop_control_plane._routes_secrets import router as secrets_router
@@ -73,6 +79,9 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         budgets_router,
         # P0.4: KB document CRUD + refresh.
         kb_router,
+        # P0.4: eval suites + runs.
+        workspace_evals_router,
+        eval_suites_router,
     ):
         app.include_router(router)
     # P0.7b: Prometheus middleware + /metrics endpoint. The

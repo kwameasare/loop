@@ -11,6 +11,7 @@ from loop_control_plane.api_keys import ApiKeyService
 from loop_control_plane.api_keys_api import ApiKeyAPI
 from loop_control_plane.budgets import BudgetService
 from loop_control_plane.conversations import ConversationService
+from loop_control_plane.eval_suites import EvalSuiteService
 from loop_control_plane.kb_documents import KbDocumentService
 from loop_control_plane.audit_events import InMemoryAuditEventStore
 from loop_control_plane.auth_exchange import InMemoryRefreshTokenStore
@@ -87,6 +88,8 @@ class CpApiState:
     budgets: BudgetService = field(default_factory=BudgetService)
     # P0.4 (KB documents):
     kb_documents: KbDocumentService = field(default_factory=KbDocumentService)
+    # P0.4 (eval suites + runs):
+    eval_suites: EvalSuiteService = field(default_factory=EvalSuiteService)
 
     def __post_init__(self) -> None:
         self.workspace_api = WorkspaceAPI(workspaces=self.workspaces)
