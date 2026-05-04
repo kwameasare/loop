@@ -34,6 +34,12 @@ dependencies = [
     # base dep — the env-var fallback to in-memory still imports the
     # module, so the import has to succeed unconditionally.
     "psycopg[binary]>=3.2",
+    # SQLAlchemy's async API (PostgresRefreshTokenStore + future
+    # async stores) bridges to psycopg via greenlet. SQLAlchemy
+    # marks greenlet as an optional dep behind the [asyncio] extra,
+    # so we list it explicitly here rather than pinning a separate
+    # extra-string.
+    "greenlet>=3.0",
     "structlog>=25",
     "uvicorn>=0.30",
 ]

@@ -134,6 +134,10 @@ ignore = [
 # is added because pytest.raises match= patterns are regex-evaluated
 # but rarely use raw strings.
 "**/_tests/**" = ["S", "ASYNC", "N", "RUF043"]
+# Integration tests run against testcontainers; same relaxations as
+# `_tests/**` (asserts, hardcoded "passwords" that are ephemeral
+# fixture credentials, snake_case helpers, regex match patterns).
+"**/_tests_integration/**" = ["S", "ASYNC", "N", "RUF043"]
 "tests/**" = ["S", "ASYNC", "N", "E402", "RUF043"]
 # build_tracker.py uses typographic en-dashes ("Wk 1–6", "engineers 1–4")
 # in deliberate display strings that match the HANDBOOK style.

@@ -14,7 +14,11 @@ from loop_control_plane.audit_events import (
     InMemoryAuditEventStore,
     PostgresAuditEventStore,
 )
-from loop_control_plane.auth_exchange import InMemoryRefreshTokenStore
+from loop_control_plane.auth_exchange import (
+    InMemoryRefreshTokenStore,
+    PostgresRefreshTokenStore,
+    RefreshTokenStore,
+)
 from loop_control_plane.budgets import BudgetService
 from loop_control_plane.conversations import ConversationService
 from loop_control_plane.eval_suites import EvalSuiteService
@@ -64,6 +68,18 @@ def _default_audit_event_store() -> AuditEventStore:
     return PostgresAuditEventStore.from_url(db_url)
 
 
+def _default_refresh_token_store() -> RefreshTokenStore:
+    """Pick between in-memory and Postgres-backed refresh-token stores [P0.2]."""
+    if os.environ.get("LOOP_CP_USE_POSTGRES") != "1":
+        return InMemoryRefreshTokenStore()
+    db_url = os.environ.get("LOOP_CP_DB_URL")
+    if not db_url:
+        raise RuntimeError(
+            "LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set"
+        )
+    return PostgresRefreshTokenStore.from_url(db_url)
+
+
 def _default_saml_validator() -> SamlValidator:
     """Pick between Stub and PySAML2 validators per ``LOOP_SAML_USE_PYSAML2``.
 
@@ -89,7 +105,7 @@ class CpApiState:
     workspaces: WorkspaceService = field(default_factory=WorkspaceService)
     audit_events: AuditEventStore = field(default_factory=_default_audit_event_store)
     agents: AgentRegistry = field(default_factory=AgentRegistry)
-    refresh_store: InMemoryRefreshTokenStore = field(default_factory=InMemoryRefreshTokenStore)
+    refresh_store: RefreshTokenStore = field(default_factory=_default_refresh_token_store)
     saml_validator: SamlValidator = field(default_factory=_default_saml_validator)
     # P0.8b: GDPR DSR (Data Subject Request) infra. Default impls are
     # in-memory + recording for dev/tests; production wires Postgres-

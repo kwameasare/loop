@@ -8,7 +8,7 @@ from sqlalchemy.engine import Engine
 
 pytestmark = pytest.mark.integration
 
-CP_HEAD_REVISION = "cp_0006_merge_audit_heads"
+CP_HEAD_REVISION = "cp_0008_refresh_tokens"
 DP_INITIAL_REVISION = "dp_0001_initial"
 
 
@@ -32,7 +32,7 @@ def test_fixture_applies_initial_control_and_data_plane_migrations(
     tables = _table_names(migrated_postgres_engine)
 
     assert {"workspaces", "users", "api_keys", "agents"}.issubset(tables)
-    assert {"audit_log", "audit_events"}.issubset(tables)
+    assert {"audit_log", "audit_events", "refresh_tokens"}.issubset(tables)
     assert {"conversations", "turns", "memory_user", "memory_bot", "tool_calls"}.issubset(tables)
     assert {"alembic_version_cp", "alembic_version_dp"}.issubset(tables)
 
