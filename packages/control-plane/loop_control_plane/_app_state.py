@@ -9,12 +9,16 @@ from loop_control_plane._app_agents import AgentRegistry
 from loop_control_plane.agent_versions import AgentVersionService
 from loop_control_plane.api_keys import ApiKeyService
 from loop_control_plane.api_keys_api import ApiKeyAPI
+from loop_control_plane.audit_events import (
+    AuditEventStore,
+    InMemoryAuditEventStore,
+    PostgresAuditEventStore,
+)
+from loop_control_plane.auth_exchange import InMemoryRefreshTokenStore
 from loop_control_plane.budgets import BudgetService
 from loop_control_plane.conversations import ConversationService
 from loop_control_plane.eval_suites import EvalSuiteService
 from loop_control_plane.kb_documents import KbDocumentService
-from loop_control_plane.audit_events import InMemoryAuditEventStore
-from loop_control_plane.auth_exchange import InMemoryRefreshTokenStore
 from loop_control_plane.data_deletion import (
     DataDeletionEmailNotifier,
     DataDeletionJobQueue,
@@ -33,6 +37,31 @@ from loop_control_plane.trace_search import (
 from loop_control_plane.usage import UsageLedger, UsageRollup
 from loop_control_plane.workspace_api import WorkspaceAPI
 from loop_control_plane.workspaces import WorkspaceService
+
+
+def _default_audit_event_store() -> AuditEventStore:
+    """Pick between in-memory and Postgres-backed audit stores [P0.2].
+
+    Wiring rule:
+
+    * ``LOOP_CP_USE_POSTGRES=1`` AND ``LOOP_CP_DB_URL`` set →
+      :class:`PostgresAuditEventStore` (production).
+    * Otherwise → :class:`InMemoryAuditEventStore`. This keeps unit
+      tests hermetic and lets air-gapped developer setups run cp-api
+      without a database.
+    """
+    if os.environ.get("LOOP_CP_USE_POSTGRES") != "1":
+        return InMemoryAuditEventStore()
+    db_url = os.environ.get("LOOP_CP_DB_URL")
+    if not db_url:
+        # Fail closed: if the operator asked for Postgres but didn't
+        # give us a URL, the audit trail would silently fall back to
+        # in-memory (and lose every event on pod restart). Refuse to
+        # start instead.
+        raise RuntimeError(
+            "LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set"
+        )
+    return PostgresAuditEventStore.from_url(db_url)
 
 
 def _default_saml_validator() -> SamlValidator:
@@ -58,7 +87,7 @@ def _default_saml_validator() -> SamlValidator:
 @dataclass
 class CpApiState:
     workspaces: WorkspaceService = field(default_factory=WorkspaceService)
-    audit_events: InMemoryAuditEventStore = field(default_factory=InMemoryAuditEventStore)
+    audit_events: AuditEventStore = field(default_factory=_default_audit_event_store)
     agents: AgentRegistry = field(default_factory=AgentRegistry)
     refresh_store: InMemoryRefreshTokenStore = field(default_factory=InMemoryRefreshTokenStore)
     saml_validator: SamlValidator = field(default_factory=_default_saml_validator)

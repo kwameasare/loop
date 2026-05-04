@@ -29,6 +29,11 @@ dependencies = [
     "pydantic-settings>=2.5",
     "pyyaml>=6.0",
     "sqlalchemy>=2.0",
+    # P0.2: Postgres-backed cp-api services use psycopg as the
+    # SQLAlchemy driver (URL: ``postgresql+psycopg://...``). It's a
+    # base dep — the env-var fallback to in-memory still imports the
+    # module, so the import has to succeed unconditionally.
+    "psycopg[binary]>=3.2",
     "structlog>=25",
     "uvicorn>=0.30",
 ]
