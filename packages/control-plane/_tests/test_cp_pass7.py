@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from hashlib import sha256
 from uuid import uuid4
 
 import pytest
@@ -109,6 +110,11 @@ async def test_auth_exchange_happy_path() -> None:
     assert len(result.refresh_token) > 30
     assert result.access_expires_at_ms > 1_700_000_000_000
     assert result.refresh_expires_at_ms > result.access_expires_at_ms
+    refresh_hash = sha256(result.refresh_token.encode("ascii")).hexdigest()
+    record = store.lookup(refresh_hash)
+    assert record is not None
+    assert record.family_id
+    assert record.family_expires_at_ms == 1_700_000_000_000 + 90 * 24 * 60 * 60 * 1000
 
 
 @pytest.mark.asyncio

@@ -18,6 +18,7 @@ from loop_control_plane.app import create_app
 
 _HS256_SECRET = "test-secret-please-rotate"
 _PASETO_KEY = "k" * 32  # 32 bytes
+_DAY_MS = 24 * 60 * 60 * 1000
 
 
 def _b64url(data: bytes) -> str:
@@ -65,6 +66,10 @@ def _initial_exchange(client: TestClient) -> tuple[str, str]:
     return body["access_token"], body["refresh_token"]
 
 
+def _hash_refresh(token: str) -> str:
+    return hashlib.sha256(token.encode("ascii")).hexdigest()
+
+
 def test_refresh_returns_new_access_and_refresh_tokens(client: TestClient) -> None:
     _access, refresh = _initial_exchange(client)
     response = client.post("/v1/auth/refresh", json={"refresh_token": refresh})
@@ -94,6 +99,24 @@ def test_refresh_replays_are_rejected(client: TestClient) -> None:
     assert second.status_code == 401
 
 
+def test_refresh_replay_revokes_descendant_family_tokens(
+    client: TestClient,
+) -> None:
+    """Reusing an already-rotated token revokes the whole chain."""
+    _, refresh = _initial_exchange(client)
+    first = client.post("/v1/auth/refresh", json={"refresh_token": refresh})
+    assert first.status_code == 200
+    descendant = first.json()["refresh_token"]
+
+    replay = client.post("/v1/auth/refresh", json={"refresh_token": refresh})
+    assert replay.status_code == 401
+
+    descendant_use = client.post(
+        "/v1/auth/refresh", json={"refresh_token": descendant}
+    )
+    assert descendant_use.status_code == 401
+
+
 def test_refresh_unknown_token_is_rejected(client: TestClient) -> None:
     response = client.post(
         "/v1/auth/refresh",
@@ -121,3 +144,34 @@ def test_refresh_chain_works_across_multiple_rotations(client: TestClient) -> No
         ).json()
         current_refresh = body["refresh_token"]
         assert current_refresh
+
+
+def test_refresh_chain_has_ninety_day_hard_expiry(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    start_ms = 1_700_000_000_000
+    clock = {"now": start_ms}
+    monkeypatch.setattr("loop_control_plane._routes_auth.now_ms", lambda: clock["now"])
+
+    _, current_refresh = _initial_exchange(client)
+    hard_expiry = start_ms + 90 * _DAY_MS
+
+    for day in (25, 50, 75):
+        clock["now"] = start_ms + day * _DAY_MS
+        response = client.post(
+            "/v1/auth/refresh", json={"refresh_token": current_refresh}
+        )
+        assert response.status_code == 200, response.text
+        body = response.json()
+        current_refresh = body["refresh_token"]
+
+    assert body["refresh_expires_at_ms"] == hard_expiry
+    assert body["refresh_expires_at_ms"] < clock["now"] + 30 * _DAY_MS
+
+    clock["now"] = hard_expiry + 1
+    expired = client.post("/v1/auth/refresh", json={"refresh_token": current_refresh})
+    assert expired.status_code == 401
+    state = client.app.state.cp  # type: ignore[attr-defined]
+    record = state.refresh_store.lookup(_hash_refresh(current_refresh))
+    assert record is not None
+    assert record.revoked_at_ms is not None

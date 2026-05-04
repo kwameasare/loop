@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import secrets
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from hashlib import sha256
 from typing import Protocol
 
@@ -23,12 +23,19 @@ from loop_control_plane.jwks import JwtClaims
 from loop_control_plane.paseto import encode_local
 
 __all__ = [
+    "REFRESH_FAMILY_TTL_MS",
+    "REFRESH_TTL_MS",
     "AuthExchange",
     "AuthExchangeError",
     "ExchangeResult",
+    "RefreshTokenRecord",
     "RefreshTokenStore",
     "UnknownIdpUser",
 ]
+
+ACCESS_TTL_MS = 60 * 60 * 1000
+REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000
+REFRESH_FAMILY_TTL_MS = 90 * 24 * 60 * 60 * 1000
 
 
 class AuthExchangeError(ValueError):
@@ -49,14 +56,33 @@ class ExchangeResult:
     refresh_expires_at_ms: int
 
 
+@dataclass(frozen=True)
+class RefreshTokenRecord:
+    user_sub: str
+    expires_at_ms: int
+    family_id: str
+    family_expires_at_ms: int
+    revoked_at_ms: int | None = None
+
+
 class RefreshTokenStore(Protocol):
     """Persistence shim: stores hashed refresh tokens with TTL."""
 
     async def put(
-        self, *, user_sub: str, token_hash: str, expires_at_ms: int
+        self,
+        *,
+        user_sub: str,
+        token_hash: str,
+        expires_at_ms: int,
+        family_id: str,
+        family_expires_at_ms: int,
     ) -> None: ...
 
     async def revoke(self, token_hash: str) -> None: ...
+
+    async def revoke_family(self, family_id: str) -> None: ...
+
+    def lookup(self, token_hash: str) -> RefreshTokenRecord | None: ...
 
 
 # Mapper: idp ``sub`` → loop ``user_id`` (UUID-string). Returns None
@@ -70,8 +96,9 @@ class AuthExchange:
     refresh_store: RefreshTokenStore
     user_mapper: IdpUserMapper
     expected_audience: str
-    access_ttl_ms: int = 60 * 60 * 1000  # 1h
-    refresh_ttl_ms: int = 30 * 24 * 60 * 60 * 1000  # 30d
+    access_ttl_ms: int = ACCESS_TTL_MS
+    refresh_ttl_ms: int = REFRESH_TTL_MS
+    refresh_family_ttl_ms: int = REFRESH_FAMILY_TTL_MS
 
     async def exchange(self, *, claims: JwtClaims, now_ms: int) -> ExchangeResult:
         # Audience pinning is the *outer* JwtValidator's job, but we
@@ -92,11 +119,15 @@ class AuthExchange:
         )
         refresh_token = secrets.token_urlsafe(32)
         refresh_hash = sha256(refresh_token.encode("ascii")).hexdigest()
-        refresh_expires_at = now_ms + self.refresh_ttl_ms
+        family_id = secrets.token_urlsafe(24)
+        family_expires_at = now_ms + self.refresh_family_ttl_ms
+        refresh_expires_at = min(now_ms + self.refresh_ttl_ms, family_expires_at)
         await self.refresh_store.put(
             user_sub=loop_user_id,
             token_hash=refresh_hash,
             expires_at_ms=refresh_expires_at,
+            family_id=family_id,
+            family_expires_at_ms=family_expires_at,
         )
         return ExchangeResult(
             access_token=access_token,
@@ -110,13 +141,33 @@ class InMemoryRefreshTokenStore:
     """Test double; production wiring uses a Postgres ``refresh_tokens`` row."""
 
     def __init__(self) -> None:
-        self._rows: dict[str, tuple[str, int]] = {}
+        self._rows: dict[str, RefreshTokenRecord] = {}
 
-    async def put(self, *, user_sub: str, token_hash: str, expires_at_ms: int) -> None:
-        self._rows[token_hash] = (user_sub, expires_at_ms)
+    async def put(
+        self,
+        *,
+        user_sub: str,
+        token_hash: str,
+        expires_at_ms: int,
+        family_id: str,
+        family_expires_at_ms: int,
+    ) -> None:
+        self._rows[token_hash] = RefreshTokenRecord(
+            user_sub=user_sub,
+            expires_at_ms=expires_at_ms,
+            family_id=family_id,
+            family_expires_at_ms=family_expires_at_ms,
+        )
 
     async def revoke(self, token_hash: str) -> None:
-        self._rows.pop(token_hash, None)
+        record = self._rows.get(token_hash)
+        if record is not None and record.revoked_at_ms is None:
+            self._rows[token_hash] = replace(record, revoked_at_ms=0)
 
-    def lookup(self, token_hash: str) -> tuple[str, int] | None:
+    async def revoke_family(self, family_id: str) -> None:
+        for token_hash, record in tuple(self._rows.items()):
+            if record.family_id == family_id and record.revoked_at_ms is None:
+                self._rows[token_hash] = replace(record, revoked_at_ms=0)
+
+    def lookup(self, token_hash: str) -> RefreshTokenRecord | None:
         return self._rows.get(token_hash)
