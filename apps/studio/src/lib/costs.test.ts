@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  buildCostCapacityModel,
   computeWorkspaceKpis,
   dayBoundsUTC,
   fetchUsageRecords,
   formatDeltaPercent,
+  formatPreciseUSD,
   formatUSD,
   monthBoundsUTC,
   previousMonthBoundsUTC,
@@ -47,7 +49,9 @@ describe("summariseCosts", () => {
     });
     expect(out.total_cents).toBe(350);
     expect(out.by_agent.map((l) => l.agent_id)).toEqual(["a", "b"]);
-    expect(out.by_metric.find((m) => m.metric === "tokens.out")?.cents).toBe(150);
+    expect(out.by_metric.find((m) => m.metric === "tokens.out")?.cents).toBe(
+      150,
+    );
   });
 
   it("excludes records outside the period and from other workspaces", () => {
@@ -114,6 +118,7 @@ describe("formatUSD", () => {
   it("renders cents as dollars", () => {
     expect(formatUSD(0)).toBe("$0.00");
     expect(formatUSD(1234)).toBe("$12.34");
+    expect(formatPreciseUSD(4.32)).toBe("$0.0432");
   });
 });
 
@@ -140,7 +145,10 @@ describe("computeWorkspaceKpis", () => {
       rec("a", "tokens.in", 50, Date.UTC(2026, 3, 1)), // earlier MTD
       rec("a", "tokens.in", 9_000, Date.UTC(2026, 2, 15)), // prev month
     ];
-    const kpis = computeWorkspaceKpis(records, { workspace_id: WS, now_ms: now });
+    const kpis = computeWorkspaceKpis(records, {
+      workspace_id: WS,
+      now_ms: now,
+    });
     expect(kpis.today_cents).toBe(100);
     expect(kpis.yesterday_cents).toBe(200);
     expect(kpis.mtd_cents).toBe(350);
@@ -157,7 +165,10 @@ describe("computeWorkspaceKpis", () => {
       rec("a", "tokens.in", 100, Date.UTC(2026, 3, 10)),
       rec("a", "tokens.in", 9_999, Date.UTC(2026, 3, 10), "ws_other"),
     ];
-    const kpis = computeWorkspaceKpis(records, { workspace_id: WS, now_ms: now });
+    const kpis = computeWorkspaceKpis(records, {
+      workspace_id: WS,
+      now_ms: now,
+    });
     expect(kpis.today_cents).toBe(100);
     expect(kpis.mtd_cents).toBe(100);
   });
@@ -170,6 +181,64 @@ describe("formatDeltaPercent", () => {
     expect(formatDeltaPercent(100, 100)).toBe("0.0%");
     expect(formatDeltaPercent(0, 0)).toBe("0%");
     expect(formatDeltaPercent(50, 0)).toBe("—");
+  });
+});
+
+describe("buildCostCapacityModel", () => {
+  it("shows canonical cost surfaces, line-item math, and decisions", () => {
+    const records: UsageRecord[] = [
+      {
+        ...rec("Support", "tokens.in", 100, APRIL_1),
+        agent_name: "Support",
+        channel: "web",
+        model: "gpt-4o",
+        environment: "production",
+        customer_segment: "enterprise",
+        turn_count: 10,
+      },
+      {
+        ...rec("Support", "tool_calls", 2, APRIL_1),
+        agent_name: "Support",
+        tool_name: "lookup_order",
+        environment: "production",
+      },
+      {
+        ...rec("Support", "retrievals", 5, APRIL_1),
+        agent_name: "Support",
+        retrieval_source: "refund_policy",
+      },
+    ];
+    const model = buildCostCapacityModel(records, {
+      workspace_id: WS,
+      now_ms: Date.UTC(2026, 3, 15),
+    });
+
+    expect(model.surfaces.map((surface) => surface.id)).toContain("per_turn");
+    expect(
+      model.surfaces.find((surface) => surface.id === "per_tool")?.detail,
+    ).toBe("lookup_order");
+    expect(
+      model.surfaces.find((surface) => surface.id === "per_retrieval")?.detail,
+    ).toBe("refund_policy");
+    expect(model.lineItems.find((item) => item.id === "runtime")?.state).toBe(
+      "unsupported",
+    );
+    expect(model.totalLineItemCents).toBeGreaterThan(0);
+    expect(model.decisions.map((decision) => decision.id)).toContain(
+      "degrade_rule",
+    );
+  });
+
+  it("marks missing dimensions unsupported instead of inventing metadata", () => {
+    const model = buildCostCapacityModel([], {
+      workspace_id: WS,
+      now_ms: Date.UTC(2026, 3, 15),
+    });
+
+    expect(
+      model.surfaces.find((surface) => surface.id === "per_channel")?.state,
+    ).toBe("unsupported");
+    expect(model.projectedMonthEndEvidence).toContain("projected_eom");
   });
 });
 
@@ -223,6 +292,12 @@ describe("fetchUsageRecords", () => {
             agent_name: "Support",
             channel: "web",
             model: "gpt-4o",
+            environment: "production",
+            customer_segment: "enterprise",
+            tool_name: "lookup_order",
+            retrieval_source: "refund_policy",
+            trace_id: "trace_refund_742",
+            turn_count: 12,
           },
         ],
       }),
@@ -242,6 +317,12 @@ describe("fetchUsageRecords", () => {
     // The second carries the dimensions through.
     expect(records[1].channel).toBe("web");
     expect(records[1].agent_name).toBe("Support");
+    expect(records[1].environment).toBe("production");
+    expect(records[1].customer_segment).toBe("enterprise");
+    expect(records[1].tool_name).toBe("lookup_order");
+    expect(records[1].retrieval_source).toBe("refund_policy");
+    expect(records[1].trace_id).toBe("trace_refund_742");
+    expect(records[1].turn_count).toBe(12);
   });
 
   it("drops events with unknown metric strings", async () => {
