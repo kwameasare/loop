@@ -40,7 +40,8 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     route: "/",
     verb: "onboard",
     label: "Studio home",
-    purpose: "Lifecycle entry — pick Build, Test, Ship, Observe, Migrate, or Govern.",
+    purpose:
+      "Lifecycle entry — pick Build, Test, Ship, Observe, Migrate, or Govern.",
     anchor: "§5",
   },
   {
@@ -71,6 +72,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     label: "Agent workbench",
     purpose: "Behavior, tools, knowledge, memory in one workspace (§5 Build).",
     anchor: "§5",
+  },
+  {
+    route: "/agents/[agent_id]/behavior",
+    verb: "build",
+    label: "Behavior editor",
+    purpose:
+      "Three-mode behavior editing with risk, telemetry, diff, and preview (§11).",
+    anchor: "§11",
   },
   {
     route: "/agents/[agent_id]/channels",
@@ -348,7 +357,8 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     route: "/a11y",
     verb: "system",
     label: "Accessibility primitives",
-    purpose: "Status glyphs, diff markers, skip-link, keyboard cheatsheet (§30).",
+    purpose:
+      "Status glyphs, diff markers, skip-link, keyboard cheatsheet (§30).",
     anchor: "§30",
   },
   {
@@ -399,7 +409,8 @@ export function auditCopy(lines: ReadonlyArray<string>): CopyAuditFinding[] {
     const matches = FORBIDDEN_COPY.filter((phrase) =>
       line.toLowerCase().includes(phrase),
     );
-    if (matches.length > 0) findings.push({ text: line, matches: [...matches] });
+    if (matches.length > 0)
+      findings.push({ text: line, matches: [...matches] });
   }
   return findings;
 }
