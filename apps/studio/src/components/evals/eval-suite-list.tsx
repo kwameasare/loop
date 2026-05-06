@@ -9,7 +9,10 @@ export interface EvalSuiteListProps {
 export function EvalSuiteList({ suites }: EvalSuiteListProps) {
   if (suites.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground" data-testid="eval-suites-empty">
+      <p
+        className="text-sm text-muted-foreground"
+        data-testid="eval-suites-empty"
+      >
         No eval suites have been created yet.
       </p>
     );
@@ -19,7 +22,7 @@ export function EvalSuiteList({ suites }: EvalSuiteListProps) {
       {suites.map((suite) => (
         <li key={suite.id}>
           <Link
-            className="block rounded border border-gray-200 p-3 hover:bg-gray-50"
+            className="block rounded-md border bg-card p-3 target-transition hover:bg-muted"
             data-testid={`eval-suite-${suite.id}`}
             href={`/evals/suites/${suite.id}`}
           >

@@ -3,10 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createEvalSuite,
   diffAgainstBaseline,
+  formatEvalUsd,
   formatPassRate,
+  getEvalFoundryModel,
   getEvalRun,
   getEvalSuite,
   listEvalSuites,
+  resultDiffForRun,
   triggerEvalSuiteRun,
   type EvalRunDetail,
 } from "./evals";
@@ -22,7 +25,18 @@ describe("listEvalSuites", () => {
     const fetcher = vi.fn(async () => ({
       ok: true,
       status: 200,
-      json: async () => ({ items: [{ id: "evs_x", name: "x", agentId: "a", cases: 1, lastRunAt: null, passRate: null }] }),
+      json: async () => ({
+        items: [
+          {
+            id: "evs_x",
+            name: "x",
+            agentId: "a",
+            cases: 1,
+            lastRunAt: null,
+            passRate: null,
+          },
+        ],
+      }),
     })) as unknown as typeof fetch;
     const { items } = await listEvalSuites({
       fetcher,
@@ -30,9 +44,12 @@ describe("listEvalSuites", () => {
       token: "tok",
     });
     expect(items).toHaveLength(1);
-    const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock.calls[0];
+    const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0];
     expect(call[0]).toBe("https://api.loop.dev/v1/evals/suites");
-    expect((call[1] as { headers: Record<string, string> }).headers.authorization).toBe("Bearer tok");
+    expect(
+      (call[1] as { headers: Record<string, string> }).headers.authorization,
+    ).toBe("Bearer tok");
   });
 });
 
@@ -45,8 +62,15 @@ describe("getEvalSuite / getEvalRun", () => {
   });
 
   it("returns null when cp-api responds 404", async () => {
-    const fetcher = vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) })) as unknown as typeof fetch;
-    const detail = await getEvalSuite("missing", { fetcher, baseUrl: "https://api.loop.dev" });
+    const fetcher = vi.fn(async () => ({
+      ok: false,
+      status: 404,
+      json: async () => ({}),
+    })) as unknown as typeof fetch;
+    const detail = await getEvalSuite("missing", {
+      fetcher,
+      baseUrl: "https://api.loop.dev",
+    });
     expect(detail).toBeNull();
   });
 
@@ -60,19 +84,69 @@ describe("getEvalSuite / getEvalRun", () => {
 describe("diffAgainstBaseline", () => {
   it("flags regressions, recoveries and new cases", () => {
     const current: EvalRunDetail = {
-      id: "r2", suiteId: "s", status: "completed", startedAt: "", finishedAt: null,
-      passed: 1, failed: 1, errored: 0, total: 3, baselineRunId: "r1",
+      id: "r2",
+      suiteId: "s",
+      status: "completed",
+      startedAt: "",
+      finishedAt: null,
+      passed: 1,
+      failed: 1,
+      errored: 0,
+      total: 3,
+      baselineRunId: "r1",
       cases: [
-        { caseId: "a", name: "a", status: "fail", expected: "", actual: "", baselineStatus: "pass", durationMs: 0 },
-        { caseId: "b", name: "b", status: "pass", expected: "", actual: "", baselineStatus: "fail", durationMs: 0 },
-        { caseId: "c", name: "c", status: "pass", expected: "", actual: "", baselineStatus: null, durationMs: 0 },
+        {
+          caseId: "a",
+          name: "a",
+          status: "fail",
+          expected: "",
+          actual: "",
+          baselineStatus: "pass",
+          durationMs: 0,
+        },
+        {
+          caseId: "b",
+          name: "b",
+          status: "pass",
+          expected: "",
+          actual: "",
+          baselineStatus: "fail",
+          durationMs: 0,
+        },
+        {
+          caseId: "c",
+          name: "c",
+          status: "pass",
+          expected: "",
+          actual: "",
+          baselineStatus: null,
+          durationMs: 0,
+        },
       ],
     };
     const baseline: EvalRunDetail = {
-      ...current, id: "r1", baselineRunId: null,
+      ...current,
+      id: "r1",
+      baselineRunId: null,
       cases: [
-        { caseId: "a", name: "a", status: "pass", expected: "", actual: "", baselineStatus: null, durationMs: 0 },
-        { caseId: "b", name: "b", status: "fail", expected: "", actual: "", baselineStatus: null, durationMs: 0 },
+        {
+          caseId: "a",
+          name: "a",
+          status: "pass",
+          expected: "",
+          actual: "",
+          baselineStatus: null,
+          durationMs: 0,
+        },
+        {
+          caseId: "b",
+          name: "b",
+          status: "fail",
+          expected: "",
+          actual: "",
+          baselineStatus: null,
+          durationMs: 0,
+        },
       ],
     };
     const diff = diffAgainstBaseline(current, baseline);
@@ -83,9 +157,27 @@ describe("diffAgainstBaseline", () => {
 
   it("treats every case as new when baseline is null", () => {
     const current: EvalRunDetail = {
-      id: "r2", suiteId: "s", status: "completed", startedAt: "", finishedAt: null,
-      passed: 1, failed: 0, errored: 0, total: 1, baselineRunId: null,
-      cases: [{ caseId: "a", name: "a", status: "pass", expected: "", actual: "", baselineStatus: null, durationMs: 0 }],
+      id: "r2",
+      suiteId: "s",
+      status: "completed",
+      startedAt: "",
+      finishedAt: null,
+      passed: 1,
+      failed: 0,
+      errored: 0,
+      total: 1,
+      baselineRunId: null,
+      cases: [
+        {
+          caseId: "a",
+          name: "a",
+          status: "pass",
+          expected: "",
+          actual: "",
+          baselineStatus: null,
+          durationMs: 0,
+        },
+      ],
     };
     expect(diffAgainstBaseline(current, null)[0].kind).toBe("new");
   });
@@ -96,6 +188,78 @@ describe("formatPassRate", () => {
     expect(formatPassRate(0.917)).toBe("91.7%");
     expect(formatPassRate(1)).toBe("100%");
     expect(formatPassRate(null)).toBe("—");
+  });
+});
+
+describe("eval foundry model", () => {
+  it("includes creation sources, suite builder controls, and featured result diffs", async () => {
+    const { items } = await listEvalSuites();
+    const model = getEvalFoundryModel(items);
+    expect(model.creationSources.map((source) => source.source)).toEqual(
+      expect.arrayContaining([
+        "simulator",
+        "production",
+        "operator_resolution",
+        "migration_transcript",
+        "knowledge_source",
+        "generated_adversarial",
+      ]),
+    );
+    expect(model.suiteBuilders[0]?.scorers.map((scorer) => scorer.id)).toEqual(
+      expect.arrayContaining([
+        "grounded_answer",
+        "tool_call_assert",
+        "cost_le",
+      ]),
+    );
+    expect(model.featuredResult).toMatchObject({
+      caseId: "c2",
+      traceDiff: expect.stringContaining("span_answer"),
+      retrievalDiff: expect.stringContaining("refund_policy_2026.pdf"),
+    });
+  });
+
+  it("builds an empty suite-builder state when no suites exist", () => {
+    const model = getEvalFoundryModel([]);
+    expect(model.suiteBuilders).toEqual([]);
+    expect(model.creationSources.length).toBeGreaterThan(0);
+  });
+});
+
+describe("resultDiffForRun", () => {
+  it("returns null when a run has no output evidence", () => {
+    const run: EvalRunDetail = {
+      id: "r",
+      suiteId: "s",
+      status: "completed",
+      startedAt: "",
+      finishedAt: null,
+      passed: 1,
+      failed: 0,
+      errored: 0,
+      total: 1,
+      baselineRunId: null,
+      cases: [
+        {
+          caseId: "a",
+          name: "a",
+          status: "pass",
+          expected: "",
+          actual: "",
+          baselineStatus: null,
+          durationMs: 0,
+        },
+      ],
+    };
+    expect(resultDiffForRun(run)).toBeNull();
+  });
+});
+
+describe("formatEvalUsd", () => {
+  it("renders signed eval cost deltas", () => {
+    expect(formatEvalUsd(0.0042)).toBe("+$0.0042");
+    expect(formatEvalUsd(-0.01)).toBe("-$0.01");
+    expect(formatEvalUsd(0)).toBe("$0.00");
   });
 });
 
