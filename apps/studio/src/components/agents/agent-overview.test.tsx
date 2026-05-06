@@ -12,6 +12,8 @@ const BASE_PROPS: AgentOverviewProps = {
   name: "Support Bot",
   description: "Handles tier-1 tickets.",
   model: "gpt-4o-mini",
+  activeVersion: 3,
+  updatedAt: "2025-01-15T10:00:00Z",
   lastDeploy: {
     deployed_at: "2025-01-15T10:00:00Z",
     version: 3,
@@ -36,22 +38,85 @@ describe("AgentOverview", () => {
 
   it("renders model identifier", () => {
     render(<AgentOverview {...BASE_PROPS} />);
-    expect(screen.getByTestId("overview-model")).toHaveTextContent("gpt-4o-mini");
+    expect(screen.getByTestId("overview-model")).toHaveTextContent(
+      "gpt-4o-mini",
+    );
   });
 
-  it("shows 'Not configured' when model is empty", () => {
+  it("shows canonical aliases when the direct model is empty", () => {
     render(<AgentOverview {...BASE_PROPS} model="" />);
-    expect(screen.getByTestId("overview-model")).toHaveTextContent("Not configured");
+    expect(screen.getByTestId("overview-model")).toHaveTextContent("fast");
+    expect(screen.getByTestId("overview-model")).toHaveTextContent("best");
   });
 
   it("renders last-deploy version", () => {
     render(<AgentOverview {...BASE_PROPS} />);
-    expect(screen.getByTestId("overview-deploy-version")).toHaveTextContent("v3");
+    expect(screen.getByTestId("overview-deploy-version")).toHaveTextContent(
+      "v3",
+    );
   });
 
   it("renders last-deploy status", () => {
     render(<AgentOverview {...BASE_PROPS} />);
-    expect(screen.getByTestId("overview-deploy-status")).toHaveTextContent("active");
+    expect(screen.getByTestId("overview-deploy-status")).toHaveTextContent(
+      "active",
+    );
+  });
+
+  it("renders the canonical workbench profile, outline, diff, live preview, and safe actions", () => {
+    render(<AgentOverview {...BASE_PROPS} />);
+
+    expect(screen.getByTestId("agent-workbench-profile")).toHaveTextContent(
+      "Support Bot",
+    );
+    expect(screen.getByTestId("overview-environment")).toHaveTextContent("dev");
+    expect(screen.getByTestId("overview-branch")).toHaveTextContent(
+      "draft/refund-clarity",
+    );
+    expect(screen.getByTestId("overview-production-version")).toHaveTextContent(
+      "v3",
+    );
+    expect(screen.getByTestId("agent-outline-purpose")).toHaveTextContent(
+      "Purpose",
+    );
+    expect(screen.getByTestId("agent-outline-tools")).toHaveTextContent(
+      "issue_refund",
+    );
+    expect(screen.getByTestId("agent-live-preview")).toHaveTextContent(
+      "I need to cancel my annual renewal",
+    );
+    expect(screen.getByTestId("diff-ribbon")).toHaveTextContent(
+      "Draft pins the May 2026 refund policy",
+    );
+    expect(screen.getByTestId("safe-next-actions")).toHaveTextContent(
+      "Replay refund turns",
+    );
+  });
+
+  it("surfaces degraded cached-data evidence when live agent data is unavailable", () => {
+    render(
+      <AgentOverview
+        {...BASE_PROPS}
+        dataState="degraded"
+        degradedReason="Showing cached target fixture because cp-api GET /agents/agt_1 returned 503."
+      />,
+    );
+
+    expect(screen.getByTestId("agent-workbench-degraded")).toHaveTextContent(
+      "cp-api GET /agents/agt_1 returned 503",
+    );
+  });
+
+  it("keeps production promotion visible but blocked when approval is missing", () => {
+    render(<AgentOverview {...BASE_PROPS} />);
+
+    expect(screen.getByTestId("agent-workbench-permission")).toHaveTextContent(
+      "Production promote is locked",
+    );
+    expect(screen.getByTestId("safe-action-approval")).toBeDisabled();
+    expect(screen.getByTestId("safe-action-approval")).toHaveTextContent(
+      "Production deploy requires Release Manager approval.",
+    );
   });
 
   it("renders 'Never' when deployed_at is null", () => {
@@ -61,7 +126,9 @@ describe("AgentOverview", () => {
         lastDeploy={{ deployed_at: null, version: null, status: null }}
       />,
     );
-    expect(screen.getByTestId("overview-deploy-time")).toHaveTextContent("Never");
+    expect(screen.getByTestId("overview-deploy-time")).toHaveTextContent(
+      "Never",
+    );
   });
 
   it("omits version row when version is null", () => {

@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
+import { getAgentDetailData } from "./agent-detail-data";
 import { AgentTabs } from "@/components/agents/agent-tabs";
 import { EmulatorPanel } from "@/components/agents/emulator-panel";
-import { getAgent } from "@/lib/cp-api";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export default async function AgentDetailLayout({
   children,
   params,
 }: AgentDetailLayoutProps) {
-  const agent = await getAgent(params.agent_id);
+  const { agent } = await getAgentDetailData(params.agent_id);
   return (
     <main
       className="container mx-auto grid max-w-6xl gap-6 py-10 lg:grid-cols-[minmax(0,1fr)_360px]"

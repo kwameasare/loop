@@ -36,14 +36,14 @@ export function AgentTabs({ agentId, pathname }: AgentTabsProps) {
   const currentRaw = pathname ?? routePathname ?? "";
   const base = `/agents/${agentId}`;
   const current = currentRaw.startsWith(base)
-    ? currentRaw.slice(base.length).replace(/^\//, "").split("/")[0] ?? ""
+    ? (currentRaw.slice(base.length).replace(/^\//, "").split("/")[0] ?? "")
     : "";
   return (
     <nav
       role="tablist"
       aria-label="Agent sections"
       data-testid="agent-tabs"
-      className="flex gap-1 border-b"
+      className="flex flex-wrap gap-1 border-b"
     >
       {AGENT_TABS.map((tab) => {
         const href = tab.segment ? `${base}/${tab.segment}` : base;
