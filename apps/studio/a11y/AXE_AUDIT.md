@@ -74,3 +74,17 @@ The gate is intentionally narrow (five SCs). Broader coverage (color contrast, m
 
 - Re-run the manual screen-reader pass once per sprint (sprint-end review checklist item).
 - Re-baseline the automated gate's component list whenever the navigation IA changes.
+
+## Canonical shell smoke coverage
+
+UX006 adds a Playwright smoke in `e2e/canonical-ux.spec.ts` and a companion
+static guard in `src/components/__a11y__/canonical-shell-a11y.test.ts`.
+Together they cover the canonical shell on desktop and mobile:
+
+- shell route reachability and named regions for the asset rail, work surface,
+  preview rail, activity timeline, and status footer;
+- keyboard traversal, visible focus, and command palette reachability;
+- reduced-motion behavior for animated status signals;
+- non-color status cues such as `Control plane healthy`, `draft`, and
+  `Canary 12%`;
+- the six-verb IA: Build, Test, Ship, Observe, Migrate, Govern.
