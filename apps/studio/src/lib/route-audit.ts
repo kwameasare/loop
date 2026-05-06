@@ -90,6 +90,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§8",
   },
   {
+    route: "/agents/[agent_id]/memory",
+    verb: "build",
+    label: "Memory Studio",
+    purpose:
+      "Memory explorer, diffs, source traces, retention, safety flags, delete, and replay (§14).",
+    anchor: "§14",
+  },
+  {
     route: "/agents/[agent_id]/channels",
     verb: "build",
     label: "Agent channels",

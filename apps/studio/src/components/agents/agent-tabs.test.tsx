@@ -15,8 +15,9 @@ describe("AgentTabs", () => {
     expect(tabs[4]).toHaveAttribute("href", "/agents/agt_42/channels");
     expect(tabs[5]).toHaveAttribute("href", "/agents/agt_42/tools");
     expect(tabs[6]).toHaveAttribute("href", "/agents/agt_42/kb");
-    expect(tabs[7]).toHaveAttribute("href", "/agents/agt_42/deploys");
-    expect(tabs[8]).toHaveAttribute("href", "/agents/agt_42/secrets");
+    expect(tabs[7]).toHaveAttribute("href", "/agents/agt_42/memory");
+    expect(tabs[8]).toHaveAttribute("href", "/agents/agt_42/deploys");
+    expect(tabs[9]).toHaveAttribute("href", "/agents/agt_42/secrets");
   });
 
   it("marks the overview tab active for the bare agent route", () => {
