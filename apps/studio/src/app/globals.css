@@ -6,26 +6,114 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --surface: 240 20% 98%;
+    --surface-elevated: 0 0% 100%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
     --primary: 240 5.9% 10%;
     --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --destructive: 0 72.2% 50.6%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 161 45% 34%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 240 10% 3.9%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --focus: 199 89% 48%;
+    --state-draft: 240 4.8% 95.9%;
+    --state-saved: 214 32% 91%;
+    --state-staged: 199 89% 48%;
+    --state-canary: 38 92% 50%;
+    --state-production: 161 45% 34%;
+    --state-archived: 240 3.8% 46.1%;
     --radius: 0.5rem;
+    --duration-flash: 90ms;
+    --duration-swift: 160ms;
+    --duration-standard: 220ms;
+    --duration-gentle: 360ms;
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
+    --card: 240 10% 5.5%;
+    --card-foreground: 0 0% 98%;
+    --surface: 240 8% 7.5%;
+    --surface-elevated: 240 7% 10%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
     --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 42%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 160 60% 45%;
+    --success-foreground: 240 10% 3.9%;
+    --warning: 43 96% 56%;
+    --warning-foreground: 240 10% 3.9%;
+    --info: 199 89% 55%;
+    --info-foreground: 240 10% 3.9%;
     --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 0 0% 98%;
+    --focus: 199 89% 55%;
+    --state-draft: 240 3.7% 15.9%;
+    --state-saved: 215 20% 30%;
+    --state-staged: 199 89% 55%;
+    --state-canary: 43 96% 56%;
+    --state-production: 160 60% 45%;
+    --state-archived: 240 5% 64.9%;
   }
 
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--focus));
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .target-transition {
+    transition-duration: var(--duration-standard);
+    transition-timing-function: var(--ease-standard);
+  }
+
+  .target-elevated {
+    background: hsl(var(--surface-elevated));
+    box-shadow: 0 1px 2px hsl(var(--foreground) / 0.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
   }
 }

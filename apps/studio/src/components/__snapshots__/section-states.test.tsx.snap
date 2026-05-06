@@ -31,7 +31,7 @@ exports[`section states > SectionError fires reset on Retry click 1`] = `
       class="mt-4 flex items-center gap-2"
     >
       <button
-        class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 border border-border bg-background hover:bg-muted h-10 px-4 py-2"
+        class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors duration-swift ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:pointer-events-none disabled:opacity-50 border border-border bg-background hover:bg-muted h-10 px-4 py-2"
       >
         Retry
       </button>

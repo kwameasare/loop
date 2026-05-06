@@ -30,6 +30,16 @@ export const COLOR_MUTED_FG = "hsl(var(--muted-foreground))";
 export const COLOR_PRIMARY = "hsl(var(--primary))";
 /** Destructive / error colour — `bg-destructive` utility class */
 export const COLOR_DESTRUCTIVE = "hsl(var(--destructive))";
+/** Accent surface colour — `bg-accent` utility class */
+export const COLOR_ACCENT = "hsl(var(--accent))";
+/** Elevated surface colour — `bg-surface-elevated` utility class */
+export const COLOR_SURFACE_ELEVATED = "hsl(var(--surface-elevated))";
+/** Success colour — `bg-success` utility class */
+export const COLOR_SUCCESS = "hsl(var(--success))";
+/** Warning colour — `bg-warning` utility class */
+export const COLOR_WARNING = "hsl(var(--warning))";
+/** Info colour — `bg-info` utility class */
+export const COLOR_INFO = "hsl(var(--info))";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fixed-palette trace span-kind colours
@@ -94,3 +104,172 @@ export const SPACE_4 = 16;
 export const SPACE_6 = 24;
 /** 32 px — tw: p-8 */
 export const SPACE_8 = 32;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Canonical target UX grammar
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const OBJECT_STATES = [
+  "draft",
+  "saved",
+  "staged",
+  "canary",
+  "production",
+  "archived",
+] as const;
+
+export type ObjectState = (typeof OBJECT_STATES)[number];
+
+export const OBJECT_STATE_TREATMENTS: Record<
+  ObjectState,
+  {
+    label: string;
+    shape: "dash" | "dot" | "ring" | "triangle" | "square" | "archive";
+    className: string;
+    textClassName: string;
+  }
+> = {
+  draft: {
+    label: "Draft",
+    shape: "dash",
+    className: "border-border bg-state-draft text-foreground",
+    textClassName: "text-muted-foreground",
+  },
+  saved: {
+    label: "Saved",
+    shape: "square",
+    className: "border-border bg-state-saved text-foreground",
+    textClassName: "text-foreground",
+  },
+  staged: {
+    label: "Staged",
+    shape: "dot",
+    className: "border-info bg-info/10 text-info",
+    textClassName: "text-info",
+  },
+  canary: {
+    label: "Canary",
+    shape: "triangle",
+    className: "border-warning bg-warning/10 text-warning",
+    textClassName: "text-warning",
+  },
+  production: {
+    label: "Production",
+    shape: "ring",
+    className: "border-success bg-success/10 text-success",
+    textClassName: "text-success",
+  },
+  archived: {
+    label: "Archived",
+    shape: "archive",
+    className: "border-border bg-muted text-muted-foreground",
+    textClassName: "text-muted-foreground",
+  },
+};
+
+export const TRUST_STATES = [
+  "healthy",
+  "watching",
+  "drifting",
+  "degraded",
+  "blocked",
+] as const;
+
+export type TrustState = (typeof TRUST_STATES)[number];
+
+export const TRUST_STATE_TREATMENTS: Record<
+  TrustState,
+  {
+    label: string;
+    shape: "check" | "eye" | "tilt" | "pulse" | "stop";
+    className: string;
+  }
+> = {
+  healthy: {
+    label: "Healthy",
+    shape: "check",
+    className: "border-success bg-success/10 text-success",
+  },
+  watching: {
+    label: "Watching",
+    shape: "eye",
+    className: "border-info bg-info/10 text-info",
+  },
+  drifting: {
+    label: "Drifting",
+    shape: "tilt",
+    className: "border-warning bg-warning/10 text-warning",
+  },
+  degraded: {
+    label: "Degraded",
+    shape: "pulse",
+    className: "border-warning bg-warning/15 text-warning",
+  },
+  blocked: {
+    label: "Blocked",
+    shape: "stop",
+    className: "border-destructive bg-destructive/10 text-destructive",
+  },
+};
+
+export const CONFIDENCE_LEVELS = ["high", "medium", "low", "unsupported"] as const;
+
+export type ConfidenceLevel = (typeof CONFIDENCE_LEVELS)[number];
+
+export const CONFIDENCE_TREATMENTS: Record<
+  ConfidenceLevel,
+  { label: string; barClassName: string; textClassName: string }
+> = {
+  high: {
+    label: "High confidence",
+    barClassName: "bg-success",
+    textClassName: "text-success",
+  },
+  medium: {
+    label: "Medium confidence",
+    barClassName: "bg-info",
+    textClassName: "text-info",
+  },
+  low: {
+    label: "Low confidence",
+    barClassName: "bg-warning",
+    textClassName: "text-warning",
+  },
+  unsupported: {
+    label: "Unsupported",
+    barClassName: "bg-destructive",
+    textClassName: "text-destructive",
+  },
+};
+
+export const TRACE_SPAN_SHAPES = {
+  server: "rounded",
+  client: "notched",
+  internal: "solid",
+  producer: "triangle",
+  consumer: "split",
+} as const;
+
+export const MOTION_TOKENS = {
+  flash: "var(--duration-flash)",
+  swift: "var(--duration-swift)",
+  standard: "var(--duration-standard)",
+  gentle: "var(--duration-gentle)",
+  standardEase: "var(--ease-standard)",
+  emphasizedEase: "var(--ease-emphasized)",
+} as const;
+
+export const DENSITY_TOKENS = {
+  compact: {
+    rowClassName: "min-h-8 gap-2 px-2 py-1 text-sm",
+    controlClassName: "h-8 rounded-md px-2 text-sm",
+  },
+  comfortable: {
+    rowClassName: "min-h-10 gap-3 px-3 py-2 text-sm",
+    controlClassName: "h-10 rounded-md px-3 text-sm",
+  },
+  presentation: {
+    rowClassName: "min-h-12 gap-4 px-4 py-3 text-base",
+    controlClassName: "h-11 rounded-md px-4 text-base",
+  },
+} as const;

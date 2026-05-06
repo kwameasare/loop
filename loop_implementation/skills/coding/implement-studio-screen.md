@@ -85,9 +85,11 @@ Touching `apps/studio/`. Studio is the public face of Loop's quality story; a sl
 
 ## Related skills
 
+- `ux/design-studio-surface.md` before implementation if the screen or workflow is ambiguous.
 - `ux/add-studio-component.md` if adding shared components.
 - `ux/add-design-token.md` if a token is needed.
 - `ux/write-ui-copy.md` for any user-facing string.
+- `ux/review-studio-ux.md` before PR review for high-impact Studio changes.
 - `api/update-openapi.md` if Studio drives a new API need.
 - `testing/write-e2e-test.md`.
 

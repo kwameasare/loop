@@ -1,16 +1,8 @@
-/**
- * S153: App shell wrapping every authed studio page.
- *
- * Layout:
- *   [ Sidebar | (Topbar / Content) ]
- *
- * The sidebar is fixed at 240px on md+ screens and collapses on
- * mobile (the basic markup keeps the structure responsive without
- * pulling in a drawer library). Pages render inside ``<main>``.
- */
-
 import type { ReactNode } from "react";
+import { ActivityTimeline } from "@/components/shell/activity-timeline";
+import { LivePreviewRail } from "@/components/shell/live-preview-rail";
 import { SidebarNav } from "@/components/shell/sidebar-nav";
+import { StatusFooter } from "@/components/shell/status-footer";
 import { Topbar } from "@/components/shell/topbar";
 
 interface AppShellProps {
@@ -20,15 +12,32 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   return (
     <div
-      className="flex min-h-screen flex-col md:flex-row"
+      className="grid min-h-screen grid-cols-1 bg-background text-foreground lg:grid-cols-[18rem_minmax(0,1fr)_23rem] lg:grid-rows-[auto_minmax(0,1fr)_auto_auto]"
       data-testid="app-shell"
     >
-      <aside className="border-b bg-muted/40 md:w-60 md:border-b-0 md:border-r">
+      <aside
+        className="border-b bg-surface lg:row-span-4 lg:border-b-0 lg:border-r"
+        aria-label="Asset rail"
+        data-testid="asset-rail"
+      >
         <SidebarNav />
       </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="lg:col-span-2">
         <Topbar />
-        <main className="flex-1">{children}</main>
+      </div>
+      <section
+        className="min-w-0 overflow-auto bg-background"
+        aria-label="Studio work surface"
+        data-testid="work-surface"
+      >
+        {children}
+      </section>
+      <LivePreviewRail />
+      <div className="lg:col-span-2">
+        <ActivityTimeline />
+      </div>
+      <div className="lg:col-span-2">
+        <StatusFooter />
       </div>
     </div>
   );

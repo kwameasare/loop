@@ -14,4 +14,15 @@ describe("Button", () => {
     const btn = screen.getByRole("button", { name: "Outline" });
     expect(btn.className).toMatch(/border/);
   });
+
+  it("supports target UX semantic variants and icon sizing", () => {
+    render(
+      <Button variant="danger" size="icon" aria-label="Rollback">
+        R
+      </Button>,
+    );
+    const btn = screen.getByRole("button", { name: "Rollback" });
+    expect(btn.className).toMatch(/destructive/);
+    expect(btn.className).toMatch(/h-9/);
+  });
 });

@@ -11,15 +11,30 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-import { SidebarNav, NAV_ITEMS } from "@/components/shell/sidebar-nav";
+import { NAV_ITEMS, NAV_SECTIONS, SidebarNav } from "@/components/shell/sidebar-nav";
 
 describe("SidebarNav", () => {
   it("renders a link per nav item", () => {
     render(<SidebarNav />);
     for (const item of NAV_ITEMS) {
       expect(
-        screen.getByTestId(`nav-${item.label.toLowerCase()}`),
+        screen.getByTestId(`nav-${item.id}`),
       ).toHaveAttribute("href", item.href);
+    }
+  });
+
+  it("renders the canonical six-verb IA", () => {
+    render(<SidebarNav />);
+    expect(NAV_SECTIONS.map((section) => section.label)).toEqual([
+      "Build",
+      "Test",
+      "Ship",
+      "Observe",
+      "Migrate",
+      "Govern",
+    ]);
+    for (const section of NAV_SECTIONS) {
+      expect(screen.getByTestId(`nav-section-${section.id}`)).toBeInTheDocument();
     }
   });
 

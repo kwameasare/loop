@@ -72,6 +72,28 @@ describe("design-tokens module", () => {
     expect(tokens.COLOR_BORDER).toMatch(/^hsl\(var\(--/);
     expect(tokens.COLOR_MUTED_FG).toMatch(/^hsl\(var\(--/);
     expect(tokens.COLOR_PRIMARY).toMatch(/^hsl\(var\(--/);
+    expect(tokens.COLOR_ACCENT).toMatch(/^hsl\(var\(--/);
+    expect(tokens.COLOR_SURFACE_ELEVATED).toMatch(/^hsl\(var\(--/);
+  });
+
+  it("exports canonical object-state and trust-state grammar", () => {
+    expect(tokens.OBJECT_STATES).toEqual([
+      "draft",
+      "saved",
+      "staged",
+      "canary",
+      "production",
+      "archived",
+    ]);
+    expect(tokens.OBJECT_STATE_TREATMENTS.production.shape).toBe("ring");
+    expect(tokens.TRUST_STATE_TREATMENTS.blocked.shape).toBe("stop");
+  });
+
+  it("exports non-color confidence and motion primitives", () => {
+    expect(tokens.CONFIDENCE_TREATMENTS.unsupported.label).toBe("Unsupported");
+    expect(tokens.TRACE_SPAN_SHAPES.producer).toBe("triangle");
+    expect(tokens.MOTION_TOKENS.standard).toBe("var(--duration-standard)");
+    expect(tokens.DENSITY_TOKENS.compact.controlClassName).toContain("h-8");
   });
 });
 

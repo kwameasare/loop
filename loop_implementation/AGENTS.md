@@ -43,7 +43,7 @@ Read in this order before doing any task:
 20. `tracker/TRACKER.md` — current epics, stories, sprints, hiring, risks
 21. `tracker/SPRINT_0.md` — week-by-week first six weeks
 22. `engineering/templates/` — ADR_TEMPLATE, RFC_TEMPLATE, RUNBOOK_TEMPLATE, SKILL_TEMPLATE (use when creating those)
-23. `skills/` — 40 task-specific skills + per-platform adapters (Claude, Codex, Copilot, Cursor, Aider, Windsurf, Continue.dev). Always start at `skills/_base/SKILL_ROUTER.md`.
+23. `skills/` — task-specific skills + per-platform adapters (Claude, Codex, Copilot, Cursor, Aider, Windsurf, Continue.dev). Always start at `skills/_base/SKILL_ROUTER.md`.
 
 ---
 
@@ -147,7 +147,7 @@ When given a task, do the following IN ORDER:
 9. **Tracker AFTER — close the story.** Edit `tools/build_tracker.py` to set status `Done` + structured "Done" notes (PR #, branch, final heartbeat). Regenerate companions. Commit as `chore(tracker): close S0NN` — last commit on your branch.
 10. **End with `skills/meta/write-pr.md`** to open the PR correctly. The pre-merge checklist verifies the claim+close commits exist.
 
-For multi-skill tasks, follow the order listed in `skills/_base/SKILL_ROUTER.md` "Multi-skill tasks": Decision → Data → API → Coding → Testing → Security/Observability → UX → Meta. The tracker claim happens once at the top and the close happens once at the bottom — not per skill.
+For multi-skill tasks, follow the order listed in `skills/_base/SKILL_ROUTER.md` "Multi-skill tasks": Decision -> UX design -> Data -> API -> Coding -> UX support -> Testing -> Security/Observability -> UX review -> Meta. The tracker claim happens once at the top and the close happens once at the bottom, not per skill.
 
 ---
 

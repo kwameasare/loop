@@ -79,7 +79,7 @@ See `loop_implementation/skills/_base/SKILL_ROUTER.md` for the Task → Skill de
 - security (error-code, threat-model, audit-event, secrets-kms)
 - testing (unit, integration, e2e, eval-suite, perf)
 - observability (otel-span, metric, runbook)
-- ux (component, design-token, ui-copy)
+- ux (surface-design, ux-review, component, design-token, ui-copy)
 - ops (deploy, rollback, incident, dr-drill)
 - devrel (docs-page, publish-mcp-server)
 

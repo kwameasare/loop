@@ -159,8 +159,10 @@ For other tools, see the respective entry under `platforms/`.
 
 | Skill | Trigger |
 |-------|---------|
-| [`ux/add-studio-component.md`](ux/add-studio-component.md) | New React component in Studio. |
-| [`ux/add-design-token.md`](ux/add-design-token.md) | Color, spacing, typography token. |
+| [`ux/design-studio-surface.md`](ux/design-studio-surface.md) | New or redesigned Studio screen, workflow, or high-impact interaction. |
+| [`ux/review-studio-ux.md`](ux/review-studio-ux.md) | UX/UI review against the canonical target standard. |
+| [`ux/add-studio-component.md`](ux/add-studio-component.md) | Reusable Studio component or target-standard primitive. |
+| [`ux/add-design-token.md`](ux/add-design-token.md) | Color, spacing, typography, motion, density, or status token. |
 | [`ux/write-ui-copy.md`](ux/write-ui-copy.md) | Any user-facing string. |
 
 ### Ops

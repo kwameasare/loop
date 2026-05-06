@@ -1,29 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Suspense } from "react";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { AppErrorBoundary } from "@/components/error-boundary";
-import { WorkspaceMembersLink } from "@/components/shell/workspace-members-link";
-import { WorkspaceSwitcher } from "@/components/shell/workspace-switcher";
+import { AppShell } from "@/components/shell/app-shell";
 import { ToastProvider } from "@/lib/toast";
-
-/**
- * Top-level section links. Each entry must point at a route that has its
- * own ``page.tsx`` (verified at edit time) so a click never lands on a
- * dynamic-route 404. The "real" navigation (workspace switcher, search,
- * search-anywhere) lives behind stories in epic E10; until then this
- * gives reviewers a way to walk the studio without typing URLs.
- */
-const NAV_LINKS: ReadonlyArray<{ href: string; label: string }> = [
-  { href: "/agents", label: "Agents" },
-  { href: "/workspaces/new", label: "Workspaces" },
-  { href: "/inbox", label: "Inbox" },
-  { href: "/traces", label: "Traces" },
-  { href: "/costs", label: "Costs" },
-  { href: "/billing", label: "Billing" },
-  { href: "/evals", label: "Evals" },
-];
 
 export const metadata: Metadata = {
   title: "Loop Studio",
@@ -74,37 +54,7 @@ export default function RootLayout({
         <ToastProvider>
           <AuthProvider {...(auth0Config ? { config: auth0Config } : {})}>
             <AppErrorBoundary>
-              <header className="border-border bg-background sticky top-0 z-10 border-b">
-                <nav
-                  aria-label="Studio sections"
-                  className="container mx-auto flex h-14 items-center gap-1 px-4 text-sm"
-                >
-                  <Link
-                    href="/"
-                    className="hover:text-foreground/90 mr-4 font-semibold tracking-tight"
-                  >
-                    Loop Studio
-                  </Link>
-                  <Suspense
-                    fallback={<div className="mr-2 h-9 w-56" aria-hidden="true" />}
-                  >
-                    <div className="mr-2 flex items-center gap-2">
-                      <WorkspaceSwitcher />
-                      <WorkspaceMembersLink />
-                    </div>
-                  </Suspense>
-                  {NAV_LINKS.map(({ href, label }) => (
-                    <Link
-                      key={href}
-                      href={href}
-                      className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-md px-3 py-1.5 transition-colors"
-                    >
-                      {label}
-                    </Link>
-                  ))}
-                </nav>
-              </header>
-              {children}
+              <AppShell>{children}</AppShell>
             </AppErrorBoundary>
           </AuthProvider>
         </ToastProvider>

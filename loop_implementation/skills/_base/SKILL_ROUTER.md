@@ -80,6 +80,8 @@ Then, the skill-specific `required_reading`.
 | Add an OTel span | `observability/add-otel-span.md` |
 | Add a Prometheus metric | `observability/add-metric.md` |
 | Codify response to a recurring failure | `observability/add-runbook.md` |
+| Design or redesign a Studio screen/workflow before implementation | `ux/design-studio-surface.md` |
+| Review Studio UX/UI against the canonical target | `ux/review-studio-ux.md` |
 | Add a Studio React component | `ux/add-studio-component.md` |
 | Add a design token (color, spacing, typography) | `ux/add-design-token.md` |
 | Author user-facing copy (UI, errors, docs) | `ux/write-ui-copy.md` |
@@ -104,20 +106,22 @@ Then, the skill-specific `required_reading`.
 Most tasks span at least two skills:
 
 - *"Add a `/v1/budgets/{id}/snooze` endpoint"* → `api/add-rest-endpoint.md` + `data/add-postgres-migration.md` (if it touches DB) + `security/add-audit-event.md` + `testing/write-integration-test.md` + `meta/write-pr.md`.
-- *"Implement the operator inbox"* → `coding/implement-studio-screen.md` + `api/add-rest-endpoint.md` + `data/add-pydantic-type.md` + `ux/add-studio-component.md` + `ux/write-ui-copy.md` + `meta/write-pr.md`.
+- *"Implement the operator inbox"* -> `ux/design-studio-surface.md` + `coding/implement-studio-screen.md` + `api/add-rest-endpoint.md` + `data/add-pydantic-type.md` + `ux/add-studio-component.md` + `ux/write-ui-copy.md` + `ux/review-studio-ux.md` + `meta/write-pr.md`.
 - *"Add Discord channel"* → `coding/implement-channel-adapter.md` + `data/add-postgres-migration.md` (if it adds tables) + `security/secrets-kms-check.md` + `testing/write-integration-test.md` + `testing/write-e2e-test.md`.
 - *"Move from pgvector to a sharded Qdrant cluster"* → `architecture/propose-adr.md` (new ADR) + `architecture/update-architecture.md` + `coding/implement-kb-feature.md` + `data/update-schema.md` + `testing/perf-check.md`.
 
 When skills overlap, follow them in this order:
 
 1. **Decision** (architecture/propose-adr) if the change is non-trivial.
-2. **Data** (data/* skills) — schema must settle first.
-3. **API** (api/* skills) — public contract.
-4. **Coding** (coding/* skills) — implementation.
-5. **Testing** (testing/* skills) — every layer.
-6. **Security** + **Observability** (cross-cutting; threaded through coding).
-7. **UX** (ux/* skills) — once data + API are stable.
-8. **Meta** (meta/* skills) — PR + tracker last.
+2. **UX design** (`ux/design-studio-surface.md`) before coding when the screen or workflow is ambiguous.
+3. **Data** (data/* skills) — schema must settle before implementation.
+4. **API** (api/* skills) — public contract.
+5. **Coding** (coding/* skills) — implementation.
+6. **UX implementation support** (`ux/add-studio-component.md`, `ux/add-design-token.md`, `ux/write-ui-copy.md`) during coding.
+7. **Testing** (testing/* skills) — every layer.
+8. **Security** + **Observability** (cross-cutting; threaded through coding).
+9. **UX review** (`ux/review-studio-ux.md`) before PR review for high-impact Studio changes.
+10. **Meta** (meta/* skills) — PR + tracker last.
 
 ---
 

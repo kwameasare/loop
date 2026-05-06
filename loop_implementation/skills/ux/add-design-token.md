@@ -1,57 +1,136 @@
 ---
 name: add-design-token
-description: Use when adding or changing a design token — color, spacing, radius, typography.
+description: Use when adding or changing a Studio design token for color, typography, spacing, radius, elevation, motion, density, or status treatment.
 when_to_use: |
-  - Adding a new semantic color.
-  - Tightening or loosening a spacing scale.
-  - Adding a radius or elevation tier.
+  - Adding or changing a semantic color, status treatment, typography scale, spacing, radius, elevation, shadow, motion duration, easing curve, or density token.
+  - Converting repeated raw values into a token.
+  - Implementing visual language from the canonical target UX standard.
+  - Adding accessibility-safe variants for reduced motion, high contrast, color-blind safety, or density.
 required_reading:
-  - ux/00_CANONICAL_TARGET_UX_STANDARD.md   # §28 visual language and §29 motion
+  - ux/00_CANONICAL_TARGET_UX_STANDARD.md
+  - engineering/HANDBOOK.md
 applies_to: ux
-owner: Designer + Founding Eng #5
-last_reviewed: 2026-04-29
+owner: Product Design + Founding Eng #5
+last_reviewed: 2026-05-06
 ---
 
-# Add design token
+# Add Design Token
 
 ## Trigger
 
-Tokens are the boundary between "design" and "code." Add carefully — every token is forever.
+Use this skill when a Studio visual or motion decision needs to become reusable code. Tokens are the bridge between the canonical target UX and implementation. Add them carefully: every token creates a vocabulary future contributors will use.
 
-## Required reading
+## Required Reading
 
-`ux/00_CANONICAL_TARGET_UX_STANDARD.md` §28-29.
+1. `ux/00_CANONICAL_TARGET_UX_STANDARD.md`, especially:
+   - Section 28, Visual Language
+   - Section 29, Motion, Tactility, And Sound
+   - Section 30, Accessibility And Inclusion
+   - Section 31, Responsive Modes
+   - Section 32, States And Copy
+   - Section 42, Evolution
+2. Existing app token files:
+   - `apps/studio/src/app/globals.css` or current global CSS path
+   - `apps/studio/tailwind.config.*` if present
+   - existing component styles that use the relevant token family
+
+## Token Decision Rules
+
+Add or change a token only when at least one is true:
+
+- The value appears in two or more places.
+- The value expresses a canonical product state such as Live, Canary, Pending review, Approved, Mocked, Stale, Needs your eyes, Read-only, Risk, or Evidence.
+- The value supports a named motion or polish primitive such as FocusPulse, MetricCountUp, StageStepper, EvidenceCallout, ConfidenceMeter, DiffRibbon, LiveBadge, CompletionMark, or RiskHalo.
+- The value is required for accessibility, reduced motion, high contrast, density, or color-blind safety.
+- Product Design explicitly promotes the value from local styling to the system.
+
+Do not add a token for a one-off flourish.
 
 ## Steps
 
-1. **Justify**: tokens are added when ≥ 2 places use the same value. One-off colors stay inline.
-2. **Naming**: semantic, not literal. `color.brand.primary`, not `color.navy_0F1E3A`.
-3. **Define in two places:**
-   - CSS variable in `apps/studio/app/globals.css`.
-   - Tailwind config in `apps/studio/tailwind.config.ts`.
-4. **Dark + light modes:** every color token has both values. Use `:root` + `[data-theme="dark"]`.
-5. **Document** in the app design system and update `ux/00_CANONICAL_TARGET_UX_STANDARD.md` if the token changes the target visual language.
-6. **Tests:** Storybook visual snapshot on the design-system page.
+1. **Classify the token.**
+   - color
+   - typography
+   - spacing
+   - radius
+   - elevation/shadow
+   - motion duration
+   - motion curve
+   - opacity
+   - density
+   - status treatment
+   - chart/trace shape or pattern
 
-## Definition of done
+2. **Name it semantically.**
+   Use product meaning, not raw appearance:
+   - Good: `color.status.canary.bg`
+   - Good: `motion.duration.expressive`
+   - Good: `radius.control`
+   - Avoid: `color.orange500`
+   - Avoid: `duration.400`
 
-- [ ] Tracker story claimed before work (status `In progress`) and closed after (`Done` + PR ref) — see `meta/update-tracker.md`.
-- [ ] Used in ≥ 2 places.
-- [ ] Semantic name.
-- [ ] Both modes defined.
-- [ ] Reflected in 00_CANONICAL_TARGET_UX_STANDARD.md if it changes the target visual language.
-- [ ] Storybook snapshot updated.
+3. **Check the canonical visual constraints.**
+   - Avoid one-note palettes.
+   - Status cannot rely on color alone.
+   - Cards stay restrained; do not create new decorative card styles casually.
+   - Motion must clarify cause/effect.
+   - Reduced motion is first-class.
+   - No confetti, particle effects, bokeh/orb backgrounds, or childish bounce.
 
-## Anti-patterns
+4. **Define implementation values in the app design system.**
+   - CSS variables for runtime theming.
+   - Tailwind theme extension if Tailwind consumes it.
+   - TypeScript token map only if components need typed access.
+   - Light and dark values where relevant.
+   - High-contrast/reduced-motion alternatives where relevant.
 
-- ❌ Literal naming (`color_blue_500`).
-- ❌ Single-mode token.
-- ❌ Inline use of the token's underlying hex bypassing the variable.
+5. **Prove contrast and accessibility.**
+   - Text contrast meets WCAG 2.2 AA.
+   - Focus treatment is visible in dark and light themes.
+   - Color-blind simulations remain distinguishable when the token represents state.
+   - Motion token has reduced-motion fallback.
 
-## Related skills
+6. **Replace repeated raw values.**
+   Convert the target call sites in the same change if safe. Do not leave a token unused unless it is part of a larger staged migration and the PR explains why.
 
-- `ux/add-studio-component.md`.
+7. **Document at the right level.**
+   - Implementation details belong in app design-system docs or Storybook.
+   - `ux/00_CANONICAL_TARGET_UX_STANDARD.md` changes only when the target visual language itself changes.
+   - Section 42 says exact token tables can move out of the canonical target as the design system matures.
+
+8. **Verify visually.**
+   - Run relevant unit/story tests if available.
+   - Inspect dark, light, reduced-motion, and high-contrast states.
+   - Check at least one dense table/list and one spacious surface if the token affects layout.
+
+## Definition Of Done
+
+- [ ] Token is justified by reuse, product state, accessibility, or explicit design-system need.
+- [ ] Name is semantic and stable.
+- [ ] Dark/light values exist where relevant.
+- [ ] Reduced-motion/high-contrast alternatives exist where relevant.
+- [ ] Status treatment has non-color support where relevant.
+- [ ] Existing raw values were replaced where safe.
+- [ ] Visual checks or screenshots cover the token's real use.
+- [ ] Canonical target doc updated only if the target visual language changed.
+
+## Anti-Patterns
+
+- Literal token names such as `blue500` for product semantics.
+- Single-use tokens created to justify a one-off visual.
+- New accent colors that weaken the trust palette.
+- Color-only status tokens.
+- Motion tokens that enable decorative animation without state meaning.
+- Tokens added to the canonical target doc when they belong in implementation docs.
+- Raw hex added to components after a semantic token exists.
+
+## Related Skills
+
+- `ux/add-studio-component.md` when a token supports a reusable component.
+- `ux/design-studio-surface.md` when token changes affect a whole surface.
+- `ux/review-studio-ux.md` for visual and accessibility review.
 
 ## References
 
-- `ux/00_CANONICAL_TARGET_UX_STANDARD.md` §28-29.
+- `ux/00_CANONICAL_TARGET_UX_STANDARD.md`
+- `engineering/HANDBOOK.md`

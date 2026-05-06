@@ -6,7 +6,7 @@
 
 This folder is the engineering team's Day-1 package for building Loop — the open-source, agent-first, **cloud-agnostic** runtime for production AI agents that competes with Botpress. It is the *implementation* counterpart to the strategic [`botpress_competitor_spec.md`](../botpress_competitor_spec.md) one folder up.
 
-**For AI coding agents:** start at [`AGENTS.md`](AGENTS.md), then [`skills/_base/SKILL_ROUTER.md`](skills/_base/SKILL_ROUTER.md). The 40 skills in `skills/` cover every recurring task — pick the matching one from the Task → Skill table and follow its checklist. Per-platform adapter files for Claude, Codex, GitHub Copilot, Cursor, Aider, Windsurf, and Continue.dev are in [`skills/platforms/`](skills/platforms/). All canonical docs are Markdown. Don't touch `.docx`, `.pptx`, or `.xlsx` directly — they're derived exports.
+**For AI coding agents:** start at [`AGENTS.md`](AGENTS.md), then [`skills/_base/SKILL_ROUTER.md`](skills/_base/SKILL_ROUTER.md). The skills in `skills/` cover recurring tasks — pick the matching one from the Task → Skill table and follow its checklist. Per-platform adapter files for Claude, Codex, GitHub Copilot, Cursor, Aider, Windsurf, and Continue.dev are in [`skills/platforms/`](skills/platforms/). All canonical docs are Markdown. Don't touch `.docx`, `.pptx`, or `.xlsx` directly — they're derived exports.
 
 **Cloud:** Loop is cloud-agnostic by construction. Runs on AWS, Azure, GCP, Alibaba Cloud, OVHcloud, or self-hosted Kubernetes — same code, same Helm chart, configured per environment. See [`architecture/CLOUD_PORTABILITY.md`](architecture/CLOUD_PORTABILITY.md) and ADR-016.
 
@@ -60,7 +60,7 @@ loop_implementation/
 │   ├── csv/                           Per-sheet CSVs (epics.csv · stories.csv · sprints.csv · hiring.csv · risks.csv · roadmap.csv · budgets.csv · overview.csv)
 │   └── IMPLEMENTATION_TRACKER.xlsx    Same content as a spreadsheet (humans / Excel / Sheets)
 │
-├── skills/                            ★ 40 task-specific skills (Claude-Skill format) + per-platform adapters
+├── skills/                            ★ Task-specific skills (Claude-Skill format) + per-platform adapters
 │   ├── README.md                      Skill catalog + how to use per platform
 │   ├── _base/SKILL_ROUTER.md          The base skill — read first; routes you to the right specific skill
 │   ├── meta/                          write-pr · update-tracker · verify-doc-consistency
@@ -71,7 +71,7 @@ loop_implementation/
 │   ├── security/                      error-code · threat-model · audit-event · secrets-kms-check
 │   ├── testing/                       unit · integration · e2e · eval-suite · perf-check
 │   ├── observability/                 otel-span · metric · runbook
-│   ├── ux/                            studio-component · design-token · ui-copy
+│   ├── ux/                            surface-design · ux-review · studio-component · design-token · ui-copy
 │   ├── ops/                           deploy · rollback · triage-incident · dr-drill
 │   ├── devrel/                        docs-page · publish-mcp-server
 │   └── platforms/                     Adapter files for Claude, Codex, GitHub Copilot, Cursor, Aider, Windsurf, Continue.dev
