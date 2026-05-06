@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
 import { Suspense } from "react";
 
+import { CommandPaletteLauncher } from "@/components/command";
 import { LiveBadge } from "@/components/target";
 import { UserMenu } from "@/components/shell/user-menu";
 import { WorkspaceMembersLink } from "@/components/shell/workspace-members-link";
@@ -45,16 +45,7 @@ export function Topbar() {
         </LiveBadge>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <button
-          type="button"
-          className="inline-flex h-9 items-center gap-2 rounded-md border bg-card px-3 text-sm font-medium text-muted-foreground transition-colors duration-swift ease-standard hover:text-foreground"
-        >
-          <Search className="h-4 w-4" aria-hidden={true} />
-          <span className="hidden sm:inline">Command</span>
-          <kbd className="hidden rounded bg-muted px-1.5 py-0.5 text-[0.68rem] font-medium text-muted-foreground lg:inline">
-            K
-          </kbd>
-        </button>
+        <CommandPaletteLauncher />
         <UserMenu />
       </div>
     </header>
