@@ -9,12 +9,13 @@ describe("AgentTabs", () => {
     const tabs = screen.getAllByRole("tab");
     expect(tabs).toHaveLength(AGENT_TABS.length);
     expect(tabs[0]).toHaveAttribute("href", "/agents/agt_42");
-    expect(tabs[1]).toHaveAttribute("href", "/agents/agt_42/versions");
-    expect(tabs[2]).toHaveAttribute("href", "/agents/agt_42/channels");
-    expect(tabs[3]).toHaveAttribute("href", "/agents/agt_42/tools");
-    expect(tabs[4]).toHaveAttribute("href", "/agents/agt_42/kb");
-    expect(tabs[5]).toHaveAttribute("href", "/agents/agt_42/deploys");
-    expect(tabs[6]).toHaveAttribute("href", "/agents/agt_42/secrets");
+    expect(tabs[1]).toHaveAttribute("href", "/agents/agt_42/behavior");
+    expect(tabs[2]).toHaveAttribute("href", "/agents/agt_42/versions");
+    expect(tabs[3]).toHaveAttribute("href", "/agents/agt_42/channels");
+    expect(tabs[4]).toHaveAttribute("href", "/agents/agt_42/tools");
+    expect(tabs[5]).toHaveAttribute("href", "/agents/agt_42/kb");
+    expect(tabs[6]).toHaveAttribute("href", "/agents/agt_42/deploys");
+    expect(tabs[7]).toHaveAttribute("href", "/agents/agt_42/secrets");
   });
 
   it("marks the overview tab active for the bare agent route", () => {
