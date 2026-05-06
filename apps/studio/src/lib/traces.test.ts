@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fetchTraceByTurnId,
   formatDurationNs,
+  formatUsd,
+  getTrace,
   layoutTrace,
   searchTraces,
   type Trace,
@@ -14,6 +16,7 @@ const trace: Trace = {
       id: "root",
       parent_id: null,
       name: "root",
+      category: "channel",
       kind: "server",
       service: "x",
       start_ns: 0,
@@ -26,6 +29,7 @@ const trace: Trace = {
       id: "child2",
       parent_id: "root",
       name: "child2",
+      category: "tool",
       kind: "internal",
       service: "x",
       start_ns: 500,
@@ -38,6 +42,7 @@ const trace: Trace = {
       id: "child1",
       parent_id: "root",
       name: "child1",
+      category: "retrieval",
       kind: "internal",
       service: "x",
       start_ns: 100,
@@ -87,6 +92,48 @@ describe("formatDurationNs", () => {
   });
 });
 
+describe("formatUsd", () => {
+  it("keeps trace-level precision for small costs", () => {
+    expect(formatUsd(0.0042)).toBe("$0.0042");
+    expect(formatUsd(12)).toBe("$12.00");
+  });
+});
+
+describe("getTrace", () => {
+  it("builds the canonical trace fixture from target UX fixtures", async () => {
+    const trace = await getTrace("trace_refund_742");
+    expect(trace?.summary).toMatchObject({
+      outcome: "Answered with grounded cancellation steps; no refund issued.",
+      model: "gpt-4.1-mini",
+      tool_count: 1,
+      retrieval_count: 2,
+      memory_writes: 1,
+      eval_score: 96,
+    });
+    expect(trace?.spans.map((span) => span.category)).toEqual(
+      expect.arrayContaining([
+        "channel",
+        "retrieval",
+        "tool",
+        "llm",
+        "memory",
+        "eval",
+      ]),
+    );
+  });
+
+  it("includes an unsupported explanation instead of invented reasoning", async () => {
+    const trace = await getTrace("trace_refund_742");
+    expect(
+      trace?.explanations?.some(
+        (explanation) =>
+          explanation.confidence_level === "unsupported" &&
+          explanation.statement.includes("Unsupported"),
+      ),
+    ).toBe(true);
+  });
+});
+
 import { listTraces, formatTraceTimestamp, type TraceSummary } from "./traces";
 
 const baseRow: Omit<TraceSummary, "id" | "started_at_ms"> = {
@@ -131,11 +178,23 @@ describe("listTraces", () => {
   it("free-text search matches id, agent_name, root_name", () => {
     const rows: TraceSummary[] = [
       { ...baseRow, id: "trc_alpha_1", started_at_ms: 1 },
-      { ...baseRow, id: "trc_other", started_at_ms: 2, agent_name: "Beta", root_name: "GET /v1/health" },
+      {
+        ...baseRow,
+        id: "trc_other",
+        started_at_ms: 2,
+        agent_name: "Beta",
+        root_name: "GET /v1/health",
+      },
     ];
-    expect(listTraces(rows, { q: "alpha" }).traces.map((t) => t.id)).toEqual(["trc_alpha_1"]);
-    expect(listTraces(rows, { q: "beta" }).traces.map((t) => t.id)).toEqual(["trc_other"]);
-    expect(listTraces(rows, { q: "health" }).traces.map((t) => t.id)).toEqual(["trc_other"]);
+    expect(listTraces(rows, { q: "alpha" }).traces.map((t) => t.id)).toEqual([
+      "trc_alpha_1",
+    ]);
+    expect(listTraces(rows, { q: "beta" }).traces.map((t) => t.id)).toEqual([
+      "trc_other",
+    ]);
+    expect(listTraces(rows, { q: "health" }).traces.map((t) => t.id)).toEqual([
+      "trc_other",
+    ]);
   });
 
   it("clamps page beyond available pages", () => {
@@ -147,7 +206,9 @@ describe("listTraces", () => {
 
 describe("formatTraceTimestamp", () => {
   it("renders MMM D HH:MM UTC", () => {
-    expect(formatTraceTimestamp(Date.UTC(2026, 3, 15, 9, 5))).toBe("Apr 15 09:05 UTC");
+    expect(formatTraceTimestamp(Date.UTC(2026, 3, 15, 9, 5))).toBe(
+      "Apr 15 09:05 UTC",
+    );
   });
 });
 

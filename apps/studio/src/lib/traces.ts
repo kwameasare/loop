@@ -1,3 +1,5 @@
+import { targetUxFixtures } from "@/lib/target-ux";
+
 /**
  * Trace types + fixture data.
  *
@@ -19,10 +21,67 @@ export type SpanEvent = {
   attributes?: Record<string, string | number | boolean>;
 };
 
+export type TraceSpanCategory =
+  | "llm"
+  | "tool"
+  | "retrieval"
+  | "memory"
+  | "channel"
+  | "voice"
+  | "sub_agent"
+  | "retry"
+  | "provider_failover"
+  | "budget"
+  | "policy"
+  | "eval"
+  | "deploy";
+
+export type TraceJsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | TraceJsonValue[]
+  | { [key: string]: TraceJsonValue };
+
+export type TracePayload = Record<string, TraceJsonValue>;
+
+export type TraceRedaction = {
+  field: string;
+  reason: string;
+  replacement: string;
+  evidence: string;
+};
+
+export type TraceCostMath = {
+  prompt_tokens: number;
+  completion_tokens: number;
+  input_usd: number;
+  output_usd: number;
+  tool_usd: number;
+  total_usd: number;
+  budget_source: string;
+};
+
+export type TraceRetry = {
+  attempt: number;
+  status: "ok" | "error" | "timeout";
+  latency_ns: number;
+  evidence: string;
+};
+
+export type TraceSpanLinks = {
+  logs: string[];
+  eval_cases: string[];
+  migration_source?: string;
+  deploy_version?: string;
+};
+
 export type Span = {
   id: string;
   parent_id: string | null;
   name: string;
+  category: TraceSpanCategory;
   kind: SpanKind;
   service: string;
   start_ns: number;
@@ -30,10 +89,49 @@ export type Span = {
   status: "ok" | "error" | "unset";
   attributes: Record<string, string | number | boolean>;
   events: SpanEvent[];
+  input?: TracePayload;
+  output?: TracePayload;
+  raw_payload?: TracePayload;
+  normalized_payload?: TracePayload;
+  redactions?: TraceRedaction[];
+  cost?: TraceCostMath;
+  retry_history?: TraceRetry[];
+  links?: TraceSpanLinks;
+};
+
+export type TraceExplanation = {
+  id: string;
+  title: string;
+  statement: string;
+  evidence: string;
+  source_span_id: string;
+  confidence: number;
+  confidence_level: "high" | "medium" | "low" | "unsupported";
+};
+
+export type TraceDetailSummary = {
+  outcome: string;
+  agent_name: string;
+  environment: string;
+  channel: string;
+  provider: string;
+  model: string;
+  deploy_version: string;
+  snapshot_id: string;
+  total_latency_ns: number;
+  total_cost_usd: number;
+  tool_count: number;
+  retrieval_count: number;
+  memory_writes: number;
+  eval_score: number | null;
+  eval_suite: string | null;
 };
 
 export type Trace = {
   id: string;
+  title?: string;
+  summary?: TraceDetailSummary;
+  explanations?: TraceExplanation[];
   spans: Span[];
 };
 
@@ -92,10 +190,7 @@ export function layoutTrace(trace: Trace): TraceLayout {
         span,
         depth,
         offset: (span.start_ns - startNs) / duration,
-        width: Math.max(
-          0.001,
-          (span.end_ns - span.start_ns) / duration,
-        ),
+        width: Math.max(0.001, (span.end_ns - span.start_ns) / duration),
       });
       walk(span.id, depth + 1);
     }
@@ -118,59 +213,497 @@ export function formatDurationNs(ns: number): string {
   return `${(ns / 1_000_000_000).toFixed(2)}s`;
 }
 
-const FIXTURE_TRACE: Trace = {
-  id: "trc_demo_001",
-  spans: [
+export function formatUsd(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    currency: "USD",
+    maximumFractionDigits: 4,
+    minimumFractionDigits: amount < 0.01 && amount > 0 ? 4 : 2,
+    style: "currency",
+  }).format(amount);
+}
+
+const NS_PER_MS = 1_000_000;
+
+function ms(ms: number): number {
+  return ms * NS_PER_MS;
+}
+
+function buildFixtureTrace(): Trace {
+  const targetTrace = targetUxFixtures.traces[0]!;
+  const agent =
+    targetUxFixtures.agents.find((item) => item.id === targetTrace.agentId) ??
+    targetUxFixtures.agents[0]!;
+  const deploy =
+    targetUxFixtures.deploys.find(
+      (item) => item.agentId === targetTrace.agentId,
+    ) ?? targetUxFixtures.deploys[0]!;
+  const evalSuite = targetUxFixtures.evals[0]!;
+  const targetContext = targetTrace.spans.find(
+    (span) => span.id === "span_context",
+  )!;
+  const targetTool = targetTrace.spans.find((span) => span.id === "span_tool")!;
+  const targetAnswer = targetTrace.spans.find(
+    (span) => span.id === "span_answer",
+  )!;
+
+  const spans: Span[] = [
     {
-      id: "s1",
+      id: "span_turn",
       parent_id: null,
-      name: "POST /v1/agents/agt_support/turns",
+      name: "web.turn.accepted",
+      category: "channel",
       kind: "server",
       service: "runtime",
-      start_ns: 0,
-      end_ns: 850_000_000,
+      start_ns: ms(0),
+      end_ns: ms(1_030),
       status: "ok",
-      attributes: { "http.method": "POST", "http.status_code": 200 },
-      events: [],
+      attributes: {
+        channel: agent.channel,
+        environment: targetUxFixtures.workspace.environment,
+        trace_id: targetTrace.id,
+      },
+      events: [{ name: "turn_started", timestamp_ns: ms(0) }],
+      input: {
+        user_message: "I need to cancel my annual renewal before it bills.",
+        channel: agent.channel,
+      },
+      output: {
+        outcome: "answered with retention-policy handoff",
+        trace_id: targetTrace.id,
+      },
+      raw_payload: {
+        headers: {
+          "x-loop-trace": targetTrace.id,
+          authorization: "[redacted]",
+        },
+        body: {
+          message: "I need to cancel my annual renewal before it bills.",
+          customer_email: "j.morgan@example.com",
+        },
+      },
+      normalized_payload: {
+        turn_id: "turn_refund_742",
+        message_text: "I need to cancel my annual renewal before it bills.",
+        pii_fields: ["customer_email"],
+      },
+      redactions: [
+        {
+          field: "headers.authorization",
+          reason: "credential",
+          replacement: "[redacted]",
+          evidence: "Gateway redaction policy pii_and_secret_v4",
+        },
+        {
+          field: "body.customer_email",
+          reason: "PII",
+          replacement: "[email]",
+          evidence: "Runtime PII classifier matched email pattern",
+        },
+      ],
+      cost: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        input_usd: 0,
+        output_usd: 0,
+        tool_usd: 0,
+        total_usd: 0,
+        budget_source: "workspace daily trace budget",
+      },
+      retry_history: [],
+      links: {
+        logs: ["runtime.turn.accepted trace_refund_742"],
+        eval_cases: [evalSuite.id],
+        deploy_version: targetTrace.version,
+      },
     },
     {
-      id: "s2",
-      parent_id: "s1",
-      name: "kb.retrieve",
-      kind: "internal",
+      id: targetContext.id,
+      parent_id: "span_turn",
+      name: "kb.retrieve.refund_policy",
+      category: "retrieval",
+      kind: targetContext.kind,
       service: "kb-engine",
-      start_ns: 30_000_000,
-      end_ns: 220_000_000,
-      status: "ok",
-      attributes: { top_k: 5, alpha: 0.5 },
-      events: [{ name: "cache_miss", timestamp_ns: 35_000_000 }],
+      start_ns: ms(targetContext.startedAtMs),
+      end_ns: ms(targetContext.startedAtMs + targetContext.durationMs),
+      status: targetContext.status,
+      attributes: {
+        top_k: 5,
+        retrieved_chunks: 2,
+        source: "refund_policy_2026.pdf",
+      },
+      events: [
+        {
+          name: "chunk_ranked",
+          timestamp_ns: ms(targetContext.startedAtMs + 44),
+          attributes: { chunk: "refund_policy_2026.pdf#p4", rank: 1 },
+        },
+      ],
+      input: {
+        query: "cancel annual renewal refund policy",
+        filters: ["production", "refunds"],
+      },
+      output: {
+        top_chunk: "refund_policy_2026.pdf#p4",
+        second_chunk: "refund_policy_2024.pdf#p2",
+        evidence: targetContext.evidence ?? "",
+      },
+      raw_payload: {
+        qdrant_collection: "acme_support_knowledge",
+        query_vector: "[768 floats omitted]",
+      },
+      normalized_payload: {
+        chunks: [
+          {
+            id: "refund_policy_2026.pdf#p4",
+            score: 0.91,
+            quote: "Annual renewals can be cancelled before renewal capture.",
+          },
+          {
+            id: "refund_policy_2024.pdf#p2",
+            score: 0.78,
+            quote: "Older renewal language, retained for migration parity.",
+          },
+        ],
+      },
+      redactions: [],
+      cost: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        input_usd: 0,
+        output_usd: 0,
+        tool_usd: 0.0016,
+        total_usd: 0.0016,
+        budget_source: "retrieval line item cost_tools",
+      },
+      retry_history: [],
+      links: {
+        logs: ["kb.retrieve trace_refund_742 span_context"],
+        eval_cases: [evalSuite.id],
+        migration_source: targetUxFixtures.migrations[0]!.id,
+        deploy_version: targetTrace.version,
+      },
     },
     {
-      id: "s3",
-      parent_id: "s1",
-      name: "llm.complete",
-      kind: "client",
-      service: "gateway",
-      start_ns: 230_000_000,
-      end_ns: 800_000_000,
-      status: "ok",
-      attributes: { model: "gpt-4o-mini", tokens_out: 142 },
-      events: [],
-    },
-    {
-      id: "s4",
-      parent_id: "s3",
-      name: "tool.search_docs",
-      kind: "internal",
+      id: targetTool.id,
+      parent_id: "span_turn",
+      name: "tool.lookup_order",
+      category: "tool",
+      kind: targetTool.kind,
       service: "tool-host",
-      start_ns: 400_000_000,
-      end_ns: 520_000_000,
-      status: "ok",
-      attributes: { tool: "search_docs" },
-      events: [],
+      start_ns: ms(targetTool.startedAtMs),
+      end_ns: ms(targetTool.startedAtMs + targetTool.durationMs),
+      status: targetTool.status,
+      attributes: {
+        tool: "lookup_order",
+        side_effect: "read",
+        authorization: "mcp",
+      },
+      events: [
+        { name: "tool_result", timestamp_ns: ms(targetTool.startedAtMs + 238) },
+      ],
+      input: {
+        order_id: "ord_renewal_431",
+        fields: ["renewal_date", "plan", "payment_state"],
+      },
+      output: {
+        renewal_date: "2026-05-09",
+        payment_state: "not captured",
+        plan: "annual",
+      },
+      raw_payload: {
+        request_id: "tool_req_742",
+        order_id: "ord_renewal_431",
+      },
+      normalized_payload: {
+        entitlement_state: "cancelable_before_capture",
+      },
+      redactions: [],
+      cost: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        input_usd: 0,
+        output_usd: 0,
+        tool_usd: 0.004,
+        total_usd: 0.004,
+        budget_source: "tool-host meter",
+      },
+      retry_history: [],
+      links: {
+        logs: ["tool-host.lookup_order trace_refund_742 span_tool"],
+        eval_cases: [evalSuite.id],
+        deploy_version: targetTrace.version,
+      },
     },
-  ],
-};
+    {
+      id: "span_budget",
+      parent_id: "span_turn",
+      name: "budget.check",
+      category: "budget",
+      kind: "internal",
+      service: "gateway",
+      start_ns: ms(383),
+      end_ns: ms(405),
+      status: "ok",
+      attributes: {
+        daily_budget_remaining_usd: 118.72,
+        model_route: "quality",
+      },
+      events: [],
+      input: {
+        requested_model: "gpt-4.1-mini",
+        estimated_tokens: 820,
+      },
+      output: {
+        approved_model: "gpt-4.1-mini",
+        budget_remaining_usd: 118.72,
+      },
+      raw_payload: {
+        budget_id: "budget_support_daily",
+        meter: "llm_tokens",
+      },
+      normalized_payload: {
+        decision: "approved",
+      },
+      redactions: [],
+      cost: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        input_usd: 0,
+        output_usd: 0,
+        tool_usd: 0,
+        total_usd: 0,
+        budget_source: "workspace daily budget cap",
+      },
+      retry_history: [],
+      links: {
+        logs: ["gateway.budget.check trace_refund_742 span_budget"],
+        eval_cases: [],
+        deploy_version: targetTrace.version,
+      },
+    },
+    {
+      id: targetAnswer.id,
+      parent_id: "span_turn",
+      name: "llm.complete.grounded_answer",
+      category: "llm",
+      kind: targetAnswer.kind,
+      service: "gateway",
+      start_ns: ms(targetAnswer.startedAtMs),
+      end_ns: ms(targetAnswer.startedAtMs + targetAnswer.durationMs),
+      status: targetAnswer.status,
+      attributes: {
+        provider: "OpenAI",
+        model: "gpt-4.1-mini",
+        tokens_in: 812,
+        tokens_out: 146,
+      },
+      events: [{ name: "first_token", timestamp_ns: ms(612) }],
+      input: {
+        model: "gpt-4.1-mini",
+        evidence_chunks: [
+          "refund_policy_2026.pdf#p4",
+          "refund_policy_2024.pdf#p2",
+        ],
+        tool_results: ["lookup_order"],
+      },
+      output: {
+        answer_summary:
+          "Customer can cancel before renewal capture; handoff only if account owner confirmation fails.",
+        grounded_source: "refund_policy_2026.pdf#p4",
+      },
+      raw_payload: {
+        messages: [
+          "system: Use policy citations when answering renewal questions.",
+          "user: I need to cancel my annual renewal before it bills.",
+        ],
+      },
+      normalized_payload: {
+        citations: ["refund_policy_2026.pdf#p4"],
+        tool_calls: [],
+      },
+      redactions: [],
+      cost: {
+        prompt_tokens: 812,
+        completion_tokens: 146,
+        input_usd: 0.0122,
+        output_usd: 0.0254,
+        tool_usd: 0,
+        total_usd: 0.0376,
+        budget_source: "llm reasoning line item cost_llm",
+      },
+      retry_history: [
+        {
+          attempt: 1,
+          status: "ok",
+          latency_ns: ms(targetAnswer.durationMs),
+          evidence: "No provider retry recorded for span_answer",
+        },
+      ],
+      links: {
+        logs: ["gateway.llm.complete trace_refund_742 span_answer"],
+        eval_cases: [evalSuite.id],
+        deploy_version: targetTrace.version,
+      },
+    },
+    {
+      id: "span_memory",
+      parent_id: "span_turn",
+      name: "memory.write.preference",
+      category: "memory",
+      kind: "internal",
+      service: "runtime",
+      start_ns: ms(930),
+      end_ns: ms(982),
+      status: "ok",
+      attributes: {
+        memory_key: targetUxFixtures.memory[0]!.key,
+        policy: targetUxFixtures.memory[0]!.policy,
+      },
+      events: [],
+      input: {
+        before: targetUxFixtures.memory[0]!.before,
+        observed: targetUxFixtures.memory[0]!.source,
+      },
+      output: {
+        after: targetUxFixtures.memory[0]!.after,
+        policy: targetUxFixtures.memory[0]!.policy,
+      },
+      raw_payload: {
+        memory_id: targetUxFixtures.memory[0]!.id,
+        user_id: "usr_j_morgan",
+      },
+      normalized_payload: {
+        key: targetUxFixtures.memory[0]!.key,
+        value: targetUxFixtures.memory[0]!.after,
+      },
+      redactions: [],
+      cost: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        input_usd: 0,
+        output_usd: 0,
+        tool_usd: 0,
+        total_usd: 0,
+        budget_source: "included runtime memory write",
+      },
+      retry_history: [],
+      links: {
+        logs: ["runtime.memory.write trace_refund_742 span_memory"],
+        eval_cases: [],
+        deploy_version: targetTrace.version,
+      },
+    },
+    {
+      id: "span_eval",
+      parent_id: "span_turn",
+      name: "eval.attach.refund_parity",
+      category: "eval",
+      kind: "internal",
+      service: "eval-harness",
+      start_ns: ms(985),
+      end_ns: ms(1_020),
+      status: "ok",
+      attributes: {
+        suite: evalSuite.name,
+        pass_rate: evalSuite.passRate,
+        regression_count: evalSuite.regressionCount,
+      },
+      events: [],
+      input: {
+        trace_id: targetTrace.id,
+        suite: evalSuite.id,
+      },
+      output: {
+        pass_rate: evalSuite.passRate,
+        regression_count: evalSuite.regressionCount,
+      },
+      raw_payload: {
+        suite_id: evalSuite.id,
+        case_ids: ["refund_window_basic", "refund_cancel_before_capture"],
+      },
+      normalized_payload: {
+        deploy_gate: deploy.blockedReason ?? "ready",
+      },
+      redactions: [],
+      cost: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        input_usd: 0,
+        output_usd: 0,
+        tool_usd: 0,
+        total_usd: 0,
+        budget_source: "eval metadata only",
+      },
+      retry_history: [],
+      links: {
+        logs: ["eval.attach trace_refund_742 span_eval"],
+        eval_cases: [evalSuite.id, "refund_window_basic"],
+        deploy_version: deploy.id,
+      },
+    },
+  ];
+
+  return {
+    id: targetTrace.id,
+    title: targetTrace.title,
+    summary: {
+      outcome: "Answered with grounded cancellation steps; no refund issued.",
+      agent_name: agent.name,
+      environment: targetUxFixtures.workspace.environment,
+      channel: agent.channel,
+      provider: "OpenAI",
+      model: "gpt-4.1-mini",
+      deploy_version: targetTrace.version,
+      snapshot_id: targetTrace.snapshotId,
+      total_latency_ns: ms(1_030),
+      total_cost_usd: agent.costPerTurnUsd,
+      tool_count: targetUxFixtures.tools.filter(
+        (tool) => tool.id === "tool_lookup_order",
+      ).length,
+      retrieval_count: 2,
+      memory_writes: targetUxFixtures.memory.length,
+      eval_score: evalSuite.passRate,
+      eval_suite: evalSuite.name,
+    },
+    explanations: [
+      {
+        id: "explain_policy_rank",
+        title: "Answer grounded on the newer refund policy",
+        statement:
+          "The answer cites `refund_policy_2026.pdf` because span_context ranked it above `refund_policy_2024.pdf`.",
+        evidence:
+          targetContext.evidence ?? "span_context recorded the policy ranking.",
+        source_span_id: targetContext.id,
+        confidence: 82,
+        confidence_level: "medium",
+      },
+      {
+        id: "explain_cost",
+        title: "Cost came mostly from the final model call",
+        statement:
+          "Cost is USD $0.043 because span_answer used 812 input tokens and 146 output tokens; lookup_order added USD $0.004.",
+        evidence: "span_answer cost math plus span_tool tool meter",
+        source_span_id: targetAnswer.id,
+        confidence: 91,
+        confidence_level: "high",
+      },
+      {
+        id: "explain_unknown",
+        title: "No evidence for private model reasoning",
+        statement:
+          "Unsupported. The trace does not expose private model reasoning; inspect inputs, outputs, retrieved chunks, and tool results instead.",
+        evidence:
+          "No hidden reasoning span or provider chain-of-thought is recorded.",
+        source_span_id: targetAnswer.id,
+        confidence: 0,
+        confidence_level: "unsupported",
+      },
+    ],
+    spans,
+  };
+}
+
+const FIXTURE_TRACE: Trace = buildFixtureTrace();
 
 export async function getTrace(id: string): Promise<Trace | null> {
   if (id === FIXTURE_TRACE.id) return FIXTURE_TRACE;
@@ -305,7 +838,8 @@ export async function searchTraces(
   if (query.conversation_id)
     params.set("conversation_id", query.conversation_id);
   if (query.turn_id) params.set("turn_id", query.turn_id);
-  if (query.started_at_from) params.set("started_at_from", query.started_at_from);
+  if (query.started_at_from)
+    params.set("started_at_from", query.started_at_from);
   if (query.started_at_to) params.set("started_at_to", query.started_at_to);
   if (query.only_errors) params.set("only_errors", "true");
   if (query.page_size) params.set("page_size", String(query.page_size));
@@ -362,10 +896,12 @@ export const FIXTURE_TRACES: TraceSummary[] = (() => {
   ];
   const list: TraceSummary[] = [];
   for (let i = 0; i < 47; i += 1) {
-    const agent = agents[i % agents.length] ?? { id: "agt_unknown", name: "Unknown Agent" };
+    const agent = agents[i % agents.length] ?? {
+      id: "agt_unknown",
+      name: "Unknown Agent",
+    };
     const root_name =
-      rootNames[i % rootNames.length] ??
-      "POST /v1/agents/{id}/turns";
+      rootNames[i % rootNames.length] ?? "POST /v1/agents/{id}/turns";
     list.push({
       id: `trc_demo_${String(i + 1).padStart(3, "0")}`,
       agent_id: agent.id,
@@ -379,11 +915,12 @@ export const FIXTURE_TRACES: TraceSummary[] = (() => {
   }
   list.unshift({
     id: FIXTURE_TRACE_ID,
-    agent_id: "agt_support",
-    agent_name: "Support Bot",
-    root_name: "POST /v1/agents/agt_support/turns",
+    agent_id: targetUxFixtures.workspace.activeAgentId,
+    agent_name: FIXTURE_TRACE.summary?.agent_name ?? "Acme Support Concierge",
+    root_name:
+      FIXTURE_TRACE.title ?? "Customer asks to cancel an annual renewal",
     status: "ok",
-    duration_ns: 850_000_000,
+    duration_ns: FIXTURE_TRACE.summary?.total_latency_ns ?? 850_000_000,
     started_at_ms: TRACE_BASE_MS + 60 * 1000,
     span_count: FIXTURE_TRACE.spans.length,
   });
