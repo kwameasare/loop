@@ -13,13 +13,11 @@ import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import {
-  createEvalSuite,
-  type CreateEvalSuiteInput,
-} from "@/lib/evals";
+import { createEvalSuite, type CreateEvalSuiteInput } from "@/lib/evals";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -127,18 +125,27 @@ export function NewSuiteModal({
           New suite
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md" data-testid="new-suite-modal">
+      <DialogContent
+        className="max-w-md"
+        data-testid="new-suite-modal"
+      >
         <form
           onSubmit={handleSubmit}
           className="flex flex-col gap-3"
           data-testid="new-suite-form"
-          aria-labelledby={`${formId}-title`}
         >
           <DialogHeader>
-            <DialogTitle id={`${formId}-title`}>New suite</DialogTitle>
+            <DialogTitle>New suite</DialogTitle>
+            <DialogDescription>
+              Start with a dataset, then attach scorers, fixtures, thresholds,
+              and deploy gates in the suite builder.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground" htmlFor={`${formId}-name`}>
+            <label
+              className="text-xs text-muted-foreground"
+              htmlFor={`${formId}-name`}
+            >
               Name
             </label>
             <input
@@ -152,7 +159,10 @@ export function NewSuiteModal({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground" htmlFor={`${formId}-dataset-ref`}>
+            <label
+              className="text-xs text-muted-foreground"
+              htmlFor={`${formId}-dataset-ref`}
+            >
               Dataset ref
             </label>
             <input
@@ -189,7 +199,7 @@ export function NewSuiteModal({
             </div>
           </fieldset>
           {error ? (
-            <p className="text-sm text-red-600" role="alert">
+            <p className="text-sm text-destructive" role="alert">
               {error}
             </p>
           ) : null}

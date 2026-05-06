@@ -43,7 +43,11 @@ export function RunNowButton({
         {running ? "Starting…" : "Run now"}
       </Button>
       {error ? (
-        <p className="text-sm text-red-600" role="alert" data-testid="eval-suite-run-error">
+        <p
+          className="text-sm text-destructive"
+          role="alert"
+          data-testid="eval-suite-run-error"
+        >
           {error}
         </p>
       ) : null}

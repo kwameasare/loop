@@ -33,18 +33,17 @@ export function EvalRunList({ detail }: EvalRunListProps) {
       </thead>
       <tbody>
         {detail.runs.map((run) => {
-          const rate =
-            run.total === 0 ? null : run.passed / run.total;
+          const rate = run.total === 0 ? null : run.passed / run.total;
           const label = statusLabel(run.passed, run.failed, run.errored);
           return (
             <tr
-              className="border-t border-gray-200"
+              className="border-t"
               data-testid={`eval-run-row-${run.id}`}
               key={run.id}
             >
               <td className="py-1">
                 <Link
-                  className="text-blue-600 hover:underline"
+                  className="text-info hover:underline"
                   data-testid={`eval-run-link-${run.id}`}
                   href={`/evals/runs/${run.id}`}
                 >
