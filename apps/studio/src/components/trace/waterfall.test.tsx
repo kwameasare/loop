@@ -11,6 +11,7 @@ const trace: Trace = {
       id: "root",
       parent_id: null,
       name: "POST /turns",
+      category: "channel",
       kind: "server",
       service: "runtime",
       start_ns: 0,
@@ -23,6 +24,7 @@ const trace: Trace = {
       id: "child",
       parent_id: "root",
       name: "kb.retrieve",
+      category: "retrieval",
       kind: "internal",
       service: "kb",
       start_ns: 100,
@@ -62,6 +64,56 @@ describe("TraceWaterfall", () => {
       '"id": "child"',
     );
   });
+
+  it("shows a sortable table alternative with status and parent context", () => {
+    render(<TraceWaterfall trace={trace} />);
+    expect(screen.getByTestId("span-table")).toHaveTextContent("Parent span");
+    expect(screen.getByTestId("span-table")).toHaveTextContent(
+      "Retrieval / internal",
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Duration/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Duration ascending/ }));
+    expect(screen.getByText("Duration descending")).toBeInTheDocument();
+  });
+
+  it("exposes redaction and cost views in the inspector", () => {
+    render(
+      <TraceWaterfall
+        trace={{
+          ...trace,
+          spans: [
+            {
+              ...trace.spans[0]!,
+              redactions: [
+                {
+                  evidence: "PII classifier matched email pattern",
+                  field: "body.customer_email",
+                  reason: "PII",
+                  replacement: "[email]",
+                },
+              ],
+              cost: {
+                budget_source: "workspace daily trace budget",
+                completion_tokens: 4,
+                input_usd: 0.01,
+                output_usd: 0.02,
+                prompt_tokens: 12,
+                tool_usd: 0,
+                total_usd: 0.03,
+              },
+            },
+            trace.spans[1]!,
+          ],
+        }}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("span-tab-redactions"));
+    expect(screen.getByTestId("span-panel-redactions")).toHaveTextContent(
+      "body.customer_email",
+    );
+    fireEvent.click(screen.getByTestId("span-tab-cost"));
+    expect(screen.getByTestId("span-panel-cost")).toHaveTextContent("$0.03");
+  });
 });
 
 import type { Span } from "@/lib/traces";
@@ -85,6 +137,7 @@ describe("TraceWaterfall — inline attrs + perf", () => {
         id: "root",
         parent_id: null,
         name: "root",
+        category: "channel",
         kind: "server",
         service: "runtime",
         start_ns: 0,
@@ -99,6 +152,7 @@ describe("TraceWaterfall — inline attrs + perf", () => {
         id: `s${i}`,
         parent_id: i === 1 || i % 5 === 0 ? "root" : `s${i - 1}`,
         name: `op_${i}`,
+        category: "tool",
         kind: "internal",
         service: "svc",
         start_ns: i * 1000,
