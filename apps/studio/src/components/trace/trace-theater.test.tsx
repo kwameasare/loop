@@ -68,6 +68,8 @@ describe("TraceTheater", () => {
       "Unsupported. The trace does not expose private model reasoning.",
     );
     expect(screen.getByText(/Source: span_answer/)).toBeInTheDocument();
+    expect(screen.getByTestId("trace-scrubber")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-xray")).toBeInTheDocument();
   });
 
   it("shows a degraded state when trace metadata is missing", () => {
