@@ -27,5 +27,141 @@
     "generic": "Algo salió mal. Por favor, inténtelo de nuevo.",
     "notFound": "No encontrado.",
     "unauthorized": "No tiene autorización para ver esta página."
+  },
+  "targetStates": {
+    "loading": {
+      "eyebrow": "Cargando",
+      "title": "{{object}} se está cargando",
+      "description": "Cargando {{object}}. El estado de la shell en caché sigue visible mientras termina este trabajo.",
+      "evidenceLabel": "Evidencia",
+      "primaryAction": "Cancelar",
+      "secondaryAction": "Abrir estado",
+      "stageLabel": "Etapa",
+      "requestIdLabel": "ID de solicitud",
+      "updatedAtLabel": "Última actualización"
+    },
+    "empty": {
+      "eyebrow": "Vacío",
+      "title": "Aún no hay {{object}}",
+      "description": "Cree, importe, conecte, ejecute, despliegue, invite o guarde como evaluación desde aquí.",
+      "evidenceLabel": "Evidencia del workspace",
+      "primaryAction": "Crear",
+      "secondaryAction": "Importar",
+      "stageLabel": "Inicio sugerido",
+      "requestIdLabel": "ID de solicitud",
+      "updatedAtLabel": "Última revisión"
+    },
+    "error": {
+      "eyebrow": "Error",
+      "title": "{{object}} no se pudo cargar",
+      "description": "La solicitud falló. Reintente o vuelva a iniciar sesión si la sesión expiró.",
+      "evidenceLabel": "Evidencia del fallo",
+      "primaryAction": "Reintentar",
+      "secondaryAction": "Reportar",
+      "stageLabel": "Paso fallido",
+      "requestIdLabel": "ID de solicitud",
+      "updatedAtLabel": "Falló a las"
+    },
+    "degraded": {
+      "eyebrow": "Degradado",
+      "title": "{{object}} está degradado",
+      "description": "Los datos en caché siguen visibles. Los cambios nuevos son de solo lectura hasta que el servicio se recupere.",
+      "evidenceLabel": "Evidencia de estado",
+      "primaryAction": "Reintentar",
+      "secondaryAction": "Abrir estado",
+      "stageLabel": "Etapa afectada",
+      "requestIdLabel": "ID de solicitud",
+      "updatedAtLabel": "Último estado sano"
+    },
+    "stale": {
+      "eyebrow": "Desactualizado",
+      "title": "{{object}} puede estar desactualizado",
+      "description": "Actualice antes de tomar decisiones de producción.",
+      "evidenceLabel": "Evidencia de frescura",
+      "primaryAction": "Actualizar",
+      "secondaryAction": "Abrir traza",
+      "stageLabel": "Fuente de actualización",
+      "requestIdLabel": "ID de solicitud",
+      "updatedAtLabel": "Última actualización"
+    },
+    "permissionBlocked": {
+      "eyebrow": "Permiso bloqueado",
+      "title": "Se necesita permiso para {{object}}",
+      "description": "Su rol no puede cambiar esta superficie. Solicite acceso o mantenga el estado actual de producción.",
+      "evidenceLabel": "Evidencia de política",
+      "primaryAction": "Solicitar acceso",
+      "secondaryAction": "Ver política",
+      "stageLabel": "Rol requerido",
+      "requestIdLabel": "ID de auditoría",
+      "updatedAtLabel": "Política revisada"
+    }
+  },
+  "sectionStates": {
+    "loading": {
+      "eyebrow": "Cargando",
+      "title": "{{section}} se está cargando",
+      "description": "Cargando {{section}}. El estado del workspace en caché sigue visible en la shell.",
+      "evidenceLabel": "Evidencia",
+      "primaryAction": "Cancelar",
+      "secondaryAction": "Abrir estado",
+      "stageLabel": "Etapa",
+      "requestIdLabel": "ID de solicitud",
+      "updatedAtLabel": "Última actualización"
+    },
+    "empty": {
+      "eyebrow": "Vacío",
+      "title": "Aún no hay {{section}}",
+      "description": "Comience desde un turno existente, importe o cree el primer objeto para esta sección.",
+      "evidenceLabel": "Evidencia del workspace",
+      "primaryAction": "Crear",
+      "secondaryAction": "Importar",
+      "stageLabel": "Inicio sugerido",
+      "requestIdLabel": "ID de solicitud",
+      "updatedAtLabel": "Última revisión"
+    },
+    "error": {
+      "eyebrow": "Error",
+      "title": "{{section}} no se pudo cargar",
+      "description": "La solicitud de cp-api falló para {{section}}. Reintente o vuelva a iniciar sesión si la sesión expiró.",
+      "evidenceLabel": "Evidencia del fallo",
+      "primaryAction": "Reintentar",
+      "secondaryAction": "Reportar",
+      "stageLabel": "Paso fallido",
+      "requestIdLabel": "ID de solicitud",
+      "updatedAtLabel": "Falló a las"
+    },
+    "degraded": {
+      "eyebrow": "Degradado",
+      "title": "{{section}} está degradado",
+      "description": "Los datos en caché siguen visibles. Las acciones nuevas se ponen en cola hasta que el servicio esté sano.",
+      "evidenceLabel": "Evidencia de estado",
+      "primaryAction": "Reintentar",
+      "secondaryAction": "Abrir estado",
+      "stageLabel": "Etapa afectada",
+      "requestIdLabel": "ID de solicitud",
+      "updatedAtLabel": "Último estado sano"
+    },
+    "stale": {
+      "eyebrow": "Desactualizado",
+      "title": "{{section}} puede estar desactualizado",
+      "description": "Actualice antes de editar o aprobar cambios.",
+      "evidenceLabel": "Evidencia de frescura",
+      "primaryAction": "Actualizar",
+      "secondaryAction": "Abrir traza",
+      "stageLabel": "Fuente de actualización",
+      "requestIdLabel": "ID de solicitud",
+      "updatedAtLabel": "Última actualización"
+    },
+    "permissionBlocked": {
+      "eyebrow": "Permiso bloqueado",
+      "title": "Se necesita permiso para {{section}}",
+      "description": "Su rol no puede cambiar esta sección. Solicite acceso o mantenga el estado actual de producción.",
+      "evidenceLabel": "Evidencia de política",
+      "primaryAction": "Solicitar acceso",
+      "secondaryAction": "Ver política",
+      "stageLabel": "Rol requerido",
+      "requestIdLabel": "ID de auditoría",
+      "updatedAtLabel": "Política revisada"
+    }
   }
 }

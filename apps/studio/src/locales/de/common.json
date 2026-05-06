@@ -27,5 +27,141 @@
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "notFound": "Nicht gefunden.",
     "unauthorized": "Sie sind nicht berechtigt, diese Seite zu sehen."
+  },
+  "targetStates": {
+    "loading": {
+      "eyebrow": "Lädt",
+      "title": "{{object}} wird geladen",
+      "description": "{{object}} wird geladen. Der zwischengespeicherte Shell-Status bleibt sichtbar, bis diese Arbeit fertig ist.",
+      "evidenceLabel": "Nachweis",
+      "primaryAction": "Abbrechen",
+      "secondaryAction": "Status öffnen",
+      "stageLabel": "Phase",
+      "requestIdLabel": "Anfrage-ID",
+      "updatedAtLabel": "Zuletzt aktualisiert"
+    },
+    "empty": {
+      "eyebrow": "Leer",
+      "title": "Noch kein {{object}}",
+      "description": "Erstellen, importieren, verbinden, ausführen, deployen, einladen oder als Eval speichern.",
+      "evidenceLabel": "Workspace-Nachweis",
+      "primaryAction": "Erstellen",
+      "secondaryAction": "Importieren",
+      "stageLabel": "Vorgeschlagener Start",
+      "requestIdLabel": "Anfrage-ID",
+      "updatedAtLabel": "Zuletzt geprüft"
+    },
+    "error": {
+      "eyebrow": "Fehler",
+      "title": "{{object}} konnte nicht geladen werden",
+      "description": "Die Anfrage ist fehlgeschlagen. Versuchen Sie es erneut oder melden Sie sich neu an, wenn die Sitzung abgelaufen ist.",
+      "evidenceLabel": "Fehlernachweis",
+      "primaryAction": "Erneut versuchen",
+      "secondaryAction": "Melden",
+      "stageLabel": "Fehlgeschlagener Schritt",
+      "requestIdLabel": "Anfrage-ID",
+      "updatedAtLabel": "Fehlgeschlagen um"
+    },
+    "degraded": {
+      "eyebrow": "Degradiert",
+      "title": "{{object}} ist degradiert",
+      "description": "Zwischengespeicherte Daten bleiben sichtbar. Neue Änderungen sind schreibgeschützt, bis der Dienst wiederhergestellt ist.",
+      "evidenceLabel": "Statusnachweis",
+      "primaryAction": "Erneut versuchen",
+      "secondaryAction": "Status öffnen",
+      "stageLabel": "Betroffene Phase",
+      "requestIdLabel": "Anfrage-ID",
+      "updatedAtLabel": "Zuletzt fehlerfrei"
+    },
+    "stale": {
+      "eyebrow": "Veraltet",
+      "title": "{{object}} ist möglicherweise veraltet",
+      "description": "Aktualisieren Sie vor Produktionsentscheidungen.",
+      "evidenceLabel": "Aktualitätsnachweis",
+      "primaryAction": "Aktualisieren",
+      "secondaryAction": "Trace öffnen",
+      "stageLabel": "Aktualisierungsquelle",
+      "requestIdLabel": "Anfrage-ID",
+      "updatedAtLabel": "Zuletzt aktualisiert"
+    },
+    "permissionBlocked": {
+      "eyebrow": "Berechtigung blockiert",
+      "title": "Berechtigung für {{object}} erforderlich",
+      "description": "Ihre Rolle kann diese Oberfläche nicht ändern. Fordern Sie Zugriff an oder behalten Sie den aktuellen Produktionszustand.",
+      "evidenceLabel": "Richtliniennachweis",
+      "primaryAction": "Zugriff anfordern",
+      "secondaryAction": "Richtlinie anzeigen",
+      "stageLabel": "Erforderliche Rolle",
+      "requestIdLabel": "Audit-ID",
+      "updatedAtLabel": "Richtlinie geprüft"
+    }
+  },
+  "sectionStates": {
+    "loading": {
+      "eyebrow": "Lädt",
+      "title": "{{section}} wird geladen",
+      "description": "{{section}} wird geladen. Der zwischengespeicherte Workspace-Status bleibt in der Shell sichtbar.",
+      "evidenceLabel": "Nachweis",
+      "primaryAction": "Abbrechen",
+      "secondaryAction": "Status öffnen",
+      "stageLabel": "Phase",
+      "requestIdLabel": "Anfrage-ID",
+      "updatedAtLabel": "Zuletzt aktualisiert"
+    },
+    "empty": {
+      "eyebrow": "Leer",
+      "title": "Noch kein {{section}}",
+      "description": "Beginnen Sie mit einem vorhandenen Turn, importieren Sie oder erstellen Sie das erste Objekt für diesen Abschnitt.",
+      "evidenceLabel": "Workspace-Nachweis",
+      "primaryAction": "Erstellen",
+      "secondaryAction": "Importieren",
+      "stageLabel": "Vorgeschlagener Start",
+      "requestIdLabel": "Anfrage-ID",
+      "updatedAtLabel": "Zuletzt geprüft"
+    },
+    "error": {
+      "eyebrow": "Fehler",
+      "title": "{{section}} konnte nicht geladen werden",
+      "description": "Die cp-api-Anfrage für {{section}} ist fehlgeschlagen. Versuchen Sie es erneut oder melden Sie sich neu an, wenn die Sitzung abgelaufen ist.",
+      "evidenceLabel": "Fehlernachweis",
+      "primaryAction": "Erneut versuchen",
+      "secondaryAction": "Melden",
+      "stageLabel": "Fehlgeschlagener Schritt",
+      "requestIdLabel": "Anfrage-ID",
+      "updatedAtLabel": "Fehlgeschlagen um"
+    },
+    "degraded": {
+      "eyebrow": "Degradiert",
+      "title": "{{section}} ist degradiert",
+      "description": "Zwischengespeicherte Daten bleiben sichtbar. Neue Aktionen warten, bis der Dienst fehlerfrei ist.",
+      "evidenceLabel": "Statusnachweis",
+      "primaryAction": "Erneut versuchen",
+      "secondaryAction": "Status öffnen",
+      "stageLabel": "Betroffene Phase",
+      "requestIdLabel": "Anfrage-ID",
+      "updatedAtLabel": "Zuletzt fehlerfrei"
+    },
+    "stale": {
+      "eyebrow": "Veraltet",
+      "title": "{{section}} ist möglicherweise veraltet",
+      "description": "Aktualisieren Sie vor Änderungen oder Freigaben.",
+      "evidenceLabel": "Aktualitätsnachweis",
+      "primaryAction": "Aktualisieren",
+      "secondaryAction": "Trace öffnen",
+      "stageLabel": "Aktualisierungsquelle",
+      "requestIdLabel": "Anfrage-ID",
+      "updatedAtLabel": "Zuletzt aktualisiert"
+    },
+    "permissionBlocked": {
+      "eyebrow": "Berechtigung blockiert",
+      "title": "Berechtigung für {{section}} erforderlich",
+      "description": "Ihre Rolle kann diesen Abschnitt nicht ändern. Fordern Sie Zugriff an oder behalten Sie den aktuellen Produktionszustand.",
+      "evidenceLabel": "Richtliniennachweis",
+      "primaryAction": "Zugriff anfordern",
+      "secondaryAction": "Richtlinie anzeigen",
+      "stageLabel": "Erforderliche Rolle",
+      "requestIdLabel": "Audit-ID",
+      "updatedAtLabel": "Richtlinie geprüft"
+    }
   }
 }
