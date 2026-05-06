@@ -90,6 +90,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§8",
   },
   {
+    route: "/agents/[agent_id]/conductor",
+    verb: "build",
+    label: "Multi-Agent Conductor",
+    purpose:
+      "Sub-agent assets, handoff contracts, ownership, failure paths, and traceable delegation (§17).",
+    anchor: "§17",
+  },
+  {
     route: "/agents/[agent_id]/memory",
     verb: "build",
     label: "Memory Studio",
