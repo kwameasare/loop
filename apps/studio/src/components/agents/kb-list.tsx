@@ -13,7 +13,9 @@ import {
 } from "@/lib/kb";
 
 type UploadFn = (input: UploadKbDocumentInput) => Promise<KbDocument>;
-type DeleteFn = (input: DeleteKbDocumentInput) => Promise<{ documentId: string }>;
+type DeleteFn = (
+  input: DeleteKbDocumentInput,
+) => Promise<{ documentId: string }>;
 type RefreshFn = typeof defaultTriggerRefresh;
 
 export interface KbListProps {
@@ -109,9 +111,7 @@ export function KbList({
       const status = await triggerRefresh(agentId, documentId);
       setDocs((prev) =>
         prev.map((d) =>
-          d.id === documentId
-            ? { ...d, lastRefreshedAt: status.lastRunAt }
-            : d,
+          d.id === documentId ? { ...d, lastRefreshedAt: status.lastRunAt } : d,
         ),
       );
       setToast({ kind: "success", message: "Refresh triggered." });
@@ -164,7 +164,7 @@ export function KbList({
           </p>
         </div>
         <button
-          className="rounded bg-gray-900 text-white text-sm px-3 py-1"
+          className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground target-transition hover:bg-primary/90"
           data-testid="kb-upload-open"
           onClick={() => setUploadOpen(true)}
           type="button"
@@ -179,18 +179,18 @@ export function KbList({
         </p>
       ) : (
         <ul
-          className="flex flex-col divide-y border rounded"
+          className="flex flex-col divide-y divide-border rounded-md border bg-card"
           data-testid="kb-doc-list"
         >
           {docs.map((doc) => (
             <li
               key={doc.id}
-              className="flex items-center justify-between px-3 py-2 text-sm"
+              className="flex flex-col gap-3 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
               data-testid={`kb-doc-${doc.id}`}
             >
               <div className="flex flex-col">
                 <span className="font-medium">{doc.name}</span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   {doc.contentType} · {formatBytes(doc.bytes)} ·{" "}
                   <span data-testid={`kb-doc-status-${doc.id}`}>
                     {doc.status}
@@ -205,7 +205,7 @@ export function KbList({
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  className="text-xs text-blue-600 hover:underline disabled:opacity-50"
+                  className="text-xs font-medium text-info hover:underline disabled:opacity-50"
                   data-testid={`kb-doc-refresh-${doc.id}`}
                   disabled={refreshingIds.has(doc.id)}
                   onClick={() => handleRefresh(doc.id)}
@@ -214,7 +214,7 @@ export function KbList({
                   {refreshingIds.has(doc.id) ? "Refreshing…" : "Refresh"}
                 </button>
                 <button
-                  className="text-xs text-red-600 hover:underline"
+                  className="text-xs font-medium text-destructive hover:underline"
                   data-testid={`kb-doc-delete-${doc.id}`}
                   onClick={() => {
                     setConfirmDoc(doc);
@@ -233,12 +233,12 @@ export function KbList({
       {uploadOpen ? (
         <div
           aria-modal="true"
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
           data-testid="kb-upload-modal"
           role="dialog"
         >
           <form
-            className="bg-white rounded p-4 w-[420px] flex flex-col gap-3"
+            className="flex w-[min(420px,100%)] flex-col gap-3 rounded-md border bg-background p-4 shadow-lg"
             onSubmit={handleUpload}
           >
             <h3 className="text-sm font-medium">Upload document</h3>
@@ -254,7 +254,7 @@ export function KbList({
             />
             {uploading ? (
               <div
-                className="h-2 rounded bg-gray-200 overflow-hidden"
+                className="h-2 overflow-hidden rounded bg-muted"
                 data-testid="kb-upload-progress"
                 aria-valuemin={0}
                 aria-valuemax={100}
@@ -262,7 +262,7 @@ export function KbList({
                 role="progressbar"
               >
                 <div
-                  className="h-full bg-emerald-500 transition-[width]"
+                  className="h-full bg-success transition-[width]"
                   data-testid="kb-upload-progress-fill"
                   style={{ width: `${uploadProgress}%` }}
                 />
@@ -270,7 +270,7 @@ export function KbList({
             ) : null}
             <div className="flex justify-end gap-2">
               <button
-                className="text-sm px-3 py-1 rounded border"
+                className="rounded-md border px-3 py-1 text-sm target-transition hover:bg-muted"
                 data-testid="kb-upload-cancel"
                 disabled={uploading}
                 onClick={() => {
@@ -282,7 +282,7 @@ export function KbList({
                 Cancel
               </button>
               <button
-                className="text-sm px-3 py-1 rounded bg-gray-900 text-white disabled:opacity-50"
+                className="rounded-md bg-primary px-3 py-1 text-sm text-primary-foreground target-transition hover:bg-primary/90 disabled:opacity-50"
                 data-testid="kb-upload-submit"
                 disabled={!uploadFile || uploading}
                 type="submit"
@@ -297,11 +297,11 @@ export function KbList({
       {confirmDoc ? (
         <div
           aria-modal="true"
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
           data-testid="kb-delete-modal"
           role="dialog"
         >
-          <div className="bg-white rounded p-4 w-[420px] flex flex-col gap-3">
+          <div className="flex w-[min(420px,100%)] flex-col gap-3 rounded-md border bg-background p-4 shadow-lg">
             <h3 className="text-sm font-medium">Delete document?</h3>
             <p className="text-sm">
               Type <code className="font-mono">DELETE</code> to permanently
@@ -310,7 +310,7 @@ export function KbList({
             </p>
             <input
               autoFocus
-              className="border rounded px-2 py-1 text-sm"
+              className="rounded-md border bg-background px-2 py-1 text-sm"
               data-testid="kb-delete-confirm"
               id={confirmId}
               onChange={(e) => setConfirmText(e.target.value)}
@@ -319,7 +319,7 @@ export function KbList({
             />
             <div className="flex justify-end gap-2">
               <button
-                className="text-sm px-3 py-1 rounded border"
+                className="rounded-md border px-3 py-1 text-sm target-transition hover:bg-muted"
                 data-testid="kb-delete-cancel"
                 onClick={() => {
                   setConfirmDoc(null);
@@ -330,7 +330,7 @@ export function KbList({
                 Cancel
               </button>
               <button
-                className="text-sm px-3 py-1 rounded bg-red-600 text-white disabled:opacity-50"
+                className="rounded-md bg-destructive px-3 py-1 text-sm text-destructive-foreground target-transition hover:bg-destructive/90 disabled:opacity-50"
                 data-testid="kb-delete-submit"
                 disabled={!canDelete}
                 onClick={handleDelete}
@@ -347,8 +347,8 @@ export function KbList({
         <p
           className={
             toast.kind === "success"
-              ? "text-xs text-emerald-700"
-              : "text-xs text-red-600"
+              ? "text-xs text-success"
+              : "text-xs text-destructive"
           }
           data-testid={`kb-toast-${toast.kind}`}
           role="status"
