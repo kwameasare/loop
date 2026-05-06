@@ -16,7 +16,7 @@ required_reading:
   - engineering/ERROR_CODES.md         # CH prefix
   - engineering/ENV_REFERENCE.md       # §4 channel adapter env vars
   - engineering/COPY_GUIDE.md          # for any user-facing string
-  - ux/UX_DESIGN.md                    # operator inbox interactions for HITL
+  - ux/00_CANONICAL_TARGET_UX_STANDARD.md                    # operator inbox interactions for HITL
 applies_to: coding
 owner: Founding Eng #7 (Channel Integrations) — Eng #3 owns voice
 last_reviewed: 2026-04-29

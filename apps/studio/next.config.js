@@ -14,6 +14,8 @@ function originFromRaw(raw) {
 }
 
 function buildCsp() {
+  const isDev = process.env.NODE_ENV !== "production";
+
   const cpOrigin = originFromRaw(
     process.env.NEXT_PUBLIC_LOOP_API_URL || process.env.LOOP_CP_API_BASE_URL,
   );
@@ -24,18 +26,29 @@ function buildCsp() {
     process.env.LOOP_AUTH0_DOMAIN || process.env.NEXT_PUBLIC_AUTH0_DOMAIN;
   const auth0Origin = auth0Domain ? `https://${auth0Domain}` : null;
 
+  // Next.js dev mode runs an HMR websocket and uses ``eval`` +
+  // inline ``<script>`` tags for the React Refresh runtime. Without
+  // these allowances the page can't even hydrate ("Checking
+  // session…" hangs because React's bootstrap is CSP-blocked). The
+  // production build emits no ``eval`` and no inline scripts so the
+  // strict directives apply there.
   const connectSrc = ["'self'", cpOrigin, dpOrigin, auth0Origin]
     .filter(Boolean)
+    .concat(isDev ? ["ws://localhost:*", "http://localhost:*"] : [])
     .join(" ");
+
+  const scriptSrc = isDev
+    ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
+    : "script-src 'self'";
 
   return [
     "default-src 'self'",
     "base-uri 'self'",
     "frame-ancestors 'none'",
-    "img-src 'self' data: https:",
+    "img-src 'self' data: https: blob:",
     "font-src 'self' data:",
     `connect-src ${connectSrc}`,
-    "script-src 'self'",
+    scriptSrc,
     "style-src 'self' 'unsafe-inline'",
     "object-src 'none'",
     "form-action 'self'",

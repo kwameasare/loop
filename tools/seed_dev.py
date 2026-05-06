@@ -124,13 +124,18 @@ def get_or_create_workspace(
     headers = _bearer(token)
     listing = client.get(f"{base_url}/v1/workspaces", headers=headers, timeout=5.0)
     if listing.status_code == 200:
-        for ws in listing.json().get("workspaces", []):
+        # Route returns ``{items: [...]}`` in the new schema; older fixtures
+        # used ``workspaces``. Tolerate both so the seed survives re-runs
+        # against either shape.
+        body = listing.json()
+        for ws in body.get("items", body.get("workspaces", [])):
             if ws.get("name") == name:
                 return ws  # type: ignore[no-any-return]
+    slug = name.lower().replace(" ", "-")
     response = client.post(
         f"{base_url}/v1/workspaces",
         headers=headers,
-        json={"name": name},
+        json={"name": name, "slug": slug},
         timeout=5.0,
     )
     if response.status_code not in (200, 201):
@@ -147,16 +152,20 @@ def get_or_create_agent(
     workspace_id: str,
     name: str,
 ) -> dict[str, Any]:
-    headers = _bearer(token)
+    headers = {**_bearer(token), "x-loop-workspace-id": workspace_id}
     listing = client.get(f"{base_url}/v1/agents", headers=headers, timeout=5.0)
     if listing.status_code == 200:
-        for agent in listing.json().get("agents", []):
-            if agent.get("name") == name and agent.get("workspace_id") == workspace_id:
+        body = listing.json()
+        for agent in body.get("items", body.get("agents", [])):
+            if agent.get("name") == name:
                 return agent  # type: ignore[no-any-return]
+    # The agents POST route reads workspace from the
+    # X-Loop-Workspace-Id header (set in ``headers`` above) and
+    # rejects ``workspace_id`` in the body via extra="forbid".
     response = client.post(
         f"{base_url}/v1/agents",
         headers=headers,
-        json={"workspace_id": workspace_id, "name": name, "slug": name.lower().replace(" ", "-")},
+        json={"name": name, "slug": name.lower().replace(" ", "-")},
         timeout=5.0,
     )
     if response.status_code not in (200, 201):

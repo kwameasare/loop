@@ -1,6 +1,6 @@
 # Loop — Copy & Voice Guide
 
-**Status:** v0.1  •  **Owner:** Designer + Eng #5 (Studio)  •  **Companion:** `ux/UX_DESIGN.md` §5.5–5.7.
+**Status:** v0.1  •  **Owner:** Designer + Eng #5 (Studio)  •  **Companion:** `ux/00_CANONICAL_TARGET_UX_STANDARD.md` §32 and Appendix C.
 
 How Loop talks. Applies to product UI strings, error messages, docs, marketing, status page, and customer-support replies.
 
@@ -179,5 +179,5 @@ Rollback: loop deploy rollback --agent=support-en
 
 ## 10. References
 
-- `ux/UX_DESIGN.md` §5.5–5.7 — design tokens, error catalog, toast patterns.
+- `ux/00_CANONICAL_TARGET_UX_STANDARD.md` §32 and Appendix C — states, errors, empty states, and product copy examples.
 - `engineering/ERROR_CODES.md` — every error has a canonical code + recommended copy.

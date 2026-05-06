@@ -2829,7 +2829,7 @@ def render_md() -> str:
     out.append("- **Data model** — `loop_implementation/data/SCHEMA.md`")
     out.append("- **API spec** — `loop_implementation/api/openapi.yaml`")
     out.append("- **ADRs** — `loop_implementation/adrs/README.md`")
-    out.append("- **UX/UI** — `loop_implementation/ux/UX_DESIGN.md`")
+    out.append("- **UX/UI** — `loop_implementation/ux/00_CANONICAL_TARGET_UX_STANDARD.md`")
     out.append("- **Engineering handbook** — `loop_implementation/engineering/HANDBOOK.md`")
     out.append("- **Security** — `loop_implementation/engineering/SECURITY.md`")
     out.append("- **Testing** — `loop_implementation/engineering/TESTING.md`")

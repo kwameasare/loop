@@ -35,7 +35,10 @@ loop_implementation/
 │   └── README.md                      28 Architecture Decision Records covering language, vector store, MCP, NATS, Firecracker, license, eval-gating, cloud-agnostic, and more
 │
 ├── ux/
-│   └── UX_DESIGN.md                   Studio IA, screens, design system, components, wireframes, accessibility
+│   ├── 00_CANONICAL_TARGET_UX_STANDARD.md  Canonical Studio target UX/UI standard
+│   ├── 90_LEGACY_IMPLEMENTATION_UX_BASELINE.md
+│   ├── 99_SUPERSEDED_CODEX_OPTIMAL_UX_DRAFT.md
+│   └── 99_SUPERSEDED_CLAUDE_OPTIMAL_UX_DRAFT.md
 │
 ├── engineering/
 │   ├── HANDBOOK.md                    Local dev setup, conventions, branching, code review, on-call, definition of done
@@ -106,7 +109,7 @@ If you have **a day**, add:
 7. `engineering/HANDBOOK.md` — how we work.
 8. `engineering/ENV_REFERENCE.md` — every environment variable.
 9. `engineering/ERROR_CODES.md` — error namespace.
-10. `ux/UX_DESIGN.md` — the Studio plan.
+10. `ux/00_CANONICAL_TARGET_UX_STANDARD.md` — the Studio plan.
 11. `engineering/TESTING.md` + `engineering/PERFORMANCE.md` — the bars to clear.
 12. `engineering/SECURITY.md` + `architecture/AUTH_FLOWS.md` — auth and trust.
 13. `architecture/NETWORKING.md` + `architecture/CLOUD_PORTABILITY.md` — infra.
@@ -140,7 +143,7 @@ If you have **a week**, also: skim every package in `scaffolding/`, run `make bo
                                 │
                                 ▼
                 ┌─────────────────────────────────────┐
-                │  scaffolding/   ux/UX_DESIGN.md     │   the "how" and the "look"
+                │  scaffolding/   ux/00_CANONICAL_TARGET_UX_STANDARD.md     │   the "how" and the "look"
                 └─────────────────────────────────────┘
                                 │
                                 ▼
@@ -192,7 +195,7 @@ Edit policy: any change to the architecture, schema, or API is a single PR that 
 | New service / new package | `architecture/ARCHITECTURE.md` §2 + an ADR if non-obvious |
 | New permission / role | `engineering/SECURITY.md` §6 + integration test |
 | Breaking SDK type change | `data/SCHEMA.md` §9 + bump SDK major version |
-| New screen or interaction | `ux/UX_DESIGN.md` + Playwright e2e |
+| New screen or interaction | `ux/00_CANONICAL_TARGET_UX_STANDARD.md` + Playwright e2e |
 | Discovered a hard truth about an existing decision | New ADR in `adrs/` (don't edit the old one — supersede it) |
 | New eval scorer | `engineering/TESTING.md` §5 |
 | New environment variable | `scaffolding/.env.example` + `engineering/HANDBOOK.md` §1 |
@@ -209,8 +212,8 @@ Edit policy: any change to the architecture, schema, or API is a single PR that 
 | **Founder/CTO** | README (you are here) + ARCHITECTURE.md | SPRINT_0.md, CLOUD_PORTABILITY.md | Everything except HANDBOOK §dev setup |
 | **Runtime engineer** | AGENTS.md + ARCHITECTURE.md §3 | SCHEMA.md §3, TESTING.md | TurnExecutor in scaffolding/; all ADRs |
 | **Infra engineer** | AGENTS.md + architecture/CLOUD_PORTABILITY.md | SCHEMA.md §5–6 (state stores), SECURITY.md | Terraform + Helm in scaffolding/; ops ADRs |
-| **Voice engineer** | AGENTS.md + ARCHITECTURE.md §4.2 | ux/UX_DESIGN.md, SCHEMA.md (voice_calls table) | ADR-008 (voice as first-class), engineering/PERFORMANCE.md voice latency budget |
-| **UX/Studio engineer** | AGENTS.md + ux/UX_DESIGN.md | api/openapi.yaml (contracts), SCHEMA.md (UI data shapes) | Figma design system (TBD); HANDBOOK §code review |
+| **Voice engineer** | AGENTS.md + ARCHITECTURE.md §4.2 | ux/00_CANONICAL_TARGET_UX_STANDARD.md, SCHEMA.md (voice_calls table) | ADR-008 (voice as first-class), engineering/PERFORMANCE.md voice latency budget |
+| **UX/Studio engineer** | AGENTS.md + ux/00_CANONICAL_TARGET_UX_STANDARD.md | api/openapi.yaml (contracts), SCHEMA.md (UI data shapes) | Figma design system (TBD); HANDBOOK §code review |
 | **DevRel** | README + SPRINT_0.md + AGENTS.md | architecture/ARCHITECTURE.md, scaffolding/ examples | Copy templates, quickstart drafts |
 | **Security/Compliance eng** | README + SECURITY.md | SCHEMA.md §8–11 (data classification), CLOUD_PORTABILITY.md | Threat model exercises; audit log design |
 
@@ -309,7 +312,7 @@ This folder (`loop_implementation/`) is the engineering team's Day-1 execution p
 | `data/SCHEMA.md` | How data flows and is stored | Eng #2 |
 | `api/openapi.yaml` | Public REST contract | Arch owner + Eng #5 (Studio) |
 | `adrs/` | Why we made key decisions | Team consensus |
-| `ux/UX_DESIGN.md` | What Studio looks like | Eng #5 + Designer |
+| `ux/00_CANONICAL_TARGET_UX_STANDARD.md` | Canonical target UX/UI standard for Studio | Product + Design + Studio Engineering |
 | `engineering/` (HANDBOOK, SECURITY, TESTING) | How we work, ship, and keep safe | Team lead + domain experts |
 | `tracker/SPRINT_0.md` | What we build in the first 6 weeks | CTO + Eng leads |
 
@@ -327,7 +330,7 @@ This folder (`loop_implementation/`) is the engineering team's Day-1 execution p
 | New table or column | `data/SCHEMA.md` + Alembic migration | Same PR |
 | New service / package | `architecture/ARCHITECTURE.md` §2, new ADR | Same PR |
 | New permission or role | `engineering/SECURITY.md` §6 + test | Same PR |
-| New UX screen | `ux/UX_DESIGN.md` + Figma | Same PR |
+| New UX screen | `ux/00_CANONICAL_TARGET_UX_STANDARD.md` + Figma | Same PR |
 | Discovered bug in old decision | New ADR (never edit old ADR) | Separate PR (urgent) |
 | New eval scorer | `engineering/TESTING.md` §5 | Same PR |
 
@@ -457,7 +460,7 @@ When writing new docs, use these templates:
 | SCHEMA.md | Draft v0.2 (cloud-agnostic) | 2026-04-29 |
 | openapi.yaml | Draft v0.2 | 2026-04-29 |
 | ADRs (28 — including ADR-016 cloud-agnostic, ADR-017 RBAC, ADR-018 SSE/WS, ADR-019 chunking, ADR-020 RLS, ADR-021 sandbox runtime, ADR-022 idempotency, ADR-023 eval determinism, ADR-024 deprecation policy, ADR-025 telemetry retention, ADR-026 agent code isolation, ADR-027 eval registry license, ADR-028 pricing precision) | All Accepted | 2026-04-29 |
-| UX_DESIGN.md | Draft v0.1 | 2026-04-29 |
+| 00_CANONICAL_TARGET_UX_STANDARD.md | Canonical target v1.1 | 2026-05-06 |
 | HANDBOOK.md | Draft v0.2 | 2026-04-29 |
 | SECURITY.md | Draft v0.2 (cloud-agnostic) | 2026-04-29 |
 | TESTING.md | Draft v0.1 | 2026-04-29 |

@@ -659,7 +659,7 @@ Source of truth: `tools/build_tracker.py`. xlsx companion regenerated separately
 - **Data model** — `loop_implementation/data/SCHEMA.md`
 - **API spec** — `loop_implementation/api/openapi.yaml`
 - **ADRs** — `loop_implementation/adrs/README.md`
-- **UX/UI** — `loop_implementation/ux/UX_DESIGN.md`
+- **UX/UI** — `loop_implementation/ux/00_CANONICAL_TARGET_UX_STANDARD.md`
 - **Engineering handbook** — `loop_implementation/engineering/HANDBOOK.md`
 - **Security** — `loop_implementation/engineering/SECURITY.md`
 - **Testing** — `loop_implementation/engineering/TESTING.md`

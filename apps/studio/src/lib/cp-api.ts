@@ -46,6 +46,27 @@ function noStoreFetch(fetcher: typeof fetch): typeof fetch {
   return (input, init) => fetcher(input, { ...init, cache: "no-store" });
 }
 
+/**
+ * Inject a default ``X-Loop-Workspace-Id`` from
+ * ``LOOP_DEFAULT_WORKSPACE_ID`` (server-side env) when the caller
+ * hasn't already set one. cp-api requires the header on every
+ * workspace-scoped GET; the generated client doesn't know to send
+ * it because the OpenAPI spec doesn't declare it on every route
+ * (tracked as drift baseline). This shim closes the gap for SSR
+ * paths so the studio's pages render with seeded data.
+ */
+function withDefaultWorkspaceHeader(fetcher: typeof fetch): typeof fetch {
+  return (input, init) => {
+    const defaultWs = process.env.LOOP_DEFAULT_WORKSPACE_ID;
+    if (!defaultWs) return fetcher(input, init);
+    const headers = new Headers(init?.headers);
+    if (!headers.has("x-loop-workspace-id")) {
+      headers.set("x-loop-workspace-id", defaultWs);
+    }
+    return fetcher(input, { ...init, headers });
+  };
+}
+
 function cpApiFetch(opts: {
   fetcher?: typeof fetch;
   baseUrl: string;
@@ -55,7 +76,7 @@ function cpApiFetch(opts: {
     // refreshSessionToken appends /v1/auth/refresh; pass origin-ish base.
     refreshBaseUrl: opts.baseUrl.replace(/\/v1$/, ""),
   });
-  return noStoreFetch(authed);
+  return noStoreFetch(withDefaultWorkspaceHeader(authed));
 }
 
 function createApiClient(opts: {

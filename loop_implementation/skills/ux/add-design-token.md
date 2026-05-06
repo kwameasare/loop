@@ -6,7 +6,7 @@ when_to_use: |
   - Tightening or loosening a spacing scale.
   - Adding a radius or elevation tier.
 required_reading:
-  - ux/UX_DESIGN.md   # §5 design tokens
+  - ux/00_CANONICAL_TARGET_UX_STANDARD.md   # §28 visual language and §29 motion
 applies_to: ux
 owner: Designer + Founding Eng #5
 last_reviewed: 2026-04-29
@@ -20,7 +20,7 @@ Tokens are the boundary between "design" and "code." Add carefully — every tok
 
 ## Required reading
 
-`ux/UX_DESIGN.md` §5.
+`ux/00_CANONICAL_TARGET_UX_STANDARD.md` §28-29.
 
 ## Steps
 
@@ -30,7 +30,7 @@ Tokens are the boundary between "design" and "code." Add carefully — every tok
    - CSS variable in `apps/studio/app/globals.css`.
    - Tailwind config in `apps/studio/tailwind.config.ts`.
 4. **Dark + light modes:** every color token has both values. Use `:root` + `[data-theme="dark"]`.
-5. **Document** in `ux/UX_DESIGN.md` §5 in the relevant table.
+5. **Document** in the app design system and update `ux/00_CANONICAL_TARGET_UX_STANDARD.md` if the token changes the target visual language.
 6. **Tests:** Storybook visual snapshot on the design-system page.
 
 ## Definition of done
@@ -39,7 +39,7 @@ Tokens are the boundary between "design" and "code." Add carefully — every tok
 - [ ] Used in ≥ 2 places.
 - [ ] Semantic name.
 - [ ] Both modes defined.
-- [ ] Listed in UX_DESIGN.md.
+- [ ] Reflected in 00_CANONICAL_TARGET_UX_STANDARD.md if it changes the target visual language.
 - [ ] Storybook snapshot updated.
 
 ## Anti-patterns
@@ -54,4 +54,4 @@ Tokens are the boundary between "design" and "code." Add carefully — every tok
 
 ## References
 
-- `ux/UX_DESIGN.md` §5.
+- `ux/00_CANONICAL_TARGET_UX_STANDARD.md` §28-29.

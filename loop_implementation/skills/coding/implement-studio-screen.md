@@ -8,7 +8,7 @@ when_to_use: |
   - Implementing the operator inbox.
   - Adding a chart, table, or interactive component.
 required_reading:
-  - ux/UX_DESIGN.md              # IA, screens, design tokens, component library, copy guidelines
+  - ux/00_CANONICAL_TARGET_UX_STANDARD.md              # canonical target UX/UI standard
   - api/openapi.yaml             # data shapes
   - engineering/HANDBOOK.md      # §2.2 TypeScript conventions
   - engineering/COPY_GUIDE.md    # any user-facing string
@@ -26,7 +26,7 @@ Touching `apps/studio/`. Studio is the public face of Loop's quality story; a sl
 
 ## Required reading
 
-1. `ux/UX_DESIGN.md` end-to-end (your screen must conform to its IA, tokens, copy guide).
+1. `ux/00_CANONICAL_TARGET_UX_STANDARD.md` end-to-end (your screen must conform to the canonical target UX standard).
 2. `api/openapi.yaml` for the endpoints you'll consume.
 3. `engineering/COPY_GUIDE.md` for tone.
 
@@ -39,16 +39,16 @@ Touching `apps/studio/`. Studio is the public face of Loop's quality story; a sl
 2. **Data fetching.** TanStack Query only. No raw `fetch` in components.
    - Generated client lives in `apps/studio/lib/api/`. Re-generate from `api/openapi.yaml` via `pnpm openapi:generate`.
 3. **State management.** Local first. Cross-cutting → Zustand. Never Redux.
-4. **Styling.** Tailwind utility classes + shadcn/ui primitives. Use design tokens from `ux/UX_DESIGN.md` §5 — never raw hex.
+4. **Styling.** Tailwind utility classes + shadcn/ui primitives. Follow `ux/00_CANONICAL_TARGET_UX_STANDARD.md` §28-29 for visual language, motion, and tactility; never use raw hex where a token exists.
 5. **Dark mode.** Default. Both modes must look right. Test by toggling.
-6. **Density modes** (`ux/UX_DESIGN.md` §5.12): tables respect compact/normal/comfortable.
+6. **Density modes.** Tables respect compact/normal/comfortable modes where the current Studio design system supports them.
 7. **Empty / loading / error states.** Every screen has all three:
-   - Empty: copy from `ux/UX_DESIGN.md` empty-state catalog.
+   - Empty: copy follows `ux/00_CANONICAL_TARGET_UX_STANDARD.md` §32 and Appendix C.
    - Loading: skeleton (no spinners on full pages).
    - Error: inline, with retry, and a `cmd-shift-c` shortcut to copy a debug bundle.
-8. **Live updates.** WebSocket only on the screens listed in `ux/UX_DESIGN.md` §6.2 (operator inbox, conversation detail, trace tail, cost dashboard). Others use 30s polling.
-9. **Keyboard shortcuts.** Add the screen's shortcuts to the catalog (§5.20). Show in `?` help.
-10. **Accessibility.** WCAG 2.2 AA. Audit checklist per component (§5.14). Visible focus rings; ARIA labels on icon-only buttons; reduced-motion respected.
+8. **Live updates.** Use WebSocket only for genuinely live surfaces such as operator inbox, conversation detail, trace tail, production tail, cost dashboard, and deploy watch. Others use polling.
+9. **Keyboard shortcuts.** Add discoverable shortcuts for expert flows. Show in `?` help.
+10. **Accessibility.** WCAG 2.2 AA and `ux/00_CANONICAL_TARGET_UX_STANDARD.md` §30. Visible focus rings; ARIA labels on icon-only buttons; reduced-motion respected.
 11. **Internationalization.** Strings via `apps/studio/locales/<lang>.json`. No literals in components.
 12. **Performance budgets** (`engineering/PERFORMANCE.md` §1.1):
     - LCP ≤ 1.0s (broadband).
@@ -58,12 +58,12 @@ Touching `apps/studio/`. Studio is the public face of Loop's quality story; a sl
     - Vitest unit for hooks and pure components.
     - Playwright e2e for the journey if it's a top-10 user journey (`engineering/TESTING.md` §4).
     - Lighthouse CI gates LCP/TBT/CLS.
-14. **Docs.** Add the screen to `ux/UX_DESIGN.md` §3 if it's a new top-level screen.
+14. **Docs.** Update `ux/00_CANONICAL_TARGET_UX_STANDARD.md` when the change affects the target UX standard.
 
 ## Definition of done
 
 - [ ] Tracker story claimed before work (status `In progress`) and closed after (`Done` + PR ref) — see `meta/update-tracker.md`.
-- [ ] Conforms to UX_DESIGN.md tokens, copy, IA.
+- [ ] Conforms to 00_CANONICAL_TARGET_UX_STANDARD.md.
 - [ ] Empty / loading / error states present.
 - [ ] Keyboard shortcuts added to catalog.
 - [ ] WCAG 2.2 AA — focus, ARIA, contrast checked.
@@ -93,6 +93,6 @@ Touching `apps/studio/`. Studio is the public face of Loop's quality story; a sl
 
 ## References
 
-- `ux/UX_DESIGN.md` (whole doc).
+- `ux/00_CANONICAL_TARGET_UX_STANDARD.md` (whole doc).
 - `engineering/COPY_GUIDE.md`.
 - `engineering/PERFORMANCE.md` §1.1.

@@ -152,7 +152,7 @@ of the following are green for two consecutive release trains:
    tenants (Layer-3 integration test under
    [TESTING.md](TESTING.md)).
 3. Audit log UI passes Studio visual-regression suite + a11y
-   contract (see [ux/UX_DESIGN.md](../ux/UX_DESIGN.md)).
+   contract (see [ux/00_CANONICAL_TARGET_UX_STANDARD.md](../ux/00_CANONICAL_TARGET_UX_STANDARD.md)).
 4. [PARITY.md](PARITY.md) is published in the docs site for the exact
    release tag, with evidence committed beside it.
 5. p50 voice latency ≤ 700 ms on the synthetic harness

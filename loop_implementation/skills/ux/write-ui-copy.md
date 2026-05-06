@@ -9,7 +9,7 @@ when_to_use: |
   - Writing a docs page lede.
 required_reading:
   - engineering/COPY_GUIDE.md
-  - ux/UX_DESIGN.md   # §5.5–§5.7 copy / errors / toasts
+  - ux/00_CANONICAL_TARGET_UX_STANDARD.md   # §32 states/copy and Appendix C
 applies_to: ux
 owner: Designer + author of the change
 last_reviewed: 2026-04-29
@@ -59,4 +59,4 @@ Any user-facing string. Loop's voice is part of the product.
 ## References
 
 - `engineering/COPY_GUIDE.md`.
-- `ux/UX_DESIGN.md` §5.5–§5.7.
+- `ux/00_CANONICAL_TARGET_UX_STANDARD.md` §32 and Appendix C.

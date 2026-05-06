@@ -39,7 +39,7 @@ Read in this order before doing any task:
 16. `engineering/DR.md` — disaster recovery
 17. `engineering/RUNBOOKS.md` — operational procedures
 18. `engineering/COPY_GUIDE.md` — voice + tone for any user-facing string
-19. `ux/UX_DESIGN.md` — Studio IA + design tokens
+19. `ux/00_CANONICAL_TARGET_UX_STANDARD.md` — canonical Studio target UX/UI standard
 20. `tracker/TRACKER.md` — current epics, stories, sprints, hiring, risks
 21. `tracker/SPRINT_0.md` — week-by-week first six weeks
 22. `engineering/templates/` — ADR_TEMPLATE, RFC_TEMPLATE, RUNBOOK_TEMPLATE, SKILL_TEMPLATE (use when creating those)
@@ -67,7 +67,7 @@ Read in this order before doing any task:
 | Templates | `engineering/templates/*.md` | (already Markdown) | — |
 | Skills (per-task playbooks) | `skills/<category>/<name>.md` | (already Markdown with Claude Skill frontmatter) | per-platform adapters in `skills/platforms/*` |
 | Skill router | `skills/_base/SKILL_ROUTER.md` | (already Markdown) | — |
-| UX design | `ux/UX_DESIGN.md` | (already Markdown with ASCII wireframes) | Figma later |
+| UX design | `ux/00_CANONICAL_TARGET_UX_STANDARD.md` | (already Markdown with ASCII wireframes) | Figma later |
 | Engineering docs | `engineering/*.md` | (already Markdown) | — |
 | Tracker | `tracker/TRACKER.md` (canonical for AI agents) | `tracker/tracker.json` (full structured), `tracker/csv/*.csv` (per sheet) | `tracker/IMPLEMENTATION_TRACKER.xlsx` |
 | Sprint 0 plan | `tracker/SPRINT_0.md` | (already Markdown) | — |
@@ -220,7 +220,7 @@ with conversation list, right with detail + compose). This closes Sprint 0 Demo
 requirement: "operators can take over a conversation and draft/send messages."
 
 ## Changes
-- `ux/UX_DESIGN.md` §3.9 updated with screen spec + wireframe
+- `ux/00_CANONICAL_TARGET_UX_STANDARD.md` updated with the relevant target UX behavior
 - `studio-web`: new component <HITLInbox /> + <OperatorCompose />
 - `studio-web`: new route /app/inbox with WebSocket for real-time updates
 - `cp-api`: new POST /conversations/{id}/takeover endpoint (creates hitl_queue entry)
@@ -234,7 +234,7 @@ requirement: "operators can take over a conversation and draft/send messages."
 - [x] Accessible (keyboard nav + ARIA labels)
 - [x] Dark mode tested
 - [x] Mobile responsive (minimal tablet support)
-- [x] UX_DESIGN.md reflects reality
+- [x] 00_CANONICAL_TARGET_UX_STANDARD.md remains the target UX source of truth
 - [x] No console errors
 ```
 
@@ -306,7 +306,7 @@ Before marking a PR ready for review:
 
 | Situation | Tool | Example |
 |-----------|------|---------|
-| Modify existing file (small change < 50 lines) | **Edit** | Add a section to UX_DESIGN.md |
+| Modify existing file (small change < 50 lines) | **Edit** | Add a note to 00_CANONICAL_TARGET_UX_STANDARD.md |
 | Modify existing file (large change, multiple sections) | **Edit** | Still use Edit; just target multiple specific sections |
 | Create new file from scratch | **Write** | New ADR, new package, new helper script |
 | Refactor / rewrite entire file | **Write** | Complete rewrite of a doc or module |
@@ -314,7 +314,7 @@ Before marking a PR ready for review:
 ### How to handle large files
 
 - **Read in chunks:** For files >1000 lines, use `offset` and `limit` to read just the section you need (e.g., lines 600–700).
-- **Search first:** Use Grep to find the exact line number before Read. Example: `grep -n "## 5. Design tokens" UX_DESIGN.md` → Edit targets that section.
+- **Search first:** Use Grep to find the exact line number before Read. Example: `grep -n "## 28. Visual Language" 00_CANONICAL_TARGET_UX_STANDARD.md` -> Edit targets that section.
 - **One Edit per logical section:** Don't try to do 5 unrelated edits in one call; split them.
 - **Validate your context:** Always read the surrounding lines before and after your target to understand nesting, indentation, and context.
 
@@ -359,7 +359,7 @@ When a task is underspecified:
 |------|-------|---|
 | Fix a typo in SCHEMA.md | Just that file | Everything |
 | Add a new LLM provider to the gateway | ARCHITECTURE.md §3 (gateway), SCHEMA.md (no schema change), openapi.yaml (if public) | Full TESTING, HANDBOOK |
-| Add a new channel adapter | ARCHITECTURE.md §2.2, SCHEMA.md (channel_configs table), UX_DESIGN.md (if new UI), api/openapi.yaml (webhook shape) | ADRs, SECURITY detail |
+| Add a new channel adapter | ARCHITECTURE.md §2.2, SCHEMA.md (channel_configs table), 00_CANONICAL_TARGET_UX_STANDARD.md (if new UI), api/openapi.yaml (webhook shape) | ADRs, SECURITY detail |
 | Implement GDPR DSAR request export | SECURITY.md §6 (GDPR), SCHEMA.md (data_export_requests table), ARCHITECTURE.md (s3 layout) | Everything else |
 
 **Good practice:** Search the code first. Find the relevant imports/dependencies. Then read only those docs.
@@ -404,7 +404,7 @@ grep -r "from google.cloud" packages/runtime/
 - **Coding standards:** `engineering/HANDBOOK.md` (§1 local dev, §2 conventions, §3 code review bar)
 - **Security baseline:** `engineering/SECURITY.md` (§1 threat model, §5 RLS, §6 compliance)
 - **Testing pyramid:** `engineering/TESTING.md` (§1 unit/integration/e2e, §5 eval scorers)
-- **UI/UX contracts:** `ux/UX_DESIGN.md` (§1 principles, §3 screens, §5 design system)
+- **UI/UX contracts:** `ux/00_CANONICAL_TARGET_UX_STANDARD.md` (§1 product promise, §3 principles, §5 IA, §28-32 visual/copy, §37 quality bar)
 - **Sprint planning:** `tracker/SPRINT_0.md` (week-by-week milestones, dependencies)
 
 ---

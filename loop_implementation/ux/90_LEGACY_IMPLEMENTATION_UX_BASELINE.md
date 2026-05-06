@@ -1,8 +1,10 @@
-# Loop Studio — UX/UI Design Document
+# Legacy Implementation UX Baseline - Loop Studio
 
-**Status:** Draft v0.1
+**Status:** LEGACY IMPLEMENTATION BASELINE. Superseded as the target UX standard by [`00_CANONICAL_TARGET_UX_STANDARD.md`](00_CANONICAL_TARGET_UX_STANDARD.md).
 **Owner:** Founding Eng #5 (Studio) + Designer
 **Companion files:** `architecture/ARCHITECTURE.md` (system), `api/openapi.yaml` (data shapes)
+
+**Canonical target:** [`00_CANONICAL_TARGET_UX_STANDARD.md`](00_CANONICAL_TARGET_UX_STANDARD.md) is the true UX/UI standard. This file remains useful only as a historical implementation baseline and near-term detail reference where it does not conflict with the canonical target.
 
 This document defines the UX of Loop Studio — the web-based debugger and operator surface — and the design system that supports it. Studio is **not** a flow editor; it is a debugger first, operator console second, and (much later) optional flow visualizer.
 

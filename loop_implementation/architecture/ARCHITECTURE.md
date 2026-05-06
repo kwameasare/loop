@@ -662,7 +662,7 @@ See `adrs/` for the running log.
 - `api/openapi.yaml` — REST API spec
 - `adrs/*.md` — decision records (see ADR-016 for cloud-portability rationale)
 - `engineering/HANDBOOK.md` — coding conventions, dev setup
-- `ux/UX_DESIGN.md` — Studio screens & IA
+- `ux/00_CANONICAL_TARGET_UX_STANDARD.md` — Studio screens & IA
 - `engineering/SECURITY.md` — threat model, controls
 - `engineering/TESTING.md` — testing pyramid + eval harness
 - `tracker/` — sprint plan, epics, stories

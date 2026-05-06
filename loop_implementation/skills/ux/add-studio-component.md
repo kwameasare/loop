@@ -5,7 +5,7 @@ when_to_use: |
   - Component will be reused across screens.
   - Component encodes a design pattern (TraceWaterfall, ConversationStream, …).
 required_reading:
-  - ux/UX_DESIGN.md          # §4 component library
+  - ux/00_CANONICAL_TARGET_UX_STANDARD.md          # canonical target UX/UI standard
   - engineering/HANDBOOK.md  # §2.2 TS conventions
   - engineering/COPY_GUIDE.md
 applies_to: ux
@@ -21,19 +21,19 @@ Adding a reusable component (not a one-off screen).
 
 ## Required reading
 
-`ux/UX_DESIGN.md` §4.
+`ux/00_CANONICAL_TARGET_UX_STANDARD.md`, especially §28-32 and §37.
 
 ## Steps
 
 1. **File**: `apps/studio/components/<feature>/<Name>.tsx`. Function component, named export, no defaults.
 2. **Storybook story**: `<Name>.stories.tsx` covering: default, loading, error, empty, dense modes.
-3. **Tokens only.** No raw hex, no inline px (use Tailwind tokens or `ux/UX_DESIGN.md` §5).
+3. **Tokens only.** No raw hex, no inline px where a token exists. Follow `ux/00_CANONICAL_TARGET_UX_STANDARD.md` §28-29 for visual and motion intent.
 4. **Polymorphic via `as` prop** when shape varies (e.g., link vs button).
 5. **Forward refs** when the component wraps an interactive primitive.
 6. **Accessibility:** ARIA labels for icon-only buttons; visible focus rings; keyboard navigation; reduced motion support.
 7. **i18n:** strings via `t()`.
 8. **Tests:** Vitest for behavior; Storybook a11y addon for accessibility regressions.
-9. **Add to `ux/UX_DESIGN.md` §4 component table.**
+9. **Docs.** Update `ux/00_CANONICAL_TARGET_UX_STANDARD.md` when the component creates or changes a target UX pattern.
 
 ## Definition of done
 
@@ -42,7 +42,7 @@ Adding a reusable component (not a one-off screen).
 - [ ] Story covers default + states.
 - [ ] A11y checks pass.
 - [ ] Forward refs where applicable.
-- [ ] Added to component table in UX_DESIGN.md.
+- [ ] Documented in 00_CANONICAL_TARGET_UX_STANDARD.md when it changes the target UX pattern.
 
 ## Anti-patterns
 
@@ -57,4 +57,4 @@ Adding a reusable component (not a one-off screen).
 
 ## References
 
-- `ux/UX_DESIGN.md` §4–§5.
+- `ux/00_CANONICAL_TARGET_UX_STANDARD.md` §28-32 and §37.

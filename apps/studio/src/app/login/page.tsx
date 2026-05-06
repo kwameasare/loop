@@ -1,29 +1,39 @@
 "use client";
 
 /**
- * S151: ``/login`` — kicks off the Auth0 PKCE redirect.
+ * ``/login`` — Auth0 PKCE redirect when Auth0 is configured, OR
+ * a local email-only form when it isn't (local pilot mode).
  *
- * Reads ``returnTo`` from the query string and forwards it into the
- * Auth0 redirect's ``appState`` so ``onRedirectCallback`` (configured
- * in the AuthProvider) can route the user back after authentication.
+ * Auth0 path (S151): forwards ``returnTo`` into the Auth0 redirect's
+ * ``appState`` so the post-callback route lands the user back where
+ * they came from.
  *
- * Already-signed-in users skip the round-trip and go straight to
- * ``returnTo`` (or ``/``). The inner component is wrapped in a
- * Suspense boundary because ``useSearchParams`` forces a client-side
- * bailout during static prerender.
+ * Local-pilot path: posts the email to ``/api/dev-login`` (server-only
+ * route handler that mints a HS256 JWT against
+ * ``LOOP_CP_LOCAL_JWT_SECRET`` and exchanges it with cp's
+ * ``/v1/auth/exchange``). The returned PASETO is stashed in
+ * ``sessionStorage`` (``loop.cp.session``) — the same key the
+ * Auth0 callback uses — so the rest of the studio works unchanged.
+ *
+ * Auth0-configured is detected by ``NEXT_PUBLIC_AUTH0_DOMAIN``. The
+ * AuthProvider already throws in NODE_ENV=production when that's
+ * unset, so the local-pilot form is only reachable in dev/preview.
  */
 
 import { useAuth0 } from "@auth0/auth0-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import { storeSessionToken } from "@/lib/cp-auth-exchange";
 import { useUser } from "@/lib/use-user";
 
-function LoginInner() {
+const AUTH0_CONFIGURED =
+  typeof process !== "undefined" &&
+  Boolean(process.env.NEXT_PUBLIC_AUTH0_DOMAIN);
+
+function Auth0Login({ returnTo }: { returnTo: string }) {
   const { loginWithRedirect } = useAuth0();
   const { isAuthenticated, isLoading } = useUser();
   const router = useRouter();
-  const params = useSearchParams();
-  const returnTo = params.get("returnTo") || "/";
 
   useEffect(() => {
     if (isLoading) return;
@@ -43,6 +53,115 @@ function LoginInner() {
       <p className="text-muted-foreground">Redirecting to sign in…</p>
     </main>
   );
+}
+
+function LocalPilotLogin({ returnTo }: { returnTo: string }) {
+  const router = useRouter();
+  const [email, setEmail] = useState("dev@loop.local");
+  const [status, setStatus] = useState<
+    | { kind: "idle" }
+    | { kind: "submitting" }
+    | { kind: "error"; message: string }
+  >({ kind: "idle" });
+
+  const submit = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setStatus({ kind: "submitting" });
+      try {
+        const response = await fetch("/api/dev-login", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const text = await response.text();
+        if (!response.ok) {
+          let parsed: { error?: string } = {};
+          try {
+            parsed = JSON.parse(text) as { error?: string };
+          } catch {
+            /* fall through */
+          }
+          throw new Error(
+            parsed.error ?? `dev-login failed: HTTP ${response.status}`,
+          );
+        }
+        const payload = JSON.parse(text) as {
+          access_token: string;
+          token_type?: string;
+          expires_in?: number;
+          refresh_token?: string;
+        };
+        storeSessionToken(payload);
+        router.replace(returnTo);
+      } catch (err) {
+        setStatus({
+          kind: "error",
+          message: err instanceof Error ? err.message : "Sign-in failed",
+        });
+      }
+    },
+    [email, returnTo, router],
+  );
+
+  return (
+    <main className="flex min-h-screen items-center justify-center px-4">
+      <form
+        onSubmit={submit}
+        className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-6 shadow-sm"
+        aria-label="Local pilot sign in"
+      >
+        <div className="space-y-1">
+          <h1 className="text-xl font-semibold tracking-tight">
+            Sign in (local pilot)
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            No Auth0 configured. Enter any email — the studio will mint a
+            local session via cp&apos;s dev exchange. Production deploys
+            require a real IdP.
+          </p>
+        </div>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Email</span>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            data-testid="dev-login-email"
+            className="rounded-md border bg-background px-2 py-1.5"
+            autoFocus
+          />
+        </label>
+        {status.kind === "error" ? (
+          <p
+            role="alert"
+            data-testid="dev-login-error"
+            className="text-destructive text-sm"
+          >
+            {status.message}
+          </p>
+        ) : null}
+        <button
+          type="submit"
+          disabled={status.kind === "submitting"}
+          data-testid="dev-login-submit"
+          className="w-full rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+        >
+          {status.kind === "submitting" ? "Signing in…" : "Sign in"}
+        </button>
+      </form>
+    </main>
+  );
+}
+
+function LoginInner() {
+  const params = useSearchParams();
+  const returnTo = params.get("returnTo") || "/";
+  if (!AUTH0_CONFIGURED) {
+    return <LocalPilotLogin returnTo={returnTo} />;
+  }
+  return <Auth0Login returnTo={returnTo} />;
 }
 
 export default function LoginPage() {
