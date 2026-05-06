@@ -85,8 +85,14 @@ describe("AgentOverview", () => {
     expect(screen.getByTestId("agent-live-preview")).toHaveTextContent(
       "I need to cancel my annual renewal",
     );
-    expect(screen.getByTestId("diff-ribbon")).toHaveTextContent(
+    expect(screen.getAllByTestId("diff-ribbon")[0]).toHaveTextContent(
       "Draft pins the May 2026 refund policy",
+    );
+    expect(screen.getByTestId("build-to-test-flow-agent")).toHaveTextContent(
+      "Fork from turn",
+    );
+    expect(screen.getByTestId("build-to-test-flow-agent")).toHaveTextContent(
+      "Save run as eval",
     );
     expect(screen.getByTestId("safe-next-actions")).toHaveTextContent(
       "Replay refund turns",

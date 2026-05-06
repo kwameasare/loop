@@ -32,6 +32,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { BuildToTestFlow } from "@/components/agents/build-to-test-flow";
+import { createBuildToTestFlowData } from "@/lib/target-ux/build-flow";
 
 export interface DeploySummary {
   /** ISO 8601 timestamp of the most recent deploy. */
@@ -844,6 +846,8 @@ export function AgentOverview({
         after={data.diff.after}
         impact={data.diff.impact}
       />
+
+      <BuildToTestFlow data={createBuildToTestFlowData(id, "agent")} />
 
       <section
         className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr))]"
