@@ -134,9 +134,10 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
   {
     route: "/agents/[agent_id]/tools",
     verb: "build",
-    label: "Agent tools",
-    purpose: "Tool registry bound to the agent.",
-    anchor: "§5",
+    label: "Tools Room",
+    purpose:
+      "Catalog, schema, auth, safety contract, mock/live, and draft-from-request flow (§12).",
+    anchor: "§12",
   },
   {
     route: "/agents/[agent_id]/versions",

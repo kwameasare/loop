@@ -1,13 +1,9 @@
-/**
- * P0.3: agent tools tab.
- *
- * Lists every tool currently bound to the agent. Wires
- * ``GET /v1/agents/{agent_id}/tools`` (cp shim blocked; falls back
- * to an empty catalog on 404). Replaces the previous static stub.
- */
-
-import { listAgentTools } from "@/lib/agent-tools";
-import { ToolsList } from "@/components/agents/tools-list";
+import { ToolsRoom } from "@/components/tools/tools-room";
+import {
+  createToolsRoomData,
+  listAgentTools,
+  type AgentTool,
+} from "@/lib/agent-tools";
 
 export const dynamic = "force-dynamic";
 
@@ -16,17 +12,12 @@ interface AgentToolsPageProps {
 }
 
 export default async function AgentToolsPage({ params }: AgentToolsPageProps) {
-  const tools = await listAgentTools(params.agent_id);
-  return (
-    <div className="flex flex-col gap-4" data-testid="agent-tools">
-      <header>
-        <h2 className="text-lg font-medium">Tools</h2>
-        <p className="text-sm text-muted-foreground">
-          MCP and HTTP tools bound to this agent. Bindings flow through the
-          control plane; this page reflects the live state.
-        </p>
-      </header>
-      <ToolsList tools={tools} />
-    </div>
-  );
+  let liveTools: AgentTool[] = [];
+  try {
+    liveTools = await listAgentTools(params.agent_id);
+  } catch {
+    liveTools = [];
+  }
+  const data = createToolsRoomData(params.agent_id, liveTools);
+  return <ToolsRoom data={data} />;
 }
