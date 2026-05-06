@@ -27,5 +27,141 @@
     "generic": "Something went wrong. Please try again.",
     "notFound": "Not found.",
     "unauthorized": "You are not authorized to view this page."
+  },
+  "targetStates": {
+    "loading": {
+      "eyebrow": "Loading",
+      "title": "{{object}} is loading",
+      "description": "Loading {{object}}. Cached shell status stays visible while this work finishes.",
+      "evidenceLabel": "Evidence",
+      "primaryAction": "Cancel",
+      "secondaryAction": "Open status",
+      "stageLabel": "Stage",
+      "requestIdLabel": "Request ID",
+      "updatedAtLabel": "Last updated"
+    },
+    "empty": {
+      "eyebrow": "Empty",
+      "title": "No {{object}} yet",
+      "description": "Create, import, connect, run, deploy, invite, or save as eval from here.",
+      "evidenceLabel": "Workspace evidence",
+      "primaryAction": "Create",
+      "secondaryAction": "Import",
+      "stageLabel": "Suggested start",
+      "requestIdLabel": "Request ID",
+      "updatedAtLabel": "Last checked"
+    },
+    "error": {
+      "eyebrow": "Error",
+      "title": "{{object}} could not load",
+      "description": "The request failed. Retry, or sign back in if the session expired.",
+      "evidenceLabel": "Failure evidence",
+      "primaryAction": "Retry",
+      "secondaryAction": "Report",
+      "stageLabel": "Failed step",
+      "requestIdLabel": "Request ID",
+      "updatedAtLabel": "Failed at"
+    },
+    "degraded": {
+      "eyebrow": "Degraded",
+      "title": "{{object}} is degraded",
+      "description": "Cached data remains visible. New changes are read-only until the service recovers.",
+      "evidenceLabel": "Status evidence",
+      "primaryAction": "Retry",
+      "secondaryAction": "Open status",
+      "stageLabel": "Affected stage",
+      "requestIdLabel": "Request ID",
+      "updatedAtLabel": "Last healthy"
+    },
+    "stale": {
+      "eyebrow": "Stale",
+      "title": "{{object}} may be stale",
+      "description": "Refresh before making production decisions.",
+      "evidenceLabel": "Freshness evidence",
+      "primaryAction": "Refresh",
+      "secondaryAction": "Open trace",
+      "stageLabel": "Refresh source",
+      "requestIdLabel": "Request ID",
+      "updatedAtLabel": "Last updated"
+    },
+    "permissionBlocked": {
+      "eyebrow": "Permission blocked",
+      "title": "Permission needed for {{object}}",
+      "description": "Your role cannot change this surface. Request access or keep the current production state.",
+      "evidenceLabel": "Policy evidence",
+      "primaryAction": "Request access",
+      "secondaryAction": "View policy",
+      "stageLabel": "Required role",
+      "requestIdLabel": "Audit ID",
+      "updatedAtLabel": "Policy checked"
+    }
+  },
+  "sectionStates": {
+    "loading": {
+      "eyebrow": "Loading",
+      "title": "{{section}} is loading",
+      "description": "Loading {{section}}. Cached workspace status stays visible in the shell.",
+      "evidenceLabel": "Evidence",
+      "primaryAction": "Cancel",
+      "secondaryAction": "Open status",
+      "stageLabel": "Stage",
+      "requestIdLabel": "Request ID",
+      "updatedAtLabel": "Last updated"
+    },
+    "empty": {
+      "eyebrow": "Empty",
+      "title": "No {{section}} yet",
+      "description": "Start from an existing turn, import, or create the first object for this section.",
+      "evidenceLabel": "Workspace evidence",
+      "primaryAction": "Create",
+      "secondaryAction": "Import",
+      "stageLabel": "Suggested start",
+      "requestIdLabel": "Request ID",
+      "updatedAtLabel": "Last checked"
+    },
+    "error": {
+      "eyebrow": "Error",
+      "title": "{{section}} could not load",
+      "description": "The cp-api request failed for {{section}}. Retry, or sign back in if the session expired.",
+      "evidenceLabel": "Failure evidence",
+      "primaryAction": "Retry",
+      "secondaryAction": "Report",
+      "stageLabel": "Failed step",
+      "requestIdLabel": "Request ID",
+      "updatedAtLabel": "Failed at"
+    },
+    "degraded": {
+      "eyebrow": "Degraded",
+      "title": "{{section}} is degraded",
+      "description": "Cached data remains visible. New actions queue until the service is healthy.",
+      "evidenceLabel": "Status evidence",
+      "primaryAction": "Retry",
+      "secondaryAction": "Open status",
+      "stageLabel": "Affected stage",
+      "requestIdLabel": "Request ID",
+      "updatedAtLabel": "Last healthy"
+    },
+    "stale": {
+      "eyebrow": "Stale",
+      "title": "{{section}} may be stale",
+      "description": "Refresh before editing or approving changes.",
+      "evidenceLabel": "Freshness evidence",
+      "primaryAction": "Refresh",
+      "secondaryAction": "Open trace",
+      "stageLabel": "Refresh source",
+      "requestIdLabel": "Request ID",
+      "updatedAtLabel": "Last updated"
+    },
+    "permissionBlocked": {
+      "eyebrow": "Permission blocked",
+      "title": "Permission needed for {{section}}",
+      "description": "Your role cannot change this section. Request access or keep the current production state.",
+      "evidenceLabel": "Policy evidence",
+      "primaryAction": "Request access",
+      "secondaryAction": "View policy",
+      "stageLabel": "Required role",
+      "requestIdLabel": "Audit ID",
+      "updatedAtLabel": "Policy checked"
+    }
   }
 }

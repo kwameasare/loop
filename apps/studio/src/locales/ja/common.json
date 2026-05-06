@@ -27,5 +27,141 @@
     "generic": "エラーが発生しました。もう一度お試しください。",
     "notFound": "見つかりません。",
     "unauthorized": "このページを表示する権限がありません。"
+  },
+  "targetStates": {
+    "loading": {
+      "eyebrow": "読み込み中",
+      "title": "{{object}}を読み込んでいます",
+      "description": "{{object}}を読み込んでいます。この処理が終わるまで、キャッシュされたシェル状態は表示されたままです。",
+      "evidenceLabel": "証拠",
+      "primaryAction": "キャンセル",
+      "secondaryAction": "ステータスを開く",
+      "stageLabel": "ステージ",
+      "requestIdLabel": "リクエスト ID",
+      "updatedAtLabel": "最終更新"
+    },
+    "empty": {
+      "eyebrow": "空",
+      "title": "{{object}}はまだありません",
+      "description": "ここから作成、インポート、接続、実行、デプロイ、招待、または評価として保存できます。",
+      "evidenceLabel": "ワークスペースの証拠",
+      "primaryAction": "作成",
+      "secondaryAction": "インポート",
+      "stageLabel": "推奨される開始点",
+      "requestIdLabel": "リクエスト ID",
+      "updatedAtLabel": "最終確認"
+    },
+    "error": {
+      "eyebrow": "エラー",
+      "title": "{{object}}を読み込めませんでした",
+      "description": "リクエストに失敗しました。再試行するか、セッションが期限切れの場合は再度サインインしてください。",
+      "evidenceLabel": "失敗の証拠",
+      "primaryAction": "再試行",
+      "secondaryAction": "報告",
+      "stageLabel": "失敗したステップ",
+      "requestIdLabel": "リクエスト ID",
+      "updatedAtLabel": "失敗時刻"
+    },
+    "degraded": {
+      "eyebrow": "低下",
+      "title": "{{object}}は低下しています",
+      "description": "キャッシュされたデータは表示されたままです。サービスが回復するまで、新しい変更は読み取り専用です。",
+      "evidenceLabel": "ステータスの証拠",
+      "primaryAction": "再試行",
+      "secondaryAction": "ステータスを開く",
+      "stageLabel": "影響を受けたステージ",
+      "requestIdLabel": "リクエスト ID",
+      "updatedAtLabel": "最後に正常だった時刻"
+    },
+    "stale": {
+      "eyebrow": "古い可能性",
+      "title": "{{object}}は古い可能性があります",
+      "description": "本番判断の前に更新してください。",
+      "evidenceLabel": "鮮度の証拠",
+      "primaryAction": "更新",
+      "secondaryAction": "トレースを開く",
+      "stageLabel": "更新元",
+      "requestIdLabel": "リクエスト ID",
+      "updatedAtLabel": "最終更新"
+    },
+    "permissionBlocked": {
+      "eyebrow": "権限ブロック",
+      "title": "{{object}}には権限が必要です",
+      "description": "このロールではこのサーフェスを変更できません。アクセスをリクエストするか、現在の本番状態を維持してください。",
+      "evidenceLabel": "ポリシーの証拠",
+      "primaryAction": "アクセスをリクエスト",
+      "secondaryAction": "ポリシーを見る",
+      "stageLabel": "必要なロール",
+      "requestIdLabel": "監査 ID",
+      "updatedAtLabel": "ポリシー確認"
+    }
+  },
+  "sectionStates": {
+    "loading": {
+      "eyebrow": "読み込み中",
+      "title": "{{section}}を読み込んでいます",
+      "description": "{{section}}を読み込んでいます。キャッシュされたワークスペース状態はシェルに表示されたままです。",
+      "evidenceLabel": "証拠",
+      "primaryAction": "キャンセル",
+      "secondaryAction": "ステータスを開く",
+      "stageLabel": "ステージ",
+      "requestIdLabel": "リクエスト ID",
+      "updatedAtLabel": "最終更新"
+    },
+    "empty": {
+      "eyebrow": "空",
+      "title": "{{section}}はまだありません",
+      "description": "既存のターンから開始するか、このセクションの最初のオブジェクトをインポートまたは作成してください。",
+      "evidenceLabel": "ワークスペースの証拠",
+      "primaryAction": "作成",
+      "secondaryAction": "インポート",
+      "stageLabel": "推奨される開始点",
+      "requestIdLabel": "リクエスト ID",
+      "updatedAtLabel": "最終確認"
+    },
+    "error": {
+      "eyebrow": "エラー",
+      "title": "{{section}}を読み込めませんでした",
+      "description": "{{section}}の cp-api リクエストに失敗しました。再試行するか、セッションが期限切れの場合は再度サインインしてください。",
+      "evidenceLabel": "失敗の証拠",
+      "primaryAction": "再試行",
+      "secondaryAction": "報告",
+      "stageLabel": "失敗したステップ",
+      "requestIdLabel": "リクエスト ID",
+      "updatedAtLabel": "失敗時刻"
+    },
+    "degraded": {
+      "eyebrow": "低下",
+      "title": "{{section}}は低下しています",
+      "description": "キャッシュされたデータは表示されたままです。サービスが正常になるまで、新しいアクションはキューに入ります。",
+      "evidenceLabel": "ステータスの証拠",
+      "primaryAction": "再試行",
+      "secondaryAction": "ステータスを開く",
+      "stageLabel": "影響を受けたステージ",
+      "requestIdLabel": "リクエスト ID",
+      "updatedAtLabel": "最後に正常だった時刻"
+    },
+    "stale": {
+      "eyebrow": "古い可能性",
+      "title": "{{section}}は古い可能性があります",
+      "description": "編集や承認の前に更新してください。",
+      "evidenceLabel": "鮮度の証拠",
+      "primaryAction": "更新",
+      "secondaryAction": "トレースを開く",
+      "stageLabel": "更新元",
+      "requestIdLabel": "リクエスト ID",
+      "updatedAtLabel": "最終更新"
+    },
+    "permissionBlocked": {
+      "eyebrow": "権限ブロック",
+      "title": "{{section}}には権限が必要です",
+      "description": "このロールではこのセクションを変更できません。アクセスをリクエストするか、現在の本番状態を維持してください。",
+      "evidenceLabel": "ポリシーの証拠",
+      "primaryAction": "アクセスをリクエスト",
+      "secondaryAction": "ポリシーを見る",
+      "stageLabel": "必要なロール",
+      "requestIdLabel": "監査 ID",
+      "updatedAtLabel": "ポリシー確認"
+    }
   }
 }

@@ -27,5 +27,141 @@
     "generic": "Une erreur est survenue. Veuillez réessayer.",
     "notFound": "Introuvable.",
     "unauthorized": "Vous n'êtes pas autorisé à afficher cette page."
+  },
+  "targetStates": {
+    "loading": {
+      "eyebrow": "Chargement",
+      "title": "{{object}} se charge",
+      "description": "Chargement de {{object}}. L'état de shell en cache reste visible pendant la fin de cette tâche.",
+      "evidenceLabel": "Preuve",
+      "primaryAction": "Annuler",
+      "secondaryAction": "Ouvrir le statut",
+      "stageLabel": "Étape",
+      "requestIdLabel": "ID de requête",
+      "updatedAtLabel": "Dernière mise à jour"
+    },
+    "empty": {
+      "eyebrow": "Vide",
+      "title": "Aucun {{object}} pour le moment",
+      "description": "Créez, importez, connectez, lancez, déployez, invitez ou enregistrez comme éval depuis ici.",
+      "evidenceLabel": "Preuve du workspace",
+      "primaryAction": "Créer",
+      "secondaryAction": "Importer",
+      "stageLabel": "Départ suggéré",
+      "requestIdLabel": "ID de requête",
+      "updatedAtLabel": "Dernière vérification"
+    },
+    "error": {
+      "eyebrow": "Erreur",
+      "title": "{{object}} n'a pas pu se charger",
+      "description": "La requête a échoué. Réessayez, ou reconnectez-vous si la session a expiré.",
+      "evidenceLabel": "Preuve d'échec",
+      "primaryAction": "Réessayer",
+      "secondaryAction": "Signaler",
+      "stageLabel": "Étape échouée",
+      "requestIdLabel": "ID de requête",
+      "updatedAtLabel": "Échec à"
+    },
+    "degraded": {
+      "eyebrow": "Dégradé",
+      "title": "{{object}} est dégradé",
+      "description": "Les données en cache restent visibles. Les nouveaux changements sont en lecture seule jusqu'au rétablissement du service.",
+      "evidenceLabel": "Preuve de statut",
+      "primaryAction": "Réessayer",
+      "secondaryAction": "Ouvrir le statut",
+      "stageLabel": "Étape affectée",
+      "requestIdLabel": "ID de requête",
+      "updatedAtLabel": "Dernier état sain"
+    },
+    "stale": {
+      "eyebrow": "Périmé",
+      "title": "{{object}} peut être périmé",
+      "description": "Actualisez avant de prendre des décisions de production.",
+      "evidenceLabel": "Preuve de fraîcheur",
+      "primaryAction": "Actualiser",
+      "secondaryAction": "Ouvrir la trace",
+      "stageLabel": "Source d'actualisation",
+      "requestIdLabel": "ID de requête",
+      "updatedAtLabel": "Dernière mise à jour"
+    },
+    "permissionBlocked": {
+      "eyebrow": "Permission bloquée",
+      "title": "Permission requise pour {{object}}",
+      "description": "Votre rôle ne peut pas modifier cette surface. Demandez l'accès ou gardez l'état de production actuel.",
+      "evidenceLabel": "Preuve de politique",
+      "primaryAction": "Demander l'accès",
+      "secondaryAction": "Voir la politique",
+      "stageLabel": "Rôle requis",
+      "requestIdLabel": "ID d'audit",
+      "updatedAtLabel": "Politique vérifiée"
+    }
+  },
+  "sectionStates": {
+    "loading": {
+      "eyebrow": "Chargement",
+      "title": "{{section}} se charge",
+      "description": "Chargement de {{section}}. L'état du workspace en cache reste visible dans la shell.",
+      "evidenceLabel": "Preuve",
+      "primaryAction": "Annuler",
+      "secondaryAction": "Ouvrir le statut",
+      "stageLabel": "Étape",
+      "requestIdLabel": "ID de requête",
+      "updatedAtLabel": "Dernière mise à jour"
+    },
+    "empty": {
+      "eyebrow": "Vide",
+      "title": "Aucun {{section}} pour le moment",
+      "description": "Commencez depuis un tour existant, importez ou créez le premier objet pour cette section.",
+      "evidenceLabel": "Preuve du workspace",
+      "primaryAction": "Créer",
+      "secondaryAction": "Importer",
+      "stageLabel": "Départ suggéré",
+      "requestIdLabel": "ID de requête",
+      "updatedAtLabel": "Dernière vérification"
+    },
+    "error": {
+      "eyebrow": "Erreur",
+      "title": "{{section}} n'a pas pu se charger",
+      "description": "La requête cp-api a échoué pour {{section}}. Réessayez, ou reconnectez-vous si la session a expiré.",
+      "evidenceLabel": "Preuve d'échec",
+      "primaryAction": "Réessayer",
+      "secondaryAction": "Signaler",
+      "stageLabel": "Étape échouée",
+      "requestIdLabel": "ID de requête",
+      "updatedAtLabel": "Échec à"
+    },
+    "degraded": {
+      "eyebrow": "Dégradé",
+      "title": "{{section}} est dégradé",
+      "description": "Les données en cache restent visibles. Les nouvelles actions attendent que le service soit sain.",
+      "evidenceLabel": "Preuve de statut",
+      "primaryAction": "Réessayer",
+      "secondaryAction": "Ouvrir le statut",
+      "stageLabel": "Étape affectée",
+      "requestIdLabel": "ID de requête",
+      "updatedAtLabel": "Dernier état sain"
+    },
+    "stale": {
+      "eyebrow": "Périmé",
+      "title": "{{section}} peut être périmé",
+      "description": "Actualisez avant de modifier ou d'approuver.",
+      "evidenceLabel": "Preuve de fraîcheur",
+      "primaryAction": "Actualiser",
+      "secondaryAction": "Ouvrir la trace",
+      "stageLabel": "Source d'actualisation",
+      "requestIdLabel": "ID de requête",
+      "updatedAtLabel": "Dernière mise à jour"
+    },
+    "permissionBlocked": {
+      "eyebrow": "Permission bloquée",
+      "title": "Permission requise pour {{section}}",
+      "description": "Votre rôle ne peut pas modifier cette section. Demandez l'accès ou gardez l'état de production actuel.",
+      "evidenceLabel": "Preuve de politique",
+      "primaryAction": "Demander l'accès",
+      "secondaryAction": "Voir la politique",
+      "stageLabel": "Rôle requis",
+      "requestIdLabel": "ID d'audit",
+      "updatedAtLabel": "Politique vérifiée"
+    }
   }
 }

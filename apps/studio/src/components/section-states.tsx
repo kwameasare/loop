@@ -1,42 +1,46 @@
 /**
- * P0.3: shared loading + error states for App Router section
- * boundaries.
+ * Shared target states for App Router section boundaries.
  *
  * Each top-level section (inbox, billing, costs, …) needs a
  * ``loading.tsx`` + ``error.tsx`` so React Suspense + error
  * boundaries don't fall through to the root error page when a fetch
- * suspends or throws. The components are intentionally minimal so
- * the section title stays in the loading/error surface — it gives
- * the operator context about *which* part of the studio is in
- * trouble.
+ * suspends or throws. These wrappers keep the state copy, i18n keys,
+ * non-color cues, and recovery actions consistent across surfaces.
  */
 
-import { Button } from "@/components/ui/button";
+import {
+  TargetState,
+  getSectionStateCopy,
+  type TargetStateKind,
+} from "@/components/target/state";
 
 export interface SectionLoadingProps {
   /** Section title shown above the skeleton ("Costs", "Inbox", etc.). */
   title: string;
   /** Optional sub-line. */
-  subtitle?: string;
+  subtitle?: string | undefined;
+  /** Named loading stage, such as "Querying recent traces". */
+  stage?: string | undefined;
 }
 
-export function SectionLoading({ title, subtitle }: SectionLoadingProps) {
+export function SectionLoading({
+  title,
+  subtitle,
+  stage,
+}: SectionLoadingProps) {
+  const copy = getSectionStateCopy("loading", { section: title, stage });
   return (
     <main
       className="container mx-auto flex max-w-3xl flex-col gap-4 p-6"
       data-testid="section-loading"
     >
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        {subtitle ? (
-          <p className="text-muted-foreground text-sm">{subtitle}</p>
-        ) : null}
-      </header>
-      <div className="space-y-2">
-        <div className="h-12 rounded border bg-muted" />
-        <div className="h-12 rounded border bg-muted" />
-        <div className="h-12 rounded border bg-muted" />
-      </div>
+      <TargetState
+        state="loading"
+        objectName={title}
+        title={copy.title}
+        description={subtitle ?? copy.description}
+        stage={stage}
+      />
     </main>
   );
 }
@@ -45,9 +49,9 @@ export interface SectionErrorProps {
   title: string;
   reset: () => void;
   /** Optional override for the body copy. */
-  description?: string;
+  description?: string | undefined;
   /** Error object from Next.js route boundary (may include request_id). */
-  error?: unknown;
+  error?: unknown | undefined;
 }
 
 function requestIdFromError(error: unknown): string {
@@ -78,33 +82,98 @@ export function SectionError({
   error,
 }: SectionErrorProps) {
   const requestId = requestIdFromError(error);
+  const copy = getSectionStateCopy("error", {
+    section: title,
+    requestId,
+  });
   return (
     <main
       className="container mx-auto flex max-w-3xl flex-col gap-4 p-6"
       data-testid="section-error"
     >
-      <div className="rounded-lg border p-4" role="alert">
-        <h2 className="text-base font-medium">{title} could not load</h2>
-        <p className="text-muted-foreground mt-1 text-sm">
-          {description ??
-            "The cp-api request failed. Retry, or sign back in if the session expired."}
-        </p>
-        <p className="mt-2 text-xs text-muted-foreground" data-testid="section-error-request-id">
-          request_id: {requestId}
-        </p>
-        <div className="mt-4 flex items-center gap-2">
-          <Button onClick={reset} variant="outline">
-            Retry
-          </Button>
-          <a
-            className="text-sm underline underline-offset-2"
-            data-testid="section-error-report"
-            href={reportHref(title, requestId)}
-          >
-            Report
-          </a>
-        </div>
-      </div>
+      <TargetState
+        state="error"
+        objectName={title}
+        title={copy.title}
+        description={description ?? copy.description}
+        requestId={requestId}
+        primaryAction={{ label: copy.primaryAction, onClick: reset }}
+        secondaryAction={{
+          label: copy.secondaryAction,
+          href: reportHref(title, requestId),
+        }}
+      />
     </main>
   );
+}
+
+export interface SectionStateProps {
+  title: string;
+  state: Exclude<TargetStateKind, "loading" | "error">;
+  description?: string | undefined;
+  evidence?: string | undefined;
+  stage?: string | undefined;
+  updatedAt?: string | undefined;
+  primaryAction?:
+    | {
+        label?: string | undefined;
+        onClick?: (() => void) | undefined;
+        href?: string | undefined;
+      }
+    | undefined;
+  secondaryAction?:
+    | {
+        label?: string | undefined;
+        onClick?: (() => void) | undefined;
+        href?: string | undefined;
+      }
+    | undefined;
+}
+
+export function SectionState({
+  title,
+  state,
+  description,
+  evidence,
+  stage,
+  updatedAt,
+  primaryAction,
+  secondaryAction,
+}: SectionStateProps) {
+  const copy = getSectionStateCopy(state, {
+    section: title,
+    stage,
+    updatedAt,
+  });
+  return (
+    <TargetState
+      state={state}
+      objectName={title}
+      title={copy.title}
+      description={description ?? copy.description}
+      evidence={evidence}
+      stage={stage}
+      updatedAt={updatedAt}
+      primaryAction={primaryAction}
+      secondaryAction={secondaryAction}
+    />
+  );
+}
+
+export function SectionEmpty(props: Omit<SectionStateProps, "state">) {
+  return <SectionState {...props} state="empty" />;
+}
+
+export function SectionDegraded(props: Omit<SectionStateProps, "state">) {
+  return <SectionState {...props} state="degraded" />;
+}
+
+export function SectionStale(props: Omit<SectionStateProps, "state">) {
+  return <SectionState {...props} state="stale" />;
+}
+
+export function SectionPermissionBlocked(
+  props: Omit<SectionStateProps, "state">,
+) {
+  return <SectionState {...props} state="permissionBlocked" />;
 }
