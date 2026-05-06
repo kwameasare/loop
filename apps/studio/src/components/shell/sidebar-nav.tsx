@@ -160,14 +160,14 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     items: [
       {
         id: "import",
-        href: "/workspaces/new",
+        href: "/migrate",
         label: "Import",
         summary: "Botpress and legacy platform intake",
         icon: PackageOpen,
       },
       {
         id: "parity",
-        href: "/evals?mode=parity",
+        href: "/migrate#three-pane-review-heading",
         label: "Parity",
         summary: "Structure, behavior, cost, risk comparison",
         icon: ClipboardCheck,
