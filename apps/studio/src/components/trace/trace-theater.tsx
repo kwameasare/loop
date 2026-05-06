@@ -4,7 +4,9 @@ import {
   LiveBadge,
   StatePanel,
 } from "@/components/target";
+import { TraceScrubber } from "@/components/trace/scrubber/trace-scrubber";
 import { TraceWaterfall } from "@/components/trace/waterfall";
+import { AgentXrayPanel } from "@/components/trace/xray/agent-xray-panel";
 import { formatDurationNs, formatUsd, type Trace } from "@/lib/traces";
 
 function Metric({
@@ -176,6 +178,8 @@ export function TraceTheater({ trace }: { trace: Trace }) {
         />
       ) : null}
 
+      <TraceScrubber trace={trace} />
+      <AgentXrayPanel trace={trace} />
       <TraceWaterfall trace={trace} />
     </div>
   );
