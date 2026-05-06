@@ -31,6 +31,12 @@ describe("BehaviorEditor", () => {
     expect(screen.getByTestId("behavior-preview")).toHaveTextContent(
       "Preview before apply",
     );
+    expect(screen.getByTestId("build-to-test-flow-behavior")).toHaveTextContent(
+      "Preview, fork, and save as eval",
+    );
+    expect(screen.getByTestId("build-to-test-flow-behavior")).toHaveTextContent(
+      "Save run as eval",
+    );
 
     fireEvent.click(screen.getByTestId("behavior-mode-policy"));
     expect(screen.getByTestId("behavior-policy-mode")).toHaveTextContent(

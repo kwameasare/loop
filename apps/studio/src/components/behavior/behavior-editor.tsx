@@ -19,6 +19,7 @@ import {
   RiskHalo,
   StatePanel,
 } from "@/components/target";
+import { BuildToTestFlow } from "@/components/agents/build-to-test-flow";
 import {
   OBJECT_STATE_TREATMENTS,
   TRUST_STATE_TREATMENTS,
@@ -34,6 +35,7 @@ import {
   type BehaviorSentence,
   type BehaviorSentenceTelemetry,
 } from "@/lib/behavior";
+import { createBuildToTestFlowData } from "@/lib/target-ux/build-flow";
 import { cn } from "@/lib/utils";
 
 export interface BehaviorEditorProps {
@@ -600,6 +602,10 @@ export function BehaviorEditor({ data }: BehaviorEditorProps) {
 
         <PreviewPanel data={data} />
       </section>
+
+      <BuildToTestFlow
+        data={createBuildToTestFlowData(data.agentId, "behavior")}
+      />
 
       <ModeSwitcher mode={mode} onModeChange={setMode} />
 
