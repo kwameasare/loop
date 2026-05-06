@@ -82,6 +82,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§11",
   },
   {
+    route: "/agents/[agent_id]/map",
+    verb: "build",
+    label: "Agent map",
+    purpose:
+      "Instrumentation-first dependency, tool, memory, eval, hazard, and fork map (§8).",
+    anchor: "§8",
+  },
+  {
     route: "/agents/[agent_id]/channels",
     verb: "build",
     label: "Agent channels",
