@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 
+import { CostCapacityPanel } from "@/components/cost/cost-capacity-panel";
 import { CostDashboard } from "@/components/cost/cost-dashboard";
 import { CostFilterBar } from "@/components/cost/cost-filter-bar";
 import { CostTimeSeriesChart } from "@/components/cost/cost-time-series-chart";
@@ -9,10 +10,12 @@ import { WorkspaceKpiCards } from "@/components/cost/workspace-kpi-cards";
 import { thirtyDayWindowUTC } from "@/lib/cost-series";
 import {
   computeWorkspaceKpis,
+  buildCostCapacityModel,
   filterRecords,
   monthBoundsUTC,
   type UsageRecord,
 } from "@/lib/costs";
+import { buildLatencyBudgetModel } from "@/lib/latency";
 import { useCostFilters } from "@/lib/use-cost-filters";
 
 interface Props {
@@ -64,6 +67,15 @@ export function CostPageClient({
     now_ms,
   });
   const window = thirtyDayWindowUTC(now_ms);
+  const costCapacity = useMemo(
+    () =>
+      buildCostCapacityModel(filtered, {
+        workspace_id,
+        now_ms,
+      }),
+    [filtered, now_ms, workspace_id],
+  );
+  const latencyBudget = useMemo(() => buildLatencyBudgetModel(800), []);
 
   return (
     <div className="flex flex-col gap-6 p-6" data-testid="costs-page">
@@ -76,6 +88,7 @@ export function CostPageClient({
         onReset={resetFilters}
       />
       <WorkspaceKpiCards kpis={kpis} />
+      <CostCapacityPanel model={costCapacity} latency={latencyBudget} />
       <CostTimeSeriesChart
         records={filtered}
         workspace_id={workspace_id}

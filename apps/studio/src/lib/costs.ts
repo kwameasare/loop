@@ -1,3 +1,5 @@
+import { targetUxFixtures } from "@/lib/target-ux";
+
 /**
  * Cost dashboard data + reducers.
  *
@@ -21,6 +23,18 @@ export type UsageRecord = {
   channel?: string;
   /** Model identifier (e.g. "gpt-4o"). Optional – absent means "default model". */
   model?: string;
+  /** Runtime environment that generated the usage. */
+  environment?: string;
+  /** Customer or account segment attributed by billing metadata. */
+  customer_segment?: string;
+  /** Tool name when a usage event is attributable to one tool. */
+  tool_name?: string;
+  /** Knowledge source when a retrieval usage event is attributable. */
+  retrieval_source?: string;
+  /** Trace that contains the usage evidence, when available. */
+  trace_id?: string;
+  /** Number of turns represented by this rollup row. */
+  turn_count?: number;
   metric: UsageMetric;
   quantity: number;
   /** Day bucket the record was rolled up into (UTC midnight, ms). */
@@ -52,12 +66,104 @@ export type CostSummary = {
   by_metric: MetricCostLine[];
 };
 
+export type CostSurfaceId =
+  | "per_turn"
+  | "per_trace"
+  | "per_agent"
+  | "per_channel"
+  | "per_model"
+  | "per_tool"
+  | "per_retrieval"
+  | "per_environment"
+  | "per_customer_segment"
+  | "projected_month_end";
+
+export interface CostSurface {
+  id: CostSurfaceId;
+  label: string;
+  value: string;
+  detail: string;
+  evidence: string;
+  state: "ready" | "unsupported" | "degraded";
+}
+
+export interface CostLineItem {
+  id: string;
+  label: string;
+  formula: string;
+  cents: number;
+  evidence: string;
+  state: "ready" | "unsupported";
+}
+
+export interface CostDecision {
+  id: string;
+  label: string;
+  recommendation: string;
+  expectedEffect: string;
+  risk: string;
+  evidence: string;
+  state: "draft" | "ready" | "blocked";
+}
+
+export interface CostCapacityModel {
+  surfaces: CostSurface[];
+  lineItems: CostLineItem[];
+  decisions: CostDecision[];
+  projectedMonthEndCents: number;
+  projectedMonthEndEvidence: string;
+  totalLineItemCents: number;
+}
+
 const DEFAULT_RATES: RatesCentsPerUnit = {
   "tokens.in": 1,
   "tokens.out": 3,
   tool_calls: 50,
   retrievals: 10,
 };
+
+const TRACE_LINE_ITEMS: CostLineItem[] = [
+  {
+    id: "model_input",
+    label: "Model input",
+    formula: "812 input tokens x trace meter",
+    cents: 1.22,
+    evidence: "trace_refund_742 span_answer input_usd",
+    state: "ready",
+  },
+  {
+    id: "model_output",
+    label: "Model output",
+    formula: "146 output tokens x trace meter",
+    cents: 2.54,
+    evidence: "trace_refund_742 span_answer output_usd",
+    state: "ready",
+  },
+  {
+    id: "tool_lookup",
+    label: "Tool calls",
+    formula: "lookup_order tool meter",
+    cents: 0.4,
+    evidence: "trace_refund_742 span_tool tool_usd",
+    state: "ready",
+  },
+  {
+    id: "retrieval",
+    label: "Retrieval",
+    formula: "refund_policy top-k retrieval",
+    cents: 0.16,
+    evidence: "trace_refund_742 span_context tool_usd",
+    state: "ready",
+  },
+  {
+    id: "runtime",
+    label: "Runtime",
+    formula: "No runtime meter emitted",
+    cents: 0,
+    evidence: "Unsupported: usage rollup has no runtime line item",
+    state: "unsupported",
+  },
+];
 
 export type CostFilters = {
   agent_id: string;
@@ -166,6 +272,11 @@ export function formatUSD(cents: number): string {
   return `$${dollars.toFixed(2)}`;
 }
 
+export function formatPreciseUSD(cents: number): string {
+  const dollars = cents / 100;
+  return `$${dollars.toFixed(4)}`;
+}
+
 export function monthBoundsUTC(now_ms: number): {
   period_start_ms: number;
   period_end_ms: number;
@@ -208,6 +319,12 @@ interface CpUsageEvent {
   agent_name?: string;
   channel?: string;
   model?: string;
+  environment?: string;
+  customer_segment?: string;
+  tool_name?: string;
+  retrieval_source?: string;
+  trace_id?: string;
+  turn_count?: number;
 }
 
 function dayBucketMs(ts_ms: number): number {
@@ -259,6 +376,12 @@ export async function fetchUsageRecords(
       agent_name: e.agent_name ?? "",
       ...(e.channel ? { channel: e.channel } : {}),
       ...(e.model ? { model: e.model } : {}),
+      ...(e.environment ? { environment: e.environment } : {}),
+      ...(e.customer_segment ? { customer_segment: e.customer_segment } : {}),
+      ...(e.tool_name ? { tool_name: e.tool_name } : {}),
+      ...(e.retrieval_source ? { retrieval_source: e.retrieval_source } : {}),
+      ...(e.trace_id ? { trace_id: e.trace_id } : {}),
+      ...(typeof e.turn_count === "number" ? { turn_count: e.turn_count } : {}),
       metric: e.metric as UsageMetric,
       quantity: e.quantity,
       day_ms: dayBucketMs(e.timestamp_ms),
@@ -277,8 +400,11 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
       agent_name: "Support",
       channel: "web",
       model: "gpt-4o",
+      environment: "production",
+      customer_segment: "enterprise",
       metric: "tokens.in",
       quantity: 12_000,
+      turn_count: 420,
       day_ms: day(2),
     },
     {
@@ -287,8 +413,11 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
       agent_name: "Support",
       channel: "web",
       model: "gpt-4o",
+      environment: "production",
+      customer_segment: "enterprise",
       metric: "tokens.out",
       quantity: 4_000,
+      turn_count: 420,
       day_ms: day(2),
     },
     {
@@ -297,8 +426,12 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
       agent_name: "Support",
       channel: "whatsapp",
       model: "gpt-4o-mini",
+      environment: "canary",
+      customer_segment: "consumer",
+      tool_name: "lookup_order",
       metric: "tool_calls",
       quantity: 30,
+      turn_count: 30,
       day_ms: day(1),
     },
     {
@@ -307,8 +440,11 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
       agent_name: "Sales Outreach",
       channel: "email",
       model: "gpt-4o",
+      environment: "staging",
+      customer_segment: "growth",
       metric: "tokens.in",
       quantity: 6_500,
+      turn_count: 180,
       day_ms: day(3),
     },
     {
@@ -317,8 +453,11 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
       agent_name: "Sales Outreach",
       channel: "email",
       model: "gpt-4o",
+      environment: "staging",
+      customer_segment: "growth",
       metric: "tokens.out",
       quantity: 2_200,
+      turn_count: 180,
       day_ms: day(3),
     },
     {
@@ -327,8 +466,12 @@ export const FIXTURE_USAGE: UsageRecord[] = (() => {
       agent_name: "Sales Outreach",
       channel: "whatsapp",
       model: "gpt-4o-mini",
+      environment: "production",
+      customer_segment: "growth",
+      retrieval_source: "pricing_policy",
       metric: "retrievals",
       quantity: 80,
+      turn_count: 80,
       day_ms: day(3),
     },
   ];
@@ -463,4 +606,231 @@ export function formatDeltaPercent(
   const pct = Math.round(ratio * 1000) / 10;
   const sign = pct > 0 ? "+" : pct < 0 ? "−" : "";
   return `${sign}${Math.abs(pct).toFixed(1)}%`;
+}
+
+function totalTurns(records: UsageRecord[]): number {
+  return records.reduce((sum, record) => sum + (record.turn_count ?? 0), 0);
+}
+
+function topCostBy(
+  records: UsageRecord[],
+  key: keyof Pick<
+    UsageRecord,
+    | "agent_name"
+    | "channel"
+    | "model"
+    | "environment"
+    | "customer_segment"
+    | "tool_name"
+    | "retrieval_source"
+  >,
+  rates: RatesCentsPerUnit = DEFAULT_RATES,
+): { label: string; cents: number } | null {
+  const totals = new Map<string, number>();
+  for (const record of records) {
+    const label = record[key];
+    if (!label) continue;
+    const cents = (rates[record.metric] ?? 0) * record.quantity;
+    totals.set(label, (totals.get(label) ?? 0) + cents);
+  }
+  return (
+    [...totals.entries()]
+      .map(([label, cents]) => ({ label, cents }))
+      .sort((a, b) => b.cents - a.cents)[0] ?? null
+  );
+}
+
+function surfaceFromTop(
+  id: CostSurfaceId,
+  label: string,
+  top: { label: string; cents: number } | null,
+  evidence: string,
+): CostSurface {
+  if (!top) {
+    return {
+      id,
+      label,
+      value: "Unsupported",
+      detail: "No usage metadata emitted for this dimension yet.",
+      evidence,
+      state: "unsupported",
+    };
+  }
+  return {
+    id,
+    label,
+    value: formatUSD(top.cents),
+    detail: top.label,
+    evidence,
+    state: "ready",
+  };
+}
+
+export function buildCostCapacityModel(
+  records: UsageRecord[],
+  options: {
+    workspace_id: string;
+    now_ms: number;
+    rates_cents_per_unit?: RatesCentsPerUnit;
+  },
+): CostCapacityModel {
+  const rates = options.rates_cents_per_unit ?? DEFAULT_RATES;
+  const month = monthBoundsUTC(options.now_ms);
+  const summary = summariseCosts(records, {
+    workspace_id: options.workspace_id,
+    period_start_ms: month.period_start_ms,
+    period_end_ms: month.period_end_ms,
+    rates_cents_per_unit: rates,
+  });
+  const kpis = computeWorkspaceKpis(records, {
+    workspace_id: options.workspace_id,
+    now_ms: options.now_ms,
+    rates_cents_per_unit: rates,
+  });
+  const turns = totalTurns(records);
+  const activeAgent =
+    targetUxFixtures.agents.find(
+      (agent) => agent.id === targetUxFixtures.workspace.activeAgentId,
+    ) ?? targetUxFixtures.agents[0];
+  const perTurnCents =
+    turns > 0
+      ? summary.total_cents / turns
+      : (activeAgent?.costPerTurnUsd ?? 0) * 100;
+  const traceCostCents = (activeAgent?.costPerTurnUsd ?? 0) * 100;
+  const topAgent = summary.by_agent[0]
+    ? {
+        label: summary.by_agent[0].agent_name,
+        cents: summary.by_agent[0].cents,
+      }
+    : null;
+
+  const lineItems = TRACE_LINE_ITEMS.map((item) => ({ ...item }));
+  const totalLineItemCents = lineItems.reduce(
+    (sum, item) => sum + item.cents,
+    0,
+  );
+
+  return {
+    surfaces: [
+      {
+        id: "per_turn",
+        label: "Per turn",
+        value: formatUSD(perTurnCents),
+        detail:
+          turns > 0
+            ? `${Math.round(turns).toLocaleString()} turns in current filter`
+            : `${activeAgent?.name ?? "Active agent"} target fixture`,
+        evidence:
+          turns > 0
+            ? "Usage rollup turn_count metadata"
+            : "Shared target UX active agent costPerTurnUsd",
+        state: turns > 0 ? "ready" : "degraded",
+      },
+      {
+        id: "per_trace",
+        label: "Per trace",
+        value: formatUSD(traceCostCents),
+        detail: "trace_refund_742",
+        evidence: "Trace Theater fixture cost summary",
+        state: "ready",
+      },
+      surfaceFromTop(
+        "per_agent",
+        "Per agent",
+        topAgent,
+        "Usage rollup grouped by agent_id",
+      ),
+      surfaceFromTop(
+        "per_channel",
+        "Per channel",
+        topCostBy(records, "channel", rates),
+        "Usage rollup channel metadata",
+      ),
+      surfaceFromTop(
+        "per_model",
+        "Per model",
+        topCostBy(records, "model", rates),
+        "Usage rollup model metadata",
+      ),
+      surfaceFromTop(
+        "per_tool",
+        "Per tool",
+        topCostBy(records, "tool_name", rates),
+        "Usage rollup tool_name metadata",
+      ),
+      surfaceFromTop(
+        "per_retrieval",
+        "Per knowledge query",
+        topCostBy(records, "retrieval_source", rates),
+        "Usage rollup retrieval_source metadata",
+      ),
+      surfaceFromTop(
+        "per_environment",
+        "Per environment",
+        topCostBy(records, "environment", rates),
+        "Usage rollup environment metadata",
+      ),
+      surfaceFromTop(
+        "per_customer_segment",
+        "Per customer segment",
+        topCostBy(records, "customer_segment", rates),
+        "Usage rollup customer_segment metadata",
+      ),
+      {
+        id: "projected_month_end",
+        label: "Projected month-end",
+        value: formatUSD(kpis.projected_eom_cents),
+        detail: `${kpis.days_elapsed}/${kpis.days_in_month} days elapsed`,
+        evidence: "MTD run-rate projection from workspace KPI reducer",
+        state: "ready",
+      },
+    ],
+    lineItems,
+    decisions: [
+      {
+        id: "soft_cap",
+        label: "Soft cap",
+        recommendation: "Warn at USD $900 before workspace spend crosses cap.",
+        expectedEffect:
+          "Gives owners two days to tune routing before hard cap.",
+        risk: "No production traffic changes.",
+        evidence: "Projected month-end and workspace budget policy",
+        state: "ready",
+      },
+      {
+        id: "hard_cap",
+        label: "Hard cap",
+        recommendation: "Hold non-critical campaigns after USD $1,200.",
+        expectedEffect:
+          "Keeps projected month-end under finance approval limit.",
+        risk: "May delay outbound campaign turns.",
+        evidence: "Budget cap increase requires preview under control model",
+        state: "draft",
+      },
+      {
+        id: "degrade_rule",
+        label: "Degrade rule",
+        recommendation:
+          "Route classification to fast model after USD $500/day.",
+        expectedEffect: "Expected -18% model spend, -280ms p95 for classifier.",
+        risk: "Quality impact must clear eval gate before apply.",
+        evidence: "Latency suggestion and eval coverage threshold",
+        state: "draft",
+      },
+      {
+        id: "tool_loop",
+        label: "Tool loop detection",
+        recommendation:
+          "Alert when lookup_order repeats more than twice per turn.",
+        expectedEffect: "Caps repeated tool spend and flags trace loops.",
+        risk: "May require operator review for complex accounts.",
+        evidence: "Trace span count and tool meter line item",
+        state: "ready",
+      },
+    ],
+    projectedMonthEndCents: kpis.projected_eom_cents,
+    projectedMonthEndEvidence:
+      "projected_eom = mtd / days_elapsed x days_in_month",
+    totalLineItemCents,
+  };
 }

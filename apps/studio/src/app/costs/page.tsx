@@ -62,30 +62,32 @@ function CostsPageBody(): JSX.Element {
 
   if (wsLoading || !active) {
     return (
-      <p className="p-6 text-sm text-muted-foreground" data-testid="costs-loading">
+      <p
+        className="p-6 text-sm text-muted-foreground"
+        data-testid="costs-loading"
+      >
         Loading costs…
       </p>
     );
   }
   if (error) {
     return (
-      <p className="p-6 text-sm text-red-600" role="alert">
+      <p className="p-6 text-sm text-destructive" role="alert">
         {error}
       </p>
     );
   }
   if (records === null) {
     return (
-      <p className="p-6 text-sm text-muted-foreground" data-testid="costs-loading">
+      <p
+        className="p-6 text-sm text-muted-foreground"
+        data-testid="costs-loading"
+      >
         Loading costs…
       </p>
     );
   }
   return (
-    <CostPageClient
-      records={records}
-      workspace_id={active.id}
-      now_ms={nowMs}
-    />
+    <CostPageClient records={records} workspace_id={active.id} now_ms={nowMs} />
   );
 }
