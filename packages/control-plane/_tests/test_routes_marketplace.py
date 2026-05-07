@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -53,3 +54,69 @@ def test_marketplace_browse_filters_by_query(client: TestClient) -> None:
     assert response.status_code == 200, response.text
     slugs = [item["slug"] for item in response.json()["items"]]
     assert slugs == ["salesforce"]
+
+
+def test_private_marketplace_publish_version_install_and_deprecate(
+    client: TestClient,
+) -> None:
+    workspace = client.post(
+        "/v1/workspaces",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={"name": "Acme", "slug": f"acme-{uuid4().hex[:8]}"},
+    )
+    assert workspace.status_code == 201, workspace.text
+    workspace_id = UUID(workspace.json()["id"])
+
+    published = client.post(
+        "/v1/marketplace/items",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={
+            "workspace_id": str(workspace_id),
+            "name": "Private refund skill",
+            "slug": f"private-refunds-{uuid4().hex[:8]}",
+            "description": "Internal refund policy helper",
+            "category": "skills",
+            "visibility": "private",
+            "version": "1.0.0",
+            "artifact": {"kind": "skill", "entrypoint": "refunds"},
+        },
+    )
+    assert published.status_code == 201, published.text
+    item_id = published.json()["id"]
+    assert published.json()["latest_version"] == "1.0.0"
+
+    version = client.post(
+        f"/v1/marketplace/items/{item_id}/versions",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={
+            "workspace_id": str(workspace_id),
+            "version": "1.1.0",
+            "changelog": "Adds stricter refund evidence.",
+            "artifact": {"kind": "skill", "entrypoint": "refunds.v2"},
+        },
+    )
+    assert version.status_code == 201, version.text
+    assert version.json()["latest_version"] == "1.1.0"
+
+    install = client.post(
+        f"/v1/marketplace/items/{item_id}/install",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={"workspace_id": str(workspace_id)},
+    )
+    assert install.status_code == 201, install.text
+    assert install.json()["audit_ref"].startswith("marketplace.install.")
+
+    installs = client.get(
+        f"/v1/marketplace/items/{item_id}/installs?workspace_id={workspace_id}",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert installs.status_code == 200, installs.text
+    assert installs.json()["items"][0]["item_id"] == item_id
+
+    deprecated = client.post(
+        f"/v1/marketplace/items/{item_id}/deprecate",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={"workspace_id": str(workspace_id), "reason": "Superseded by v2 template"},
+    )
+    assert deprecated.status_code == 200, deprecated.text
+    assert deprecated.json()["lifecycle"] == "deprecated"

@@ -212,6 +212,11 @@ class CpApiState:
     marketplace_store: InMemoryMarketplaceStore = field(
         default_factory=InMemoryMarketplaceStore
     )
+    # Canonical UX punch-list wire-up state. These maps are intentionally
+    # in-memory for dev/tests and mirror the route contract a persistent
+    # implementation will back with workspace-scoped tables.
+    ux_wireup: dict[str, Any] = field(default_factory=dict)
+    presence_rooms: dict[UUID, set[Any]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.workspace_api = WorkspaceAPI(workspaces=self.workspaces)

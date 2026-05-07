@@ -8,6 +8,8 @@ import {
   filterMarketplace,
   formatInstallCount,
   marketplaceItemFromCp,
+  installMarketplaceItem,
+  publishPrivateMarketplaceItem,
   submitPrivateSkill,
   type MarketplaceItem,
 } from "./marketplace";
@@ -188,5 +190,55 @@ describe("marketplace cp-api adapter", () => {
     });
 
     expect(catalog.map((item) => item.id)).toEqual(["first-party.salesforce"]);
+  });
+
+  it("publishes and installs a private item against cp-api", async () => {
+    const fetcher = async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/marketplace/items")) {
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          workspace_id: "ws-1",
+          version: "1.0.0",
+          reviewers: ["lead@example.com"],
+        });
+        return response({ server_id: "private.refunds" }, 201);
+      }
+      if (url.endsWith("/marketplace/items/private.refunds/install")) {
+        expect(JSON.parse(String(init?.body))).toEqual({ workspace_id: "ws-1" });
+        return response(
+          {
+            install_id: "inst_1",
+            item_id: "private.refunds",
+            workspace_id: "ws-1",
+          },
+          201,
+        );
+      }
+      throw new Error(`unexpected URL ${url}`);
+    };
+
+    const published = await publishPrivateMarketplaceItem(
+      "ws-1",
+      {
+        itemId: "private_refunds",
+        version: "1.0.0",
+        changelog: "Adds refund policy automation.",
+        permissions: ["read-traces"],
+        reviewers: ["lead@example.com"],
+      },
+      { baseUrl: "https://cp.test/v1", fetcher: fetcher as unknown as typeof fetch },
+    );
+    expect(published).toMatchObject({
+      ok: true,
+      lifecycle: "published",
+      itemId: "private.refunds",
+    });
+
+    const installed = await installMarketplaceItem("ws-1", "private.refunds", {
+      baseUrl: "https://cp.test/v1",
+      fetcher: fetcher as unknown as typeof fetch,
+    });
+    expect(installed.install_id).toBe("inst_1");
   });
 });

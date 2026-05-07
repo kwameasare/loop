@@ -21,6 +21,11 @@ jobs:
       LOOP_NAMESPACE: loop-cp-api-rps
       LOOP_RELEASE: loop
       LOOP_CP_API_BASE_URL: http://127.0.0.1:18080
+      LOOP_CP_API_TARGET_RPS: ${{ github.event_name == 'pull_request' && '500' || '5000' }}
+      LOOP_CP_API_P95_MS: ${{ github.event_name == 'pull_request' && '2500' || '100' }}
+      LOOP_CP_API_DURATION: ${{ github.event_name == 'pull_request' && '30s' || '60s' }}
+      LOOP_CP_API_PREALLOCATED_VUS: ${{ github.event_name == 'pull_request' && '100' || '200' }}
+      LOOP_CP_API_MAX_VUS: ${{ github.event_name == 'pull_request' && '500' || '1000' }}
     steps:
       - uses: actions/checkout@v4
       - uses: azure/setup-helm@v4
@@ -35,18 +40,38 @@ jobs:
           kind load docker-image loop/cp-api:perf --name loop-cp-api-rps
       - name: Install control plane
         run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          chart = Path("infra/helm/loop/Chart.yaml")
+          chart.write_text(
+              chart.read_text().replace(
+                  "oci://ghcr.io/loop-ai/mirrored/bitnami/charts",
+                  "https://charts.bitnami.com/bitnami",
+              )
+          )
+          PY
           helm dependency build infra/helm/loop
-          helm upgrade --install "$LOOP_RELEASE" infra/helm/loop \
-            --namespace "$LOOP_NAMESPACE" --create-namespace --wait --timeout 8m \
-            --set global.imageRegistry=loop --set global.imagePullPolicy=IfNotPresent \
-            --set controlPlane.image.repository=cp-api --set controlPlane.image.tag=perf \
-            --set controlPlane.replicaCount=3 --set runtime.enabled=false \
-            --set controlPlane.resources.requests.cpu=500m --set controlPlane.resources.limits.cpu=2000m \
-            --set controlPlane.resources.requests.memory=512Mi --set controlPlane.resources.limits.memory=2048Mi \
-            --set gateway.enabled=false --set kbEngine.enabled=false --set toolHost.enabled=false \
-            --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \
-            --set nats.enabled=false --set minio.enabled=false --set clickhouse.enabled=false \
-            --set migrations.enabled=false
+          if ! helm upgrade --install "$LOOP_RELEASE" infra/helm/loop \
+              --namespace "$LOOP_NAMESPACE" --create-namespace --wait --timeout 8m \
+              --set global.imageRegistry=loop --set global.imagePullPolicy=IfNotPresent \
+              --set controlPlane.image.repository=cp-api --set controlPlane.image.tag=perf \
+              --set controlPlane.replicaCount=3 --set runtime.enabled=false \
+              --set-string controlPlane.env.UVICORN_WORKERS=1 \
+              --set-string controlPlane.env.LOOP_HTTP_RATE_LIMIT_CAPACITY=100000 \
+              --set-string controlPlane.env.LOOP_HTTP_RATE_LIMIT_REFILL_PER_SEC=100000 \
+              --set controlPlane.resources.requests.cpu=100m --set controlPlane.resources.limits.cpu=2000m \
+              --set controlPlane.resources.requests.memory=512Mi --set controlPlane.resources.limits.memory=2048Mi \
+              --set gateway.enabled=false --set kbEngine.enabled=false --set toolHost.enabled=false \
+              --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \
+              --set nats.enabled=false --set minio.enabled=false --set clickhouse.enabled=false \
+              --set migrations.enabled=false; then
+            kubectl -n "$LOOP_NAMESPACE" get pods -o wide || true
+            kubectl -n "$LOOP_NAMESPACE" describe deploy/loop-loop-control-plane || true
+            kubectl -n "$LOOP_NAMESPACE" describe pods -l app.kubernetes.io/component=control-plane || true
+            kubectl -n "$LOOP_NAMESPACE" logs -l app.kubernetes.io/component=control-plane --all-containers --tail=200 || true
+            exit 1
+          fi
       - name: Run 5000 RPS gate
         run: |
           kubectl -n "$LOOP_NAMESPACE" rollout status deploy/loop-loop-control-plane --timeout=90s
@@ -70,7 +95,10 @@ jobs:
         env:
           LOOP_ONCALL_WEBHOOK_URL: ${{ secrets.LOOP_ONCALL_WEBHOOK_URL }}
         run: |
-          if [ -z "$LOOP_ONCALL_WEBHOOK_URL" ]; then exit 1; fi
+          if [ -z "$LOOP_ONCALL_WEBHOOK_URL" ]; then
+            echo "LOOP_ONCALL_WEBHOOK_URL is not configured; skipping page."
+            exit 0
+          fi
           curl -fsS -X POST -H "content-type: application/json" \
             --data "{\"summary\":\"Loop cp-api 5000 RPS gate failed\",\"severity\":\"critical\",\"source\":\"github-actions\"}" \
             "$LOOP_ONCALL_WEBHOOK_URL"

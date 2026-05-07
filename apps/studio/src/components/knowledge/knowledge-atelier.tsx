@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { KbList } from "@/components/agents/kb-list";
 import { EmbeddingsExplorer } from "@/components/knowledge/embeddings-explorer/embeddings-explorer";
@@ -22,6 +22,7 @@ import {
 import {
   buildEmbeddingsExplorerModel,
   buildInverseRetrievalModel,
+  fetchInverseRetrievalModel,
 } from "@/lib/knowledge-diagnostics";
 import {
   formatScore,
@@ -237,6 +238,9 @@ export function KnowledgeAtelier({
   const [documents, setDocuments] = useState(initialDocuments);
   const [query, setQuery] = useState("");
   const [savedEval, setSavedEval] = useState<string | null>(null);
+  const [liveInverseModel, setLiveInverseModel] = useState<ReturnType<
+    typeof buildInverseRetrievalModel
+  > | null>(null);
 
   const model: KnowledgeAtelierModel = useMemo(
     () => getKnowledgeAtelierModel(agentId, documents),
@@ -246,6 +250,16 @@ export function KnowledgeAtelier({
     () => buildInverseRetrievalModel(model),
     [model],
   );
+  useEffect(() => {
+    let cancelled = false;
+    setLiveInverseModel(null);
+    void fetchInverseRetrievalModel(agentId, model).then((next) => {
+      if (!cancelled) setLiveInverseModel(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [agentId, model]);
   const embeddingsModel = useMemo(
     () => buildEmbeddingsExplorerModel(model),
     [model],
@@ -481,7 +495,7 @@ export function KnowledgeAtelier({
         </div>
       </section>
 
-      <InverseRetrievalLab model={inverseModel} />
+      <InverseRetrievalLab model={liveInverseModel ?? inverseModel} />
       <EmbeddingsExplorer model={embeddingsModel} />
 
       <section

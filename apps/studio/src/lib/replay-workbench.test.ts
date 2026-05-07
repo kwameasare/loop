@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { fetchReplayWorkbenchModel } from "./replay-workbench";
+import { fetchReplayWorkbenchModel, replayAgainstDraft } from "./replay-workbench";
 
 describe("fetchReplayWorkbenchModel", () => {
   it("builds risky replay candidates from live traces", async () => {
@@ -48,5 +48,55 @@ describe("fetchReplayWorkbenchModel", () => {
     });
     expect(model.selectedReplay.diffRows[1].status).toBe("regressed");
     expect(model.scenes[0].linkedTraceId).toBe("e".repeat(32));
+  });
+
+  it("runs replay-against-draft through the live cp-api contract", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      new Response(
+        JSON.stringify({
+          items: [
+            {
+              trace_id: "trace-prod-1",
+              status: "changed",
+              behavioral_distance: 34,
+              latency_delta_ms: 80,
+              cost_delta_pct: 4,
+              token_aligned_rows: [
+                {
+                  frame: "answer",
+                  baseline: "old",
+                  draft: "new",
+                  status: "changed",
+                },
+              ],
+            },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const replay = await replayAgainstDraft(
+      "agent-1",
+      {
+        traceIds: ["trace-prod-1"],
+        draftBranchRef: "draft/refund",
+        compareVersionRef: "v22",
+      },
+      {
+        baseUrl: "https://cp.example.test/v1",
+        fetcher,
+      },
+    );
+
+    expect(replay.items[0]?.conversationId).toBe("trace-prod-1");
+    expect(replay.items[0]?.diffRows[0]?.baseline).toBe("old");
+    const [url, init] = fetcher.mock.calls[0]!;
+    expect(url).toBe("https://cp.example.test/v1/agents/agent-1/replay/against-draft");
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      trace_ids: ["trace-prod-1"],
+      draft_branch_ref: "draft/refund",
+      compare_version_ref: "v22",
+    });
   });
 });

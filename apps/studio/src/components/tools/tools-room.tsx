@@ -32,6 +32,7 @@ import {
   type ToolsRoomData,
   type ToolsRoomTool,
 } from "@/lib/agent-tools";
+import { cpJson } from "@/lib/ux-wireup";
 import { cn } from "@/lib/utils";
 
 export interface ToolsRoomProps {
@@ -398,10 +399,24 @@ function MockLivePanel({ tool }: { tool: ToolsRoomTool | null }) {
   );
 }
 
-function ImportDraftPanel() {
+function ImportDraftPanel({ agentId }: { agentId: string }) {
   const [source, setSource] = useState<ToolDraftSource>("curl");
   const [input, setInput] = useState(DEFAULT_TOOL_IMPORT);
   const [draft, setDraft] = useState<ToolDraft | null>(null);
+  const [liveImportId, setLiveImportId] = useState<string | null>(null);
+
+  async function draftLiveTool() {
+    setDraft(draftToolFromRequest(input, source));
+    const result = await cpJson<{ tool_id: string }>(
+      `/agents/${encodeURIComponent(agentId)}/tools/import`,
+      {
+        method: "POST",
+        body: { source: input, source_kind: source },
+        fallback: { tool_id: "tool_local_import" },
+      },
+    );
+    setLiveImportId(result.tool_id);
+  }
 
   return (
     <section
@@ -446,19 +461,25 @@ function ImportDraftPanel() {
         <button
           type="button"
           className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-          onClick={() => setDraft(draftToolFromRequest(input, source))}
+          onClick={() => void draftLiveTool()}
           data-testid="tools-room-draft-tool"
         >
           <Code2 className="h-4 w-4" aria-hidden />
           Draft tool
         </button>
-        {draft ? <DraftSummary draft={draft} /> : null}
+        {draft ? <DraftSummary draft={draft} liveImportId={liveImportId} /> : null}
       </div>
     </section>
   );
 }
 
-function DraftSummary({ draft }: { draft: ToolDraft }) {
+function DraftSummary({
+  draft,
+  liveImportId,
+}: {
+  draft: ToolDraft;
+  liveImportId: string | null;
+}) {
   return (
     <div
       className="rounded-md border border-info/40 bg-info/5 p-3"
@@ -501,6 +522,11 @@ function DraftSummary({ draft }: { draft: ToolDraft }) {
       <p className="mt-1 text-xs text-muted-foreground">
         Evidence: {draft.evidence}
       </p>
+      {liveImportId ? (
+        <p className="mt-1 font-mono text-xs text-muted-foreground">
+          Live draft target: {liveImportId}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -585,7 +611,7 @@ export function ToolsRoom({ data }: ToolsRoomProps) {
         <DetailPanel tool={selectedTool} />
         <SafetyContract tool={selectedTool} />
         <MockLivePanel tool={selectedTool} />
-        <ImportDraftPanel />
+        <ImportDraftPanel agentId={data.agentId} />
         <EvidenceCallout
           title="Secret values stay out of Studio"
           source="SECURITY.md §3; CLOUD_PORTABILITY.md §4.3; ENV_REFERENCE.md §9"

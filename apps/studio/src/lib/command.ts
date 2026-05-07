@@ -255,6 +255,19 @@ export const CHATOPS_COMMANDS: ChatOpsCommand[] = [
     description: "Diff the current preview against another version",
     args: ["against="],
   },
+  {
+    id: "chatops_enable",
+    trigger: "/enable",
+    description: "Re-enable a tool disabled in this preview",
+    args: ["tool="],
+  },
+  {
+    id: "chatops_reset",
+    trigger: "/reset",
+    description: "Reset preview controls to the production baseline",
+    args: ["preview"],
+    confirm: true,
+  },
 ];
 
 /** Parse a typed prefix from a query, returning prefix and remainder. */

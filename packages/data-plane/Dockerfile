@@ -20,6 +20,8 @@ COPY packages/sdk-py/pyproject.toml ./packages/sdk-py/
 COPY packages/sdk-py/loop ./packages/sdk-py/loop
 COPY packages/gateway/pyproject.toml ./packages/gateway/
 COPY packages/gateway/loop_gateway ./packages/gateway/loop_gateway
+COPY packages/memory/pyproject.toml ./packages/memory/
+COPY packages/memory/loop_memory ./packages/memory/loop_memory
 COPY packages/control-plane/pyproject.toml ./packages/control-plane/
 COPY packages/control-plane/loop_control_plane ./packages/control-plane/loop_control_plane
 COPY packages/runtime/pyproject.toml ./packages/runtime/
@@ -29,7 +31,7 @@ COPY packages/data-plane/loop_data_plane ./packages/data-plane/loop_data_plane
 
 RUN uv venv "${VIRTUAL_ENV}" \
     && uv pip install --python "${VIRTUAL_ENV}/bin/python" \
-        ./packages/channels/core ./packages/sdk-py ./packages/gateway ./packages/control-plane \
+        ./packages/channels/core ./packages/sdk-py ./packages/gateway ./packages/memory ./packages/control-plane \
         ./packages/runtime ./packages/data-plane \
     && mkdir -p /python-libs \
     && for lib in \

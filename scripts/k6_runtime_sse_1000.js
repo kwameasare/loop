@@ -21,7 +21,7 @@ import { check, sleep } from "k6";
 //   * ASPIRATIONAL_CONCURRENCY: 1000 — production scale, captured in
 //     bench/results/runtime_sse_1000_concurrency.json's `aspirational`
 //     field. Tested on real cloud HPA deployments, not on kind.
-const RUNTIME_SSE_P95_MS = 3000;
+const RUNTIME_SSE_P95_MS = parseInt(__ENV.LOOP_RUNTIME_SSE_P95_MS || "3000", 10);
 const CONCURRENT_TURNS = parseInt(__ENV.LOOP_RUNTIME_SSE_VUS || "200", 10);
 const ASPIRATIONAL_CONCURRENCY = 1000;
 const BASE_URL = (__ENV.LOOP_RUNTIME_SSE_BASE_URL || "http://127.0.0.1:18082").replace(/\/$/, "");

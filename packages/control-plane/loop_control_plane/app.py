@@ -42,6 +42,11 @@ from loop_control_plane._routes_migration_parity import (
 from loop_control_plane._routes_secrets import router as secrets_router
 from loop_control_plane._routes_traces_usage import router as telemetry_router
 from loop_control_plane._routes_traces_usage import router_traces as traces_router
+from loop_control_plane._routes_ux_wireup import router_agents as ux_agents_router
+from loop_control_plane._routes_ux_wireup import router_public as ux_public_router
+from loop_control_plane._routes_ux_wireup import (
+    router_workspaces as ux_workspaces_router,
+)
 from loop_control_plane._routes_voice import router as voice_router
 from loop_control_plane._routes_webhooks_incoming import (
     router as webhooks_incoming_router,
@@ -116,6 +121,11 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         cobuilder_router,
         # UX wire-up: Migration parity board derives from imported agent state.
         migration_parity_router,
+        # UX punch-list: canonical realtime, replay, governance, dashboards,
+        # comments-as-specs, scenes, and creative-polish contracts.
+        ux_workspaces_router,
+        ux_agents_router,
+        ux_public_router,
         # P0.4 final: inbound webhook dispatcher (per-channel
         # verification handled by the channels-* packages).
         webhooks_incoming_router,

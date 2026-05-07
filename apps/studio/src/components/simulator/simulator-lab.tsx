@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useId, useMemo, useState, type FormEvent } from "react";
 import { History, Play, RotateCcw } from "lucide-react";
 
 import { InlineChatOps } from "@/components/command/inline-chatops";
@@ -182,6 +182,28 @@ export function SimulatorLab({
     () => buildSimulatorRun(config, agentId),
     [agentId, config],
   );
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        event.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+      const channel = SIMULATOR_CHANNELS[Number(event.key) - 1];
+      if (!channel) return;
+      event.preventDefault();
+      updateConfig({ channel: channel.id });
+      appendTimeline(`Channel ${event.key}`, `Switched to ${channel.label}`);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   function updateConfig(next: Partial<SimulatorConfig>) {
     setConfig((prev) => ({ ...prev, ...next }));

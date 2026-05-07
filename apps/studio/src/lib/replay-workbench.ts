@@ -4,6 +4,7 @@ import {
   type TraceSummary,
   type TracesClientOptions,
 } from "@/lib/traces";
+import { cpJson, type UxWireupClientOptions } from "@/lib/ux-wireup";
 
 export type ReplayRisk = "low" | "medium" | "high";
 
@@ -11,6 +12,7 @@ export interface ProductionConversationCandidate {
   id: string;
   title: string;
   agentName: string;
+  agentId: string;
   sourceVersion: string;
   draftVersion: string;
   snapshotId: string;
@@ -94,6 +96,7 @@ const conversations: readonly ProductionConversationCandidate[] = [
     id: "prod_refund_legal",
     title: "Cancellation with legal threat",
     agentName: "Acme Support Concierge",
+    agentId: "11111111-1111-4111-8111-111111111111",
     sourceVersion: "v23.1.4",
     draftVersion: "draft/refund-clarity",
     snapshotId: "snap_refund_may",
@@ -106,6 +109,7 @@ const conversations: readonly ProductionConversationCandidate[] = [
     id: "prod_spanish_refund",
     title: "Spanish refund paraphrase",
     agentName: "Acme Support Concierge",
+    agentId: "11111111-1111-4111-8111-111111111111",
     sourceVersion: "v23.1.4",
     draftVersion: "draft/refund-clarity",
     snapshotId: "snap_refund_may",
@@ -118,6 +122,7 @@ const conversations: readonly ProductionConversationCandidate[] = [
     id: "prod_angry_repeat",
     title: "Angry repeat customer asks for manager",
     agentName: "Acme Support Concierge",
+    agentId: "11111111-1111-4111-8111-111111111111",
     sourceVersion: "v23.1.4",
     draftVersion: "draft/refund-clarity",
     snapshotId: "snap_refund_may",
@@ -316,6 +321,7 @@ function liveConversation(trace: TraceSummary, index: number): ProductionConvers
     id: trace.id,
     title: trace.root_name || `Production turn ${index + 1}`,
     agentName: trace.agent_name,
+    agentId: trace.agent_id,
     sourceVersion: "production",
     draftVersion: "active draft",
     snapshotId: `snap-${trace.id.slice(0, 8)}`,
@@ -426,4 +432,67 @@ export async function fetchReplayWorkbenchModel(
     }
     throw err;
   }
+}
+
+export async function replayAgainstDraft(
+  agentId: string,
+  args: { traceIds: readonly string[]; draftBranchRef: string; compareVersionRef?: string },
+  opts: UxWireupClientOptions = {},
+): Promise<{ items: readonly FutureReplaySummary[] }> {
+  const fallback: { items: FutureReplaySummary[] } = {
+    items: args.traceIds.map((traceId) => ({
+      ...selectedReplay,
+      conversationId: traceId,
+      mostLikelyBreak: `Local replay compares ${traceId} against ${args.draftBranchRef}.`,
+    })),
+  };
+  const body = await cpJson<{
+    items?: Array<{
+      trace_id: string;
+      behavioral_distance: number;
+      latency_delta_ms: number;
+      cost_delta_pct: number;
+      status: FutureReplayDiff["status"];
+      token_aligned_rows: Array<{
+        frame: string;
+        baseline: string;
+        draft: string;
+        status: FutureReplayDiff["status"];
+      }>;
+    }>;
+  }>(
+    `/agents/${encodeURIComponent(agentId)}/replay/against-draft`,
+    {
+      ...opts,
+      method: "POST",
+      body: {
+        trace_ids: args.traceIds,
+        draft_branch_ref: args.draftBranchRef,
+        compare_version_ref: args.compareVersionRef,
+      },
+      fallback: { items: [] },
+    },
+  ).catch(() => ({ items: [] }));
+  if (!body.items?.length) return fallback;
+  return {
+    items: body.items.map((item) => ({
+      conversationId: item.trace_id,
+      behavioralDistance: item.behavioral_distance,
+      changedFrames: item.token_aligned_rows.filter((row) => row.status !== "same").length,
+      latencyDeltaMs: item.latency_delta_ms,
+      costDeltaPct: item.cost_delta_pct,
+      mostLikelyBreak:
+        item.status === "regressed"
+          ? "Replay found a likely behavioral regression before promotion."
+          : "Replay produced a draft diff ready for review.",
+      diffRows: item.token_aligned_rows.map((row, index) => ({
+        id: `${item.trace_id}-${index}`,
+        frame: row.frame,
+        baseline: row.baseline,
+        draft: row.draft,
+        status: row.status,
+        evidenceRef: `${item.trace_id}/against-draft/${index}`,
+      })),
+    })),
+  };
 }

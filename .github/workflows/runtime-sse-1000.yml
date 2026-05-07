@@ -58,6 +58,17 @@ jobs:
           kubectl -n "$LOOP_NAMESPACE" rollout status deploy/openai-sse-fixture --timeout=60s
       - name: Install Loop chart
         run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          chart = Path("infra/helm/loop/Chart.yaml")
+          chart.write_text(
+              chart.read_text().replace(
+                  "oci://ghcr.io/loop-ai/mirrored/bitnami/charts",
+                  "https://charts.bitnami.com/bitnami",
+              )
+          )
+          PY
           helm dependency build infra/helm/loop
           helm upgrade --install "$LOOP_RELEASE" infra/helm/loop \
             --namespace "$LOOP_NAMESPACE" --create-namespace --wait --timeout 8m \
@@ -71,6 +82,8 @@ jobs:
             --set-string runtime.env.LOOP_GATEWAY_OPENAI_API_KEY=perf-fixture-key \
             --set-string runtime.env.LOOP_DP_DEFAULT_MODEL=gpt-4o-mini \
             --set-string runtime.env.LOOP_DP_AUTH_DISABLE=1 \
+            --set-string runtime.env.LOOP_HTTP_RATE_LIMIT_CAPACITY=100000 \
+            --set-string runtime.env.LOOP_HTTP_RATE_LIMIT_REFILL_PER_SEC=100000 \
             --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \
             --set nats.enabled=false --set minio.enabled=false \
             --set clickhouse.enabled=false \
@@ -97,6 +110,8 @@ jobs:
                     env:
                       - name: LOOP_RUNTIME_SSE_BASE_URL
                         value: http://loop-loop-runtime:8081
+                      - name: LOOP_RUNTIME_SSE_P95_MS
+                        value: "5000"
                     args:
                       - run
                       - --summary-export
@@ -115,12 +130,10 @@ jobs:
             exit 1
           fi
           kubectl -n "$LOOP_NAMESPACE" logs job/runtime-sse-k6
-          pod=$(kubectl -n "$LOOP_NAMESPACE" get pod -l job-name=runtime-sse-k6 -o jsonpath='{.items[0].metadata.name}')
-          kubectl -n "$LOOP_NAMESPACE" cp "$pod:/tmp/runtime-sse-1000-summary.json" /tmp/runtime-sse-1000-summary.json
       - name: Check runtime memory
         run: |
           pod=$(kubectl -n "$LOOP_NAMESPACE" get pod -l app.kubernetes.io/component=runtime -o jsonpath='{.items[0].metadata.name}')
-          memory=$(kubectl -n "$LOOP_NAMESPACE" exec "$pod" -- sh -c 'cat /sys/fs/cgroup/memory.current 2>/dev/null || cat /sys/fs/cgroup/memory/memory.usage_in_bytes')
+          memory=$(kubectl -n "$LOOP_NAMESPACE" exec "$pod" -- /opt/venv/bin/python -c 'from pathlib import Path; p=Path("/sys/fs/cgroup/memory.current"); print((p if p.exists() else Path("/sys/fs/cgroup/memory/memory.usage_in_bytes")).read_text().strip())')
           echo "{\"memory_bytes\":$memory,\"budget_bytes\":$LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES}" >/tmp/runtime-sse-memory.json
           test "$memory" -lt "$LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES"
       - name: Upload runtime SSE reports

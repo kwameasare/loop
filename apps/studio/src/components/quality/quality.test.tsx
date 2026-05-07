@@ -67,8 +67,10 @@ describe("ScreenChecklist", () => {
     const item = screen.getByTestId("checklist-item-de-progress");
     fireEvent.click(within(item).getByRole("checkbox"));
     expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange.mock.calls[0]?.[0].results.find((r) => r.category === "delight")!.passed).toContain(
-      "de-progress",
-    );
+    expect(
+      onChange.mock.calls[0]?.[0].results.find(
+        (r: { category: string }) => r.category === "delight",
+      )!.passed,
+    ).toContain("de-progress");
   });
 });

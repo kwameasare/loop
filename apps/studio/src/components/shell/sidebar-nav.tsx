@@ -28,6 +28,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 
+import { AgentMoodRing } from "@/components/shell/agent-mood-ring";
 import { LiveBadge } from "@/components/target";
 import { targetUxFixtures } from "@/lib/target-ux";
 import { cn } from "@/lib/utils";
@@ -376,7 +377,11 @@ function NavLink({
             : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
         )}
       >
-        <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden={true} />
+        {item.id === "agents" && depth === 0 ? (
+          <AgentMoodRing label={item.label} mood="healthy" />
+        ) : (
+          <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden={true} />
+        )}
         <span className="min-w-0 flex-1">
           <span className="flex items-center justify-between gap-2">
             <span className="font-medium leading-5">{item.label}</span>

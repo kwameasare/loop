@@ -185,6 +185,10 @@ __all__ = [
     "regex_match",
     "rouge_l",
     "tool_call_match",
+    "voice_barge_in",
+    "voice_stage_latency",
+    "voice_tts_fidelity",
+    "voice_wer",
 ]
 
 
@@ -436,4 +440,114 @@ def tool_call_match(*, ordered: bool = True) -> Scorer:
         )
 
     scorer.name = "tool_call_match"  # type: ignore[attr-defined]
+    return scorer  # type: ignore[return-value]
+
+
+# --------------------------------------------------------------------------- #
+# Canonical §16.3 -- voice-specific eval scorers.
+# --------------------------------------------------------------------------- #
+
+
+def _metadata_float(run: Run, key: str, default: float = 0.0) -> float:
+    raw = run.metadata.get(key)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+def voice_wer(*, max_wer: float = 0.08) -> Scorer:
+    """Score word error rate for canonical voice terms."""
+
+    if not 0 <= max_wer <= 1:
+        raise ValueError("max_wer must be in [0, 1]")
+
+    def scorer(sample: Sample, run: Run) -> object:
+        if "voice_wer" in run.metadata:
+            wer = _metadata_float(run, "voice_wer", 1.0)
+        else:
+            expected = _tokenise(sample.expected or "")
+            actual = _tokenise(run.output)
+            if not expected:
+                wer = 0.0 if not actual else 1.0
+            else:
+                missing = len([token for token in expected if token not in actual])
+                wer = missing / len(expected)
+        value = max(0.0, 1.0 - wer)
+        return _score(
+            name="voice_wer",
+            sample=sample,
+            value=value,
+            threshold=1.0 - max_wer,
+            detail=f"wer={wer:.3f} max={max_wer:.3f}",
+        )
+
+    scorer.name = "voice_wer"  # type: ignore[attr-defined]
+    return scorer  # type: ignore[return-value]
+
+
+def voice_barge_in(*, threshold: float = 1.0) -> Scorer:
+    """Pass when barge-in was detected and respected when expected."""
+
+    def scorer(sample: Sample, run: Run) -> object:
+        expected = sample.metadata.get("barge_in_expected", "false").lower() == "true"
+        observed = run.metadata.get("barge_in_respected", "false").lower() == "true"
+        ok = observed if expected else True
+        return _score(
+            name="voice_barge_in",
+            sample=sample,
+            value=1.0 if ok else 0.0,
+            threshold=threshold,
+            detail=f"barge_in_expected={expected} respected={observed}",
+        )
+
+    scorer.name = "voice_barge_in"  # type: ignore[attr-defined]
+    return scorer  # type: ignore[return-value]
+
+
+def voice_tts_fidelity(*, min_score: float = 0.92) -> Scorer:
+    """Score recorded-call TTS audio fidelity from run metadata."""
+
+    if not 0 <= min_score <= 1:
+        raise ValueError("min_score must be in [0, 1]")
+
+    def scorer(sample: Sample, run: Run) -> object:
+        score = _metadata_float(run, "tts_fidelity", 0.0)
+        return _score(
+            name="voice_tts_fidelity",
+            sample=sample,
+            value=score,
+            threshold=min_score,
+            detail=f"tts_fidelity={score:.3f} min={min_score:.3f}",
+        )
+
+    scorer.name = "voice_tts_fidelity"  # type: ignore[attr-defined]
+    return scorer  # type: ignore[return-value]
+
+
+def voice_stage_latency(*, max_stage_ms: float = 450.0) -> Scorer:
+    """Gate ASR, agent-start, and TTS stage latency from metadata."""
+
+    if max_stage_ms <= 0:
+        raise ValueError("max_stage_ms must be positive")
+
+    def scorer(sample: Sample, run: Run) -> object:
+        worst = max(
+            _metadata_float(run, "asr_latency_ms", 0.0),
+            _metadata_float(run, "agent_start_latency_ms", 0.0),
+            _metadata_float(run, "tts_latency_ms", 0.0),
+        )
+        excess = max(0.0, worst - max_stage_ms)
+        value = max(0.0, 1.0 - excess / max_stage_ms)
+        return _score(
+            name="voice_stage_latency",
+            sample=sample,
+            value=value,
+            threshold=1.0,
+            detail=f"worst_stage_ms={worst:.1f} budget={max_stage_ms:.1f}",
+        )
+
+    scorer.name = "voice_stage_latency"  # type: ignore[attr-defined]
     return scorer  # type: ignore[return-value]

@@ -9,6 +9,7 @@ import {
   StageStepper,
   StatePanel,
 } from "@/components/target";
+import { TelemetryConsentCard } from "@/components/help";
 import { buttonVariants } from "@/components/ui/button";
 import { targetUxFixtures } from "@/lib/target-ux";
 
@@ -43,6 +44,8 @@ export default function HomePage() {
           </Link>
         </div>
       </header>
+
+      <TelemetryConsentCard />
 
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <MetricCountUp

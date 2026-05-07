@@ -133,3 +133,12 @@ Audit-action namespaces covered by this entry:
 - **I** No namespace broadens data exposure: mutating handlers remain workspace-scoped, redact secret material, and keep export/deletion controls constrained to authorized actors.
 - **D** Existing quotas and rate-limit controls continue to apply to mutating paths; webhook and eval/start paths preserve idempotency and bounded retry behavior.
 - **E** No additional privilege boundary is introduced. Role checks used by mutating handlers remain owner/admin scoped and do not grant cross-workspace authority.
+
+### 2026-05-07 — UX wire-up perf gate rate-limit overrides (#266)
+Touches: `packages/control-plane/loop_control_plane/rate_limit_middleware.py`, perf workflows. Adds environment-configurable HTTP token-bucket capacity/refill values so synthetic CI perf jobs can exercise real `cp-api` / `dp-runtime` images without being throttled by the public-boundary guard.
+- **S** No caller identity change. Requests still resolve the same principal (`workspace_id`, forwarded IP, client IP, or anonymous); the env knobs only resize the bucket attached to that principal.
+- **T** No request or state payload integrity change. Invalid or non-positive env values are ignored and the default limiter values remain in force.
+- **R** The limiter remains a request-admission control, not a state-changing endpoint, so it emits no audit row directly. CI override usage is visible in the workflow definition and GitHub check logs.
+- **I** No data exposure change. The configuration contains numeric budgets only and does not touch PII, secrets, traces, memory, or customer payloads.
+- **D** Production defaults remain `capacity=60` and `refill_per_sec=30`; the high values are set only in perf workflow Helm overrides. This prevents false perf failures from the guard itself while preserving the default DoS protection for normal deployments.
+- **E** No new role, scope, or permission boundary. Operators who can already set deployment environment variables could tune the limiter before this change via chart edits; this makes the intended knob explicit and bounded to positive numeric values.

@@ -51,6 +51,16 @@ export interface VoiceStageClientOptions {
   baseUrl?: string;
 }
 
+export interface VoiceNumberProvisionResult {
+  id: string;
+  phone_number: string;
+  provider: string;
+  country: string;
+  status: string;
+  sip_route: string;
+  compliance: readonly { id: string; status: string }[];
+}
+
 function cpApiBaseUrl(override?: string): string | null {
   const raw =
     override ??
@@ -94,6 +104,53 @@ export async function fetchVoiceStageModel(
     throw new Error(`cp-api GET voice stage -> ${response.status}`);
   }
   return (await response.json()) as VoiceStageModel;
+}
+
+export async function provisionVoiceNumber(
+  workspaceId: string,
+  opts: VoiceStageClientOptions & {
+    country?: string;
+    areaCode?: string;
+    provider?: string;
+  } = {},
+): Promise<VoiceNumberProvisionResult> {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    return {
+      id: "num_local",
+      phone_number: "+14155550100",
+      provider: opts.provider ?? "twilio",
+      country: opts.country ?? "US",
+      status: "provisioned",
+      sip_route: `livekit://workspace/${workspaceId}/voice/local`,
+      compliance: [
+        { id: "business_profile", status: "ready" },
+        { id: "10dlc_registration", status: "pending" },
+        { id: "livekit_sip_trunk", status: "ready" },
+      ],
+    };
+  }
+  const response = await (opts.fetcher ?? fetch)(
+    `${base}/workspaces/${encodeURIComponent(workspaceId)}/voice/numbers/provision`,
+    {
+      method: "POST",
+      headers: {
+        ...headers(opts),
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        country: opts.country ?? "US",
+        area_code: opts.areaCode ?? "415",
+        capability: "voice",
+        provider: opts.provider ?? "twilio",
+      }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`cp-api voice provision -> ${response.status}`);
+  }
+  return (await response.json()) as VoiceNumberProvisionResult;
 }
 
 export const VOICE_STAGE_FIXTURE: VoiceStageModel = {

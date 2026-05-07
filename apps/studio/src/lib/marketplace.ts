@@ -182,6 +182,8 @@ export interface SubmissionResult {
   ok: boolean;
   errors: string[];
   lifecycle: MarketplaceLifecycle;
+  itemId?: string;
+  auditRef?: string;
 }
 
 /**
@@ -261,7 +263,10 @@ function cpApiBaseUrl(override?: string): string | null {
 function marketplaceHeaders(
   opts: MarketplaceClientOptions,
 ): Record<string, string> {
-  const headers: Record<string, string> = { accept: "application/json" };
+  const headers: Record<string, string> = {
+    accept: "application/json",
+    "content-type": "application/json",
+  };
   const token = opts.token ?? process.env.LOOP_TOKEN;
   if (token) headers.authorization = `Bearer ${token}`;
   return headers;
@@ -335,6 +340,88 @@ export async function fetchMarketplaceCatalog(
   }
   const body = (await response.json()) as { items?: CpMarketplaceItem[] };
   return (body.items ?? []).map(marketplaceItemFromCp);
+}
+
+export async function publishPrivateMarketplaceItem(
+  workspaceId: string,
+  payload: PrivateSkillSubmission & {
+    name?: string;
+    description?: string;
+  },
+  opts: MarketplaceClientOptions = {},
+): Promise<SubmissionResult> {
+  const validation = submitPrivateSkill(payload);
+  if (!validation.ok) return validation;
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    return {
+      ...validation,
+      itemId: `mk_private_${payload.itemId}`,
+      auditRef: "local/marketplace/item_publish",
+    };
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const response = await fetcher(`${base}/marketplace/items`, {
+    method: "POST",
+    headers: marketplaceHeaders(opts),
+    body: JSON.stringify({
+      workspace_id: workspaceId,
+      slug: payload.itemId.replace(/^mk_/, "").replace(/_/g, "-"),
+      name: payload.name ?? payload.itemId,
+      description:
+        payload.description ??
+        "Private workspace skill submitted from Studio.",
+      categories: ["private", "skill"],
+      version: payload.version,
+      permissions: payload.permissions,
+      reviewers: payload.reviewers,
+    }),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    return {
+      ok: false,
+      errors: [`cp-api marketplace publish -> ${response.status}`],
+      lifecycle: "draft",
+    };
+  }
+  const body = (await response.json()) as { server_id?: string };
+  const itemId = body.server_id ?? `mk_private_${payload.itemId}`;
+  return {
+    ...validation,
+    lifecycle: "published",
+    itemId,
+    auditRef: `marketplace/item/${itemId}/publish`,
+  };
+}
+
+export async function installMarketplaceItem(
+  workspaceId: string,
+  itemId: string,
+  opts: MarketplaceClientOptions = {},
+): Promise<{ install_id: string; item_id: string; workspace_id: string }> {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    return {
+      install_id: `inst_local_${itemId}`,
+      item_id: itemId,
+      workspace_id: workspaceId,
+    };
+  }
+  return (await (opts.fetcher ?? fetch)(
+    `${base}/marketplace/items/${encodeURIComponent(itemId)}/install`,
+    {
+      method: "POST",
+      headers: marketplaceHeaders(opts),
+      body: JSON.stringify({ workspace_id: workspaceId }),
+      cache: "no-store",
+    },
+  ).then(async (response) => {
+    if (!response.ok) {
+      throw new Error(`cp-api marketplace install -> ${response.status}`);
+    }
+    return response.json();
+  })) as { install_id: string; item_id: string; workspace_id: string };
 }
 
 /** Default catalog used by the marketplace surface in fixture mode. */

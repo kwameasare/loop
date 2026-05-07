@@ -19,6 +19,7 @@ import {
   type TraceSummary,
   type TracesClientOptions,
 } from "@/lib/traces";
+import { cpJson } from "@/lib/ux-wireup";
 
 export type ObservatoryTone = "healthy" | "watching" | "drifting" | "blocked";
 
@@ -64,6 +65,13 @@ export interface ObservatoryModel {
   anomalies: readonly ObservatoryAnomaly[];
   tail: readonly ProductionTailEvent[];
   agents: readonly AmbientAgentHealth[];
+}
+
+export interface ObservatoryDashboardLayout {
+  id: string;
+  name: string;
+  layout: readonly { source_type: string; source_id: string; title: string }[];
+  shared_with: readonly string[];
 }
 
 export interface ObservatoryClientOptions
@@ -382,6 +390,43 @@ export async function fetchObservatoryModel(
     inbox,
     nowMs,
   });
+}
+
+export async function pinObservatoryMetric(
+  workspaceId: string,
+  metric: ObservatoryMetric,
+  opts: ObservatoryClientOptions = {},
+): Promise<ObservatoryDashboardLayout> {
+  return cpJson<ObservatoryDashboardLayout>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/dashboards`,
+    {
+      ...opts,
+      method: "POST",
+      body: {
+        name: `${metric.label} watch`,
+        layout: [
+          {
+            source_type: "observatory_metric",
+            source_id: metric.id,
+            title: metric.label,
+          },
+        ],
+        shared_with: [],
+      },
+      fallback: {
+        id: `dash_local_${metric.id}`,
+        name: `${metric.label} watch`,
+        layout: [
+          {
+            source_type: "observatory_metric",
+            source_id: metric.id,
+            title: metric.label,
+          },
+        ],
+        shared_with: [],
+      },
+    },
+  );
 }
 
 export const OBSERVATORY_MODEL: ObservatoryModel = {

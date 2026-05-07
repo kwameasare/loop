@@ -264,6 +264,8 @@ export const SIMULATOR_COMMANDS = [
   "/as-user persona=angry-customer",
   "/replay turn=3 with-memory=cleared",
   "/diff against=v23",
+  "/enable tool=lookup_order",
+  "/reset preview",
 ] as const;
 
 export const DEFAULT_SIMULATOR_CONFIG: SimulatorConfig = {
@@ -409,6 +411,36 @@ export function parseSimulatorCommand(
       ok: true,
       message: `Diff target set to ${against}.`,
       nextConfig: { ...config, diffAgainst: against },
+    };
+  }
+
+  if (command.startsWith("/enable")) {
+    const tool = command.match(/tool=([^\s]+)/)?.[1];
+    if (!tool || !toolNames().includes(tool)) {
+      return {
+        ok: false,
+        message: "Tool is not available in this simulator fixture.",
+        nextConfig: config,
+      };
+    }
+    return {
+      ok: true,
+      message: `${tool} re-enabled for this preview.`,
+      nextConfig: {
+        ...config,
+        disabledTools: config.disabledTools.filter((name) => name !== tool),
+      },
+    };
+  }
+
+  if (command.startsWith("/reset")) {
+    return {
+      ok: true,
+      message: "Preview controls reset to the production baseline.",
+      nextConfig: {
+        ...DEFAULT_SIMULATOR_CONFIG,
+        channel: config.channel,
+      },
     };
   }
 

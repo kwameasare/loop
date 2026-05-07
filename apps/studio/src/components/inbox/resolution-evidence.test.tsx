@@ -4,7 +4,10 @@ import { describe, expect, it, vi } from "vitest";
 import { ConversationEvidence } from "./conversation-evidence";
 import { ResolutionToEval } from "./resolution-to-eval";
 import { SuggestedDraft } from "./suggested-draft";
-import { FIXTURE_EVIDENCE_CONTEXT } from "@/lib/inbox-resolution";
+import {
+  FIXTURE_EVIDENCE_CONTEXT,
+  type EvalCaseFromResolution,
+} from "@/lib/inbox-resolution";
 
 describe("ConversationEvidence", () => {
   it("defaults to the trace pane and shows tool/error rows", () => {
@@ -82,14 +85,21 @@ describe("ResolutionToEval", () => {
   });
 
   it("on save, calls onSave with linked trace + tool + retrieval attachments and shows audited confirmation", async () => {
-    const onSave = vi.fn(async () => ({ ok: true, suite_id: "ops-evals" }));
+    const onSave = vi.fn(
+      async (_draft: EvalCaseFromResolution) => ({
+        ok: true,
+        suite_id: "ops-evals",
+      }),
+    );
     render(
       <ResolutionToEval ctx={FIXTURE_EVIDENCE_CONTEXT} onSave={onSave} />,
     );
     fireEvent.click(screen.getByTestId("resolution-save-eval"));
     await screen.findByTestId("resolution-to-eval-saved");
     expect(onSave).toHaveBeenCalledTimes(1);
-    const arg = onSave.mock.calls[0][0];
+    const arg = onSave.mock.calls[0]?.[0];
+    expect(arg).toBeDefined();
+    if (!arg) throw new Error("expected save payload");
     expect(arg.linkedTrace).toBe("trace/thr_8823");
     expect(arg.attachments).toContain("tool/shopify-orders#thr_8823");
     expect(arg.attachments).toContain("kb/refund-policy.md#section-2");

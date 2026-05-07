@@ -150,6 +150,23 @@ def test_falls_back_to_ip_for_unauthenticated_requests() -> None:
     assert client.get("/v1/auth/login").status_code == 429
 
 
+def test_default_config_reads_perf_override_env(monkeypatch) -> None:
+    monkeypatch.setenv("LOOP_HTTP_RATE_LIMIT_CAPACITY", "3")
+    monkeypatch.setenv("LOOP_HTTP_RATE_LIMIT_REFILL_PER_SEC", "3")
+
+    app = FastAPI()
+
+    @app.get("/x")
+    async def x() -> dict[str, str]:
+        return {}
+
+    install_rate_limit(app)
+    client = TestClient(app)
+    for _ in range(3):
+        assert client.get("/x").status_code == 200
+    assert client.get("/x").status_code == 429
+
+
 def test_install_is_idempotent() -> None:
     """Calling install twice must not double-wrap the app — otherwise
     each request would consume two tokens silently."""

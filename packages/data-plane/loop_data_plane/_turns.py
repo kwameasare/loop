@@ -28,6 +28,7 @@ class _DisconnectProbe(Protocol):
     async def is_disconnected(self) -> bool: ...
 
 __all__ = [
+    "CrossRegionCalloutError",
     "RuntimeTurnRequest",
     "TurnAuthError",
     "TurnBudgetError",
@@ -36,6 +37,7 @@ __all__ = [
     "TurnInternalError",
     "TurnRateLimitedError",
     "collect_turn",
+    "enforce_residency_metadata",
     "stream_turn_sse",
 ]
 
@@ -113,6 +115,19 @@ class TurnInternalError(TurnExecutionError):
     http_status = 500
 
 
+class CrossRegionCalloutError(TurnExecutionError):
+    """Runtime data-residency guard (§24.5).
+
+    Metadata-driven tool/callout previews can declare a target region before
+    a turn reaches tool dispatch. If workspace_region and target_region differ,
+    the data plane blocks at the boundary and surfaces the canonical
+    LOOP-AC-602 code instead of letting the external call happen.
+    """
+
+    code = "LOOP-AC-602"
+    http_status = 403
+
+
 _STREAM_ERROR_MESSAGES: dict[str, str] = {
     "LOOP-GW-101": "Provider credentials were rejected.",
     "LOOP-GW-301": "Provider rate limit exceeded.",
@@ -123,6 +138,7 @@ _STREAM_ERROR_MESSAGES: dict[str, str] = {
     "LOOP-RT-403": "Turn rate limit exceeded.",
     "LOOP-RT-404": "Upstream gateway failed.",
     "LOOP-RT-501": "Turn execution failed.",
+    "LOOP-AC-602": "Cross-region callout blocked by workspace residency policy.",
 }
 
 
@@ -177,6 +193,23 @@ class RuntimeTurnRequest(BaseModel):
         return self.request_id or str(uuid4())
 
 
+def enforce_residency_metadata(body: RuntimeTurnRequest) -> None:
+    workspace_region = body.metadata.get("workspace_region")
+    target_region = body.metadata.get("target_region")
+    if not isinstance(workspace_region, str) or not isinstance(target_region, str):
+        return
+    if not workspace_region or not target_region or workspace_region == target_region:
+        return
+    tool_name = body.metadata.get("tool_name")
+    detail = (
+        "LOOP-AC-602 cross_region_blocked: "
+        f"workspace_region={workspace_region} target_region={target_region}"
+    )
+    if isinstance(tool_name, str) and tool_name:
+        detail += f" tool={tool_name}"
+    raise CrossRegionCalloutError(detail)
+
+
 async def stream_turn_sse(
     executor: TurnExecutor,
     body: RuntimeTurnRequest,
@@ -195,12 +228,14 @@ async def stream_turn_sse(
     """
     encoder = SseEncoder()
     turn_id = body.turn_id()
-    agen = executor.execute(
-        body.agent(),
-        body.event(),
-        request_id=turn_id,
-    )
+    agen: AsyncIterator[TurnEvent] | None = None
     try:
+        enforce_residency_metadata(body)
+        agen = executor.execute(
+            body.agent(),
+            body.event(),
+            request_id=turn_id,
+        )
         async for event in agen:
             if request is not None and await request.is_disconnected():
                 logger.info(
@@ -240,7 +275,8 @@ async def stream_turn_sse(
         # disconnect branch above (clean done, exception, generator
         # GC), make sure the executor's resources are released.
         with contextlib.suppress(Exception):
-            await agen.aclose()
+            if agen is not None:
+                await agen.aclose()
 
 
 async def collect_turn(
@@ -248,6 +284,7 @@ async def collect_turn(
     body: RuntimeTurnRequest,
 ) -> dict[str, Any]:
     turn_id = body.turn_id()
+    enforce_residency_metadata(body)
     events: list[TurnEvent] = []
     try:
         async for event in executor.execute(
@@ -256,6 +293,8 @@ async def collect_turn(
             request_id=turn_id,
         ):
             events.append(event)
+    except TurnExecutionError:
+        raise
     except Exception as exc:
         raise TurnExecutionError(str(exc)) from exc
     complete = next((event for event in reversed(events) if event.type == "complete"), None)

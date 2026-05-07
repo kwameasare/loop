@@ -14,6 +14,11 @@ import {
   type Trace,
   type TracesClientOptions,
 } from "@/lib/traces";
+import {
+  cpJson,
+  cpWebSocketUrl,
+  type UxWireupClientOptions,
+} from "@/lib/ux-wireup";
 
 // ---------------------------------------------------------------------------
 // Presence
@@ -43,6 +48,7 @@ export interface AxisApproval {
   state: ApprovalState;
   reviewer?: string;
   decidedAt?: string;
+  invalidatedAt?: string;
   /** Free-text rationale; required for rejected / changes_requested. */
   rationale?: string;
   evidenceRef: string;
@@ -137,6 +143,23 @@ export interface CollaborationWorkspace {
   pairDebug: PairDebugSession;
 }
 
+export interface CommentResolutionPayload {
+  expected_behavior: string;
+  failure_reason: string;
+  also_create_eval_case?: boolean;
+  source_trace?: string;
+}
+
+export interface CommentResolutionResult {
+  comment_id: string;
+  resolved_by: string;
+  eval_case_created: boolean;
+  case_id: string | null;
+  expected_behavior: string;
+  failure_reason: string;
+  source_trace?: string | null;
+}
+
 export class PlayheadError extends Error {
   constructor(message: string) {
     super(message);
@@ -184,6 +207,46 @@ export function setPlayhead(
     ...session,
     playheadMs: clampPlayhead(session, offsetMs),
   };
+}
+
+export function presenceSocketUrl(
+  workspaceId: string,
+  opts: { baseUrl?: string; callerSub?: string } = {},
+): string | null {
+  return cpWebSocketUrl(
+    `/workspaces/${encodeURIComponent(workspaceId)}/presence`,
+    opts,
+  );
+}
+
+export async function resolveCommentAsEvalCase(
+  agentId: string,
+  commentId: string,
+  payload: CommentResolutionPayload,
+  opts: UxWireupClientOptions = {},
+): Promise<CommentResolutionResult> {
+  return cpJson<CommentResolutionResult>(
+    `/agents/${encodeURIComponent(agentId)}/comments/${encodeURIComponent(
+      commentId,
+    )}/resolve`,
+    {
+      ...opts,
+      method: "POST",
+      body: {
+        ...payload,
+        also_create_eval_case: payload.also_create_eval_case ?? true,
+      },
+      fallback: {
+        comment_id: commentId,
+        resolved_by: "local-builder",
+        eval_case_created: payload.also_create_eval_case ?? true,
+        case_id: `eval_comment_${commentId}`,
+        expected_behavior: payload.expected_behavior,
+        failure_reason: payload.failure_reason,
+        source_trace: payload.source_trace ?? null,
+      },
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 import type { KnowledgeAtelierModel, KnowledgeChunk } from "@/lib/knowledge";
+import { cpJson, type UxWireupClientOptions } from "@/lib/ux-wireup";
 
 export interface InverseRetrievalMiss {
   id: string;
@@ -94,6 +95,50 @@ export function buildInverseRetrievalModel(
         evidenceRef: `${selected.id}/miss/long-chunk`,
       },
     ],
+  };
+}
+
+export async function fetchInverseRetrievalModel(
+  agentId: string,
+  model: KnowledgeAtelierModel,
+  opts: UxWireupClientOptions = {},
+): Promise<InverseRetrievalModel> {
+  const fallback = buildInverseRetrievalModel(model);
+  const body = await cpJson<{
+    chunk_id: string;
+    items?: Array<{
+      query: string;
+      trace_id: string;
+      rank: number;
+      miss_reason: string;
+      fix_path: string;
+    }>;
+  }>(
+    `/agents/${encodeURIComponent(agentId)}/kb/inverse-retrieval`,
+    {
+      ...opts,
+      method: "POST",
+      body: { chunk_id: fallback.selectedChunkId },
+      fallback: { chunk_id: fallback.selectedChunkId, items: [] },
+    },
+  ).catch(() => ({ chunk_id: fallback.selectedChunkId, items: [] }));
+  if (!body.items?.length) return fallback;
+  return {
+    ...fallback,
+    selectedChunkId: body.chunk_id,
+    misses: body.items.map((item, index) => ({
+      id: `live_miss_${index + 1}`,
+      productionQuery: item.query,
+      closeness: Math.max(60, 96 - index * 5),
+      missReason: `${item.miss_reason}: ${item.fix_path}`,
+      repair:
+        item.miss_reason === "reranked_low"
+          ? "re-rank"
+          : item.fix_path.includes("metadata")
+            ? "metadata"
+            : "instruction",
+      evidenceRef: `${item.trace_id}/inverse-retrieval/${item.rank}`,
+    })),
   };
 }
 

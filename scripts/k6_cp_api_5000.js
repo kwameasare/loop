@@ -1,8 +1,11 @@
 import http from "k6/http";
 import { check } from "k6";
 
-const CP_API_TARGET_RPS = 5000;
-const CP_API_P95_MS = 100;
+const CP_API_TARGET_RPS = Number(__ENV.LOOP_CP_API_TARGET_RPS || "5000");
+const CP_API_P95_MS = Number(__ENV.LOOP_CP_API_P95_MS || "100");
+const CP_API_DURATION = __ENV.LOOP_CP_API_DURATION || "60s";
+const CP_API_PREALLOCATED_VUS = Number(__ENV.LOOP_CP_API_PREALLOCATED_VUS || "200");
+const CP_API_MAX_VUS = Number(__ENV.LOOP_CP_API_MAX_VUS || "1000");
 const BASE_URL = (__ENV.LOOP_CP_API_BASE_URL || "http://127.0.0.1:18080").replace(/\/$/, "");
 
 export const options = {
@@ -11,9 +14,9 @@ export const options = {
       executor: "constant-arrival-rate",
       rate: CP_API_TARGET_RPS,
       timeUnit: "1s",
-      duration: "60s",
-      preAllocatedVUs: 200,
-      maxVUs: 1000,
+      duration: CP_API_DURATION,
+      preAllocatedVUs: CP_API_PREALLOCATED_VUS,
+      maxVUs: CP_API_MAX_VUS,
     },
   },
   thresholds: {
@@ -30,6 +33,15 @@ export default function () {
   });
   check(response, {
     "cp-api health is 200": (res) => res.status === 200,
-    "cp-api health is ok": (res) => res.json("ok") === true,
+    "cp-api health is ok": (res) => {
+      if (res.status !== 200) {
+        return false;
+      }
+      try {
+        return res.json("ok") === true;
+      } catch {
+        return false;
+      }
+    },
   });
 }

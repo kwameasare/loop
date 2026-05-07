@@ -107,13 +107,15 @@ describe("ChangesetApprovals", () => {
 
     const allGreen = {
       ...FIXTURE_CHANGESET,
-      approvals: FIXTURE_CHANGESET.approvals.map((a) => ({
-        ...a,
-        state: "approved" as const,
-        rationale: undefined,
-        reviewer: a.reviewer ?? "Latency Bot",
-        decidedAt: a.decidedAt ?? "2025-02-21T11:36:00Z",
-      })),
+      approvals: FIXTURE_CHANGESET.approvals.map((a) => {
+        const { rationale: _rationale, ...rest } = a;
+        return {
+          ...rest,
+          state: "approved" as const,
+          reviewer: a.reviewer ?? "Latency Bot",
+          decidedAt: a.decidedAt ?? "2025-02-21T11:36:00Z",
+        };
+      }),
     };
     rerender(<ChangesetApprovals changeset={allGreen} onMerge={onMerge} />);
     const btn2 = screen.getByTestId(
