@@ -47,20 +47,26 @@ jobs:
           )
           PY
           helm dependency build infra/helm/loop
-          helm upgrade --install "$LOOP_RELEASE" infra/helm/loop \
-            --namespace "$LOOP_NAMESPACE" --create-namespace --wait --timeout 8m \
-            --set global.imageRegistry=loop --set global.imagePullPolicy=IfNotPresent \
-            --set controlPlane.image.repository=cp-api --set controlPlane.image.tag=perf \
-            --set controlPlane.replicaCount=3 --set runtime.enabled=false \
-            --set-string controlPlane.env.UVICORN_WORKERS=1 \
-            --set-string controlPlane.env.LOOP_HTTP_RATE_LIMIT_CAPACITY=100000 \
-            --set-string controlPlane.env.LOOP_HTTP_RATE_LIMIT_REFILL_PER_SEC=100000 \
-            --set controlPlane.resources.requests.cpu=500m --set controlPlane.resources.limits.cpu=2000m \
-            --set controlPlane.resources.requests.memory=512Mi --set controlPlane.resources.limits.memory=2048Mi \
-            --set gateway.enabled=false --set kbEngine.enabled=false --set toolHost.enabled=false \
-            --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \
-            --set nats.enabled=false --set minio.enabled=false --set clickhouse.enabled=false \
-            --set migrations.enabled=false
+          if ! helm upgrade --install "$LOOP_RELEASE" infra/helm/loop \
+              --namespace "$LOOP_NAMESPACE" --create-namespace --wait --timeout 8m \
+              --set global.imageRegistry=loop --set global.imagePullPolicy=IfNotPresent \
+              --set controlPlane.image.repository=cp-api --set controlPlane.image.tag=perf \
+              --set controlPlane.replicaCount=3 --set runtime.enabled=false \
+              --set-string controlPlane.env.UVICORN_WORKERS=1 \
+              --set-string controlPlane.env.LOOP_HTTP_RATE_LIMIT_CAPACITY=100000 \
+              --set-string controlPlane.env.LOOP_HTTP_RATE_LIMIT_REFILL_PER_SEC=100000 \
+              --set controlPlane.resources.requests.cpu=100m --set controlPlane.resources.limits.cpu=2000m \
+              --set controlPlane.resources.requests.memory=512Mi --set controlPlane.resources.limits.memory=2048Mi \
+              --set gateway.enabled=false --set kbEngine.enabled=false --set toolHost.enabled=false \
+              --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \
+              --set nats.enabled=false --set minio.enabled=false --set clickhouse.enabled=false \
+              --set migrations.enabled=false; then
+            kubectl -n "$LOOP_NAMESPACE" get pods -o wide || true
+            kubectl -n "$LOOP_NAMESPACE" describe deploy/loop-loop-control-plane || true
+            kubectl -n "$LOOP_NAMESPACE" describe pods -l app.kubernetes.io/component=control-plane || true
+            kubectl -n "$LOOP_NAMESPACE" logs -l app.kubernetes.io/component=control-plane --all-containers --tail=200 || true
+            exit 1
+          fi
       - name: Run 5000 RPS gate
         run: |
           kubectl -n "$LOOP_NAMESPACE" rollout status deploy/loop-loop-control-plane --timeout=90s

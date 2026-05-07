@@ -50,6 +50,8 @@ def test_cp_api_5000_rps_workflow_runs_k6_and_pages() -> None:
     assert "controlPlane.image.repository=cp-api" in runs
     assert "controlPlane.env.UVICORN_WORKERS=1" in runs
     assert "controlPlane.env.LOOP_HTTP_RATE_LIMIT_REFILL_PER_SEC=100000" in runs
+    assert "controlPlane.resources.requests.cpu=100m" in runs
+    assert "describe pods -l app.kubernetes.io/component=control-plane" in runs
     assert "helm_e2e_smoke_server.py" not in WORKFLOW.read_text()
     assert "--set migrations.enabled=false" in runs
     assert "svc/loop-loop-control-plane 18080:8080" in runs
