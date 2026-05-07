@@ -34,6 +34,25 @@ const trace: Trace = {
       attributes: { tool: "lookup_order" },
       events: [],
     },
+    {
+      id: "span_llm",
+      parent_id: null,
+      name: "llm.final_answer",
+      category: "llm",
+      kind: "client",
+      service: "model",
+      start_ns: 200,
+      end_ns: 300,
+      status: "ok",
+      attributes: {
+        tokens_in: 1000,
+        tokens_out: 120,
+        used_prompt_sections: "§1, §4",
+        all_prompt_sections: "§1, §2, §3, §4, §5",
+        sampled_turns: 42,
+      },
+      events: [],
+    },
   ],
 };
 
@@ -50,7 +69,12 @@ describe("AgentXrayPanel", () => {
     expect(
       screen.getAllByTestId("xray-representative-trace")[0],
     ).toHaveTextContent("trace_refund_742");
-    expect(screen.getByTestId("agent-xray")).toHaveTextContent("unsupported");
+    expect(screen.getByTestId("xray-dead-weight-summary")).toHaveTextContent(
+      "§2",
+    );
+    expect(screen.getByTestId("agent-xray")).not.toHaveTextContent(
+      "Prompt dead-code claim unsupported",
+    );
   });
 
   it("shows an empty state instead of invented claims", () => {

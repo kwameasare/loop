@@ -265,6 +265,7 @@ def test_behavior_telemetry_inverse_retrieval_voice_and_scenes(
         json={"country": "US", "area_code": "415", "capability": "voice", "provider": "twilio"},
     )
     assert number.status_code == 200, number.text
+    assert number.json()["provisioner"] == "deterministic"
     assert number.json()["sip_route"].startswith("livekit://")
 
     scorers = client.get("/v1/eval-scorers/voice", headers=_auth()).json()["items"]
@@ -313,6 +314,30 @@ def test_tool_import_persona_semantic_diff_style_bisect_and_shares(
     )
     assert len(persona.json()["items"]) == 5
 
+    latency = client.post(
+        f"/v1/agents/{agent_id}/latency-budget",
+        headers=_auth(),
+        json={"trace_id": "trace-prod-1", "target_latency_ms": 900},
+    )
+    assert latency.status_code == 200, latency.text
+    assert latency.json()["suggestions"][0]["saves_ms"] > 0
+
+    ablation = client.post(
+        f"/v1/agents/{agent_id}/context-ablation",
+        headers=_auth(),
+        json={"turn_id": "turn-1", "toggles": {"prompt_sections": False}},
+    )
+    assert ablation.status_code == 200, ablation.text
+    assert ablation.json()["items"][0]["id"] == "prompt_sections"
+    assert ablation.json()["items"][0]["cost_delta_pct"] < 0
+
+    empty = client.get(
+        f"/v1/agents/{agent_id}/empty-state-suggestions?surface=evals",
+        headers=_auth(),
+    )
+    assert empty.status_code == 200, empty.text
+    assert "starter eval suite" in empty.json()["items"][0]["title"]
+
     semantic = client.post(
         f"/v1/agents/{agent_id}/semantic-diff",
         headers=_auth(),
@@ -354,6 +379,43 @@ def test_tool_import_persona_semantic_diff_style_bisect_and_shares(
     assert share.status_code == 201, share.text
     viewed = client.get(f"/v1/shares/{share.json()['id']}", headers=_auth())
     assert viewed.json()["redaction_banner"].startswith("2 redaction")
+
+
+def test_pair_debug_audio_and_voice_provisioner_modes(
+    client: TestClient,
+    workspace_id: UUID,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = client.post(
+        f"/v1/workspaces/{workspace_id}/pair-debug/audio/session",
+        headers=_auth(),
+        json={"agent_id": "agent_support", "participant_id": "builder:peer"},
+    )
+    assert session.status_code == 200, session.text
+    assert session.json()["transport"] == "webrtc"
+    assert session.json()["signaling_url"].startswith("wss://")
+
+    monkeypatch.setenv("LOOP_VOICE_PROVISIONER", "twilio")
+    for name in [
+        "TWILIO_ACCOUNT_SID",
+        "TWILIO_AUTH_TOKEN",
+        "LIVEKIT_URL",
+        "LIVEKIT_API_KEY",
+        "LIVEKIT_API_SECRET",
+    ]:
+        monkeypatch.delenv(name, raising=False)
+    blocked = client.post(
+        f"/v1/workspaces/{workspace_id}/voice/numbers/provision",
+        headers=_auth(),
+        json={
+            "country": "US",
+            "area_code": "415",
+            "capability": "voice",
+            "provider": "twilio",
+        },
+    )
+    assert blocked.status_code == 503, blocked.text
+    assert "Twilio and LiveKit credentials" in blocked.json()["detail"]
 
 
 def test_telemetry_help_branding_voice_demo_and_activity(

@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useState, type FormEvent } from "react";
 import { History, Play, RotateCcw } from "lucide-react";
 
 import { InlineChatOps } from "@/components/command/inline-chatops";
+import { PersonaSimulatorPanel } from "@/components/simulator/persona-simulator";
 import { EvidenceCallout, LiveBadge, StatePanel } from "@/components/target";
 import {
   DEFAULT_SIMULATOR_CONFIG,
@@ -68,6 +69,19 @@ const INITIAL_STATE: PanelState = {
   done: false,
   error: null,
 };
+
+const CHANNEL_HOTKEYS = [
+  { key: "1", channel: "slack" },
+  { key: "2", channel: "whatsapp" },
+  { key: "3", channel: "sms" },
+  { key: "4", channel: "voice" },
+] as const;
+
+function channelHotkey(channelId: string): string | null {
+  return (
+    CHANNEL_HOTKEYS.find((item) => item.channel === channelId)?.key ?? null
+  );
+}
 
 function summarize(value: unknown, max = 80): string {
   if (value === undefined || value === null) return "";
@@ -195,7 +209,11 @@ export function SimulatorLab({
       ) {
         return;
       }
-      const channel = SIMULATOR_CHANNELS[Number(event.key) - 1];
+      const mapping = CHANNEL_HOTKEYS.find((item) => item.key === event.key);
+      if (!mapping) return;
+      const channel = SIMULATOR_CHANNELS.find(
+        (item) => item.id === mapping.channel,
+      );
       if (!channel) return;
       event.preventDefault();
       updateConfig({ channel: channel.id });
@@ -321,10 +339,17 @@ export function SimulatorLab({
               onClick={() => updateConfig({ channel: channel.id })}
             >
               {channel.label}
+              {channelHotkey(channel.id) ? (
+                <span className="ml-1 text-[10px] opacity-70">
+                  {channelHotkey(channel.id)}
+                </span>
+              ) : null}
             </button>
           ))}
         </div>
       </header>
+
+      <PersonaSimulatorPanel agentId={agentId} />
 
       <div className="grid gap-3 text-xs sm:grid-cols-2">
         <label className="flex flex-col gap-1">

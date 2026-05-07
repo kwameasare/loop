@@ -27,10 +27,20 @@ export interface AgentXrayClaim {
   confidence: number;
 }
 
+export interface AgentXrayDeadWeightSummary {
+  activeSections: string[];
+  unusedSections: string[];
+  sampledTurns: number;
+  statement: string;
+  evidence: string;
+  representativeTraceIds: string[];
+}
+
 export interface AgentXrayModel {
   traceIds: string[];
   sampleSize: number;
   claims: AgentXrayClaim[];
+  deadWeightSummary: AgentXrayDeadWeightSummary | null;
   unsupportedReason: string | null;
 }
 
@@ -69,6 +79,41 @@ function claimFromSpan(args: {
   };
 }
 
+function parseSectionList(value: string | number | boolean | undefined): string[] {
+  if (value === undefined) return [];
+  return String(value)
+    .split(/[,\n|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function buildDeadWeightSummary(
+  llm: Span | undefined,
+  traceIds: string[],
+): AgentXrayDeadWeightSummary | null {
+  if (!llm) return null;
+  const activeSections = parseSectionList(llm.attributes.used_prompt_sections);
+  const allSections = parseSectionList(llm.attributes.all_prompt_sections);
+  if (activeSections.length === 0 || allSections.length === 0) return null;
+  const active = new Set(activeSections);
+  const unusedSections = allSections.filter((section) => !active.has(section));
+  if (unusedSections.length === 0) return null;
+  const sampledTurns = Number(llm.attributes.sampled_turns ?? traceIds.length);
+  const activeRatio = Math.round(
+    (activeSections.length / Math.max(1, allSections.length)) * 100,
+  );
+  return {
+    activeSections,
+    unusedSections,
+    sampledTurns,
+    statement: `${activeRatio}% of prompt sections were visibly invoked in this sample; ${unusedSections.join(
+      ", ",
+    )} are dead weight until a representative trace proves otherwise.`,
+    evidence: `${llm.id}: prompt-section telemetry`,
+    representativeTraceIds: traceIds,
+  };
+}
+
 export function buildAgentXrayModel(input: Trace | Trace[]): AgentXrayModel {
   const traces = Array.isArray(input) ? input : [input];
   const traceIds = traces.map((trace) => trace.id);
@@ -78,6 +123,7 @@ export function buildAgentXrayModel(input: Trace | Trace[]): AgentXrayModel {
       traceIds,
       sampleSize: 0,
       claims: [],
+      deadWeightSummary: null,
       unsupportedReason:
         "Agent X-Ray needs recorded spans before it can make observed-behavior claims.",
     };
@@ -88,6 +134,7 @@ export function buildAgentXrayModel(input: Trace | Trace[]): AgentXrayModel {
   const llm = spansByCategory(traces, "llm")[0];
   const tool = spansByCategory(traces, "tool")[0];
   const memory = spansByCategory(traces, "memory")[0];
+  const deadWeightSummary = buildDeadWeightSummary(llm, traceIds);
 
   if (retrieval) {
     const source = String(retrieval.attributes.source ?? "source not recorded");
@@ -156,23 +203,26 @@ export function buildAgentXrayModel(input: Trace | Trace[]): AgentXrayModel {
     );
   }
 
-  claims.push({
-    id: "xray-no-dead-prompt-claim",
-    kind: "unsupported",
-    title: "Prompt dead-code claim unsupported in this sample",
-    statement:
-      "This trace does not include prompt-section invocation telemetry, so X-Ray cannot claim that sections are unused.",
-    metric: "unsupported",
-    evidence: "No prompt-section spans or config reference were recorded.",
-    representativeTraceIds: traceIds,
-    representativeSpanIds: [],
-    confidence: 0,
-  });
+  if (!deadWeightSummary) {
+    claims.push({
+      id: "xray-no-dead-prompt-claim",
+      kind: "unsupported",
+      title: "Prompt dead-code claim unsupported in this sample",
+      statement:
+        "This trace does not include prompt-section invocation telemetry, so X-Ray cannot claim that sections are unused.",
+      metric: "unsupported",
+      evidence: "No prompt-section spans or config reference were recorded.",
+      representativeTraceIds: traceIds,
+      representativeSpanIds: [],
+      confidence: 0,
+    });
+  }
 
   return {
     traceIds,
     sampleSize: traces.length,
     claims,
+    deadWeightSummary,
     unsupportedReason: null,
   };
 }

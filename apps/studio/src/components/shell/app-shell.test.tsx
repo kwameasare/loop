@@ -46,6 +46,7 @@ describe("AppShell", () => {
 
     expect(screen.getByTestId("asset-rail")).toBeInTheDocument();
     expect(screen.getByTestId("topbar")).toBeInTheDocument();
+    expect(screen.getByTestId("pair-debug-audio")).toBeInTheDocument();
     expect(screen.getByTestId("work-surface")).toHaveTextContent(
       "Workbench content",
     );

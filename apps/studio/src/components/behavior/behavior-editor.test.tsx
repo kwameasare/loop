@@ -74,6 +74,19 @@ describe("BehaviorEditor", () => {
     expect(screen.getByTestId("behavior-risk-flags")).toHaveTextContent(
       "Tool grant risk",
     );
+    expect(screen.getByTestId("style-transfer-panel")).toHaveTextContent(
+      "Same policy, different tone",
+    );
+  });
+
+  it("previews style-transfer rewrites with eval deltas", async () => {
+    render(<BehaviorEditor data={createBehaviorEditorData("agent_support")} />);
+
+    fireEvent.click(screen.getByTestId("style-transfer-run"));
+
+    expect(await screen.findByTestId("style-transfer-results")).toHaveTextContent(
+      "formal voice",
+    );
   });
 
   it("keeps apply blocked until preview policy checks pass", () => {

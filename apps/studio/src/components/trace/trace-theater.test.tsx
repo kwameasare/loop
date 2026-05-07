@@ -69,6 +69,8 @@ describe("TraceTheater", () => {
     );
     expect(screen.getByText(/Source: span_answer/)).toBeInTheDocument();
     expect(screen.getByTestId("trace-scrubber")).toBeInTheDocument();
+    expect(screen.getByTestId("latency-budget-visualizer")).toBeInTheDocument();
+    expect(screen.getByTestId("cost-of-context-slider")).toBeInTheDocument();
     expect(screen.getByTestId("agent-xray")).toBeInTheDocument();
   });
 

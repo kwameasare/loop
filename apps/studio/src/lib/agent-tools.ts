@@ -74,7 +74,7 @@ export type ToolAuthMode = "mock" | "oauth" | "secret" | "mcp";
 
 export type ToolEnvironmentMode = "mock" | "live" | "blocked";
 
-export type ToolDraftSource = "curl" | "openapi" | "postman";
+export type ToolDraftSource = "curl" | "openapi" | "postman" | "devtools";
 
 export interface ToolSchemaField {
   name: string;

@@ -47,6 +47,7 @@ describe("ToolsRoom", () => {
   it("drafts a typed tool from a curl request and redacts auth", () => {
     render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
 
+    expect(screen.getByTestId("tools-room-source-devtools")).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("tools-room-draft-tool"));
     const draft = screen.getByTestId("tools-room-draft");
     expect(draft).toHaveTextContent("api_example_test");
@@ -54,6 +55,9 @@ describe("ToolsRoom", () => {
     expect(draft).toHaveTextContent("redacted");
     expect(draft).toHaveTextContent("Draft only");
     expect(draft).not.toHaveTextContent("Bearer <redacted>");
+
+    fireEvent.click(screen.getByTestId("tools-room-add-library"));
+    expect(draft).toHaveTextContent("Added to the draft tool library");
   });
 
   it("renders an empty state with the import flow still available", () => {

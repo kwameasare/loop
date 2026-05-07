@@ -2,12 +2,14 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { CommandPaletteLauncher } from "@/components/command";
+import { PairDebugAudioControl } from "@/components/collaboration/pair-debug-audio-control";
 import { HelpClipLauncher } from "@/components/help";
 import { ActivityRibbon } from "@/components/shell/activity-ribbon";
 import { LiveBadge } from "@/components/target";
 import { UserMenu } from "@/components/shell/user-menu";
 import { WorkspaceMembersLink } from "@/components/shell/workspace-members-link";
 import { WorkspaceSwitcher } from "@/components/shell/workspace-switcher";
+import { FIXTURE_PRESENCE } from "@/lib/collaboration";
 import { targetUxFixtures } from "@/lib/target-ux";
 
 function ContextChip({ label, value }: { label: string; value: string }) {
@@ -48,6 +50,12 @@ export function Topbar() {
         </LiveBadge>
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        <PairDebugAudioControl
+          workspaceId={workspace.id}
+          agentId={workspace.activeAgentId}
+          teammateCount={Math.max(0, FIXTURE_PRESENCE.length - 1)}
+          participantId="builder:local"
+        />
         <HelpClipLauncher />
         <CommandPaletteLauncher />
         <UserMenu />

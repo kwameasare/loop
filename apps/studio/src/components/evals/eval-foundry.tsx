@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { PersonalizedEmptyStateSuggestions } from "@/components/empty-state/personalized-empty-state-suggestions";
 import { EvidenceCallout, LiveBadge, StatePanel } from "@/components/target";
 import { EvalSuiteList } from "@/components/evals/eval-suite-list";
 import {
@@ -7,6 +8,7 @@ import {
   type EvalFoundryModel,
   type EvalSuite,
 } from "@/lib/evals";
+import { targetUxFixtures } from "@/lib/target-ux";
 
 export interface EvalFoundryProps {
   suites: EvalSuite[];
@@ -52,11 +54,17 @@ export function EvalFoundry({ suites, model, createAction }: EvalFoundryProps) {
           </p>
         </div>
         {model.creationSources.length === 0 ? (
-          <StatePanel state="empty" title="No case sources yet">
-            Run a simulator session, save production turns, import migration
-            transcripts, or connect a knowledge source to seed the first eval
-            suite.
-          </StatePanel>
+          <div>
+            <StatePanel state="empty" title="No case sources yet">
+              Run a simulator session, save production turns, import migration
+              transcripts, or connect a knowledge source to seed the first eval
+              suite.
+            </StatePanel>
+            <PersonalizedEmptyStateSuggestions
+              agentId={targetUxFixtures.workspace.activeAgentId}
+              surface="evals"
+            />
+          </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
             {model.creationSources.map((source) => (

@@ -5,13 +5,13 @@ import {
   AlertTriangle,
   Braces,
   ClipboardList,
-  Code2,
   KeyRound,
   PlayCircle,
   ShieldCheck,
   Wrench,
 } from "lucide-react";
 
+import { InstantToolImport } from "@/components/tools/instant-tool-import";
 import {
   ConfidenceMeter,
   EvidenceCallout,
@@ -24,15 +24,10 @@ import {
   TRUST_STATE_TREATMENTS,
 } from "@/lib/design-tokens";
 import {
-  DEFAULT_TOOL_IMPORT,
-  draftToolFromRequest,
-  type ToolDraft,
-  type ToolDraftSource,
   type ToolSideEffect,
   type ToolsRoomData,
   type ToolsRoomTool,
 } from "@/lib/agent-tools";
-import { cpJson } from "@/lib/ux-wireup";
 import { cn } from "@/lib/utils";
 
 export interface ToolsRoomProps {
@@ -399,138 +394,6 @@ function MockLivePanel({ tool }: { tool: ToolsRoomTool | null }) {
   );
 }
 
-function ImportDraftPanel({ agentId }: { agentId: string }) {
-  const [source, setSource] = useState<ToolDraftSource>("curl");
-  const [input, setInput] = useState(DEFAULT_TOOL_IMPORT);
-  const [draft, setDraft] = useState<ToolDraft | null>(null);
-  const [liveImportId, setLiveImportId] = useState<string | null>(null);
-
-  async function draftLiveTool() {
-    setDraft(draftToolFromRequest(input, source));
-    const result = await cpJson<{ tool_id: string }>(
-      `/agents/${encodeURIComponent(agentId)}/tools/import`,
-      {
-        method: "POST",
-        body: { source: input, source_kind: source },
-        fallback: { tool_id: "tool_local_import" },
-      },
-    );
-    setLiveImportId(result.tool_id);
-  }
-
-  return (
-    <section
-      className="min-w-0 rounded-md border bg-card p-4"
-      data-testid="tools-room-import"
-      aria-labelledby="tools-import-heading"
-    >
-      <div className="flex flex-col gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Instant tool
-          </p>
-          <h3 className="mt-1 text-sm font-semibold" id="tools-import-heading">
-            Draft from curl, OpenAPI, or Postman.
-          </h3>
-        </div>
-        <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,7rem),1fr))]">
-          {(["curl", "openapi", "postman"] as const).map((item) => (
-            <button
-              key={item}
-              type="button"
-              className={cn(
-                "rounded-md border px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
-                source === item
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background",
-              )}
-              aria-pressed={source === item}
-              onClick={() => setSource(item)}
-              data-testid={`tools-room-source-${item}`}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        <textarea
-          className="min-h-36 rounded-md border bg-background p-3 font-mono text-xs leading-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          aria-label="Tool request input"
-        />
-        <button
-          type="button"
-          className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-          onClick={() => void draftLiveTool()}
-          data-testid="tools-room-draft-tool"
-        >
-          <Code2 className="h-4 w-4" aria-hidden />
-          Draft tool
-        </button>
-        {draft ? <DraftSummary draft={draft} liveImportId={liveImportId} /> : null}
-      </div>
-    </section>
-  );
-}
-
-function DraftSummary({
-  draft,
-  liveImportId,
-}: {
-  draft: ToolDraft;
-  liveImportId: string | null;
-}) {
-  return (
-    <div
-      className="rounded-md border border-info/40 bg-info/5 p-3"
-      data-testid="tools-room-draft"
-    >
-      <p className="text-sm font-semibold">{draft.name}</p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {draft.method} {draft.url}
-      </p>
-      <div className="mt-3 grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr))]">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">Auth</p>
-          <p className="text-sm">{draft.authNeeds.join(" ")}</p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">
-            Side effect
-          </p>
-          <p className="text-sm">{draft.sideEffect}</p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">Boundary</p>
-          <p className="text-sm">{draft.productionBoundary}</p>
-        </div>
-      </div>
-      <ul className="mt-3 space-y-1 text-sm">
-        {draft.schema.map((field) => (
-          <li key={field.name}>
-            {field.name}: {field.type}
-            {field.sensitive ? " (Vault only)" : ""}
-          </li>
-        ))}
-      </ul>
-      <pre className="mt-3 overflow-auto rounded-md bg-background p-3 text-xs">
-        <code>{draft.mockResponse}</code>
-      </pre>
-      <p className="mt-2 text-xs text-muted-foreground">
-        Eval stub: {draft.evalStub}
-      </p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Evidence: {draft.evidence}
-      </p>
-      {liveImportId ? (
-        <p className="mt-1 font-mono text-xs text-muted-foreground">
-          Live draft target: {liveImportId}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
 export function ToolsRoom({ data }: ToolsRoomProps) {
   const [selectedToolId, setSelectedToolId] = useState<string | null>(
     data.tools[0]?.id ?? null,
@@ -611,7 +474,7 @@ export function ToolsRoom({ data }: ToolsRoomProps) {
         <DetailPanel tool={selectedTool} />
         <SafetyContract tool={selectedTool} />
         <MockLivePanel tool={selectedTool} />
-        <ImportDraftPanel agentId={data.agentId} />
+        <InstantToolImport agentId={data.agentId} />
         <EvidenceCallout
           title="Secret values stay out of Studio"
           source="SECURITY.md §3; CLOUD_PORTABILITY.md §4.3; ENV_REFERENCE.md §9"
