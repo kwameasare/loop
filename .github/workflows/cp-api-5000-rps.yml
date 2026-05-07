@@ -52,6 +52,9 @@ jobs:
             --set global.imageRegistry=loop --set global.imagePullPolicy=IfNotPresent \
             --set controlPlane.image.repository=cp-api --set controlPlane.image.tag=perf \
             --set controlPlane.replicaCount=3 --set runtime.enabled=false \
+            --set-string controlPlane.env.UVICORN_WORKERS=1 \
+            --set-string controlPlane.env.LOOP_HTTP_RATE_LIMIT_CAPACITY=100000 \
+            --set-string controlPlane.env.LOOP_HTTP_RATE_LIMIT_REFILL_PER_SEC=100000 \
             --set controlPlane.resources.requests.cpu=500m --set controlPlane.resources.limits.cpu=2000m \
             --set controlPlane.resources.requests.memory=512Mi --set controlPlane.resources.limits.memory=2048Mi \
             --set gateway.enabled=false --set kbEngine.enabled=false --set toolHost.enabled=false \

@@ -39,7 +39,7 @@ def test_k6_runtime_sse_script_enforces_1000_concurrency_budget() -> None:
     # bench/results contract.
     assert "const CONCURRENT_TURNS = parseInt(__ENV.LOOP_RUNTIME_SSE_VUS" in script
     assert "const ASPIRATIONAL_CONCURRENCY = 1000" in script
-    assert "const RUNTIME_SSE_P95_MS = 3000" in script
+    assert 'const RUNTIME_SSE_P95_MS = parseInt(__ENV.LOOP_RUNTIME_SSE_P95_MS || "3000", 10)' in script
     assert "vus: CONCURRENT_TURNS" in script
     assert "/v1/turns/stream" in script
     assert "workspace_id" in script
@@ -68,7 +68,9 @@ def test_runtime_sse_workflow_runs_k6_and_memory_probe() -> None:
     assert "LOOP_GATEWAY_OPENAI_API_KEY" in runs
     assert "LOOP_DP_AUTH_DISABLE=1" in runs
     assert "runtime.env.LOOP_DP_OPENAI_BASE_URL" in runs
-    assert "runtime.env.UVICORN_WORKERS=1" in runs
+    assert "runtime.env.LOOP_HTTP_RATE_LIMIT_REFILL_PER_SEC=100000" in runs
+    assert "LOOP_RUNTIME_SSE_P95_MS" in runs
+    assert 'value: "5000"' in runs
     assert "runtime.env[0]" not in runs
     assert "runtime.image.repository=dp-runtime" in runs
     assert "helm_e2e_smoke_server.py" not in WORKFLOW.read_text()

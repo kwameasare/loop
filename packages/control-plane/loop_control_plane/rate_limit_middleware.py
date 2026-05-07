@@ -33,6 +33,7 @@ A 429 carries:
 from __future__ import annotations
 
 import math
+import os
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass
 from typing import Final
@@ -204,7 +205,7 @@ def install_rate_limit(
     if getattr(app, "_loop_rate_limit_installed", False):
         return app.state.rate_limiter  # type: ignore[no-any-return]
 
-    cfg = config or RateLimitConfig()
+    cfg = config or _config_from_env()
     if exempt_paths is not None:
         cfg = RateLimitConfig(
             capacity=cfg.capacity,
@@ -225,3 +226,20 @@ def install_rate_limit(
     )
     app._loop_rate_limit_installed = True  # type: ignore[attr-defined]
     return rl
+
+
+def _config_from_env() -> RateLimitConfig:
+    capacity = _float_env("LOOP_HTTP_RATE_LIMIT_CAPACITY", 60.0)
+    refill_per_sec = _float_env("LOOP_HTTP_RATE_LIMIT_REFILL_PER_SEC", 30.0)
+    return RateLimitConfig(capacity=capacity, refill_per_sec=refill_per_sec)
+
+
+def _float_env(name: str, default: float) -> float:
+    raw = os.environ.get(name)
+    if raw is None or raw == "":
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        return default
+    return value if value > 0 else default

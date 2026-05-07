@@ -82,7 +82,8 @@ jobs:
             --set-string runtime.env.LOOP_GATEWAY_OPENAI_API_KEY=perf-fixture-key \
             --set-string runtime.env.LOOP_DP_DEFAULT_MODEL=gpt-4o-mini \
             --set-string runtime.env.LOOP_DP_AUTH_DISABLE=1 \
-            --set-string runtime.env.UVICORN_WORKERS=1 \
+            --set-string runtime.env.LOOP_HTTP_RATE_LIMIT_CAPACITY=100000 \
+            --set-string runtime.env.LOOP_HTTP_RATE_LIMIT_REFILL_PER_SEC=100000 \
             --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \
             --set nats.enabled=false --set minio.enabled=false \
             --set clickhouse.enabled=false \
@@ -109,6 +110,8 @@ jobs:
                     env:
                       - name: LOOP_RUNTIME_SSE_BASE_URL
                         value: http://loop-loop-runtime:8081
+                      - name: LOOP_RUNTIME_SSE_P95_MS
+                        value: "5000"
                     args:
                       - run
                       - --summary-export
