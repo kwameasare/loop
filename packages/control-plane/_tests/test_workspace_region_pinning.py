@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import UUID
 
+import loop_control_plane.regions as regions_module
 import pytest
 import yaml
 from loop_control_plane.authorize import AuthorisationError
@@ -25,6 +26,50 @@ def test_region_registry_loads_abstract_regions() -> None:
     assert registry.default_region == "na-east"
     assert registry.require("na-east").concrete["aws"] == "us-east-1"
     assert registry.require("eu-west").residency == "EU"
+
+
+def test_region_registry_uses_runtime_fallback_when_repo_file_is_absent(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.delenv("LOOP_REGIONS_PATH", raising=False)
+    monkeypatch.setattr(
+        regions_module, "DEFAULT_REGIONS_PATH", tmp_path / "missing.yaml"
+    )
+    monkeypatch.setattr(
+        regions_module, "PACKAGED_REGIONS_PATH", tmp_path / "also-missing.yaml"
+    )
+
+    registry = regions_module.load_region_registry()
+
+    assert registry.default_region == "na-east"
+    assert registry.require("eu-cost").concrete["hetzner"] == "fsn1"
+
+
+def test_region_registry_honors_configured_runtime_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "regions.yaml"
+    path.write_text(
+        """
+default_region: lab
+regions:
+  lab:
+    display_name: Lab
+    residency: test
+    data_plane_url: https://runtime.lab.loop.example
+    concrete:
+      aws: us-test-1
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LOOP_REGIONS_PATH", str(path))
+
+    registry = regions_module.load_region_registry()
+
+    assert registry.default_region == "lab"
+    assert registry.require("lab").concrete["aws"] == "us-test-1"
 
 
 def test_openapi_documents_workspace_region_contract() -> None:

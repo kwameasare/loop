@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
@@ -9,7 +10,53 @@ from typing import Any, cast
 
 import yaml
 
-DEFAULT_REGIONS_PATH = Path(__file__).resolve().parents[3] / "infra" / "terraform" / "regions.yaml"
+DEFAULT_REGIONS_PATH = (
+    Path(__file__).resolve().parents[3] / "infra" / "terraform" / "regions.yaml"
+)
+PACKAGED_REGIONS_PATH = Path(__file__).with_name("regions.yaml")
+_FALLBACK_REGIONS_YAML = """
+default_region: na-east
+regions:
+  na-east:
+    display_name: North America East
+    residency: US
+    primary: true
+    data_plane_url: https://runtime.na-east.loop.example
+    concrete:
+      aws: us-east-1
+      azure: eastus
+      gcp: us-east1
+  eu-west:
+    display_name: Europe West
+    residency: EU
+    primary: false
+    data_plane_url: https://runtime.eu-west.loop.example
+    concrete:
+      aws: eu-central-1
+      azure: westeurope
+      gcp: europe-west1
+  cn-shanghai:
+    display_name: China Shanghai
+    residency: CN
+    primary: false
+    data_plane_url: https://runtime.cn-shanghai.loop.example
+    concrete:
+      alibaba: cn-shanghai
+  eu-sovereign:
+    display_name: Europe Sovereign
+    residency: EU
+    primary: false
+    data_plane_url: https://runtime.eu-sovereign.loop.example
+    concrete:
+      ovh: GRA11
+  eu-cost:
+    display_name: Europe Cost Optimized
+    residency: EU
+    primary: false
+    data_plane_url: https://runtime.eu-cost.loop.example
+    concrete:
+      hetzner: fsn1
+"""
 
 
 class RegionError(ValueError):
@@ -60,8 +107,24 @@ def _require_str(value: object, *, name: str) -> str:
     return value
 
 
-def load_region_registry(path: Path = DEFAULT_REGIONS_PATH) -> RegionRegistry:
-    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+def _read_default_regions_yaml() -> str:
+    configured_path = os.environ.get("LOOP_REGIONS_PATH")
+    if configured_path:
+        return Path(configured_path).expanduser().read_text(encoding="utf-8")
+    if DEFAULT_REGIONS_PATH.exists():
+        return DEFAULT_REGIONS_PATH.read_text(encoding="utf-8")
+    if PACKAGED_REGIONS_PATH.exists():
+        return PACKAGED_REGIONS_PATH.read_text(encoding="utf-8")
+    return _FALLBACK_REGIONS_YAML
+
+
+def load_region_registry(path: Path | None = None) -> RegionRegistry:
+    raw_text = (
+        path.read_text(encoding="utf-8")
+        if path is not None
+        else _read_default_regions_yaml()
+    )
+    raw = yaml.safe_load(raw_text)
     data = _require_mapping(raw, name="regions.yaml")
     default_region = _require_str(data.get("default_region"), name="default_region")
     raw_regions = _require_mapping(data.get("regions"), name="regions")
