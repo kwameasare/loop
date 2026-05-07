@@ -58,6 +58,17 @@ jobs:
           kubectl -n "$LOOP_NAMESPACE" rollout status deploy/openai-sse-fixture --timeout=60s
       - name: Install Loop chart
         run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          chart = Path("infra/helm/loop/Chart.yaml")
+          chart.write_text(
+              chart.read_text().replace(
+                  "oci://ghcr.io/loop-ai/mirrored/bitnami/charts",
+                  "https://charts.bitnami.com/bitnami",
+              )
+          )
+          PY
           helm dependency build infra/helm/loop
           helm upgrade --install "$LOOP_RELEASE" infra/helm/loop \
             --namespace "$LOOP_NAMESPACE" --create-namespace --wait --timeout 8m \

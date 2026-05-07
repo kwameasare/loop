@@ -59,6 +59,7 @@ def test_runtime_sse_workflow_runs_k6_and_memory_probe() -> None:
     assert job["env"]["LOOP_RUNTIME_SSE_MAX_MEMORY_BYTES"] == "4294967296"
     assert "packages/data-plane/Dockerfile -t loop/dp-runtime:perf" in runs
     assert "scripts/openai_sse_fixture.py" in runs
+    assert "charts.bitnami.com/bitnami" in runs
     assert "grafana/k6:0.50.0" in runs
     assert "http://loop-loop-runtime:8081" in runs
     assert "runtime-sse-k6" in runs
