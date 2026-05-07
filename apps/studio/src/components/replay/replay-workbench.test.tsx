@@ -21,6 +21,7 @@ describe("ReplayWorkbench", () => {
     expect(screen.getByTestId("scene-library")).toHaveTextContent(
       "Canonical production conversations",
     );
+    expect(screen.getByTestId("cost-of-context-slider")).toBeInTheDocument();
   });
 
   it("lets a builder promote replay evidence into evals", () => {

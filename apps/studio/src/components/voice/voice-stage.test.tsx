@@ -13,6 +13,9 @@ describe("VoiceStage", () => {
       "Latency budget",
     );
     expect(screen.getByText("Queued speech preview")).toBeInTheDocument();
+    expect(screen.getByTestId("voice-queued-speech-preview")).toHaveTextContent(
+      "500 ms before speech",
+    );
     expect(screen.getByTestId("voice-evals-and-links")).toHaveTextContent(
       "Audited demo links",
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BookmarkPlus,
   GitFork,
@@ -44,6 +44,7 @@ export function TraceScrubber({ trace }: { trace: Trace }) {
     if (!playing || model.frames.length <= 1) return;
     if (
       typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
       setPlaying(false);
@@ -61,30 +62,21 @@ export function TraceScrubber({ trace }: { trace: Trace }) {
     return () => window.clearInterval(timer);
   }, [model.frames.length, playing, speed]);
 
-  if (!frame) {
-    return (
-      <StatePanel state="empty" title="Trace scrubber unavailable">
-        {model.unsupportedReason ??
-          "Trace frames are not available for this trace."}
-      </StatePanel>
-    );
-  }
-
-  function selectFrame(next: number) {
+  const selectFrame = useCallback((next: number) => {
     setFrameIndex(Math.max(0, Math.min(model.frames.length - 1, next)));
-  }
+  }, [model.frames.length]);
 
-  function forkFrame() {
+  const forkFrame = useCallback(() => {
     if (!frame) return;
     setAction(`${frame.forkLabel} queued against ${model.identity.version}.`);
-  }
+  }, [frame, model.identity.version]);
 
-  function saveFrame() {
+  const saveFrame = useCallback(() => {
     if (!frame) return;
     setAction(
       `${frame.saveLabel} queued with trace ${model.identity.traceId}.`,
     );
-  }
+  }, [frame, model.identity.traceId]);
 
   function handleKey(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === " ") {
@@ -99,6 +91,49 @@ export function TraceScrubber({ trace }: { trace: Trace }) {
       event.preventDefault();
       saveFrame();
     }
+  }
+
+  useEffect(() => {
+    function handleGlobalKey(event: KeyboardEvent): void {
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      if (
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      if (event.key === " ") {
+        event.preventDefault();
+        setPlaying((value) => !value);
+      } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        selectFrame(frameIndex - 1);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        selectFrame(frameIndex + 1);
+      } else if (event.key.toLowerCase() === "f") {
+        event.preventDefault();
+        forkFrame();
+      } else if (event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        saveFrame();
+      }
+    }
+
+    window.addEventListener("keydown", handleGlobalKey);
+    return () => window.removeEventListener("keydown", handleGlobalKey);
+  }, [forkFrame, frameIndex, saveFrame, selectFrame]);
+
+  if (!frame) {
+    return (
+      <StatePanel state="empty" title="Trace scrubber unavailable">
+        {model.unsupportedReason ??
+          "Trace frames are not available for this trace."}
+      </StatePanel>
+    );
   }
 
   return (

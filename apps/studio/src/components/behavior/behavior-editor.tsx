@@ -20,6 +20,7 @@ import {
   StatePanel,
 } from "@/components/target";
 import { BuildToTestFlow } from "@/components/agents/build-to-test-flow";
+import { StyleTransferPanel } from "@/components/behavior/style-transfer-panel";
 import {
   OBJECT_STATE_TREATMENTS,
   TRUST_STATE_TREATMENTS,
@@ -91,6 +92,17 @@ function telemetrySummary(telemetry: BehaviorSentenceTelemetry): string {
 
 function allSentences(sections: BehaviorSection[]): BehaviorSentence[] {
   return sections.flatMap((section) => section.sentences);
+}
+
+function sectionTextForSentence(
+  sections: BehaviorSection[],
+  sentenceId: string | null,
+): string {
+  const section =
+    sections.find((candidate) =>
+      candidate.sentences.some((sentence) => sentence.id === sentenceId),
+    ) ?? sections[0];
+  return section?.sentences.map((sentence) => sentence.text).join("\n") ?? "";
 }
 
 function riskMap(flags: BehaviorRiskFlag[]): Map<string, BehaviorRiskFlag> {
@@ -554,6 +566,10 @@ export function BehaviorEditor({ data }: BehaviorEditorProps) {
   const objectTreatment = OBJECT_STATE_TREATMENTS[data.objectState];
   const trustTreatment = TRUST_STATE_TREATMENTS[data.trust];
   const isEmpty = data.sections.length === 0;
+  const activeSectionText = sectionTextForSentence(
+    data.sections,
+    selectedSentence?.id ?? null,
+  );
 
   return (
     <div className="flex flex-col gap-6" data-testid="behavior-editor">
@@ -649,6 +665,10 @@ export function BehaviorEditor({ data }: BehaviorEditorProps) {
 
         <aside className="space-y-4">
           <SentenceTelemetryPanel sentence={selectedSentence} />
+          <StyleTransferPanel
+            agentId={data.agentId}
+            section={activeSectionText}
+          />
           <ConfidenceMeter
             value={data.evalCoveragePercent}
             level={data.evalConfidence}

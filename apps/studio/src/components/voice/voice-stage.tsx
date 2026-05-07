@@ -119,6 +119,7 @@ export function VoiceStage({
   const [demoId, setDemoId] = useState<string | null>(null);
   const [bargeInArmed, setBargeInArmed] = useState(model.config.bargeIn);
   const [provisioned, setProvisioned] = useState<string | null>(null);
+  const [queuedSpeechCancelled, setQueuedSpeechCancelled] = useState(false);
   const score = useMemo(
     () =>
       Math.round(
@@ -127,6 +128,10 @@ export function VoiceStage({
       ),
     [model.evals],
   );
+  const queuedPreview = model.queuedSpeechPreview;
+  const queuedLeadMs = queuedPreview
+    ? Math.max(0, queuedPreview.ttsStartMs - queuedPreview.textReadyMs)
+    : 0;
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6" data-testid="voice-stage">
@@ -211,6 +216,47 @@ export function VoiceStage({
             >
               {model.queuedSpeech}
             </EvidenceCallout>
+            {queuedPreview ? (
+              <div
+                className="mt-3 rounded-md border bg-background p-3"
+                data-testid="voice-queued-speech-preview"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">
+                      Live 500 ms ahead preview
+                    </p>
+                    <p className="mt-1 text-sm">
+                      {queuedSpeechCancelled
+                        ? "Queued speech cancelled before TTS."
+                        : queuedPreview.text}
+                    </p>
+                  </div>
+                  <LiveBadge tone={queuedSpeechCancelled ? "paused" : "staged"}>
+                    {queuedLeadMs} ms before speech
+                  </LiveBadge>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                  <span>
+                    Source span:{" "}
+                    <span className="font-mono">{queuedPreview.llmSpanId}</span>
+                  </span>
+                  {queuedPreview.cancellable ? (
+                    <button
+                      type="button"
+                      className="rounded-md border bg-card px-2 py-1 font-medium text-foreground hover:bg-muted"
+                      onClick={() =>
+                        setQueuedSpeechCancelled((current) => !current)
+                      }
+                    >
+                      {queuedSpeechCancelled
+                        ? "Restore queued speech"
+                        : "Cancel before TTS"}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
 

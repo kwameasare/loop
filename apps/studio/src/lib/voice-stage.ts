@@ -22,10 +22,19 @@ export interface VoiceDemoLink {
   audited: boolean;
 }
 
+export interface QueuedSpeechPreview {
+  text: string;
+  textReadyMs: number;
+  ttsStartMs: number;
+  llmSpanId: string;
+  cancellable: boolean;
+}
+
 export interface VoiceStageModel {
   agentName: string;
   callState: "dev" | "staging" | "production";
   queuedSpeech: string;
+  queuedSpeechPreview?: QueuedSpeechPreview;
   transcript: readonly {
     id: string;
     speaker: "caller" | "agent" | "tool";
@@ -55,6 +64,7 @@ export interface VoiceNumberProvisionResult {
   id: string;
   phone_number: string;
   provider: string;
+  provisioner?: string;
   country: string;
   status: string;
   sip_route: string;
@@ -120,6 +130,7 @@ export async function provisionVoiceNumber(
       id: "num_local",
       phone_number: "+14155550100",
       provider: opts.provider ?? "twilio",
+      provisioner: "deterministic",
       country: opts.country ?? "US",
       status: "provisioned",
       sip_route: `livekit://workspace/${workspaceId}/voice/local`,
@@ -158,6 +169,13 @@ export const VOICE_STAGE_FIXTURE: VoiceStageModel = {
   callState: "staging",
   queuedSpeech:
     "I can help with that. Before I look up the renewal, I need the account email or order number.",
+  queuedSpeechPreview: {
+    text: "I can help with that. Before I look up the renewal, I need the account email or order number.",
+    textReadyMs: 1240,
+    ttsStartMs: 1740,
+    llmSpanId: "llm",
+    cancellable: true,
+  },
   transcript: [
     {
       id: "turn_1",

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { KbList } from "@/components/agents/kb-list";
+import { PersonalizedEmptyStateSuggestions } from "@/components/empty-state/personalized-empty-state-suggestions";
 import { EmbeddingsExplorer } from "@/components/knowledge/embeddings-explorer/embeddings-explorer";
 import { InverseRetrievalLab } from "@/components/knowledge/inverse-retrieval/inverse-retrieval-lab";
 import {
@@ -332,10 +333,13 @@ export function KnowledgeAtelier({
           </div>
         </div>
         {model.sources.length === 0 ? (
-          <StatePanel state="empty" title="No knowledge sources indexed">
-            Upload a file or connect a source before retrieval, chunking, and
-            readiness can produce evidence.
-          </StatePanel>
+          <div>
+            <StatePanel state="empty" title="No knowledge sources indexed">
+              Upload a file or connect a source before retrieval, chunking, and
+              readiness can produce evidence.
+            </StatePanel>
+            <PersonalizedEmptyStateSuggestions agentId={agentId} surface="kb" />
+          </div>
         ) : (
           <div className="grid gap-3 2xl:grid-cols-2">
             {model.sources.map((source) => (

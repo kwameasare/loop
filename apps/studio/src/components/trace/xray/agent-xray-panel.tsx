@@ -39,6 +39,41 @@ export function AgentXrayPanel({ trace }: { trace: Trace | Trace[] }) {
         </p>
       </div>
 
+      {model.deadWeightSummary ? (
+        <EvidenceCallout
+          title="Prompt dead-weight summary"
+          source={model.deadWeightSummary.evidence}
+          confidence={86}
+          confidenceLevel="medium"
+          tone="info"
+        >
+          <div className="space-y-2" data-testid="xray-dead-weight-summary">
+            <p>{model.deadWeightSummary.statement}</p>
+            <dl className="grid gap-1 text-xs">
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Active sections</dt>
+                <dd className="font-mono">
+                  {model.deadWeightSummary.activeSections.join(", ")}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Dead weight</dt>
+                <dd className="font-mono">
+                  {model.deadWeightSummary.unusedSections.join(", ")}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Sample</dt>
+                <dd className="font-mono">
+                  {model.deadWeightSummary.sampledTurns} turns ·{" "}
+                  {model.deadWeightSummary.representativeTraceIds.join(", ")}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </EvidenceCallout>
+      ) : null}
+
       <div className="grid gap-3 lg:grid-cols-2">
         {model.claims.map((claim) => (
           <EvidenceCallout

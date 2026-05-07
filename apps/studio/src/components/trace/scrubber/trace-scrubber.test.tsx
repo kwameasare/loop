@@ -74,13 +74,26 @@ describe("TraceScrubber", () => {
   it("queues fork and save actions from the selected frame", () => {
     render(<TraceScrubber trace={trace} />);
 
-    fireEvent.click(screen.getByTestId("trace-scrubber-fork"));
+    fireEvent.keyDown(window, { key: "f" });
     expect(screen.getByTestId("trace-scrubber-action")).toHaveTextContent(
       "Fork from span_context",
     );
-    fireEvent.click(screen.getByTestId("trace-scrubber-save"));
+    fireEvent.keyDown(window, { key: "s" });
     expect(screen.getByTestId("trace-scrubber-action")).toHaveTextContent(
       "Save span_context",
+    );
+  });
+
+  it("supports video-editor keyboard stepping from the scrubber surface", () => {
+    render(<TraceScrubber trace={trace} />);
+
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+    expect(screen.getByTestId("trace-frame-detail")).toHaveTextContent(
+      "tool.lookup_order is executing",
+    );
+    fireEvent.keyDown(window, { key: " " });
+    expect(screen.getByTestId("trace-scrubber-play")).toHaveTextContent(
+      "Pause",
     );
   });
 

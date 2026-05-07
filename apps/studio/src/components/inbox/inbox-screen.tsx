@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { PersonalizedEmptyStateSuggestions } from "@/components/empty-state/personalized-empty-state-suggestions";
 import {
   claimItem,
   formatRelativeMs,
@@ -11,6 +12,7 @@ import {
   resolveItem,
   type InboxItem,
 } from "@/lib/inbox";
+import { targetUxFixtures } from "@/lib/target-ux";
 
 type Props = {
   initialItems: InboxItem[];
@@ -136,9 +138,15 @@ export function InboxScreen(props: Props): JSX.Element {
           Pending ({pending.length})
         </h2>
         {pending.length === 0 ? (
-          <p className="text-muted-foreground p-4 text-sm">
-            No pending escalations.
-          </p>
+          <div className="p-4">
+            <p className="text-sm text-muted-foreground">
+              No pending escalations.
+            </p>
+            <PersonalizedEmptyStateSuggestions
+              agentId={targetUxFixtures.workspace.activeAgentId}
+              surface="inbox"
+            />
+          </div>
         ) : (
           <ul>
             {pending.map((item) => (

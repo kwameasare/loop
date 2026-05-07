@@ -8,6 +8,7 @@ tables without changing the Studio-facing API.
 
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from typing import Any
@@ -1064,6 +1065,10 @@ class VoiceNumberProvisionBody(BaseModel):
     provider: str = Field(default="twilio", max_length=64)
 
 
+def _voice_provisioner_mode() -> str:
+    return os.environ.get("LOOP_VOICE_PROVISIONER", "deterministic").strip().lower()
+
+
 @router_workspaces.post("/{workspace_id}/voice/numbers/provision")
 async def provision_voice_number(
     request: Request,
@@ -1076,10 +1081,28 @@ async def provision_voice_number(
         workspace_id=workspace_id,
         user_sub=caller_sub,
     )
+    provisioner = _voice_provisioner_mode()
+    if provisioner not in {"deterministic", "twilio", "livekit", "twilio_livekit"}:
+        raise HTTPException(status_code=400, detail="unsupported voice provisioner")
+    if provisioner != "deterministic" and not (
+        os.environ.get("TWILIO_ACCOUNT_SID")
+        and os.environ.get("TWILIO_AUTH_TOKEN")
+        and os.environ.get("LIVEKIT_URL")
+        and os.environ.get("LIVEKIT_API_KEY")
+        and os.environ.get("LIVEKIT_API_SECRET")
+    ):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "real voice provisioning requires Twilio and LiveKit credentials; "
+                "set LOOP_VOICE_PROVISIONER=deterministic for local runs"
+            ),
+        )
     number = {
         "id": f"num_{uuid4().hex[:10]}",
         "phone_number": f"+1{body.area_code or '415'}555{str(uuid4().int)[-4:]}",
         "provider": body.provider,
+        "provisioner": provisioner,
         "country": body.country,
         "capability": body.capability,
         "status": "provisioned",
@@ -1157,6 +1180,231 @@ async def run_persona_test(
         payload=body.model_dump(mode="json"),
     )
     return {"persona_set": body.persona_set, "items": items}
+
+
+class LatencyBudgetBody(BaseModel):
+    trace_id: str = Field(min_length=1, max_length=160)
+    target_latency_ms: int = Field(default=900, ge=100, le=30_000)
+
+
+@router_agents.post("/{agent_id}/latency-budget")
+async def latency_budget(
+    request: Request,
+    agent_id: UUID,
+    body: LatencyBudgetBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    workspace_id = await _authorize_agent(
+        request, agent_id=agent_id, caller_sub=caller_sub
+    )
+    spans = [
+        {"id": "system", "label": "System", "ms": 70, "kind": "runtime"},
+        {"id": "llm", "label": "LLM", "ms": 430, "kind": "model"},
+        {"id": "retrieval", "label": "KB", "ms": 120, "kind": "retrieval"},
+        {"id": "tool", "label": "Tool", "ms": 180, "kind": "tool"},
+        {"id": "memory", "label": "Memory", "ms": 55, "kind": "memory"},
+        {"id": "channel", "label": "Channel", "ms": 95, "kind": "channel"},
+    ]
+    total = sum(int(span["ms"]) for span in spans)
+    gap = max(0, total - body.target_latency_ms)
+    suggestions = [
+        {
+            "id": "swap_model",
+            "label": "Swap to fast draft model",
+            "saves_ms": 280,
+            "quality_delta": -0.02,
+            "evidence_ref": f"latency-budget/{body.trace_id}/llm",
+        },
+        {
+            "id": "cache_retrieval",
+            "label": "Cache repeated KB query",
+            "saves_ms": 90,
+            "quality_delta": 0,
+            "evidence_ref": f"latency-budget/{body.trace_id}/retrieval",
+        },
+        {
+            "id": "skip_second_pass",
+            "label": "Skip second LLM repair pass",
+            "saves_ms": 410,
+            "quality_delta": -0.04,
+            "evidence_ref": f"latency-budget/{body.trace_id}/repair-pass",
+        },
+    ]
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="latency_budget:analyze",
+        resource_type="trace",
+        resource_id=body.trace_id,
+        payload={"target_latency_ms": body.target_latency_ms, "gap_ms": gap},
+    )
+    return {
+        "trace_id": body.trace_id,
+        "target_latency_ms": body.target_latency_ms,
+        "total_latency_ms": total,
+        "gap_ms": gap,
+        "spans": spans,
+        "suggestions": suggestions,
+    }
+
+
+class ContextAblationBody(BaseModel):
+    turn_id: str = Field(min_length=1, max_length=160)
+    toggles: dict[str, bool] = Field(default_factory=dict)
+
+
+@router_agents.post("/{agent_id}/context-ablation")
+async def context_ablation(
+    request: Request,
+    agent_id: UUID,
+    body: ContextAblationBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    workspace_id = await _authorize_agent(
+        request, agent_id=agent_id, caller_sub=caller_sub
+    )
+    defaults = {
+        "prompt_sections": True,
+        "kb_chunks": True,
+        "memory": True,
+        "examples": True,
+    }
+    toggles = {**defaults, **body.toggles}
+    items = [
+        {
+            "id": "prompt_sections",
+            "label": "Long-tail prompt sections",
+            "enabled": toggles["prompt_sections"],
+            "cost_delta_pct": -14 if not toggles["prompt_sections"] else 0,
+            "latency_delta_ms": -120 if not toggles["prompt_sections"] else 0,
+            "quality_delta": -0.01 if not toggles["prompt_sections"] else 0,
+            "evidence_ref": f"context-ablation/{body.turn_id}/prompt",
+        },
+        {
+            "id": "kb_chunks",
+            "label": "Retrieved KB chunks",
+            "enabled": toggles["kb_chunks"],
+            "cost_delta_pct": -9 if not toggles["kb_chunks"] else 0,
+            "latency_delta_ms": -90 if not toggles["kb_chunks"] else 0,
+            "quality_delta": -0.08 if not toggles["kb_chunks"] else 0,
+            "evidence_ref": f"context-ablation/{body.turn_id}/kb",
+        },
+        {
+            "id": "memory",
+            "label": "Durable memory",
+            "enabled": toggles["memory"],
+            "cost_delta_pct": -3 if not toggles["memory"] else 0,
+            "latency_delta_ms": -45 if not toggles["memory"] else 0,
+            "quality_delta": -0.02 if not toggles["memory"] else 0,
+            "evidence_ref": f"context-ablation/{body.turn_id}/memory",
+        },
+        {
+            "id": "examples",
+            "label": "Few-shot examples",
+            "enabled": toggles["examples"],
+            "cost_delta_pct": -11 if not toggles["examples"] else 0,
+            "latency_delta_ms": -70 if not toggles["examples"] else 0,
+            "quality_delta": -0.03 if not toggles["examples"] else 0,
+            "evidence_ref": f"context-ablation/{body.turn_id}/examples",
+        },
+    ]
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="context_ablation:run",
+        resource_type="turn",
+        resource_id=body.turn_id,
+        payload={"toggles": toggles},
+    )
+    return {"turn_id": body.turn_id, "items": items}
+
+
+@router_agents.get("/{agent_id}/empty-state-suggestions")
+async def empty_state_suggestions(
+    request: Request,
+    agent_id: UUID,
+    surface: str = Query(pattern="^(evals|kb|inbox)$"),
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    workspace_id = await _authorize_agent(
+        request, agent_id=agent_id, caller_sub=caller_sub
+    )
+    traces = await request.app.state.cp.trace_store.search(
+        TraceQuery(workspace_id=workspace_id)
+    )
+    trace_count = len(traces)
+    suggestions = {
+        "evals": [
+            {
+                "id": "starter_eval_from_traces",
+                "title": f"Save {max(1, min(12, trace_count or 12))} turns from yesterday as a starter eval suite.",
+                "action_label": "Create starter suite",
+                "evidence_ref": f"empty-state/{agent_id}/evals/recent-traces",
+            }
+        ],
+        "kb": [
+            {
+                "id": "kb_gap_review",
+                "title": "Three KB chunks were cited often but failed two evals.",
+                "action_label": "Review KB gaps",
+                "evidence_ref": f"empty-state/{agent_id}/kb/citation-failures",
+            }
+        ],
+        "inbox": [
+            {
+                "id": "seed_inbox_runbook",
+                "title": "Turn the last operator resolution into an eval and a runbook.",
+                "action_label": "Create resolution eval",
+                "evidence_ref": f"empty-state/{agent_id}/inbox/operator-resolution",
+            }
+        ],
+    }[surface]
+    return {"surface": surface, "items": suggestions}
+
+
+class PairDebugAudioBody(BaseModel):
+    agent_id: str = Field(min_length=1, max_length=160)
+    participant_id: str = Field(default=CALLER, max_length=160)
+
+
+@router_workspaces.post("/{workspace_id}/pair-debug/audio/session")
+async def create_pair_debug_audio_session(
+    request: Request,
+    workspace_id: UUID,
+    body: PairDebugAudioBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    await authorize_workspace_access(
+        workspaces=request.app.state.cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    session = {
+        "id": f"pair_audio_{uuid4().hex[:10]}",
+        "workspace_id": str(workspace_id),
+        "agent_id": body.agent_id,
+        "participants": [caller_sub, body.participant_id],
+        "transport": "webrtc",
+        "signaling_url": f"wss://studio.loop.local/pair-debug/{workspace_id}/{body.agent_id}",
+        "ice_servers": [{"urls": ["stun:stun.l.google.com:19302"]}],
+        "expires_at": (datetime.now(UTC) + timedelta(minutes=30)).isoformat(),
+        "audit_ref": f"pair-debug-audio/{workspace_id}/{body.agent_id}",
+    }
+    _bucket(request, "pair_debug_audio").setdefault(str(workspace_id), []).append(
+        session
+    )
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="pair_debug_audio:create",
+        resource_type="pair_debug_audio",
+        resource_id=session["id"],
+        payload={"agent_id": body.agent_id, "transport": session["transport"]},
+    )
+    return session
 
 
 class SceneBody(BaseModel):

@@ -129,6 +129,7 @@ export type TraceDetailSummary = {
 
 export type Trace = {
   id: string;
+  agentId?: string;
   title?: string;
   summary?: TraceDetailSummary;
   explanations?: TraceExplanation[];
@@ -645,6 +646,7 @@ function buildFixtureTrace(): Trace {
 
   return {
     id: targetTrace.id,
+    agentId: targetTrace.agentId,
     title: targetTrace.title,
     summary: {
       outcome: "Answered with grounded cancellation steps; no refund issued.",
@@ -921,6 +923,7 @@ function normalizeTraceDetail(raw: unknown): Trace {
   );
   return {
     id: detail.trace_id,
+    agentId: detail.agent_id,
     title: `Turn ${detail.turn_id.slice(0, 8)}`,
     summary: {
       outcome: detail.error ? "Turn completed with an error." : "Turn completed.",

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CostOfContextSlider } from "@/components/trace/cost-of-context-slider";
 import {
   ConfidenceMeter,
   EvidenceCallout,
@@ -517,6 +518,10 @@ export function ReplayWorkbench({ model }: { model: ReplayWorkbenchModel }) {
 
       <PersonaSimulator personas={model.personas} />
       <PropertyTester model={model} />
+      <CostOfContextSlider
+        agentId={selected.agentId}
+        turnId={selected.traceId}
+      />
       <SceneLibrary scenes={model.scenes} />
 
       <section className="rounded-md border bg-card p-4" data-testid="comments-as-spec">

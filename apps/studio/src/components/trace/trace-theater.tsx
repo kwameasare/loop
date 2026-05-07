@@ -4,9 +4,12 @@ import {
   LiveBadge,
   StatePanel,
 } from "@/components/target";
+import { CostOfContextSlider } from "@/components/trace/cost-of-context-slider";
+import { LatencyBudgetVisualizer } from "@/components/trace/latency-budget";
 import { TraceScrubber } from "@/components/trace/scrubber/trace-scrubber";
 import { TraceWaterfall } from "@/components/trace/waterfall";
 import { AgentXrayPanel } from "@/components/trace/xray/agent-xray-panel";
+import { targetUxFixtures } from "@/lib/target-ux";
 import { formatDurationNs, formatUsd, type Trace } from "@/lib/traces";
 
 function Metric({
@@ -39,6 +42,7 @@ export function TraceTheater({ trace }: { trace: Trace }) {
   const summary = trace.summary;
   const explanations = trace.explanations ?? [];
   const totalCost = summary?.total_cost_usd ?? 0;
+  const agentId = trace.agentId ?? targetUxFixtures.workspace.activeAgentId;
 
   return (
     <div className="space-y-6" data-testid="trace-theater">
@@ -179,6 +183,8 @@ export function TraceTheater({ trace }: { trace: Trace }) {
       ) : null}
 
       <TraceScrubber trace={trace} />
+      <LatencyBudgetVisualizer agentId={agentId} trace={trace} />
+      <CostOfContextSlider agentId={agentId} turnId={trace.id} />
       <AgentXrayPanel trace={trace} />
       <TraceWaterfall trace={trace} />
     </div>
