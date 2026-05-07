@@ -21,6 +21,7 @@ export const AGENT_TABS: AgentTabSpec[] = [
   { segment: "memory", label: "Memory" },
   { segment: "deploys", label: "Deploys" },
   { segment: "secrets", label: "Secrets" },
+  { segment: "simulator", label: "Simulator" },
 ];
 
 export interface AgentTabsProps {

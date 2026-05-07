@@ -11,6 +11,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -126,6 +127,10 @@ export function NewAgentModal({
         >
           <DialogHeader>
             <DialogTitle>Create agent</DialogTitle>
+            <DialogDescription>
+              Name the agent, choose a stable slug, and add the first purpose
+              note for the builder workspace.
+            </DialogDescription>
           </DialogHeader>
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">Name</span>

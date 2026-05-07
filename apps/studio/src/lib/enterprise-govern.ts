@@ -417,7 +417,7 @@ export interface WhitelabelConfig {
 
 export const WHITELABEL_DEFAULT: WhitelabelConfig = {
   brandName: "Acme Concierge",
-  primaryColor: "#0F172A",
+  primaryColor: "hsl(var(--primary))",
   domain: "concierge.acme.com",
   emailFrom: "concierge@acme.com",
   evidenceRef: "audit/whitelabel#current",

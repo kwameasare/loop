@@ -95,7 +95,9 @@ export default function AccessibilityDemoPage(): JSX.Element {
             <DiffLine kind="unchanged">retrieval.k = 8</DiffLine>
             <DiffLine kind="removed">retrieval.rerank = false</DiffLine>
             <DiffLine kind="added">retrieval.rerank = true</DiffLine>
-            <DiffLine kind="added">retrieval.rerank.model = "loop-reranker-v2"</DiffLine>
+            <DiffLine kind="added">
+              {'retrieval.rerank.model = "loop-reranker-v2"'}
+            </DiffLine>
           </div>
         </section>
 

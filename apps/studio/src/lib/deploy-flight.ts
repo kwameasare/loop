@@ -129,7 +129,7 @@ export const PREFLIGHT_DIFFS: ReadonlyArray<PreflightDiff> = [
     after: "Refund policy: 30-day window OR original payment refund",
     impact: "Lower abandonment on refund flow; one new tool grant required.",
     severity: "high",
-    evidenceRef: "eval-suite/refund-v3#124",
+    evidenceRef: "eval-suite/refund-v3 section 124",
   },
   {
     dimension: "tool",

@@ -38,6 +38,14 @@ describe("STUDIO_ROUTES", () => {
     expect(orphans, JSON.stringify(orphans, null, 2)).toEqual([]);
   });
 
+  it("does not register concrete routes that are missing on disk", () => {
+    const onDisk = new Set(discoverRoutes());
+    const missing = STUDIO_ROUTES.filter(
+      (entry) => !entry.route.includes("[") && !onDisk.has(entry.route),
+    ).map((entry) => entry.route);
+    expect(missing, JSON.stringify(missing, null, 2)).toEqual([]);
+  });
+
   it("uses only canonical lifecycle verbs", () => {
     for (const entry of STUDIO_ROUTES) {
       expect(IA_LIFECYCLE_VERBS).toContain(entry.verb);

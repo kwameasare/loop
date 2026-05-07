@@ -137,7 +137,10 @@ export function applyAction(
 ): ApplyResult {
   const evaluation = evaluateConsent(action, ctx);
   if (!evaluation.ok) {
-    const first = evaluation.reasons[0];
+    const first = evaluation.reasons[0] ?? {
+      code: "mode" as const,
+      message: "Action is blocked by the co-builder consent policy.",
+    };
     throw new CoBuilderConsentError(first.code, first.message);
   }
   return {

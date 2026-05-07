@@ -94,7 +94,7 @@ export default function HomePage() {
             confidence={evalSuite.passRate}
             tone="info"
           >
-            Replay last week's refund escalations against the draft before
+            Replay last week of refund escalations against the draft before
             raising the canary above {deploy.canaryPercent}%.
           </EvidenceCallout>
 

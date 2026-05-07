@@ -148,6 +148,13 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§5",
   },
   {
+    route: "/agents/[agent_id]/simulator",
+    verb: "test",
+    label: "Simulator Lab",
+    purpose: "Multi-channel preview and Inline ChatOps commands (§15).",
+    anchor: "§15",
+  },
+  {
     route: "/agents/[agent_id]/tools",
     verb: "build",
     label: "Tools Room",
@@ -242,6 +249,13 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§17",
   },
   // Observe
+  {
+    route: "/observe",
+    verb: "observe",
+    label: "Observatory",
+    purpose: "Dashboards, anomaly cards, production tail, and ambient health (§20).",
+    anchor: "§20",
+  },
   {
     route: "/traces",
     verb: "observe",

@@ -134,7 +134,6 @@ function ModeSwitcher({
             type="button"
             role="tab"
             aria-selected={selected}
-            aria-pressed={selected}
             className={cn(
               "flex min-h-16 items-start gap-2 rounded-md border p-3 text-left transition-colors duration-swift ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
               selected
