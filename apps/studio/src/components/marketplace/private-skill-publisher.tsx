@@ -6,12 +6,14 @@ import {
   MARKETPLACE_PERMISSIONS,
   type MarketplacePermission,
   type SubmissionResult,
+  publishPrivateMarketplaceItem,
   submitPrivateSkill,
 } from "@/lib/marketplace";
 import { cn } from "@/lib/utils";
 
 export interface PrivateSkillPublisherProps {
   itemId: string;
+  workspaceId?: string;
   defaultName?: string;
   className?: string;
   onSubmit?: (result: SubmissionResult, payload: {
@@ -25,6 +27,7 @@ export interface PrivateSkillPublisherProps {
 
 export function PrivateSkillPublisher({
   itemId,
+  workspaceId,
   defaultName,
   className,
   onSubmit,
@@ -57,6 +60,16 @@ export function PrivateSkillPublisher({
     const r = submitPrivateSkill(payload);
     setResult(r);
     onSubmit?.(r, payload);
+    if (workspaceId && r.ok) {
+      void publishPrivateMarketplaceItem(workspaceId, {
+        ...payload,
+        name: defaultName ?? itemId,
+        description: changelog,
+      }).then((next) => {
+        setResult(next);
+        onSubmit?.(next, payload);
+      });
+    }
   };
 
   return (
@@ -157,7 +170,11 @@ export function PrivateSkillPublisher({
           data-testid="publisher-result"
         >
           {result.ok ? (
-            <p>Submitted to review queue. Lifecycle: {result.lifecycle}.</p>
+            <p>
+              Submitted to review queue. Lifecycle: {result.lifecycle}.
+              {result.itemId ? ` Item: ${result.itemId}.` : ""}
+              {result.auditRef ? ` Audit: ${result.auditRef}.` : ""}
+            </p>
           ) : (
             <ul className="flex flex-col gap-0.5">
               {result.errors.map((err) => (

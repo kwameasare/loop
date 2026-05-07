@@ -22,6 +22,7 @@ import {
   type ShareLink,
   type ShareScope,
   buildShareLink,
+  createServerShareLink,
   previewRedaction,
   recordAccess,
   revokeShareLink,
@@ -38,6 +39,7 @@ export interface ShareDialogProps {
   initialScope?: ShareScope;
   initialExpiresAt?: string;
   initialRedactions?: RedactionCategory[];
+  workspaceId?: string;
   /**
    * Optional clock for tests so generated ids/timestamps are deterministic.
    */
@@ -60,6 +62,7 @@ export function ShareDialog({
   initialScope = "workspace",
   initialExpiresAt,
   initialRedactions = ["pii", "secrets"],
+  workspaceId,
   now,
 }: ShareDialogProps) {
   const [scope, setScope] = useState<ShareScope>(initialScope);
@@ -71,6 +74,7 @@ export function ShareDialog({
   ]);
   const [link, setLink] = useState<ShareLink | null>(null);
   const [accessLog, setAccessLog] = useState<AccessLog>({ events: [] });
+  const [busy, setBusy] = useState(false);
 
   const preview = useMemo(
     () => previewRedaction(samplePayload, { categories: redactions }),
@@ -85,21 +89,27 @@ export function ShareDialog({
     );
   }
 
-  function generate() {
-    const next = buildShareLink(
-      {
-        artifact,
-        artifactId,
-        scope,
-        expiresAt,
-        redactions: { categories: redactions },
-      },
-      now,
-    );
-    setLink(next);
-    setAccessLog(
-      recordAccess(next, "you", "viewed", { events: [] }, now),
-    );
+  async function generate() {
+    if (busy) return;
+    setBusy(true);
+    const request = {
+      artifact,
+      artifactId,
+      scope,
+      expiresAt,
+      redactions: { categories: redactions },
+    };
+    try {
+      const next = workspaceId
+        ? await createServerShareLink(workspaceId, request, {}, now)
+        : buildShareLink(request, now);
+      setLink(next);
+      setAccessLog(
+        recordAccess(next, "you", "viewed", { events: [] }, now),
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
   function revoke() {
@@ -271,8 +281,13 @@ export function ShareDialog({
           <span className="text-xs text-muted-foreground">
             Shareable as: {SHAREABLE_ARTIFACTS.length} canonical artifact types
           </span>
-          <Button type="button" onClick={generate} data-testid="share-generate">
-            Generate link
+          <Button
+            type="button"
+            onClick={() => void generate()}
+            data-testid="share-generate"
+            disabled={busy}
+          >
+            {busy ? "Generating..." : "Generate link"}
           </Button>
         </footer>
       </DialogContent>

@@ -24,6 +24,7 @@ import {
   fetchMarketplaceCatalog,
   type MarketplaceItem,
 } from "@/lib/marketplace";
+import { useActiveWorkspace } from "@/lib/use-active-workspace";
 
 export default function MarketplacePage(): JSX.Element {
   return (
@@ -38,6 +39,7 @@ function MarketplacePageBody(): JSX.Element {
   const [tab, setTab] = useState<"browse" | "publish">("browse");
   const [items, setItems] = useState<MarketplaceItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { active } = useActiveWorkspace();
 
   useEffect(() => {
     let cancelled = false;
@@ -136,7 +138,10 @@ function MarketplacePageBody(): JSX.Element {
           </div>
         </div>
       ) : (
-        <PrivateSkillPublisher itemId="mk_skill_pii_redactor" />
+        <PrivateSkillPublisher
+          itemId="mk_skill_pii_redactor"
+          {...(active?.id ? { workspaceId: active.id } : {})}
+        />
       )}
     </main>
   );

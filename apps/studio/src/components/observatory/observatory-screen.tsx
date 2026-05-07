@@ -14,6 +14,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { ConfidenceMeter, EvidenceCallout, LiveBadge } from "@/components/target";
+import { pinObservatoryMetric } from "@/lib/observatory";
 import type {
   AmbientAgentHealth,
   ObservatoryAnomaly,
@@ -38,7 +39,15 @@ const SEVERITY_TONE: Record<ObservatoryAnomaly["severity"], string> = {
   critical: "border-destructive bg-destructive text-destructive-foreground",
 };
 
-function MetricCard({ metric }: { metric: ObservatoryMetric }) {
+function MetricCard({
+  metric,
+  onPin,
+  pinned,
+}: {
+  metric: ObservatoryMetric;
+  onPin?: () => void;
+  pinned?: boolean;
+}) {
   return (
     <article className="rounded-md border bg-card p-4" data-testid={`observatory-metric-${metric.id}`}>
       <div className="flex items-start justify-between gap-3">
@@ -52,6 +61,18 @@ function MetricCard({ metric }: { metric: ObservatoryMetric }) {
       <p className="mt-3 text-2xl font-semibold tabular-nums">{metric.value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{metric.delta}</p>
       <p className="mt-3 text-sm">{metric.nextAction}</p>
+      {onPin ? (
+        <Button
+          type="button"
+          variant={pinned ? "subtle" : "outline"}
+          size="sm"
+          className="mt-3"
+          onClick={onPin}
+          data-testid={`observatory-pin-${metric.id}`}
+        >
+          {pinned ? "Pinned" : "Pin chart to dashboard"}
+        </Button>
+      ) : null}
     </article>
   );
 }
@@ -160,9 +181,16 @@ function TailRow({ event }: { event: ProductionTailEvent }) {
   );
 }
 
-export function ObservatoryScreen({ model }: { model: ObservatoryModel }) {
+export function ObservatoryScreen({
+  model,
+  workspaceId,
+}: {
+  model: ObservatoryModel;
+  workspaceId?: string;
+}) {
   const [paused, setPaused] = useState(false);
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
+  const [pinned, setPinned] = useState<string[]>([]);
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6" data-testid="observatory-screen">
       <header className="flex flex-wrap items-start justify-between gap-4">
@@ -191,7 +219,23 @@ export function ObservatoryScreen({ model }: { model: ObservatoryModel }) {
 
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" data-testid="observatory-dashboards">
         {model.metrics.map((metric) => (
-          <MetricCard key={metric.id} metric={metric} />
+          <MetricCard
+            key={metric.id}
+            metric={metric}
+            pinned={pinned.includes(metric.id)}
+            {...(workspaceId
+              ? {
+                  onPin: () => {
+                    setPinned((current) =>
+                      current.includes(metric.id)
+                        ? current
+                        : [...current, metric.id],
+                    );
+                    void pinObservatoryMetric(workspaceId, metric);
+                  },
+                }
+              : {})}
+          />
         ))}
       </section>
 

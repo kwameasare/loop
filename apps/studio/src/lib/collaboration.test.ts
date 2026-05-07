@@ -17,6 +17,8 @@ import {
   isChangesetReadyToMerge,
   pendingAxes,
   PlayheadError,
+  presenceSocketUrl,
+  resolveCommentAsEvalCase,
   setPlayhead,
   validateChangesetApprovals,
 } from "./collaboration";
@@ -104,13 +106,15 @@ describe("changeset approvals", () => {
     expect(isChangesetReadyToMerge(FIXTURE_CHANGESET)).toBe(false);
     const allGreen = {
       ...FIXTURE_CHANGESET,
-      approvals: FIXTURE_CHANGESET.approvals.map((a) => ({
-        ...a,
-        state: "approved" as const,
-        rationale: undefined,
-        reviewer: a.reviewer ?? "Latency Bot",
-        decidedAt: a.decidedAt ?? "2025-02-21T11:36:00Z",
-      })),
+      approvals: FIXTURE_CHANGESET.approvals.map((a) => {
+        const { rationale: _rationale, ...rest } = a;
+        return {
+          ...rest,
+          state: "approved" as const,
+          reviewer: a.reviewer ?? "Latency Bot",
+          decidedAt: a.decidedAt ?? "2025-02-21T11:36:00Z",
+        };
+      }),
     };
     expect(isChangesetReadyToMerge(allGreen)).toBe(true);
   });
@@ -227,5 +231,54 @@ describe("fetchCollaborationWorkspace", () => {
     expect(workspace.presence[0].focus).toContain("trace/");
     expect(workspace.changeset.title).toContain("agent.version.promoted");
     expect(workspace.pairDebug.trace[0].evidenceRef).toContain("span-1");
+  });
+});
+
+describe("collaboration wireup", () => {
+  it("builds presence sockets against the canonical cp-api websocket path", () => {
+    expect(
+      presenceSocketUrl("ws-1", {
+        baseUrl: "https://cp.example.test/v1",
+        callerSub: "sam@example.com",
+      }),
+    ).toBe(
+      "wss://cp.example.test/v1/workspaces/ws-1/presence?caller_sub=sam%40example.com",
+    );
+  });
+
+  it("resolves comments into eval cases through cp-api", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      new Response(
+        JSON.stringify({
+          comment_id: "cmt_1",
+          resolved_by: "sam@example.com",
+          eval_case_created: true,
+          case_id: "eval_comment_cmt_1",
+          expected_behavior: "Refund the order.",
+          failure_reason: "The agent escalated.",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const result = await resolveCommentAsEvalCase(
+      "agt_1",
+      "cmt_1",
+      {
+        expected_behavior: "Refund the order.",
+        failure_reason: "The agent escalated.",
+      },
+      {
+        baseUrl: "https://cp.example.test/v1",
+        fetcher,
+      },
+    );
+
+    expect(result.case_id).toBe("eval_comment_cmt_1");
+    const [url, init] = fetcher.mock.calls[0]!;
+    expect(url).toBe("https://cp.example.test/v1/agents/agt_1/comments/cmt_1/resolve");
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      also_create_eval_case: true,
+    });
   });
 });

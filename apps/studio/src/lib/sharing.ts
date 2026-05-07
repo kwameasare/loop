@@ -6,6 +6,8 @@
  * preview redactions and generate URLs without any browser-only dependency.
  */
 
+import { cpJson, type UxWireupClientOptions } from "@/lib/ux-wireup";
+
 /** Artifacts the canonical standard allows sharing (section 27.4). */
 export const SHAREABLE_ARTIFACTS = [
   "trace",
@@ -79,6 +81,10 @@ export interface AccessLog {
   events: ShareAccessEvent[];
 }
 
+export interface ServerShareLink extends ShareLink {
+  redactionBanner: string;
+}
+
 const ARTIFACT_ROUTES: Record<ShareArtifact, string> = {
   trace: "/share/trace",
   conversation: "/share/conversation",
@@ -123,6 +129,49 @@ export function buildShareLink(
     url: `${route}/${id}?${params.toString()}`,
     createdAt: created,
     active: true,
+  };
+}
+
+export async function createServerShareLink(
+  workspaceId: string,
+  request: ShareLinkRequest,
+  opts: UxWireupClientOptions = {},
+  now: () => Date = () => new Date(),
+): Promise<ServerShareLink> {
+  const local = buildShareLink(request, now);
+  const expiresAtMs = new Date(request.expiresAt).getTime();
+  const expiresInMinutes = Math.max(
+    1,
+    Math.ceil((expiresAtMs - now().getTime()) / 60_000),
+  );
+  const body = await cpJson<{
+    id: string;
+    url: string;
+    expires_at: string;
+    redactions: RedactionCategory[];
+  }>(`/workspaces/${encodeURIComponent(workspaceId)}/shares`, {
+    ...opts,
+    method: "POST",
+    body: {
+      source_type: request.artifact,
+      source_id: request.artifactId,
+      expires_in_minutes: expiresInMinutes,
+      redactions: request.redactions.categories,
+    },
+    fallback: {
+      id: local.id,
+      url: local.url,
+      expires_at: local.expiresAt,
+      redactions: [...request.redactions.categories],
+    },
+  });
+  return {
+    ...local,
+    id: body.id,
+    url: body.url,
+    expiresAt: body.expires_at,
+    redactions: { categories: body.redactions },
+    redactionBanner: `${body.redactions.length} redaction categories enforced server-side.`,
   };
 }
 

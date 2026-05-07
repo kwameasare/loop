@@ -26,6 +26,7 @@ import {
   type ProductionConversationCandidate,
   type ReplayFailureCluster,
   type ReplayWorkbenchModel,
+  replayAgainstDraft,
 } from "@/lib/replay-workbench";
 import { cn } from "@/lib/utils";
 
@@ -92,7 +93,22 @@ function FutureReplayPanel({
   const [playing, setPlaying] = useState(false);
   const [forked, setForked] = useState(false);
   const [savedEval, setSavedEval] = useState(false);
-  const replay = model.selectedReplay;
+  const [runningFutureReplay, setRunningFutureReplay] = useState(false);
+  const [liveReplay, setLiveReplay] = useState(model.selectedReplay);
+  const replay = liveReplay;
+  async function handleReplayAgainstDraft() {
+    setRunningFutureReplay(true);
+    try {
+      const result = await replayAgainstDraft(selected.agentId, {
+        traceIds: [selected.traceId],
+        draftBranchRef: selected.draftVersion,
+        compareVersionRef: selected.sourceVersion,
+      });
+      setLiveReplay(result.items[0] ?? model.selectedReplay);
+    } finally {
+      setRunningFutureReplay(false);
+    }
+  }
   return (
     <section className="space-y-4" data-testid="production-replay">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -107,6 +123,16 @@ function FutureReplayPanel({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleReplayAgainstDraft}
+            disabled={runningFutureReplay}
+          >
+            <WandSparkles className="mr-2 h-4 w-4" />
+            {runningFutureReplay ? "Replaying..." : "Replay against my draft"}
+          </Button>
           <Button
             type="button"
             variant="outline"

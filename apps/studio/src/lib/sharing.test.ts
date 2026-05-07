@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   buildQuickBranchLink,
   buildShareLink,
+  createServerShareLink,
   previewRedaction,
   recordAccess,
   revokeShareLink,
@@ -29,6 +30,42 @@ describe("buildShareLink", () => {
     expect(link.url).toContain("scope=named-people");
     expect(link.url).toContain("redact=pii");
     expect(link.active).toBe(true);
+  });
+
+  it("creates server-backed share links with redaction metadata", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+      expect(String(input)).toBe("https://cp.test/v1/workspaces/ws-1/shares");
+      expect(JSON.parse(String(init?.body))).toMatchObject({
+        source_type: "trace",
+        source_id: "trace_refund_742",
+        redactions: ["pii", "secrets"],
+      });
+      return new Response(
+        JSON.stringify({
+          id: "share_live_1",
+          url: "/share/live/1",
+          expires_at: "2026-05-13T12:00:00.000Z",
+          redactions: ["pii", "secrets"],
+        }),
+        { status: 201, headers: { "content-type": "application/json" } },
+      );
+    });
+
+    const link = await createServerShareLink(
+      "ws-1",
+      {
+        artifact: "trace",
+        artifactId: "trace_refund_742",
+        scope: "link-anyone",
+        expiresAt: "2026-05-13T12:00:00.000Z",
+        redactions: { categories: ["pii", "secrets"] },
+      },
+      { baseUrl: "https://cp.test/v1", fetcher },
+      now,
+    );
+
+    expect(link.id).toBe("share_live_1");
+    expect(link.redactionBanner).toContain("2 redaction");
   });
 });
 

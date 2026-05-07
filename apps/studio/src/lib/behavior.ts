@@ -9,6 +9,7 @@ import {
   type ListAgentVersionsOptions,
 } from "@/lib/agent-versions";
 import { targetUxFixtures, type TargetUXFixture } from "@/lib/target-ux";
+import { cpJson } from "@/lib/ux-wireup";
 
 export type BehaviorMode = "plain" | "policy" | "config";
 
@@ -526,7 +527,46 @@ export async function fetchBehaviorEditorData(
   opts: ListAgentVersionsOptions = {},
 ): Promise<BehaviorEditorData> {
   const versions = await listAgentVersions(agentId, { ...opts, pageSize: 1 });
-  return createBehaviorEditorDataFromVersion(agentId, versions.items[0] ?? null);
+  const data = createBehaviorEditorDataFromVersion(agentId, versions.items[0] ?? null);
+  const telemetry = await cpJson<{
+    items?: Array<{
+      sentence_id: string;
+      cited_outputs_7d: number;
+      contradicted_traces: number;
+      never_invoked_turns: number;
+      eval_cases: number;
+      confidence: ConfidenceLevel;
+      representative_traces?: string[];
+    }>;
+  }>(`/agents/${encodeURIComponent(agentId)}/behavior/sentence-telemetry`, {
+    ...opts,
+    fallback: { items: [] },
+  }).catch(() => ({ items: [] }));
+  if (!telemetry.items?.length) return data;
+  const telemetryById = new Map(telemetry.items.map((item) => [item.sentence_id, item]));
+  return {
+    ...data,
+    sections: data.sections.map((section) => ({
+      ...section,
+      sentences: section.sentences.map((sentence, index) => {
+        const live = telemetryById.get(sentence.id) ?? telemetry.items?.[index] ?? null;
+        if (!live) return sentence;
+        return {
+          ...sentence,
+          telemetry: {
+            citedOutputs7d: live.cited_outputs_7d,
+            contradictedTraces: live.contradicted_traces,
+            neverInvokedTurns: live.never_invoked_turns,
+            evalCases: live.eval_cases,
+            evidence:
+              live.representative_traces?.join(", ") ??
+              "cp-api behavior sentence telemetry",
+            confidence: live.confidence,
+          },
+        };
+      }),
+    })),
+  };
 }
 
 export function createEmptyBehaviorEditorData(

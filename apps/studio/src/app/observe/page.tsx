@@ -67,5 +67,5 @@ function ObservePageBody(): JSX.Element {
       </main>
     );
   }
-  return <ObservatoryScreen model={model} />;
+  return <ObservatoryScreen model={model} workspaceId={active.id} />;
 }

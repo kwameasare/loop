@@ -76,6 +76,14 @@ export function ChangesetApprovals(
             {a.rationale ? (
               <p className="mt-1">{a.rationale}</p>
             ) : null}
+            {a.invalidatedAt ? (
+              <p
+                className="mt-1 rounded border border-amber-200 bg-amber-100 px-2 py-1"
+                data-testid={`approval-invalidated-${a.axis}`}
+              >
+                Approval invalidated by edit · {a.invalidatedAt}
+              </p>
+            ) : null}
             <p className="mt-1 truncate text-[11px] opacity-70">
               {a.evidenceRef}
             </p>

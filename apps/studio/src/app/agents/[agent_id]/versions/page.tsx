@@ -1,3 +1,4 @@
+import { EditHistoryScrubber } from "@/components/agents/edit-history-scrubber";
 import { AgentVersionsList } from "@/components/agents/agent-versions-list";
 import { listAgentVersions } from "@/lib/agent-versions";
 
@@ -23,6 +24,7 @@ export default async function AgentVersionsPage({
   return (
     <div className="flex flex-col gap-4" data-testid="agent-versions-tab">
       <h2 className="text-lg font-medium">Versions</h2>
+      <EditHistoryScrubber agentId={params.agent_id} />
       <AgentVersionsList versions={items} />
     </div>
   );

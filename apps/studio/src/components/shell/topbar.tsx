@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { CommandPaletteLauncher } from "@/components/command";
+import { HelpClipLauncher } from "@/components/help";
+import { ActivityRibbon } from "@/components/shell/activity-ribbon";
 import { LiveBadge } from "@/components/target";
 import { UserMenu } from "@/components/shell/user-menu";
 import { WorkspaceMembersLink } from "@/components/shell/workspace-members-link";
@@ -27,6 +29,7 @@ export function Topbar() {
       className="sticky top-0 z-20 flex min-h-14 items-center justify-between gap-3 border-b bg-background/95 px-4 py-2 backdrop-blur"
       data-testid="topbar"
     >
+      <ActivityRibbon />
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <Link href="/" className="text-sm font-semibold tracking-tight">
           Loop Studio
@@ -45,6 +48,7 @@ export function Topbar() {
         </LiveBadge>
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        <HelpClipLauncher />
         <CommandPaletteLauncher />
         <UserMenu />
       </div>

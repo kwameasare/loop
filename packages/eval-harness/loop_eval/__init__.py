@@ -61,6 +61,10 @@ from loop_eval.scorers import (
     regex_match,
     rouge_l,
     tool_call_match,
+    voice_barge_in,
+    voice_stage_latency,
+    voice_tts_fidelity,
+    voice_wer,
 )
 from loop_eval.suite_loader import (
     LoadedSuite,
@@ -158,4 +162,8 @@ __all__ = [
     "to_samples",
     "tool_call_match",
     "turn_subject",
+    "voice_barge_in",
+    "voice_stage_latency",
+    "voice_tts_fidelity",
+    "voice_wer",
 ]

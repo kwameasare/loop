@@ -20,6 +20,7 @@ interface CommentThreadViewProps {
 export function CommentThreadView(props: CommentThreadViewProps): JSX.Element {
   const { thread, onResolveAsEval, currentUser } = props;
   const [evalSpecId, setEvalSpecId] = useState("");
+  const [alsoCreateEval, setAlsoCreateEval] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [localThread, setLocalThread] = useState<CommentThread>(thread);
 
@@ -27,14 +28,14 @@ export function CommentThreadView(props: CommentThreadViewProps): JSX.Element {
   const resolved = !!localThread.resolution;
 
   function handleResolve(): void {
-    if (!evalSpecId.trim()) {
+    if (alsoCreateEval && !evalSpecId.trim()) {
       setError("Eval spec id is required.");
       return;
     }
     setError(null);
     const input: ResolveAsEvalInput = {
       threadId: localThread.id,
-      evalSpecId: evalSpecId.trim(),
+      evalSpecId: alsoCreateEval ? evalSpecId.trim() : "comment-resolved",
       resolvedBy: currentUser.id,
       resolvedAt: new Date().toISOString(),
       evidenceRef: `audit/comments/${localThread.id}/resolve`,
@@ -42,7 +43,7 @@ export function CommentThreadView(props: CommentThreadViewProps): JSX.Element {
     try {
       const next = resolveThreadAsEval(localThread, input);
       setLocalThread(next);
-      onResolveAsEval?.(input);
+      if (alsoCreateEval) onResolveAsEval?.(input);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to resolve.");
     }
@@ -118,8 +119,18 @@ export function CommentThreadView(props: CommentThreadViewProps): JSX.Element {
             value={evalSpecId}
             onChange={(e) => setEvalSpecId(e.target.value)}
             placeholder="eval_refund_callback_over_200"
+            disabled={!alsoCreateEval}
             className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
           />
+          <label className="flex items-center gap-2 text-xs text-slate-600">
+            <input
+              type="checkbox"
+              checked={alsoCreateEval}
+              onChange={(e) => setAlsoCreateEval(e.target.checked)}
+              data-testid={`thread-create-eval-${localThread.id}`}
+            />
+            Also create eval case from this resolution
+          </label>
           {error ? (
             <p
               data-testid={`thread-error-${localThread.id}`}
@@ -134,7 +145,7 @@ export function CommentThreadView(props: CommentThreadViewProps): JSX.Element {
             onClick={handleResolve}
             className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium hover:bg-slate-50"
           >
-            Resolve as eval spec
+            {alsoCreateEval ? "Resolve as eval spec" : "Resolve comment"}
           </button>
         </div>
       ) : null}

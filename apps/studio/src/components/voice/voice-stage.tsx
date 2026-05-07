@@ -13,7 +13,11 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { ConfidenceMeter, EvidenceCallout, LiveBadge } from "@/components/target";
-import type { VoiceLatencySpan, VoiceStageModel } from "@/lib/voice-stage";
+import {
+  provisionVoiceNumber,
+  type VoiceLatencySpan,
+  type VoiceStageModel,
+} from "@/lib/voice-stage";
 import { cn } from "@/lib/utils";
 
 const SPAN_TONE: Record<VoiceLatencySpan["status"], string> = {
@@ -104,10 +108,17 @@ function LatencyBudget({ spans }: { spans: readonly VoiceLatencySpan[] }) {
   );
 }
 
-export function VoiceStage({ model }: { model: VoiceStageModel }) {
+export function VoiceStage({
+  model,
+  workspaceId,
+}: {
+  model: VoiceStageModel;
+  workspaceId?: string;
+}) {
   const [paused, setPaused] = useState(false);
   const [demoId, setDemoId] = useState<string | null>(null);
   const [bargeInArmed, setBargeInArmed] = useState(model.config.bargeIn);
+  const [provisioned, setProvisioned] = useState<string | null>(null);
   const score = useMemo(
     () =>
       Math.round(
@@ -146,6 +157,20 @@ export function VoiceStage({ model }: { model: VoiceStageModel }) {
             <PhoneCall className="mr-2 h-4 w-4" />
             Start staging call
           </Button>
+          {workspaceId ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                void provisionVoiceNumber(workspaceId).then((number) =>
+                  setProvisioned(number.phone_number),
+                )
+              }
+              data-testid="voice-provision-number"
+            >
+              Get a phone number
+            </Button>
+          ) : null}
         </div>
       </header>
 
@@ -212,6 +237,17 @@ export function VoiceStage({ model }: { model: VoiceStageModel }) {
                 <dd>{model.config.voice}</dd>
               </div>
             </dl>
+            {provisioned ? (
+              <EvidenceCallout
+                className="mt-4"
+                title="Phone number provisioned"
+                tone="success"
+                source="voice/numbers/provision"
+              >
+                {provisioned} is routed through the LiveKit SIP trunk. Complete
+                any pending compliance checklist before production traffic.
+              </EvidenceCallout>
+            ) : null}
             <button
               type="button"
               className={cn(

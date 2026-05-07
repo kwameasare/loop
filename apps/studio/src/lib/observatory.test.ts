@@ -4,6 +4,7 @@ import {
   buildObservatoryModel,
   fetchObservatoryModel,
   OBSERVATORY_MODEL,
+  pinObservatoryMetric,
 } from "@/lib/observatory";
 import type { InboxItem } from "@/lib/inbox";
 import type { TraceSummary } from "@/lib/traces";
@@ -103,6 +104,46 @@ describe("buildObservatoryModel", () => {
       evalPassRate: 50,
       tone: "blocked",
     });
+  });
+
+  it("persists a metric as a custom dashboard layout", async () => {
+    const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(input)).toBe("https://cp.test/v1/workspaces/ws1/dashboards");
+      expect(init?.method).toBe("POST");
+      expect(JSON.parse(String(init?.body))).toMatchObject({
+        name: "Quality watch",
+        layout: [
+          {
+            source_type: "observatory_metric",
+            source_id: "quality",
+            title: "Quality",
+          },
+        ],
+      });
+      return response({
+        id: "dash_1",
+        name: "Pinned quality",
+        layout: [{ metric_id: "quality" }],
+      });
+    });
+
+    const dashboard = await pinObservatoryMetric(
+      "ws1",
+      {
+        id: "quality",
+        label: "Quality",
+        value: "98%",
+        delta: "+2.0",
+        tone: "healthy",
+        nextAction: "Review the pinned quality traces.",
+      },
+      {
+        baseUrl: "https://cp.test/v1",
+        fetcher: fetcher as unknown as typeof fetch,
+      },
+    );
+
+    expect(dashboard.id).toBe("dash_1");
   });
 });
 

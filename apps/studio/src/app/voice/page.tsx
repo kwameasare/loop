@@ -56,5 +56,5 @@ function VoicePageBody(): JSX.Element {
       </p>
     );
   }
-  return <VoiceStage model={model!} />;
+  return <VoiceStage model={model!} workspaceId={active.id} />;
 }

@@ -11,6 +11,10 @@ from loop_eval import (
     latency_scorer,
     llm_judge,
     regex_match,
+    voice_barge_in,
+    voice_stage_latency,
+    voice_tts_fidelity,
+    voice_wer,
 )
 from loop_eval.models import Run
 
@@ -77,6 +81,39 @@ def test_latency_and_cost_scorers() -> None:
 def test_latency_scorer_rejects_nonpositive_max() -> None:
     with pytest.raises(ValueError, match="max_ms"):
         latency_scorer(max_ms=0)
+
+
+def test_voice_scorers_gate_recorded_call_quality() -> None:
+    sample = Sample(
+        id="voice-1",
+        input="call",
+        expected="refund window",
+        metadata={"barge_in_expected": "true"},
+    )
+    run = Run(
+        sample_id="voice-1",
+        output="refund window",
+        latency_ms=900,
+        cost_usd=0.002,
+        metadata={
+            "voice_wer": "0.02",
+            "barge_in_respected": "true",
+            "tts_fidelity": "0.96",
+            "asr_latency_ms": "120",
+            "agent_start_latency_ms": "180",
+            "tts_latency_ms": "260",
+        },
+    )
+
+    for scorer in (
+        voice_wer(max_wer=0.08),
+        voice_barge_in(),
+        voice_tts_fidelity(min_score=0.92),
+        voice_stage_latency(max_stage_ms=450),
+    ):
+        score = scorer(sample, run)
+        assert isinstance(score, Score)
+        assert score.passed, score
 
 
 @pytest.mark.asyncio
