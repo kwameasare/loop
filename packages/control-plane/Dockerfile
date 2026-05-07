@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.14-slim-bookworm AS builder
 
 ENV PATH="/opt/venv/bin:${PATH}" \
     UV_COMPILE_BYTECODE=1 \
