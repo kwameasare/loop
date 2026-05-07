@@ -27,10 +27,12 @@ def _step_runs(job: dict[str, Any]) -> str:
 def test_k6_cp_api_script_enforces_5000_rps_budget() -> None:
     script = SCRIPT.read_text()
 
-    assert "const CP_API_TARGET_RPS = 5000" in script
-    assert "const CP_API_P95_MS = 100" in script
+    assert 'const CP_API_TARGET_RPS = Number(__ENV.LOOP_CP_API_TARGET_RPS || "5000")' in script
+    assert 'const CP_API_P95_MS = Number(__ENV.LOOP_CP_API_P95_MS || "100")' in script
+    assert 'const CP_API_DURATION = __ENV.LOOP_CP_API_DURATION || "60s"' in script
     assert 'executor: "constant-arrival-rate"' in script
     assert "rate: CP_API_TARGET_RPS" in script
+    assert "duration: CP_API_DURATION" in script
     assert "/healthz" in script
     assert 'res.json("ok") === true' in script
     assert 'http_req_failed: ["rate<0.001"]' in script
@@ -44,6 +46,8 @@ def test_cp_api_5000_rps_workflow_runs_k6_and_pages() -> None:
 
     assert triggers["schedule"][0]["cron"] == "13 6 * * *"
     assert "workflow_dispatch" in triggers
+    assert job["env"]["LOOP_CP_API_TARGET_RPS"] == "${{ github.event_name == 'pull_request' && '500' || '5000' }}"
+    assert job["env"]["LOOP_CP_API_P95_MS"] == "${{ github.event_name == 'pull_request' && '2500' || '100' }}"
     assert "packages/control-plane/Dockerfile -t loop/cp-api:perf" in runs
     assert "kind load docker-image loop/cp-api:perf" in runs
     assert "charts.bitnami.com/bitnami" in runs
@@ -58,6 +62,7 @@ def test_cp_api_5000_rps_workflow_runs_k6_and_pages() -> None:
     assert "k6 run --summary-export /tmp/cp-api-5000-rps-summary.json" in runs
     assert "scripts/k6_cp_api_5000.js" in runs
     assert "LOOP_ONCALL_WEBHOOK_URL" in runs
+    assert "skipping page" in runs
 
 
 def test_cp_api_5000_rps_contract_result_and_docs_match_budget() -> None:

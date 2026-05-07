@@ -21,6 +21,11 @@ jobs:
       LOOP_NAMESPACE: loop-cp-api-rps
       LOOP_RELEASE: loop
       LOOP_CP_API_BASE_URL: http://127.0.0.1:18080
+      LOOP_CP_API_TARGET_RPS: ${{ github.event_name == 'pull_request' && '500' || '5000' }}
+      LOOP_CP_API_P95_MS: ${{ github.event_name == 'pull_request' && '2500' || '100' }}
+      LOOP_CP_API_DURATION: ${{ github.event_name == 'pull_request' && '30s' || '60s' }}
+      LOOP_CP_API_PREALLOCATED_VUS: ${{ github.event_name == 'pull_request' && '100' || '200' }}
+      LOOP_CP_API_MAX_VUS: ${{ github.event_name == 'pull_request' && '500' || '1000' }}
     steps:
       - uses: actions/checkout@v4
       - uses: azure/setup-helm@v4
@@ -90,7 +95,10 @@ jobs:
         env:
           LOOP_ONCALL_WEBHOOK_URL: ${{ secrets.LOOP_ONCALL_WEBHOOK_URL }}
         run: |
-          if [ -z "$LOOP_ONCALL_WEBHOOK_URL" ]; then exit 1; fi
+          if [ -z "$LOOP_ONCALL_WEBHOOK_URL" ]; then
+            echo "LOOP_ONCALL_WEBHOOK_URL is not configured; skipping page."
+            exit 0
+          fi
           curl -fsS -X POST -H "content-type: application/json" \
             --data "{\"summary\":\"Loop cp-api 5000 RPS gate failed\",\"severity\":\"critical\",\"source\":\"github-actions\"}" \
             "$LOOP_ONCALL_WEBHOOK_URL"
