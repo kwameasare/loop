@@ -60,7 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@v3
-      - uses: imjasonh/setup-crane@v0.4
+      - uses: imjasonh/setup-crane@v0.5
       - uses: docker/setup-buildx-action@v3
       - name: Build cp-api image
         uses: docker/build-push-action@v6
@@ -77,7 +77,7 @@ jobs:
           echo "cp-api image size: ${size} bytes"
           test "$size" -lt "$CP_API_MAX_BYTES"
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.CP_API_IMAGE }}
           severity: HIGH,CRITICAL
@@ -115,7 +115,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@v3
-      - uses: imjasonh/setup-crane@v0.4
+      - uses: imjasonh/setup-crane@v0.5
       - uses: docker/setup-buildx-action@v3
       - name: Build dp-runtime image
         uses: docker/build-push-action@v6
@@ -132,7 +132,7 @@ jobs:
           echo "dp-runtime image size: ${size} bytes"
           test "$size" -lt "$DP_RUNTIME_MAX_BYTES"
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.DP_RUNTIME_IMAGE }}
           severity: HIGH,CRITICAL
