@@ -14,12 +14,14 @@ WORKDIR /src
 COPY --from=ghcr.io/astral-sh/uv:0.9.29 /uv /usr/local/bin/uv
 COPY packages/channels/core/pyproject.toml ./packages/channels/core/
 COPY packages/channels/core/loop_channels_core ./packages/channels/core/loop_channels_core
+COPY packages/memory/pyproject.toml ./packages/memory/
+COPY packages/memory/loop_memory ./packages/memory/loop_memory
 COPY packages/control-plane/pyproject.toml ./packages/control-plane/
 COPY packages/control-plane/loop_control_plane ./packages/control-plane/loop_control_plane
 
 RUN uv venv "${VIRTUAL_ENV}" \
     && uv pip install --python "${VIRTUAL_ENV}/bin/python" \
-        ./packages/channels/core ./packages/control-plane \
+        ./packages/channels/core ./packages/memory ./packages/control-plane \
     && mkdir -p /python-libs \
     && for lib in \
         libbz2.so.1.0 \
