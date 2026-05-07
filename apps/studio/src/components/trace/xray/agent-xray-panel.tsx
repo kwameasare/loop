@@ -8,7 +8,7 @@ function toneForClaim(claim: AgentXrayClaim) {
   return "info" as const;
 }
 
-export function AgentXrayPanel({ trace }: { trace: Trace }) {
+export function AgentXrayPanel({ trace }: { trace: Trace | Trace[] }) {
   const model = buildAgentXrayModel(trace);
 
   if (model.unsupportedReason) {
@@ -33,8 +33,9 @@ export function AgentXrayPanel({ trace }: { trace: Trace }) {
           Observed behavior from representative traces
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Claims open to trace and span evidence. Unsupported claims stay
-          explicit instead of guessing.
+          Claims open to {model.sampleSize} trace
+          {model.sampleSize === 1 ? "" : "s"} and span evidence. Unsupported
+          claims stay explicit instead of guessing.
         </p>
       </div>
 

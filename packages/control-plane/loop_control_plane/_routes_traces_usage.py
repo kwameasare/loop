@@ -29,6 +29,7 @@ from loop_control_plane.authorize import authorize_workspace_access
 from loop_control_plane.trace_search import TraceQuery
 
 router = APIRouter(prefix="/v1/workspaces", tags=["Telemetry"])
+router_traces = APIRouter(prefix="/v1/traces", tags=["Telemetry"])
 
 
 @router.get("/{workspace_id}/traces")
@@ -74,6 +75,78 @@ async def search_traces(
     }
 
 
+def _maybe_uuid(value: str) -> UUID | None:
+    if len(value) == 32 and "-" not in value:
+        return None
+    try:
+        return UUID(value)
+    except ValueError:
+        return None
+
+
+@router_traces.get("/{trace_ref}")
+async def get_trace_detail(
+    request: Request,
+    trace_ref: str,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    """Fetch detail for one turn trace.
+
+    The current trace store persists summary rows. Until the span store is
+    mounted, this route returns a faithful one-span trace envelope derived from
+    the summary so Studio's Trace Theater can navigate from a live trace list
+    into a real, authorized detail page instead of falling back to fixtures.
+    """
+
+    cp = request.app.state.cp
+    trace_turn_id = _maybe_uuid(trace_ref)
+    for workspace in await cp.workspaces.list_for_user(caller_sub):
+        query = TraceQuery(
+            workspace_id=workspace.id,
+            turn_id=trace_turn_id,
+            page_size=200 if trace_turn_id is None else 1,
+        )
+        result = await cp.trace_search.run(query)
+        matches = [
+            item
+            for item in result.items
+            if trace_turn_id is not None or item.trace_id == trace_ref
+        ]
+        if not matches:
+            continue
+        item = matches[0]
+        status = "error" if item.error else "ok"
+        return {
+            "trace_id": item.trace_id,
+            "turn_id": str(item.turn_id),
+            "conversation_id": str(item.conversation_id),
+            "agent_id": str(item.agent_id),
+            "started_at": item.started_at.isoformat(),
+            "duration_ms": item.duration_ms,
+            "span_count": item.span_count,
+            "error": item.error,
+            "spans": [
+                {
+                    "span_id": item.trace_id,
+                    "parent_span_id": None,
+                    "kind": "channel",
+                    "name": "runtime turn",
+                    "started_at": item.started_at.isoformat(),
+                    "latency_ms": item.duration_ms,
+                    "cost_usd": 0,
+                    "status": status,
+                    "attrs": {
+                        "turn_id": str(item.turn_id),
+                        "conversation_id": str(item.conversation_id),
+                        "agent_id": str(item.agent_id),
+                        "summary_span_count": item.span_count,
+                    },
+                }
+            ],
+        }
+    raise HTTPException(status_code=404, detail="trace not found")
+
+
 @router.get("/{workspace_id}/usage")
 async def list_usage(
     request: Request,
@@ -110,4 +183,4 @@ async def list_usage(
     }
 
 
-__all__ = ["router"]
+__all__ = ["router", "router_traces"]

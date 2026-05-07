@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { buildAgentXrayModel } from "./agent-xray";
+import { buildAgentXrayModel, fetchAgentXrayTraces } from "./agent-xray";
 import type { Trace } from "./traces";
 
 const trace: Trace = {
@@ -83,5 +83,68 @@ describe("buildAgentXrayModel", () => {
 
     expect(model.claims).toEqual([]);
     expect(model.unsupportedReason).toContain("needs recorded spans");
+  });
+});
+
+describe("fetchAgentXrayTraces", () => {
+  it("loads recent trace summaries and resolves their details", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.includes("/workspaces/ws-1/traces")) {
+        return new Response(
+          JSON.stringify({
+            items: [
+              {
+                workspace_id: "ws-1",
+                trace_id: "f".repeat(32),
+                turn_id: "11111111-1111-4111-8111-111111111111",
+                conversation_id: "22222222-2222-4222-8222-222222222222",
+                agent_id: "33333333-3333-4333-8333-333333333333",
+                started_at: "2026-05-07T12:00:00Z",
+                duration_ms: 100,
+                span_count: 1,
+                error: false,
+              },
+            ],
+            next_cursor: null,
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          trace_id: "f".repeat(32),
+          turn_id: "11111111-1111-4111-8111-111111111111",
+          conversation_id: "22222222-2222-4222-8222-222222222222",
+          agent_id: "33333333-3333-4333-8333-333333333333",
+          started_at: "2026-05-07T12:00:00Z",
+          duration_ms: 100,
+          span_count: 1,
+          error: false,
+          spans: [
+            {
+              span_id: "span-1",
+              parent_span_id: null,
+              kind: "channel",
+              name: "runtime turn",
+              started_at: "2026-05-07T12:00:00Z",
+              latency_ms: 100,
+              cost_usd: 0,
+              status: "ok",
+              attrs: {},
+            },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    });
+
+    const traces = await fetchAgentXrayTraces("ws-1", {
+      baseUrl: "https://cp.example.test/v1",
+      fetcher,
+    });
+
+    expect(traces).toHaveLength(1);
+    expect(traces[0].id).toBe("f".repeat(32));
   });
 });

@@ -3,6 +3,8 @@
 * ``GET   /v1/agents/{id}/conversations`` — list (any member).
 * ``GET   /v1/conversations/{id}`` — single read (any member).
 * ``POST  /v1/conversations/{id}/takeover`` — operator takeover (ADMIN+).
+* ``POST  /v1/conversations/{id}/operator-messages`` — operator reply (ADMIN+).
+* ``POST  /v1/conversations/{id}/handback`` — return control to agent (ADMIN+).
 
 The studio's `/inbox` page is the primary consumer.
 """
@@ -22,6 +24,7 @@ from loop_control_plane.conversations import (
     ConversationError,
     ConversationState,
     serialise_detail,
+    serialise_message,
     serialise_summary,
 )
 
@@ -32,6 +35,11 @@ router_conversations = APIRouter(prefix="/v1/conversations", tags=["Conversation
 class TakeoverBody(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     note: str = Field(default="", max_length=2048)
+
+
+class OperatorMessageBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    body: str = Field(min_length=1, max_length=4096)
 
 
 async def _agent_workspace(request: Request, agent_id: UUID) -> UUID:
@@ -127,6 +135,87 @@ async def takeover_conversation(
         resource_id=str(conversation_id),
         request_id=request_id(request),
         # NEVER log the conversation content; only metadata.
+        payload={
+            "conversation_id": str(conversation_id),
+            "agent_id": str(summary.agent_id),
+            "state": summary.state,
+        },
+    )
+    return serialise_summary(summary)
+
+
+@router_conversations.post("/{conversation_id}/operator-messages", status_code=201)
+async def post_operator_message(
+    request: Request,
+    conversation_id: UUID,
+    body: OperatorMessageBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    workspace_id = await _conversation_workspace(request, conversation_id)
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    try:
+        message = await cp.conversations.operator_reply(
+            workspace_id=workspace_id,
+            conversation_id=conversation_id,
+            body=body.body,
+        )
+    except ConversationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="conversation:operator_message",
+        resource_type="conversation",
+        store=cp.audit_events,
+        resource_id=str(conversation_id),
+        request_id=request_id(request),
+        payload={
+            "conversation_id": str(conversation_id),
+            "message_id": str(message.id),
+            "body_length": len(body.body),
+        },
+    )
+    return serialise_message(message)
+
+
+@router_conversations.post("/{conversation_id}/handback")
+async def handback_conversation(
+    request: Request,
+    conversation_id: UUID,
+    body: TakeoverBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    workspace_id = await _conversation_workspace(request, conversation_id)
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    try:
+        summary = await cp.conversations.handback(
+            workspace_id=workspace_id,
+            conversation_id=conversation_id,
+            operator_sub=caller_sub,
+            note=body.note,
+        )
+    except ConversationError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="conversation:handback",
+        resource_type="conversation",
+        store=cp.audit_events,
+        resource_id=str(conversation_id),
+        request_id=request_id(request),
         payload={
             "conversation_id": str(conversation_id),
             "agent_id": str(summary.agent_id),

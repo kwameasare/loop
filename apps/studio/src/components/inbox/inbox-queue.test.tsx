@@ -30,7 +30,10 @@ describe("InboxQueue", () => {
     const previews = screen.getAllByTestId(/queue-preview-/);
     expect(previews.length).toBeGreaterThan(0);
     const links = screen.getAllByTestId(/queue-link-/);
-    expect(links[0]).toHaveAttribute("href", "/inbox");
+    expect(links[0]).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/inbox\/conversation\//),
+    );
   });
 
   it("filters by team", () => {

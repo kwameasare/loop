@@ -69,7 +69,11 @@ export function AgentVersionsList({
     if (!confirm(`Promote v${v.version} to production?`)) return;
     setPendingId(v.id);
     try {
-      const result = await promote({ versionId: v.id, stage: "production" });
+      const result = await promote({
+        agentId: v.agent_id,
+        versionId: v.id,
+        stage: "production",
+      });
       setRows((prev) =>
         prev.map((r) =>
           r.id === v.id ? { ...r, promoted_to: result.promoted_to } : r,

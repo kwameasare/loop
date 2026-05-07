@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   assertSnapshotSignature,
   bisectStepsBetween,
   branchSnapshot,
+  fetchDeploySafetyModel,
   FIXTURE_BEHAVIOR_CHANGES,
   FIXTURE_BISECT,
   FIXTURE_SNAPSHOTS,
@@ -22,6 +23,67 @@ describe("topLikelyChanges", () => {
     const before = FIXTURE_BEHAVIOR_CHANGES.map((c) => c.id);
     topLikelyChanges(FIXTURE_BEHAVIOR_CHANGES, 2);
     expect(FIXTURE_BEHAVIOR_CHANGES.map((c) => c.id)).toEqual(before);
+  });
+});
+
+describe("fetchDeploySafetyModel", () => {
+  it("builds what-could-break rows from live traces", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.includes("/workspaces/ws-1/traces")) {
+        return new Response(
+          JSON.stringify({
+            items: [
+              {
+                workspace_id: "ws-1",
+                trace_id: "c".repeat(32),
+                turn_id: "11111111-1111-4111-8111-111111111111",
+                conversation_id: "22222222-2222-4222-8222-222222222222",
+                agent_id: "33333333-3333-4333-8333-333333333333",
+                started_at: "2026-05-07T12:00:00Z",
+                duration_ms: 500,
+                span_count: 4,
+                error: true,
+              },
+            ],
+            next_cursor: null,
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          items: [
+            {
+              id: "ev-1",
+              occurred_at: "2026-05-07T12:00:00Z",
+              workspace_id: "ws-1",
+              actor_sub: "sam@example.com",
+              action: "agent.version.promoted",
+              resource_type: "agent_version",
+              resource_id: "v1",
+              outcome: "success",
+            },
+          ],
+          total: 1,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    });
+
+    const model = await fetchDeploySafetyModel("ws-1", {
+      baseUrl: "https://cp.example.test/v1",
+      fetcher,
+    });
+
+    expect(model.changes[0]).toMatchObject({
+      exemplarTranscriptId: "c".repeat(32),
+      likelihood: "high",
+    });
+    expect(model.snapshots[0].signature).toBe(
+      `sig:${model.snapshots[0].sha256}`,
+    );
+    expect(model.bisect.culpritCommit).toBe("agentve");
   });
 });
 

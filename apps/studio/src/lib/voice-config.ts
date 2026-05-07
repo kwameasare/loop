@@ -81,18 +81,26 @@ function _voiceConfigBase(override?: string): string {
 /**
  * Fetch the voice config for a workspace.
  *
- * Blocked on cp-api PR. Until the route ships, returns a default
- * empty config so the panel renders cleanly.
+ * Falls back to the fixture only when no cp-api base URL is configured.
  */
 export async function fetchVoiceConfig(
   workspace_id: string,
   opts: VoiceConfigClientOptions = {},
 ): Promise<VoiceConfig> {
+  let base: string;
+  try {
+    base = _voiceConfigBase(opts.baseUrl);
+  } catch (err) {
+    if (err instanceof Error && /LOOP_CP_API_BASE_URL/.test(err.message)) {
+      return { ...FIXTURE_VOICE_CONFIG, workspace_id };
+    }
+    throw err;
+  }
   const fetcher = opts.fetcher ?? fetch;
   const headers: Record<string, string> = { accept: "application/json" };
   const token = opts.token ?? process.env.LOOP_TOKEN;
   if (token) headers.authorization = `Bearer ${token}`;
-  const url = `${_voiceConfigBase(opts.baseUrl)}/workspaces/${encodeURIComponent(
+  const url = `${base}/workspaces/${encodeURIComponent(
     workspace_id,
   )}/voice/config`;
   const res = await fetcher(url, {
@@ -112,12 +120,21 @@ export async function fetchVoiceConfig(
   return (await res.json()) as VoiceConfig;
 }
 
-/** Save provider selections. Returns the updated config. Blocked on cp-api PR. */
+/** Save provider selections. Returns ok when cp-api persists the update. */
 export async function saveVoiceConfig(
   workspace_id: string,
   next: Pick<VoiceConfig, "asr_provider" | "tts_provider">,
   opts: VoiceConfigClientOptions = {},
 ): Promise<{ ok: boolean; error?: string }> {
+  let base: string;
+  try {
+    base = _voiceConfigBase(opts.baseUrl);
+  } catch (err) {
+    if (err instanceof Error && /LOOP_CP_API_BASE_URL/.test(err.message)) {
+      return { ok: false, error: "Voice config API is not configured" };
+    }
+    throw err;
+  }
   const fetcher = opts.fetcher ?? fetch;
   const headers: Record<string, string> = {
     accept: "application/json",
@@ -125,7 +142,7 @@ export async function saveVoiceConfig(
   };
   const token = opts.token ?? process.env.LOOP_TOKEN;
   if (token) headers.authorization = `Bearer ${token}`;
-  const url = `${_voiceConfigBase(opts.baseUrl)}/workspaces/${encodeURIComponent(
+  const url = `${base}/workspaces/${encodeURIComponent(
     workspace_id,
   )}/voice/config`;
   const res = await fetcher(url, {
@@ -135,7 +152,7 @@ export async function saveVoiceConfig(
     cache: "no-store",
   });
   if (res.status === 404) {
-    return { ok: false, error: "Voice config API not yet available" };
+    return { ok: false, error: "Voice config API not available" };
   }
   if (!res.ok) {
     return { ok: false, error: `cp-api PATCH voice/config -> ${res.status}` };

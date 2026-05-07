@@ -1,11 +1,13 @@
 import { BehaviorEditor } from "@/components/behavior/behavior-editor";
-import { createBehaviorEditorData } from "@/lib/behavior";
+import { createBehaviorEditorData, fetchBehaviorEditorData } from "@/lib/behavior";
 
 interface AgentBehaviorPageProps {
   params: { agent_id: string };
 }
 
-export default function AgentBehaviorPage({ params }: AgentBehaviorPageProps) {
-  const data = createBehaviorEditorData(params.agent_id);
+export default async function AgentBehaviorPage({ params }: AgentBehaviorPageProps) {
+  const data = await fetchBehaviorEditorData(params.agent_id).catch(() =>
+    createBehaviorEditorData(params.agent_id),
+  );
   return <BehaviorEditor data={data} />;
 }

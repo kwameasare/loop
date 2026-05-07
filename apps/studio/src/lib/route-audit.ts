@@ -271,6 +271,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§8",
   },
   {
+    route: "/xray",
+    verb: "observe",
+    label: "Agent X-Ray",
+    purpose:
+      "Observed behavior, prompt-section support gaps, cost drivers, and representative traces (§3.14, §12).",
+    anchor: "§3.14",
+  },
+  {
     route: "/inbox",
     verb: "observe",
     label: "Operator inbox",
@@ -348,6 +356,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     label: "Governance",
     purpose: "Policies, approvers, audit evidence (§24).",
     anchor: "§24",
+  },
+  {
+    route: "/enterprise/audit",
+    verb: "govern",
+    label: "Audit Explorer",
+    purpose:
+      "Append-only workspace audit evidence with filters, pagination, and precise outcomes (§24.4).",
+    anchor: "§24.4",
   },
   {
     route: "/billing",

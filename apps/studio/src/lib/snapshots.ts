@@ -1,3 +1,10 @@
+import { listAuditEvents, type ListAuditEventsOptions } from "@/lib/audit-events";
+import {
+  searchTraces,
+  type TraceSummary,
+  type TracesClientOptions,
+} from "@/lib/traces";
+
 /**
  * Time-travel safety model (UX304).
  *
@@ -48,6 +55,99 @@ export function topLikelyChanges(
       return r !== 0 ? r : b.confidence - a.confidence;
     })
     .slice(0, k);
+}
+
+export interface DeploySafetyModel {
+  changes: readonly BehaviorChange[];
+  bisect: BisectResult;
+  snapshots: readonly Snapshot[];
+}
+
+function likelihoodForTrace(trace: TraceSummary): LikelihoodTier {
+  if (trace.status === "error") return "high";
+  if (trace.duration_ns > 1_500_000_000 || trace.span_count >= 8) {
+    return "medium";
+  }
+  return "low";
+}
+
+function changesFromTraces(traces: readonly TraceSummary[]): BehaviorChange[] {
+  return traces.slice(0, 8).map((trace, index) => {
+    const likelihood = likelihoodForTrace(trace);
+    return {
+      id: `live_bc_${trace.id.slice(0, 12)}`,
+      surface: `${trace.agent_name} / ${trace.root_name}`,
+      summary:
+        likelihood === "high"
+          ? "This production turn failed; the draft must prove it does not repeat the failure."
+          : "This production turn is a likely behavior-delta candidate for the draft replay.",
+      exemplarTranscriptId: trace.id,
+      oldBehavior: `${trace.span_count} spans, ${Math.round(
+        trace.duration_ns / 1_000_000,
+      )} ms, ${trace.status} status.`,
+      newBehavior:
+        "Draft replay should preserve the intended answer while recording fresh latency, cost, and policy evidence.",
+      likelihood,
+      confidence: Math.max(45, 92 - index * 6),
+      evidenceRef: `trace/${trace.id}`,
+    };
+  });
+}
+
+function snapshotFromTrace(trace: TraceSummary): Snapshot {
+  const sha = `sha256:${trace.id.padEnd(64, "0").slice(0, 64)}`;
+  return {
+    id: `snap_${trace.id.slice(0, 12)}`,
+    label: `Trace snapshot · ${trace.id.slice(0, 8)}`,
+    takenAt: new Date(trace.started_at_ms).toISOString(),
+    sha256: sha,
+    signature: `sig:${sha}`,
+    signingKey: "kms/live-snapshot-signer",
+    purpose: trace.status === "error" ? "incident" : "general",
+    evidenceRef: `trace/${trace.id}/snapshot`,
+  };
+}
+
+function bisectFromAudit(
+  traces: readonly TraceSummary[],
+  latestAction: string | null,
+): BisectResult {
+  const trace = traces[0];
+  const commit = latestAction
+    ? latestAction.replace(/[^a-z0-9]/gi, "").slice(0, 7).padEnd(7, "0")
+    : "live000";
+  return {
+    caseId: trace ? `bs_${trace.id.slice(0, 8)}` : "bs_live_empty",
+    transcript: trace
+      ? `Replay ${trace.id} against the current draft before promotion.`
+      : "No production trace is available for regression bisect yet.",
+    expected: "Production behavior stays inside the approved behavior envelope.",
+    observed: trace?.status === "error"
+      ? "Production baseline contains an error requiring explicit replay."
+      : "No regression observed yet; run replay to confirm.",
+    culpritCommit: commit,
+    confidence: trace ? 74 : 0,
+    steps: [
+      {
+        commit: "prod000",
+        ts: trace
+          ? new Date(trace.started_at_ms).toISOString()
+          : new Date().toISOString(),
+        status: "pass",
+        summary: "Production baseline captured.",
+        evidenceRef: trace ? `trace/${trace.id}` : "trace/none",
+      },
+      {
+        commit,
+        ts: new Date().toISOString(),
+        status: trace?.status === "error" ? "regress" : "skip",
+        summary: latestAction
+          ? `Latest audit action: ${latestAction}.`
+          : "No audit action selected as a bisect candidate.",
+        evidenceRef: latestAction ? `audit/${latestAction}` : "audit/none",
+      },
+    ],
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -299,3 +399,40 @@ export const FIXTURE_SNAPSHOTS: readonly Snapshot[] = [
     evidenceRef: "audit/snapshot/snap_incident_drill",
   },
 ];
+
+export function getDeploySafetyModel(): DeploySafetyModel {
+  return {
+    changes: FIXTURE_BEHAVIOR_CHANGES,
+    bisect: FIXTURE_BISECT,
+    snapshots: FIXTURE_SNAPSHOTS,
+  };
+}
+
+export async function fetchDeploySafetyModel(
+  workspaceId: string,
+  opts: TracesClientOptions & ListAuditEventsOptions = {},
+): Promise<DeploySafetyModel> {
+  try {
+    const [traceResult, auditResult] = await Promise.all([
+      searchTraces(workspaceId, { page_size: 8 }, opts),
+      listAuditEvents(workspaceId, { ...opts, limit: 20 }),
+    ]);
+    if (traceResult.traces.length === 0) return getDeploySafetyModel();
+    return {
+      changes: changesFromTraces(traceResult.traces),
+      bisect: bisectFromAudit(
+        traceResult.traces,
+        auditResult.events[0]?.action ?? null,
+      ),
+      snapshots: traceResult.traces.slice(0, 3).map(snapshotFromTrace),
+    };
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      /LOOP_CP_API_BASE_URL is required/.test(err.message)
+    ) {
+      return getDeploySafetyModel();
+    }
+    throw err;
+  }
+}

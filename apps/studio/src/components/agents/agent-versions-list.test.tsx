@@ -95,6 +95,7 @@ describe("AgentVersionsList", () => {
       fireEvent.click(screen.getByTestId("agent-version-promote-2"));
     });
     expect(promote).toHaveBeenCalledWith({
+      agentId: "agt_1",
       versionId: "ver_2",
       stage: "production",
     });

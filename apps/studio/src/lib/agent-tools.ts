@@ -1,11 +1,10 @@
 /**
  * P0.3: cp-api client for agent tool catalog.
  *
- * Reads ``GET /v1/agents/{agent_id}/tools`` (per-agent binding) which
- * is blocked on cp-api PR — the underlying ``mcp_marketplace.py``
- * service module exists but no FastAPI shim is mounted yet. Until
- * then the call returns an empty catalog so the page renders cleanly
- * and lights up automatically when the route lands.
+ * Reads ``GET /v1/agents/{agent_id}/tools`` for per-agent tool bindings.
+ * The first live route exposes tools declared on the active/latest agent
+ * version spec; richer credential health and marketplace install metadata
+ * can layer onto the same shape.
  */
 
 import type {

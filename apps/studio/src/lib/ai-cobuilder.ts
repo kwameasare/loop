@@ -184,6 +184,23 @@ export interface AdversarialReview {
   bullets: readonly ReviewBullet[];
 }
 
+export interface CoBuilderWorkspace {
+  workspaceId: string;
+  agentId: string | null;
+  agentName: string;
+  operator: OperatorContext;
+  actions: readonly CoBuilderAction[];
+  rubberDuck: RubberDuckDiagnosis;
+  review: AdversarialReview;
+}
+
+export interface CoBuilderClientOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+  agentId?: string;
+}
+
 export class ReviewShapeError extends Error {
   constructor(message: string) {
     super(message);
@@ -210,6 +227,71 @@ export function blockingBullets(
   review: AdversarialReview,
 ): readonly ReviewBullet[] {
   return review.bullets.filter((b) => b.severity === "block");
+}
+
+function cpApiBaseUrl(override?: string): string {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) {
+    throw new Error("LOOP_CP_API_BASE_URL is required for Co-Builder calls");
+  }
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+function headers(opts: CoBuilderClientOptions): Record<string, string> {
+  const out: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) out.authorization = `Bearer ${token}`;
+  return out;
+}
+
+export function createFixtureCoBuilderWorkspace(
+  workspaceId = "ws-fixture",
+): CoBuilderWorkspace {
+  return {
+    workspaceId,
+    agentId: "agent_support",
+    agentName: "Acme Support Concierge",
+    operator: FIXTURE_OPERATOR,
+    actions: [FIXTURE_ACTION_SUGGEST, FIXTURE_ACTION_DRIVE],
+    rubberDuck: FIXTURE_RUBBER_DUCK,
+    review: FIXTURE_REVIEW,
+  };
+}
+
+export async function fetchCoBuilderWorkspace(
+  workspaceId: string,
+  opts: CoBuilderClientOptions = {},
+): Promise<CoBuilderWorkspace> {
+  let base: string;
+  try {
+    base = cpApiBaseUrl(opts.baseUrl);
+  } catch (err) {
+    if (err instanceof Error && /LOOP_CP_API_BASE_URL/.test(err.message)) {
+      return createFixtureCoBuilderWorkspace(workspaceId);
+    }
+    throw err;
+  }
+  const params = new URLSearchParams();
+  if (opts.agentId) params.set("agent_id", opts.agentId);
+  const query = params.toString();
+  const response = await (opts.fetcher ?? fetch)(
+    `${base}/workspaces/${encodeURIComponent(workspaceId)}/cobuilder${
+      query ? `?${query}` : ""
+    }`,
+    {
+      method: "GET",
+      headers: headers(opts),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`cp-api GET cobuilder -> ${response.status}`);
+  }
+  return (await response.json()) as CoBuilderWorkspace;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,3 +1,5 @@
+import { getTrace, type Span, type Trace, type TracePayload } from "@/lib/traces";
+
 /**
  * Replay / time-travel debugging.
  *
@@ -353,9 +355,176 @@ export const FIXTURE_REPLAY: ReplayTrace = {
   ],
 };
 
-export async function getReplayTrace(id: string): Promise<ReplayTrace | null> {
-  if (id === FIXTURE_REPLAY.id) return FIXTURE_REPLAY;
-  return null;
+const NS_PER_MS = 1_000_000;
+
+function payloadText(
+  payload: TracePayload | undefined,
+  keys: readonly string[],
+): string {
+  if (!payload) return "";
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === "string" && value.trim()) return value;
+    if (typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+  }
+  return "";
 }
 
-export const FIXTURE_REPLAY_ID = FIXTURE_REPLAY.id;
+function spanActor(span: Span, trace: Trace): string {
+  if (span.category === "llm") {
+    return trace.summary?.agent_name ?? "agent";
+  }
+  if (span.category === "tool") {
+    return String(span.attributes.tool ?? span.name);
+  }
+  if (span.category === "retrieval") return "knowledge";
+  if (span.category === "memory") return "memory";
+  return span.service || span.category;
+}
+
+function spanStartMs(span: Span, baseMs: number): number {
+  return baseMs + Math.round(span.start_ns / NS_PER_MS);
+}
+
+function spanEndMs(span: Span, baseMs: number): number {
+  return baseMs + Math.round(span.end_ns / NS_PER_MS);
+}
+
+function eventAttributes(span: Span): Record<string, string | number | boolean> {
+  return {
+    ...span.attributes,
+    span_id: span.id,
+    span_name: span.name,
+    category: span.category,
+    status: span.status,
+  };
+}
+
+function replayEventsForSpan(span: Span, trace: Trace, baseMs: number): ReplayEvent[] {
+  const actor = spanActor(span, trace);
+  const attrs = eventAttributes(span);
+  if (span.category === "tool") {
+    return [
+      {
+        step: 0,
+        timestamp_ms: spanStartMs(span, baseMs),
+        kind: "tool_call_start",
+        actor,
+        text: `${span.name} started`,
+        attributes: attrs,
+      },
+      {
+        step: 0,
+        timestamp_ms: spanEndMs(span, baseMs),
+        kind: span.status === "error" ? "error" : "tool_call_end",
+        actor,
+        text:
+          payloadText(span.output, ["answer_summary", "result", "status"]) ||
+          `${span.name} ${span.status}`,
+        attributes: attrs,
+      },
+    ];
+  }
+  if (span.category === "retrieval") {
+    return [
+      {
+        step: 0,
+        timestamp_ms: spanStartMs(span, baseMs),
+        kind: "tool_call_start",
+        actor,
+        text:
+          payloadText(span.input, ["query"]) ||
+          `${span.name} query started`,
+        attributes: attrs,
+      },
+      {
+        step: 0,
+        timestamp_ms: spanEndMs(span, baseMs),
+        kind: span.status === "error" ? "error" : "tool_call_end",
+        actor,
+        text:
+          payloadText(span.output, ["top_chunk", "evidence"]) ||
+          `${span.name} ${span.status}`,
+        attributes: attrs,
+      },
+    ];
+  }
+  if (span.category === "llm") {
+    return [
+      {
+        step: 0,
+        timestamp_ms: spanEndMs(span, baseMs),
+        kind: span.status === "error" ? "error" : "agent_message",
+        actor,
+        text:
+          payloadText(span.output, ["answer_summary", "message", "text"]) ||
+          `${span.name} ${span.status}`,
+        attributes: attrs,
+      },
+    ];
+  }
+  if (span.category === "memory") {
+    return [
+      {
+        step: 0,
+        timestamp_ms: spanEndMs(span, baseMs),
+        kind: span.status === "error" ? "error" : "handoff",
+        actor,
+        text:
+          payloadText(span.output, ["after", "policy"]) ||
+          `${span.name} recorded memory state`,
+        attributes: attrs,
+      },
+    ];
+  }
+  return [
+    {
+      step: 0,
+      timestamp_ms: spanEndMs(span, baseMs),
+      kind: span.status === "error" ? "error" : "handoff",
+      actor,
+      text: payloadText(span.output, ["outcome", "decision"]) || span.name,
+      attributes: attrs,
+    },
+  ];
+}
+
+export function replayTraceFromTrace(trace: Trace): ReplayTrace {
+  const baseMs = Date.UTC(2026, 4, 7, 0, 0, 0);
+  const sorted = [...trace.spans].sort((a, b) => a.start_ns - b.start_ns);
+  const firstUserMessage =
+    sorted
+      .map((span) => payloadText(span.input, ["user_message", "message_text", "message"]))
+      .find(Boolean) ?? "";
+  const events: ReplayEvent[] = [];
+  if (firstUserMessage) {
+    events.push({
+      step: 0,
+      timestamp_ms: baseMs,
+      kind: "user_message",
+      actor: "user",
+      text: firstUserMessage,
+    });
+  }
+  for (const span of sorted) {
+    events.push(...replayEventsForSpan(span, trace, baseMs));
+  }
+  return {
+    id: trace.id,
+    conversation_id:
+      trace.spans
+        .map((span) => String(span.attributes.conversation_id ?? ""))
+        .find(Boolean) ?? trace.id,
+    events: events
+      .sort((a, b) => a.timestamp_ms - b.timestamp_ms)
+      .map((event, index) => ({ ...event, step: index })),
+  };
+}
+
+export async function getReplayTrace(id: string): Promise<ReplayTrace | null> {
+  if (id === FIXTURE_REPLAY.id) return FIXTURE_REPLAY;
+  const trace = await getTrace(id);
+  return trace ? replayTraceFromTrace(trace) : null;
+}

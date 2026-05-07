@@ -325,7 +325,48 @@ describe("fetchTraceByTurnId", () => {
     expect(url).toBe("https://cp.test/v1/traces/turn-1");
   });
 
-  it("returns null on 404 (route not yet shipped)", async () => {
+  it("normalizes sparse cp trace detail into Trace Theater shape", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        trace_id: "0123456789abcdef0123456789abcdef",
+        turn_id: "11111111-2222-3333-4444-555555555555",
+        conversation_id: "22222222-3333-4444-5555-666666666666",
+        agent_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        started_at: "2026-05-01T10:00:00Z",
+        duration_ms: 850,
+        span_count: 1,
+        error: false,
+        spans: [
+          {
+            span_id: "span-root",
+            parent_span_id: null,
+            kind: "channel",
+            name: "runtime turn",
+            started_at: "2026-05-01T10:00:00Z",
+            latency_ms: 850,
+            cost_usd: 0,
+            status: "ok",
+            attrs: { turn_id: "11111111-2222-3333-4444-555555555555" },
+          },
+        ],
+      }),
+    });
+    const res = await fetchTraceByTurnId("11111111-2222-3333-4444-555555555555", {
+      fetcher,
+    });
+    expect(res?.id).toBe("0123456789abcdef0123456789abcdef");
+    expect(res?.summary?.total_latency_ns).toBe(850_000_000);
+    expect(res?.spans[0]).toMatchObject({
+      id: "span-root",
+      category: "channel",
+      status: "ok",
+    });
+    expect(res?.explanations?.[0]?.confidence_level).toBe("unsupported");
+  });
+
+  it("returns null on 404", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });

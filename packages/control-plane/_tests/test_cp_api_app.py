@@ -145,6 +145,7 @@ def test_uvicorn_cp_api_serves_health_auth_workspaces_agents_and_audit(
         listed = _json(client.get("/v1/workspaces", headers=headers))
         assert listed["total"] == 1
         assert listed["items"][0]["slug"] == "s901-workspace"
+        assert listed["items"][0]["role"] == "owner"
 
         fetched = _json(client.get(f"/v1/workspaces/{workspace_id}", headers=headers))
         assert fetched["id"] == workspace_id

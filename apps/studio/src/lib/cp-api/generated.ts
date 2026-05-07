@@ -21,6 +21,11 @@ export interface APIKeyCreated {
   scopes?: string[];
 }
 
+export interface AdversarialReview {
+  actionId: string;
+  bullets: ReviewBullet[];
+}
+
 export interface Agent {
   active_version?: number | null;
   created_at?: string;
@@ -48,13 +53,36 @@ export interface AgentResponse {
   suggested_actions?: Record<string, unknown>[];
 }
 
+export interface AgentTool {
+  description: string;
+  id: string;
+  kind: "mcp" | "http";
+  name: string;
+  source: string;
+}
+
+export interface AgentToolList {
+  items: AgentTool[];
+}
+
 export interface AgentVersion {
-  agent_id?: string;
-  deploy_state?: "inactive" | "canary" | "active" | "rolled_back";
-  deployed_at?: string | null;
-  eval_status?: "pending" | "running" | "passed" | "failed" | "skipped";
-  id?: string;
-  version?: number;
+  agent_id: string;
+  created_at: string;
+  created_by: string;
+  id: string;
+  notes: string;
+  spec: Record<string, unknown>;
+  version: number;
+  workspace_id: string;
+}
+
+export interface AgentVersionCreate {
+  notes?: string;
+  spec?: Record<string, unknown>;
+}
+
+export interface AgentVersionList {
+  items: AgentVersion[];
 }
 
 export interface AuditEvent {
@@ -112,6 +140,105 @@ export interface Budget {
   spent_usd?: number;
 }
 
+export interface CanaryStage {
+  durationMinutes: number;
+  guardrails: string[];
+  id: string;
+  percent: number;
+  status: "pending" | "in_progress" | "passed" | "halted";
+}
+
+export interface CoBuilderAction {
+  cost: CoBuilderCost;
+  diff: CoBuilderDiffHunk;
+  evidenceRef: string;
+  id: string;
+  mode: "suggest" | "edit" | "drive";
+  provenance: CoBuilderProvenance[];
+  rationale: string;
+  requiredScopes: string[];
+  title: string;
+}
+
+export interface CoBuilderCost {
+  latencyMs: number;
+  usd: number;
+}
+
+export interface CoBuilderDiffHunk {
+  body: string;
+  path: string;
+}
+
+export interface CoBuilderProvenance {
+  evidenceRef: string;
+  excerpt: string;
+  source: string;
+}
+
+export interface CoBuilderWorkspace {
+  actions: CoBuilderAction[];
+  agentId: string | null;
+  agentName: string;
+  operator: OperatorContext;
+  review: AdversarialReview;
+  rubberDuck: RubberDuckDiagnosis;
+  workspaceId: string;
+}
+
+export interface ConductorData {
+  agentId: string;
+  agentName: string;
+  branch: string;
+  contracts: HandoffContract[];
+  degradedReason?: string;
+  delegations: DelegationTrace[];
+  objectState: "draft" | "saved" | "staged" | "canary" | "production" | "archived";
+  orchestrationEvidence: string;
+  permissionReason?: string;
+  subAgents: ConductorSubAgent[];
+  topology: ConductorTopologyEdge[];
+  trust: "healthy" | "watching" | "drifting" | "degraded" | "blocked";
+}
+
+export interface ConductorSubAgent {
+  activeHandoffs: number;
+  budgetUsd: number;
+  costEvidence: string;
+  currentOwner: string;
+  evalConfidence: "high" | "medium" | "low" | "unsupported";
+  evalCoveragePercent: number;
+  failurePaths: string[];
+  id: string;
+  latencyEvidence: string;
+  latencyP95Ms: number;
+  memoryAccess: string;
+  name: string;
+  objectState: "draft" | "saved" | "staged" | "canary" | "production" | "archived";
+  owner: string;
+  purpose: string;
+  spentUsd: number;
+  status: "ready" | "active" | "degraded" | "blocked";
+  tools: ConductorToolGrant[];
+  traceSpans: string[];
+  trust: "healthy" | "watching" | "drifting" | "degraded" | "blocked";
+  version: string;
+}
+
+export interface ConductorToolGrant {
+  evidence: string;
+  mode: "read" | "draft" | "live" | "blocked";
+  name: string;
+}
+
+export interface ConductorTopologyEdge {
+  id: string;
+  label: string;
+  source: string;
+  state: "ready" | "active" | "violated" | "blocked";
+  target: string;
+}
+
 export interface ContentPart {
   bytes_b64?: string;
   mime_type?: string;
@@ -121,21 +248,81 @@ export interface ContentPart {
 }
 
 export interface Conversation {
-  agent_id?: string;
-  channel_type?: string;
-  id?: string;
-  last_at?: string;
-  status?: "active" | "idle" | "closed" | "escalated";
-  user_id?: string;
+  agent_id: string;
+  created_at: string;
+  id: string;
+  last_message_at: string;
+  message_count: number;
+  operator_taken_over: boolean;
+  state: "open" | "closed" | "in-takeover";
+  subject: string;
+  workspace_id: string;
 }
 
-export type ConversationDetail = Conversation & { "turns"?: Turn[] };
+export interface ConversationDetail {
+  last_assistant_message: string;
+  last_user_message: string;
+  messages: ConversationMessage[];
+  metadata: Record<string, unknown>;
+  summary: Conversation;
+}
+
+export interface ConversationMessage {
+  body: string;
+  conversation_id: string;
+  created_at: string;
+  id: string;
+  role: "user" | "assistant" | "operator" | "system";
+}
+
+export interface CutoverPlan {
+  id: string;
+  rollbackTriggers: RollbackTrigger[];
+  shadow: ShadowTrafficSummary;
+  stages: CanaryStage[];
+}
+
+export interface DelegationTrace {
+  contractId: string;
+  costUsd: number;
+  evidence: string;
+  id: string;
+  latencyMs: number;
+  sourceAgent: string;
+  spanId: string;
+  status: "ok" | "warning" | "failed";
+  targetAgent: string;
+  traceId: string;
+}
+
+export interface DiffEntry {
+  delta?: string;
+  evidenceRef: string;
+  id: string;
+  mode: "structure" | "behavior" | "cost" | "risk";
+  severity: "ok" | "advisory" | "blocking";
+  sourcePath: string;
+  summary: string;
+  targetPath: string;
+}
 
 export interface EvalCase {
+  attachments?: string[];
+  created_at?: string;
+  created_by?: string;
   expected: Record<string, unknown>;
+  id?: string;
   input: Record<string, unknown>;
   name: string;
   scorers: { "config"?: Record<string, unknown>; "kind"?: "llm_judge" | "embedding_sim" | "regex_match" | "json_schema" | "tool_call_assert" | "latency_le" | "cost_le" | "hallucination" | "toxicity" | "pii_leak" }[];
+  source?: string;
+  source_ref?: string;
+  suite_id?: string;
+  workspace_id?: string;
+}
+
+export interface EvalCaseList {
+  items: EvalCase[];
 }
 
 export interface EvalRun {
@@ -154,6 +341,77 @@ export interface EvalSuite {
   id?: string;
   name?: string;
 }
+
+export interface HandoffContract {
+  budgetUsd: number;
+  currentOwner: string;
+  evidenceTrace: string;
+  fallback: string;
+  from: string;
+  id: string;
+  inputSchema: string[];
+  memoryAccess: string;
+  name: string;
+  outputSchema: string[];
+  purpose: string;
+  state: "ready" | "active" | "violated" | "blocked";
+  timeoutMs: number;
+  to: string;
+  toolGrants: string[];
+  violation?: string;
+}
+
+export interface ImportLineage {
+  archive: string;
+  archiveSha: string;
+  importId: string;
+  importedAt: string;
+  source: string;
+  steps: LineageStep[];
+}
+
+export type InboxChannel = "web" | "voice" | "sms" | "whatsapp" | "slack";
+
+export interface InboxClaimRequest {
+  now_ms?: number;
+  operator_id?: string | null;
+}
+
+export interface InboxEscalateRequest {
+  agent_id: string;
+  conversation_id: string;
+  last_message_excerpt?: string;
+  now_ms?: number;
+  reason: string;
+  user_id: string;
+}
+
+export interface InboxItem {
+  agent_id: string;
+  channel?: InboxChannel;
+  claimed_at_ms: number | null;
+  conversation_id: string;
+  created_at_ms: number;
+  id: string;
+  last_message_excerpt: string;
+  operator_id: string | null;
+  reason: string;
+  resolved_at_ms: number | null;
+  status: InboxStatus;
+  team_id?: string;
+  user_id: string;
+  workspace_id: string;
+}
+
+export interface InboxItemList {
+  items: InboxItem[];
+}
+
+export interface InboxResolveRequest {
+  now_ms?: number;
+}
+
+export type InboxStatus = "pending" | "claimed" | "resolved";
 
 export interface InvokeRequest {
   channel: "web" | "whatsapp" | "slack" | "teams" | "telegram" | "sms" | "email" | "discord" | "voice" | "webhook";
@@ -193,6 +451,14 @@ export interface KBIngestUrl {
   url: string;
 }
 
+export interface LineageStep {
+  detail: string;
+  evidenceRef: string;
+  id: string;
+  label: string;
+  status: "ok" | "warn" | "error";
+}
+
 export interface MCPServer {
   id?: string;
   install_status?: "pending" | "installed" | "failed" | "disabled";
@@ -200,6 +466,86 @@ export interface MCPServer {
   name?: string;
   source_url?: string;
   version?: string;
+}
+
+export interface MarketplaceBrowseItem {
+  average_rating: number;
+  calls: number;
+  categories: string[];
+  description: string;
+  install_button_enabled: boolean;
+  installs: number;
+  latest_version: string;
+  name: string;
+  publisher: string;
+  quality_score: number;
+  server_id: string;
+  slug: string;
+}
+
+export interface MarketplaceBrowseList {
+  items: MarketplaceBrowseItem[];
+}
+
+export interface MemoryStudioEntry {
+  after: string;
+  agent_id: string;
+  before: string;
+  confidence: "high" | "medium" | "low" | "unsupported";
+  deletion_reason: string;
+  deletion_state: "available" | "blocked" | "queued";
+  id: string;
+  key: string;
+  replay_impact: string;
+  retention_policy: string;
+  safety_flags: "none" | "pii" | "secret-like" | "conflict" | "stale" | "weak-evidence"[];
+  scope: "user" | "bot" | "session";
+  source: string;
+  source_trace: string;
+  updated_at: string;
+  user_id?: string | null;
+  workspace_id: string;
+  writer_version: string;
+}
+
+export interface MemoryStudioEntryList {
+  items: MemoryStudioEntry[];
+}
+
+export interface MigrationParityWorkspace {
+  cutover: CutoverPlan;
+  diffs: DiffEntry[];
+  lineage: ImportLineage;
+  readiness: ParityReadiness;
+  repairs: RepairSuggestion[];
+  replay: ParityReplayCase[];
+}
+
+export interface OperatorContext {
+  budgetRemainingUsd: number;
+  maxMode: "suggest" | "edit" | "drive";
+  scopes: string[];
+}
+
+export interface OperatorMessageRequest {
+  body: string;
+}
+
+export interface ParityReadiness {
+  advisoryCount: number;
+  blockingCount: number;
+  overallScore: number;
+  parityPassing: number;
+  parityTotal: number;
+}
+
+export interface ParityReplayCase {
+  evidenceRef: string;
+  expectedTarget: string;
+  id: string;
+  observedTarget: string;
+  status: "pass" | "regress" | "improve" | "skipped";
+  transcript: string;
 }
 
 export interface ProblemDetail {
@@ -213,6 +559,32 @@ export interface ProblemDetail {
 
 export type RegionName = "na-east" | "eu-west";
 
+export interface RepairSuggestion {
+  confidence: "low" | "medium" | "high";
+  diffId: string;
+  groundingRef: string;
+  id: string;
+  patchSummary: string;
+  rationale: string;
+}
+
+export interface ResolutionEvalCaseRequest {
+  attachments: string[];
+  expectedOutcome: string;
+  failureReason: string;
+  id: string;
+  linkedTrace: string;
+  source: "operator-resolution";
+  title: string;
+}
+
+export interface ResolutionEvalCaseResponse {
+  case: EvalCase;
+  case_id: string;
+  ok: boolean;
+  suite_id: string;
+}
+
 export interface RetrievalChunk {
   byte_range?: number[];
   chunk_id?: string;
@@ -220,6 +592,34 @@ export interface RetrievalChunk {
   doc_id?: string;
   score?: number;
   source_uri?: string;
+}
+
+export interface ReviewBullet {
+  body: string;
+  evidenceRef: string;
+  id: string;
+  severity: "info" | "warn" | "block";
+}
+
+export interface RollbackTrigger {
+  action: string;
+  evidenceRef: string;
+  id: string;
+  metric: "regression" | "error_rate" | "cost_spike" | "manual";
+  threshold: string;
+}
+
+export interface RubberDuckDiagnosis {
+  caseId: string;
+  failureSummary: string;
+  findings: RubberDuckFinding[];
+  proposedFix: CoBuilderAction;
+}
+
+export interface RubberDuckFinding {
+  evidenceRef: string;
+  observation: string;
+  step: string;
 }
 
 export interface RuntimeTurnRequest {
@@ -250,6 +650,15 @@ export interface SecretRef {
   id?: string;
   rotated_at?: string | null;
   secret_name?: string;
+}
+
+export interface ShadowTrafficSummary {
+  agreement: number;
+  costPerTurnDelta: string;
+  divergences: number;
+  durationMinutes: number;
+  evidenceRef: string;
+  turns: number;
 }
 
 export interface Trace {
@@ -296,6 +705,77 @@ export interface Version {
   built_at?: string;
 }
 
+export interface VoiceConfig {
+  asr_provider: "deepgram" | "whisper" | "google";
+  numbers: VoiceNumber[];
+  tts_provider: "elevenlabs" | "openai" | "polly";
+  workspace_id: string;
+}
+
+export interface VoiceConfigPatch {
+  asr_provider?: "deepgram" | "whisper" | "google";
+  tts_provider?: "elevenlabs" | "openai" | "polly";
+}
+
+export interface VoiceDemoLink {
+  audited: boolean;
+  expiresIn: string;
+  id: string;
+  label: string;
+  scope: string;
+}
+
+export interface VoiceEvalCase {
+  coverage: string;
+  evidenceRef: string;
+  id: string;
+  name: string;
+  passRate: number;
+}
+
+export interface VoiceLatencySpan {
+  budgetMs: number;
+  id: string;
+  label: string;
+  ms: number;
+  status: "ok" | "watch" | "over";
+}
+
+export interface VoiceNumber {
+  e164: string;
+  id: string;
+  label: string;
+  provisioned_at_ms: number;
+  region: string;
+}
+
+export interface VoiceStageConfig {
+  asr: string;
+  bargeIn: boolean;
+  phoneNumber: string;
+  tts: string;
+  voice: string;
+}
+
+export interface VoiceStageModel {
+  agentName: string;
+  callState: "dev" | "staging" | "production";
+  config: VoiceStageConfig;
+  demoLinks: VoiceDemoLink[];
+  evals: VoiceEvalCase[];
+  queuedSpeech: string;
+  spans: VoiceLatencySpan[];
+  transcript: VoiceTranscriptTurn[];
+  waveform: number[];
+}
+
+export interface VoiceTranscriptTurn {
+  id: string;
+  speaker: "caller" | "agent" | "tool";
+  text: string;
+  timestamp: string;
+}
+
 export interface WebhookRegistration {
   created_at?: string;
   events?: string[];
@@ -311,6 +791,7 @@ export interface Workspace {
   name?: string;
   plan?: "hobby" | "pro" | "team" | "enterprise";
   region?: RegionName;
+  role?: "owner" | "admin" | "member" | "viewer";
   slug?: string;
 }
 
@@ -407,6 +888,12 @@ export interface CpApiOperations {
     request: unknown;
     response: unknown;
   };
+  GetAgentsByAgentIdConductor: {
+    method: "GET";
+    path: "/agents/{agent_id}/conductor";
+    request: unknown;
+    response: ConductorData;
+  };
   GetAgentsByAgentIdConversations: {
     method: "GET";
     path: "/agents/{agent_id}/conversations";
@@ -419,11 +906,41 @@ export interface CpApiOperations {
     request: InvokeRequest;
     response: AgentResponse;
   };
+  GetAgentsByAgentIdMemory: {
+    method: "GET";
+    path: "/agents/{agent_id}/memory";
+    request: unknown;
+    response: MemoryStudioEntryList;
+  };
+  DeleteAgentsByAgentIdMemoryUserByMemoryKey: {
+    method: "DELETE";
+    path: "/agents/{agent_id}/memory/user/{memory_key}";
+    request: unknown;
+    response: unknown;
+  };
+  GetAgentsByAgentIdTools: {
+    method: "GET";
+    path: "/agents/{agent_id}/tools";
+    request: unknown;
+    response: AgentToolList;
+  };
+  GetAgentsByAgentIdVersions: {
+    method: "GET";
+    path: "/agents/{agent_id}/versions";
+    request: unknown;
+    response: AgentVersionList;
+  };
   PostAgentsByAgentIdVersions: {
     method: "POST";
     path: "/agents/{agent_id}/versions";
-    request: unknown;
+    request: AgentVersionCreate;
     response: AgentVersion;
+  };
+  PostAgentsByAgentIdVersionsByVersionIdPromote: {
+    method: "POST";
+    path: "/agents/{agent_id}/versions/{version_id}/promote";
+    request: unknown;
+    response: Agent;
   };
   GetAuditEventsLegacy: {
     method: "GET";
@@ -461,16 +978,22 @@ export interface CpApiOperations {
     request: unknown;
     response: ConversationDetail;
   };
-  PostConversationsByConversationIdMessages: {
+  PostConversationsByConversationIdHandback: {
     method: "POST";
-    path: "/conversations/{conversation_id}/messages";
-    request: { "content": ContentPart[] };
-    response: unknown;
+    path: "/conversations/{conversation_id}/handback";
+    request: { "note": string };
+    response: Conversation;
+  };
+  PostConversationsByConversationIdOperatorMessages: {
+    method: "POST";
+    path: "/conversations/{conversation_id}/operator-messages";
+    request: OperatorMessageRequest;
+    response: ConversationMessage;
   };
   PostConversationsByConversationIdTakeover: {
     method: "POST";
     path: "/conversations/{conversation_id}/takeover";
-    request: { "reason": string };
+    request: { "note": string };
     response: Conversation;
   };
   GetEvalRunsByRunId: {
@@ -489,19 +1012,13 @@ export interface CpApiOperations {
     method: "GET";
     path: "/eval-suites/{suite_id}/cases";
     request: unknown;
-    response: EvalCase[];
+    response: EvalCaseList;
   };
   PostEvalSuitesBySuiteIdCases: {
     method: "POST";
     path: "/eval-suites/{suite_id}/cases";
     request: EvalCase;
     response: EvalCase;
-  };
-  DeleteEvalSuitesBySuiteIdCases: {
-    method: "DELETE";
-    path: "/eval-suites/{suite_id}/cases";
-    request: unknown;
-    response: unknown;
   };
   PostEvalSuitesBySuiteIdRuns: {
     method: "POST";
@@ -514,6 +1031,24 @@ export interface CpApiOperations {
     path: "/healthz";
     request: unknown;
     response: unknown;
+  };
+  PostInboxByItemIdClaim: {
+    method: "POST";
+    path: "/inbox/{item_id}/claim";
+    request: InboxClaimRequest;
+    response: InboxItem;
+  };
+  PostInboxByItemIdRelease: {
+    method: "POST";
+    path: "/inbox/{item_id}/release";
+    request: unknown;
+    response: InboxItem;
+  };
+  PostInboxByItemIdResolve: {
+    method: "POST";
+    path: "/inbox/{item_id}/resolve";
+    request: InboxResolveRequest;
+    response: InboxItem;
   };
   PostKb: {
     method: "POST";
@@ -532,6 +1067,12 @@ export interface CpApiOperations {
     path: "/kb/{kb_id}/search";
     request: unknown;
     response: RetrievalChunk[];
+  };
+  GetMarketplace: {
+    method: "GET";
+    path: "/marketplace";
+    request: unknown;
+    response: MarketplaceBrowseList;
   };
   GetMcp: {
     method: "GET";
@@ -629,6 +1170,30 @@ export interface CpApiOperations {
     request: { "name": string; "scopes": string[] };
     response: APIKeyCreated;
   };
+  GetWorkspacesByWorkspaceIdCobuilder: {
+    method: "GET";
+    path: "/workspaces/{workspace_id}/cobuilder";
+    request: unknown;
+    response: CoBuilderWorkspace;
+  };
+  PostWorkspacesByWorkspaceIdEvalCasesFromResolution: {
+    method: "POST";
+    path: "/workspaces/{workspace_id}/eval-cases/from-resolution";
+    request: ResolutionEvalCaseRequest;
+    response: ResolutionEvalCaseResponse;
+  };
+  GetWorkspacesByWorkspaceIdInbox: {
+    method: "GET";
+    path: "/workspaces/{workspace_id}/inbox";
+    request: unknown;
+    response: InboxItemList;
+  };
+  PostWorkspacesByWorkspaceIdInboxEscalate: {
+    method: "POST";
+    path: "/workspaces/{workspace_id}/inbox/escalate";
+    request: InboxEscalateRequest;
+    response: InboxItem;
+  };
   GetWorkspacesByWorkspaceIdMembers: {
     method: "GET";
     path: "/workspaces/{workspace_id}/members";
@@ -641,11 +1206,35 @@ export interface CpApiOperations {
     request: { "email": string; "role": "owner" | "admin" | "editor" | "operator" | "viewer" };
     response: WorkspaceMember;
   };
+  GetWorkspacesByWorkspaceIdMigrationParity: {
+    method: "GET";
+    path: "/workspaces/{workspace_id}/migration/parity";
+    request: unknown;
+    response: MigrationParityWorkspace;
+  };
   GetWorkspacesByWorkspaceIdSecrets: {
     method: "GET";
     path: "/workspaces/{workspace_id}/secrets";
     request: unknown;
     response: SecretRef[];
+  };
+  GetWorkspacesByWorkspaceIdVoiceConfig: {
+    method: "GET";
+    path: "/workspaces/{workspace_id}/voice/config";
+    request: unknown;
+    response: VoiceConfig;
+  };
+  PatchWorkspacesByWorkspaceIdVoiceConfig: {
+    method: "PATCH";
+    path: "/workspaces/{workspace_id}/voice/config";
+    request: VoiceConfigPatch;
+    response: VoiceConfig;
+  };
+  GetWorkspacesByWorkspaceIdVoiceStage: {
+    method: "GET";
+    path: "/workspaces/{workspace_id}/voice/stage";
+    request: unknown;
+    response: VoiceStageModel;
   };
 }
 
@@ -656,27 +1245,37 @@ export interface CpApi {
   PostAgents(args: { body: AgentCreate }): Promise<Agent>;
   GetAgentsByAgentId(args: { agent_id: string; body: unknown }): Promise<Agent>;
   DeleteAgentsByAgentId(args: { agent_id: string; body: unknown }): Promise<unknown>;
+  GetAgentsByAgentIdConductor(args: { agent_id: string; body: unknown }): Promise<ConductorData>;
   GetAgentsByAgentIdConversations(args: { agent_id: string; body: unknown }): Promise<{ "items"?: Conversation[]; "next_cursor"?: string | null }>;
   PostAgentsByAgentIdInvoke(args: { agent_id: string; body: InvokeRequest }): Promise<AgentResponse>;
-  PostAgentsByAgentIdVersions(args: { agent_id: string; body: unknown }): Promise<AgentVersion>;
+  GetAgentsByAgentIdMemory(args: { agent_id: string; body: unknown }): Promise<MemoryStudioEntryList>;
+  DeleteAgentsByAgentIdMemoryUserByMemoryKey(args: { agent_id: string; memory_key: string; body: unknown }): Promise<unknown>;
+  GetAgentsByAgentIdTools(args: { agent_id: string; body: unknown }): Promise<AgentToolList>;
+  GetAgentsByAgentIdVersions(args: { agent_id: string; body: unknown }): Promise<AgentVersionList>;
+  PostAgentsByAgentIdVersions(args: { agent_id: string; body: AgentVersionCreate }): Promise<AgentVersion>;
+  PostAgentsByAgentIdVersionsByVersionIdPromote(args: { agent_id: string; version_id: string; body: unknown }): Promise<Agent>;
   GetAuditEventsLegacy(args: { body: unknown }): Promise<AuditEventList>;
   GetAuditEvents(args: { body: unknown }): Promise<AuditEventList>;
   PostAuthExchange(args: { body: AuthExchangeRequest }): Promise<AuthExchangeResponse>;
   GetBudgets(args: { body: unknown }): Promise<Budget[]>;
   PostBudgets(args: { body: { "hard_usd"?: number; "scope": "workspace" | "agent" | "conversation" | "day"; "scope_id"?: string | null; "soft_usd"?: number } }): Promise<Budget>;
   GetConversationsByConversationId(args: { conversation_id: string; body: unknown }): Promise<ConversationDetail>;
-  PostConversationsByConversationIdMessages(args: { conversation_id: string; body: { "content": ContentPart[] } }): Promise<unknown>;
-  PostConversationsByConversationIdTakeover(args: { conversation_id: string; body: { "reason": string } }): Promise<Conversation>;
+  PostConversationsByConversationIdHandback(args: { conversation_id: string; body: { "note": string } }): Promise<Conversation>;
+  PostConversationsByConversationIdOperatorMessages(args: { conversation_id: string; body: OperatorMessageRequest }): Promise<ConversationMessage>;
+  PostConversationsByConversationIdTakeover(args: { conversation_id: string; body: { "note": string } }): Promise<Conversation>;
   GetEvalRunsByRunId(args: { run_id: string; body: unknown }): Promise<EvalRunDetail>;
   PostEvalSuites(args: { body: { "cases"?: EvalCase[]; "name": string } }): Promise<EvalSuite>;
-  GetEvalSuitesBySuiteIdCases(args: { suite_id: string; body: unknown }): Promise<EvalCase[]>;
+  GetEvalSuitesBySuiteIdCases(args: { suite_id: string; body: unknown }): Promise<EvalCaseList>;
   PostEvalSuitesBySuiteIdCases(args: { suite_id: string; body: EvalCase }): Promise<EvalCase>;
-  DeleteEvalSuitesBySuiteIdCases(args: { suite_id: string; body: unknown }): Promise<unknown>;
   PostEvalSuitesBySuiteIdRuns(args: { suite_id: string; body: { "agent_version_id": string; "baseline_version_id"?: string } }): Promise<EvalRun>;
   GetHealthz(args: { body: unknown }): Promise<unknown>;
+  PostInboxByItemIdClaim(args: { item_id: string; body: InboxClaimRequest }): Promise<InboxItem>;
+  PostInboxByItemIdRelease(args: { item_id: string; body: unknown }): Promise<InboxItem>;
+  PostInboxByItemIdResolve(args: { item_id: string; body: InboxResolveRequest }): Promise<InboxItem>;
   PostKb(args: { body: KBCreate }): Promise<KB>;
   PostKbByKbIdIngest(args: { kb_id: string; body: KBIngestUrl | KBIngestNotion | KBIngestS3 }): Promise<{ "document_id"?: string; "status"?: string }>;
   GetKbByKbIdSearch(args: { kb_id: string; body: unknown }): Promise<RetrievalChunk[]>;
+  GetMarketplace(args: { body: unknown }): Promise<MarketplaceBrowseList>;
   GetMcp(args: { body: unknown }): Promise<MCPServer[]>;
   PostMcp(args: { body: { "config"?: Record<string, unknown>; "source": string } }): Promise<MCPServer>;
   GetReadyz(args: { body: unknown }): Promise<unknown>;
@@ -693,9 +1292,17 @@ export interface CpApi {
   PatchWorkspacesByWorkspaceId(args: { workspace_id: string; body: WorkspacePatch }): Promise<Workspace>;
   GetWorkspacesByWorkspaceIdApiKeys(args: { workspace_id: string; body: unknown }): Promise<APIKey[]>;
   PostWorkspacesByWorkspaceIdApiKeys(args: { workspace_id: string; body: { "name": string; "scopes": string[] } }): Promise<APIKeyCreated>;
+  GetWorkspacesByWorkspaceIdCobuilder(args: { workspace_id: string; body: unknown }): Promise<CoBuilderWorkspace>;
+  PostWorkspacesByWorkspaceIdEvalCasesFromResolution(args: { workspace_id: string; body: ResolutionEvalCaseRequest }): Promise<ResolutionEvalCaseResponse>;
+  GetWorkspacesByWorkspaceIdInbox(args: { workspace_id: string; body: unknown }): Promise<InboxItemList>;
+  PostWorkspacesByWorkspaceIdInboxEscalate(args: { workspace_id: string; body: InboxEscalateRequest }): Promise<InboxItem>;
   GetWorkspacesByWorkspaceIdMembers(args: { workspace_id: string; body: unknown }): Promise<WorkspaceMember[]>;
   PostWorkspacesByWorkspaceIdMembers(args: { workspace_id: string; body: { "email": string; "role": "owner" | "admin" | "editor" | "operator" | "viewer" } }): Promise<WorkspaceMember>;
+  GetWorkspacesByWorkspaceIdMigrationParity(args: { workspace_id: string; body: unknown }): Promise<MigrationParityWorkspace>;
   GetWorkspacesByWorkspaceIdSecrets(args: { workspace_id: string; body: unknown }): Promise<SecretRef[]>;
+  GetWorkspacesByWorkspaceIdVoiceConfig(args: { workspace_id: string; body: unknown }): Promise<VoiceConfig>;
+  PatchWorkspacesByWorkspaceIdVoiceConfig(args: { workspace_id: string; body: VoiceConfigPatch }): Promise<VoiceConfig>;
+  GetWorkspacesByWorkspaceIdVoiceStage(args: { workspace_id: string; body: unknown }): Promise<VoiceStageModel>;
 }
 
 export function createCpApi(opts: CpApiClientOptions): CpApi {
@@ -705,27 +1312,37 @@ export function createCpApi(opts: CpApiClientOptions): CpApi {
     PostAgents: (args) => fetcher<Agent>("POST", `/agents`, args.body),
     GetAgentsByAgentId: (args) => fetcher<Agent>("GET", `/agents/${encodeURIComponent(args.agent_id)}`, args.body),
     DeleteAgentsByAgentId: (args) => fetcher<unknown>("DELETE", `/agents/${encodeURIComponent(args.agent_id)}`, args.body),
+    GetAgentsByAgentIdConductor: (args) => fetcher<ConductorData>("GET", `/agents/${encodeURIComponent(args.agent_id)}/conductor`, args.body),
     GetAgentsByAgentIdConversations: (args) => fetcher<{ "items"?: Conversation[]; "next_cursor"?: string | null }>("GET", `/agents/${encodeURIComponent(args.agent_id)}/conversations`, args.body),
     PostAgentsByAgentIdInvoke: (args) => fetcher<AgentResponse>("POST", `/agents/${encodeURIComponent(args.agent_id)}/invoke`, args.body),
+    GetAgentsByAgentIdMemory: (args) => fetcher<MemoryStudioEntryList>("GET", `/agents/${encodeURIComponent(args.agent_id)}/memory`, args.body),
+    DeleteAgentsByAgentIdMemoryUserByMemoryKey: (args) => fetcher<unknown>("DELETE", `/agents/${encodeURIComponent(args.agent_id)}/memory/user/${encodeURIComponent(args.memory_key)}`, args.body),
+    GetAgentsByAgentIdTools: (args) => fetcher<AgentToolList>("GET", `/agents/${encodeURIComponent(args.agent_id)}/tools`, args.body),
+    GetAgentsByAgentIdVersions: (args) => fetcher<AgentVersionList>("GET", `/agents/${encodeURIComponent(args.agent_id)}/versions`, args.body),
     PostAgentsByAgentIdVersions: (args) => fetcher<AgentVersion>("POST", `/agents/${encodeURIComponent(args.agent_id)}/versions`, args.body),
+    PostAgentsByAgentIdVersionsByVersionIdPromote: (args) => fetcher<Agent>("POST", `/agents/${encodeURIComponent(args.agent_id)}/versions/${encodeURIComponent(args.version_id)}/promote`, args.body),
     GetAuditEventsLegacy: (args) => fetcher<AuditEventList>("GET", `/audit-events`, args.body),
     GetAuditEvents: (args) => fetcher<AuditEventList>("GET", `/audit/events`, args.body),
     PostAuthExchange: (args) => fetcher<AuthExchangeResponse>("POST", `/auth/exchange`, args.body),
     GetBudgets: (args) => fetcher<Budget[]>("GET", `/budgets`, args.body),
     PostBudgets: (args) => fetcher<Budget>("POST", `/budgets`, args.body),
     GetConversationsByConversationId: (args) => fetcher<ConversationDetail>("GET", `/conversations/${encodeURIComponent(args.conversation_id)}`, args.body),
-    PostConversationsByConversationIdMessages: (args) => fetcher<unknown>("POST", `/conversations/${encodeURIComponent(args.conversation_id)}/messages`, args.body),
+    PostConversationsByConversationIdHandback: (args) => fetcher<Conversation>("POST", `/conversations/${encodeURIComponent(args.conversation_id)}/handback`, args.body),
+    PostConversationsByConversationIdOperatorMessages: (args) => fetcher<ConversationMessage>("POST", `/conversations/${encodeURIComponent(args.conversation_id)}/operator-messages`, args.body),
     PostConversationsByConversationIdTakeover: (args) => fetcher<Conversation>("POST", `/conversations/${encodeURIComponent(args.conversation_id)}/takeover`, args.body),
     GetEvalRunsByRunId: (args) => fetcher<EvalRunDetail>("GET", `/eval-runs/${encodeURIComponent(args.run_id)}`, args.body),
     PostEvalSuites: (args) => fetcher<EvalSuite>("POST", `/eval-suites`, args.body),
-    GetEvalSuitesBySuiteIdCases: (args) => fetcher<EvalCase[]>("GET", `/eval-suites/${encodeURIComponent(args.suite_id)}/cases`, args.body),
+    GetEvalSuitesBySuiteIdCases: (args) => fetcher<EvalCaseList>("GET", `/eval-suites/${encodeURIComponent(args.suite_id)}/cases`, args.body),
     PostEvalSuitesBySuiteIdCases: (args) => fetcher<EvalCase>("POST", `/eval-suites/${encodeURIComponent(args.suite_id)}/cases`, args.body),
-    DeleteEvalSuitesBySuiteIdCases: (args) => fetcher<unknown>("DELETE", `/eval-suites/${encodeURIComponent(args.suite_id)}/cases`, args.body),
     PostEvalSuitesBySuiteIdRuns: (args) => fetcher<EvalRun>("POST", `/eval-suites/${encodeURIComponent(args.suite_id)}/runs`, args.body),
     GetHealthz: (args) => fetcher<unknown>("GET", `/healthz`, args.body),
+    PostInboxByItemIdClaim: (args) => fetcher<InboxItem>("POST", `/inbox/${encodeURIComponent(args.item_id)}/claim`, args.body),
+    PostInboxByItemIdRelease: (args) => fetcher<InboxItem>("POST", `/inbox/${encodeURIComponent(args.item_id)}/release`, args.body),
+    PostInboxByItemIdResolve: (args) => fetcher<InboxItem>("POST", `/inbox/${encodeURIComponent(args.item_id)}/resolve`, args.body),
     PostKb: (args) => fetcher<KB>("POST", `/kb`, args.body),
     PostKbByKbIdIngest: (args) => fetcher<{ "document_id"?: string; "status"?: string }>("POST", `/kb/${encodeURIComponent(args.kb_id)}/ingest`, args.body),
     GetKbByKbIdSearch: (args) => fetcher<RetrievalChunk[]>("GET", `/kb/${encodeURIComponent(args.kb_id)}/search`, args.body),
+    GetMarketplace: (args) => fetcher<MarketplaceBrowseList>("GET", `/marketplace`, args.body),
     GetMcp: (args) => fetcher<MCPServer[]>("GET", `/mcp`, args.body),
     PostMcp: (args) => fetcher<MCPServer>("POST", `/mcp`, args.body),
     GetReadyz: (args) => fetcher<unknown>("GET", `/readyz`, args.body),
@@ -742,8 +1359,16 @@ export function createCpApi(opts: CpApiClientOptions): CpApi {
     PatchWorkspacesByWorkspaceId: (args) => fetcher<Workspace>("PATCH", `/workspaces/${encodeURIComponent(args.workspace_id)}`, args.body),
     GetWorkspacesByWorkspaceIdApiKeys: (args) => fetcher<APIKey[]>("GET", `/workspaces/${encodeURIComponent(args.workspace_id)}/api-keys`, args.body),
     PostWorkspacesByWorkspaceIdApiKeys: (args) => fetcher<APIKeyCreated>("POST", `/workspaces/${encodeURIComponent(args.workspace_id)}/api-keys`, args.body),
+    GetWorkspacesByWorkspaceIdCobuilder: (args) => fetcher<CoBuilderWorkspace>("GET", `/workspaces/${encodeURIComponent(args.workspace_id)}/cobuilder`, args.body),
+    PostWorkspacesByWorkspaceIdEvalCasesFromResolution: (args) => fetcher<ResolutionEvalCaseResponse>("POST", `/workspaces/${encodeURIComponent(args.workspace_id)}/eval-cases/from-resolution`, args.body),
+    GetWorkspacesByWorkspaceIdInbox: (args) => fetcher<InboxItemList>("GET", `/workspaces/${encodeURIComponent(args.workspace_id)}/inbox`, args.body),
+    PostWorkspacesByWorkspaceIdInboxEscalate: (args) => fetcher<InboxItem>("POST", `/workspaces/${encodeURIComponent(args.workspace_id)}/inbox/escalate`, args.body),
     GetWorkspacesByWorkspaceIdMembers: (args) => fetcher<WorkspaceMember[]>("GET", `/workspaces/${encodeURIComponent(args.workspace_id)}/members`, args.body),
     PostWorkspacesByWorkspaceIdMembers: (args) => fetcher<WorkspaceMember>("POST", `/workspaces/${encodeURIComponent(args.workspace_id)}/members`, args.body),
+    GetWorkspacesByWorkspaceIdMigrationParity: (args) => fetcher<MigrationParityWorkspace>("GET", `/workspaces/${encodeURIComponent(args.workspace_id)}/migration/parity`, args.body),
     GetWorkspacesByWorkspaceIdSecrets: (args) => fetcher<SecretRef[]>("GET", `/workspaces/${encodeURIComponent(args.workspace_id)}/secrets`, args.body),
+    GetWorkspacesByWorkspaceIdVoiceConfig: (args) => fetcher<VoiceConfig>("GET", `/workspaces/${encodeURIComponent(args.workspace_id)}/voice/config`, args.body),
+    PatchWorkspacesByWorkspaceIdVoiceConfig: (args) => fetcher<VoiceConfig>("PATCH", `/workspaces/${encodeURIComponent(args.workspace_id)}/voice/config`, args.body),
+    GetWorkspacesByWorkspaceIdVoiceStage: (args) => fetcher<VoiceStageModel>("GET", `/workspaces/${encodeURIComponent(args.workspace_id)}/voice/stage`, args.body),
   };
 }

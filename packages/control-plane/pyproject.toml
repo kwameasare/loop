@@ -13,6 +13,7 @@ dependencies = [
     # Cross-channel idempotency primitives (P0.5g) used by the
     # /v1/webhooks/incoming/{channel} dispatcher (P0.4).
     "loop-channels-core",
+    "loop-memory",
     # OpenTelemetry tracing (P0.7c). Auto-instruments FastAPI so every
     # request becomes a span propagated to dp-runtime via traceparent.
     "opentelemetry-api>=1.27",

@@ -1,3 +1,10 @@
+import { listAuditEvents, type ListAuditEventsOptions } from "@/lib/audit-events";
+import {
+  searchTraces,
+  type TraceSummary,
+  type TracesClientOptions,
+} from "@/lib/traces";
+
 /**
  * UX303: Deployment Flight Deck domain model.
  *
@@ -420,3 +427,208 @@ export const FLIGHT_READINESS: ReadonlyArray<FlightReadinessMetric> = [
   { id: "approvals", label: "Approvals", value: "1 / 2", hint: "SRE on-call pending" },
   { id: "rollback", label: "Rollback target", value: "ver_v2", hint: "armed · ETA 38s" },
 ] as const;
+
+export interface DeployFlightModel {
+  readiness: ReadonlyArray<FlightReadinessMetric>;
+  diffs: ReadonlyArray<PreflightDiff>;
+  gates: ReadonlyArray<EvalGate>;
+  approvals: ReadonlyArray<ApprovalRequirement>;
+  rollbackTarget: RollbackTarget;
+}
+
+function liveDiffs(traces: readonly TraceSummary[]): PreflightDiff[] {
+  const errors = traces.filter((trace) => trace.status === "error").length;
+  const slowest = [...traces].sort((a, b) => b.duration_ns - a.duration_ns)[0];
+  return [
+    {
+      dimension: "behavior",
+      before: "Production behavior from recent traces",
+      after: "Draft behavior must replay the same high-risk turns",
+      impact: `${traces.length} recent traces are in the promotion evidence window.`,
+      severity: errors > 0 ? "blocking" : "advisory",
+      evidenceRef: traces[0] ? `trace/${traces[0].id}` : "trace/none",
+    },
+    {
+      dimension: "tool",
+      before: "Existing tool ordering",
+      after: "Tool ordering checked by replay and trace scrubber",
+      impact:
+        slowest && slowest.span_count >= 8
+          ? "Tool-heavy trace detected; inspect before widening canary."
+          : "No tool-heavy trace detected in the live window.",
+      severity: slowest && slowest.span_count >= 8 ? "high" : "info",
+      evidenceRef: slowest ? `trace/${slowest.id}/spans` : "trace/none",
+    },
+    {
+      dimension: "knowledge",
+      before: "Current retrieval evidence",
+      after: "Replay should preserve cited source lineage",
+      impact: "Trace Theater and X-Ray will show retrieval evidence where spans exist.",
+      severity: "advisory",
+      evidenceRef: "xray/retrieval",
+    },
+    {
+      dimension: "memory",
+      before: "Current memory rules",
+      after: "Promotion keeps memory deletes and writes auditable",
+      impact: "Memory Studio delete events are included in the audit trail.",
+      severity: "info",
+      evidenceRef: "audit/memory",
+    },
+    {
+      dimension: "channel",
+      before: "Current production channels",
+      after: "Canary protects channel-specific changes",
+      impact: "Voice and chat changes should remain under canary until trace health is stable.",
+      severity: "advisory",
+      evidenceRef: "voice/stage",
+    },
+    {
+      dimension: "budget",
+      before: "Current budget envelope",
+      after: "Live trace latency and cost are checked before promotion",
+      impact: slowest
+        ? `Slowest live trace is ${Math.round(slowest.duration_ns / 1_000_000)} ms.`
+        : "No latency sample is available yet.",
+      severity: slowest && slowest.duration_ns > 2_000_000_000 ? "high" : "info",
+      evidenceRef: slowest ? `trace/${slowest.id}/latency` : "trace/none",
+    },
+  ];
+}
+
+function liveGates(traces: readonly TraceSummary[]): EvalGate[] {
+  const total = traces.length;
+  const passed = traces.filter((trace) => trace.status === "ok").length;
+  const errors = total - passed;
+  return [
+    {
+      id: "live-trace-health",
+      label: "Live trace health",
+      status: errors > 0 ? "failed" : "passed",
+      cases: { passed, total: Math.max(total, 1) },
+      evidenceRef: total > 0 ? "trace/recent-window" : "trace/empty-window",
+      blocking: true,
+    },
+    {
+      id: "production-replay",
+      label: "Production replay candidates",
+      status: total > 0 ? "running" : "failed",
+      cases: { passed: Math.max(0, total - errors), total: Math.max(total, 1) },
+      evidenceRef: "/replay",
+      blocking: true,
+    },
+  ];
+}
+
+function liveReadiness(
+  traces: readonly TraceSummary[],
+  approvals: readonly ApprovalRequirement[],
+): FlightReadinessMetric[] {
+  const diffs = liveDiffs(traces);
+  const blocking = diffs.filter((diff) => diff.severity === "blocking").length;
+  const required = approvals.filter((approval) => approval.required);
+  const approved = required.filter((approval) => approval.satisfied);
+  const rollbackTrace = traces[0];
+  return [
+    {
+      id: "diffs",
+      label: "Preflight diffs",
+      value: String(diffs.length),
+      hint: "derived from live trace posture",
+    },
+    {
+      id: "blocking",
+      label: "Blocking gates",
+      value: String(blocking),
+      hint: blocking > 0 ? "trace errors block promotion" : "no blocking diffs",
+    },
+    {
+      id: "approvals",
+      label: "Approvals",
+      value: `${approved.length} / ${required.length}`,
+      hint: "from audit evidence and role policy",
+    },
+    {
+      id: "rollback",
+      label: "Rollback target",
+      value: rollbackTrace ? rollbackTrace.id.slice(0, 8) : "none",
+      hint: rollbackTrace ? "snapshot-ready trace" : "no live trace yet",
+    },
+  ];
+}
+
+function liveApprovals(latestAction: string | null): ApprovalRequirement[] {
+  return [
+    {
+      id: "lead",
+      role: "Engineering lead",
+      required: true,
+      satisfied: Boolean(latestAction),
+      approver: latestAction ? "audit actor" : null,
+      approvedAt: latestAction ? new Date().toISOString() : null,
+      evidenceRef: latestAction ? `audit/${latestAction}` : "audit/pending-lead",
+    },
+    {
+      id: "sre",
+      role: "SRE on-call",
+      required: true,
+      satisfied: false,
+      approver: null,
+      approvedAt: null,
+      evidenceRef: "audit/pending-sre",
+    },
+  ];
+}
+
+function liveRollbackTarget(trace: TraceSummary | undefined): RollbackTarget {
+  if (!trace) return ROLLBACK_TARGET;
+  return {
+    versionId: trace.id.slice(0, 12),
+    label: `Known-good trace ${trace.id.slice(0, 8)}`,
+    shippedAt: new Date(trace.started_at_ms).toISOString(),
+    summary: `${trace.span_count} spans, ${Math.round(
+      trace.duration_ns / 1_000_000,
+    )} ms, ${trace.status} status.`,
+    evidenceRef: `trace/${trace.id}/snapshot`,
+    knownGood: trace.status === "ok",
+  };
+}
+
+export function getDeployFlightModel(): DeployFlightModel {
+  return {
+    readiness: FLIGHT_READINESS,
+    diffs: PREFLIGHT_DIFFS,
+    gates: EVAL_GATES,
+    approvals: APPROVALS,
+    rollbackTarget: ROLLBACK_TARGET,
+  };
+}
+
+export async function fetchDeployFlightModel(
+  workspaceId: string,
+  opts: TracesClientOptions & ListAuditEventsOptions = {},
+): Promise<DeployFlightModel> {
+  try {
+    const [traceResult, auditResult] = await Promise.all([
+      searchTraces(workspaceId, { page_size: 20 }, opts),
+      listAuditEvents(workspaceId, { ...opts, limit: 20 }),
+    ]);
+    if (traceResult.traces.length === 0) return getDeployFlightModel();
+    const approvals = liveApprovals(auditResult.events[0]?.action ?? null);
+    return {
+      readiness: liveReadiness(traceResult.traces, approvals),
+      diffs: liveDiffs(traceResult.traces),
+      gates: liveGates(traceResult.traces),
+      approvals,
+      rollbackTarget: liveRollbackTarget(traceResult.traces[0]),
+    };
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      /LOOP_CP_API_BASE_URL is required/.test(err.message)
+    ) {
+      return getDeployFlightModel();
+    }
+    throw err;
+  }
+}

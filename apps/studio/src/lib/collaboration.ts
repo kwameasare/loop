@@ -7,6 +7,13 @@
  */
 
 import { TRACE_CLIENT, TRACE_PRODUCER, TRACE_SERVER } from "@/lib/design-tokens";
+import { listAuditEvents, type ListAuditEventsOptions } from "@/lib/audit-events";
+import {
+  fetchTraceByTurnId,
+  searchTraces,
+  type Trace,
+  type TracesClientOptions,
+} from "@/lib/traces";
 
 // ---------------------------------------------------------------------------
 // Presence
@@ -122,6 +129,12 @@ export interface PairDebugSession {
   participants: readonly PresenceUser[];
   /** Current playhead offset in ms; clamped within trace range. */
   playheadMs: number;
+}
+
+export interface CollaborationWorkspace {
+  presence: readonly PresenceUser[];
+  changeset: Changeset;
+  pairDebug: PairDebugSession;
 }
 
 export class PlayheadError extends Error {
@@ -284,3 +297,115 @@ export const FIXTURE_PAIR_DEBUG: PairDebugSession = {
     },
   ],
 };
+
+function traceKind(category: Trace["spans"][number]["category"]): TraceEvent["kind"] {
+  if (category === "tool" || category === "retrieval") return "tool_call";
+  if (category === "llm") return "model_call";
+  if (category === "policy" || category === "budget") return "guardrail";
+  if (category === "channel") return "user_turn";
+  return "agent_turn";
+}
+
+function pairDebugFromTrace(trace: Trace): PairDebugSession {
+  const spans = [...trace.spans].sort((a, b) => a.start_ns - b.start_ns);
+  const traceEvents: TraceEvent[] = spans.map((span) => ({
+    id: span.id,
+    ts: new Date(Date.UTC(2026, 4, 7) + span.start_ns / 1_000_000).toISOString(),
+    offsetMs: Math.round(span.start_ns / 1_000_000),
+    kind: traceKind(span.category),
+    summary: `${span.name} ${span.status}`,
+    evidenceRef: `${trace.id}/${span.id}`,
+  }));
+  return {
+    id: `pd_${trace.id.slice(0, 12)}`,
+    participants: FIXTURE_PRESENCE.slice(0, 1),
+    playheadMs: traceEvents[0]?.offsetMs ?? 0,
+    trace: traceEvents.length > 0 ? traceEvents : FIXTURE_PAIR_DEBUG.trace,
+  };
+}
+
+function changesetFromAudit(
+  workspaceId: string,
+  latestAction: string | null,
+): Changeset {
+  const evidenceRef = latestAction
+    ? `audit/${workspaceId}/${latestAction}`
+    : `audit/${workspaceId}/no-recent-write`;
+  return {
+    id: `cs_${workspaceId.slice(0, 8)}`,
+    title: latestAction
+      ? `Review impact of ${latestAction}`
+      : "No pending changeset in the live audit window",
+    authorDisplay: latestAction ? "Workspace actor" : "Loop system",
+    createdAt: new Date().toISOString(),
+    evidenceRef,
+    approvals: [
+      {
+        axis: "behavior",
+        state: latestAction ? "pending" : "approved",
+        evidenceRef: `${evidenceRef}/behavior`,
+      },
+      {
+        axis: "eval",
+        state: latestAction ? "pending" : "approved",
+        evidenceRef: `${evidenceRef}/eval`,
+      },
+      {
+        axis: "cost",
+        state: "approved",
+        reviewer: "Cost guard",
+        decidedAt: new Date().toISOString(),
+        evidenceRef: `${evidenceRef}/cost`,
+      },
+      {
+        axis: "latency",
+        state: "approved",
+        reviewer: "Latency guard",
+        decidedAt: new Date().toISOString(),
+        evidenceRef: `${evidenceRef}/latency`,
+      },
+    ],
+  };
+}
+
+export async function fetchCollaborationWorkspace(
+  workspaceId: string,
+  opts: TracesClientOptions & ListAuditEventsOptions = {},
+): Promise<CollaborationWorkspace> {
+  try {
+    const [traceResult, auditResult] = await Promise.all([
+      searchTraces(workspaceId, { page_size: 1 }, opts),
+      listAuditEvents(workspaceId, { ...opts, limit: 20 }),
+    ]);
+    const traceId = traceResult.traces[0]?.id;
+    const trace = traceId
+      ? await fetchTraceByTurnId(traceId, opts).catch(() => null)
+      : null;
+    const latestAction = auditResult.events[0]?.action ?? null;
+    return {
+      presence: [
+        {
+          id: "current_builder",
+          display: "Current builder",
+          color: TRACE_SERVER,
+          status: "active",
+          focus: traceId ? `trace/${traceId.slice(0, 8)}` : "workspace",
+        },
+      ],
+      changeset: changesetFromAudit(workspaceId, latestAction),
+      pairDebug: trace ? pairDebugFromTrace(trace) : FIXTURE_PAIR_DEBUG,
+    };
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      /LOOP_CP_API_BASE_URL is required/.test(err.message)
+    ) {
+      return {
+        presence: FIXTURE_PRESENCE,
+        changeset: FIXTURE_CHANGESET,
+        pairDebug: FIXTURE_PAIR_DEBUG,
+      };
+    }
+    throw err;
+  }
+}

@@ -1,13 +1,10 @@
 /**
  * Agent-version data shapes and a thin loader the versions tab calls.
  *
- * The cp-api currently exposes ``POST /v1/agents/{id}/versions`` for
- * deploys but no GET-list endpoint and no ``config_json`` field on
- * AgentVersion (see openapi.yaml#components/schemas/AgentVersion).
- * Studio needs both to render the diff viewer, so we ship a small
- * studio-local type + fixture loader. The loader is wired so swapping
- * to a real endpoint is a one-line change once the cp-api story
- * (S560 / S561 — see Open questions on S160) lands.
+ * The cp-api exposes ``GET /v1/agents/{id}/versions`` and promotion
+ * via ``POST /v1/agents/{id}/versions/{version_id}/promote``. Studio
+ * maps the stored free-form ``spec`` into pretty JSON for the diff
+ * viewer and falls back to fixtures only in no-backend local mode.
  */
 
 export type DeployState =
@@ -46,6 +43,8 @@ export interface ListAgentVersionsResponse {
 
 export interface ListAgentVersionsOptions {
   fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
   cursor?: string;
   pageSize?: number;
 }
@@ -61,7 +60,8 @@ export async function listAgentVersions(
   agentId: string,
   opts: ListAgentVersionsOptions = {},
 ): Promise<ListAgentVersionsResponse> {
-  const all = fixtureVersions(agentId);
+  const live = await fetchLiveAgentVersions(agentId, opts);
+  const all = live ?? fixtureVersions(agentId);
   const pageSize = opts.pageSize ?? 5;
   const cursorIdx = opts.cursor ? Number.parseInt(opts.cursor, 10) || 0 : 0;
   const slice = all.slice(cursorIdx, cursorIdx + pageSize);
@@ -69,6 +69,96 @@ export async function listAgentVersions(
     ? String(cursorIdx + pageSize)
     : null;
   return { items: slice, next_cursor: next };
+}
+
+interface CpAgentVersion {
+  id: string;
+  agent_id: string;
+  version: number;
+  spec?: Record<string, unknown>;
+  notes?: string;
+  created_at?: string;
+  created_by?: string;
+}
+
+function cpApiBaseUrl(override?: string): string | null {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) return null;
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+function versionHeaders(
+  opts: Pick<ListAgentVersionsOptions, "token">,
+): Record<string, string> {
+  const headers: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  return headers;
+}
+
+function isDeployState(value: unknown): value is DeployState {
+  return (
+    value === "inactive" ||
+    value === "canary" ||
+    value === "active" ||
+    value === "rolled_back"
+  );
+}
+
+function isEvalStatus(value: unknown): value is EvalStatus {
+  return (
+    value === "pending" ||
+    value === "running" ||
+    value === "passed" ||
+    value === "failed" ||
+    value === "skipped"
+  );
+}
+
+function mapCpVersion(version: CpAgentVersion): AgentVersionDetail {
+  const spec = version.spec ?? {};
+  return {
+    id: version.id,
+    agent_id: version.agent_id,
+    version: version.version,
+    deploy_state: isDeployState(spec.deploy_state)
+      ? spec.deploy_state
+      : "inactive",
+    deployed_at: version.created_at ?? null,
+    eval_status: isEvalStatus(spec.eval_status) ? spec.eval_status : "skipped",
+    config_json: JSON.stringify(spec, null, 2),
+    promoted_to:
+      typeof spec.promoted_to === "string" ? spec.promoted_to : null,
+  };
+}
+
+async function fetchLiveAgentVersions(
+  agentId: string,
+  opts: ListAgentVersionsOptions,
+): Promise<AgentVersionDetail[] | null> {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) return null;
+  const fetcher = opts.fetcher ?? fetch;
+  const response = await fetcher(
+    `${base}/agents/${encodeURIComponent(agentId)}/versions`,
+    {
+      method: "GET",
+      headers: versionHeaders(opts),
+      cache: "no-store",
+    },
+  );
+  if (response.status === 404) return [];
+  if (!response.ok) {
+    throw new Error(`cp-api GET agent versions -> ${response.status}`);
+  }
+  const body = (await response.json()) as { items?: CpAgentVersion[] };
+  return (body.items ?? [])
+    .map(mapCpVersion)
+    .sort((a, b) => b.version - a.version);
 }
 
 /**
@@ -116,6 +206,7 @@ function fixtureVersions(agentId: string): AgentVersionDetail[] {
 }
 
 export interface PromoteAgentVersionInput {
+  agentId?: string;
   versionId: string;
   /** Stage to promote into. Defaults to "production". */
   stage?: string;
@@ -134,9 +225,7 @@ export interface PromoteAgentVersionOptions {
 }
 
 /**
- * POST to cp-api ``/v1/agent-versions/{id}/promote``. The endpoint is
- * tracked under follow-up S560 — until it lands the call will surface
- * a 404 to the toast layer, which is the failure UX we want anyway.
+ * POST to cp-api ``/v1/agents/{agent_id}/versions/{version_id}/promote``.
  */
 export async function promoteAgentVersion(
   input: PromoteAgentVersionInput,
@@ -150,6 +239,9 @@ export async function promoteAgentVersion(
   if (!baseRaw) {
     throw new Error("LOOP_CP_API_BASE_URL is required to promote a version");
   }
+  if (!input.agentId) {
+    throw new Error("agentId is required to promote a version");
+  }
   const trimmed = baseRaw.replace(/\/$/, "");
   const base = trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
   const f = opts.fetcher ?? fetch;
@@ -159,7 +251,9 @@ export async function promoteAgentVersion(
   };
   if (opts.token) headers.authorization = `Bearer ${opts.token}`;
   const response = await f(
-    `${base}/agent-versions/${encodeURIComponent(input.versionId)}/promote`,
+    `${base}/agents/${encodeURIComponent(
+      input.agentId,
+    )}/versions/${encodeURIComponent(input.versionId)}/promote`,
     { method: "POST", headers, body: JSON.stringify({ stage }) },
   );
   if (!response.ok) {

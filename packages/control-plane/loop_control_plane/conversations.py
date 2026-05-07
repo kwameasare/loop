@@ -26,6 +26,16 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, ConfigDict, Field
 
 ConversationState = Literal["open", "closed", "in-takeover"]
+ConversationRole = Literal["user", "assistant", "operator", "system"]
+
+
+class ConversationMessage(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+    id: UUID
+    conversation_id: UUID
+    role: ConversationRole
+    body: str
+    created_at: datetime
 
 
 class ConversationSummary(BaseModel):
@@ -47,6 +57,7 @@ class ConversationDetail(BaseModel):
     last_user_message: str
     last_assistant_message: str
     metadata: dict[str, Any]
+    messages: tuple[ConversationMessage, ...] = ()
 
 
 class ConversationError(ValueError):
@@ -131,6 +142,83 @@ class ConversationService:
                 )
             return updated
 
+    async def handback(
+        self,
+        *,
+        workspace_id: UUID,
+        conversation_id: UUID,
+        operator_sub: str,
+        note: str = "",
+    ) -> ConversationSummary:
+        """Return an operator-owned conversation to the agent."""
+        async with self._lock:
+            summary = self._summaries.get(conversation_id)
+            if summary is None or summary.workspace_id != workspace_id:
+                raise ConversationError(f"unknown conversation: {conversation_id}")
+            updated = summary.model_copy(
+                update={
+                    "state": "open",
+                    "operator_taken_over": False,
+                    "last_message_at": datetime.now(UTC),
+                }
+            )
+            self._summaries[conversation_id] = updated
+            detail = self._details.get(conversation_id)
+            if detail is not None:
+                new_meta = dict(detail.metadata)
+                new_meta["operator_handback"] = {
+                    "operator_sub": operator_sub,
+                    "note": note,
+                    "at": updated.last_message_at.isoformat(),
+                }
+                self._details[conversation_id] = detail.model_copy(
+                    update={"summary": updated, "metadata": new_meta}
+                )
+            return updated
+
+    async def operator_reply(
+        self,
+        *,
+        workspace_id: UUID,
+        conversation_id: UUID,
+        body: str,
+    ) -> ConversationMessage:
+        """Append an operator reply while the conversation is in takeover."""
+        async with self._lock:
+            detail = self._details.get(conversation_id)
+            if detail is None or detail.summary.workspace_id != workspace_id:
+                raise ConversationError(f"unknown conversation: {conversation_id}")
+            if not detail.summary.operator_taken_over:
+                raise ConversationError(
+                    f"conversation is not in operator takeover: {conversation_id}"
+                )
+            now = datetime.now(UTC)
+            message = ConversationMessage(
+                id=uuid4(),
+                conversation_id=conversation_id,
+                role="operator",
+                body=body,
+                created_at=now,
+            )
+            summary = detail.summary.model_copy(
+                update={
+                    "last_message_at": now,
+                    "message_count": detail.summary.message_count + 1,
+                }
+            )
+            self._summaries[conversation_id] = summary
+            self._details[conversation_id] = detail.model_copy(
+                update={
+                    "summary": summary,
+                    "messages": (*detail.messages, message),
+                    "metadata": {
+                        **detail.metadata,
+                        "last_operator_message_at": now.isoformat(),
+                    },
+                }
+            )
+            return message
+
     # ---------------------------------------------------------------- #
     # Test seam — the dp will inject rows in production via the
     # forward_data_plane_call proxy. Tests use this directly.
@@ -147,6 +235,17 @@ class ConversationService:
     ) -> ConversationDetail:
         cid = uuid4()
         now = datetime.now(UTC)
+        messages: list[ConversationMessage] = []
+        if last_user_message:
+            messages.append(
+                ConversationMessage(
+                    id=uuid4(),
+                    conversation_id=cid,
+                    role="user",
+                    body=last_user_message,
+                    created_at=now,
+                )
+            )
         summary = ConversationSummary(
             id=cid,
             workspace_id=workspace_id,
@@ -156,13 +255,24 @@ class ConversationService:
             operator_taken_over=False,
             created_at=now,
             last_message_at=now,
-            message_count=2,
+            message_count=len(messages),
         )
+        if last_assistant_message:
+            messages.append(
+                ConversationMessage(
+                    id=uuid4(),
+                    conversation_id=cid,
+                    role="assistant",
+                    body=last_assistant_message,
+                    created_at=now,
+                )
+            )
         detail = ConversationDetail(
             summary=summary,
             last_user_message=last_user_message,
             last_assistant_message=last_assistant_message,
             metadata={},
+            messages=tuple(messages),
         )
         async with self._lock:
             self._summaries[cid] = summary
@@ -184,18 +294,30 @@ def serialise_summary(s: ConversationSummary) -> dict[str, Any]:
     }
 
 
+def serialise_message(m: ConversationMessage) -> dict[str, Any]:
+    return {
+        "id": str(m.id),
+        "conversation_id": str(m.conversation_id),
+        "role": m.role,
+        "body": m.body,
+        "created_at": m.created_at.isoformat(),
+    }
+
+
 def serialise_detail(d: ConversationDetail) -> dict[str, Any]:
     return {
         "summary": serialise_summary(d.summary),
         "last_user_message": d.last_user_message,
         "last_assistant_message": d.last_assistant_message,
         "metadata": d.metadata,
+        "messages": [serialise_message(message) for message in d.messages],
     }
 
 
 __all__ = [
     "ConversationDetail",
     "ConversationError",
+    "ConversationMessage",
     "ConversationService",
     "ConversationState",
     "ConversationSummary",

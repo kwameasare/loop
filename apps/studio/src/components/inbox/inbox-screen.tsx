@@ -17,7 +17,12 @@ type Props = {
   workspace_id: string;
   operator_id: string;
   now_ms: number;
+  onClaimItem?: InboxMutation;
+  onReleaseItem?: InboxMutation;
+  onResolveItem?: InboxMutation;
 };
+
+type InboxMutation = (item: InboxItem) => Promise<InboxItem>;
 
 type Reply = { item_id: string; body: string };
 
@@ -26,6 +31,8 @@ export function InboxScreen(props: Props): JSX.Element {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<string>("");
   const [sentReplies, setSentReplies] = useState<Reply[]>([]);
+  const [busyItemId, setBusyItemId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const pending = useMemo(
     () => listPending(items, props.workspace_id),
@@ -44,18 +51,51 @@ export function InboxScreen(props: Props): JSX.Element {
     setItems((prev) => prev.map((i) => (i.id === next.id ? next : i)));
   }
 
-  function handleClaim(item: InboxItem): void {
+  function errorMessage(err: unknown): string {
+    return err instanceof Error
+      ? err.message
+      : "The inbox action could not be completed.";
+  }
+
+  async function handleClaim(item: InboxItem): Promise<void> {
     const claimed = claimItem(item, {
       operator_id: props.operator_id,
       now_ms: props.now_ms,
     });
     update(claimed);
     setSelectedId(claimed.id);
+    if (!props.onClaimItem) return;
+    setBusyItemId(item.id);
+    setActionError(null);
+    try {
+      const committed = await props.onClaimItem(item);
+      update(committed);
+      setSelectedId(committed.id);
+    } catch (err) {
+      update(item);
+      setSelectedId(null);
+      setActionError(errorMessage(err));
+    } finally {
+      setBusyItemId(null);
+    }
   }
 
-  function handleRelease(item: InboxItem): void {
-    update(releaseItem(item));
+  async function handleRelease(item: InboxItem): Promise<void> {
+    const released = releaseItem(item);
+    update(released);
     setDraft("");
+    if (!props.onReleaseItem) return;
+    setBusyItemId(item.id);
+    setActionError(null);
+    try {
+      update(await props.onReleaseItem(item));
+    } catch (err) {
+      update(item);
+      setSelectedId(item.id);
+      setActionError(errorMessage(err));
+    } finally {
+      setBusyItemId(null);
+    }
   }
 
   function handleSend(item: InboxItem): void {
@@ -64,10 +104,23 @@ export function InboxScreen(props: Props): JSX.Element {
     setDraft("");
   }
 
-  function handleResolve(item: InboxItem): void {
-    update(resolveItem(item, { now_ms: props.now_ms }));
+  async function handleResolve(item: InboxItem): Promise<void> {
+    const resolved = resolveItem(item, { now_ms: props.now_ms });
+    update(resolved);
     setDraft("");
     setSelectedId(null);
+    if (!props.onResolveItem) return;
+    setBusyItemId(item.id);
+    setActionError(null);
+    try {
+      update(await props.onResolveItem(item));
+    } catch (err) {
+      update(item);
+      setSelectedId(item.id);
+      setActionError(errorMessage(err));
+    } finally {
+      setBusyItemId(null);
+    }
   }
 
   return (
@@ -109,10 +162,12 @@ export function InboxScreen(props: Props): JSX.Element {
                   <button
                     type="button"
                     className="rounded border px-2 py-1 text-xs font-medium hover:bg-accent"
-                    onClick={() => handleClaim(item)}
+                    onClick={() => void handleClaim(item)}
                     data-testid={`claim-${item.id}`}
+                    disabled={busyItemId === item.id}
+                    aria-busy={busyItemId === item.id}
                   >
-                    Take over
+                    {busyItemId === item.id ? "Taking over" : "Take over"}
                   </button>
                 </div>
               </li>
@@ -154,6 +209,15 @@ export function InboxScreen(props: Props): JSX.Element {
       </aside>
 
       <main className="flex-1 rounded-lg border" data-testid="inbox-detail">
+        {actionError ? (
+          <p
+            className="border-b px-6 py-3 text-sm text-red-600"
+            role="alert"
+            data-testid="inbox-action-error"
+          >
+            {actionError}
+          </p>
+        ) : null}
         {selected === null ? (
           <p className="text-muted-foreground p-6 text-sm">
             Select a conversation from the queue.
@@ -202,10 +266,12 @@ export function InboxScreen(props: Props): JSX.Element {
                   <button
                     type="button"
                     className="rounded border px-3 py-1.5 text-xs font-medium hover:bg-accent"
-                    onClick={() => handleRelease(selected)}
+                    onClick={() => void handleRelease(selected)}
                     data-testid="release-button"
+                    disabled={busyItemId === selected.id}
+                    aria-busy={busyItemId === selected.id}
                   >
-                    Release
+                    {busyItemId === selected.id ? "Releasing" : "Release"}
                   </button>
                   <div className="flex gap-2">
                     <button
@@ -213,17 +279,19 @@ export function InboxScreen(props: Props): JSX.Element {
                       className="rounded border px-3 py-1.5 text-xs font-medium hover:bg-accent"
                       onClick={() => handleSend(selected)}
                       data-testid="send-button"
-                      disabled={!draft.trim()}
+                      disabled={!draft.trim() || busyItemId === selected.id}
                     >
                       Send
                     </button>
                     <button
                       type="button"
                       className="rounded bg-foreground px-3 py-1.5 text-xs font-medium text-background"
-                      onClick={() => handleResolve(selected)}
+                      onClick={() => void handleResolve(selected)}
                       data-testid="resolve-button"
+                      disabled={busyItemId === selected.id}
+                      aria-busy={busyItemId === selected.id}
                     >
-                      Resolve
+                      {busyItemId === selected.id ? "Resolving" : "Resolve"}
                     </button>
                   </div>
                 </div>

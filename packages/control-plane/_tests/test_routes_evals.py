@@ -167,6 +167,68 @@ def test_eval_routes_emit_audit_events(
     assert "eval:run:start" in actions
 
 
+def test_create_case_and_list_cases(
+    client: TestClient, workspace_id: UUID
+) -> None:
+    headers = {"authorization": _bearer_for("owner-1")}
+    suite = client.post(
+        f"/v1/workspaces/{workspace_id}/eval-suites",
+        headers=headers,
+        json={"name": "operator", "dataset_ref": "operator"},
+    ).json()
+    response = client.post(
+        f"/v1/eval-suites/{suite['id']}/cases",
+        headers=headers,
+        json={
+            "name": "refund resolution",
+            "input": {"conversation_id": "conv-1"},
+            "expected": {"outcome": "refund issued"},
+            "scorers": [{"kind": "llm_judge", "config": {}}],
+            "source": "operator-resolution",
+            "source_ref": "trace-1",
+            "attachments": ["tool/refund"],
+        },
+    )
+    assert response.status_code == 201, response.text
+    assert response.json()["source"] == "operator-resolution"
+
+    cases = client.get(
+        f"/v1/eval-suites/{suite['id']}/cases", headers=headers
+    ).json()["items"]
+    assert cases[0]["name"] == "refund resolution"
+
+
+def test_create_case_from_resolution_creates_operator_suite_and_audit(
+    client: TestClient, workspace_id: UUID
+) -> None:
+    headers = {"authorization": _bearer_for("owner-1")}
+    response = client.post(
+        f"/v1/workspaces/{workspace_id}/eval-cases/from-resolution",
+        headers=headers,
+        json={
+            "id": "eval_conv_1",
+            "title": "Resolution from conv_1",
+            "expectedOutcome": "Refund issued and email confirmed.",
+            "failureReason": "Tool failure",
+            "linkedTrace": "trace/conv_1",
+            "attachments": ["tool/refund", "kb/refund-policy"],
+            "source": "operator-resolution",
+        },
+    )
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["ok"] is True
+    assert body["case"]["expected"]["outcome"] == "Refund issued and email confirmed."
+
+    suites = client.get(
+        f"/v1/workspaces/{workspace_id}/eval-suites", headers=headers
+    ).json()["items"]
+    assert suites[0]["name"] == "Operator resolutions"
+    state = client.app.state.cp  # type: ignore[attr-defined]
+    actions = [e.action for e in state.audit_events.list_for_workspace(workspace_id)]
+    assert "eval:case:create_from_resolution" in actions
+
+
 def test_run_unknown_suite_returns_404(client: TestClient) -> None:
     from uuid import uuid4
     response = client.post(

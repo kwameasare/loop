@@ -125,8 +125,18 @@ class WorkspaceAPI:
         items.sort(key=lambda w: w.created_at)
         start = (page - 1) * page_size
         page_items = items[start : start + page_size]
+        payload = []
+        for workspace in page_items:
+            item = _serialise_ws(workspace)
+            role = await self.workspaces.role_of(
+                workspace_id=workspace.id,
+                user_sub=caller_sub,
+            )
+            if role is not None:
+                item["role"] = role.value
+            payload.append(item)
         return {
-            "items": [_serialise_ws(w) for w in page_items],
+            "items": payload,
             "page": page,
             "page_size": page_size,
             "total": len(items),

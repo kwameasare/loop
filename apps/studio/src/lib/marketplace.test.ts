@@ -4,11 +4,21 @@ import {
   DEFAULT_MARKETPLACE_CATALOG,
   currentVersion,
   deprecateItem,
+  fetchMarketplaceCatalog,
   filterMarketplace,
   formatInstallCount,
+  marketplaceItemFromCp,
   submitPrivateSkill,
   type MarketplaceItem,
 } from "./marketplace";
+
+function response(body: unknown, status = 200): Response {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => body,
+  } as Response;
+}
 
 describe("filterMarketplace", () => {
   it("matches by free-text query across name, tagline, and author", () => {
@@ -119,5 +129,64 @@ describe("formatInstallCount", () => {
     expect(formatInstallCount(942)).toBe("942");
     expect(formatInstallCount(4128)).toBe("4.1k");
     expect(formatInstallCount(15000)).toBe("15k");
+  });
+});
+
+describe("marketplace cp-api adapter", () => {
+  it("maps first-party MCP browse items into Studio marketplace items", () => {
+    const item = marketplaceItemFromCp({
+      server_id: "first-party.salesforce",
+      slug: "salesforce",
+      name: "Salesforce",
+      publisher: "loop",
+      description: "Read Salesforce objects.",
+      categories: ["crm", "read"],
+      latest_version: "1.0.0",
+      quality_score: 91,
+      average_rating: 4.7,
+      installs: 12,
+      calls: 44,
+      install_button_enabled: true,
+    });
+
+    expect(item).toMatchObject({
+      id: "first-party.salesforce",
+      kind: "tool",
+      publisher: "official",
+      trust: "verified",
+      lifecycle: "published",
+    });
+    expect(item.permissions).toEqual(["external-network", "read-traces"]);
+  });
+
+  it("loads the live marketplace catalog when cp-api is configured", async () => {
+    const fetcher = async (input: RequestInfo | URL) => {
+      expect(String(input)).toBe("https://cp.test/v1/marketplace");
+      return response({
+        items: [
+          {
+            server_id: "first-party.salesforce",
+            slug: "salesforce",
+            name: "Salesforce",
+            publisher: "loop",
+            description: "Read Salesforce objects.",
+            categories: ["crm", "read"],
+            latest_version: "1.0.0",
+            quality_score: 91,
+            average_rating: 4.7,
+            installs: 12,
+            calls: 44,
+            install_button_enabled: true,
+          },
+        ],
+      });
+    };
+
+    const catalog = await fetchMarketplaceCatalog({
+      baseUrl: "https://cp.test/v1",
+      fetcher: fetcher as unknown as typeof fetch,
+    });
+
+    expect(catalog.map((item) => item.id)).toEqual(["first-party.salesforce"]);
   });
 });
