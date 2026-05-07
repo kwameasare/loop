@@ -79,6 +79,8 @@ def test_runtime_sse_workflow_runs_k6_and_memory_probe() -> None:
     assert "/tmp/runtime-sse-1000-summary.json" in runs
     assert "scripts/k6_runtime_sse_1000.js" in runs
     assert "memory.current" in runs
+    assert "/opt/venv/bin/python -c" in runs
+    assert " sh -c " not in runs
     assert "LOOP_ONCALL_WEBHOOK_URL" in runs
 
 
