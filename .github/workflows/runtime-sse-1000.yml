@@ -130,8 +130,6 @@ jobs:
             exit 1
           fi
           kubectl -n "$LOOP_NAMESPACE" logs job/runtime-sse-k6
-          pod=$(kubectl -n "$LOOP_NAMESPACE" get pod -l job-name=runtime-sse-k6 -o jsonpath='{.items[0].metadata.name}')
-          kubectl -n "$LOOP_NAMESPACE" cp "$pod:/tmp/runtime-sse-1000-summary.json" /tmp/runtime-sse-1000-summary.json
       - name: Check runtime memory
         run: |
           pod=$(kubectl -n "$LOOP_NAMESPACE" get pod -l app.kubernetes.io/component=runtime -o jsonpath='{.items[0].metadata.name}')
