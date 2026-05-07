@@ -82,6 +82,7 @@ jobs:
             --set-string runtime.env.LOOP_GATEWAY_OPENAI_API_KEY=perf-fixture-key \
             --set-string runtime.env.LOOP_DP_DEFAULT_MODEL=gpt-4o-mini \
             --set-string runtime.env.LOOP_DP_AUTH_DISABLE=1 \
+            --set-string runtime.env.UVICORN_WORKERS=1 \
             --set postgresql.enabled=false --set redis.enabled=false --set qdrant.enabled=false \
             --set nats.enabled=false --set minio.enabled=false \
             --set clickhouse.enabled=false \

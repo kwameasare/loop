@@ -68,6 +68,7 @@ def test_runtime_sse_workflow_runs_k6_and_memory_probe() -> None:
     assert "LOOP_GATEWAY_OPENAI_API_KEY" in runs
     assert "LOOP_DP_AUTH_DISABLE=1" in runs
     assert "runtime.env.LOOP_DP_OPENAI_BASE_URL" in runs
+    assert "runtime.env.UVICORN_WORKERS=1" in runs
     assert "runtime.env[0]" not in runs
     assert "runtime.image.repository=dp-runtime" in runs
     assert "helm_e2e_smoke_server.py" not in WORKFLOW.read_text()
