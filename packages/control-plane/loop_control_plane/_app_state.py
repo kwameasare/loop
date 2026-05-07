@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
+from typing import Any
+from uuid import UUID
+
+from loop_memory.inmemory import InMemorySessionMemoryStore, InMemoryUserMemoryStore
 
 from loop_control_plane._app_agents import AgentRegistry, PostgresAgentRegistry
 from loop_control_plane.agent_versions import AgentVersionService
@@ -30,7 +34,15 @@ from loop_control_plane.data_deletion import (
     RecordingDataDeletionEmailNotifier,
 )
 from loop_control_plane.eval_suites import EvalSuiteService
+from loop_control_plane.inbox import InboxQueue
+from loop_control_plane.inbox_api import InboxAPI
 from loop_control_plane.kb_documents import KbDocumentService
+from loop_control_plane.mcp_marketplace import (
+    FirstPartyCatalog,
+    InMemoryMarketplaceStore,
+    MarketplacePublisher,
+    TrustedPublisherVerifier,
+)
 from loop_control_plane.saml import SamlValidator, StubSamlValidator
 from loop_control_plane.secrets import InMemorySecretsBackend, SecretsBackend
 from loop_control_plane.trace_search import (
@@ -177,14 +189,29 @@ class CpApiState:
     # P0.4 (traces + usage):
     trace_store: TraceStore = field(default_factory=InMemoryTraceStore)
     usage_ledger: UsageLedger = field(default_factory=UsageLedger)
+    # UX wire-up: Memory Studio reads the same memory store surface used by runtime.
+    user_memory_store: InMemoryUserMemoryStore = field(
+        default_factory=InMemoryUserMemoryStore
+    )
+    session_memory_store: InMemorySessionMemoryStore = field(
+        default_factory=InMemorySessionMemoryStore
+    )
+    voice_configs: dict[UUID, dict[str, Any]] = field(default_factory=dict)
     # P0.4 (conversations + takeover):
     conversations: ConversationService = field(default_factory=ConversationService)
+    # UX wire-up: human escalation queue. The domain queue existed before
+    # the Studio route was mounted; keep it in process-local state for dev/tests.
+    inbox_queue: InboxQueue = field(default_factory=InboxQueue)
     # P0.4 (budgets):
     budgets: BudgetService = field(default_factory=BudgetService)
     # P0.4 (KB documents):
     kb_documents: KbDocumentService = field(default_factory=KbDocumentService)
     # P0.4 (eval suites + runs):
     eval_suites: EvalSuiteService = field(default_factory=EvalSuiteService)
+    # UX wire-up: first-party MCP marketplace browse catalog.
+    marketplace_store: InMemoryMarketplaceStore = field(
+        default_factory=InMemoryMarketplaceStore
+    )
 
     def __post_init__(self) -> None:
         self.workspace_api = WorkspaceAPI(workspaces=self.workspaces)
@@ -192,6 +219,13 @@ class CpApiState:
             api_keys=self.api_keys, workspaces=self.workspaces
         )
         self.trace_search = TraceSearchService(self.trace_store)
+        self.inbox_api = InboxAPI(queue=self.inbox_queue)
         # P0.4: agent versions service depends on AgentRegistry; built
         # in __post_init__ so it shares the same agent storage map.
         self.agent_versions = AgentVersionService(self.agents)
+        if not self.marketplace_store.servers:
+            publisher = MarketplacePublisher(
+                store=self.marketplace_store,
+                verifier=TrustedPublisherVerifier({"loop"}),
+            )
+            FirstPartyCatalog().publish_all(publisher, now_ms=1_714_521_600_000)

@@ -45,6 +45,57 @@ export interface VoiceStageModel {
   demoLinks: readonly VoiceDemoLink[];
 }
 
+export interface VoiceStageClientOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+function cpApiBaseUrl(override?: string): string | null {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) return null;
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+function headers(opts: VoiceStageClientOptions): Record<string, string> {
+  const out: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) out.authorization = `Bearer ${token}`;
+  return out;
+}
+
+export async function fetchVoiceStageModel(
+  workspaceId: string,
+  opts: VoiceStageClientOptions = {},
+): Promise<VoiceStageModel> {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    return {
+      ...VOICE_STAGE_FIXTURE,
+      config: {
+        ...VOICE_STAGE_FIXTURE.config,
+        phoneNumber: "No number provisioned",
+      },
+    };
+  }
+  const response = await (opts.fetcher ?? fetch)(
+    `${base}/workspaces/${encodeURIComponent(workspaceId)}/voice/stage`,
+    {
+      method: "GET",
+      headers: headers(opts),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`cp-api GET voice stage -> ${response.status}`);
+  }
+  return (await response.json()) as VoiceStageModel;
+}
+
 export const VOICE_STAGE_FIXTURE: VoiceStageModel = {
   agentName: "Voice Receptionist",
   callState: "staging",
@@ -124,3 +175,32 @@ export const VOICE_STAGE_FIXTURE: VoiceStageModel = {
     },
   ],
 };
+
+function labelFor<T extends string>(
+  entries: readonly { id: T; label: string }[],
+  id: T,
+): string {
+  return entries.find((entry) => entry.id === id)?.label ?? id;
+}
+
+export function voiceStageFromConfig(config: VoiceConfig): VoiceStageModel {
+  const primaryNumber = config.numbers[0];
+  return {
+    ...VOICE_STAGE_FIXTURE,
+    config: {
+      ...VOICE_STAGE_FIXTURE.config,
+      asr: labelFor(ASR_PROVIDERS, config.asr_provider),
+      tts: labelFor(TTS_PROVIDERS, config.tts_provider),
+      phoneNumber: primaryNumber?.e164 ?? "No number provisioned",
+    },
+    demoLinks: VOICE_STAGE_FIXTURE.demoLinks.map((link) => ({
+      ...link,
+      audited: config.workspace_id !== "ws-fixture",
+    })),
+  };
+}
+import {
+  ASR_PROVIDERS,
+  TTS_PROVIDERS,
+  type VoiceConfig,
+} from "@/lib/voice-config";

@@ -32,6 +32,46 @@ describe("listAgentVersions", () => {
     const numbers = items.map((v) => v.version);
     expect(numbers).toEqual([...numbers].sort((a, b) => b - a));
   });
+
+  it("loads live versions from cp-api when configured", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          items: [
+            {
+              id: "ver-live-1",
+              agent_id: "agt_1",
+              version: 1,
+              spec: {
+                system_prompt: "You are live.",
+                deploy_state: "active",
+                eval_status: "passed",
+              },
+              created_at: "2026-05-07T12:00:00Z",
+            },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const { items } = await listAgentVersions("agt_1", {
+      baseUrl: "https://cp.example.com/v1",
+      fetcher: fetcher as unknown as typeof fetch,
+      pageSize: 10,
+    });
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.example.com/v1/agents/agt_1/versions",
+      expect.objectContaining({ method: "GET" }),
+    );
+    expect(items[0]).toMatchObject({
+      id: "ver-live-1",
+      deploy_state: "active",
+      eval_status: "passed",
+    });
+    expect(items[0]?.config_json).toContain("You are live.");
+  });
 });
 
 describe("priorVersion", () => {
@@ -50,7 +90,7 @@ describe("priorVersion", () => {
 });
 
 describe("promoteAgentVersion", () => {
-  it("POSTs to /v1/agent-versions/{id}/promote with the stage", async () => {
+  it("POSTs to /v1/agents/{agent_id}/versions/{id}/promote with the stage", async () => {
     const fetcher = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -62,7 +102,7 @@ describe("promoteAgentVersion", () => {
       ),
     );
     const result = await promoteAgentVersion(
-      { versionId: "ver_42" },
+      { agentId: "agt_1", versionId: "ver_42" },
       {
         fetcher: fetcher as unknown as typeof fetch,
         baseUrl: "https://cp.example.com",
@@ -72,7 +112,7 @@ describe("promoteAgentVersion", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
     const [url, init] = fetcher.mock.calls[0];
     expect(url).toBe(
-      "https://cp.example.com/v1/agent-versions/ver_42/promote",
+      "https://cp.example.com/v1/agents/agt_1/versions/ver_42/promote",
     );
     expect(init.method).toBe("POST");
     expect(init.headers.authorization).toBe("Bearer tok-123");
@@ -86,7 +126,7 @@ describe("promoteAgentVersion", () => {
       .mockResolvedValue(new Response("nope", { status: 404 }));
     await expect(
       promoteAgentVersion(
-        { versionId: "ver_x" },
+        { agentId: "agt_1", versionId: "ver_x" },
         {
           fetcher: fetcher as unknown as typeof fetch,
           baseUrl: "https://cp.example.com",

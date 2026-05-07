@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createBehaviorEditorData,
+  createBehaviorEditorDataFromVersion,
   createEmptyBehaviorEditorData,
 } from "@/lib/behavior";
 
@@ -96,5 +97,29 @@ describe("BehaviorEditor", () => {
     expect(screen.getByTestId("behavior-risk-flags")).toHaveTextContent(
       "No risk flags yet",
     );
+  });
+
+  it("renders behavior sourced from a live agent version spec", () => {
+    const data = createBehaviorEditorDataFromVersion("agent_support", {
+      id: "ver-live",
+      agent_id: "agent_support",
+      version: 3,
+      deploy_state: "active",
+      deployed_at: "2026-05-07T12:00:00Z",
+      eval_status: "passed",
+      config_json: JSON.stringify({
+        system_prompt: "Answer refund questions. Escalate legal threats.",
+        tools: ["lookup_order"],
+      }),
+      promoted_to: "production",
+    });
+
+    render(<BehaviorEditor data={data} />);
+
+    expect(screen.getByText("System prompt")).toBeInTheDocument();
+    expect(screen.getAllByText(/Answer refund questions/).length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getByText("Declared tools")).toBeInTheDocument();
   });
 });

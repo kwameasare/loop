@@ -223,7 +223,9 @@ export function InboxQueue(props: InboxQueueProps) {
                     <Link
                       className="text-blue-600 hover:underline"
                       data-testid={`queue-link-${item.id}`}
-                      href="/inbox"
+                      href={`/inbox/conversation/${encodeURIComponent(
+                        item.conversation_id,
+                      )}`}
                     >
                       {item.user_id}
                     </Link>

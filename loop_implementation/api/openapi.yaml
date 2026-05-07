@@ -34,6 +34,8 @@ tags:
     description: Knowledge base ingestion and search
   - name: MCP
     description: MCP server registration and tool management
+  - name: Marketplace
+    description: First-party and workspace marketplace catalog
   - name: Evals
     description: Evaluation suites, runs, and test cases
   - name: Usage
@@ -48,6 +50,18 @@ tags:
     description: Operational readiness and version checks
   - name: Runtime
     description: Data-plane turn execution and SSE streaming
+  - name: Inbox
+    description: Human-in-the-loop operator escalation queue
+  - name: Memory
+    description: Runtime memory inspection and erasure controls
+  - name: Voice
+    description: Voice channel configuration and preview controls
+  - name: Conductor
+    description: Multi-agent topology, handoff contracts, and delegation evidence
+  - name: Migration
+    description: Import parity, replay, repair, and cutover readiness
+  - name: CoBuilder
+    description: AI co-builder suggestions, consent grammar, and adversarial review
 
 paths:
 
@@ -170,6 +184,201 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/WorkspaceMember" }
 
+  /workspaces/{workspace_id}/inbox:
+    parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+    get:
+      tags: [Inbox]
+      summary: List pending and caller-claimed inbox items
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InboxItemList" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /workspaces/{workspace_id}/inbox/escalate:
+    parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+    post:
+      tags: [Inbox]
+      summary: Escalate a conversation into the operator inbox
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InboxEscalateRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InboxItem" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Conversation already has an open inbox item
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProblemDetail" }
+
+  /workspaces/{workspace_id}/voice/config:
+    parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+    get:
+      tags: [Voice]
+      summary: Get workspace voice channel configuration
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VoiceConfig" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    patch:
+      tags: [Voice]
+      summary: Update voice ASR/TTS provider selections
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VoiceConfigPatch" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VoiceConfig" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /workspaces/{workspace_id}/voice/stage:
+    parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+    get:
+      tags: [Voice]
+      summary: Get composed Voice Stage model for a workspace
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VoiceStageModel" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /workspaces/{workspace_id}/migration/parity:
+    parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+    get:
+      tags: [Migration]
+      summary: Get migration parity workspace model
+      parameters:
+        - in: query
+          name: source
+          schema: { type: string, default: botpress }
+          required: false
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MigrationParityWorkspace" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /workspaces/{workspace_id}/cobuilder:
+    parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+    get:
+      tags: [CoBuilder]
+      summary: Get AI Co-Builder suggestions for workspace state
+      parameters:
+        - in: query
+          name: agent_id
+          schema: { type: string, format: uuid }
+          required: false
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CoBuilderWorkspace" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /inbox/{item_id}/claim:
+    parameters: [{ $ref: "#/components/parameters/InboxItemId" }]
+    post:
+      tags: [Inbox]
+      summary: Claim an inbox item for the caller or named operator
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InboxClaimRequest" }
+      responses:
+        "200":
+          description: Claimed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InboxItem" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Item is no longer claimable
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProblemDetail" }
+
+  /inbox/{item_id}/release:
+    parameters: [{ $ref: "#/components/parameters/InboxItemId" }]
+    post:
+      tags: [Inbox]
+      summary: Release a claimed inbox item back to pending
+      responses:
+        "200":
+          description: Released
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InboxItem" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Item is not currently claimed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProblemDetail" }
+
+  /inbox/{item_id}/resolve:
+    parameters: [{ $ref: "#/components/parameters/InboxItemId" }]
+    post:
+      tags: [Inbox]
+      summary: Resolve a claimed inbox item
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InboxResolveRequest" }
+      responses:
+        "200":
+          description: Resolved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InboxItem" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Item is not currently claimed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProblemDetail" }
+
   /workspaces/{workspace_id}/api-keys:
     parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
     get:
@@ -283,34 +492,103 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /agents/{agent_id}/versions:
+  /agents/{agent_id}/tools:
     parameters: [{ $ref: "#/components/parameters/AgentId" }]
-    post:
+    get:
       tags: [Agents]
-      summary: Deploy a new agent version
+      summary: List tools declared by the active or latest agent version
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentToolList" }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /agents/{agent_id}/memory:
+    parameters: [{ $ref: "#/components/parameters/AgentId" }]
+    get:
+      tags: [Memory]
+      summary: List runtime memory visible in Memory Studio
       parameters:
-        - in: header
-          name: Idempotency-Key
+        - in: query
+          name: user_id
+          schema: { type: string }
+          required: false
+        - in: query
+          name: conversation_id
           schema: { type: string, format: uuid }
           required: false
-          description: Idempotency key to prevent duplicate deploys
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MemoryStudioEntryList" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /agents/{agent_id}/memory/user/{memory_key}:
+    parameters:
+      - { $ref: "#/components/parameters/AgentId" }
+      - { $ref: "#/components/parameters/MemoryKey" }
+    delete:
+      tags: [Memory]
+      summary: Delete one durable user memory entry with audit trail
+      parameters:
+        - in: query
+          name: user_id
+          schema: { type: string }
+          required: false
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /agents/{agent_id}/conductor:
+    parameters: [{ $ref: "#/components/parameters/AgentId" }]
+    get:
+      tags: [Conductor]
+      summary: Get multi-agent conductor topology for an agent
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConductorData" }
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /agents/{agent_id}/versions:
+    parameters: [{ $ref: "#/components/parameters/AgentId" }]
+    get:
+      tags: [Agents]
+      summary: List immutable agent versions
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentVersionList" }
+    post:
+      tags: [Agents]
+      summary: Create a new immutable agent version
       requestBody:
         required: true
         content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                config:
-                  type: string
-                  description: JSON config
-                code:
-                  type: string
-                  format: binary
-                  description: Tar.zst archive of the agent source
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentVersionCreate" }
       responses:
-        "202":
-          description: Deploy accepted (eval & rollout in progress)
+        "201":
+          description: Created
           headers:
             X-RateLimit-Limit:
               schema: { type: integer }
@@ -325,6 +603,23 @@ paths:
           $ref: "#/components/responses/RateLimited"
         "500":
           $ref: "#/components/responses/ServerError"
+
+  /agents/{agent_id}/versions/{version_id}/promote:
+    parameters:
+      - { $ref: "#/components/parameters/AgentId" }
+      - in: path
+        name: version_id
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [Agents]
+      summary: Promote a version to active
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Agent" }
 
   /agents/{agent_id}/invoke:
     parameters: [{ $ref: "#/components/parameters/AgentId" }]
@@ -485,9 +780,9 @@ paths:
           application/json:
             schema:
               type: object
-              required: [reason]
+              required: [note]
               properties:
-                reason: { type: string }
+                note: { type: string, maxLength: 2048 }
       responses:
         "200":
           description: OK
@@ -495,30 +790,51 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Conversation" }
 
-  /conversations/{conversation_id}/messages:
+  /conversations/{conversation_id}/operator-messages:
     parameters: [{ $ref: "#/components/parameters/ConversationId" }]
     post:
       tags: [Conversations]
       summary: Operator sends a message in a taken-over conversation
-      parameters:
-        - in: header
-          name: Idempotency-Key
-          schema: { type: string, format: uuid }
-          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OperatorMessageRequest"
+      responses:
+        "201":
+          description: Sent
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConversationMessage" }
+        "409":
+          description: Conversation is not in operator takeover.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProblemDetail" }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /conversations/{conversation_id}/handback:
+    parameters: [{ $ref: "#/components/parameters/ConversationId" }]
+    post:
+      tags: [Conversations]
+      summary: Operator returns control to the agent
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [content]
+              required: [note]
               properties:
-                content:
-                  type: array
-                  items: { $ref: "#/components/schemas/ContentPart" }
+                note: { type: string, maxLength: 2048 }
       responses:
-        "201":
-          description: Sent
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Conversation" }
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -623,6 +939,27 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/MCPServer" }
+
+  /marketplace:
+    get:
+      tags: [Marketplace]
+      summary: Browse marketplace catalog
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, minimum: 1, maximum: 100 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarketplaceBrowseList" }
 
   # ──────────────── Evals ────────────────
   /eval-suites:
@@ -877,8 +1214,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items: { $ref: "#/components/schemas/EvalCase" }
+                $ref: "#/components/schemas/EvalCaseList"
     post:
       tags: [Evals]
       summary: Add a test case to suite
@@ -893,12 +1229,22 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/EvalCase" }
-    delete:
+  /workspaces/{workspace_id}/eval-cases/from-resolution:
+    parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+    post:
       tags: [Evals]
-      summary: Delete a test case
+      summary: Save an operator resolution as an eval case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResolutionEvalCaseRequest" }
       responses:
-        "204":
-          description: Deleted
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResolutionEvalCaseResponse" }
 
   /healthz:
     get:
@@ -1003,6 +1349,16 @@ components:
       name: conversation_id
       required: true
       schema: { type: string, format: uuid }
+    InboxItemId:
+      in: path
+      name: item_id
+      required: true
+      schema: { type: string, format: uuid }
+    MemoryKey:
+      in: path
+      name: memory_key
+      required: true
+      schema: { type: string }
     KBId:
       in: path
       name: kb_id
@@ -1065,6 +1421,7 @@ components:
         plan: { type: string, enum: [hobby, pro, team, enterprise] }
         region: { $ref: "#/components/schemas/RegionName" }
         created_at: { type: string, format: date-time }
+        role: { type: string, enum: [owner, admin, member, viewer] }
 
     WorkspaceList:
       type: object
@@ -1128,13 +1485,48 @@ components:
 
     AgentVersion:
       type: object
+      required: [id, workspace_id, agent_id, version, spec, notes, created_at, created_by]
       properties:
         id: { type: string, format: uuid }
+        workspace_id: { type: string, format: uuid }
         agent_id: { type: string, format: uuid }
         version: { type: integer }
-        eval_status: { type: string, enum: [pending, running, passed, failed, skipped] }
-        deploy_state: { type: string, enum: [inactive, canary, active, rolled_back] }
-        deployed_at: { type: string, format: date-time, nullable: true }
+        spec: { type: object }
+        notes: { type: string }
+        created_at: { type: string, format: date-time }
+        created_by: { type: string }
+
+    AgentVersionCreate:
+      type: object
+      properties:
+        spec: { type: object }
+        notes: { type: string, maxLength: 2048 }
+
+    AgentVersionList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AgentVersion" }
+
+    AgentTool:
+      type: object
+      required: [id, name, kind, description, source]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [mcp, http] }
+        description: { type: string }
+        source: { type: string }
+
+    AgentToolList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AgentTool" }
 
     InvokeRequest:
       type: object
@@ -1236,22 +1628,54 @@ components:
 
     Conversation:
       type: object
+      required:
+        - id
+        - workspace_id
+        - agent_id
+        - subject
+        - state
+        - operator_taken_over
+        - created_at
+        - last_message_at
+        - message_count
       properties:
         id: { type: string, format: uuid }
+        workspace_id: { type: string, format: uuid }
         agent_id: { type: string, format: uuid }
-        channel_type: { type: string }
-        user_id: { type: string }
-        status: { type: string, enum: [active, idle, closed, escalated] }
-        last_at: { type: string, format: date-time }
+        subject: { type: string }
+        state: { type: string, enum: [open, closed, in-takeover] }
+        operator_taken_over: { type: boolean }
+        created_at: { type: string, format: date-time }
+        last_message_at: { type: string, format: date-time }
+        message_count: { type: integer }
+
+    ConversationMessage:
+      type: object
+      required: [id, conversation_id, role, body, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        conversation_id: { type: string, format: uuid }
+        role: { type: string, enum: [user, assistant, operator, system] }
+        body: { type: string }
+        created_at: { type: string, format: date-time }
 
     ConversationDetail:
-      allOf:
-        - $ref: "#/components/schemas/Conversation"
-        - type: object
-          properties:
-            turns:
-              type: array
-              items: { $ref: "#/components/schemas/Turn" }
+      type: object
+      required: [summary, last_user_message, last_assistant_message, metadata, messages]
+      properties:
+        summary: { $ref: "#/components/schemas/Conversation" }
+        last_user_message: { type: string }
+        last_assistant_message: { type: string }
+        metadata: { type: object }
+        messages:
+          type: array
+          items: { $ref: "#/components/schemas/ConversationMessage" }
+
+    OperatorMessageRequest:
+      type: object
+      required: [body]
+      properties:
+        body: { type: string, minLength: 1, maxLength: 4096 }
 
     Turn:
       type: object
@@ -1266,6 +1690,643 @@ components:
         latency_ms: { type: integer }
         started_at: { type: string, format: date-time }
         ended_at: { type: string, format: date-time }
+
+    InboxStatus:
+      type: string
+      enum: [pending, claimed, resolved]
+
+    InboxChannel:
+      type: string
+      enum: [web, voice, sms, whatsapp, slack]
+
+    InboxItem:
+      type: object
+      required:
+        - id
+        - workspace_id
+        - agent_id
+        - conversation_id
+        - user_id
+        - status
+        - reason
+        - operator_id
+        - created_at_ms
+        - claimed_at_ms
+        - resolved_at_ms
+        - last_message_excerpt
+      properties:
+        id: { type: string, format: uuid }
+        workspace_id: { type: string, format: uuid }
+        agent_id: { type: string, format: uuid }
+        conversation_id: { type: string, format: uuid }
+        user_id: { type: string }
+        status: { $ref: "#/components/schemas/InboxStatus" }
+        reason: { type: string }
+        operator_id: { type: string, nullable: true }
+        created_at_ms: { type: integer }
+        claimed_at_ms: { type: integer, nullable: true }
+        resolved_at_ms: { type: integer, nullable: true }
+        last_message_excerpt: { type: string }
+        team_id:
+          type: string
+          description: Optional Studio grouping metadata when an inbox backend provides it.
+        channel:
+          $ref: "#/components/schemas/InboxChannel"
+
+    InboxItemList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/InboxItem" }
+
+    InboxEscalateRequest:
+      type: object
+      required: [agent_id, conversation_id, user_id, reason]
+      properties:
+        agent_id: { type: string, format: uuid }
+        conversation_id: { type: string, format: uuid }
+        user_id: { type: string, minLength: 1 }
+        reason: { type: string, minLength: 1 }
+        last_message_excerpt: { type: string }
+        now_ms: { type: integer, minimum: 0 }
+
+    InboxClaimRequest:
+      type: object
+      properties:
+        operator_id: { type: string, nullable: true }
+        now_ms: { type: integer, minimum: 0 }
+
+    InboxResolveRequest:
+      type: object
+      properties:
+        now_ms: { type: integer, minimum: 0 }
+
+    MemoryStudioEntry:
+      type: object
+      required:
+        - id
+        - workspace_id
+        - agent_id
+        - scope
+        - key
+        - before
+        - after
+        - source
+        - source_trace
+        - retention_policy
+        - updated_at
+        - writer_version
+        - confidence
+        - safety_flags
+        - deletion_state
+        - deletion_reason
+        - replay_impact
+      properties:
+        id: { type: string }
+        workspace_id: { type: string, format: uuid }
+        agent_id: { type: string, format: uuid }
+        scope: { type: string, enum: [user, bot, session] }
+        user_id: { type: string, nullable: true }
+        key: { type: string }
+        before: { type: string }
+        after: { type: string }
+        source: { type: string }
+        source_trace: { type: string }
+        retention_policy: { type: string }
+        updated_at: { type: string }
+        writer_version: { type: string }
+        confidence: { type: string, enum: [high, medium, low, unsupported] }
+        safety_flags:
+          type: array
+          items:
+            type: string
+            enum: [none, pii, secret-like, conflict, stale, weak-evidence]
+        deletion_state: { type: string, enum: [available, blocked, queued] }
+        deletion_reason: { type: string }
+        replay_impact: { type: string }
+
+    MemoryStudioEntryList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/MemoryStudioEntry" }
+
+    VoiceNumber:
+      type: object
+      required: [id, e164, label, region, provisioned_at_ms]
+      properties:
+        id: { type: string }
+        e164: { type: string }
+        label: { type: string }
+        region: { type: string }
+        provisioned_at_ms: { type: integer }
+
+    VoiceConfig:
+      type: object
+      required: [workspace_id, numbers, asr_provider, tts_provider]
+      properties:
+        workspace_id: { type: string, format: uuid }
+        numbers:
+          type: array
+          items: { $ref: "#/components/schemas/VoiceNumber" }
+        asr_provider: { type: string, enum: [deepgram, whisper, google] }
+        tts_provider: { type: string, enum: [elevenlabs, openai, polly] }
+
+    VoiceConfigPatch:
+      type: object
+      properties:
+        asr_provider: { type: string, enum: [deepgram, whisper, google] }
+        tts_provider: { type: string, enum: [elevenlabs, openai, polly] }
+
+    VoiceTranscriptTurn:
+      type: object
+      required: [id, speaker, text, timestamp]
+      properties:
+        id: { type: string }
+        speaker: { type: string, enum: [caller, agent, tool] }
+        text: { type: string }
+        timestamp: { type: string }
+
+    VoiceLatencySpan:
+      type: object
+      required: [id, label, ms, budgetMs, status]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        ms: { type: integer }
+        budgetMs: { type: integer }
+        status: { type: string, enum: [ok, watch, over] }
+
+    VoiceStageConfig:
+      type: object
+      required: [asr, tts, bargeIn, voice, phoneNumber]
+      properties:
+        asr: { type: string }
+        tts: { type: string }
+        bargeIn: { type: boolean }
+        voice: { type: string }
+        phoneNumber: { type: string }
+
+    VoiceEvalCase:
+      type: object
+      required: [id, name, passRate, coverage, evidenceRef]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        passRate: { type: integer }
+        coverage: { type: string }
+        evidenceRef: { type: string }
+
+    VoiceDemoLink:
+      type: object
+      required: [id, label, expiresIn, scope, audited]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        expiresIn: { type: string }
+        scope: { type: string }
+        audited: { type: boolean }
+
+    VoiceStageModel:
+      type: object
+      required:
+        - agentName
+        - callState
+        - queuedSpeech
+        - transcript
+        - waveform
+        - spans
+        - config
+        - evals
+        - demoLinks
+      properties:
+        agentName: { type: string }
+        callState: { type: string, enum: [dev, staging, production] }
+        queuedSpeech: { type: string }
+        transcript:
+          type: array
+          items: { $ref: "#/components/schemas/VoiceTranscriptTurn" }
+        waveform:
+          type: array
+          items: { type: integer }
+        spans:
+          type: array
+          items: { $ref: "#/components/schemas/VoiceLatencySpan" }
+        config: { $ref: "#/components/schemas/VoiceStageConfig" }
+        evals:
+          type: array
+          items: { $ref: "#/components/schemas/VoiceEvalCase" }
+        demoLinks:
+          type: array
+          items: { $ref: "#/components/schemas/VoiceDemoLink" }
+
+    LineageStep:
+      type: object
+      required: [id, label, status, evidenceRef, detail]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        status: { type: string, enum: [ok, warn, error] }
+        evidenceRef: { type: string }
+        detail: { type: string }
+
+    ImportLineage:
+      type: object
+      required: [importId, source, archive, importedAt, archiveSha, steps]
+      properties:
+        importId: { type: string }
+        source: { type: string }
+        archive: { type: string }
+        importedAt: { type: string }
+        archiveSha: { type: string }
+        steps:
+          type: array
+          items: { $ref: "#/components/schemas/LineageStep" }
+
+    ParityReadiness:
+      type: object
+      required: [overallScore, parityPassing, parityTotal, blockingCount, advisoryCount]
+      properties:
+        overallScore: { type: integer }
+        parityPassing: { type: integer }
+        parityTotal: { type: integer }
+        blockingCount: { type: integer }
+        advisoryCount: { type: integer }
+
+    DiffEntry:
+      type: object
+      required: [id, mode, sourcePath, targetPath, severity, summary, evidenceRef]
+      properties:
+        id: { type: string }
+        mode: { type: string, enum: [structure, behavior, cost, risk] }
+        sourcePath: { type: string }
+        targetPath: { type: string }
+        severity: { type: string, enum: [ok, advisory, blocking] }
+        summary: { type: string }
+        delta: { type: string }
+        evidenceRef: { type: string }
+
+    ParityReplayCase:
+      type: object
+      required: [id, transcript, status, expectedTarget, observedTarget, evidenceRef]
+      properties:
+        id: { type: string }
+        transcript: { type: string }
+        status: { type: string, enum: [pass, regress, improve, skipped] }
+        expectedTarget: { type: string }
+        observedTarget: { type: string }
+        evidenceRef: { type: string }
+
+    RepairSuggestion:
+      type: object
+      required: [id, diffId, rationale, groundingRef, confidence, patchSummary]
+      properties:
+        id: { type: string }
+        diffId: { type: string }
+        rationale: { type: string }
+        groundingRef: { type: string }
+        confidence: { type: string, enum: [low, medium, high] }
+        patchSummary: { type: string }
+
+    ShadowTrafficSummary:
+      type: object
+      required: [durationMinutes, turns, agreement, divergences, costPerTurnDelta, evidenceRef]
+      properties:
+        durationMinutes: { type: integer }
+        turns: { type: integer }
+        agreement: { type: integer }
+        divergences: { type: integer }
+        costPerTurnDelta: { type: string }
+        evidenceRef: { type: string }
+
+    CanaryStage:
+      type: object
+      required: [id, percent, durationMinutes, status, guardrails]
+      properties:
+        id: { type: string }
+        percent: { type: integer }
+        durationMinutes: { type: integer }
+        status: { type: string, enum: [pending, in_progress, passed, halted] }
+        guardrails:
+          type: array
+          items: { type: string }
+
+    RollbackTrigger:
+      type: object
+      required: [id, metric, threshold, action, evidenceRef]
+      properties:
+        id: { type: string }
+        metric: { type: string, enum: [regression, error_rate, cost_spike, manual] }
+        threshold: { type: string }
+        action: { type: string }
+        evidenceRef: { type: string }
+
+    CutoverPlan:
+      type: object
+      required: [id, shadow, stages, rollbackTriggers]
+      properties:
+        id: { type: string }
+        shadow: { $ref: "#/components/schemas/ShadowTrafficSummary" }
+        stages:
+          type: array
+          items: { $ref: "#/components/schemas/CanaryStage" }
+        rollbackTriggers:
+          type: array
+          items: { $ref: "#/components/schemas/RollbackTrigger" }
+
+    MigrationParityWorkspace:
+      type: object
+      required: [lineage, readiness, diffs, replay, repairs, cutover]
+      properties:
+        lineage: { $ref: "#/components/schemas/ImportLineage" }
+        readiness: { $ref: "#/components/schemas/ParityReadiness" }
+        diffs:
+          type: array
+          items: { $ref: "#/components/schemas/DiffEntry" }
+        replay:
+          type: array
+          items: { $ref: "#/components/schemas/ParityReplayCase" }
+        repairs:
+          type: array
+          items: { $ref: "#/components/schemas/RepairSuggestion" }
+        cutover: { $ref: "#/components/schemas/CutoverPlan" }
+
+    OperatorContext:
+      type: object
+      required: [maxMode, scopes, budgetRemainingUsd]
+      properties:
+        maxMode: { type: string, enum: [suggest, edit, drive] }
+        scopes:
+          type: array
+          items: { type: string }
+        budgetRemainingUsd: { type: number }
+
+    CoBuilderProvenance:
+      type: object
+      required: [source, excerpt, evidenceRef]
+      properties:
+        source: { type: string }
+        excerpt: { type: string }
+        evidenceRef: { type: string }
+
+    CoBuilderCost:
+      type: object
+      required: [usd, latencyMs]
+      properties:
+        usd: { type: number }
+        latencyMs: { type: integer }
+
+    CoBuilderDiffHunk:
+      type: object
+      required: [path, body]
+      properties:
+        path: { type: string }
+        body: { type: string }
+
+    CoBuilderAction:
+      type: object
+      required:
+        - id
+        - mode
+        - title
+        - rationale
+        - diff
+        - provenance
+        - cost
+        - requiredScopes
+        - evidenceRef
+      properties:
+        id: { type: string }
+        mode: { type: string, enum: [suggest, edit, drive] }
+        title: { type: string }
+        rationale: { type: string }
+        diff: { $ref: "#/components/schemas/CoBuilderDiffHunk" }
+        provenance:
+          type: array
+          items: { $ref: "#/components/schemas/CoBuilderProvenance" }
+        cost: { $ref: "#/components/schemas/CoBuilderCost" }
+        requiredScopes:
+          type: array
+          items: { type: string }
+        evidenceRef: { type: string }
+
+    RubberDuckFinding:
+      type: object
+      required: [step, observation, evidenceRef]
+      properties:
+        step: { type: string }
+        observation: { type: string }
+        evidenceRef: { type: string }
+
+    RubberDuckDiagnosis:
+      type: object
+      required: [caseId, failureSummary, findings, proposedFix]
+      properties:
+        caseId: { type: string }
+        failureSummary: { type: string }
+        findings:
+          type: array
+          items: { $ref: "#/components/schemas/RubberDuckFinding" }
+        proposedFix: { $ref: "#/components/schemas/CoBuilderAction" }
+
+    ReviewBullet:
+      type: object
+      required: [id, severity, body, evidenceRef]
+      properties:
+        id: { type: string }
+        severity: { type: string, enum: [info, warn, block] }
+        body: { type: string }
+        evidenceRef: { type: string }
+
+    AdversarialReview:
+      type: object
+      required: [actionId, bullets]
+      properties:
+        actionId: { type: string }
+        bullets:
+          type: array
+          items: { $ref: "#/components/schemas/ReviewBullet" }
+
+    CoBuilderWorkspace:
+      type: object
+      required: [workspaceId, agentId, agentName, operator, actions, rubberDuck, review]
+      properties:
+        workspaceId: { type: string, format: uuid }
+        agentId: { type: string, format: uuid, nullable: true }
+        agentName: { type: string }
+        operator: { $ref: "#/components/schemas/OperatorContext" }
+        actions:
+          type: array
+          items: { $ref: "#/components/schemas/CoBuilderAction" }
+        rubberDuck: { $ref: "#/components/schemas/RubberDuckDiagnosis" }
+        review: { $ref: "#/components/schemas/AdversarialReview" }
+
+    ConductorToolGrant:
+      type: object
+      required: [name, mode, evidence]
+      properties:
+        name: { type: string }
+        mode: { type: string, enum: [read, draft, live, blocked] }
+        evidence: { type: string }
+
+    ConductorSubAgent:
+      type: object
+      required:
+        - id
+        - name
+        - purpose
+        - owner
+        - version
+        - objectState
+        - trust
+        - status
+        - currentOwner
+        - tools
+        - budgetUsd
+        - spentUsd
+        - latencyP95Ms
+        - evalCoveragePercent
+        - evalConfidence
+        - memoryAccess
+        - activeHandoffs
+        - costEvidence
+        - latencyEvidence
+        - failurePaths
+        - traceSpans
+      properties:
+        id: { type: string }
+        name: { type: string }
+        purpose: { type: string }
+        owner: { type: string }
+        version: { type: string }
+        objectState: { type: string, enum: [draft, saved, staged, canary, production, archived] }
+        trust: { type: string, enum: [healthy, watching, drifting, degraded, blocked] }
+        status: { type: string, enum: [ready, active, degraded, blocked] }
+        currentOwner: { type: string }
+        tools:
+          type: array
+          items: { $ref: "#/components/schemas/ConductorToolGrant" }
+        budgetUsd: { type: number }
+        spentUsd: { type: number }
+        latencyP95Ms: { type: integer }
+        evalCoveragePercent: { type: integer }
+        evalConfidence: { type: string, enum: [high, medium, low, unsupported] }
+        memoryAccess: { type: string }
+        activeHandoffs: { type: integer }
+        costEvidence: { type: string }
+        latencyEvidence: { type: string }
+        failurePaths:
+          type: array
+          items: { type: string }
+        traceSpans:
+          type: array
+          items: { type: string }
+
+    HandoffContract:
+      type: object
+      required:
+        - id
+        - name
+        - from
+        - to
+        - purpose
+        - state
+        - inputSchema
+        - outputSchema
+        - timeoutMs
+        - fallback
+        - memoryAccess
+        - toolGrants
+        - budgetUsd
+        - currentOwner
+        - evidenceTrace
+      properties:
+        id: { type: string }
+        name: { type: string }
+        from: { type: string }
+        to: { type: string }
+        purpose: { type: string }
+        state: { type: string, enum: [ready, active, violated, blocked] }
+        inputSchema:
+          type: array
+          items: { type: string }
+        outputSchema:
+          type: array
+          items: { type: string }
+        timeoutMs: { type: integer }
+        fallback: { type: string }
+        memoryAccess: { type: string }
+        toolGrants:
+          type: array
+          items: { type: string }
+        budgetUsd: { type: number }
+        currentOwner: { type: string }
+        evidenceTrace: { type: string }
+        violation: { type: string }
+
+    DelegationTrace:
+      type: object
+      required: [id, traceId, contractId, sourceAgent, targetAgent, spanId, status, latencyMs, costUsd, evidence]
+      properties:
+        id: { type: string }
+        traceId: { type: string }
+        contractId: { type: string }
+        sourceAgent: { type: string }
+        targetAgent: { type: string }
+        spanId: { type: string }
+        status: { type: string, enum: [ok, warning, failed] }
+        latencyMs: { type: integer }
+        costUsd: { type: number }
+        evidence: { type: string }
+
+    ConductorTopologyEdge:
+      type: object
+      required: [id, source, target, label, state]
+      properties:
+        id: { type: string }
+        source: { type: string }
+        target: { type: string }
+        label: { type: string }
+        state: { type: string, enum: [ready, active, violated, blocked] }
+
+    ConductorData:
+      type: object
+      required:
+        - agentId
+        - agentName
+        - branch
+        - objectState
+        - trust
+        - subAgents
+        - contracts
+        - delegations
+        - topology
+        - orchestrationEvidence
+      properties:
+        agentId: { type: string, format: uuid }
+        agentName: { type: string }
+        branch: { type: string }
+        objectState: { type: string, enum: [draft, saved, staged, canary, production, archived] }
+        trust: { type: string, enum: [healthy, watching, drifting, degraded, blocked] }
+        subAgents:
+          type: array
+          items: { $ref: "#/components/schemas/ConductorSubAgent" }
+        contracts:
+          type: array
+          items: { $ref: "#/components/schemas/HandoffContract" }
+        delegations:
+          type: array
+          items: { $ref: "#/components/schemas/DelegationTrace" }
+        topology:
+          type: array
+          items: { $ref: "#/components/schemas/ConductorTopologyEdge" }
+        orchestrationEvidence: { type: string }
+        permissionReason: { type: string }
+        degradedReason: { type: string }
 
     KB:
       type: object
@@ -1336,10 +2397,52 @@ components:
                   description: { type: string }
                   input_schema: { type: object }
 
+    MarketplaceBrowseItem:
+      type: object
+      required:
+        - server_id
+        - slug
+        - name
+        - publisher
+        - description
+        - categories
+        - latest_version
+        - quality_score
+        - average_rating
+        - installs
+        - calls
+        - install_button_enabled
+      properties:
+        server_id: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        publisher: { type: string }
+        description: { type: string }
+        categories:
+          type: array
+          items: { type: string }
+        latest_version: { type: string }
+        quality_score: { type: integer, minimum: 0, maximum: 100 }
+        average_rating: { type: number, minimum: 0, maximum: 5 }
+        installs: { type: integer, minimum: 0 }
+        calls: { type: integer, minimum: 0 }
+        install_button_enabled: { type: boolean }
+
+    MarketplaceBrowseList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/MarketplaceBrowseItem" }
+
     EvalCase:
       type: object
       required: [name, input, expected, scorers]
       properties:
+        id: { type: string, format: uuid }
+        suite_id: { type: string, format: uuid }
+        workspace_id: { type: string, format: uuid }
         name: { type: string }
         input: { type: object }
         expected: { type: object }
@@ -1350,6 +2453,44 @@ components:
             properties:
               kind: { type: string, enum: [llm_judge, embedding_sim, regex_match, json_schema, tool_call_assert, latency_le, cost_le, hallucination, toxicity, pii_leak] }
               config: { type: object }
+        source: { type: string }
+        source_ref: { type: string }
+        attachments:
+          type: array
+          items: { type: string }
+        created_at: { type: string, format: date-time }
+        created_by: { type: string }
+
+    EvalCaseList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/EvalCase" }
+
+    ResolutionEvalCaseRequest:
+      type: object
+      required: [id, title, expectedOutcome, failureReason, linkedTrace, attachments, source]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        expectedOutcome: { type: string }
+        failureReason: { type: string }
+        linkedTrace: { type: string }
+        attachments:
+          type: array
+          items: { type: string }
+        source: { type: string, enum: [operator-resolution] }
+
+    ResolutionEvalCaseResponse:
+      type: object
+      required: [ok, suite_id, case_id, case]
+      properties:
+        ok: { type: boolean }
+        suite_id: { type: string, format: uuid }
+        case_id: { type: string, format: uuid }
+        case: { $ref: "#/components/schemas/EvalCase" }
 
     EvalSuite:
       type: object

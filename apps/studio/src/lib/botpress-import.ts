@@ -18,6 +18,84 @@ import type {
   RollbackTrigger,
 } from "./migration-parity";
 
+export interface MigrationParityWorkspace {
+  lineage: ImportLineage;
+  readiness: ParityReadiness;
+  diffs: readonly DiffEntry[];
+  replay: readonly ParityReplayCase[];
+  repairs: readonly RepairSuggestion[];
+  cutover: CutoverPlan;
+}
+
+export interface MigrationParityClientOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+  source?: "botpress";
+}
+
+function cpApiBaseUrl(override?: string): string {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) {
+    throw new Error("LOOP_CP_API_BASE_URL is required for migration parity calls");
+  }
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+function headers(opts: MigrationParityClientOptions): Record<string, string> {
+  const out: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) out.authorization = `Bearer ${token}`;
+  return out;
+}
+
+export function createFixtureMigrationParityWorkspace(): MigrationParityWorkspace {
+  return {
+    lineage: FIXTURE_BOTPRESS_LINEAGE,
+    readiness: FIXTURE_BOTPRESS_READINESS,
+    diffs: FIXTURE_BOTPRESS_DIFFS,
+    replay: FIXTURE_BOTPRESS_REPLAY,
+    repairs: FIXTURE_BOTPRESS_REPAIRS,
+    cutover: FIXTURE_BOTPRESS_CUTOVER,
+  };
+}
+
+export async function fetchMigrationParityWorkspace(
+  workspaceId: string,
+  opts: MigrationParityClientOptions = {},
+): Promise<MigrationParityWorkspace> {
+  let base: string;
+  try {
+    base = cpApiBaseUrl(opts.baseUrl);
+  } catch (err) {
+    if (err instanceof Error && /LOOP_CP_API_BASE_URL/.test(err.message)) {
+      return createFixtureMigrationParityWorkspace();
+    }
+    throw err;
+  }
+  const params = new URLSearchParams({
+    source: opts.source ?? "botpress",
+  });
+  const response = await (opts.fetcher ?? fetch)(
+    `${base}/workspaces/${encodeURIComponent(
+      workspaceId,
+    )}/migration/parity?${params}`,
+    {
+      method: "GET",
+      headers: headers(opts),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`cp-api GET migration parity -> ${response.status}`);
+  }
+  return (await response.json()) as MigrationParityWorkspace;
+}
+
 export const FIXTURE_BOTPRESS_LINEAGE: ImportLineage = {
   importId: "imp_bp_2025_02_21",
   source: "botpress",

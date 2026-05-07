@@ -1,4 +1,11 @@
-import type { Span, Trace } from "@/lib/traces";
+import {
+  fetchTraceByTurnId,
+  getTrace,
+  searchTraces,
+  type Span,
+  type Trace,
+  type TracesClientOptions,
+} from "@/lib/traces";
 
 export type AgentXrayClaimKind =
   | "behavior"
@@ -168,4 +175,32 @@ export function buildAgentXrayModel(input: Trace | Trace[]): AgentXrayModel {
     claims,
     unsupportedReason: null,
   };
+}
+
+export async function fetchAgentXrayTraces(
+  workspaceId: string,
+  opts: TracesClientOptions = {},
+): Promise<Trace[]> {
+  try {
+    const result = await searchTraces(
+      workspaceId,
+      { page_size: 6 },
+      opts,
+    );
+    const details = await Promise.all(
+      result.traces.map((trace) =>
+        fetchTraceByTurnId(trace.id, opts).catch(() => null),
+      ),
+    );
+    return details.filter((trace): trace is Trace => trace !== null);
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      /LOOP_CP_API_BASE_URL is required/.test(err.message)
+    ) {
+      const fallback = await getTrace("trace_refund_742");
+      return fallback ? [fallback] : [];
+    }
+    throw err;
+  }
 }

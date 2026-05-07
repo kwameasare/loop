@@ -9,7 +9,9 @@ import {
   ReviewShapeError,
   applyAction,
   blockingBullets,
+  createFixtureCoBuilderWorkspace,
   evaluateConsent,
+  fetchCoBuilderWorkspace,
   validateAdversarialReview,
 } from "./ai-cobuilder";
 
@@ -98,5 +100,28 @@ describe("blockingBullets", () => {
     const blockers = blockingBullets(FIXTURE_REVIEW);
     expect(blockers).toHaveLength(1);
     expect(blockers[0].id).toBe("rb_3");
+  });
+});
+
+describe("fetchCoBuilderWorkspace", () => {
+  it("loads the workspace-scoped Co-Builder contract from cp-api", async () => {
+    const fetcher = async (input: RequestInfo | URL) => {
+      expect(String(input)).toBe(
+        "https://cp.example/v1/workspaces/ws-1/cobuilder?agent_id=agent-1",
+      );
+      return new Response(
+        JSON.stringify(createFixtureCoBuilderWorkspace("ws-1")),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    };
+
+    const workspace = await fetchCoBuilderWorkspace("ws-1", {
+      baseUrl: "https://cp.example",
+      agentId: "agent-1",
+      fetcher: fetcher as typeof fetch,
+    });
+
+    expect(workspace.workspaceId).toBe("ws-1");
+    expect(workspace.actions).toHaveLength(2);
   });
 });

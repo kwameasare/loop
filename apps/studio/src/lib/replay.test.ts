@@ -7,8 +7,10 @@ import {
   diffReplayTraces,
   nextBoundary,
   previousBoundary,
+  replayTraceFromTrace,
   snapshotAt,
 } from "./replay";
+import type { Trace } from "./traces";
 
 describe("snapshotAt", () => {
   it("clamps the cursor below 0", () => {
@@ -141,5 +143,87 @@ describe("boundaries", () => {
     expect(nextBoundary(FIXTURE_REPLAY, 99)).toBe(
       FIXTURE_REPLAY.events.length - 1,
     );
+  });
+});
+
+describe("replayTraceFromTrace", () => {
+  it("converts a live trace detail into replay events", () => {
+    const trace: Trace = {
+      id: "abc123",
+      summary: {
+        outcome: "answered",
+        agent_name: "Support",
+        environment: "production",
+        channel: "web",
+        provider: "Runtime",
+        model: "recorded",
+        deploy_version: "v1",
+        snapshot_id: "snap-1",
+        total_latency_ns: 25_000_000,
+        total_cost_usd: 0,
+        tool_count: 1,
+        retrieval_count: 0,
+        memory_writes: 0,
+        eval_score: null,
+        eval_suite: null,
+      },
+      spans: [
+        {
+          id: "root",
+          parent_id: null,
+          name: "runtime turn",
+          category: "channel",
+          kind: "server",
+          service: "runtime",
+          start_ns: 0,
+          end_ns: 10_000_000,
+          status: "ok",
+          attributes: { conversation_id: "conv-1" },
+          events: [],
+          input: { user_message: "Where is my order?" },
+          output: { outcome: "accepted" },
+        },
+        {
+          id: "tool",
+          parent_id: "root",
+          name: "tool.lookup_order",
+          category: "tool",
+          kind: "internal",
+          service: "tool-host",
+          start_ns: 12_000_000,
+          end_ns: 20_000_000,
+          status: "ok",
+          attributes: { tool: "lookup_order" },
+          events: [],
+          output: { status: "shipped" },
+        },
+        {
+          id: "answer",
+          parent_id: "root",
+          name: "llm.answer",
+          category: "llm",
+          kind: "internal",
+          service: "gateway",
+          start_ns: 21_000_000,
+          end_ns: 25_000_000,
+          status: "ok",
+          attributes: {},
+          events: [],
+          output: { answer_summary: "It shipped." },
+        },
+      ],
+    };
+
+    const replay = replayTraceFromTrace(trace);
+
+    expect(replay.conversation_id).toBe("conv-1");
+    expect(replay.events.map((event) => event.kind)).toEqual([
+      "user_message",
+      "handoff",
+      "tool_call_start",
+      "tool_call_end",
+      "agent_message",
+    ]);
+    expect(replay.events[4].text).toBe("It shipped.");
   });
 });

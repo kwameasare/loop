@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   FIXTURE_THREADS,
@@ -11,6 +11,7 @@ import {
   ApprovalValidationError,
   clampPlayhead,
   eventAtPlayhead,
+  fetchCollaborationWorkspace,
   FIXTURE_CHANGESET,
   FIXTURE_PAIR_DEBUG,
   isChangesetReadyToMerge,
@@ -142,5 +143,89 @@ describe("pair-debug shared playhead", () => {
     const back = setPlayhead(FIXTURE_PAIR_DEBUG, -50);
     expect(back.playheadMs).toBe(0);
     expect(back).not.toBe(FIXTURE_PAIR_DEBUG);
+  });
+});
+
+describe("fetchCollaborationWorkspace", () => {
+  it("derives review presence and pair-debug state from live traces", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.includes("/workspaces/ws-1/traces")) {
+        return new Response(
+          JSON.stringify({
+            items: [
+              {
+                workspace_id: "ws-1",
+                trace_id: "b".repeat(32),
+                turn_id: "11111111-1111-4111-8111-111111111111",
+                conversation_id: "22222222-2222-4222-8222-222222222222",
+                agent_id: "33333333-3333-4333-8333-333333333333",
+                started_at: "2026-05-07T12:00:00Z",
+                duration_ms: 100,
+                span_count: 1,
+                error: false,
+              },
+            ],
+            next_cursor: null,
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      if (url.includes("/audit/events")) {
+        return new Response(
+          JSON.stringify({
+            items: [
+              {
+                id: "ev-1",
+                occurred_at: "2026-05-07T12:00:00Z",
+                workspace_id: "ws-1",
+                actor_sub: "sam@example.com",
+                action: "agent.version.promoted",
+                resource_type: "agent_version",
+                resource_id: "v1",
+                outcome: "success",
+              },
+            ],
+            total: 1,
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          trace_id: "b".repeat(32),
+          turn_id: "11111111-1111-4111-8111-111111111111",
+          conversation_id: "22222222-2222-4222-8222-222222222222",
+          agent_id: "33333333-3333-4333-8333-333333333333",
+          started_at: "2026-05-07T12:00:00Z",
+          duration_ms: 100,
+          span_count: 1,
+          error: false,
+          spans: [
+            {
+              span_id: "span-1",
+              parent_span_id: null,
+              kind: "channel",
+              name: "runtime turn",
+              started_at: "2026-05-07T12:00:00Z",
+              latency_ms: 100,
+              cost_usd: 0,
+              status: "ok",
+              attrs: {},
+            },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    });
+
+    const workspace = await fetchCollaborationWorkspace("ws-1", {
+      baseUrl: "https://cp.example.test/v1",
+      fetcher,
+    });
+
+    expect(workspace.presence[0].focus).toContain("trace/");
+    expect(workspace.changeset.title).toContain("agent.version.promoted");
+    expect(workspace.pairDebug.trace[0].evidenceRef).toContain("span-1");
   });
 });

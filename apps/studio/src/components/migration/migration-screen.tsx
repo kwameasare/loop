@@ -12,6 +12,8 @@ import {
   MIGRATION_READINESS,
   REVIEW_ITEMS,
   countReviewItemsBySeverity,
+  type MigrationReadiness,
+  type ReviewItem,
 } from "@/lib/migration";
 
 export interface MigrationScreenProps {
@@ -21,6 +23,8 @@ export interface MigrationScreenProps {
    * connectivity.
    */
   className?: string;
+  readiness?: MigrationReadiness;
+  reviewItems?: readonly ReviewItem[];
 }
 
 /**
@@ -29,8 +33,12 @@ export interface MigrationScreenProps {
  * three-pane review using only shared target primitives — no local badges,
  * confidence meters, or risk halos are rebuilt here.
  */
-export function MigrationScreen({ className }: MigrationScreenProps) {
-  const severityCounts = countReviewItemsBySeverity(REVIEW_ITEMS);
+export function MigrationScreen({
+  className,
+  readiness = MIGRATION_READINESS,
+  reviewItems = REVIEW_ITEMS,
+}: MigrationScreenProps) {
+  const severityCounts = countReviewItemsBySeverity(reviewItems);
   const blockingPath =
     severityCounts.blocking > 0
       ? "Resolve blocking decisions before staging cutover."
@@ -59,23 +67,23 @@ export function MigrationScreen({ className }: MigrationScreenProps) {
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <MetricCountUp
           label="Migration readiness"
-          value={MIGRATION_READINESS.overallScore}
+          value={readiness.overallScore}
           suffix="%"
-          delta={`${MIGRATION_READINESS.parityPassing}/${MIGRATION_READINESS.parityTotal} parity tests passing`}
+          delta={`${readiness.parityPassing}/${readiness.parityTotal} parity tests passing`}
         />
         <MetricCountUp
           label="Cleanly imported"
-          value={MIGRATION_READINESS.cleanlyImported}
-          delta={`${MIGRATION_READINESS.needsReview} need review`}
+          value={readiness.cleanlyImported}
+          delta={`${readiness.needsReview} need review`}
         />
         <MetricCountUp
           label="Secrets to reconnect"
-          value={MIGRATION_READINESS.secretsToReconnect}
+          value={readiness.secretsToReconnect}
           delta="Vault-backed; never sent to studio"
         />
         <MetricCountUp
           label="Unsupported items"
-          value={MIGRATION_READINESS.unsupported}
+          value={readiness.unsupported}
           delta="Marked intentionally and tracked in lineage"
         />
       </section>
@@ -91,7 +99,7 @@ export function MigrationScreen({ className }: MigrationScreenProps) {
         }
         action={
           <ConfidenceMeter
-            value={MIGRATION_READINESS.overallScore}
+            value={readiness.overallScore}
             label="Overall readiness"
           />
         }
@@ -115,7 +123,7 @@ export function MigrationScreen({ className }: MigrationScreenProps) {
         retention window so any decision is auditable months later.
       </EvidenceCallout>
 
-      <ThreePaneReview />
+      <ThreePaneReview items={reviewItems} />
     </main>
   );
 }

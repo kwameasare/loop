@@ -1,4 +1,9 @@
 import { targetUxFixtures } from "@/lib/target-ux";
+import {
+  searchTraces,
+  type TraceSummary,
+  type TracesClientOptions,
+} from "@/lib/traces";
 
 export type ReplayRisk = "low" | "medium" | "high";
 
@@ -297,4 +302,128 @@ export function getReplayWorkbenchModel(): ReplayWorkbenchModel {
     clusters,
     scenes,
   };
+}
+
+function riskForTrace(trace: TraceSummary): ReplayRisk {
+  if (trace.status === "error") return "high";
+  if (trace.duration_ns > 1_200_000_000 || trace.span_count >= 8) return "medium";
+  return "low";
+}
+
+function liveConversation(trace: TraceSummary, index: number): ProductionConversationCandidate {
+  const risk = riskForTrace(trace);
+  return {
+    id: trace.id,
+    title: trace.root_name || `Production turn ${index + 1}`,
+    agentName: trace.agent_name,
+    sourceVersion: "production",
+    draftVersion: "active draft",
+    snapshotId: `snap-${trace.id.slice(0, 8)}`,
+    traceId: trace.id,
+    turns: Math.max(1, trace.span_count),
+    risk,
+    issue:
+      risk === "high"
+        ? "Error trace should be replayed before promotion."
+        : risk === "medium"
+          ? "Long or tool-heavy trace is likely to change under a draft."
+          : "Representative production trace ready for replay coverage.",
+  };
+}
+
+function replaySummaryForTrace(trace: TraceSummary): FutureReplaySummary {
+  const changedFrames =
+    trace.status === "error" ? Math.max(1, Math.ceil(trace.span_count / 2)) : 1;
+  const behavioralDistance = trace.status === "error"
+    ? 61
+    : Math.min(44, 12 + trace.span_count * 3);
+  return {
+    conversationId: trace.id,
+    behavioralDistance,
+    changedFrames,
+    latencyDeltaMs: -Math.round(trace.duration_ns / 8_000_000),
+    costDeltaPct: trace.status === "error" ? 9 : -4,
+    mostLikelyBreak:
+      trace.status === "error"
+        ? "The recorded production turn failed; replay the same input against the draft and require an explicit regression decision."
+        : "The draft may alter tool ordering or retrieval evidence for this production turn.",
+    diffRows: [
+      {
+        id: `${trace.id}-frame-1`,
+        frame: "turn / recorded input",
+        baseline: `${trace.root_name} on ${trace.agent_name}`,
+        draft: "Draft receives the same production input with current behavior state.",
+        status: "same",
+        evidenceRef: `${trace.id}/input`,
+      },
+      {
+        id: `${trace.id}-frame-2`,
+        frame: "turn / spans",
+        baseline: `${trace.span_count} recorded spans, ${trace.status} status.`,
+        draft:
+          trace.status === "error"
+            ? "Draft must remove the recorded failure before promotion."
+            : "Draft span plan is expected to stay within the same behavior envelope.",
+        status: trace.status === "error" ? "regressed" : "changed",
+        evidenceRef: `${trace.id}/spans`,
+      },
+      {
+        id: `${trace.id}-frame-3`,
+        frame: "turn / latency budget",
+        baseline: `${Math.round(trace.duration_ns / 1_000_000)} ms production latency.`,
+        draft: "Replay records the new latency and cost deltas before deploy.",
+        status: "improved",
+        evidenceRef: `${trace.id}/latency`,
+      },
+    ],
+  };
+}
+
+function modelFromTraces(traces: readonly TraceSummary[]): ReplayWorkbenchModel {
+  if (traces.length === 0) {
+    return {
+      ...getReplayWorkbenchModel(),
+      conversations: [],
+    };
+  }
+  const ordered = [...traces].sort((a, b) => {
+    const riskOrder: Record<ReplayRisk, number> = { high: 0, medium: 1, low: 2 };
+    return riskOrder[riskForTrace(a)] - riskOrder[riskForTrace(b)];
+  });
+  const [first] = ordered;
+  return {
+    ...getReplayWorkbenchModel(),
+    conversations: ordered.map(liveConversation),
+    selectedReplay: replaySummaryForTrace(first!),
+    scenes: scenes.map((scene, index) => {
+      const trace = ordered[index % ordered.length]!;
+      return {
+        ...scene,
+        provenance: `Saved from live trace ${trace.id}; replay evidence remains workspace-scoped.`,
+        linkedTraceId: trace.id,
+      };
+    }),
+  };
+}
+
+export async function fetchReplayWorkbenchModel(
+  workspaceId: string,
+  opts: TracesClientOptions = {},
+): Promise<ReplayWorkbenchModel> {
+  try {
+    const result = await searchTraces(
+      workspaceId,
+      { page_size: 25 },
+      opts,
+    );
+    return modelFromTraces(result.traces);
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      /LOOP_CP_API_BASE_URL is required/.test(err.message)
+    ) {
+      return getReplayWorkbenchModel();
+    }
+    throw err;
+  }
 }

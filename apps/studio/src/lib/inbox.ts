@@ -127,6 +127,23 @@ export interface InboxClientOptions {
   baseUrl?: string;
 }
 
+type CpInboxItem = {
+  id: string;
+  workspace_id: string;
+  agent_id: string;
+  conversation_id: string;
+  user_id: string;
+  status: InboxStatus;
+  reason: string;
+  operator_id: string | null;
+  created_at_ms: number;
+  claimed_at_ms: number | null;
+  resolved_at_ms: number | null;
+  last_message_excerpt?: string;
+  team_id?: string;
+  channel?: InboxChannel;
+};
+
 function cpApiBaseUrl(override?: string): string {
   const raw =
     override ??
@@ -160,27 +177,43 @@ async function cpFetch<T>(
   return (await res.json()) as T;
 }
 
+function normalizeInboxItem(item: CpInboxItem): InboxItem {
+  return {
+    id: item.id,
+    workspace_id: item.workspace_id,
+    team_id: item.team_id ?? "team-default",
+    agent_id: item.agent_id,
+    channel: item.channel ?? "web",
+    conversation_id: item.conversation_id,
+    user_id: item.user_id,
+    status: item.status,
+    reason: item.reason,
+    operator_id: item.operator_id,
+    created_at_ms: item.created_at_ms,
+    claimed_at_ms: item.claimed_at_ms,
+    resolved_at_ms: item.resolved_at_ms,
+    last_message_excerpt: item.last_message_excerpt ?? "",
+  };
+}
+
 /**
  * Fetch the operator inbox for a workspace.
  *
- * Blocked on cp-api PR: ``/v1/workspaces/{id}/inbox`` is not yet
- * mounted in ``packages/control-plane/loop_control_plane/app.py`` —
- * the underlying ``InboxAPI`` class is implemented but no FastAPI
- * router exists. Until that ships, callers receive an empty list on
- * 404 and the screen renders the empty state cleanly. When the
- * route lands the studio side requires no further changes (the path
- * matches what the audit doc names).
+ * This is the live cp-api queue route. A 404 still falls back to an
+ * empty list so older local control-plane processes degrade cleanly
+ * while developers restart.
  */
 export async function listInbox(
   workspace_id: string,
   opts: InboxClientOptions = {},
 ): Promise<{ items: InboxItem[] }> {
   try {
-    return await cpFetch<{ items: InboxItem[] }>(
+    const result = await cpFetch<{ items: CpInboxItem[] }>(
       "GET",
       `/workspaces/${encodeURIComponent(workspace_id)}/inbox`,
       opts,
     );
+    return { items: result.items.map(normalizeInboxItem) };
   } catch (err) {
     if (err instanceof Error && /-> 404/.test(err.message)) {
       return { items: [] };
@@ -195,9 +228,13 @@ export async function claimInboxItem(
   operator_id: string,
   opts: InboxClientOptions = {},
 ): Promise<InboxItem> {
-  return cpFetch<InboxItem>("POST", `/inbox/${encodeURIComponent(item_id)}/claim`, opts, {
-    operator_id,
-  });
+  const item = await cpFetch<CpInboxItem>(
+    "POST",
+    `/inbox/${encodeURIComponent(item_id)}/claim`,
+    opts,
+    { operator_id },
+  );
+  return normalizeInboxItem(item);
 }
 
 /** Release a claim — drops back into the pending queue. */
@@ -205,11 +242,12 @@ export async function releaseInboxItem(
   item_id: string,
   opts: InboxClientOptions = {},
 ): Promise<InboxItem> {
-  return cpFetch<InboxItem>(
+  const item = await cpFetch<CpInboxItem>(
     "POST",
     `/inbox/${encodeURIComponent(item_id)}/release`,
     opts,
   );
+  return normalizeInboxItem(item);
 }
 
 /** Resolve a claim — closes the escalation. */
@@ -217,11 +255,12 @@ export async function resolveInboxItem(
   item_id: string,
   opts: InboxClientOptions = {},
 ): Promise<InboxItem> {
-  return cpFetch<InboxItem>(
+  const item = await cpFetch<CpInboxItem>(
     "POST",
     `/inbox/${encodeURIComponent(item_id)}/resolve`,
     opts,
   );
+  return normalizeInboxItem(item);
 }
 
 /**
@@ -240,7 +279,7 @@ export async function takeoverConversation(
     "POST",
     `/conversations/${encodeURIComponent(conversation_id)}/takeover`,
     opts,
-    { reason },
+    { note: reason },
   );
 }
 

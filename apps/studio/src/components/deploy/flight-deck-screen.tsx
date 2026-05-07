@@ -1,4 +1,7 @@
-import { FLIGHT_READINESS } from "@/lib/deploy-flight";
+import {
+  FLIGHT_READINESS,
+  type DeployFlightModel,
+} from "@/lib/deploy-flight";
 
 import { CanarySlider } from "./canary-slider";
 import { DeployTimeline } from "./deploy-timeline";
@@ -7,7 +10,12 @@ import { PreflightGrid } from "./preflight-grid";
 import { PromotionPanel } from "./promotion-panel";
 import { RollbackPanel } from "./rollback-panel";
 
-export function FlightDeckScreen() {
+export function FlightDeckScreen({
+  model,
+}: {
+  model?: DeployFlightModel;
+}) {
+  const readiness = model?.readiness ?? FLIGHT_READINESS;
   return (
     <main
       className="space-y-8 p-6"
@@ -32,7 +40,7 @@ export function FlightDeckScreen() {
         className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
         data-testid="flight-readiness"
       >
-        {FLIGHT_READINESS.map((m) => (
+        {readiness.map((m) => (
           <article
             key={m.id}
             className="rounded-md border bg-card p-4"
@@ -49,13 +57,21 @@ export function FlightDeckScreen() {
 
       <EnvironmentStrip />
 
-      <PreflightGrid />
+      <PreflightGrid {...(model ? { diffs: model.diffs } : {})} />
 
-      <PromotionPanel />
+      <PromotionPanel
+        {...(model
+          ? {
+              approvals: model.approvals,
+              diffs: model.diffs,
+              gates: model.gates,
+            }
+          : {})}
+      />
 
       <CanarySlider />
 
-      <RollbackPanel />
+      <RollbackPanel {...(model ? { target: model.rollbackTarget } : {})} />
 
       <DeployTimeline />
     </main>

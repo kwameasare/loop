@@ -188,16 +188,31 @@ describe("inbox cp-api client", () => {
       ok: true,
       status: 200,
       json: async () => ({
-        items: [{ id: "1", workspace_id: "ws1", status: "pending" }],
+        items: [
+          {
+            id: "1",
+            workspace_id: "ws1",
+            agent_id: "agent-1",
+            conversation_id: "conv-1",
+            user_id: "user-1",
+            status: "pending",
+            reason: "human requested",
+            operator_id: null,
+            created_at_ms: 1,
+            claimed_at_ms: null,
+            resolved_at_ms: null,
+          },
+        ],
       }),
     });
     const res = await listInbox("ws1", { fetcher });
     expect(res.items).toHaveLength(1);
+    expect(res.items[0]).toMatchObject({ team_id: "team-default", channel: "web" });
     const [url] = fetcher.mock.calls[0];
     expect(url).toBe("https://cp.test/v1/workspaces/ws1/inbox");
   });
 
-  it("listInbox returns empty list on 404 (route not yet shipped)", async () => {
+  it("listInbox returns empty list on 404 while an older cp-api is running", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
@@ -216,7 +231,19 @@ describe("inbox cp-api client", () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ id: "i1", status: "claimed" }),
+      json: async () => ({
+        id: "i1",
+        workspace_id: "ws1",
+        agent_id: "agent-1",
+        conversation_id: "conv-1",
+        user_id: "user-1",
+        status: "claimed",
+        reason: "human requested",
+        operator_id: "op-1",
+        created_at_ms: 1,
+        claimed_at_ms: 2,
+        resolved_at_ms: null,
+      }),
     });
     await claimInboxItem("i1", "op-1", { fetcher });
     const [url, init] = fetcher.mock.calls[0];
@@ -229,7 +256,19 @@ describe("inbox cp-api client", () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ id: "i1", status: "pending" }),
+      json: async () => ({
+        id: "i1",
+        workspace_id: "ws1",
+        agent_id: "agent-1",
+        conversation_id: "conv-1",
+        user_id: "user-1",
+        status: "pending",
+        reason: "human requested",
+        operator_id: null,
+        created_at_ms: 1,
+        claimed_at_ms: null,
+        resolved_at_ms: null,
+      }),
     });
     await releaseInboxItem("i1", { fetcher });
     const [url, init] = fetcher.mock.calls[0];
@@ -242,20 +281,32 @@ describe("inbox cp-api client", () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ id: "i1", status: "resolved" }),
+      json: async () => ({
+        id: "i1",
+        workspace_id: "ws1",
+        agent_id: "agent-1",
+        conversation_id: "conv-1",
+        user_id: "user-1",
+        status: "resolved",
+        reason: "human requested",
+        operator_id: "op-1",
+        created_at_ms: 1,
+        claimed_at_ms: 2,
+        resolved_at_ms: 3,
+      }),
     });
     await resolveInboxItem("i1", { fetcher });
     const [url] = fetcher.mock.calls[0];
     expect(url).toBe("https://cp.test/v1/inbox/i1/resolve");
   });
 
-  it("takeoverConversation POSTs to /v1/conversations/{id}/takeover with reason", async () => {
+  it("takeoverConversation POSTs to /v1/conversations/{id}/takeover with note", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
     await takeoverConversation("c1", "user requested human", { fetcher });
     const [url, init] = fetcher.mock.calls[0];
     expect(url).toBe("https://cp.test/v1/conversations/c1/takeover");
-    expect(JSON.parse(init.body)).toEqual({ reason: "user requested human" });
+    expect(JSON.parse(init.body)).toEqual({ note: "user requested human" });
   });
 });

@@ -94,6 +94,56 @@ export interface ConductorData {
   degradedReason?: string | undefined;
 }
 
+export interface ConductorClientOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+function cpApiBaseUrl(override?: string): string {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) {
+    throw new Error("LOOP_CP_API_BASE_URL is required for conductor calls");
+  }
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+export async function fetchConductorData(
+  agentId: string,
+  opts: ConductorClientOptions = {},
+): Promise<ConductorData> {
+  let base: string;
+  try {
+    base = cpApiBaseUrl(opts.baseUrl);
+  } catch (err) {
+    if (err instanceof Error && /LOOP_CP_API_BASE_URL/.test(err.message)) {
+      return createConductorData(agentId);
+    }
+    throw err;
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const headers: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  const response = await fetcher(
+    `${base}/agents/${encodeURIComponent(agentId)}/conductor`,
+    {
+      method: "GET",
+      headers,
+      cache: "no-store",
+    },
+  );
+  if (response.status === 404) return createBlockedConductorData(agentId);
+  if (!response.ok) {
+    throw new Error(`cp-api GET agent conductor -> ${response.status}`);
+  }
+  return (await response.json()) as ConductorData;
+}
+
 export function createConductorData(
   agentId: string,
   fixture: TargetUXFixture = targetUxFixtures,

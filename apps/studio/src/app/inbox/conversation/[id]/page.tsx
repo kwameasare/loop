@@ -1,61 +1,86 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { RequireAuth } from "@/components/auth/require-auth";
 import { ConversationEvidence } from "@/components/inbox/conversation-evidence";
 import { ConversationViewer } from "@/components/inbox/conversation-viewer";
 import { ResolutionToEval } from "@/components/inbox/resolution-to-eval";
 import { SuggestedDraft } from "@/components/inbox/suggested-draft";
 import {
-  FIXTURE_CONVERSATION_ID,
-  FIXTURE_TRANSCRIPT,
-  fixtureSubscriber,
-  type ConversationMessage,
+  createPollingSubscriber,
+  fetchConversationDetail,
+  handbackConversation,
+  postOperatorMessage,
+  takeoverConversation,
+  type ConversationDetailView,
 } from "@/lib/conversation";
 import {
-  FIXTURE_EVIDENCE_CONTEXT,
-  FIXTURE_SUGGESTED_DRAFT,
-  type EvalCaseFromResolution,
+  createEvidenceContextFromConversation,
+  saveResolutionEvalCase,
+  suggestOperatorDraftFromConversation,
 } from "@/lib/inbox-resolution";
-
-async function fixtureTakeover() {
-  return { ok: true as const };
-}
-
-async function fixtureHandback() {
-  return { ok: true as const };
-}
-
-async function fixturePostMessage({
-  conversation_id,
-  body,
-}: {
-  conversation_id: string;
-  body: string;
-}) {
-  const message: ConversationMessage = {
-    id: `op-${Date.now()}`,
-    conversation_id,
-    role: "operator",
-    body,
-    created_at_ms: Date.now(),
-  };
-  return { ok: true as const, message };
-}
-
-async function fixtureSaveEval(
-  _draft: EvalCaseFromResolution,
-): Promise<{ ok: boolean; suite_id: string }> {
-  return { ok: true, suite_id: "operator-resolutions" };
-}
+import { useActiveWorkspace } from "@/lib/use-active-workspace";
 
 export default function ConversationPage({
   params,
 }: {
   params: { id: string };
 }): JSX.Element {
-  const conversation_id = params.id || FIXTURE_CONVERSATION_ID;
+  return (
+    <RequireAuth>
+      <ConversationPageBody conversation_id={params.id} />
+    </RequireAuth>
+  );
+}
+
+function ConversationPageBody({
+  conversation_id,
+}: {
+  conversation_id: string;
+}): JSX.Element {
   const [insertedDraft, setInsertedDraft] = useState<string | null>(null);
+  const [detail, setDetail] = useState<ConversationDetailView | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const { active } = useActiveWorkspace();
+  const subscriber = useMemo(() => createPollingSubscriber(), []);
+  const evidence = useMemo(
+    () =>
+      detail
+        ? createEvidenceContextFromConversation({
+            conversation_id,
+            messages: detail.messages,
+          })
+        : null,
+    [conversation_id, detail],
+  );
+  const suggestedDraft = useMemo(
+    () =>
+      detail
+        ? suggestOperatorDraftFromConversation(detail.messages)
+        : "Loading the conversation evidence before suggesting a reply.",
+    [detail],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    setDetail(null);
+    setLoadError(null);
+    void fetchConversationDetail(conversation_id)
+      .then((next) => {
+        if (cancelled) return;
+        setDetail(next);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setLoadError(
+          err instanceof Error ? err.message : "Could not load conversation",
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [conversation_id]);
 
   return (
     <main
@@ -73,16 +98,29 @@ export default function ConversationPage({
         </p>
       </header>
 
+      {loadError ? (
+        <p className="mb-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {loadError}
+        </p>
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-4">
-          <ConversationViewer
-            conversation_id={conversation_id}
-            handback={fixtureHandback}
-            initialTranscript={FIXTURE_TRANSCRIPT}
-            postMessage={fixturePostMessage}
-            subscribe={fixtureSubscriber}
-            takeover={fixtureTakeover}
-          />
+          {detail ? (
+            <ConversationViewer
+              conversation_id={conversation_id}
+              handback={({ conversation_id: id }) => handbackConversation(id)}
+              initialOwnership={detail.ownership}
+              initialTranscript={detail.messages}
+              postMessage={postOperatorMessage}
+              subscribe={subscriber}
+              takeover={({ conversation_id: id }) => takeoverConversation(id)}
+            />
+          ) : (
+            <section className="rounded-lg border bg-white p-6 text-sm text-muted-foreground">
+              Loading conversation...
+            </section>
+          )}
           {insertedDraft ? (
             <p
               className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900"
@@ -95,14 +133,29 @@ export default function ConversationPage({
 
         <aside className="space-y-4">
           <SuggestedDraft
-            draft={FIXTURE_SUGGESTED_DRAFT}
+            draft={suggestedDraft}
             onInsert={(text) => setInsertedDraft(text)}
           />
-          <ConversationEvidence ctx={FIXTURE_EVIDENCE_CONTEXT} />
-          <ResolutionToEval
-            ctx={FIXTURE_EVIDENCE_CONTEXT}
-            onSave={fixtureSaveEval}
-          />
+          {evidence ? (
+            <>
+              <ConversationEvidence ctx={evidence} />
+              <ResolutionToEval
+                ctx={evidence}
+                onSave={(draft) =>
+                  active
+                    ? saveResolutionEvalCase(active.id, draft)
+                    : Promise.resolve({
+                        ok: false,
+                        error: "No active workspace selected.",
+                      })
+                }
+              />
+            </>
+          ) : (
+            <section className="rounded-lg border bg-white p-4 text-sm text-muted-foreground">
+              Loading evidence context...
+            </section>
+          )}
         </aside>
       </div>
     </main>

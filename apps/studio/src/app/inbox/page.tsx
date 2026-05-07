@@ -3,18 +3,22 @@
 /**
  * P0.3: ``/inbox`` — operator escalation queue.
  *
- * Wires the InboxScreen to real cp-api calls. The
- * ``/v1/workspaces/{id}/inbox`` route is not yet mounted on cp (see
- * ``listInbox`` in lib/inbox.ts) so we fall through to an empty queue
- * until that PR lands; the takeover round-trip via
- * ``/v1/conversations/{id}/takeover`` is wired today.
+ * Wires the InboxScreen to live cp-api calls for queue load, claim,
+ * release, and resolution. The screen still keeps optimistic local
+ * feedback, then reconciles each action against the server response.
  */
 
 import { useEffect, useMemo, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { InboxScreen } from "@/components/inbox/inbox-screen";
-import { listInbox, type InboxItem } from "@/lib/inbox";
+import {
+  claimInboxItem,
+  listInbox,
+  releaseInboxItem,
+  resolveInboxItem,
+  type InboxItem,
+} from "@/lib/inbox";
 import { useUser } from "@/lib/use-user";
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
 
@@ -85,6 +89,9 @@ function InboxPageBody(): JSX.Element {
       workspace_id={active.id}
       operator_id={user.sub}
       now_ms={nowMs}
+      onClaimItem={(item) => claimInboxItem(item.id, user.sub)}
+      onReleaseItem={(item) => releaseInboxItem(item.id)}
+      onResolveItem={(item) => resolveInboxItem(item.id)}
     />
   );
 }

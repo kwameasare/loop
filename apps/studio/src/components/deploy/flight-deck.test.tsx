@@ -10,6 +10,7 @@ import {
   PromotionPanel,
   RollbackPanel,
 } from ".";
+import { fetchDeployFlightModel } from "@/lib/deploy-flight";
 
 describe("EnvironmentStrip", () => {
   it("renders dev/staging/production/region-eu cards with their approval policies", () => {
@@ -226,5 +227,64 @@ describe("FlightDeckScreen", () => {
     expect(screen.getByTestId("rollback-panel")).toBeInTheDocument();
     expect(screen.getByTestId("deploy-timeline")).toBeInTheDocument();
     expect(screen.getByTestId("flight-readiness-rollback")).toBeInTheDocument();
+  });
+});
+
+describe("fetchDeployFlightModel", () => {
+  it("derives preflight gates from live trace and audit posture", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.includes("/workspaces/ws-1/traces")) {
+        return new Response(
+          JSON.stringify({
+            items: [
+              {
+                workspace_id: "ws-1",
+                trace_id: "d".repeat(32),
+                turn_id: "11111111-1111-4111-8111-111111111111",
+                conversation_id: "22222222-2222-4222-8222-222222222222",
+                agent_id: "33333333-3333-4333-8333-333333333333",
+                started_at: "2026-05-07T12:00:00Z",
+                duration_ms: 500,
+                span_count: 4,
+                error: true,
+              },
+            ],
+            next_cursor: null,
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          items: [
+            {
+              id: "ev-1",
+              occurred_at: "2026-05-07T12:00:00Z",
+              workspace_id: "ws-1",
+              actor_sub: "sam@example.com",
+              action: "agent.version.promoted",
+              resource_type: "agent_version",
+              resource_id: "v1",
+              outcome: "success",
+            },
+          ],
+          total: 1,
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    });
+
+    const model = await fetchDeployFlightModel("ws-1", {
+      baseUrl: "https://cp.example.test/v1",
+      fetcher,
+    });
+
+    expect(model.diffs[0].severity).toBe("blocking");
+    expect(model.gates[0]).toMatchObject({
+      id: "live-trace-health",
+      status: "failed",
+    });
+    expect(model.rollbackTarget.versionId).toBe("d".repeat(12));
   });
 });

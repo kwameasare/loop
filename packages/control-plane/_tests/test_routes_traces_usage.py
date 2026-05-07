@@ -137,6 +137,67 @@ def test_search_traces_requires_workspace_membership(
     assert response.status_code in (401, 403)
 
 
+def test_get_trace_detail_by_turn_or_trace_id(
+    client: TestClient, workspace_id: UUID
+) -> None:
+    cp = client.app.state.cp  # type: ignore[attr-defined]
+    turn_id = uuid4()
+    cp.trace_store.add(
+        TraceSummary(
+            workspace_id=workspace_id,
+            trace_id="c" * 32,
+            turn_id=turn_id,
+            conversation_id=uuid4(),
+            agent_id=uuid4(),
+            started_at=datetime(2026, 5, 4, 12, 0, tzinfo=UTC),
+            duration_ms=240,
+            span_count=4,
+            error=False,
+        )
+    )
+
+    by_turn = client.get(
+        f"/v1/traces/{turn_id}",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert by_turn.status_code == 200, by_turn.text
+    assert by_turn.json()["turn_id"] == str(turn_id)
+    assert by_turn.json()["spans"][0]["attrs"]["summary_span_count"] == 4
+
+    by_trace = client.get(
+        "/v1/traces/" + ("c" * 32),
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert by_trace.status_code == 200, by_trace.text
+    assert by_trace.json()["trace_id"] == "c" * 32
+
+
+def test_get_trace_detail_requires_membership(
+    client: TestClient, workspace_id: UUID
+) -> None:
+    cp = client.app.state.cp  # type: ignore[attr-defined]
+    turn_id = uuid4()
+    cp.trace_store.add(
+        TraceSummary(
+            workspace_id=workspace_id,
+            trace_id="d" * 32,
+            turn_id=turn_id,
+            conversation_id=uuid4(),
+            agent_id=uuid4(),
+            started_at=datetime(2026, 5, 4, 12, 0, tzinfo=UTC),
+            duration_ms=240,
+            span_count=4,
+            error=False,
+        )
+    )
+
+    response = client.get(
+        f"/v1/traces/{turn_id}",
+        headers={"authorization": _bearer_for("stranger")},
+    )
+    assert response.status_code == 404
+
+
 def test_search_traces_rejects_invalid_window(
     client: TestClient, workspace_id: UUID
 ) -> None:

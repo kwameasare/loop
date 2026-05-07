@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 
-import { FIXTURE_REPLAY_ID } from "@/lib/replay";
 import { getTrace } from "@/lib/traces";
 import { TraceTheater } from "@/components/trace/trace-theater";
 
@@ -27,7 +26,7 @@ export default async function TracePage({
         </div>
         <a
           className="rounded-md border bg-card px-3 py-1.5 text-sm target-transition hover:bg-muted"
-          href={`/replay/${FIXTURE_REPLAY_ID}`}
+          href={`/replay/${encodeURIComponent(trace.id)}`}
         >
           Open replay
         </a>

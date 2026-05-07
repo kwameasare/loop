@@ -74,11 +74,172 @@ export type EvalCaseFromResolution = {
   source: "operator-resolution";
 };
 
+export interface ResolutionEvalClientOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+function cpApiBaseUrl(override?: string): string | null {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) return null;
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+function resolutionHeaders(
+  opts: ResolutionEvalClientOptions,
+): Record<string, string> {
+  const headers: Record<string, string> = {
+    accept: "application/json",
+    "content-type": "application/json",
+  };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  return headers;
+}
+
 export class ResolutionDraftError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "ResolutionDraftError";
   }
+}
+
+export function createEvidenceContextFromConversation(args: {
+  conversation_id: string;
+  messages: readonly {
+    id: string;
+    role: "user" | "assistant" | "operator" | "system";
+    body: string;
+    created_at_ms: number;
+  }[];
+}): EvidenceContext {
+  const ordered = [...args.messages].sort(
+    (a, b) => a.created_at_ms - b.created_at_ms,
+  );
+  const trace: EvidenceTrace[] = ordered.slice(-6).map((message, index) => {
+    const lower = message.body.toLowerCase();
+    const status =
+      /error|failed|502|timeout|cannot|unable/.test(lower)
+        ? "error"
+        : /legal|escalat|human|operator|review/.test(lower)
+          ? "warn"
+          : "ok";
+    return {
+      id: `step_${index + 1}`,
+      step: `${message.role} turn`,
+      detail:
+        message.body.length > 140
+          ? `${message.body.slice(0, 137)}...`
+          : message.body,
+      status,
+      evidenceRef: `conversation/${args.conversation_id}#${message.id}`,
+    };
+  });
+  const joined = ordered.map((message) => message.body).join("\n").toLowerCase();
+  const memory: EvidenceMemory[] = [];
+  if (/vip|premium|gold/.test(joined)) {
+    memory.push({
+      id: "mem_customer_tier",
+      scope: "session",
+      key: "customer_tier_hint",
+      value: "premium-or-vip mentioned in conversation",
+      evidenceRef: `memory/${args.conversation_id}#customer_tier_hint`,
+    });
+  }
+  if (/spanish|español|english|français|french|german|deutsch/.test(joined)) {
+    memory.push({
+      id: "mem_language",
+      scope: "session",
+      key: "language_hint",
+      value: "language preference mentioned in conversation",
+      evidenceRef: `memory/${args.conversation_id}#language_hint`,
+    });
+  }
+  const tools: EvidenceTool[] = [];
+  if (/order|refund|charge|payment|renewal|subscription/.test(joined)) {
+    tools.push({
+      id: "tool_order_lookup",
+      name: "OrderLookup.read",
+      status: /502|timeout|failed|error/.test(joined) ? "error" : "ok",
+      detail: /502|timeout|failed|error/.test(joined)
+        ? "Conversation indicates the order or payment lookup path failed."
+        : "Conversation contains order/payment context that should be checked before resolution.",
+      evidenceRef: `tool/order-lookup#${args.conversation_id}`,
+    });
+  }
+  if (/legal|lawyer|attorney|human|operator|escalat|manager/.test(joined)) {
+    tools.push({
+      id: "tool_handoff_policy",
+      name: "HandoffPolicy.evaluate",
+      status: "warn",
+      detail: "Conversation mentions escalation or human handoff conditions.",
+      evidenceRef: `tool/handoff-policy#${args.conversation_id}`,
+    });
+  }
+  const retrieval: EvidenceRetrieval[] = [];
+  if (/refund|return|cancel|renewal|subscription/.test(joined)) {
+    retrieval.push({
+      id: "rtv_refund_policy",
+      source: "kb/refund-and-cancellation-policy",
+      score: 0.84,
+      excerpt:
+        "Use the current refund and cancellation policy before promising outcomes.",
+      evidenceRef: `kb/refund-and-cancellation-policy#${args.conversation_id}`,
+    });
+  }
+  if (/legal|lawyer|attorney|human|operator|escalat/.test(joined)) {
+    retrieval.push({
+      id: "rtv_escalation_policy",
+      source: "kb/escalation-policy",
+      score: 0.8,
+      excerpt:
+        "Escalate legal threats, explicit human requests, and high-risk payment disputes.",
+      evidenceRef: `kb/escalation-policy#${args.conversation_id}`,
+    });
+  }
+  return {
+    conversation_id: args.conversation_id,
+    trace:
+      trace.length > 0
+        ? trace
+        : [
+            {
+              id: "step_empty",
+              step: "Conversation load",
+              detail: "No transcript messages are available yet.",
+              status: "warn",
+              evidenceRef: `conversation/${args.conversation_id}#empty`,
+            },
+          ],
+    memory,
+    tools,
+    retrieval,
+    resolutionEvidenceRef: `trace/${args.conversation_id}`,
+  };
+}
+
+export function suggestOperatorDraftFromConversation(
+  messages: readonly { role: string; body: string; created_at_ms: number }[],
+): string {
+  const latestUser = [...messages]
+    .sort((a, b) => b.created_at_ms - a.created_at_ms)
+    .find((message) => message.role === "user");
+  const body = latestUser?.body.toLowerCase() ?? "";
+  if (/legal|lawyer|attorney/.test(body)) {
+    return "I understand this is sensitive. I’m escalating this to the right human specialist and attaching the conversation trace so they can review the exact policy and account context before responding.";
+  }
+  if (/refund|charge|payment|renewal|cancel/.test(body)) {
+    return "Thanks for the details. I’m checking the current order and refund policy evidence now, then I’ll confirm the safest next step with a traceable explanation.";
+  }
+  if (/human|person|operator|agent/.test(body)) {
+    return "I’m here with you now. I’ve paused the agent and I’m reviewing the conversation evidence before replying.";
+  }
+  return "I’m reviewing the conversation context and will respond with the exact next step in a moment.";
 }
 
 /**
@@ -115,6 +276,49 @@ export function buildEvalCaseFromResolution(
     ],
     source: "operator-resolution",
   };
+}
+
+export async function saveResolutionEvalCase(
+  workspaceId: string,
+  draft: EvalCaseFromResolution,
+  opts: ResolutionEvalClientOptions = {},
+): Promise<{ ok: boolean; error?: string; suite_id?: string; case_id?: string }> {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    return { ok: true, suite_id: "operator-resolutions", case_id: draft.id };
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const response = await fetcher(
+    `${base}/workspaces/${encodeURIComponent(
+      workspaceId,
+    )}/eval-cases/from-resolution`,
+    {
+      method: "POST",
+      headers: resolutionHeaders(opts),
+      body: JSON.stringify(draft),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    return {
+      ok: false,
+      error: `cp-api save resolution eval -> ${response.status}`,
+    };
+  }
+  const body = (await response.json()) as {
+    ok?: boolean;
+    suite_id?: string;
+    case_id?: string;
+  };
+  const result: {
+    ok: boolean;
+    error?: string;
+    suite_id?: string;
+    case_id?: string;
+  } = { ok: body.ok ?? true };
+  if (body.suite_id) result.suite_id = body.suite_id;
+  if (body.case_id) result.case_id = body.case_id;
+  return result;
 }
 
 export const FIXTURE_EVIDENCE_CONTEXT: EvidenceContext = {

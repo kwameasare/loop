@@ -6,6 +6,8 @@ import {
   FIXTURE_BOTPRESS_LINEAGE,
   FIXTURE_BOTPRESS_READINESS,
   FIXTURE_BOTPRESS_REPLAY,
+  createFixtureMigrationParityWorkspace,
+  fetchMigrationParityWorkspace,
 } from "./botpress-import";
 import {
   CutoverError,
@@ -92,5 +94,27 @@ describe("lineage fixture", () => {
     for (const step of FIXTURE_BOTPRESS_LINEAGE.steps) {
       expect(step.evidenceRef).toMatch(/^audit\/import\//);
     }
+  });
+});
+
+describe("fetchMigrationParityWorkspace", () => {
+  it("loads the live migration parity workspace from cp-api", async () => {
+    const fetcher = async (input: RequestInfo | URL) => {
+      expect(String(input)).toBe(
+        "https://cp.example/v1/workspaces/ws-1/migration/parity?source=botpress",
+      );
+      return new Response(
+        JSON.stringify(createFixtureMigrationParityWorkspace()),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    };
+
+    const workspace = await fetchMigrationParityWorkspace("ws-1", {
+      baseUrl: "https://cp.example",
+      fetcher: fetcher as typeof fetch,
+    });
+
+    expect(workspace.lineage.source).toBe("botpress");
+    expect(workspace.cutover.rollbackTriggers.length).toBeGreaterThan(0);
   });
 });

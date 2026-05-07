@@ -8,25 +8,55 @@
  * builders open the detail view and lets private-workspace publishers
  * stage a new skill version for review.
  *
- * The catalog is backed by `DEFAULT_MARKETPLACE_CATALOG` until the
- * marketplace control-plane endpoint lands. No live network calls.
+ * The catalog loads from `GET /v1/marketplace` when cp-api is configured and
+ * falls back to the canonical fixture for local no-backend runs.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { RequireAuth } from "@/components/auth/require-auth";
 import {
   MarketplaceDetail,
   MarketplaceGrid,
   PrivateSkillPublisher,
 } from "@/components/marketplace";
 import {
-  DEFAULT_MARKETPLACE_CATALOG,
+  fetchMarketplaceCatalog,
   type MarketplaceItem,
 } from "@/lib/marketplace";
 
 export default function MarketplacePage(): JSX.Element {
+  return (
+    <RequireAuth>
+      <MarketplacePageBody />
+    </RequireAuth>
+  );
+}
+
+function MarketplacePageBody(): JSX.Element {
   const [selected, setSelected] = useState<MarketplaceItem | null>(null);
   const [tab, setTab] = useState<"browse" | "publish">("browse");
+  const [items, setItems] = useState<MarketplaceItem[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchMarketplaceCatalog()
+      .then((catalog) => {
+        if (cancelled) return;
+        setItems(catalog);
+        setSelected((current) => current ?? catalog[0] ?? null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(
+          err instanceof Error ? err.message : "Could not load marketplace",
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6" aria-label="Marketplace">
@@ -73,13 +103,26 @@ export default function MarketplacePage(): JSX.Element {
 
       {tab === "browse" ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_3fr]">
-          <MarketplaceGrid
-            items={DEFAULT_MARKETPLACE_CATALOG}
-            includeDeprecated
-            onSelect={setSelected}
-          />
+          {error ? (
+            <p className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+              {error}
+            </p>
+          ) : (
+            <MarketplaceGrid
+              items={items ?? []}
+              includeDeprecated
+              onSelect={setSelected}
+            />
+          )}
           <div>
-            {selected ? (
+            {items === null && !error ? (
+              <p
+                role="status"
+                className="rounded-md border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground"
+              >
+                Loading marketplace...
+              </p>
+            ) : selected ? (
               <MarketplaceDetail item={selected} />
             ) : (
               <p

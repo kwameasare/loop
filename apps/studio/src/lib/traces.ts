@@ -707,25 +707,32 @@ const FIXTURE_TRACE: Trace = buildFixtureTrace();
 
 export async function getTrace(id: string): Promise<Trace | null> {
   if (id === FIXTURE_TRACE.id) return FIXTURE_TRACE;
-  return null;
+  try {
+    return await fetchTraceByTurnId(id);
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      /LOOP_CP_API_BASE_URL is required/.test(err.message)
+    ) {
+      return null;
+    }
+    throw err;
+  }
 }
 
 /**
- * Fetch a single trace by turn id from cp.
- *
- * Blocked on cp-api PR: ``GET /v1/traces/{turn_id}`` is in the OpenAPI
- * spec but not yet routed in cp's app.py. Returns null on 404 so the
- * inspector renders the "trace not found" empty state cleanly.
+ * Fetch a single trace detail from cp by turn id or trace id. Returns null on
+ * 404 so the inspector renders the "trace not found" empty state cleanly.
  */
 export async function fetchTraceByTurnId(
-  turn_id: string,
+  trace_ref: string,
   opts: TracesClientOptions = {},
 ): Promise<Trace | null> {
   const fetcher = opts.fetcher ?? fetch;
   const headers: Record<string, string> = { accept: "application/json" };
   const token = opts.token ?? process.env.LOOP_TOKEN;
   if (token) headers.authorization = `Bearer ${token}`;
-  const url = `${cpApiBaseUrl(opts.baseUrl)}/traces/${encodeURIComponent(turn_id)}`;
+  const url = `${cpApiBaseUrl(opts.baseUrl)}/traces/${encodeURIComponent(trace_ref)}`;
   const res = await fetcher(url, {
     method: "GET",
     headers,
@@ -733,7 +740,7 @@ export async function fetchTraceByTurnId(
   });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`cp-api GET trace -> ${res.status}`);
-  return (await res.json()) as Trace;
+  return normalizeTraceDetail(await res.json());
 }
 
 export const FIXTURE_TRACE_ID = FIXTURE_TRACE.id;
@@ -804,6 +811,30 @@ interface CpTraceItem {
   error: boolean;
 }
 
+interface CpTraceSpan {
+  span_id: string;
+  parent_span_id: string | null;
+  kind: "llm" | "tool" | "retrieval" | "memory" | "channel" | string;
+  name: string;
+  started_at: string;
+  latency_ms: number;
+  cost_usd: number;
+  status: string;
+  attrs?: Record<string, string | number | boolean>;
+}
+
+interface CpTraceDetail {
+  trace_id: string;
+  turn_id: string;
+  conversation_id: string;
+  agent_id: string;
+  started_at: string;
+  duration_ms: number;
+  span_count: number;
+  error: boolean;
+  spans?: CpTraceSpan[];
+}
+
 export interface SearchTracesQuery {
   agent_id?: string;
   conversation_id?: string;
@@ -813,6 +844,115 @@ export interface SearchTracesQuery {
   only_errors?: boolean;
   page_size?: number;
   cursor?: string;
+}
+
+function isStudioTrace(value: unknown): value is Trace {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as { id?: unknown; spans?: unknown };
+  if (typeof candidate.id !== "string" || !Array.isArray(candidate.spans)) {
+    return false;
+  }
+  const [first] = candidate.spans;
+  return (
+    first === undefined ||
+    (typeof first === "object" &&
+      first !== null &&
+      "id" in first &&
+      "start_ns" in first)
+  );
+}
+
+function categoryFromCp(kind: string): TraceSpanCategory {
+  if (
+    kind === "llm" ||
+    kind === "tool" ||
+    kind === "retrieval" ||
+    kind === "memory" ||
+    kind === "channel"
+  ) {
+    return kind;
+  }
+  return "channel";
+}
+
+function statusFromCp(status: string, error: boolean): Span["status"] {
+  if (status === "ok" || status === "error" || status === "unset") {
+    return status;
+  }
+  return error ? "error" : "ok";
+}
+
+function normalizeTraceDetail(raw: unknown): Trace {
+  if (isStudioTrace(raw)) return raw;
+  const detail = raw as CpTraceDetail;
+  const traceStart = Date.parse(detail.started_at);
+  const spans = (detail.spans ?? []).map<Span>((span) => {
+    const startDeltaMs = Math.max(0, Date.parse(span.started_at) - traceStart);
+    const latencyNs = span.latency_ms * NS_PER_MS;
+    const normalized: Span = {
+      id: span.span_id,
+      parent_id: span.parent_span_id,
+      name: span.name,
+      category: categoryFromCp(span.kind),
+      kind: span.kind === "channel" ? "server" : "internal",
+      service: "control-plane",
+      start_ns: ms(startDeltaMs),
+      end_ns: ms(startDeltaMs) + latencyNs,
+      status: statusFromCp(span.status, detail.error),
+      attributes: span.attrs ?? {},
+      events: [],
+    };
+    if (span.cost_usd > 0) {
+      normalized.cost = {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        input_usd: 0,
+        output_usd: 0,
+        tool_usd: span.kind === "tool" ? span.cost_usd : 0,
+        total_usd: span.cost_usd,
+        budget_source: "control-plane trace detail",
+      };
+    }
+    return normalized;
+  });
+  const totalCost = spans.reduce(
+    (sum, span) => sum + (span.cost?.total_usd ?? 0),
+    0,
+  );
+  return {
+    id: detail.trace_id,
+    title: `Turn ${detail.turn_id.slice(0, 8)}`,
+    summary: {
+      outcome: detail.error ? "Turn completed with an error." : "Turn completed.",
+      agent_name: detail.agent_id,
+      environment: "production",
+      channel: "web",
+      provider: "Runtime",
+      model: "recorded trace",
+      deploy_version: "live",
+      snapshot_id: "not-attached",
+      total_latency_ns: detail.duration_ms * NS_PER_MS,
+      total_cost_usd: totalCost,
+      tool_count: spans.filter((span) => span.category === "tool").length,
+      retrieval_count: spans.filter((span) => span.category === "retrieval").length,
+      memory_writes: spans.filter((span) => span.category === "memory").length,
+      eval_score: null,
+      eval_suite: null,
+    },
+    explanations: [
+      {
+        id: "summary-derived",
+        title: "Trace detail is summary-derived",
+        statement:
+          "Unsupported. Full span payloads were not returned by the trace store.",
+        evidence: `${detail.span_count} spans summarized for turn ${detail.turn_id}.`,
+        source_span_id: spans[0]?.id ?? detail.trace_id,
+        confidence: 0,
+        confidence_level: "unsupported",
+      },
+    ],
+    spans,
+  };
 }
 
 /**

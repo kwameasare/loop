@@ -53,6 +53,150 @@ export interface MemoryStudioData {
   degradedReason?: string | undefined;
 }
 
+export interface MemoryStudioClientOptions {
+  fetcher?: typeof fetch;
+  token?: string;
+  baseUrl?: string;
+}
+
+interface CpMemoryEntry {
+  id: string;
+  scope: "user" | "bot" | "session";
+  key: string;
+  before: string;
+  after: string;
+  source: string;
+  source_trace: string;
+  retention_policy: string;
+  updated_at: string;
+  writer_version: string;
+  confidence: ConfidenceLevel;
+  safety_flags: MemorySafetyFlag[];
+  deletion_state: "available" | "blocked" | "queued";
+  deletion_reason: string;
+  replay_impact: string;
+}
+
+function cpApiBaseUrl(override?: string): string {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) {
+    throw new Error("LOOP_CP_API_BASE_URL is required for memory calls");
+  }
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+function headers(opts: MemoryStudioClientOptions): Record<string, string> {
+  const out: Record<string, string> = { accept: "application/json" };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) out.authorization = `Bearer ${token}`;
+  return out;
+}
+
+function scopeFromCp(scope: CpMemoryEntry["scope"]): MemoryScope {
+  if (scope === "session") return "session";
+  return "user";
+}
+
+function normalizeMemoryEntry(item: CpMemoryEntry): MemoryStudioEntry {
+  return {
+    id: item.id,
+    scope: scopeFromCp(item.scope),
+    key: item.key,
+    before: item.before,
+    after: item.after,
+    source: item.source,
+    sourceTrace: item.source_trace,
+    retentionPolicy: item.retention_policy,
+    lastWrite: item.updated_at || "not recorded",
+    writerVersion: item.writer_version,
+    confidence: item.confidence,
+    safetyFlags: item.safety_flags,
+    deletionState: item.deletion_state,
+    deletionReason: item.deletion_reason,
+    replayImpact: item.replay_impact,
+  };
+}
+
+export function createMemoryStudioDataFromEntries(
+  agentId: string,
+  entries: MemoryStudioEntry[],
+): MemoryStudioData {
+  const base = createMemoryStudioData(agentId);
+  return {
+    ...base,
+    entries,
+    degradedReason:
+      entries.length === 0
+        ? "No memory writes have been captured yet. Replay a turn or run a simulator scenario to inspect memory."
+        : undefined,
+  };
+}
+
+export async function fetchMemoryStudioData(
+  agentId: string,
+  userId: string,
+  opts: MemoryStudioClientOptions = {},
+): Promise<MemoryStudioData> {
+  let base: string;
+  try {
+    base = cpApiBaseUrl(opts.baseUrl);
+  } catch (err) {
+    if (err instanceof Error && /LOOP_CP_API_BASE_URL/.test(err.message)) {
+      return createMemoryStudioData(agentId);
+    }
+    throw err;
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const params = new URLSearchParams({ user_id: userId });
+  const response = await fetcher(
+    `${base}/agents/${encodeURIComponent(agentId)}/memory?${params}`,
+    {
+      method: "GET",
+      headers: headers(opts),
+      cache: "no-store",
+    },
+  );
+  if (response.status === 404) return createEmptyMemoryStudioData(agentId);
+  if (!response.ok) {
+    throw new Error(`cp-api GET agent memory -> ${response.status}`);
+  }
+  const body = (await response.json()) as { items?: CpMemoryEntry[] };
+  return createMemoryStudioDataFromEntries(
+    agentId,
+    (body.items ?? []).map(normalizeMemoryEntry),
+  );
+}
+
+export async function deleteMemoryStudioEntry(
+  agentId: string,
+  entry: MemoryStudioEntry,
+  userId: string,
+  opts: MemoryStudioClientOptions = {},
+): Promise<void> {
+  if (entry.scope !== "user") {
+    throw new Error("Only durable user memory can be deleted through cp-api");
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const params = new URLSearchParams({ user_id: userId });
+  const response = await fetcher(
+    `${cpApiBaseUrl(opts.baseUrl)}/agents/${encodeURIComponent(
+      agentId,
+    )}/memory/user/${encodeURIComponent(entry.key)}?${params}`,
+    {
+      method: "DELETE",
+      headers: headers(opts),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`cp-api DELETE agent memory -> ${response.status}`);
+  }
+}
+
 export function createMemoryStudioData(
   agentId: string,
   fixture: TargetUXFixture = targetUxFixtures,

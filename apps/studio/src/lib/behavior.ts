@@ -3,6 +3,11 @@ import type {
   ObjectState,
   TrustState,
 } from "@/lib/design-tokens";
+import {
+  listAgentVersions,
+  type AgentVersionDetail,
+  type ListAgentVersionsOptions,
+} from "@/lib/agent-versions";
 import { targetUxFixtures, type TargetUXFixture } from "@/lib/target-ux";
 
 export type BehaviorMode = "plain" | "policy" | "config";
@@ -100,6 +105,48 @@ export const BEHAVIOR_MODE_DESCRIPTION: Record<BehaviorMode, string> = {
     "Goals, refusal, escalation, tools, memory, and compliance boundaries.",
   config: "Exact source representation with branch-ready config.",
 };
+
+function words(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function sentenceRole(index: number): BehaviorSentence["role"] {
+  return index === 0 ? "purpose" : index === 1 ? "style" : "promise";
+}
+
+function sentencesFromPrompt(prompt: string, version: AgentVersionDetail): BehaviorSentence[] {
+  const parts = prompt
+    .split(/\n+|(?<=[.!?])\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+  return parts.map((text, index) => ({
+    id: `live_sentence_${version.version}_${index + 1}`,
+    role: sentenceRole(index),
+    text,
+    tokenCount: words(text),
+    telemetry: {
+      citedOutputs7d: 0,
+      contradictedTraces: 0,
+      neverInvokedTurns: 0,
+      evalCases: version.eval_status === "passed" ? 1 : 0,
+      evidence: `agent version ${version.version} spec`,
+      confidence: version.eval_status === "passed" ? "medium" : "unsupported",
+    },
+    riskIds: version.eval_status === "passed" ? [] : ["risk_eval_gap"],
+  }));
+}
+
+function parseConfig(version: AgentVersionDetail): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(version.config_json);
+    return parsed && typeof parsed === "object"
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
 
 const BEHAVIOR_RISKS: BehaviorRiskFlag[] = [
   {
@@ -342,6 +389,144 @@ export function createBehaviorEditorData(
           : "Preview is ready, but apply is blocked until Release Manager approval and the Spanish refund eval pass.",
     },
   };
+}
+
+export function createBehaviorEditorDataFromVersion(
+  agentId: string,
+  version: AgentVersionDetail | null,
+  fixture: TargetUXFixture = targetUxFixtures,
+): BehaviorEditorData {
+  if (!version) return createEmptyBehaviorEditorData(agentId);
+  const base = createBehaviorEditorData(agentId, fixture);
+  const spec = parseConfig(version);
+  const prompt =
+    typeof spec.system_prompt === "string"
+      ? spec.system_prompt
+      : typeof spec.prompt === "string"
+        ? spec.prompt
+        : "";
+  const toolNames = Array.isArray(spec.tools)
+    ? spec.tools.map((tool) => String(tool))
+    : [];
+  const promptSentences =
+    prompt.trim().length > 0
+      ? sentencesFromPrompt(prompt, version)
+      : [
+          {
+            id: `live_sentence_${version.version}_empty`,
+            role: "purpose" as const,
+            text: "No system prompt is declared in this version spec yet.",
+            tokenCount: 11,
+            telemetry: {
+              citedOutputs7d: 0,
+              contradictedTraces: 0,
+              neverInvokedTurns: 0,
+              evalCases: 0,
+              evidence: `agent version ${version.version} spec`,
+              confidence: "unsupported" as const,
+            },
+            riskIds: ["risk_eval_gap"],
+          },
+        ];
+  const liveSections: BehaviorSection[] = [
+    {
+      id: "live-system-prompt",
+      label: "System prompt",
+      description:
+        "Prompt text persisted on the active/latest control-plane version.",
+      diffFromProduction:
+        version.deploy_state === "active"
+          ? "This is the promoted behavior snapshot."
+          : "This version is not promoted; preview before applying.",
+      coveragePercent: version.eval_status === "passed" ? 90 : 0,
+      evidence: `cp-api agent version ${version.id}`,
+      policyRules: promptSentences.map((sentence) => sentence.text),
+      config: version.config_json,
+      sentences: promptSentences,
+    },
+    {
+      id: "live-tools",
+      label: "Declared tools",
+      description: "Tool names declared by the version spec.",
+      diffFromProduction:
+        toolNames.length > 0
+          ? `${toolNames.length} tool binding${toolNames.length === 1 ? "" : "s"} declared.`
+          : "No tool bindings declared.",
+      coveragePercent: toolNames.length > 0 ? 75 : 0,
+      evidence: `cp-api agent version ${version.id}`,
+      policyRules:
+        toolNames.length > 0
+          ? toolNames.map((tool) => `Tool available: ${tool}`)
+          : ["No tools declared."],
+      config: JSON.stringify({ tools: toolNames }, null, 2),
+      sentences: toolNames.map((tool, index) => ({
+        id: `live_tool_${index + 1}`,
+        role: "tool",
+        text: `Tool available: ${tool}`,
+        tokenCount: words(tool) + 2,
+        telemetry: {
+          citedOutputs7d: 0,
+          contradictedTraces: 0,
+          neverInvokedTurns: 0,
+          evalCases: version.eval_status === "passed" ? 1 : 0,
+          evidence: `agent version ${version.version} tool declaration`,
+          confidence: version.eval_status === "passed" ? "medium" : "low",
+        },
+        riskIds: /refund|delete|send|write|charge/i.test(tool)
+          ? ["risk_tool_grant"]
+          : [],
+      })),
+    },
+  ];
+  return {
+    ...base,
+    branch: `v${version.version}`,
+    objectState: version.deploy_state === "active" ? "production" : "saved",
+    trust: version.eval_status === "passed" ? "healthy" : "watching",
+    sections: liveSections,
+    semanticDiffs: [
+      {
+        id: "live_version_spec",
+        summary: `Behavior is sourced from control-plane version v${version.version}.`,
+        evidence: `version ${version.id}`,
+        impact:
+          version.eval_status === "passed"
+            ? "Eval status is passed for this version."
+            : "Eval status is not passed; apply remains preview-only.",
+      },
+    ],
+    evalCoveragePercent: version.eval_status === "passed" ? 90 : 0,
+    evalEvidence: `cp-api version ${version.id}; eval status ${version.eval_status}`,
+    evalConfidence: version.eval_status === "passed" ? "medium" : "unsupported",
+    preview: {
+      affectedEnvironments:
+        version.deploy_state === "active" ? ["production"] : ["dev", "staging"],
+      policyChecks:
+        version.eval_status === "passed"
+          ? ["Version eval status is passed."]
+          : ["Run evals before applying this behavior to production."],
+      costDelta: "Cost delta requires trace usage for this version.",
+      risk: version.eval_status === "passed" ? "low" : "high",
+      rollback:
+        version.deploy_state === "active"
+          ? "Promote the previous version to roll back."
+          : "Discard this saved version before promotion.",
+      evidence: `cp-api version ${version.id}`,
+      canApply: version.eval_status === "passed",
+      blockedReason:
+        version.eval_status === "passed"
+          ? undefined
+          : "Behavior cannot apply until eval status passes.",
+    },
+  };
+}
+
+export async function fetchBehaviorEditorData(
+  agentId: string,
+  opts: ListAgentVersionsOptions = {},
+): Promise<BehaviorEditorData> {
+  const versions = await listAgentVersions(agentId, { ...opts, pageSize: 1 });
+  return createBehaviorEditorDataFromVersion(agentId, versions.items[0] ?? null);
 }
 
 export function createEmptyBehaviorEditorData(

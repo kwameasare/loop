@@ -6,6 +6,9 @@ from fastapi import FastAPI
 
 from loop_control_plane._app_common import domain_error, package_version
 from loop_control_plane._app_state import CpApiState
+from loop_control_plane._routes_agent_conductor import router as agent_conductor_router
+from loop_control_plane._routes_agent_memory import router as agent_memory_router
+from loop_control_plane._routes_agent_tools import router as agent_tools_router
 from loop_control_plane._routes_agent_versions import (
     router as agent_versions_router,
 )
@@ -14,6 +17,7 @@ from loop_control_plane._routes_api_keys import router as api_keys_router
 from loop_control_plane._routes_audit import router as audit_router
 from loop_control_plane._routes_auth import router as auth_router
 from loop_control_plane._routes_budgets import router as budgets_router
+from loop_control_plane._routes_cobuilder import router as cobuilder_router
 from loop_control_plane._routes_conversations import (
     router_agents_conv as agent_conversations_router,
 )
@@ -28,9 +32,17 @@ from loop_control_plane._routes_evals import (
     router_workspaces as workspace_evals_router,
 )
 from loop_control_plane._routes_health import router as health_router
+from loop_control_plane._routes_inbox import router_inbox as inbox_router
+from loop_control_plane._routes_inbox import router_workspaces as workspace_inbox_router
 from loop_control_plane._routes_kb import router as kb_router
+from loop_control_plane._routes_marketplace import router as marketplace_router
+from loop_control_plane._routes_migration_parity import (
+    router as migration_parity_router,
+)
 from loop_control_plane._routes_secrets import router as secrets_router
 from loop_control_plane._routes_traces_usage import router as telemetry_router
+from loop_control_plane._routes_traces_usage import router_traces as traces_router
+from loop_control_plane._routes_voice import router as voice_router
 from loop_control_plane._routes_webhooks_incoming import (
     router as webhooks_incoming_router,
 )
@@ -74,11 +86,23 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         secrets_router,
         # P0.4: traces search + usage list routes.
         telemetry_router,
+        traces_router,
         # P0.4: agent version create/list/promote.
         agent_versions_router,
+        # UX wire-up: Studio Tools Room reads active version tool bindings.
+        agent_tools_router,
+        # UX wire-up: Studio Memory Studio reads runtime memory stores.
+        agent_memory_router,
+        # UX wire-up: Studio Multi-Agent Conductor reads version topology.
+        agent_conductor_router,
+        # UX wire-up: Studio Voice config has a real control-plane contract.
+        voice_router,
         # P0.4: conversation list + read + takeover.
         agent_conversations_router,
         conversations_router,
+        # UX wire-up: Studio Inbox now reaches the domain queue routes.
+        workspace_inbox_router,
+        inbox_router,
         # P0.4: workspace budgets (daily/hard limits).
         budgets_router,
         # P0.4: KB document CRUD + refresh.
@@ -86,6 +110,12 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         # P0.4: eval suites + runs.
         workspace_evals_router,
         eval_suites_router,
+        # UX wire-up: Marketplace browse reads the first-party MCP registry.
+        marketplace_router,
+        # UX wire-up: AI Co-Builder suggestions derive from live workspace state.
+        cobuilder_router,
+        # UX wire-up: Migration parity board derives from imported agent state.
+        migration_parity_router,
         # P0.4 final: inbound webhook dispatcher (per-channel
         # verification handled by the channels-* packages).
         webhooks_incoming_router,

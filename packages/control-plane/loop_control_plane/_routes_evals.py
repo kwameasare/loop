@@ -12,20 +12,38 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.eval_suites import (
+    EvalCaseCreate,
     EvalError,
     EvalRunStart,
     EvalSuiteCreate,
+    serialise_case,
     serialise_run,
     serialise_suite,
 )
 
 router_workspaces = APIRouter(prefix="/v1/workspaces", tags=["Evals"])
 router_suites = APIRouter(prefix="/v1/eval-suites", tags=["Evals"])
+
+
+class ResolutionEvalCaseBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    id: str = Field(min_length=1, max_length=256)
+    title: str = Field(min_length=1, max_length=256)
+    expected_outcome: str = Field(
+        min_length=1, max_length=4096, alias="expectedOutcome"
+    )
+    failure_reason: str = Field(
+        min_length=1, max_length=1024, alias="failureReason"
+    )
+    linked_trace: str = Field(min_length=1, max_length=512, alias="linkedTrace")
+    attachments: list[str] = Field(default_factory=list)
+    source: str = Field(default="operator-resolution", max_length=128)
 
 
 @router_workspaces.get("/{workspace_id}/eval-suites")
@@ -81,6 +99,77 @@ async def create_suite(
     return serialise_suite(suite)
 
 
+@router_workspaces.post("/{workspace_id}/eval-cases/from-resolution", status_code=201)
+async def create_case_from_resolution(
+    request: Request,
+    workspace_id: UUID,
+    body: ResolutionEvalCaseBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    suite = await cp.eval_suites.get_or_create_suite(
+        workspace_id=workspace_id,
+        name="Operator resolutions",
+        dataset_ref="operator-resolutions",
+        metrics=["resolution_match", "groundedness"],
+        actor_sub=caller_sub,
+    )
+    case = await cp.eval_suites.add_case(
+        workspace_id=workspace_id,
+        suite_id=suite.id,
+        body=EvalCaseCreate(
+            name=body.title,
+            input={
+                "conversation_id": body.id.removeprefix("eval_"),
+                "linked_trace": body.linked_trace,
+                "failure_reason": body.failure_reason,
+            },
+            expected={"outcome": body.expected_outcome},
+            scorers=[
+                {
+                    "kind": "llm_judge",
+                    "config": {"rubric": "operator resolution expected outcome"},
+                },
+                {
+                    "kind": "tool_call_assert",
+                    "config": {"evidence": body.attachments},
+                },
+            ],
+            source=body.source,
+            source_ref=body.linked_trace,
+            attachments=body.attachments,
+        ),
+        actor_sub=caller_sub,
+    )
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="eval:case:create_from_resolution",
+        resource_type="eval_case",
+        store=cp.audit_events,
+        resource_id=str(case.id),
+        request_id=request_id(request),
+        payload={
+            "case_id": str(case.id),
+            "suite_id": str(suite.id),
+            "linked_trace": body.linked_trace,
+            "attachments": len(body.attachments),
+        },
+    )
+    return {
+        "ok": True,
+        "suite_id": str(suite.id),
+        "case_id": str(case.id),
+        "case": serialise_case(case),
+    }
+
+
 async def _suite_workspace(request: Request, suite_id: UUID) -> UUID:
     cp = request.app.state.cp
     suite = cp.eval_suites._suites.get(suite_id)  # type: ignore[attr-defined]
@@ -109,6 +198,65 @@ async def list_runs(
     except EvalError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return {"items": [serialise_run(r) for r in rows]}
+
+
+@router_suites.get("/{suite_id}/cases")
+async def list_cases(
+    request: Request,
+    suite_id: UUID,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    workspace_id = await _suite_workspace(request, suite_id)
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    try:
+        rows = await cp.eval_suites.list_cases(
+            workspace_id=workspace_id, suite_id=suite_id
+        )
+    except EvalError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return {"items": [serialise_case(case) for case in rows]}
+
+
+@router_suites.post("/{suite_id}/cases", status_code=201)
+async def create_case(
+    request: Request,
+    suite_id: UUID,
+    body: EvalCaseCreate,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    workspace_id = await _suite_workspace(request, suite_id)
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    try:
+        case = await cp.eval_suites.add_case(
+            workspace_id=workspace_id,
+            suite_id=suite_id,
+            body=body,
+            actor_sub=caller_sub,
+        )
+    except EvalError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="eval:case:create",
+        resource_type="eval_case",
+        store=cp.audit_events,
+        resource_id=str(case.id),
+        request_id=request_id(request),
+        payload={"case_id": str(case.id), "suite_id": str(suite_id)},
+    )
+    return serialise_case(case)
 
 
 @router_suites.post("/{suite_id}/runs", status_code=202)

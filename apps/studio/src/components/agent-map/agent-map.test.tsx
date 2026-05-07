@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createAgentMapData,
+  createAgentMapDataFromVersion,
   createEmptyAgentMapData,
   evaluateAgentMapEdit,
   INVALID_AGENT_MAP_EDIT,
@@ -84,5 +85,33 @@ describe("AgentMap", () => {
     expect(screen.getByText("No map instrumentation yet")).toBeInTheDocument();
     expect(screen.getByTestId("agent-map-invalid-edit")).toBeDisabled();
     expect(screen.getByText("No object selected")).toBeInTheDocument();
+  });
+
+  it("builds the comprehension map from a live agent version spec", () => {
+    const data = createAgentMapDataFromVersion("agent_support", {
+      id: "ver-live-map",
+      agent_id: "agent_support",
+      version: 7,
+      deploy_state: "active",
+      deployed_at: "2026-05-07T12:00:00Z",
+      eval_status: "failed",
+      promoted_to: "production",
+      config_json: JSON.stringify({
+        system_prompt: "Answer refund questions with policy evidence.",
+        tools: ["lookup_order", "issue_refund"],
+        memory_rules: ["preferred_language"],
+        eval_suites: ["refund-regressions"],
+      }),
+    });
+
+    expect(data.branch).toBe("v7");
+    expect(data.objectState).toBe("production");
+    expect(data.nodes.some((node) => node.label === "issue_refund")).toBe(true);
+    expect(data.hazards.map((hazard) => hazard.id)).toContain(
+      "hazard-live-tool-grant",
+    );
+    expect(data.hazards.map((hazard) => hazard.id)).toContain(
+      "hazard-eval-regression",
+    );
   });
 });

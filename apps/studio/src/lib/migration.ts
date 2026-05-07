@@ -185,14 +185,14 @@ export const MIGRATION_ENTRY_CHOICES: readonly MigrationEntryChoice[] = [
     label: "Start from template",
     summary: "Begin with a curated agent skeleton and customize the behavior.",
     firstClass: false,
-    href: "/agents?surface=templates",
+    href: "/marketplace",
   },
   {
     id: "git",
     label: "Connect Git repository",
     summary: "Treat your repo as the source of truth for behavior and tools.",
     firstClass: false,
-    href: "/agents?surface=git",
+    href: "/agents",
   },
   {
     id: "blank",
@@ -200,7 +200,7 @@ export const MIGRATION_ENTRY_CHOICES: readonly MigrationEntryChoice[] = [
     summary:
       "Create an empty agent. Recommended only for exploratory builds without legacy context.",
     firstClass: false,
-    href: "/agents?surface=blank",
+    href: "/agents",
   },
 ];
 

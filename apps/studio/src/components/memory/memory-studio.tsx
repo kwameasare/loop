@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 
 export interface MemoryStudioProps {
   data: MemoryStudioData;
+  onDeleteEntry?: (entry: MemoryStudioEntry) => Promise<void>;
 }
 
 const SCOPE_LABEL: Record<MemoryScope, string> = {
@@ -172,10 +173,12 @@ function MemoryExplorer({
 function MemoryDetail({
   entry,
   deleteNotice,
+  isDeleting,
   onDelete,
 }: {
   entry: MemoryStudioEntry | null;
   deleteNotice: string | null;
+  isDeleting: boolean;
   onDelete: (entry: MemoryStudioEntry) => void;
 }) {
   if (!entry) {
@@ -250,14 +253,14 @@ function MemoryDetail({
         </RiskHalo>
         <button
           type="button"
-          disabled={blockedDelete}
+          disabled={blockedDelete || isDeleting}
           title={blockedDelete ? entry.deletionReason : undefined}
           className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
           onClick={() => onDelete(entry)}
           data-testid="memory-delete"
         >
           <Trash2 className="h-4 w-4" aria-hidden />
-          Delete memory
+          {isDeleting ? "Deleting memory" : "Delete memory"}
         </button>
         {deleteNotice ? (
           <p
@@ -318,24 +321,53 @@ function ReplayControls({ data }: { data: MemoryStudioData }) {
   );
 }
 
-export function MemoryStudio({ data }: MemoryStudioProps) {
+export function MemoryStudio({ data, onDeleteEntry }: MemoryStudioProps) {
+  const [entries, setEntries] = useState<MemoryStudioEntry[]>(data.entries);
   const [scope, setScope] = useState<MemoryScope | "all">("all");
   const [selectedId, setSelectedId] = useState<string | null>(
-    data.entries[0]?.id ?? null,
+    entries[0]?.id ?? null,
   );
   const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const selectedEntry = useMemo(
     () =>
-      data.entries.find((entry) => entry.id === selectedId) ??
-      data.entries[0] ??
+      entries.find((entry) => entry.id === selectedId) ??
+      entries[0] ??
       null,
-    [data.entries, selectedId],
+    [entries, selectedId],
   );
   const objectTreatment = OBJECT_STATE_TREATMENTS[data.objectState];
   const trustTreatment = TRUST_STATE_TREATMENTS[data.trust];
-  const flagged = data.entries.filter(
+  const flagged = entries.filter(
     (entry) => !entry.safetyFlags.includes("none"),
   ).length;
+
+  async function handleDelete(entry: MemoryStudioEntry): Promise<void> {
+    if (!onDeleteEntry) {
+      setDeleteNotice(
+        `Deletion queued for ${entry.key}. Evidence: ${entry.sourceTrace}.`,
+      );
+      return;
+    }
+    setDeletingId(entry.id);
+    setDeleteNotice(null);
+    try {
+      await onDeleteEntry(entry);
+      setEntries((current) => current.filter((item) => item.id !== entry.id));
+      setSelectedId((current) =>
+        current === entry.id
+          ? entries.find((item) => item.id !== entry.id)?.id ?? null
+          : current,
+      );
+      setDeleteNotice(`Deleted ${entry.key}. Evidence: ${entry.sourceTrace}.`);
+    } catch (err) {
+      setDeleteNotice(
+        err instanceof Error ? err.message : `Could not delete ${entry.key}.`,
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6" data-testid="memory-studio">
@@ -374,7 +406,7 @@ export function MemoryStudio({ data }: MemoryStudioProps) {
       <section className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))]">
         <div className="rounded-md border bg-card p-3">
           <p className="text-xs text-muted-foreground">Memory entries</p>
-          <p className="mt-1 text-xl font-semibold">{data.entries.length}</p>
+          <p className="mt-1 text-xl font-semibold">{entries.length}</p>
         </div>
         <div className="rounded-md border bg-card p-3">
           <p className="text-xs text-muted-foreground">Flagged writes</p>
@@ -388,7 +420,7 @@ export function MemoryStudio({ data }: MemoryStudioProps) {
 
       <section className="grid min-w-0 gap-4">
         <MemoryExplorer
-          entries={data.entries}
+          entries={entries}
           selectedId={selectedEntry?.id ?? null}
           scope={scope}
           onScopeChange={setScope}
@@ -400,11 +432,8 @@ export function MemoryStudio({ data }: MemoryStudioProps) {
         <MemoryDetail
           entry={selectedEntry}
           deleteNotice={deleteNotice}
-          onDelete={(entry) =>
-            setDeleteNotice(
-              `Deletion queued for ${entry.key}. Evidence: ${entry.sourceTrace}.`,
-            )
-          }
+          isDeleting={deletingId === selectedEntry?.id}
+          onDelete={(entry) => void handleDelete(entry)}
         />
         <ReplayControls data={data} />
         <EvidenceCallout

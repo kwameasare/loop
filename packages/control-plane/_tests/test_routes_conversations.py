@@ -99,6 +99,7 @@ def test_get_conversation_returns_detail(
     )
     assert response.status_code == 200, response.text
     assert response.json()["last_user_message"] == "Where is my order?"
+    assert response.json()["messages"][0]["role"] == "user"
 
 
 def test_get_unknown_conversation_returns_404(client: TestClient) -> None:
@@ -171,6 +172,73 @@ def test_takeover_idempotent(
     assert first.status_code == 200
     assert second.status_code == 200
     assert second.json()["state"] == "in-takeover"
+
+
+def test_operator_message_requires_takeover(
+    client: TestClient, setup: tuple[UUID, UUID, UUID]
+) -> None:
+    _, _, conv_id = setup
+    response = client.post(
+        f"/v1/conversations/{conv_id}/operator-messages",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={"body": "I can help from here."},
+    )
+    assert response.status_code == 409
+
+
+def test_operator_message_appends_to_conversation_and_audit(
+    client: TestClient, setup: tuple[UUID, UUID, UUID]
+) -> None:
+    workspace_id, _, conv_id = setup
+    headers = {"authorization": _bearer_for("owner-1")}
+    client.post(
+        f"/v1/conversations/{conv_id}/takeover",
+        headers=headers,
+        json={"note": "User asked for human."},
+    )
+    response = client.post(
+        f"/v1/conversations/{conv_id}/operator-messages",
+        headers=headers,
+        json={"body": "I can help from here."},
+    )
+    assert response.status_code == 201, response.text
+    assert response.json()["role"] == "operator"
+
+    detail = client.get(
+        f"/v1/conversations/{conv_id}",
+        headers=headers,
+    ).json()
+    assert detail["messages"][-1]["body"] == "I can help from here."
+    actions = [
+        e.action
+        for e in client.app.state.cp.audit_events.list_for_workspace(workspace_id)  # type: ignore[attr-defined]
+    ]
+    assert "conversation:operator_message" in actions
+
+
+def test_handback_returns_control_to_agent(
+    client: TestClient, setup: tuple[UUID, UUID, UUID]
+) -> None:
+    workspace_id, _, conv_id = setup
+    headers = {"authorization": _bearer_for("owner-1")}
+    client.post(
+        f"/v1/conversations/{conv_id}/takeover",
+        headers=headers,
+        json={"note": "User asked for human."},
+    )
+    response = client.post(
+        f"/v1/conversations/{conv_id}/handback",
+        headers=headers,
+        json={"note": "Resolved."},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["state"] == "open"
+    assert response.json()["operator_taken_over"] is False
+    actions = [
+        e.action
+        for e in client.app.state.cp.audit_events.list_for_workspace(workspace_id)  # type: ignore[attr-defined]
+    ]
+    assert "conversation:handback" in actions
 
 
 def test_cross_tenant_get_returns_404(

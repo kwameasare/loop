@@ -8,6 +8,7 @@ import {
   fetchVoiceConfig,
   saveVoiceConfig,
 } from "./voice-config";
+import { fetchVoiceStageModel } from "./voice-stage";
 import { mintVoiceToken } from "./voice-transport";
 
 const ORIG_BASE = process.env.LOOP_CP_API_BASE_URL;
@@ -120,6 +121,46 @@ describe("voice-config cp-api client", () => {
       { fetcher },
     );
     expect(res.ok).toBe(false);
-    expect(res.error).toMatch(/not yet available/);
+    expect(res.error).toMatch(/not available/);
+  });
+});
+
+describe("voice-stage cp-api client", () => {
+  beforeEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+  });
+  afterEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = ORIG_BASE;
+    vi.restoreAllMocks();
+  });
+
+  it("fetchVoiceStageModel returns the composed stage model", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        agentName: "Voice Concierge",
+        callState: "staging",
+        queuedSpeech: "hello",
+        transcript: [],
+        waveform: [],
+        spans: [],
+        config: {
+          asr: "Google Speech-to-Text v2",
+          tts: "Amazon Polly Neural",
+          bargeIn: true,
+          voice: "Warm concierge",
+          phoneNumber: "+15551234567",
+        },
+        evals: [],
+        demoLinks: [],
+      }),
+    });
+
+    const model = await fetchVoiceStageModel("ws1", { fetcher });
+
+    expect(model.agentName).toBe("Voice Concierge");
+    const [url] = fetcher.mock.calls[0];
+    expect(url).toBe("https://cp.test/v1/workspaces/ws1/voice/stage");
   });
 });
