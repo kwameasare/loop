@@ -17,14 +17,17 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { Button } from "@/components/ui/button";
 import { clearSessionToken } from "@/lib/cp-auth-exchange";
 
-const AUTH0_CONFIGURED =
-  typeof process !== "undefined" &&
-  Boolean(process.env.NEXT_PUBLIC_AUTH0_DOMAIN);
+function isAuth0Configured(): boolean {
+  return (
+    typeof process !== "undefined" &&
+    Boolean(process.env.NEXT_PUBLIC_AUTH0_DOMAIN)
+  );
+}
 
 export function SignInButton() {
   const auth0 = useAuth0();
   const onClick = () => {
-    if (AUTH0_CONFIGURED) {
+    if (isAuth0Configured()) {
       void auth0.loginWithRedirect();
       return;
     }
@@ -35,7 +38,7 @@ export function SignInButton() {
   return (
     <Button
       onClick={onClick}
-      disabled={AUTH0_CONFIGURED && auth0.isLoading}
+      disabled={isAuth0Configured() && auth0.isLoading}
       data-testid="sign-in-button"
     >
       Sign In
@@ -49,7 +52,7 @@ export function SignOutButton() {
     // Drop the cp-api session token before kicking off any logout
     // flow so a same-tab "Sign In" cannot replay the prior session.
     clearSessionToken();
-    if (AUTH0_CONFIGURED) {
+    if (isAuth0Configured()) {
       const returnTo =
         typeof window !== "undefined" ? window.location.origin : undefined;
       void logout({

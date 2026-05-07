@@ -125,8 +125,14 @@ export function FlowEditor(props: FlowEditorProps) {
       (fromPayload as FlowNodeType) || pending;
     if (!type) return;
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const screenX = e.clientX - rect.left;
-    const screenY = e.clientY - rect.top;
+    const clientX = Number.isFinite(e.clientX)
+      ? e.clientX
+      : rect.left + Math.max(160, rect.width / 2);
+    const clientY = Number.isFinite(e.clientY)
+      ? e.clientY
+      : rect.top + Math.max(120, rect.height / 2);
+    const screenX = clientX - rect.left;
+    const screenY = clientY - rect.top;
     // Convert to world coords via current viewport.
     const worldX = (screenX - viewport.x) / viewport.zoom;
     const worldY = (screenY - viewport.y) / viewport.zoom;
@@ -310,7 +316,10 @@ export function FlowEditor(props: FlowEditorProps) {
                 <div
                   className={`absolute -translate-x-1/2 -translate-y-1/2`}
                   key={n.id}
-                  style={{ left: n.x, top: n.y }}
+                  style={{
+                    left: Number.isFinite(n.x) ? n.x : 0,
+                    top: Number.isFinite(n.y) ? n.y : 0,
+                  }}
                 >
                   <button
                     className={`flex min-w-[7rem] items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm shadow-sm hover:bg-zinc-50 ${isSelected ? "ring-2 ring-blue-500" : ""}`}

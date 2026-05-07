@@ -63,7 +63,7 @@ export const FIXTURE_TRANSCRIPT: ConversationMessage[] = [
     id: "m3",
     conversation_id: FIXTURE_CONVERSATION_ID,
     role: "user",
-    body: "Order #4421. I'd like to talk to a real person please.",
+    body: "Order 4421. I'd like to talk to a real person please.",
     created_at_ms: Date.UTC(2026, 4, 1, 11, 56),
   },
 ];

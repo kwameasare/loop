@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 
 const auth0State = {
@@ -18,7 +18,12 @@ vi.mock("@auth0/auth0-react", () => ({
 import { useUser } from "@/lib/use-user";
 
 describe("useUser", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("returns the identity when Auth0 reports an authenticated user", () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTH0_DOMAIN", "example.auth0.com");
     const { result } = renderHook(() => useUser());
     expect(result.current.isAuthenticated).toBe(true);
     expect(result.current.user?.sub).toBe("auth0|user-123");

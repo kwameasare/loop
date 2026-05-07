@@ -6,6 +6,8 @@
  * shared trace playhead.
  */
 
+import { TRACE_CLIENT, TRACE_PRODUCER, TRACE_SERVER } from "@/lib/design-tokens";
+
 // ---------------------------------------------------------------------------
 // Presence
 // ---------------------------------------------------------------------------
@@ -136,8 +138,10 @@ export function clampPlayhead(
   if (session.trace.length === 0) {
     throw new PlayheadError("trace is empty");
   }
-  const min = session.trace[0].offsetMs;
-  const max = session.trace[session.trace.length - 1].offsetMs;
+  const first = session.trace[0]!;
+  const last = session.trace[session.trace.length - 1]!;
+  const min = first.offsetMs;
+  const max = last.offsetMs;
   if (Number.isNaN(offsetMs)) {
     throw new PlayheadError("offsetMs must be a number");
   }
@@ -177,21 +181,21 @@ export const FIXTURE_PRESENCE: readonly PresenceUser[] = [
   {
     id: "u_amaya",
     display: "Amaya O.",
-    color: "#0ea5e9",
+    color: TRACE_SERVER,
     status: "active",
     focus: "node_refund_escalate",
   },
   {
     id: "u_kojo",
     display: "Kojo A.",
-    color: "#a855f7",
+    color: TRACE_CLIENT,
     status: "viewing",
     focus: "node_refund_escalate",
   },
   {
     id: "u_zara",
     display: "Zara N.",
-    color: "#f97316",
+    color: TRACE_PRODUCER,
     status: "idle",
   },
 ];

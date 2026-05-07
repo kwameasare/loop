@@ -759,6 +759,7 @@ paths:
 
   /audit/events:
     get:
+      operationId: getAuditEvents
       tags: [Admin]
       summary: Get audit log entries
       parameters:
@@ -791,6 +792,7 @@ paths:
 
   /audit-events:
     get:
+      operationId: getAuditEventsLegacy
       tags: [Admin]
       summary: Get audit log entries (legacy alias)
       parameters:

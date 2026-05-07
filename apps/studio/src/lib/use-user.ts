@@ -34,9 +34,12 @@ export interface UseUserResult {
   isLoading: boolean;
 }
 
-const AUTH0_CONFIGURED =
-  typeof process !== "undefined" &&
-  Boolean(process.env.NEXT_PUBLIC_AUTH0_DOMAIN);
+function isAuth0Configured(): boolean {
+  return (
+    typeof process !== "undefined" &&
+    Boolean(process.env.NEXT_PUBLIC_AUTH0_DOMAIN)
+  );
+}
 
 /** Same key used by ``cp-auth-exchange.ts``. Exported as a constant
  * so the local-pilot login + the storage-event listener stay in sync. */
@@ -157,5 +160,5 @@ export function useUser(): UseUserResult {
   // single useEffect on mount).
   const auth0 = useAuth0Session();
   const local = useLocalSession();
-  return AUTH0_CONFIGURED ? auth0 : local;
+  return isAuth0Configured() ? auth0 : local;
 }

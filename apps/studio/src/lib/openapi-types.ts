@@ -384,7 +384,7 @@ export interface Operations {
     request: unknown;
     response: AgentVersion;
   };
-  GetAuditEvents: {
+  GetAuditEventsLegacy: {
     method: "GET";
     path: "/audit-events";
     request: unknown;

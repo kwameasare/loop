@@ -8,11 +8,15 @@
  */
 
 import { render } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AuthProvider } from "./auth-provider";
 
 describe("AuthProvider", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("renders children when env vars are missing in dev/test", () => {
     const { getByText } = render(
       <AuthProvider envName="development" config={{ domain: "", clientId: "" }}>
@@ -23,6 +27,7 @@ describe("AuthProvider", () => {
   });
 
   it("throws when env vars are missing in production", () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
     expect(() =>
       render(
         <AuthProvider

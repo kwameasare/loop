@@ -9,7 +9,7 @@ export interface PermissionBoundaryProps {
   reason: string;
   children: ReactNode;
   actionLabel?: string;
-  onRequestAccess?: () => void;
+  onRequestAccess?: (() => void) | undefined;
 }
 
 export function PermissionBoundary({

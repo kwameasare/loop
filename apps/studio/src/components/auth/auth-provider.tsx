@@ -54,7 +54,10 @@ export function AuthProvider({ children, config, envName }: AuthProviderProps) {
   const { domain, clientId, audience, redirectUri } = readConfig(config);
   if (!domain || !clientId) {
     const env = envName ?? process.env.NODE_ENV;
-    if (env === "production") {
+    const isNextBuild =
+      typeof process !== "undefined" &&
+      process.env.NEXT_PHASE === "phase-production-build";
+    if (env === "production" && !isNextBuild) {
       // Fail loud: production must boot with Auth0 wired or no studio
       // at all. The previous silent fallthrough shipped an
       // unauthenticated studio when env vars were missing.

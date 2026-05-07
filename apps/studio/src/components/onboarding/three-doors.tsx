@@ -30,7 +30,7 @@ export function ThreeDoors({ className, onChoose }: ThreeDoorsProps) {
       <header>
         <h1 className="text-xl font-semibold">Welcome to Studio</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Pick a door. Within 60 seconds you'll see a streaming response from
+          Pick a door. Within 60 seconds you will see a streaming response from
           your first agent.
         </p>
       </header>

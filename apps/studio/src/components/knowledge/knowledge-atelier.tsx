@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 
 import { KbList } from "@/components/agents/kb-list";
+import { EmbeddingsExplorer } from "@/components/knowledge/embeddings-explorer/embeddings-explorer";
+import { InverseRetrievalLab } from "@/components/knowledge/inverse-retrieval/inverse-retrieval-lab";
 import {
   ConfidenceMeter,
   EvidenceCallout,
@@ -17,6 +19,10 @@ import {
   type KbDocument,
   type UploadKbDocumentInput,
 } from "@/lib/kb";
+import {
+  buildEmbeddingsExplorerModel,
+  buildInverseRetrievalModel,
+} from "@/lib/knowledge-diagnostics";
 import {
   formatScore,
   getKnowledgeAtelierModel,
@@ -235,6 +241,14 @@ export function KnowledgeAtelier({
   const model: KnowledgeAtelierModel = useMemo(
     () => getKnowledgeAtelierModel(agentId, documents),
     [agentId, documents],
+  );
+  const inverseModel = useMemo(
+    () => buildInverseRetrievalModel(model),
+    [model],
+  );
+  const embeddingsModel = useMemo(
+    () => buildEmbeddingsExplorerModel(model),
+    [model],
   );
   const activeQuery = query.trim() || model.retrievalLab.defaultQuery;
 
@@ -466,6 +480,9 @@ export function KnowledgeAtelier({
           />
         </div>
       </section>
+
+      <InverseRetrievalLab model={inverseModel} />
+      <EmbeddingsExplorer model={embeddingsModel} />
 
       <section
         aria-labelledby="why-panel-heading"

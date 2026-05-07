@@ -304,7 +304,7 @@ export const FIXTURE_REPLAY: ReplayTrace = {
       timestamp_ms: 1_700_000_000_000,
       kind: "user_message",
       actor: "user",
-      text: "Where's my order #1234?",
+      text: "Where's my order 1234?",
     },
     {
       step: 1,
