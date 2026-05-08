@@ -14,7 +14,6 @@
  */
 
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
-import { targetUxFixtures } from "@/lib/target-ux";
 
 export function WorkspaceSwitcher() {
   const { workspaces, active, isLoading, setActive } = useActiveWorkspace();
@@ -24,7 +23,7 @@ export function WorkspaceSwitcher() {
         className="interactive-lift inline-flex h-8 items-center rounded-md border bg-card/70 px-2 text-sm font-medium shadow-sm backdrop-blur"
         data-testid="workspace-switcher-loading"
       >
-        {targetUxFixtures.workspace.name}
+        Workspace
       </span>
     );
   }
@@ -32,7 +31,10 @@ export function WorkspaceSwitcher() {
     return null;
   }
   return (
-    <label className="flex items-center gap-2 text-sm" data-testid="workspace-switcher">
+    <label
+      className="flex items-center gap-2 text-sm"
+      data-testid="workspace-switcher"
+    >
       <span className="sr-only">Active workspace</span>
       <select
         value={active.slug}

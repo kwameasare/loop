@@ -17,6 +17,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   listWorkspaces,
+  listFixtureWorkspaces,
   type Workspace,
 } from "@/lib/workspaces";
 
@@ -39,11 +40,13 @@ export function useActiveWorkspace(): UseActiveWorkspaceResult {
 
   useEffect(() => {
     let cancelled = false;
-    void listWorkspaces().then((res) => {
-      if (cancelled) return;
-      setWorkspaces(res.workspaces);
-      setIsLoading(false);
-    });
+    void listWorkspaces()
+      .catch(() => listFixtureWorkspaces())
+      .then((res) => {
+        if (cancelled) return;
+        setWorkspaces(res.workspaces);
+        setIsLoading(false);
+      });
     return () => {
       cancelled = true;
     };

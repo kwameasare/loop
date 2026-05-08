@@ -3,34 +3,32 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Boxes,
-  Brain,
+  Bot,
+  Building2,
   ChevronDown,
   ChevronRight,
   CircleDollarSign,
-  ClipboardCheck,
+  FileSearch,
   GitBranch,
   Gauge,
   History,
   Inbox,
-  KeyRound,
-  MemoryStick,
-  MessagesSquare,
   PackageOpen,
+  PhoneCall,
   Radar,
   Rocket,
   Route,
   ShieldCheck,
   Sparkles,
+  Store,
   TestTube2,
-  Wrench,
+  Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AgentMoodRing } from "@/components/shell/agent-mood-ring";
 import { LiveBadge } from "@/components/target";
-import { targetUxFixtures } from "@/lib/target-ux";
 import { cn } from "@/lib/utils";
 
 export interface NavItem {
@@ -49,220 +47,186 @@ export interface NavSection {
   items: readonly NavItem[];
 }
 
-const ACTIVE_AGENT_ID = targetUxFixtures.workspace.activeAgentId;
+function agentIdFromPath(pathname: string | null): string | null {
+  if (!pathname) return null;
+  const match = pathname.match(/^\/agents\/([^/]+)/);
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
+}
 
-export const NAV_SECTIONS: readonly NavSection[] = [
-  {
-    id: "build",
-    label: "Build",
-    items: [
-      {
-        id: "agents",
-        href: "/agents",
-        label: "Agents",
-        summary: "Workbench, behavior, tools, knowledge, memory",
-        icon: Sparkles,
-        signal: "draft",
-        children: [
-          {
-            id: "tools",
-            href: `/agents/${ACTIVE_AGENT_ID}/tools`,
-            label: "Tools",
-            summary: "Contracts, mocks, auth, side effects",
-            icon: Wrench,
-          },
-          {
-            id: "knowledge",
-            href: `/agents/${ACTIVE_AGENT_ID}/kb`,
-            label: "Knowledge",
-            summary: "Retrieval, inverse lab, embeddings",
-            icon: Brain,
-          },
-          {
-            id: "memory",
-            href: `/agents/${ACTIVE_AGENT_ID}/memory`,
-            label: "Memory",
-            summary: "Fact writes, policies, safety flags",
-            icon: MemoryStick,
-          },
-          {
-            id: "simulator",
-            href: `/agents/${ACTIVE_AGENT_ID}/simulator`,
-            label: "Simulator",
-            summary: "Channel preview and slash commands",
-            icon: MessagesSquare,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "test",
-    label: "Test",
-    items: [
-      {
-        id: "evals",
-        href: "/evals",
-        label: "Evals",
-        summary: "Suites, judges, production-derived coverage",
-        icon: TestTube2,
-      },
-      {
-        id: "replay",
-        href: "/replay",
-        label: "Replay",
-        summary: "Replay conversations against drafts",
-        icon: History,
-      },
-      {
-        id: "scenarios",
-        href: "/scenarios",
-        label: "Scenarios",
-        summary: "North-star validation journeys",
-        icon: ClipboardCheck,
-      },
-    ],
-  },
-  {
-    id: "ship",
-    label: "Ship",
-    items: [
-      {
-        id: "deploys",
-        href: `/agents/${ACTIVE_AGENT_ID}/deploys`,
-        label: "Deploys",
-        summary: "Preflight, canary, rollback, approvals",
-        icon: Rocket,
-        signal: "canary",
-      },
-      {
-        id: "versions",
-        href: `/agents/${ACTIVE_AGENT_ID}/versions`,
-        label: "Versions",
-        summary: "Snapshots, branches, behavioral diff",
-        icon: GitBranch,
-      },
-      {
-        id: "billing",
-        href: "/billing",
-        label: "Billing",
-        summary: "Plan, invoices, limits",
-        icon: CircleDollarSign,
-      },
-    ],
-  },
-  {
-    id: "observe",
-    label: "Observe",
-    items: [
-      {
-        id: "observatory",
-        href: "/observe",
-        label: "Observatory",
-        summary: "Health, anomalies, production tail",
-        icon: Gauge,
-        signal: "live",
-      },
-      {
-        id: "traces",
-        href: "/traces",
-        label: "Traces",
-        summary: "Scrubber, spans, forks, x-ray evidence",
-        icon: Route,
-      },
-      {
-        id: "xray",
-        href: "/xray",
-        label: "Agent X-Ray",
-        summary: "Observed behavior, dead context, evidence",
-        icon: Radar,
-      },
-      {
-        id: "inbox",
-        href: "/inbox",
-        label: "Inbox",
-        summary: "Human handoff and operator actions",
-        icon: Inbox,
-        signal: "live",
-      },
-      {
-        id: "costs",
-        href: "/costs",
-        label: "Costs",
-        summary: "Latency budget, spend, optimization",
-        icon: CircleDollarSign,
-      },
-      {
-        id: "voice",
-        href: "/voice",
-        label: "Voice",
-        summary: "ASR, TTS, barge-in, voice evals",
-        icon: MessagesSquare,
-      },
-    ],
-  },
-  {
-    id: "migrate",
-    label: "Migrate",
-    items: [
-      {
-        id: "import",
-        href: "/migrate",
-        label: "Import",
-        summary: "Botpress and legacy platform intake",
-        icon: PackageOpen,
-      },
-      {
-        id: "parity",
-        href: "/migrate/parity",
-        label: "Parity",
-        summary: "Structure, behavior, cost, risk comparison",
-        icon: ClipboardCheck,
-      },
-      {
-        id: "lineage",
-        href: "/migrate/parity",
-        label: "Lineage",
-        summary: "Persistent import evidence after cutover",
-        icon: Boxes,
-      },
-    ],
-  },
-  {
-    id: "govern",
-    label: "Govern",
-    items: [
-      {
-        id: "enterprise",
-        href: "/enterprise",
-        label: "Enterprise",
-        summary: "SSO, SCIM, residency, evidence packs",
-        icon: ShieldCheck,
-      },
-      {
-        id: "members",
-        href: "/workspaces/enterprise",
-        label: "Members",
-        summary: "Roles, groups, approvals",
-        icon: KeyRound,
-      },
-      {
-        id: "policies",
-        href: "/enterprise",
-        label: "Policies",
-        summary: "Workspace rules and audit evidence",
-        icon: Brain,
-      },
-      {
-        id: "audit",
-        href: "/enterprise/audit",
-        label: "Audit",
-        summary: "Append-only evidence and filters",
-        icon: ClipboardCheck,
-      },
-    ],
-  },
-];
+function agentHref(agentId: string | null, segment: string): string {
+  if (!agentId) return "/agents";
+  return segment
+    ? `/agents/${encodeURIComponent(agentId)}/${segment}`
+    : `/agents/${encodeURIComponent(agentId)}`;
+}
+
+export function buildNavSections(
+  agentId: string | null = null,
+): readonly NavSection[] {
+  return [
+    {
+      id: "build",
+      label: "Build",
+      items: [
+        {
+          id: "agents",
+          href: "/agents",
+          label: "Agent Workbench",
+          summary: "Profile, behavior, tools, knowledge, memory, deploy",
+          icon: Bot,
+        },
+        {
+          id: "voice",
+          href: "/voice",
+          label: "Voice Channels",
+          summary: "Phone provisioning, ASR, TTS, voice evals",
+          icon: PhoneCall,
+        },
+        {
+          id: "marketplace",
+          href: "/marketplace",
+          label: "Marketplace",
+          summary: "Install and publish workspace skills",
+          icon: Store,
+        },
+      ],
+    },
+    {
+      id: "test",
+      label: "Test",
+      items: [
+        {
+          id: "evals",
+          href: "/evals",
+          label: "Evals",
+          summary: "Suites, judges, production-derived coverage",
+          icon: TestTube2,
+        },
+        {
+          id: "replay",
+          href: "/replay",
+          label: "Replay",
+          summary: "Replay conversations against drafts",
+          icon: History,
+        },
+      ],
+    },
+    {
+      id: "ship",
+      label: "Ship",
+      items: [
+        {
+          id: "deploys",
+          href: agentId ? agentHref(agentId, "deploys") : "/deploys",
+          label: "Deploys",
+          summary: "Preflight, canary, rollback, approvals",
+          icon: Rocket,
+        },
+        ...(agentId
+          ? [
+              {
+                id: "versions",
+                href: agentHref(agentId, "versions"),
+                label: "Versions",
+                summary: "Snapshots, branches, behavioral diff",
+                icon: GitBranch,
+              },
+            ]
+          : []),
+        {
+          id: "money",
+          href: "/costs",
+          label: "Costs & Billing",
+          summary: "Operational spend, plan, invoices, limits",
+          icon: CircleDollarSign,
+        },
+      ],
+    },
+    {
+      id: "observe",
+      label: "Observe",
+      items: [
+        {
+          id: "observatory",
+          href: "/observe",
+          label: "Observatory",
+          summary: "Health, anomalies, production tail",
+          icon: Gauge,
+        },
+        {
+          id: "traces",
+          href: "/traces",
+          label: "Traces",
+          summary: "Scrubber, spans, forks, x-ray evidence",
+          icon: Route,
+        },
+        {
+          id: "xray",
+          href: "/xray",
+          label: "Behavior Evidence",
+          summary: "Observed behavior, dead context, evidence",
+          icon: Radar,
+        },
+      ],
+    },
+    {
+      id: "migrate",
+      label: "Migrate",
+      items: [
+        {
+          id: "import",
+          href: "/migrate",
+          label: "Import",
+          summary: "Botpress and legacy platform intake",
+          icon: PackageOpen,
+        },
+        {
+          id: "parity",
+          href: "/migrate/parity",
+          label: "Parity",
+          summary: "Structure, behavior, cost, risk comparison",
+          icon: Radar,
+        },
+      ],
+    },
+    {
+      id: "govern",
+      label: "Govern",
+      items: [
+        {
+          id: "enterprise",
+          href: "/enterprise",
+          label: "Enterprise",
+          summary: "SSO, SCIM, residency, evidence packs",
+          icon: Building2,
+        },
+        {
+          id: "members",
+          href: "/workspaces/enterprise/members",
+          label: "Members",
+          summary: "Roles, groups, approvals",
+          icon: Users,
+        },
+        {
+          id: "policies",
+          href: "/enterprise/govern",
+          label: "Policies",
+          summary: "Workspace rules and audit evidence",
+          icon: ShieldCheck,
+        },
+        {
+          id: "audit",
+          href: "/enterprise/audit",
+          label: "Audit",
+          summary: "Append-only evidence and filters",
+          icon: FileSearch,
+        },
+      ],
+    },
+  ];
+}
+
+export const NAV_SECTIONS: readonly NavSection[] = buildNavSections();
 
 export const NAV_ITEMS: readonly NavItem[] = NAV_SECTIONS.flatMap((section) =>
   section.items.flatMap((item) => [item, ...(item.children ?? [])]),
@@ -275,52 +239,120 @@ function isActive(current: string | null, href: string): boolean {
   return cleanHref !== "/" && current.startsWith(`${cleanHref}/`);
 }
 
+function sectionIsActive(
+  pathname: string | null,
+  section: NavSection,
+): boolean {
+  return section.items.some(
+    (item) =>
+      isActive(pathname, item.href) ||
+      (item.children?.some((child) => isActive(pathname, child.href)) ?? false),
+  );
+}
+
+function initialOpenSections(
+  pathname: string | null,
+  sections: readonly NavSection[],
+): Record<NavSection["id"], boolean> {
+  return sections.reduce(
+    (acc, section) => {
+      acc[section.id] =
+        section.id === "build" || sectionIsActive(pathname, section);
+      return acc;
+    },
+    {} as Record<NavSection["id"], boolean>,
+  );
+}
+
 export function SidebarNav() {
   const pathname = usePathname();
-  const [openSections, setOpenSections] =
-    useState<Record<NavSection["id"], boolean>>({
-      build: true,
-      test: true,
-      ship: true,
-      observe: true,
-      migrate: true,
-      govern: true,
+  const activeAgentId = agentIdFromPath(pathname);
+  const navSections = useMemo(
+    () => buildNavSections(activeAgentId),
+    [activeAgentId],
+  );
+  const [openSections, setOpenSections] = useState<
+    Record<NavSection["id"], boolean>
+  >(() => initialOpenSections(pathname, navSections));
+
+  useEffect(() => {
+    setOpenSections((current) => {
+      const next = { ...current };
+      for (const section of navSections) {
+        if (sectionIsActive(pathname, section)) next[section.id] = true;
+      }
+      return next;
     });
+  }, [navSections, pathname]);
+
   return (
     <nav
-      aria-label="Canonical Studio IA"
+      aria-label="Studio IA"
       className="quiet-scrollbar flex h-full flex-col gap-3 overflow-y-auto p-3"
       data-testid="sidebar-nav"
     >
-      <div className="instrument-panel sheen-hover rounded-md p-3">
+      <div className="instrument-panel rounded-md p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Loop
             </p>
-            <p className="mt-1 text-base font-semibold tracking-tight">Studio</p>
+            <p className="mt-1 text-base font-semibold tracking-tight">
+              Studio
+            </p>
           </div>
-          <LiveBadge tone="live" className="h-6 px-2 text-[0.65rem]">
-            canonical
-          </LiveBadge>
+          <span className="rounded-md border bg-background/70 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+            agent ops
+          </span>
         </div>
         <div className="mt-3 grid grid-cols-6 gap-1" aria-hidden="true">
-          {NAV_SECTIONS.map((section) => (
+          {navSections.map((section) => (
             <span
               key={section.id}
               className={cn(
                 "h-1 rounded-full transition-colors duration-swift",
-                section.id === "build"
-                  ? "bg-primary"
-                  : section.id === "observe"
-                    ? "bg-info"
-                    : "bg-muted",
+                sectionIsActive(pathname, section) ? "bg-primary" : "bg-muted",
               )}
             />
           ))}
         </div>
       </div>
-      {NAV_SECTIONS.map((section) => (
+      <div
+        className="rounded-md border bg-card/70 p-2"
+        data-testid="nav-attention"
+      >
+        <NavLink
+          item={{
+            id: "inbox",
+            href: "/inbox",
+            label: "HITL Inbox",
+            summary: "Human intervention, approvals, unresolved turns",
+            icon: Inbox,
+          }}
+          pathname={pathname}
+        />
+      </div>
+      {activeAgentId ? (
+        <div
+          className="rounded-md border bg-card/70 p-2"
+          data-testid="nav-active-agent"
+        >
+          <p className="px-2 pb-1 text-[0.68rem] font-semibold uppercase tracking-wider text-muted-foreground">
+            Active Agent
+          </p>
+          <NavLink
+            item={{
+              id: "active-agent",
+              href: agentHref(activeAgentId, ""),
+              label: "Workbench",
+              summary: "Agent-scoped profile, behavior, tools, memory, tests",
+              icon: Sparkles,
+            }}
+            pathname={pathname}
+          />
+        </div>
+      ) : null}
+      {navSections.map((section) => (
         <section
           key={section.id}
           aria-labelledby={`nav-section-${section.id}`}
@@ -378,7 +410,8 @@ function NavLink({
   depth?: number;
 }) {
   const active = isActive(pathname, item.href);
-  const childActive = item.children?.some((child) => isActive(pathname, child.href)) ?? false;
+  const childActive =
+    item.children?.some((child) => isActive(pathname, child.href)) ?? false;
   const Icon = item.icon;
   return (
     <div>

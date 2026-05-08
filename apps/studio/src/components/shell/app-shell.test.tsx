@@ -30,6 +30,10 @@ vi.mock("@/components/shell/workspace-members-link", () => ({
   WorkspaceMembersLink: () => <a href="/workspaces/enterprise">Members</a>,
 }));
 
+vi.mock("@/components/shell/activity-ribbon", () => ({
+  ActivityRibbon: () => <div data-testid="workspace-activity-ribbon" />,
+}));
+
 vi.mock("@/components/shell/user-menu", () => ({
   UserMenu: () => <span>User menu</span>,
 }));
@@ -37,7 +41,7 @@ vi.mock("@/components/shell/user-menu", () => ({
 import { AppShell } from "@/components/shell/app-shell";
 
 describe("AppShell", () => {
-  it("mounts the canonical five-region Studio layout", () => {
+  it("mounts the disciplined Studio shell without global live fixtures", () => {
     render(
       <AppShell>
         <div>Workbench content</div>
@@ -46,12 +50,11 @@ describe("AppShell", () => {
 
     expect(screen.getByTestId("asset-rail")).toBeInTheDocument();
     expect(screen.getByTestId("topbar")).toBeInTheDocument();
-    expect(screen.getByTestId("pair-debug-audio")).toBeInTheDocument();
     expect(screen.getByTestId("work-surface")).toHaveTextContent(
       "Workbench content",
     );
-    expect(screen.getByTestId("live-preview-rail")).toBeInTheDocument();
-    expect(screen.getByTestId("activity-timeline")).toBeInTheDocument();
-    expect(screen.getByTestId("status-footer")).toBeInTheDocument();
+    expect(screen.queryByTestId("live-preview-rail")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("activity-timeline")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("status-footer")).not.toBeInTheDocument();
   });
 });

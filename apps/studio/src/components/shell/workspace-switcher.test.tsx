@@ -5,7 +5,12 @@ const replace = vi.fn();
 const params = new URLSearchParams();
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace, push: vi.fn(), back: vi.fn(), forward: vi.fn() }),
+  useRouter: () => ({
+    replace,
+    push: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+  }),
   usePathname: () => "/agents",
   useSearchParams: () => params,
 }));
@@ -18,27 +23,27 @@ describe("WorkspaceSwitcher", () => {
     window.localStorage.clear();
   });
 
-  it("renders one option per workspace and reflects the URL ?ws", async () => {
-    params.set("ws", "globex");
+  it("renders the honest local fallback workspace", async () => {
+    params.set("ws", "local");
     render(<WorkspaceSwitcher />);
     const select = (await screen.findByTestId(
       "workspace-switcher-select",
     )) as HTMLSelectElement;
-    expect(select.value).toBe("globex");
-    expect(select.querySelectorAll("option")).toHaveLength(2);
+    expect(select.value).toBe("local");
+    expect(select.querySelectorAll("option")).toHaveLength(1);
   });
 
-  it("updates the URL and localStorage when the user picks a workspace", async () => {
+  it("updates the URL and localStorage when the user confirms the local workspace", async () => {
     params.delete("ws");
     render(<WorkspaceSwitcher />);
     const select = (await screen.findByTestId(
       "workspace-switcher-select",
     )) as HTMLSelectElement;
-    fireEvent.change(select, { target: { value: "globex" } });
+    fireEvent.change(select, { target: { value: "local" } });
     await waitFor(() =>
-      expect(replace).toHaveBeenCalledWith(expect.stringContaining("ws=globex")),
+      expect(replace).toHaveBeenCalledWith(expect.stringContaining("ws=local")),
     );
-    expect(window.localStorage.getItem("loop:active-workspace")).toBe("globex");
+    expect(window.localStorage.getItem("loop:active-workspace")).toBe("local");
   });
 
   it("updates active workspace when another tab writes storage", async () => {
@@ -48,18 +53,18 @@ describe("WorkspaceSwitcher", () => {
       "workspace-switcher-select",
     )) as HTMLSelectElement;
 
-    expect(select.value).toBe("acme");
+    expect(select.value).toBe("local");
 
     fireEvent(
       window,
       new StorageEvent("storage", {
         key: "loop:active-workspace",
-        newValue: "globex",
+        newValue: "local",
       }),
     );
 
     await waitFor(() => {
-      expect(select.value).toBe("globex");
+      expect(select.value).toBe("local");
     });
   });
 });

@@ -21,6 +21,14 @@ export function ActivityRibbon(): JSX.Element {
 
   useEffect(() => {
     if (!active) return;
+    if (active.id === "local-workspace") {
+      setActivity({
+        turn_rate_per_minute: 0,
+        ribbon_intensity: 0.08,
+        tone: "quiet",
+      });
+      return;
+    }
     let cancelled = false;
     void cpJson<ActivityModel>(
       `/workspaces/${encodeURIComponent(active.id)}/activity`,
@@ -31,9 +39,15 @@ export function ActivityRibbon(): JSX.Element {
           tone: "quiet",
         },
       },
-    ).then((next) => {
-      if (!cancelled) setActivity(next);
-    });
+    )
+      .catch(() => ({
+        turn_rate_per_minute: 0,
+        ribbon_intensity: 0.08,
+        tone: "quiet" as const,
+      }))
+      .then((next) => {
+        if (!cancelled) setActivity(next);
+      });
     return () => {
       cancelled = true;
     };
