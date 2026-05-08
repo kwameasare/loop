@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight, GitBranch, Play, Radar, Sparkles } from "lucide-react";
 
 import {
   ConfidenceMeter,
@@ -21,27 +22,60 @@ export default function HomePage() {
   const deploy = targetUxFixtures.deploys[0]!;
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4 lg:p-6">
-      <header className="flex flex-col gap-4 border-b pb-5 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Today in Loop Studio
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            {agent.name}
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-            The workspace opens directly into live build, test, ship, observe,
-            migrate, and govern context. Every recommendation below is tied to a
-            trace, eval, policy, snapshot, or migration artifact.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/traces" className={buttonVariants()}>
-            Open Trace Theater
-          </Link>
-          <Link href="/evals" className={buttonVariants({ variant: "outline" })}>
-            Run preflight
-          </Link>
+      <header className="instrument-panel page-enter rounded-md p-5 lg:p-6">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_28rem] xl:items-end">
+          <div>
+            <p className="inline-flex items-center gap-2 rounded-full border bg-card/70 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              Today in Studio
+            </p>
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight lg:text-4xl">
+              {agent.name}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              One blocked regression. One recommended replay. The rest of the
+              workspace is live, measured, and ready.
+            </p>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
+            <Link
+              href="/traces"
+              className={buttonVariants({ className: "justify-between gap-3" })}
+            >
+              <span className="inline-flex items-center gap-2">
+                <Play className="h-4 w-4" />
+                Trace Theater
+              </span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/evals"
+              className={buttonVariants({
+                variant: "outline",
+                className: "justify-between gap-3 bg-card/70",
+              })}
+            >
+              <span className="inline-flex items-center gap-2">
+                <Radar className="h-4 w-4" />
+                Preflight
+              </span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href={`/agents/${agent.id}/versions`}
+              className={buttonVariants({
+                variant: "outline",
+                className: "justify-between gap-3 bg-card/70",
+              })}
+            >
+              <span className="inline-flex items-center gap-2">
+                <GitBranch className="h-4 w-4" />
+                Draft diff
+              </span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -78,7 +112,7 @@ export default function HomePage() {
         <div className="space-y-4">
           <StatePanel
             state="degraded"
-            title="Promotion blocked by one behavioral regression"
+            title="Promotion blocked"
             action={
               <Link
                 href="/evals"
@@ -92,13 +126,13 @@ export default function HomePage() {
           </StatePanel>
 
           <EvidenceCallout
-            title="Recommended next action"
+            title="Next best action"
             source={targetUxFixtures.traces[0]!.id}
             confidence={evalSuite.passRate}
             tone="info"
           >
-            Replay last week of refund escalations against the draft before
-            raising the canary above {deploy.canaryPercent}%.
+            Replay refund escalations against the draft before raising canary
+            above {deploy.canaryPercent}%.
           </EvidenceCallout>
 
           <StageStepper

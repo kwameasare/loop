@@ -43,7 +43,13 @@ export async function cpJson<T>(
     cache: "no-store",
   };
   if (opts.body !== undefined) init.body = JSON.stringify(opts.body);
-  const response = await fetcher(`${base}${path}`, init);
+  let response: Response;
+  try {
+    response = await fetcher(`${base}${path}`, init);
+  } catch (error) {
+    if (error instanceof TypeError) return opts.fallback;
+    throw error;
+  }
   if (!response.ok) {
     throw new Error(`cp-api ${opts.method ?? "GET"} ${path} -> ${response.status}`);
   }

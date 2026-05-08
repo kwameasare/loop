@@ -24,7 +24,13 @@ export function MetricCountUp({
   className,
 }: MetricCountUpProps) {
   return (
-    <div className={cn("rounded-md border bg-card p-4", className)} data-testid="metric-count-up">
+    <div
+      className={cn(
+        "instrument-panel interactive-lift sheen-hover rounded-md p-4",
+        className,
+      )}
+      data-testid="metric-count-up"
+    >
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </p>

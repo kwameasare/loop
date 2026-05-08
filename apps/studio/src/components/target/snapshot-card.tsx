@@ -11,7 +11,10 @@ export interface SnapshotCardProps {
 export function SnapshotCard({ snapshot, className }: SnapshotCardProps) {
   return (
     <article
-      className={cn("rounded-md border bg-card p-4", className)}
+      className={cn(
+        "instrument-panel interactive-lift rounded-md p-4",
+        className,
+      )}
       data-testid="snapshot-card"
     >
       <div className="flex items-start justify-between gap-3">

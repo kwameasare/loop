@@ -49,7 +49,7 @@ export function ActivityRibbon(): JSX.Element {
       title={`${activity.turn_rate_per_minute} turns/min`}
     >
       <div
-        className="h-full bg-gradient-to-r from-success via-info to-warning transition-all duration-700 ease-standard"
+        className="activity-ribbon-flow h-full bg-gradient-to-r from-success via-info via-primary to-warning transition-all duration-700 ease-standard"
         style={{ width, opacity }}
       />
     </div>

@@ -63,22 +63,42 @@ export function TelemetryConsentCard(): JSX.Element | null {
 
   return (
     <section
-      className="rounded-md border bg-card p-4 shadow-sm"
+      className="instrument-panel rounded-md p-3"
       data-testid="telemetry-consent-card"
       aria-label="Telemetry consent"
     >
-      <div className="flex items-start gap-3">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-start gap-3">
         <ShieldCheck className="mt-0.5 h-5 w-5 text-primary" aria-hidden={true} />
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold">Telemetry consent</h2>
+          <h2 className="text-sm font-semibold">Telemetry choices</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Product analytics never include prompts, messages, KB chunks,
-            secrets, traces, or customer payloads unless your enterprise admin
-            explicitly configures that policy.
+            No prompts, messages, KB, secrets, traces, or payloads by default.
           </p>
         </div>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              void save({
+                product_analytics: false,
+                diagnostics: false,
+                ai_improvement: false,
+                crash_reports: false,
+              })
+            }
+          >
+            Decline
+          </Button>
+          <Button type="button" size="sm" onClick={() => void save(draft)}>
+            Save
+          </Button>
+        </div>
       </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+      <div className="mt-3 grid gap-2 sm:grid-cols-4">
         {(
           [
             ["product_analytics", "Product analytics"],
@@ -92,7 +112,7 @@ export function TelemetryConsentCard(): JSX.Element | null {
             type="button"
             role="switch"
             aria-checked={draft[key]}
-            className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+            className="interactive-lift pressable flex items-center justify-between rounded-md border bg-card/60 px-3 py-2 text-sm"
             onClick={() => toggle(key)}
             data-testid={`telemetry-toggle-${key}`}
           >
@@ -102,25 +122,6 @@ export function TelemetryConsentCard(): JSX.Element | null {
             </span>
           </button>
         ))}
-      </div>
-      <div className="mt-3 flex flex-wrap justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() =>
-            void save({
-              product_analytics: false,
-              diagnostics: false,
-              ai_improvement: false,
-              crash_reports: false,
-            })
-          }
-        >
-          Decline all
-        </Button>
-        <Button type="button" onClick={() => void save(draft)}>
-          Save consent
-        </Button>
       </div>
     </section>
   );

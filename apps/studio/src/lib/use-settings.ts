@@ -21,7 +21,7 @@ export type Theme = "light" | "dark" | "system";
 
 const KEY_PROFILE = "loop.settings.profileName";
 const KEY_THEME = "loop.settings.theme";
-const DEFAULT_THEME: Theme = "system";
+const DEFAULT_THEME: Theme = "dark";
 
 function readStorage(key: string): string | null {
   if (typeof localStorage === "undefined") return null;
@@ -41,6 +41,27 @@ function writeStorage(key: string, value: string): void {
   }
 }
 
+function prefersDark(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return true;
+  }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+export function resolveTheme(theme: Theme): "light" | "dark" {
+  if (theme === "system") return prefersDark() ? "dark" : "light";
+  return theme;
+}
+
+export function applyThemePreference(theme: Theme): void {
+  if (typeof document === "undefined") return;
+  const resolved = resolveTheme(theme);
+  const root = document.documentElement;
+  root.classList.toggle("dark", resolved === "dark");
+  root.dataset.theme = resolved;
+  root.style.colorScheme = resolved;
+}
+
 export interface SettingsState {
   profileName: string;
   region: RegionName;
@@ -55,10 +76,6 @@ export function useSettings(defaultProfileName = ""): SettingsState {
   });
 
   const [theme, setThemeState] = useState<Theme>(() => {
-    const stored = readStorage(KEY_THEME);
-    if (stored === "light" || stored === "dark" || stored === "system") {
-      return stored;
-    }
     return DEFAULT_THEME;
   });
 
@@ -68,6 +85,31 @@ export function useSettings(defaultProfileName = ""): SettingsState {
     setRegion(inferRegion());
   }, []);
 
+  useEffect(() => {
+    const stored = readStorage(KEY_THEME);
+    if (stored === "light" || stored === "dark" || stored === "system") {
+      setThemeState(stored);
+      applyThemePreference(stored);
+      return;
+    }
+    applyThemePreference(DEFAULT_THEME);
+  }, []);
+
+  useEffect(() => {
+    applyThemePreference(theme);
+    if (
+      theme !== "system" ||
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return;
+    }
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncSystemTheme = () => applyThemePreference("system");
+    media.addEventListener?.("change", syncSystemTheme);
+    return () => media.removeEventListener?.("change", syncSystemTheme);
+  }, [theme]);
+
   const setProfileName = useCallback((name: string) => {
     setProfileNameState(name);
     writeStorage(KEY_PROFILE, name);
@@ -76,6 +118,8 @@ export function useSettings(defaultProfileName = ""): SettingsState {
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
     writeStorage(KEY_THEME, t);
+    applyThemePreference(t);
+    window.dispatchEvent(new CustomEvent("loop:theme-change", { detail: t }));
   }, []);
 
   return { profileName, region, theme, setProfileName, setTheme };

@@ -36,7 +36,11 @@ export function EvidenceCallout({
 }: EvidenceCalloutProps) {
   return (
     <aside
-      className={cn("rounded-md border p-4", TONE_CLASS[tone], className)}
+      className={cn(
+        "instrument-panel interactive-lift rounded-md p-4",
+        TONE_CLASS[tone],
+        className,
+      )}
       data-testid="evidence-callout"
     >
       <div className="flex flex-col gap-3">

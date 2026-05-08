@@ -38,7 +38,11 @@ export function StatePanel({
 }: StatePanelProps) {
   return (
     <section
-      className={cn("rounded-md border p-4", STATE_CLASS[state], className)}
+      className={cn(
+        "instrument-panel interactive-lift rounded-md p-4",
+        STATE_CLASS[state],
+        className,
+      )}
       data-state={state}
       data-testid="state-panel"
     >

@@ -31,7 +31,7 @@ export function StageStepper({ steps, currentId, className }: StageStepperProps)
           <li
             key={step.id}
             className={cn(
-              "flex min-h-16 flex-col justify-between rounded-md border p-3",
+              "interactive-lift flex min-h-16 flex-col justify-between rounded-md border p-3",
               reached ? treatment.className : "bg-card text-muted-foreground",
             )}
             aria-current={step.id === currentId ? "step" : undefined}
