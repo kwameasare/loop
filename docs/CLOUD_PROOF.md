@@ -47,6 +47,9 @@ out mark and paged on-call from the same workflow.
 | 2026-05-07T06:21:33Z | `aws` | `na-east` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25479455168) | `88f965c5325a` |
 | 2026-05-07T06:21:23Z | `azure` | `eu-west` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25479455168) | `88f965c5325a` |
 | 2026-05-07T06:21:33Z | `gcp` | `apac-sg` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25479455168) | `88f965c5325a` |
+| 2026-05-08T06:00:23Z | `aws` | `na-east` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25539688384) | `a39787930af9` |
+| 2026-05-08T06:00:32Z | `azure` | `eu-west` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25539688384) | `a39787930af9` |
+| 2026-05-08T06:00:25Z | `gcp` | `apac-sg` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25539688384) | `a39787930af9` |
 <!-- CLOUD_PROOF_HISTORY:END -->
 
 ## Evidence sources
