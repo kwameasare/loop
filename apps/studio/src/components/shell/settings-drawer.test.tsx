@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -90,8 +90,7 @@ describe("SettingsDrawer", () => {
 
   it("marks active theme with aria-pressed=true", () => {
     render(<SettingsDrawer open={true} onClose={() => {}} />);
-    // Default theme is "system"
-    expect(screen.getByTestId("settings-theme-system")).toHaveAttribute(
+    expect(screen.getByTestId("settings-theme-dark")).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -121,12 +120,14 @@ describe("SettingsDrawer", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it("reads persisted theme from localStorage on mount", () => {
-    localStorageMock.setItem("loop.settings.theme", "dark");
+  it("reads persisted theme from localStorage on mount", async () => {
+    localStorageMock.setItem("loop.settings.theme", "light");
     render(<SettingsDrawer open={true} onClose={() => {}} />);
-    expect(screen.getByTestId("settings-theme-dark")).toHaveAttribute(
-      "aria-pressed",
-      "true",
+    await waitFor(() =>
+      expect(screen.getByTestId("settings-theme-light")).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
     );
   });
 

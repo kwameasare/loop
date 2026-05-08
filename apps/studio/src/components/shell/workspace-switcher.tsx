@@ -14,13 +14,17 @@
  */
 
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
+import { targetUxFixtures } from "@/lib/target-ux";
 
 export function WorkspaceSwitcher() {
   const { workspaces, active, isLoading, setActive } = useActiveWorkspace();
   if (isLoading) {
     return (
-      <span className="text-sm text-muted-foreground" data-testid="workspace-switcher-loading">
-        Loading workspaces…
+      <span
+        className="interactive-lift inline-flex h-8 items-center rounded-md border bg-card/70 px-2 text-sm font-medium shadow-sm backdrop-blur"
+        data-testid="workspace-switcher-loading"
+      >
+        {targetUxFixtures.workspace.name}
       </span>
     );
   }
@@ -36,7 +40,7 @@ export function WorkspaceSwitcher() {
           const next = workspaces.find((w) => w.slug === event.target.value);
           if (next) setActive(next);
         }}
-        className="rounded-md border bg-background px-2 py-1 text-sm font-medium"
+        className="interactive-lift h-8 rounded-md border bg-card/70 px-2 text-sm font-medium shadow-sm backdrop-blur"
         data-testid="workspace-switcher-select"
       >
         {workspaces.map((w) => (

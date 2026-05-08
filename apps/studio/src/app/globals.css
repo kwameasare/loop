@@ -4,62 +4,63 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 60 23% 97%;
+    --foreground: 223 53% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --surface: 240 20% 98%;
+    --card-foreground: 223 53% 12%;
+    --surface: 60 15% 94%;
     --surface-elevated: 0 0% 100%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --primary: 240 5.9% 10%;
+    --muted: 60 13% 93%;
+    --muted-foreground: 224 29% 39%;
+    --accent: 232 50% 95%;
+    --accent-foreground: 223 53% 12%;
+    --primary: 174 80% 32%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 224 39% 93%;
+    --secondary-foreground: 223 53% 12%;
     --destructive: 0 72.2% 50.6%;
     --destructive-foreground: 0 0% 98%;
-    --success: 161 45% 34%;
+    --success: 160 84% 39%;
     --success-foreground: 0 0% 98%;
     --warning: 38 92% 50%;
     --warning-foreground: 240 10% 3.9%;
-    --info: 199 89% 48%;
+    --info: 211 100% 68%;
     --info-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --focus: 199 89% 48%;
-    --state-draft: 240 4.8% 95.9%;
+    --border: 224 23% 84%;
+    --input: 224 23% 84%;
+    --ring: 174 80% 32%;
+    --focus: 211 100% 68%;
+    --state-draft: 60 13% 93%;
     --state-saved: 214 32% 91%;
     --state-staged: 199 89% 48%;
     --state-canary: 38 92% 50%;
     --state-production: 161 45% 34%;
     --state-archived: 240 3.8% 46.1%;
     --radius: 0.5rem;
-    --duration-flash: 90ms;
+    --duration-flash: 80ms;
     --duration-swift: 160ms;
-    --duration-standard: 220ms;
-    --duration-gentle: 360ms;
+    --duration-standard: 240ms;
+    --duration-gentle: 400ms;
+    --duration-ambient: 1600ms;
     --ease-standard: cubic-bezier(0.2, 0, 0, 1);
     --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 5.5%;
-    --card-foreground: 0 0% 98%;
-    --surface: 240 8% 7.5%;
-    --surface-elevated: 240 7% 10%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --background: 226 49% 8%;
+    --foreground: 210 40% 96%;
+    --card: 223 52% 12%;
+    --card-foreground: 210 40% 96%;
+    --surface: 223 52% 12%;
+    --surface-elevated: 225 45% 16%;
+    --muted: 223 42% 18%;
+    --muted-foreground: 218 24% 68%;
+    --accent: 224 45% 22%;
+    --accent-foreground: 210 40% 96%;
+    --primary: 174 84% 40%;
+    --primary-foreground: 226 49% 8%;
+    --secondary: 223 42% 18%;
+    --secondary-foreground: 210 40% 96%;
     --destructive: 0 62.8% 42%;
     --destructive-foreground: 0 0% 98%;
     --success: 160 60% 45%;
@@ -68,11 +69,11 @@
     --warning-foreground: 240 10% 3.9%;
     --info: 199 89% 55%;
     --info-foreground: 240 10% 3.9%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 0 0% 98%;
-    --focus: 199 89% 55%;
-    --state-draft: 240 3.7% 15.9%;
+    --border: 222 38% 20%;
+    --input: 223 38% 27%;
+    --ring: 174 84% 40%;
+    --focus: 211 100% 68%;
+    --state-draft: 223 42% 18%;
     --state-saved: 215 20% 30%;
     --state-staged: 199 89% 55%;
     --state-canary: 43 96% 56%;
@@ -82,6 +83,13 @@
 
   body {
     @apply bg-background text-foreground;
+    min-height: 100vh;
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.03) 1px, transparent 1px),
+      linear-gradient(180deg, hsl(var(--background)), hsl(var(--surface) / 0.72));
+    background-size: 40px 40px, 40px 40px, 100% 100%;
+    background-attachment: fixed;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
@@ -92,6 +100,10 @@
   :focus-visible {
     outline: 2px solid hsl(var(--focus));
     outline-offset: 2px;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.28);
   }
 }
 
@@ -104,6 +116,154 @@
   .target-elevated {
     background: hsl(var(--surface-elevated));
     box-shadow: 0 1px 2px hsl(var(--foreground) / 0.05);
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+}
+
+@layer components {
+  .instrument-panel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid hsl(var(--border) / 0.78);
+    background:
+      linear-gradient(180deg, hsl(var(--card) / 0.96), hsl(var(--surface-elevated) / 0.88)),
+      hsl(var(--card));
+    box-shadow:
+      0 1px 0 hsl(var(--foreground) / 0.05),
+      0 18px 54px hsl(224 64% 3% / 0.18);
+  }
+
+  .instrument-panel::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      120deg,
+      hsl(var(--info) / 0.16),
+      transparent 28%,
+      transparent 72%,
+      hsl(var(--primary) / 0.12)
+    );
+    opacity: 0;
+    transition: opacity var(--duration-standard) var(--ease-standard);
+  }
+
+  .instrument-panel:hover::before,
+  .instrument-panel:focus-within::before {
+    opacity: 1;
+  }
+
+  .interactive-lift {
+    transform: translateY(0);
+    transition:
+      transform var(--duration-swift) var(--ease-standard),
+      border-color var(--duration-swift) var(--ease-standard),
+      background-color var(--duration-swift) var(--ease-standard),
+      box-shadow var(--duration-swift) var(--ease-standard),
+      color var(--duration-swift) var(--ease-standard);
+  }
+
+  .interactive-lift:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 1px 0 hsl(var(--foreground) / 0.04),
+      0 14px 34px hsl(224 64% 3% / 0.16);
+  }
+
+  .pressable:active {
+    transform: translateY(0) scale(0.99);
+  }
+
+  .sheen-hover {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sheen-hover::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: -40% -60%;
+    background: linear-gradient(
+      110deg,
+      transparent 35%,
+      hsl(var(--foreground) / 0.1) 50%,
+      transparent 65%
+    );
+    transform: translateX(-45%);
+    opacity: 0;
+  }
+
+  .sheen-hover:hover::after {
+    animation: sheen-sweep var(--duration-ambient) var(--ease-emphasized);
+  }
+
+  .breathing-well {
+    animation: breathing-well var(--duration-ambient) var(--ease-standard) infinite alternate;
+  }
+
+  .activity-ribbon-flow {
+    background-size: 180% 100%;
+    animation: activity-flow calc(var(--duration-ambient) * 1.8) linear infinite;
+  }
+
+  .page-enter {
+    animation: page-enter var(--duration-standard) var(--ease-emphasized) both;
+  }
+
+  .quiet-scrollbar {
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sheen-sweep {
+  0% {
+    opacity: 0;
+    transform: translateX(-45%);
+  }
+  18% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(45%);
+  }
+}
+
+@keyframes breathing-well {
+  from {
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.1);
+  }
+  to {
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.34);
+  }
+}
+
+@keyframes activity-flow {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 180% 50%;
   }
 }
 

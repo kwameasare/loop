@@ -289,24 +289,36 @@ export function SidebarNav() {
   return (
     <nav
       aria-label="Canonical Studio IA"
-      className="flex h-full flex-col gap-3 overflow-y-auto p-3"
+      className="quiet-scrollbar flex h-full flex-col gap-3 overflow-y-auto p-3"
       data-testid="sidebar-nav"
     >
-      <div className="rounded-md border bg-background p-3">
+      <div className="instrument-panel sheen-hover rounded-md p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Loop
             </p>
-            <p className="mt-1 text-sm font-semibold tracking-tight">Studio</p>
+            <p className="mt-1 text-base font-semibold tracking-tight">Studio</p>
           </div>
           <LiveBadge tone="live" className="h-6 px-2 text-[0.65rem]">
             canonical
           </LiveBadge>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          Build, Test, Ship, Observe, Migrate, Govern.
-        </p>
+        <div className="mt-3 grid grid-cols-6 gap-1" aria-hidden="true">
+          {NAV_SECTIONS.map((section) => (
+            <span
+              key={section.id}
+              className={cn(
+                "h-1 rounded-full transition-colors duration-swift",
+                section.id === "build"
+                  ? "bg-primary"
+                  : section.id === "observe"
+                    ? "bg-info"
+                    : "bg-muted",
+              )}
+            />
+          ))}
+        </div>
       </div>
       {NAV_SECTIONS.map((section) => (
         <section
@@ -318,7 +330,7 @@ export function SidebarNav() {
           <button
             type="button"
             id={`nav-section-${section.id}`}
-            className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[0.68rem] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted"
+            className="group flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[0.68rem] font-semibold uppercase tracking-wider text-muted-foreground transition-all duration-swift ease-standard hover:bg-muted/70 hover:text-foreground"
             aria-expanded={openSections[section.id]}
             onClick={() =>
               setOpenSections((current) => ({
@@ -327,7 +339,12 @@ export function SidebarNav() {
               }))
             }
           >
-            <span>{section.label}</span>
+            <span className="flex items-center gap-2">
+              <span>{section.label}</span>
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-[0.6rem] tabular-nums text-muted-foreground group-hover:text-foreground">
+                {section.items.length}
+              </span>
+            </span>
             {openSections[section.id] ? (
               <ChevronDown className="h-3.5 w-3.5" aria-hidden={true} />
             ) : (
@@ -370,11 +387,11 @@ function NavLink({
         data-testid={`nav-${item.id}`}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "group flex min-h-12 items-start gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm transition-all duration-swift ease-standard hover:-translate-y-px",
-          depth > 0 && "ml-6 min-h-10 border-l pl-3",
+          "interactive-lift pressable group flex min-h-10 items-center gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm",
+          depth > 0 && "ml-5 min-h-9 border-l border-border/70 pl-3",
           active || childActive
-            ? "border-border bg-accent text-accent-foreground shadow-sm"
-            : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+            ? "border-border bg-accent/88 text-accent-foreground shadow-sm"
+            : "text-muted-foreground hover:border-border/70 hover:bg-accent/50 hover:text-foreground",
         )}
       >
         {item.id === "agents" && depth === 0 ? (
@@ -400,7 +417,12 @@ function NavLink({
               </LiveBadge>
             ) : null}
           </span>
-          <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+          <span
+            className={cn(
+              "block max-h-0 overflow-hidden text-xs text-muted-foreground opacity-0 transition-all duration-swift ease-standard group-hover:mt-0.5 group-hover:max-h-5 group-hover:opacity-100 group-focus-visible:mt-0.5 group-focus-visible:max-h-5 group-focus-visible:opacity-100",
+              (active || childActive) && "mt-0.5 max-h-5 truncate opacity-100",
+            )}
+          >
             {item.summary}
           </span>
         </span>

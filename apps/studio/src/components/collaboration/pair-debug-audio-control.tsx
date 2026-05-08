@@ -1,7 +1,7 @@
 "use client";
 
 import { Mic, MicOff } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   createPairDebugAudioSession,
@@ -25,8 +25,12 @@ export function PairDebugAudioControl({
   const [session, setSession] = useState<PairDebugAudioSession | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const peerSupported = hasPairDebugPeerSupport();
+  const [peerSupported, setPeerSupported] = useState(false);
   const enabled = teammateCount > 0 && peerSupported;
+
+  useEffect(() => {
+    setPeerSupported(hasPairDebugPeerSupport());
+  }, []);
 
   async function start(): Promise<void> {
     if (!enabled || session) return;
@@ -63,7 +67,7 @@ export function PairDebugAudioControl({
     <div className="relative" data-testid="pair-debug-audio">
       <button
         type="button"
-        className="inline-flex h-8 items-center gap-2 rounded-md border bg-card px-2 text-xs font-medium target-transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+        className="interactive-lift pressable inline-flex h-8 items-center gap-2 rounded-md border bg-card/70 px-2 text-xs font-medium shadow-sm backdrop-blur disabled:cursor-not-allowed disabled:opacity-60"
         onClick={() => (session ? stop() : void start())}
         disabled={!enabled || busy}
         aria-pressed={session !== null}
@@ -78,14 +82,14 @@ export function PairDebugAudioControl({
         <span className="hidden lg:inline">{busy ? "Joining" : label}</span>
       </button>
       {session ? (
-        <p className="absolute right-0 mt-2 w-72 rounded-md border bg-popover p-2 text-xs shadow-sm">
+        <p className="instrument-panel absolute right-0 mt-2 w-72 rounded-md p-2 text-xs">
           Human pair-debug audio is live for this agent. Session{" "}
           <span className="font-mono">{session.id}</span> expires at{" "}
           {new Date(session.expires_at).toLocaleTimeString()}.
         </p>
       ) : null}
       {error ? (
-        <p className="absolute right-0 mt-2 w-72 rounded-md border bg-popover p-2 text-xs text-destructive shadow-sm">
+        <p className="instrument-panel absolute right-0 mt-2 w-72 rounded-md p-2 text-xs text-destructive">
           {error}
         </p>
       ) : null}

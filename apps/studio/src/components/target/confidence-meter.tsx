@@ -42,7 +42,7 @@ export function ConfidenceMeter({
         </span>
       </div>
       <div
-        className="h-2 overflow-hidden rounded-full bg-muted"
+        className="h-2 overflow-hidden rounded-full bg-muted shadow-inner"
         role="meter"
         aria-valuemin={0}
         aria-valuemax={100}
@@ -50,7 +50,10 @@ export function ConfidenceMeter({
         aria-label={label ?? treatment.label}
       >
         <div
-          className={cn("h-full rounded-full", treatment.barClassName)}
+          className={cn(
+            "h-full rounded-full transition-[width] duration-gentle ease-emphasized",
+            treatment.barClassName,
+          )}
           style={{ width: `${percent}%` }}
         />
       </div>

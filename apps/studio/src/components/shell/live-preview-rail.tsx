@@ -7,7 +7,7 @@ export function LivePreviewRail() {
   const deploy = targetUxFixtures.deploys[0]!;
   return (
     <aside
-      className="border-t bg-surface/70 p-4 lg:border-l lg:border-t-0"
+      className="quiet-scrollbar border-t bg-surface/64 p-4 backdrop-blur-xl lg:border-l lg:border-t-0"
       aria-label="Live preview and inspector"
       data-testid="live-preview-rail"
     >
@@ -24,18 +24,27 @@ export function LivePreviewRail() {
           </LiveBadge>
         </div>
 
-        <div className="rounded-md border bg-card p-3">
+        <div className="instrument-panel rounded-md p-3">
           <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
             <span>Channel</span>
             <span className="font-medium text-foreground">Web chat</span>
+          </div>
+          <div className="mt-3 flex items-end gap-1" aria-hidden="true">
+            {[35, 62, 48, 86, 54, 72, 41, 65, 38].map((height, index) => (
+              <span
+                key={index}
+                className="breathing-well w-full rounded-full bg-primary/70"
+                style={{ height: `${height / 4}px`, animationDelay: `${index * 70}ms` }}
+              />
+            ))}
           </div>
           <div className="mt-3 space-y-2 text-sm">
             <p className="rounded-md bg-muted p-2">
               I need to cancel my annual renewal. What happens now?
             </p>
             <p className="rounded-md border border-info/30 bg-info/5 p-2">
-              I can help. The May refund policy applies to this renewal, and I
-              need one order lookup before I quote the exact window.
+              May policy applies. Running one order lookup before quoting the
+              window.
             </p>
           </div>
         </div>
@@ -53,7 +62,7 @@ export function LivePreviewRail() {
           impact="One Spanish paraphrase still blocks promotion."
         />
 
-        <div className="mt-auto rounded-md border bg-card p-3 text-xs text-muted-foreground">
+        <div className="instrument-panel mt-auto rounded-md p-3 text-xs text-muted-foreground">
           <p className="font-medium text-foreground">Trace ready</p>
           <p className="mt-1">
             {trace.id} - {trace.spans.length} spans - forkable from every span.

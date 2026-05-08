@@ -11,7 +11,10 @@ export interface SceneCardProps {
 export function SceneCard({ scene, className }: SceneCardProps) {
   return (
     <article
-      className={cn("rounded-md border bg-card p-4", className)}
+      className={cn(
+        "instrument-panel interactive-lift rounded-md p-4",
+        className,
+      )}
       data-testid="scene-card"
     >
       <div className="flex items-start justify-between gap-3">
