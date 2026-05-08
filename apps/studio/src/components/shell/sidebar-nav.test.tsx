@@ -32,6 +32,11 @@ describe("SidebarNav", () => {
     render(<SidebarNav />);
     expect(screen.getByTestId("nav-inbox")).toHaveAttribute("href", "/inbox");
     expect(screen.getByTestId("nav-agents")).toHaveAttribute("href", "/agents");
+    expect(screen.getByTestId("nav-channels")).toHaveAttribute(
+      "href",
+      "/channels",
+    );
+    expect(screen.getByTestId("nav-channels")).toHaveTextContent("Channels");
 
     fireEvent.click(screen.getByRole("button", { name: /observe/i }));
     expect(screen.getByTestId("nav-observatory")).toHaveAttribute(

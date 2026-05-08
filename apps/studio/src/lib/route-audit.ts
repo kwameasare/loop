@@ -109,7 +109,16 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     route: "/agents/[agent_id]/channels",
     verb: "build",
     label: "Agent channels",
-    purpose: "Web, Slack, phone, WhatsApp, email bindings.",
+    purpose:
+      "Agent-scoped bindings for web chat, WhatsApp, Telegram, Slack, Teams, SMS, email, and voice.",
+    anchor: "§5",
+  },
+  {
+    route: "/channels",
+    verb: "build",
+    label: "Workspace channels",
+    purpose:
+      "Omnichannel entry point for web chat, WhatsApp, Telegram, Slack, Teams, SMS, email, and voice.",
     anchor: "§5",
   },
   {
@@ -316,8 +325,9 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
   {
     route: "/voice",
     verb: "observe",
-    label: "Voice",
-    purpose: "Voice channel preview, ASR/TTS spans, latency budget (§16).",
+    label: "Voice stage",
+    purpose:
+      "Specialized phone-channel preview, ASR/TTS spans, barge-in, and latency budget (§16).",
     anchor: "§16",
   },
   {
