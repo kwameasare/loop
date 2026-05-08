@@ -1,26 +1,43 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/agents",
 }));
 
 vi.mock("next/link", () => ({
-  default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
-    <a href={href} {...rest}>{children}</a>
+  default: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children: React.ReactNode;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 
-import { NAV_ITEMS, NAV_SECTIONS, SidebarNav } from "@/components/shell/sidebar-nav";
+import {
+  NAV_ITEMS,
+  NAV_SECTIONS,
+  SidebarNav,
+  buildNavSections,
+} from "@/components/shell/sidebar-nav";
 
 describe("SidebarNav", () => {
-  it("renders a link per nav item", () => {
+  it("renders the primary queue and expands lifecycle sections on demand", () => {
     render(<SidebarNav />);
-    for (const item of NAV_ITEMS) {
-      expect(
-        screen.getByTestId(`nav-${item.id}`),
-      ).toHaveAttribute("href", item.href);
-    }
+    expect(screen.getByTestId("nav-inbox")).toHaveAttribute("href", "/inbox");
+    expect(screen.getByTestId("nav-agents")).toHaveAttribute("href", "/agents");
+
+    fireEvent.click(screen.getByRole("button", { name: /observe/i }));
+    expect(screen.getByTestId("nav-observatory")).toHaveAttribute(
+      "href",
+      "/observe",
+    );
   });
 
   it("renders the canonical six-verb IA", () => {
@@ -34,7 +51,9 @@ describe("SidebarNav", () => {
       "Govern",
     ]);
     for (const section of NAV_SECTIONS) {
-      expect(screen.getByTestId(`nav-section-${section.id}`)).toBeInTheDocument();
+      expect(
+        screen.getByTestId(`nav-section-${section.id}`),
+      ).toBeInTheDocument();
     }
   });
 
@@ -42,7 +61,33 @@ describe("SidebarNav", () => {
     render(<SidebarNav />);
     const active = screen.getByTestId("nav-agents");
     expect(active).toHaveAttribute("aria-current", "page");
-    const inactive = screen.getByTestId("nav-costs");
+    fireEvent.click(screen.getByRole("button", { name: /ship/i }));
+    const inactive = screen.getByTestId("nav-money");
     expect(inactive).not.toHaveAttribute("aria-current");
+  });
+
+  it("does not ship duplicate lifecycle destinations", () => {
+    const hrefs = NAV_ITEMS.map((item) => item.href);
+    expect(new Set(hrefs).size).toBe(hrefs.length);
+  });
+
+  it("agent-scoped deploy links only deep-link after an agent is selected", () => {
+    const withoutAgent = buildNavSections();
+    const withAgent = buildNavSections("agent_123");
+    expect(
+      withoutAgent
+        .flatMap((section) => section.items)
+        .find((item) => item.id === "deploys")?.href,
+    ).toBe("/deploys");
+    expect(
+      withoutAgent
+        .flatMap((section) => section.items)
+        .find((item) => item.id === "versions"),
+    ).toBeUndefined();
+    expect(
+      withAgent
+        .flatMap((section) => section.items)
+        .find((item) => item.id === "deploys")?.href,
+    ).toBe("/agents/agent_123/deploys");
   });
 });

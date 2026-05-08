@@ -30,21 +30,12 @@ describe("canonical shell a11y smoke contract", () => {
 
   it("keeps shell landmarks named for screen readers", () => {
     const shell = readSource("apps/studio/src/components/shell/app-shell.tsx");
-    const preview = readSource(
-      "apps/studio/src/components/shell/live-preview-rail.tsx",
-    );
-    const timeline = readSource(
-      "apps/studio/src/components/shell/activity-timeline.tsx",
-    );
-    const footer = readSource(
-      "apps/studio/src/components/shell/status-footer.tsx",
-    );
 
-    expect(shell).toContain('aria-label="Asset rail"');
+    expect(shell).toContain('aria-label="Workspace navigation"');
     expect(shell).toContain('aria-label="Studio work surface"');
-    expect(preview).toContain('data-testid="live-preview-rail"');
-    expect(timeline).toContain('data-testid="activity-timeline"');
-    expect(footer).toContain('data-testid="status-footer"');
+    expect(shell).not.toContain("LivePreviewRail");
+    expect(shell).not.toContain("ActivityTimeline");
+    expect(shell).not.toContain("StatusFooter");
   });
 
   it("keeps global focus and reduced-motion protections active", () => {

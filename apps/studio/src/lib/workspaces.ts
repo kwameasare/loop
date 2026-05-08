@@ -1,3 +1,4 @@
+import { readSessionToken } from "@/lib/cp-auth-exchange";
 import { createAuthedCpApiFetch } from "@/lib/cp-api-fetch";
 
 export type Workspace = {
@@ -30,16 +31,10 @@ interface CpWorkspaceList {
 
 const FIXTURE: Workspace[] = [
   {
-    id: "ws_acme",
-    name: "Acme",
-    slug: "acme",
+    id: "local-workspace",
+    name: "Local workspace",
+    slug: "local",
     role: "owner",
-  },
-  {
-    id: "ws_globex",
-    name: "Globex",
-    slug: "globex",
-    role: "admin",
   },
 ];
 
@@ -54,7 +49,12 @@ function cpApiBaseUrl(override?: string): string | null {
 }
 
 function roleFromCp(role: string | undefined): Workspace["role"] {
-  if (role === "owner" || role === "admin" || role === "member" || role === "viewer") {
+  if (
+    role === "owner" ||
+    role === "admin" ||
+    role === "member" ||
+    role === "viewer"
+  ) {
     return role;
   }
   return "member";
@@ -76,13 +76,23 @@ export async function listWorkspaces(
   if (!base) {
     return Promise.resolve({ workspaces: [...FIXTURE] });
   }
+  const explicitToken = opts.token ?? process.env.LOOP_TOKEN;
+  const hasBrowserSession =
+    typeof window !== "undefined" && readSessionToken()?.access_token;
+  if (
+    typeof window !== "undefined" &&
+    !opts.fetcher &&
+    !explicitToken &&
+    !hasBrowserSession
+  ) {
+    return Promise.resolve({ workspaces: [...FIXTURE] });
+  }
   const fetcher = createAuthedCpApiFetch({
     ...(opts.fetcher ? { fetcher: opts.fetcher } : {}),
     refreshBaseUrl: base.replace(/\/v1$/, ""),
   });
   const headers: Record<string, string> = { accept: "application/json" };
-  const token = opts.token ?? process.env.LOOP_TOKEN;
-  if (token) headers.authorization = `Bearer ${token}`;
+  if (explicitToken) headers.authorization = `Bearer ${explicitToken}`;
   const response = await fetcher(`${base}/workspaces`, {
     method: "GET",
     headers,

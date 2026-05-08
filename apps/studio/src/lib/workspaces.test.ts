@@ -6,8 +6,7 @@ describe("listWorkspaces", () => {
   it("keeps fixture workspaces for no-backend local mode", async () => {
     const out = await listFixtureWorkspaces();
     expect(out.workspaces.map((workspace) => workspace.slug)).toEqual([
-      "acme",
-      "globex",
+      "local",
     ]);
   });
 

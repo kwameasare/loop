@@ -1,35 +1,88 @@
+"use client";
+
 import Link from "next/link";
 import { Suspense } from "react";
+import { usePathname } from "next/navigation";
 
 import { CommandPaletteLauncher } from "@/components/command";
-import { PairDebugAudioControl } from "@/components/collaboration/pair-debug-audio-control";
 import { HelpClipLauncher } from "@/components/help";
 import { ActivityRibbon } from "@/components/shell/activity-ribbon";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
-import { LiveBadge } from "@/components/target";
 import { UserMenu } from "@/components/shell/user-menu";
-import { WorkspaceMembersLink } from "@/components/shell/workspace-members-link";
 import { WorkspaceSwitcher } from "@/components/shell/workspace-switcher";
-import { FIXTURE_PRESENCE } from "@/lib/collaboration";
-import { targetUxFixtures } from "@/lib/target-ux";
 
-function ContextChip({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="interactive-lift hidden h-8 items-center gap-1 rounded-md border bg-card/70 px-2 text-xs shadow-sm backdrop-blur md:inline-flex">
+function routeContext(pathname: string | null): {
+  agentId: string | null;
+  section: string;
+} {
+  if (!pathname) return { agentId: null, section: "Workspace" };
+  const agentMatch = pathname.match(/^\/agents\/([^/]+)/);
+  if (agentMatch?.[1]) {
+    return {
+      agentId: decodeURIComponent(agentMatch[1]),
+      section: "Agent workbench",
+    };
+  }
+  const [segment = ""] = pathname.split("/").filter(Boolean);
+  const labels: Record<string, string> = {
+    agents: "Agent registry",
+    evals: "Eval Foundry",
+    replay: "Replay",
+    traces: "Trace Theater",
+    observe: "Observatory",
+    inbox: "HITL Inbox",
+    voice: "Voice channels",
+    marketplace: "Marketplace",
+    migrate: "Migration Atelier",
+    enterprise: "Governance",
+    costs: "Costs",
+    billing: "Billing",
+  };
+  return { agentId: null, section: labels[segment] ?? "Workspace" };
+}
+
+function shortId(value: string): string {
+  return value.length <= 10 ? value : `${value.slice(0, 8)}...`;
+}
+
+function ContextChip({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+}) {
+  const body = (
+    <>
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium">{value}</span>
+    </>
+  );
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="interactive-lift hidden h-8 items-center gap-1 rounded-md border bg-card/70 px-2 text-xs shadow-sm backdrop-blur transition-colors hover:bg-muted/70 md:inline-flex"
+      >
+        {body}
+      </Link>
+    );
+  }
+  return (
+    <span className="interactive-lift hidden h-8 items-center gap-1 rounded-md border bg-card/70 px-2 text-xs shadow-sm backdrop-blur md:inline-flex">
+      {body}
     </span>
   );
 }
 
 export function Topbar() {
-  const workspace = targetUxFixtures.workspace;
-  const agent = targetUxFixtures.agents.find(
-    (item) => item.id === workspace.activeAgentId,
-  );
+  const pathname = usePathname();
+  const context = routeContext(pathname);
   return (
     <header
-      className="sticky top-0 z-20 flex min-h-14 items-center justify-between gap-3 border-b bg-background/82 px-4 py-2 shadow-sm backdrop-blur-xl"
+      className="sticky top-0 z-20 flex min-h-14 items-center justify-between gap-3 border-b bg-background/84 px-4 py-2 shadow-sm backdrop-blur-xl"
       data-testid="topbar"
     >
       <ActivityRibbon />
@@ -44,25 +97,22 @@ export function Topbar() {
           <span>Studio</span>
         </Link>
         <Suspense
-          fallback={<div className="h-8 w-44 rounded-md bg-muted" aria-hidden="true" />}
+          fallback={
+            <div className="h-8 w-44 rounded-md bg-muted" aria-hidden="true" />
+          }
         >
           <WorkspaceSwitcher />
-          <WorkspaceMembersLink />
         </Suspense>
-        <ContextChip label="Agent" value={agent?.name ?? "No agent"} />
-        <ContextChip label="Env" value={workspace.environment} />
-        <ContextChip label="Branch" value={workspace.branch} />
-        <LiveBadge tone="draft" className="hidden h-8 md:inline-flex">
-          {workspace.objectState}
-        </LiveBadge>
+        <ContextChip label="Surface" value={context.section} />
+        {context.agentId ? (
+          <ContextChip
+            label="Agent"
+            value={shortId(context.agentId)}
+            href={`/agents/${encodeURIComponent(context.agentId)}`}
+          />
+        ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <PairDebugAudioControl
-          workspaceId={workspace.id}
-          agentId={workspace.activeAgentId}
-          teammateCount={Math.max(0, FIXTURE_PRESENCE.length - 1)}
-          participantId="builder:local"
-        />
         <ThemeToggle />
         <HelpClipLauncher />
         <CommandPaletteLauncher />
