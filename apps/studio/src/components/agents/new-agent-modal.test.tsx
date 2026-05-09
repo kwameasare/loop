@@ -166,6 +166,47 @@ describe("NewAgentModal", () => {
     expect(screen.queryByTestId("new-agent-modal")).not.toBeInTheDocument();
   });
 
+  it("applies approved enterprise template defaults before submit", async () => {
+    const createAgentIntake = makeCreateIntake();
+    render(
+      <NewAgentModal
+        existingSlugs={[]}
+        workspaceId="ws_1"
+        createAgentIntake={createAgentIntake}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("new-agent-button"));
+    fill("new-agent-name", "Receptionist");
+    fill("new-agent-slug", "receptionist");
+    fireEvent.click(screen.getByLabelText(/Enterprise template/i));
+    fireEvent.change(screen.getByTestId("new-agent-template"), {
+      target: { value: "tmpl_voice_receptionist" },
+    });
+    fill("new-agent-owner", "maya@acme.test");
+    fireEvent.click(screen.getByTestId("new-agent-submit"));
+
+    await waitFor(() => {
+      expect(createAgentIntake).toHaveBeenCalledWith(
+        "ws_1",
+        expect.objectContaining({
+          creation_path: "enterprise_template",
+          template_id: "tmpl_voice_receptionist",
+          contract: expect.objectContaining({
+            business_responsibility: expect.stringContaining("inbound calls"),
+            channels: ["voice", "sms"],
+            systems_touched: ["calendar", "crm"],
+          }),
+          artifacts: [
+            expect.objectContaining({
+              source_ref: "template/tmpl_voice_receptionist/runbook",
+            }),
+          ],
+        }),
+      );
+    });
+  });
+
   it("blocks submission when slug collides with an existing agent", () => {
     const createAgentIntake = makeCreateIntake();
     render(

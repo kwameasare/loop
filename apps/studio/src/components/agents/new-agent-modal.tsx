@@ -28,6 +28,84 @@ import {
 
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 
+const APPROVED_TEMPLATES: Array<{
+  id: string;
+  label: string;
+  summary: string;
+  contract: Partial<CommitmentBody>;
+  capabilities: string[];
+  artifact: AgentIntakeArtifactInput;
+}> = [
+  {
+    id: "tmpl_support_agent",
+    label: "Enterprise support agent",
+    summary: "Policy-grounded web, WhatsApp, and email support.",
+    contract: {
+      business_responsibility:
+        "Resolve support questions using approved policy and escalation paths.",
+      target_users: "Enterprise customers and support operators.",
+      worst_case_failure:
+        "Promises refunds, legal positions, or account actions outside approved policy.",
+      channels: ["web", "whatsapp", "email"],
+      systems_touched: ["crm", "billing api"],
+      regions: ["us-east-1", "eu-west-2"],
+      languages: ["en"],
+      success_metric: "95% eval pass rate before canary.",
+      compliance_domain: "SOC2 support operations",
+      expected_volume: "10k turns per month",
+      budget_target: "$0.08 per resolved turn",
+      out_of_scope: "Legal advice and refunds above policy.",
+      escalation_policy:
+        "Escalate policy conflicts, legal threats, and refund exceptions to the support lead.",
+    },
+    capabilities: [
+      "Answer policy-backed support questions",
+      "Escalate billing and legal risk",
+      "Preserve channel formatting",
+    ],
+    artifact: {
+      name: "enterprise-support-template.md",
+      kind: "runbook",
+      text: "Use approved policy. Escalate legal threats. Never refund outside policy.",
+      source_ref: "template/tmpl_support_agent/runbook",
+    },
+  },
+  {
+    id: "tmpl_voice_receptionist",
+    label: "Voice receptionist",
+    summary: "Voice and SMS receptionist with handoff-safe routing.",
+    contract: {
+      business_responsibility:
+        "Handle inbound calls, answer basic questions, and route callers to the right team.",
+      target_users: "Prospects, customers, and operators calling the business.",
+      worst_case_failure:
+        "Books, cancels, or promises appointments without confirmation.",
+      channels: ["voice", "sms"],
+      systems_touched: ["calendar", "crm"],
+      regions: ["us-east-1"],
+      languages: ["en"],
+      success_metric: "90% successful route or callback capture.",
+      compliance_domain: "Customer communications",
+      expected_volume: "3k calls per month",
+      budget_target: "$0.12 per handled call",
+      out_of_scope: "Medical, legal, or financial advice.",
+      escalation_policy:
+        "Escalate urgent, regulated, or frustrated callers to the human queue.",
+    },
+    capabilities: [
+      "Answer front-desk questions",
+      "Schedule handoffs",
+      "Collect callback context",
+    ],
+    artifact: {
+      name: "voice-receptionist-template.md",
+      kind: "runbook",
+      text: "Confirm identity before scheduling. Keep speech concise. Escalate urgent callers.",
+      source_ref: "template/tmpl_voice_receptionist/runbook",
+    },
+  },
+];
+
 export interface NewAgentModalProps {
   /** Slugs already used in this workspace; submit is blocked if name collides. */
   existingSlugs: string[];
@@ -63,6 +141,7 @@ export function NewAgentModal({
   const [slug, setSlug] = useState("");
   const [creationPath, setCreationPath] =
     useState<AgentIntakePath>("business_intent");
+  const [templateId, setTemplateId] = useState(APPROVED_TEMPLATES[0]!.id);
   const [contract, setContract] = useState<CommitmentBody>({
     ...EMPTY_COMMITMENT_BODY,
     channels: ["web"],
@@ -105,6 +184,7 @@ export function NewAgentModal({
     setName("");
     setSlug("");
     setCreationPath("business_intent");
+    setTemplateId(APPROVED_TEMPLATES[0]!.id);
     setContract({
       ...EMPTY_COMMITMENT_BODY,
       channels: ["web"],
@@ -130,6 +210,28 @@ export function NewAgentModal({
     );
   }
 
+  function applyTemplate(nextTemplateId: string) {
+    const template =
+      APPROVED_TEMPLATES.find((item) => item.id === nextTemplateId) ??
+      APPROVED_TEMPLATES[0]!;
+    setTemplateId(template.id);
+    setContract((current) => ({
+      ...current,
+      ...template.contract,
+      owner_user_id: current.owner_user_id,
+      backup_owner_user_id: current.backup_owner_user_id,
+    }));
+    setCapabilities(template.capabilities);
+    setArtifact(template.artifact);
+  }
+
+  function chooseCreationPath(path: AgentIntakePath) {
+    setCreationPath(path);
+    if (path === "enterprise_template") {
+      applyTemplate(templateId);
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canSubmit) return;
@@ -146,14 +248,18 @@ export function NewAgentModal({
               },
             ]
           : [];
-      const result = await createAgentIntake(effectiveWorkspaceId, {
+      const intakeInput: AgentIntakeCreateInput = {
         agent_name: trimmedName,
         slug: trimmedSlug,
         creation_path: creationPath,
         contract,
         capabilities,
         artifacts,
-      });
+      };
+      if (creationPath === "enterprise_template") {
+        intakeInput.template_id = templateId;
+      }
+      const result = await createAgentIntake(effectiveWorkspaceId, intakeInput);
       setOpen(false);
       reset();
       router.push(`/agents/${result.agent.id}?intake=${result.id}`);
@@ -263,7 +369,7 @@ export function NewAgentModal({
                     value={option.value}
                     checked={creationPath === option.value}
                     onChange={(event) =>
-                      setCreationPath(event.target.value as AgentIntakePath)
+                      chooseCreationPath(event.target.value as AgentIntakePath)
                     }
                   />
                   <span>
@@ -276,6 +382,36 @@ export function NewAgentModal({
               ))}
             </div>
           </fieldset>
+
+          {creationPath === "enterprise_template" ? (
+            <fieldset className="grid gap-3 rounded-md border border-info/30 bg-info/5 p-4">
+              <legend className="px-1 text-sm font-medium">
+                Approved template
+              </legend>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Template</span>
+                <select
+                  value={templateId}
+                  onChange={(event) => applyTemplate(event.target.value)}
+                  data-testid="new-agent-template"
+                  className="rounded-md border bg-background px-2 py-1"
+                >
+                  {APPROVED_TEMPLATES.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="text-xs text-muted-foreground">
+                {
+                  APPROVED_TEMPLATES.find(
+                    (template) => template.id === templateId,
+                  )?.summary
+                }
+              </p>
+            </fieldset>
+          ) : null}
 
           <div className="grid gap-4 rounded-md border bg-muted/30 p-4 md:grid-cols-2">
             <label className="flex flex-col gap-1 text-sm">
