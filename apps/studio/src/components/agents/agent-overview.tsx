@@ -23,7 +23,6 @@ import {
   type ObjectState,
   type TrustState,
 } from "@/lib/design-tokens";
-import { targetUxFixtures } from "@/lib/target-ux";
 import type { TargetDeploy, TargetEvalSuite } from "@/lib/target-ux";
 import { cn } from "@/lib/utils";
 import {
@@ -32,8 +31,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { BuildToTestFlow } from "@/components/agents/build-to-test-flow";
-import { createBuildToTestFlowData } from "@/lib/target-ux/build-flow";
 
 export interface DeploySummary {
   /** ISO 8601 timestamp of the most recent deploy. */
@@ -74,9 +71,10 @@ export interface AgentWorkbenchData {
   modelAliases: string[];
   objectState: ObjectState;
   trust: TrustState;
-  environment: "dev" | "staging" | "production";
+  environment: "dev" | "staging" | "production" | "unconfigured";
   branch: string;
   lastProductionVersion: string;
+  stateSentence: string;
   draftChanges: string;
   memoryPolicy: string;
   budgetCap: string;
@@ -232,62 +230,87 @@ function buildSections(input: {
   deploySummary: string;
   evalSuite: TargetEvalSuite;
   deploy: TargetDeploy;
+  hasProduction: boolean;
 }): AgentWorkbenchSection[] {
   return [
     {
       id: "purpose",
       label: "Purpose",
       current: input.purpose,
-      lastChangedBy: "Support automation owner, 2026-05-06 08:15 UTC",
-      diffFromProduction:
-        "Purpose now names refunds, cancellations, and escalation explicitly.",
-      validation: "Copy lint passed; no unsupported claims.",
-      evidence: "snapshot snap_refund_may",
-      status: "healthy",
+      lastChangedBy: "Loaded from agent record",
+      diffFromProduction: input.hasProduction
+        ? "No commitment diff loaded for this view."
+        : "No production baseline exists yet.",
+      validation: input.purpose
+        ? "Purpose is present."
+        : "Purpose is missing and blocks first proof.",
+      evidence: "agent.summary",
+      status: input.purpose ? "healthy" : "blocked",
+    },
+    {
+      id: "commitment",
+      label: "Commitment",
+      current: "No versioned Commitment Document loaded in this workbench.",
+      lastChangedBy: "No commitment version loaded",
+      diffFromProduction: "Preflight cannot cite an active commitment yet.",
+      validation:
+        "Create or accept the Agent Contract before production promotion.",
+      evidence: "commitment.unconfigured",
+      status: "blocked",
     },
     {
       id: "behavior",
       label: "Behavior",
-      current:
-        "Renewal intent routes through policy citation, order lookup, and escalation guardrails.",
-      lastChangedBy: "Behavior editor draft v24",
-      diffFromProduction:
-        "May refund policy is pinned before archived policy retrieval.",
-      validation: "One Spanish paraphrase still needs review.",
-      evidence: "trace trace_refund_742",
+      current: "Structured behavior editor is available for this agent.",
+      lastChangedBy: "No behavior change package loaded",
+      diffFromProduction: input.hasProduction
+        ? "No semantic behavior diff loaded."
+        : "No production behavior baseline exists yet.",
+      validation:
+        "Run simulator and save failures as evals before requesting deploy.",
+      evidence: "behavior.editor",
       status: "watching",
+    },
+    {
+      id: "channels",
+      label: "Channels",
+      current: "Channel readiness is not loaded in the overview yet.",
+      lastChangedBy: "No channel binding loaded",
+      diffFromProduction: "No channel-specific production diff loaded.",
+      validation:
+        "At least one ready channel binding is required before production.",
+      evidence: "channel_bindings.unconfigured",
+      status: "blocked",
     },
     {
       id: "tools",
       label: "Tools",
       current: input.toolPermissionSummary,
-      lastChangedBy: "Platform Integrations",
-      diffFromProduction:
-        "issue_refund remains staged; lookup_order is production read-only.",
-      validation: "Money movement tool requires approval before production.",
-      evidence: "tool call span span_tool",
+      lastChangedBy: "No tool contract loaded",
+      diffFromProduction: "No tool contract diff loaded.",
+      validation: "New tools must start in sandbox and classify side effects.",
+      evidence: "tool_contracts.unconfigured",
       status: "blocked",
     },
     {
       id: "knowledge",
       label: "Knowledge",
       current: input.knowledgeSummary,
-      lastChangedBy: "Knowledge sync, 2026-05-06 08:30 UTC",
-      diffFromProduction:
-        "May policy outranks the 2024 archive for renewal cancellation phrasing.",
-      validation: "Top cited chunks are present in the replay set.",
-      evidence: "refund_policy_2026.pdf",
-      status: "healthy",
+      lastChangedBy: "No knowledge source loaded",
+      diffFromProduction: "No retrieval diff loaded.",
+      validation: "Add sources and run retrieval checks before first proof.",
+      evidence: "knowledge_sources.unconfigured",
+      status: "watching",
     },
     {
       id: "memory",
       label: "Memory",
       current: input.memoryPolicy,
-      lastChangedBy: "Security policy control control_pii",
-      diffFromProduction: "Durable memory excludes payment data and secrets.",
-      validation: "1,240 recent writes checked; zero policy violations.",
-      evidence: "enterprise control control_pii",
-      status: "healthy",
+      lastChangedBy: "No memory policy loaded",
+      diffFromProduction: "No memory policy diff loaded.",
+      validation: "Durable memory requires privacy and retention review.",
+      evidence: "memory_policy.unconfigured",
+      status: "watching",
     },
     {
       id: "evals",
@@ -300,15 +323,51 @@ function buildSections(input: {
       status: input.evalSuite.regressionCount > 0 ? "blocked" : "healthy",
     },
     {
-      id: "deploy",
-      label: "Deploy",
+      id: "traces",
+      label: "Traces",
+      current: "No preview or production trace is pinned to this overview.",
+      lastChangedBy: "No trace loaded",
+      diffFromProduction: "Trace diff unavailable until a run exists.",
+      validation: "Run the simulator to create trace evidence.",
+      evidence: "traces.empty",
+      status: "watching",
+    },
+    {
+      id: "deployments",
+      label: "Deployments",
       current: input.deploySummary,
-      lastChangedBy: "Release Manager approval queue",
-      diffFromProduction: `Canary ${input.deploy.canaryPercent}% can roll back to ${input.deploy.rollbackTarget}.`,
+      lastChangedBy: input.hasProduction
+        ? "Loaded from agent active version"
+        : "No deployment loaded",
+      diffFromProduction: input.hasProduction
+        ? `Active version can roll back only when a rollback target exists.`
+        : "No production deployment exists yet.",
       validation:
-        input.deploy.blockedReason ?? "Canary health is within policy.",
+        input.deploy.blockedReason ?? "Generate a Change Package before deploy.",
       evidence: input.deploy.id,
       status: input.deploy.blockedReason ? "blocked" : "watching",
+    },
+    {
+      id: "governance",
+      label: "Governance",
+      current: "Approval policy and audit requirements are not loaded here.",
+      lastChangedBy: "No governance packet loaded",
+      diffFromProduction: "Approval content hash unavailable until preflight.",
+      validation:
+        "High-risk changes must produce an immutable Change Package.",
+      evidence: "governance.unconfigured",
+      status: "watching",
+    },
+    {
+      id: "history",
+      label: "History",
+      current: "No history walkthrough has been generated for this agent.",
+      lastChangedBy: "No handoff packet loaded",
+      diffFromProduction: "Recent changes are unavailable in this overview.",
+      validation:
+        "A new owner should be able to inspect commitments, changes, and incidents from here.",
+      evidence: "history.unconfigured",
+      status: "watching",
     },
   ];
 }
@@ -319,58 +378,73 @@ function createDefaultWorkbenchData(
     "id" | "name" | "description" | "model" | "activeVersion" | "updatedAt"
   >,
 ): AgentWorkbenchData {
-  const fixtureAgent =
-    targetUxFixtures.agents.find((candidate) => candidate.id === props.id) ??
-    targetUxFixtures.agents[0]!;
-  const evalSuite = targetUxFixtures.evals[0]!;
-  const deploy =
-    targetUxFixtures.deploys.find(
-      (candidate) => candidate.agentId === fixtureAgent.id,
-    ) ?? targetUxFixtures.deploys[0]!;
-  const tools = targetUxFixtures.tools;
-  const memory = targetUxFixtures.memory;
-  const trace = targetUxFixtures.traces[0]!;
-  const workspace = targetUxFixtures.workspace;
-  const purpose = props.description || fixtureAgent.purpose;
-  const modelAliases = props.model
-    ? [props.model, "fast", "best"]
-    : ["fast", "best"];
-  const toolPermissionSummary = `${tools.length} tools: ${tools
-    .map((tool) => `${tool.name} (${tool.sideEffect})`)
-    .join(", ")}`;
-  const knowledgeSummary =
-    "May refund policy, Botpress parity transcript, and renewal FAQ.";
-  const memoryPolicy = `${memory.length} durable fact; no payment data or secrets retained.`;
-  const evalGate = `${evalSuite.name}: ${evalSuite.passRate}% pass, ${evalSuite.regressionCount} regression.`;
-  const deploySummary = `Canary ${deploy.canaryPercent}% with ${deploy.approvals}/${deploy.requiredApprovals} approvals.`;
-  const draftVersion = props.activeVersion
-    ? `v${props.activeVersion + 1}`
-    : "draft v1";
+  const purpose = props.description || "No purpose has been accepted yet.";
+  const hasProduction = props.activeVersion !== null && props.activeVersion !== undefined;
+  const objectState: ObjectState = hasProduction ? "production" : "draft";
+  const trust: TrustState = hasProduction ? "watching" : "blocked";
+  const modelAliases = props.model ? [props.model] : ["No model configured"];
+  const evalSuite: TargetEvalSuite = {
+    id: "evals.unconfigured",
+    name: "No eval suite loaded",
+    coverage: "No eval coverage loaded for this agent.",
+    passRate: 0,
+    regressionCount: hasProduction ? 0 : 1,
+    lastRun: "Never",
+    confidence: "unsupported",
+  };
+  const deploy: TargetDeploy = {
+    id: hasProduction ? `agent.${props.id}.active_version` : "deploy.unconfigured",
+    agentId: props.id,
+    objectState,
+    canaryPercent: hasProduction ? 100 : 0,
+    approvals: 0,
+    requiredApprovals: hasProduction ? 0 : 1,
+    rollbackTarget: hasProduction ? `v${props.activeVersion}` : "none",
+    ...(hasProduction
+      ? {}
+      : {
+          blockedReason:
+            "No Change Package or approval is loaded for first deployment.",
+        }),
+  };
+  const toolPermissionSummary = "No tool contracts loaded.";
+  const knowledgeSummary = "No knowledge sources loaded.";
+  const memoryPolicy = "No durable memory policy loaded.";
+  const evalGate = `${evalSuite.name}: ${evalSuite.coverage}`;
+  const deploySummary = hasProduction
+    ? `Production is active on v${props.activeVersion}.`
+    : "No production deployment.";
+  const lastProductionVersion = hasProduction
+    ? `v${props.activeVersion}`
+    : "No production version";
+  const stateSentence = hasProduction
+    ? `You are viewing agent ${props.name || props.id}. Production is currently ${lastProductionVersion}; no draft branch, eval gate, or change package is loaded in this overview.`
+    : `You are drafting agent ${props.name || props.id}. Production is not live; create a commitment, channel binding, eval suite, and Change Package before deploy.`;
 
   return {
-    ownerTeam: "Support automation",
+    ownerTeam: "Unassigned",
     purpose,
-    supportedChannels: [fixtureAgent.channel, "voice", "slack"],
+    supportedChannels: [],
     modelAliases,
-    objectState: fixtureAgent.objectState,
-    trust: fixtureAgent.trust,
-    environment: workspace.environment,
-    branch: workspace.branch,
-    lastProductionVersion: props.activeVersion
-      ? `v${props.activeVersion}`
-      : "No production version",
-    draftChanges: `${draftVersion} changes refund policy priority and escalation wording.`,
+    objectState,
+    trust,
+    environment: "unconfigured",
+    branch: "No branch loaded",
+    lastProductionVersion,
+    stateSentence,
+    draftChanges: hasProduction
+      ? "No draft change set loaded."
+      : "First draft has not produced a release candidate.",
     memoryPolicy,
-    budgetCap: "USD $500 hard cap; degrade to fast after USD $420.",
-    escalationRule:
-      "Escalate legal threats, refund disputes over USD $200, and policy conflicts.",
+    budgetCap: "No budget cap loaded.",
+    escalationRule: "No escalation rule loaded.",
     evalGate,
     toolPermissionSummary,
     knowledgeSummary,
     deploySummary,
-    toolsCount: tools.length,
-    knowledgeSources: 3,
-    memoryFacts: memory.length,
+    toolsCount: 0,
+    knowledgeSources: 0,
+    memoryFacts: 0,
     evalSuite,
     deploy,
     sections: buildSections({
@@ -382,49 +456,47 @@ function createDefaultWorkbenchData(
       deploySummary,
       evalSuite,
       deploy,
+      hasProduction,
     }),
     diff: {
-      before: "Production can retrieve the archived 2024 refund policy first.",
-      after:
-        "Draft pins the May 2026 refund policy when renewal intent is present.",
-      impact:
-        "Expected to reduce refund-window escalations; one Spanish paraphrase still blocks promotion.",
+      before: hasProduction ? lastProductionVersion : "No production baseline",
+      after: "No draft diff loaded",
+      impact: "Run a preview, save an eval, and generate preflight before shipping.",
     },
     livePreview: {
-      prompt: "I need to cancel my annual renewal. What happens now?",
+      prompt: "No preview run loaded.",
       response:
-        "The May refund policy applies. I need one order lookup before quoting the exact refund window.",
-      evidence: `${trace.id} -> ${trace.spans.length} spans -> ${trace.snapshotId}`,
+        "Use the simulator rail to create a trace before evaluating behavior.",
+      evidence: "preview.empty",
     },
     safeActions: [
       {
         id: "replay",
-        label: "Replay refund turns",
-        description: "Run 100 recent refund escalations against this draft.",
-        evidence: "trace_refund_742 and 11 related turns",
+        label: "Run first simulator turn",
+        description: "Create trace evidence for this agent before editing.",
+        evidence: "simulator.required",
       },
       {
         id: "eval",
-        label: "Open eval diff",
-        description:
-          "Inspect the blocking Spanish paraphrase before promotion.",
+        label: "Create starter evals",
+        description: "Generate regression coverage from the first proof.",
         evidence: evalSuite.id,
       },
       {
         id: "approval",
-        label: "Request approval",
-        description: "Ask Release Manager for the second production approval.",
+        label: "Generate Change Package",
+        description: "Preflight must collect diff, eval, channel, tool, and rollback evidence.",
         evidence: deploy.id,
         disabledReason:
-          deploy.approvals >= deploy.requiredApprovals
+          deploy.requiredApprovals === 0
             ? undefined
-            : "Production deploy requires Release Manager approval.",
+            : "Blocked until commitment, channel readiness, eval coverage, and preflight exist.",
       },
       {
         id: "rollback",
-        label: "Keep production live",
-        description: `Do not promote; keep ${deploy.rollbackTarget} as the rollback target.`,
-        evidence: "deploy_refund_canary rollback plan",
+        label: "Open history walkthrough",
+        description: "Review previous versions, incidents, approvals, and open risks.",
+        evidence: "history.empty",
       },
     ],
   };
@@ -567,6 +639,12 @@ export function AgentOverview({
             )}{" "}
             - owned by {data.ownerTeam}
           </p>
+          <p
+            className="mt-3 rounded-md border bg-muted/40 p-3 text-sm"
+            data-testid="agent-state-sentence"
+          >
+            {data.stateSentence}
+          </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -684,7 +762,11 @@ export function AgentOverview({
               </div>
               <div>
                 <dt className="text-muted-foreground">Channels</dt>
-                <dd>{data.supportedChannels.join(", ")}</dd>
+                <dd>
+                  {data.supportedChannels.length > 0
+                    ? data.supportedChannels.join(", ")
+                    : "No channel bindings loaded"}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Budget cap</dt>
@@ -723,13 +805,13 @@ export function AgentOverview({
 
         <aside
           className="space-y-4"
-          aria-label="Live preview and deploy evidence"
+          aria-label="Workbench evidence and deploy status"
           data-testid="agent-live-preview"
         >
           <RiskHalo level={approvalBlocked ? "medium" : "low"}>
             <div className="rounded-md border bg-card p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Live preview
+                Evidence panel
               </p>
               <p className="mt-3 rounded-md bg-muted p-3 text-sm">
                 {data.livePreview.prompt}
@@ -847,8 +929,6 @@ export function AgentOverview({
         impact={data.diff.impact}
       />
 
-      <BuildToTestFlow data={createBuildToTestFlowData(id, "agent")} />
-
       <section
         className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr))]"
         aria-labelledby="safe-actions-heading"
@@ -892,7 +972,7 @@ export function AgentOverview({
 
       <EvidenceCallout
         title="Audit trail"
-        source="audit event draft-refund-clarity-2026-05-06"
+        source={`agent.${id}.overview`}
         confidence={data.evalSuite.passRate}
         confidenceLevel={data.evalSuite.confidence}
         tone={approvalBlocked ? "warning" : "info"}

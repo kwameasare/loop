@@ -23,34 +23,55 @@ export default async function AgentDetailLayout({
   params,
 }: AgentDetailLayoutProps) {
   const { agent } = await getAgentDetailData(params.agent_id);
+  const productionLabel =
+    agent.active_version !== null ? `v${agent.active_version}` : "not live";
   return (
     <main
-      className="container mx-auto grid max-w-6xl gap-6 py-10 lg:grid-cols-[minmax(0,1fr)_360px]"
+      className="container mx-auto grid max-w-7xl gap-6 py-8 lg:grid-cols-[15rem_minmax(0,1fr)_22rem]"
       data-testid="agent-detail-shell"
     >
-      <div className="flex min-w-0 flex-col gap-6">
-        <header className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Agent
+      <aside
+        className="min-w-0 space-y-4 lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)] lg:overflow-auto"
+        data-testid="agent-local-nav"
+      >
+        <div className="rounded-md border bg-card p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Agent Workbench
           </p>
-          <div className="flex flex-wrap items-baseline gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight">
-              {agent.name || "Untitled agent"}
-            </h1>
-            <code className="text-sm text-muted-foreground">{agent.slug}</code>
+          <h1 className="mt-2 break-words text-lg font-semibold">
+            {agent.name || "Untitled agent"}
+          </h1>
+          <code className="mt-1 block break-all text-xs text-muted-foreground">
+            {agent.slug}
+          </code>
+        </div>
+        <AgentTabs agentId={params.agent_id} orientation="vertical" />
+      </aside>
+      <div className="flex min-w-0 flex-col gap-6">
+        <header
+          className="rounded-md border bg-card p-4"
+          data-testid="agent-local-topbar"
+        >
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span>Production {productionLabel}</span>
+            <span aria-hidden>·</span>
+            <span>Branch not loaded</span>
+            <span aria-hidden>·</span>
+            <span>Environment not selected</span>
           </div>
-          {agent.description ? (
-            <p className="text-muted-foreground">{agent.description}</p>
-          ) : null}
+          <p className="mt-2 text-sm text-foreground">
+            {agent.active_version !== null
+              ? `You are viewing ${agent.name || agent.id}. Production is ${productionLabel}; create a draft change package before promotion.`
+              : `You are drafting ${agent.name || agent.id}. Production is not live; commitment, channels, evals, and preflight are required before deploy.`}
+          </p>
         </header>
-        <AgentTabs agentId={params.agent_id} />
         <section data-testid="agent-tab-content">{children}</section>
       </div>
       <aside
         className="lg:sticky lg:top-10 lg:max-h-[calc(100vh-5rem)]"
         data-testid="agent-emulator-rail"
       >
-        <EmulatorPanel agentId={params.agent_id} />
+        <EmulatorPanel agentId={params.agent_id} evidenceMode="empty" />
       </aside>
     </main>
   );

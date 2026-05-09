@@ -45,8 +45,9 @@ describe("AgentOverview", () => {
 
   it("shows canonical aliases when the direct model is empty", () => {
     render(<AgentOverview {...BASE_PROPS} model="" />);
-    expect(screen.getByTestId("overview-model")).toHaveTextContent("fast");
-    expect(screen.getByTestId("overview-model")).toHaveTextContent("best");
+    expect(screen.getByTestId("overview-model")).toHaveTextContent(
+      "No model configured",
+    );
   });
 
   it("renders last-deploy version", () => {
@@ -63,15 +64,20 @@ describe("AgentOverview", () => {
     );
   });
 
-  it("renders the canonical workbench profile, outline, diff, live preview, and safe actions", () => {
+  it("renders the workbench profile, state sentence, outline, evidence panel, and safe actions without fixture claims", () => {
     render(<AgentOverview {...BASE_PROPS} />);
 
     expect(screen.getByTestId("agent-workbench-profile")).toHaveTextContent(
       "Support Bot",
     );
-    expect(screen.getByTestId("overview-environment")).toHaveTextContent("dev");
+    expect(screen.getByTestId("agent-state-sentence")).toHaveTextContent(
+      "Production is currently v3",
+    );
+    expect(screen.getByTestId("overview-environment")).toHaveTextContent(
+      "unconfigured",
+    );
     expect(screen.getByTestId("overview-branch")).toHaveTextContent(
-      "draft/refund-clarity",
+      "No branch loaded",
     );
     expect(screen.getByTestId("overview-production-version")).toHaveTextContent(
       "v3",
@@ -79,24 +85,26 @@ describe("AgentOverview", () => {
     expect(screen.getByTestId("agent-outline-purpose")).toHaveTextContent(
       "Purpose",
     );
+    expect(screen.getByTestId("agent-outline-commitment")).toHaveTextContent(
+      "No versioned Commitment Document loaded",
+    );
+    expect(screen.getByTestId("agent-outline-channels")).toHaveTextContent(
+      "Channel readiness is not loaded",
+    );
     expect(screen.getByTestId("agent-outline-tools")).toHaveTextContent(
-      "issue_refund",
+      "No tool contracts loaded",
     );
     expect(screen.getByTestId("agent-live-preview")).toHaveTextContent(
-      "I need to cancel my annual renewal",
+      "No preview run loaded",
     );
     expect(screen.getAllByTestId("diff-ribbon")[0]).toHaveTextContent(
-      "Draft pins the May 2026 refund policy",
-    );
-    expect(screen.getByTestId("build-to-test-flow-agent")).toHaveTextContent(
-      "Fork from turn",
-    );
-    expect(screen.getByTestId("build-to-test-flow-agent")).toHaveTextContent(
-      "Save run as eval",
+      "No draft diff loaded",
     );
     expect(screen.getByTestId("safe-next-actions")).toHaveTextContent(
-      "Replay refund turns",
+      "Run first simulator turn",
     );
+    expect(screen.queryByText("trace_refund_742")).not.toBeInTheDocument();
+    expect(screen.queryByText("I need to cancel my annual renewal")).toBeNull();
   });
 
   it("surfaces degraded cached-data evidence when live agent data is unavailable", () => {
@@ -114,14 +122,14 @@ describe("AgentOverview", () => {
   });
 
   it("keeps production promotion visible but blocked when approval is missing", () => {
-    render(<AgentOverview {...BASE_PROPS} />);
+    render(<AgentOverview {...BASE_PROPS} activeVersion={null} />);
 
     expect(screen.getByTestId("agent-workbench-permission")).toHaveTextContent(
       "Production promote is locked",
     );
     expect(screen.getByTestId("safe-action-approval")).toBeDisabled();
     expect(screen.getByTestId("safe-action-approval")).toHaveTextContent(
-      "Production deploy requires Release Manager approval.",
+      "Blocked until commitment",
     );
   });
 

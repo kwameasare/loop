@@ -1,5 +1,4 @@
 import { getAgent, type AgentSummary } from "@/lib/cp-api";
-import { targetUxFixtures } from "@/lib/target-ux";
 
 export interface AgentDetailData {
   agent: AgentSummary;
@@ -18,17 +17,18 @@ function slugFromAgentId(agentId: string): string {
 }
 
 function fallbackAgent(agentId: string): AgentSummary {
-  const fixture =
-    targetUxFixtures.agents.find((candidate) => candidate.id === agentId) ??
-    targetUxFixtures.agents[0]!;
   return {
     id: agentId,
-    name: fixture.name,
-    description: fixture.purpose,
+    name: slugFromAgentId(agentId)
+      .split("-")
+      .filter(Boolean)
+      .map((part) => part[0]?.toUpperCase() + part.slice(1))
+      .join(" ") || "Unavailable agent",
+    description: "Live agent data is unavailable for this request.",
     slug: slugFromAgentId(agentId),
-    active_version: 24,
-    updated_at: targetUxFixtures.evals[0]?.lastRun ?? "2026-05-06T08:30:00Z",
-    workspace_id: targetUxFixtures.workspace.id,
+    active_version: null,
+    updated_at: "1970-01-01T00:00:00Z",
+    workspace_id: "unavailable",
   };
 }
 

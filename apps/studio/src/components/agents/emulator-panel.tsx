@@ -4,6 +4,7 @@ import {
   SimulatorLab,
   type SimulatorInvoke,
 } from "@/components/simulator/simulator-lab";
+import { EMPTY_SIMULATOR_CONFIG } from "@/lib/emulator-lab";
 import { LoopClient } from "@/lib/loop-client";
 
 export interface EmulatorPanelProps {
@@ -12,6 +13,7 @@ export interface EmulatorPanelProps {
   invoke?: SimulatorInvoke;
   /** Override the default LoopClient (used in production). */
   client?: LoopClient;
+  evidenceMode?: "fixture" | "empty";
 }
 
 function defaultInvoke(client: LoopClient): SimulatorInvoke {
@@ -60,7 +62,12 @@ function defaultInvoke(client: LoopClient): SimulatorInvoke {
  * wrapper keeps production transport wiring beside the agent components while
  * the canonical simulator surface lives under components/simulator.
  */
-export function EmulatorPanel({ agentId, invoke, client }: EmulatorPanelProps) {
+export function EmulatorPanel({
+  agentId,
+  invoke,
+  client,
+  evidenceMode = "fixture",
+}: EmulatorPanelProps) {
   const submit =
     invoke ??
     defaultInvoke(
@@ -71,5 +78,14 @@ export function EmulatorPanel({ agentId, invoke, client }: EmulatorPanelProps) {
         }),
     );
 
-  return <SimulatorLab agentId={agentId} invoke={submit} />;
+  return (
+    <SimulatorLab
+      agentId={agentId}
+      invoke={submit}
+      evidenceMode={evidenceMode}
+      {...(evidenceMode === "empty"
+        ? { initialConfig: EMPTY_SIMULATOR_CONFIG }
+        : {})}
+    />
+  );
 }
