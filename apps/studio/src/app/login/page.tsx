@@ -24,11 +24,8 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
 import { storeSessionToken } from "@/lib/cp-auth-exchange";
+import { useAuth0Configured } from "@/lib/auth-mode";
 import { useUser } from "@/lib/use-user";
-
-const AUTH0_CONFIGURED =
-  typeof process !== "undefined" &&
-  Boolean(process.env.NEXT_PUBLIC_AUTH0_DOMAIN);
 
 function Auth0Login({ returnTo }: { returnTo: string }) {
   const { loginWithRedirect } = useAuth0();
@@ -158,7 +155,8 @@ function LocalPilotLogin({ returnTo }: { returnTo: string }) {
 function LoginInner() {
   const params = useSearchParams();
   const returnTo = params.get("returnTo") || "/";
-  if (!AUTH0_CONFIGURED) {
+  const auth0Configured = useAuth0Configured();
+  if (!auth0Configured) {
     return <LocalPilotLogin returnTo={returnTo} />;
   }
   return <Auth0Login returnTo={returnTo} />;

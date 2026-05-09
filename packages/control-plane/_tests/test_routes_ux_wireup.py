@@ -161,6 +161,51 @@ def test_dashboard_pins_persist_and_homepage_pins_are_user_scoped(
     assert pins.json()["items"][0]["title"] == "Worst trace"
 
 
+def test_estate_health_derives_claims_from_workspace_objects(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    cp = client.app.state.cp  # type: ignore[attr-defined]
+    cp.trace_store.add(
+        TraceSummary(
+            workspace_id=workspace_id,
+            trace_id="4" * 32,
+            turn_id=uuid4(),
+            conversation_id=uuid4(),
+            agent_id=agent_id,
+            started_at=datetime(2026, 5, 7, 10, 0, tzinfo=UTC),
+            duration_ms=240,
+            span_count=5,
+            error=True,
+        )
+    )
+    changeset = client.post(
+        f"/v1/workspaces/{workspace_id}/approval-changesets",
+        headers=_auth(),
+        json={"title": "Safer refunds", "payload": {"prompt": "require approval"}},
+    )
+    assert changeset.status_code == 201, changeset.text
+
+    response = client.get(
+        f"/v1/workspaces/{workspace_id}/estate-health",
+        headers=_auth(),
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["data_source"] == "live"
+    assert "agents.list_for_workspace" in body["provenance"]
+    assert body["summary"]["agents_total"] == 1
+    assert body["summary"]["agents_draft"] == 1
+    assert body["summary"]["pending_approvals"] == 1
+    assert body["summary"]["trace_errors"] == 1
+    assert {item["id"] for item in body["attention"]} >= {
+        "pending-approvals",
+        "trace-errors",
+        f"draft-agent-{agent_id}",
+    }
+    assert all(item["source"] for item in body["attention"])
+
+
 def test_comment_resolution_can_create_eval_case(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:
