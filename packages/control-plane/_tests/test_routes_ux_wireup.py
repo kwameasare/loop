@@ -287,19 +287,23 @@ def test_estate_health_derives_claims_from_workspace_objects(
     assert body["summary"]["pending_approvals"] == 1
     assert body["summary"]["trace_errors"] == 1
     assert body["summary"]["open_incidents"] == 1
+    assert body["summary"]["owner_risks"] == 1
     assert {item["id"] for item in body["attention"]} >= {
         "pending-approvals",
         "trace-errors",
         "open-incidents",
+        "continuity-owner-risks",
         f"draft-agent-{agent_id}",
     }
     assert all(item["source"] for item in body["attention"])
     assert body["shared_dependencies"][0]["id"] == "tool:refund_payment"
     assert body["channel_health"][0]["channel_type"] == "whatsapp"
     assert body["failure_clusters"][0]["kind"] == "incident"
+    assert body["owner_risks"][0]["id"] == f"ownerless-agent-{agent_id}"
     assert {
         "cluster_failures",
         "detect_drift",
+        "detect_dead_behavior_sections",
         "summarize_operator_takeovers",
     } <= {job["id"] for job in body["background_jobs"]}
 

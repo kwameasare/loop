@@ -305,6 +305,9 @@ async def get_estate_health(
     channel_bindings_by_agent = {
         agent.id: await cp.channel_bindings.list_for_agent(agent=agent) for agent in agents
     }
+    commitments_by_agent = {
+        agent.id: await cp.agent_commitments.current(agent=agent) for agent in agents
+    }
 
     draft_agents = [agent for agent in agents if agent.active_version is None]
     production_agents = [agent for agent in agents if agent.active_version is not None]
@@ -385,6 +388,51 @@ async def get_estate_health(
                 "detail": "Approval, channel readiness, or stale evidence is preventing promotion.",
                 "href": "/deploys",
                 "source": "change_packages.required_approvals",
+            }
+        )
+    owner_risks: list[dict[str, Any]] = []
+    for agent in agents:
+        commitment = commitments_by_agent[agent.id]
+        owner = commitment.body.owner_user_id.strip()
+        backup_owner = commitment.body.backup_owner_user_id.strip()
+        if not owner:
+            owner_risks.append(
+                {
+                    "id": f"ownerless-agent-{agent.id}",
+                    "agent_id": str(agent.id),
+                    "agent_name": agent.name,
+                    "severity": "critical",
+                    "owner_user_id": "",
+                    "backup_owner_user_id": backup_owner,
+                    "detail": "No owner is set on the current Commitment Document.",
+                    "href": f"/agents/{agent.id}/history",
+                    "evidence_ref": f"commitment/{commitment.id}",
+                }
+            )
+        elif not backup_owner:
+            owner_risks.append(
+                {
+                    "id": f"missing-backup-owner-{agent.id}",
+                    "agent_id": str(agent.id),
+                    "agent_name": agent.name,
+                    "severity": "watch",
+                    "owner_user_id": owner,
+                    "backup_owner_user_id": "",
+                    "detail": "No backup owner is set for continuity or incident response.",
+                    "href": f"/agents/{agent.id}/history",
+                    "evidence_ref": f"commitment/{commitment.id}",
+                }
+            )
+    if owner_risks:
+        critical_owner_risks = [risk for risk in owner_risks if risk["severity"] == "critical"]
+        attention.append(
+            {
+                "id": "continuity-owner-risks",
+                "severity": "critical" if critical_owner_risks else "watch",
+                "title": f"{len(owner_risks)} ownership continuity risk(s)",
+                "detail": "Assign owners and backup owners before relying on handoff or incident continuity.",
+                "href": "/agents",
+                "source": "agent_commitments.current",
             }
         )
     for agent in draft_agents[:5]:
@@ -527,6 +575,12 @@ async def get_estate_health(
             "evidence_ref": "estate/jobs/detect_stale_knowledge",
         },
         {
+            "id": "detect_dead_behavior_sections",
+            "status": "needs_span_telemetry" if traces.items else "waiting_for_traces",
+            "output_count": 0,
+            "evidence_ref": "estate/jobs/detect_dead_behavior_sections",
+        },
+        {
             "id": "summarize_operator_takeovers",
             "status": "completed",
             "output_count": len(pending_inbox),
@@ -544,6 +598,7 @@ async def get_estate_health(
             "tool_contracts.list_for_agent",
             "channel_bindings.list_for_agent",
             "incidents.list_for_workspace",
+            "agent_commitments.current",
             "trace_search.run",
             "inbox_queue.list_pending",
             "eval_suites.list_suites",
@@ -562,11 +617,13 @@ async def get_estate_health(
             "audit_events": len(audit_events),
             "open_incidents": len(open_incidents),
             "blocked_deploys": len(pending_changesets) + len(blocked_deploys),
+            "owner_risks": len(owner_risks),
         },
         "attention": attention[:8],
         "shared_dependencies": shared_dependencies[:8],
         "channel_health": channel_health[:12],
         "failure_clusters": failure_clusters[:8],
+        "owner_risks": owner_risks[:12],
         "background_jobs": background_jobs,
         "next_actions": attention[:5],
     }

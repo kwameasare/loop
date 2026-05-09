@@ -21,6 +21,7 @@ const HEALTH: EstateHealth = {
     audit_events: 50,
     open_incidents: 0,
     blocked_deploys: 1,
+    owner_risks: 1,
   },
   attention: [
     {
@@ -77,6 +78,19 @@ const HEALTH: EstateHealth = {
       evidence_ref: "incident/inc_1",
     },
   ],
+  owner_risks: [
+    {
+      id: "ownerless-agent-agt_1",
+      agent_id: "agt_1",
+      agent_name: "Refund Agent",
+      severity: "critical",
+      owner_user_id: "",
+      backup_owner_user_id: "",
+      detail: "No owner is set on the current Commitment Document.",
+      href: "/agents/agt_1/history",
+      evidence_ref: "commitment/commit_1",
+    },
+  ],
   background_jobs: [
     {
       id: "cluster_failures",
@@ -118,6 +132,9 @@ describe("EstateOverview", () => {
       "Refund quote regressed",
     );
     expect(screen.getByTestId("estate-channels")).toHaveTextContent("whatsapp");
+    expect(screen.getByTestId("estate-continuity")).toHaveTextContent(
+      "No owner is set",
+    );
     expect(screen.getByTestId("estate-jobs")).toHaveTextContent(
       "cluster failures",
     );

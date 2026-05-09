@@ -86,6 +86,7 @@ describe("estate health", () => {
         audit_events: 9,
         open_incidents: 0,
         blocked_deploys: 1,
+        owner_risks: 0,
       },
       attention: [],
       shared_dependencies: [
@@ -107,6 +108,7 @@ describe("estate health", () => {
       ],
       channel_health: [],
       failure_clusters: [],
+      owner_risks: [],
       background_jobs: [
         {
           id: "cluster_failures",

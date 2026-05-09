@@ -293,6 +293,60 @@ export function EstateOverview({ health }: { health: EstateHealth }) {
           )}
         </div>
 
+        <div
+          className="rounded-md border bg-card"
+          data-testid="estate-continuity"
+        >
+          <div className="border-b px-4 py-3">
+            <h2 className="text-base font-semibold">Continuity risks</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Owner and backup-owner gaps that affect handoff and incident
+              response.
+            </p>
+          </div>
+          {health.owner_risks.length ? (
+            <ol className="divide-y">
+              {health.owner_risks.map((item) => (
+                <li key={item.id} className="p-4">
+                  <Link href={item.href} className="group block">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold">
+                          {item.agent_name}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {item.detail}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "rounded-md px-2 py-0.5 text-xs font-medium",
+                          severityClass(
+                            item.severity === "critical" ? "critical" : "watch",
+                          ),
+                        )}
+                      >
+                        {item.severity}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Owner: {item.owner_user_id || "unassigned"} · Backup:{" "}
+                      {item.backup_owner_user_id || "unassigned"}
+                    </p>
+                    <p className="mt-1 font-mono text-xs text-muted-foreground">
+                      evidence: {item.evidence_ref}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="p-4 text-sm text-muted-foreground">
+              No ownership continuity gaps detected.
+            </div>
+          )}
+        </div>
+
         <div className="rounded-md border bg-card" data-testid="estate-jobs">
           <div className="border-b px-4 py-3">
             <h2 className="text-base font-semibold">
