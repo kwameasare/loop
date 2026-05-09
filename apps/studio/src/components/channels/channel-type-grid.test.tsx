@@ -27,24 +27,20 @@ describe("ChannelTypeGrid", () => {
       "whatsapp",
       "telegram",
       "slack",
+      "teams",
       "sms",
       "email",
       "voice",
+      "webhook_api",
     ]) {
       expect(screen.getByTestId(`channel-type-${id}`)).toBeInTheDocument();
     }
 
-    expect(screen.getByTestId("channel-type-web")).toHaveAttribute(
-      "href",
-      "/agents/agt_123/channels",
-    );
-    expect(screen.getByTestId("channel-type-voice")).toHaveAttribute(
-      "href",
-      "/voice",
-    );
-    expect(screen.getByTestId("channel-type-whatsapp")).toHaveAttribute(
-      "href",
-      "/marketplace",
-    );
+    for (const id of ["web", "voice", "whatsapp", "telegram", "webhook_api"]) {
+      expect(screen.getByTestId(`channel-type-${id}`)).toHaveAttribute(
+        "href",
+        "/agents/agt_123/channels",
+      );
+    }
   });
 });

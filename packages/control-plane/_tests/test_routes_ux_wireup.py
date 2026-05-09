@@ -394,6 +394,70 @@ def test_change_package_preflight_links_commitment_evidence_and_stales_on_change
     }
 
 
+def test_channel_bindings_are_peer_agent_objects_with_readiness(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    listed = client.get(
+        f"/v1/agents/{agent_id}/channel-bindings",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert listed.status_code == 200, listed.text
+    bindings = listed.json()["items"]
+    channel_types = {item["channel_type"] for item in bindings}
+    assert channel_types == {
+        "web_chat",
+        "whatsapp",
+        "telegram",
+        "slack",
+        "teams",
+        "sms",
+        "email",
+        "voice",
+        "webhook_api",
+    }
+    assert all(item["readiness"] for item in bindings)
+    assert sum(1 for item in bindings if item["channel_type"] == "voice") == 1
+
+    whatsapp = client.post(
+        f"/v1/agents/{agent_id}/channel-bindings",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "channel_type": "whatsapp",
+            "provider": "Meta Cloud API",
+            "display_name": "Acme WhatsApp support",
+            "identity_config": {"business_account_id": "waba_123"},
+            "auth_config_ref": "secret://channels/whatsapp/acme",
+        },
+    )
+    assert whatsapp.status_code == 201, whatsapp.text
+    body = whatsapp.json()
+    assert body["status"] == "draft"
+    assert body["channel_type"] == "whatsapp"
+    assert body["readiness"][0]["status"] == "pending"
+
+    checked = client.post(
+        f"/v1/agents/{agent_id}/channel-bindings/{body['id']}/readiness/business_verified",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "status": "passed",
+            "evidence_ref": "provider/meta/business/waba_123",
+            "message": "Business identity verified by Meta.",
+        },
+    )
+    assert checked.status_code == 200, checked.text
+    assert checked.json()["readiness"][0]["status"] == "passed"
+    assert checked.json()["readiness"][0]["evidence_ref"] == "provider/meta/business/waba_123"
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "channel_binding:upsert",
+        "channel_binding:readiness",
+    }
+
+
 def test_comment_resolution_can_create_eval_case(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:

@@ -26,6 +26,7 @@ from loop_control_plane.auth_exchange import (
 )
 from loop_control_plane.budgets import BudgetService
 from loop_control_plane.change_packages import ChangePackageRegistry
+from loop_control_plane.channel_bindings import ChannelBindingRegistry
 from loop_control_plane.conversations import ConversationService
 from loop_control_plane.data_deletion import (
     DataDeletionEmailNotifier,
@@ -213,6 +214,8 @@ class CpApiState:
         self.agent_commitments = CommitmentRegistry()
         # Agent-flow implementation: preflight produces immutable Change Packages.
         self.change_packages = ChangePackageRegistry()
+        # Agent-flow implementation: every agent owns peer channel bindings.
+        self.channel_bindings = ChannelBindingRegistry()
         if not self.marketplace_store.servers:
             publisher = MarketplacePublisher(
                 store=self.marketplace_store,

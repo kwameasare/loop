@@ -1,6 +1,11 @@
 import { WebChannelCard } from "@/components/agents/web-channel-card";
+import { ChannelBindingsPanel } from "@/components/channels/channel-bindings-panel";
 import { ChannelTypeGrid } from "@/components/channels/channel-type-grid";
-import { getWebChannel } from "@/lib/web-channels";
+import {
+  buildLocalChannelBindings,
+  listChannelBindings,
+} from "@/lib/channel-bindings";
+import { type WebChannelBinding, getWebChannel } from "@/lib/web-channels";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +16,32 @@ interface AgentChannelsPageProps {
 export default async function AgentChannelsPage({
   params,
 }: AgentChannelsPageProps) {
-  const binding = await getWebChannel(params.agent_id);
+  let bindings = buildLocalChannelBindings(params.agent_id);
+  try {
+    bindings = (await listChannelBindings(params.agent_id)).items;
+  } catch {
+    bindings = buildLocalChannelBindings(params.agent_id);
+  }
+
+  let binding: WebChannelBinding = {
+    agentId: params.agent_id,
+    status: "disabled",
+    channelId: null,
+    token: null,
+    enabledAt: null,
+  };
+  try {
+    binding = await getWebChannel(params.agent_id);
+  } catch {
+    binding = {
+      agentId: params.agent_id,
+      status: "disabled",
+      channelId: null,
+      token: null,
+      enabledAt: null,
+    };
+  }
+
   return (
     <div className="flex flex-col gap-3" data-testid="agent-channels">
       <header>
@@ -22,6 +52,10 @@ export default async function AgentChannelsPage({
         </p>
       </header>
       <ChannelTypeGrid agentId={params.agent_id} />
+      <ChannelBindingsPanel
+        agentId={params.agent_id}
+        initialBindings={bindings}
+      />
       <section className="rounded-md border bg-card p-4">
         <div className="mb-3">
           <h3 className="text-sm font-semibold">Web chat embed</h3>
@@ -30,10 +64,7 @@ export default async function AgentChannelsPage({
             the same agent, eval, memory, and deploy contract.
           </p>
         </div>
-      <WebChannelCard
-        agentId={params.agent_id}
-        initialBinding={binding}
-      />
+        <WebChannelCard agentId={params.agent_id} initialBinding={binding} />
       </section>
     </div>
   );

@@ -153,6 +153,15 @@ test("agent workbench keeps sections local and avoids fixture evidence", async (
     "Business responsibility",
   );
 
+  await page.getByTestId("agent-tab-channels").click();
+  await expect(page).toHaveURL(/\/agents\/agent-enterprise-support\/channels$/);
+  await expect(page.getByTestId("channel-bindings-panel")).toContainText(
+    "Voice is a channel binding",
+  );
+  await expect(page.getByTestId("channel-binding-whatsapp")).toBeVisible();
+  await expect(page.getByTestId("channel-binding-telegram")).toBeVisible();
+  await expect(page.getByTestId("channel-binding-voice")).toBeVisible();
+
   await page.getByTestId("agent-tab-deploys").click();
   await expect(page).toHaveURL(/\/agents\/agent-enterprise-support\/deploys$/);
   await expect(page.getByTestId("change-package-panel")).toContainText(
