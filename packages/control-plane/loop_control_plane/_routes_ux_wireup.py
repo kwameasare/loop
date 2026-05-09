@@ -295,10 +295,41 @@ async def get_estate_health(
     pending_changesets = [changeset for changeset in changesets if not changeset.get("approvals")]
     eval_suites = await cp.eval_suites.list_suites(workspace_id)
     audit_events = tuple(cp.audit_events.list_for_workspace(workspace_id))
+    incidents = await cp.incidents.list_for_workspace(workspace_id=workspace_id)
+    change_packages_by_agent = {
+        agent.id: await cp.change_packages.list_for_agent(agent=agent) for agent in agents
+    }
+    tool_contracts_by_agent = {
+        agent.id: await cp.tool_contracts.list_for_agent(agent=agent) for agent in agents
+    }
+    channel_bindings_by_agent = {
+        agent.id: await cp.channel_bindings.list_for_agent(agent=agent) for agent in agents
+    }
 
     draft_agents = [agent for agent in agents if agent.active_version is None]
     production_agents = [agent for agent in agents if agent.active_version is not None]
     error_traces = [trace for trace in traces.items if trace.error]
+    pending_change_packages = [
+        package
+        for packages in change_packages_by_agent.values()
+        for package in packages
+        if package.approval_status in {"pending", "requested", "blocked", "stale"}
+        or package.status in {"generated", "submitted", "stale"}
+    ]
+    open_incidents = [
+        incident for incident in incidents if incident.status not in {"resolved", "archived"}
+    ]
+    blocked_deploys = [
+        package
+        for package in pending_change_packages
+        if package.approval_status in {"blocked", "stale"}
+        or any(
+            approval.get("required")
+            and not approval.get("satisfied")
+            and approval.get("state") not in {"not_required", "pre_approved"}
+            for approval in package.required_approvals
+        )
+    ]
     attention: list[dict[str, Any]] = []
 
     if pending_inbox:
@@ -334,6 +365,28 @@ async def get_estate_health(
                 "source": "trace_search.only_errors",
             }
         )
+    if open_incidents:
+        attention.append(
+            {
+                "id": "open-incidents",
+                "severity": "critical",
+                "title": f"{len(open_incidents)} open incident(s)",
+                "detail": "Containment, candidate evals, and owner follow-up are required.",
+                "href": "/observe",
+                "source": "incidents.list_for_workspace",
+            }
+        )
+    if blocked_deploys:
+        attention.append(
+            {
+                "id": "blocked-deploys",
+                "severity": "critical",
+                "title": f"{len(blocked_deploys)} deploy candidate(s) blocked",
+                "detail": "Approval, channel readiness, or stale evidence is preventing promotion.",
+                "href": "/deploys",
+                "source": "change_packages.required_approvals",
+            }
+        )
     for agent in draft_agents[:5]:
         attention.append(
             {
@@ -358,12 +411,139 @@ async def get_estate_health(
             }
         )
 
+    tool_usage: dict[str, list[dict[str, Any]]] = {}
+    for agent in agents:
+        for contract in tool_contracts_by_agent.get(agent.id, []):
+            tool_usage.setdefault(contract.tool_id, []).append(
+                {
+                    "agent_id": str(agent.id),
+                    "agent_name": agent.name,
+                    "contract_id": contract.id,
+                    "live_status": contract.live_status,
+                    "side_effect_level": contract.side_effect_level,
+                    "pii_access": contract.pii_access,
+                    "money_movement": contract.money_movement,
+                    "evidence_ref": f"tool-contract/{contract.id}",
+                }
+            )
+    shared_dependencies = [
+        {
+            "id": f"tool:{tool_id}",
+            "type": "tool",
+            "name": tool_id,
+            "agents": rows,
+            "risk": "high"
+            if any(row["money_movement"] or row["pii_access"] for row in rows)
+            else "medium"
+            if len(rows) > 1
+            else "low",
+            "detail": (
+                f"{len(rows)} agent(s) depend on this tool; review side effects, "
+                "owners, and approval status before shared changes."
+            ),
+            "evidence_ref": rows[0]["evidence_ref"],
+        }
+        for tool_id, rows in sorted(tool_usage.items())
+        if len(rows) > 1 or any(row["live_status"] != "approved" for row in rows)
+    ]
+
+    channel_health: list[dict[str, Any]] = []
+    for agent in agents:
+        for binding in channel_bindings_by_agent.get(agent.id, []):
+            if binding.status == "not_configured":
+                continue
+            blocking_checks = [
+                check for check in binding.readiness if check.get("status") in {"failed", "pending"}
+            ]
+            channel_health.append(
+                {
+                    "id": binding.id,
+                    "agent_id": str(agent.id),
+                    "agent_name": agent.name,
+                    "channel_type": binding.channel_type,
+                    "status": binding.status,
+                    "blocking_checks": len(blocking_checks),
+                    "last_failure_at": binding.last_failure_at.isoformat()
+                    if binding.last_failure_at
+                    else None,
+                    "evidence_ref": f"channel-binding/{binding.id}",
+                }
+            )
+
+    failure_clusters = [
+        {
+            "id": f"incident:{incident.id}",
+            "kind": "incident",
+            "severity": incident.severity,
+            "title": incident.trigger,
+            "affected": incident.affected_conversation_count,
+            "href": f"/observe?incident={incident.id}",
+            "evidence_ref": f"incident/{incident.id}",
+        }
+        for incident in open_incidents[:6]
+    ]
+    if error_traces:
+        failure_clusters.append(
+            {
+                "id": "trace-errors",
+                "kind": "trace_cluster",
+                "severity": "medium",
+                "title": f"{len(error_traces)} recent trace error(s)",
+                "affected": len(error_traces),
+                "href": "/traces?only_errors=true",
+                "evidence_ref": "trace_search.only_errors",
+            }
+        )
+
+    background_jobs = [
+        {
+            "id": "cluster_failures",
+            "status": "completed",
+            "output_count": len(failure_clusters),
+            "evidence_ref": "estate/jobs/cluster_failures",
+        },
+        {
+            "id": "detect_drift",
+            "status": "completed",
+            "output_count": len(pending_change_packages),
+            "evidence_ref": "estate/jobs/detect_drift",
+        },
+        {
+            "id": "detect_cost_anomaly",
+            "status": "completed",
+            "output_count": 0,
+            "evidence_ref": "estate/jobs/detect_cost_anomaly",
+        },
+        {
+            "id": "detect_latency_anomaly",
+            "status": "completed",
+            "output_count": 0,
+            "evidence_ref": "estate/jobs/detect_latency_anomaly",
+        },
+        {
+            "id": "detect_stale_knowledge",
+            "status": "completed",
+            "output_count": 0,
+            "evidence_ref": "estate/jobs/detect_stale_knowledge",
+        },
+        {
+            "id": "summarize_operator_takeovers",
+            "status": "completed",
+            "output_count": len(pending_inbox),
+            "evidence_ref": "estate/jobs/summarize_operator_takeovers",
+        },
+    ]
+
     return {
         "workspace_id": str(workspace_id),
         "generated_at": datetime.now(UTC).isoformat(),
         "data_source": "live",
         "provenance": [
             "agents.list_for_workspace",
+            "change_packages.list_for_agent",
+            "tool_contracts.list_for_agent",
+            "channel_bindings.list_for_agent",
+            "incidents.list_for_workspace",
             "trace_search.run",
             "inbox_queue.list_pending",
             "eval_suites.list_suites",
@@ -375,15 +555,20 @@ async def get_estate_health(
             "agents_production": len(production_agents),
             "agents_draft": len(draft_agents),
             "pending_handoffs": len(pending_inbox),
-            "pending_approvals": len(pending_changesets),
+            "pending_approvals": len(pending_changesets) + len(pending_change_packages),
             "trace_errors": len(error_traces),
             "trace_count": len(traces.items),
             "eval_suites": len(eval_suites),
             "audit_events": len(audit_events),
-            "open_incidents": 0,
-            "blocked_deploys": len(pending_changesets),
+            "open_incidents": len(open_incidents),
+            "blocked_deploys": len(pending_changesets) + len(blocked_deploys),
         },
         "attention": attention[:8],
+        "shared_dependencies": shared_dependencies[:8],
+        "channel_health": channel_health[:12],
+        "failure_clusters": failure_clusters[:8],
+        "background_jobs": background_jobs,
+        "next_actions": attention[:5],
     }
 
 

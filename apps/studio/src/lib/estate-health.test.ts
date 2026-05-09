@@ -88,6 +88,34 @@ describe("estate health", () => {
         blocked_deploys: 1,
       },
       attention: [],
+      shared_dependencies: [
+        {
+          id: "tool:refund_payment",
+          type: "tool",
+          name: "refund_payment",
+          agents: [
+            {
+              agent_id: "agt_1",
+              agent_name: "Refund Agent",
+              evidence_ref: "tool-contract/tc_1",
+            },
+          ],
+          risk: "high",
+          detail: "Shared money-moving tool.",
+          evidence_ref: "tool-contract/tc_1",
+        },
+      ],
+      channel_health: [],
+      failure_clusters: [],
+      background_jobs: [
+        {
+          id: "cluster_failures",
+          status: "completed",
+          output_count: 0,
+          evidence_ref: "estate/jobs/cluster_failures",
+        },
+      ],
+      next_actions: [],
     };
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,

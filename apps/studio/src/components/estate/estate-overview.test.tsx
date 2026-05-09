@@ -32,6 +32,69 @@ const HEALTH: EstateHealth = {
       source: "approval_changesets",
     },
   ],
+  shared_dependencies: [
+    {
+      id: "tool:refund_payment",
+      type: "tool",
+      name: "refund_payment",
+      risk: "high",
+      detail: "2 agents depend on this money-moving tool.",
+      evidence_ref: "tool-contract/tc_refund",
+      agents: [
+        {
+          agent_id: "agt_1",
+          agent_name: "Refund Agent",
+          contract_id: "tc_refund",
+          live_status: "review_required",
+          side_effect_level: "money_movement",
+          pii_access: true,
+          money_movement: true,
+          evidence_ref: "tool-contract/tc_refund",
+        },
+      ],
+    },
+  ],
+  channel_health: [
+    {
+      id: "cb_whatsapp",
+      agent_id: "agt_1",
+      agent_name: "Refund Agent",
+      channel_type: "whatsapp",
+      status: "draft",
+      blocking_checks: 2,
+      last_failure_at: null,
+      evidence_ref: "channel-binding/cb_whatsapp",
+    },
+  ],
+  failure_clusters: [
+    {
+      id: "incident:inc_1",
+      kind: "incident",
+      severity: "high",
+      title: "Refund quote regressed in canary",
+      affected: 4,
+      href: "/observe?incident=inc_1",
+      evidence_ref: "incident/inc_1",
+    },
+  ],
+  background_jobs: [
+    {
+      id: "cluster_failures",
+      status: "completed",
+      output_count: 1,
+      evidence_ref: "estate/jobs/cluster_failures",
+    },
+  ],
+  next_actions: [
+    {
+      id: "pending-approvals",
+      severity: "critical",
+      title: "1 change set needs approval",
+      detail: "Release candidate cannot promote.",
+      href: "/deploys",
+      source: "approval_changesets",
+    },
+  ],
 };
 
 describe("EstateOverview", () => {
@@ -47,6 +110,16 @@ describe("EstateOverview", () => {
     );
     expect(screen.getByTestId("estate-attention")).toHaveTextContent(
       "source: approval_changesets",
+    );
+    expect(screen.getByTestId("estate-shared-dependencies")).toHaveTextContent(
+      "refund_payment",
+    );
+    expect(screen.getByTestId("estate-failure-clusters")).toHaveTextContent(
+      "Refund quote regressed",
+    );
+    expect(screen.getByTestId("estate-channels")).toHaveTextContent("whatsapp");
+    expect(screen.getByTestId("estate-jobs")).toHaveTextContent(
+      "cluster failures",
     );
   });
 
