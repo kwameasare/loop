@@ -78,6 +78,55 @@ def _add_trace(client: TestClient, workspace_id: UUID, agent_id: UUID, trace_id:
     )
 
 
+def _start_live_deployment(
+    client: TestClient,
+    workspace_id: UUID,
+    agent_id: UUID,
+) -> dict[str, object]:
+    package = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "from_version_id": "v1",
+            "to_version_id": "v2",
+            "summary": "Promote approved canary.",
+            "eval_results_ref": "eval/run/v2",
+            "replay_results_ref": "replay/run/v2",
+            "rollback_target_version_id": "v1",
+        },
+    ).json()
+    submitted = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{package['id']}/submit",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert submitted.status_code == 200, submitted.text
+    for approval_id in ("owner", "compliance"):
+        approved = client.post(
+            f"/v1/agents/{agent_id}/change-packages/{package['id']}/approvals",
+            headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+            json={"approval_id": approval_id, "decision": "approve"},
+        )
+        assert approved.status_code == 200, approved.text
+    started = client.post(
+        f"/v1/agents/{agent_id}/deployments/start",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "change_package_id": package["id"],
+            "version_id": "v2",
+            "traffic_percent": 10,
+            "channel_scope": ["web_chat"],
+        },
+    )
+    assert started.status_code == 201, started.text
+    deployment = started.json()["deployment"]
+    promoted = client.post(
+        f"/v1/agents/{agent_id}/deployments/{deployment['id']}/promote",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert promoted.status_code == 200, promoted.text
+    return promoted.json()
+
+
 def test_presence_websocket_broadcasts_selection_updates(
     client: TestClient, workspace_id: UUID
 ) -> None:
@@ -573,6 +622,64 @@ def test_observed_failure_eval_case_closes_90_second_editing_loop(
         headers=_auth(),
     ).json()["items"]
     assert "eval:case:create_from_observed_failure" in {event["action"] for event in audit}
+
+
+def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    live = _start_live_deployment(client, workspace_id, agent_id)
+    _add_trace(client, workspace_id, agent_id, "5" * 32)
+
+    rolled_back = client.post(
+        f"/v1/agents/{agent_id}/deployments/{live['id']}/rollback",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "mode": "auto",
+            "trigger": "error_rate breached 4% for web_chat canary",
+            "reason": "Tool schema changed upstream and increased failures.",
+        },
+    )
+    assert rolled_back.status_code == 200, rolled_back.text
+    assert rolled_back.json()["status"] == "rolled_back"
+
+    listed = client.get(
+        f"/v1/agents/{agent_id}/incidents",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert listed.status_code == 200, listed.text
+    incident = listed.json()["items"][0]
+    assert incident["status"] == "contained"
+    assert incident["deployment_id"] == live["id"]
+    assert incident["rollback_action_ref"] == f"deployment/{live['id']}/rollback"
+    assert incident["report"]["suspected_cause"].startswith("Tool schema")
+    assert incident["report"]["rollback_status"] == "executed"
+
+    seeded = client.post(
+        f"/v1/agents/{agent_id}/incidents/{incident['id']}/eval-cases",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert seeded.status_code == 201, seeded.text
+    assert seeded.json()["ok"] is True
+    assert seeded.json()["suite_id"]
+    assert seeded.json()["case_ids"]
+    assert seeded.json()["incident"]["candidate_eval_suite_id"] == seeded.json()["suite_id"]
+
+    workspace_incidents = client.get(
+        f"/v1/workspaces/{workspace_id}/incidents",
+        headers=_auth(),
+    )
+    assert workspace_incidents.status_code == 200, workspace_incidents.text
+    assert workspace_incidents.json()["items"][0]["id"] == incident["id"]
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "deployment:rollback",
+        "incident:create_auto_rollback",
+        "incident:eval_cases_seeded",
+    }
 
 
 def test_comment_resolution_can_create_eval_case(

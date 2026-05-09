@@ -107,25 +107,29 @@ describe("buildObservatoryModel", () => {
   });
 
   it("persists a metric as a custom dashboard layout", async () => {
-    const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      expect(String(input)).toBe("https://cp.test/v1/workspaces/ws1/dashboards");
-      expect(init?.method).toBe("POST");
-      expect(JSON.parse(String(init?.body))).toMatchObject({
-        name: "Quality watch",
-        layout: [
-          {
-            source_type: "observatory_metric",
-            source_id: "quality",
-            title: "Quality",
-          },
-        ],
-      });
-      return response({
-        id: "dash_1",
-        name: "Pinned quality",
-        layout: [{ metric_id: "quality" }],
-      });
-    });
+    const fetcher = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        expect(String(input)).toBe(
+          "https://cp.test/v1/workspaces/ws1/dashboards",
+        );
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          name: "Quality watch",
+          layout: [
+            {
+              source_type: "observatory_metric",
+              source_id: "quality",
+              title: "Quality",
+            },
+          ],
+        });
+        return response({
+          id: "dash_1",
+          name: "Pinned quality",
+          layout: [{ metric_id: "quality" }],
+        });
+      },
+    );
 
     const dashboard = await pinObservatoryMetric(
       "ws1",
@@ -153,7 +157,7 @@ describe("fetchObservatoryModel", () => {
     expect(model).toBe(OBSERVATORY_MODEL);
   });
 
-  it("loads traces, usage, and inbox from live cp-api routes", async () => {
+  it("loads traces, usage, inbox, and incidents from live cp-api routes", async () => {
     const fetcher = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes("/traces")) {
@@ -197,7 +201,10 @@ describe("fetchObservatoryModel", () => {
       fetcher: fetcher as unknown as typeof fetch,
     });
 
-    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(
+      fetcher.mock.calls.some(([url]) => String(url).includes("/incidents")),
+    ).toBe(true);
     expect(model.tail[0]?.traceId).toBe("trace-live");
     expect(model.agents[0]?.id).toBe("agent-live");
   });

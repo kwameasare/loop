@@ -40,6 +40,7 @@ from loop_control_plane.deployments import DeploymentRegistry
 from loop_control_plane.eval_suites import EvalSuiteService
 from loop_control_plane.inbox import InboxQueue
 from loop_control_plane.inbox_api import InboxAPI
+from loop_control_plane.incidents import IncidentRegistry
 from loop_control_plane.kb_documents import KbDocumentService
 from loop_control_plane.mcp_marketplace import (
     FirstPartyCatalog,
@@ -219,6 +220,8 @@ class CpApiState:
         self.channel_bindings = ChannelBindingRegistry()
         # Agent-flow implementation: rollout state creates deployed evidence packs.
         self.deployments = DeploymentRegistry()
+        # Agent-flow implementation: incidents link deploy events, traces, and evals.
+        self.incidents = IncidentRegistry()
         if not self.marketplace_store.servers:
             publisher = MarketplacePublisher(
                 store=self.marketplace_store,
