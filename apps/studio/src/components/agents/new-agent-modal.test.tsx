@@ -207,6 +207,84 @@ describe("NewAgentModal", () => {
     });
   });
 
+  it("uses workspace approved templates when the catalog endpoint returns them", async () => {
+    const createAgentIntake = makeCreateIntake();
+    const listAgentIntakeTemplates = vi.fn(async () => ({
+      items: [
+        {
+          id: "tmpl_regulated_support",
+          name: "Regulated support",
+          summary: "Reviewed template for regulated support.",
+          channels: ["telegram", "email"],
+          systems_touched: ["case system"],
+          contract: {
+            business_responsibility: "Resolve regulated support cases.",
+            target_users: "Compliance-sensitive customers.",
+            worst_case_failure: "Answers regulated questions without citation.",
+            channels: ["telegram", "email"],
+            systems_touched: ["case system"],
+            regions: ["eu-west-2"],
+            languages: ["en", "de"],
+            success_metric: "98% policy-cited answer pass rate.",
+            compliance_domain: "Regulated support",
+            expected_volume: "1k turns per month",
+            budget_target: "$0.10 per turn",
+            out_of_scope: "Legal advice.",
+            escalation_policy: "Escalate unsupported claims to compliance.",
+          },
+          capabilities: ["Answer with policy evidence"],
+          artifacts: [
+            {
+              name: "regulated-support-template.md",
+              kind: "runbook" as const,
+              text: "Cite policy before every regulated answer.",
+              source_ref: "template/tmpl_regulated_support/runbook",
+            },
+          ],
+        },
+      ],
+    }));
+    render(
+      <NewAgentModal
+        existingSlugs={[]}
+        workspaceId="ws_1"
+        createAgentIntake={createAgentIntake}
+        listAgentIntakeTemplates={listAgentIntakeTemplates}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("new-agent-button"));
+    await waitFor(() => {
+      expect(listAgentIntakeTemplates).toHaveBeenCalledWith("ws_1");
+    });
+    fireEvent.click(screen.getByLabelText(/Enterprise template/i));
+    fill("new-agent-name", "Regulated Agent");
+    fill("new-agent-slug", "regulated-agent");
+    fill("new-agent-owner", "maya@acme.test");
+    fireEvent.click(screen.getByTestId("new-agent-submit"));
+
+    await waitFor(() => {
+      expect(createAgentIntake).toHaveBeenCalledWith(
+        "ws_1",
+        expect.objectContaining({
+          creation_path: "enterprise_template",
+          template_id: "tmpl_regulated_support",
+          contract: expect.objectContaining({
+            business_responsibility: "Resolve regulated support cases.",
+            channels: ["telegram", "email"],
+            systems_touched: ["case system"],
+          }),
+          capabilities: ["Answer with policy evidence"],
+          artifacts: [
+            expect.objectContaining({
+              source_ref: "template/tmpl_regulated_support/runbook",
+            }),
+          ],
+        }),
+      );
+    });
+  });
+
   it("blocks submission when slug collides with an existing agent", () => {
     const createAgentIntake = makeCreateIntake();
     render(

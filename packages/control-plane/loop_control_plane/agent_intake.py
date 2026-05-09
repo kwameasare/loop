@@ -90,6 +90,7 @@ class AgentIntakeRecord(BaseModel):
 ENTERPRISE_TEMPLATES: dict[str, dict[str, Any]] = {
     "tmpl_support_agent": {
         "name": "Enterprise support agent",
+        "summary": "Policy-grounded web, WhatsApp, and email support.",
         "capabilities": [
             "Answer policy-backed support questions",
             "Escalate billing and legal risk",
@@ -121,6 +122,7 @@ ENTERPRISE_TEMPLATES: dict[str, dict[str, Any]] = {
     },
     "tmpl_voice_receptionist": {
         "name": "Voice receptionist",
+        "summary": "Voice and SMS receptionist with handoff-safe routing.",
         "capabilities": [
             "Answer front-desk questions",
             "Schedule handoffs",
@@ -158,9 +160,12 @@ def template_payloads() -> list[dict[str, Any]]:
         {
             "id": template_id,
             "name": str(template["name"]),
+            "summary": str(template["summary"]),
             "channels": list(template["contract"]["channels"]),
             "systems_touched": list(template["contract"]["systems_touched"]),
+            "contract": dict(template["contract"]),
             "capabilities": list(template["capabilities"]),
+            "artifacts": [dict(artifact) for artifact in template["artifacts"]],
         }
         for template_id, template in ENTERPRISE_TEMPLATES.items()
     ]

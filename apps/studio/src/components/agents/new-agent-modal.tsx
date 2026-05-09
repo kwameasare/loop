@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -11,11 +11,15 @@ import {
   parseList,
 } from "@/lib/agent-commitment";
 import {
+  LOCAL_AGENT_INTAKE_TEMPLATES,
   createAgentIntake as defaultCreateAgentIntake,
+  listAgentIntakeTemplates as defaultListAgentIntakeTemplates,
   type AgentIntakeArtifactInput,
   type AgentIntakeCreateInput,
   type AgentIntakeCreateResult,
   type AgentIntakePath,
+  type AgentIntakeTemplate,
+  type AgentIntakeTemplateList,
 } from "@/lib/agent-intake";
 import {
   Dialog,
@@ -28,84 +32,6 @@ import {
 
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 
-const APPROVED_TEMPLATES: Array<{
-  id: string;
-  label: string;
-  summary: string;
-  contract: Partial<CommitmentBody>;
-  capabilities: string[];
-  artifact: AgentIntakeArtifactInput;
-}> = [
-  {
-    id: "tmpl_support_agent",
-    label: "Enterprise support agent",
-    summary: "Policy-grounded web, WhatsApp, and email support.",
-    contract: {
-      business_responsibility:
-        "Resolve support questions using approved policy and escalation paths.",
-      target_users: "Enterprise customers and support operators.",
-      worst_case_failure:
-        "Promises refunds, legal positions, or account actions outside approved policy.",
-      channels: ["web", "whatsapp", "email"],
-      systems_touched: ["crm", "billing api"],
-      regions: ["us-east-1", "eu-west-2"],
-      languages: ["en"],
-      success_metric: "95% eval pass rate before canary.",
-      compliance_domain: "SOC2 support operations",
-      expected_volume: "10k turns per month",
-      budget_target: "$0.08 per resolved turn",
-      out_of_scope: "Legal advice and refunds above policy.",
-      escalation_policy:
-        "Escalate policy conflicts, legal threats, and refund exceptions to the support lead.",
-    },
-    capabilities: [
-      "Answer policy-backed support questions",
-      "Escalate billing and legal risk",
-      "Preserve channel formatting",
-    ],
-    artifact: {
-      name: "enterprise-support-template.md",
-      kind: "runbook",
-      text: "Use approved policy. Escalate legal threats. Never refund outside policy.",
-      source_ref: "template/tmpl_support_agent/runbook",
-    },
-  },
-  {
-    id: "tmpl_voice_receptionist",
-    label: "Voice receptionist",
-    summary: "Voice and SMS receptionist with handoff-safe routing.",
-    contract: {
-      business_responsibility:
-        "Handle inbound calls, answer basic questions, and route callers to the right team.",
-      target_users: "Prospects, customers, and operators calling the business.",
-      worst_case_failure:
-        "Books, cancels, or promises appointments without confirmation.",
-      channels: ["voice", "sms"],
-      systems_touched: ["calendar", "crm"],
-      regions: ["us-east-1"],
-      languages: ["en"],
-      success_metric: "90% successful route or callback capture.",
-      compliance_domain: "Customer communications",
-      expected_volume: "3k calls per month",
-      budget_target: "$0.12 per handled call",
-      out_of_scope: "Medical, legal, or financial advice.",
-      escalation_policy:
-        "Escalate urgent, regulated, or frustrated callers to the human queue.",
-    },
-    capabilities: [
-      "Answer front-desk questions",
-      "Schedule handoffs",
-      "Collect callback context",
-    ],
-    artifact: {
-      name: "voice-receptionist-template.md",
-      kind: "runbook",
-      text: "Confirm identity before scheduling. Keep speech concise. Escalate urgent callers.",
-      source_ref: "template/tmpl_voice_receptionist/runbook",
-    },
-  },
-];
-
 export interface NewAgentModalProps {
   /** Slugs already used in this workspace; submit is blocked if name collides. */
   existingSlugs: string[];
@@ -116,6 +42,10 @@ export interface NewAgentModalProps {
     workspaceId: string,
     input: AgentIntakeCreateInput,
   ) => Promise<AgentIntakeCreateResult>;
+  /** Override for tests so template catalog loading can stay deterministic. */
+  listAgentIntakeTemplates?: (
+    workspaceId: string,
+  ) => Promise<AgentIntakeTemplateList>;
 }
 
 type Status =
@@ -133,6 +63,7 @@ export function NewAgentModal({
   existingSlugs,
   workspaceId,
   createAgentIntake = defaultCreateAgentIntake,
+  listAgentIntakeTemplates = defaultListAgentIntakeTemplates,
 }: NewAgentModalProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -141,7 +72,15 @@ export function NewAgentModal({
   const [slug, setSlug] = useState("");
   const [creationPath, setCreationPath] =
     useState<AgentIntakePath>("business_intent");
-  const [templateId, setTemplateId] = useState(APPROVED_TEMPLATES[0]!.id);
+  const [templates, setTemplates] = useState<AgentIntakeTemplate[]>(
+    LOCAL_AGENT_INTAKE_TEMPLATES,
+  );
+  const [templateCatalogState, setTemplateCatalogState] = useState<
+    "ready" | "loading" | "fallback"
+  >("ready");
+  const [templateId, setTemplateId] = useState(
+    LOCAL_AGENT_INTAKE_TEMPLATES[0]!.id,
+  );
   const [contract, setContract] = useState<CommitmentBody>({
     ...EMPTY_COMMITMENT_BODY,
     channels: ["web"],
@@ -178,13 +117,61 @@ export function NewAgentModal({
     missingContract.length === 0 &&
     !slugError &&
     status.kind !== "submitting";
+  const shouldLoadTemplateCatalog =
+    listAgentIntakeTemplates !== defaultListAgentIntakeTemplates ||
+    Boolean(
+      process.env.NEXT_PUBLIC_LOOP_API_URL || process.env.LOOP_CP_API_BASE_URL,
+    );
+  const activeTemplate =
+    templates.find((template) => template.id === templateId) ?? templates[0];
+
+  useEffect(() => {
+    if (!open) return;
+    if (!shouldLoadTemplateCatalog) {
+      setTemplateCatalogState("ready");
+      return;
+    }
+    let cancelled = false;
+    setTemplateCatalogState("loading");
+    listAgentIntakeTemplates(effectiveWorkspaceId)
+      .then((catalog) => {
+        if (cancelled) return;
+        const nextTemplates =
+          catalog.items.length > 0
+            ? catalog.items
+            : LOCAL_AGENT_INTAKE_TEMPLATES;
+        setTemplates(nextTemplates);
+        setTemplateId((currentId) =>
+          nextTemplates.some((template) => template.id === currentId)
+            ? currentId
+            : nextTemplates[0]!.id,
+        );
+        setTemplateCatalogState(
+          catalog.items.length > 0 ? "ready" : "fallback",
+        );
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setTemplates(LOCAL_AGENT_INTAKE_TEMPLATES);
+        setTemplateId(LOCAL_AGENT_INTAKE_TEMPLATES[0]!.id);
+        setTemplateCatalogState("fallback");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    effectiveWorkspaceId,
+    listAgentIntakeTemplates,
+    open,
+    shouldLoadTemplateCatalog,
+  ]);
 
   function reset() {
     setStep(0);
     setName("");
     setSlug("");
     setCreationPath("business_intent");
-    setTemplateId(APPROVED_TEMPLATES[0]!.id);
+    setTemplateId(templates[0]?.id ?? LOCAL_AGENT_INTAKE_TEMPLATES[0]!.id);
     setContract({
       ...EMPTY_COMMITMENT_BODY,
       channels: ["web"],
@@ -210,11 +197,8 @@ export function NewAgentModal({
     );
   }
 
-  function applyTemplate(nextTemplateId: string) {
-    const template =
-      APPROVED_TEMPLATES.find((item) => item.id === nextTemplateId) ??
-      APPROVED_TEMPLATES[0]!;
-    setTemplateId(template.id);
+  function applyTemplateDefaults(template: AgentIntakeTemplate) {
+    const templateArtifact = template.artifacts[0];
     setContract((current) => ({
       ...current,
       ...template.contract,
@@ -222,7 +206,22 @@ export function NewAgentModal({
       backup_owner_user_id: current.backup_owner_user_id,
     }));
     setCapabilities(template.capabilities);
-    setArtifact(template.artifact);
+    if (templateArtifact) {
+      setArtifact(templateArtifact);
+    }
+  }
+
+  useEffect(() => {
+    if (creationPath !== "enterprise_template" || !activeTemplate) return;
+    applyTemplateDefaults(activeTemplate);
+  }, [activeTemplate, creationPath]);
+
+  function applyTemplate(nextTemplateId: string) {
+    const template =
+      templates.find((item) => item.id === nextTemplateId) ??
+      LOCAL_AGENT_INTAKE_TEMPLATES[0]!;
+    setTemplateId(template.id);
+    applyTemplateDefaults(template);
   }
 
   function chooseCreationPath(path: AgentIntakePath) {
@@ -396,20 +395,22 @@ export function NewAgentModal({
                   data-testid="new-agent-template"
                   className="rounded-md border bg-background px-2 py-1"
                 >
-                  {APPROVED_TEMPLATES.map((template) => (
+                  {templates.map((template) => (
                     <option key={template.id} value={template.id}>
-                      {template.label}
+                      {template.name}
                     </option>
                   ))}
                 </select>
               </label>
               <p className="text-xs text-muted-foreground">
-                {
-                  APPROVED_TEMPLATES.find(
-                    (template) => template.id === templateId,
-                  )?.summary
-                }
+                {activeTemplate?.summary}
               </p>
+              {templateCatalogState === "fallback" ? (
+                <p className="text-xs text-warning">
+                  Using the offline template catalog until workspace templates
+                  load.
+                </p>
+              ) : null}
             </fieldset>
           ) : null}
 
