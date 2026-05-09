@@ -532,6 +532,49 @@ def test_deployment_start_creates_evidence_pack_from_approved_change_package(
     }
 
 
+def test_observed_failure_eval_case_closes_90_second_editing_loop(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    response = client.post(
+        f"/v1/agents/{agent_id}/eval-cases/from-observed-failure",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "sentence_id": "sentence_purpose_cancel",
+            "sentence_text": "When a customer asks to cancel, cite May 2026 policy.",
+            "trace_id": "trace_refund_742",
+            "failure_reason": ("Agent cited archived policy before current May 2026 policy."),
+            "expected_outcome": ("Cite the May 2026 refund policy before quoting refund window."),
+            "proposed_fix": (
+                "Add a behavior rule requiring current policy citation before refund windows."
+            ),
+            "replay_ref": "replay/run/trace_refund_742/fixed",
+        },
+    )
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["ok"] is True
+    assert body["suite_id"]
+    assert body["case_id"]
+    assert body["case"]["source"] == "behavior-fix"
+    assert body["case"]["source_ref"] == "trace_refund_742"
+    assert body["case"]["input"]["sentence_id"] == "sentence_purpose_cancel"
+    assert body["case"]["expected"]["proposed_fix"].startswith("Add a behavior rule")
+    assert body["case"]["scorers"][1]["kind"] == "trace_regression"
+
+    suites = client.get(
+        f"/v1/workspaces/{workspace_id}/eval-suites",
+        headers=_auth(),
+    )
+    assert suites.status_code == 200, suites.text
+    assert "Observed behavior failures" in {item["name"] for item in suites.json()["items"]}
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert "eval:case:create_from_observed_failure" in {event["action"] for event in audit}
+
+
 def test_comment_resolution_can_create_eval_case(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:

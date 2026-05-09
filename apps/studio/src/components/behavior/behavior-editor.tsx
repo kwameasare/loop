@@ -20,6 +20,7 @@ import {
   StatePanel,
 } from "@/components/target";
 import { BuildToTestFlow } from "@/components/agents/build-to-test-flow";
+import { FailureRepairLoopPanel } from "@/components/behavior/failure-repair-loop-panel";
 import { StyleTransferPanel } from "@/components/behavior/style-transfer-panel";
 import {
   OBJECT_STATE_TREATMENTS,
@@ -665,6 +666,10 @@ export function BehaviorEditor({ data }: BehaviorEditorProps) {
 
         <aside className="space-y-4">
           <SentenceTelemetryPanel sentence={selectedSentence} />
+          <FailureRepairLoopPanel
+            agentId={data.agentId}
+            sentence={selectedSentence}
+          />
           <StyleTransferPanel
             agentId={data.agentId}
             section={activeSectionText}

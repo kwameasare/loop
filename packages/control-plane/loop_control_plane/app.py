@@ -30,6 +30,9 @@ from loop_control_plane._routes_conversations import (
 from loop_control_plane._routes_deployments import router as deployments_router
 from loop_control_plane._routes_dsr import router as dsr_router
 from loop_control_plane._routes_evals import (
+    router_agents as agent_evals_router,
+)
+from loop_control_plane._routes_evals import (
     router_suites as eval_suites_router,
 )
 from loop_control_plane._routes_evals import (
@@ -125,6 +128,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         # P0.4: KB document CRUD + refresh.
         kb_router,
         # P0.4: eval suites + runs.
+        # Agent-flow implementation: observed behavior failures become eval cases.
+        agent_evals_router,
         workspace_evals_router,
         eval_suites_router,
         # UX wire-up: Marketplace browse reads the first-party MCP registry.
