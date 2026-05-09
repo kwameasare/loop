@@ -1,5 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import type {
+  AgentIntakeCreateInput,
+  AgentIntakeCreateResult,
+} from "@/lib/agent-intake";
 
 const push = vi.fn();
 
@@ -13,20 +18,6 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { NewAgentModal } from "./new-agent-modal";
-import type { AgentSummary, CreateAgentInput } from "@/lib/cp-api";
-import type { CommitmentDraftInput } from "@/lib/agent-commitment";
-
-function makeCreate(result: Partial<AgentSummary> = {}) {
-  return vi.fn(async (input: CreateAgentInput) => ({
-    id: result.id ?? "agt_new",
-    name: input.name,
-    slug: input.slug,
-    description: input.description ?? "",
-    active_version: null,
-    updated_at: "2026-05-01T00:00:00Z",
-    workspace_id: "ws_1",
-  }));
-}
 
 function fill(testId: string, value: string) {
   fireEvent.change(screen.getByTestId(testId), { target: { value } });
@@ -44,36 +35,75 @@ function fillContract() {
   fill("new-agent-systems", "billing, crm");
   fill("new-agent-regions", "us-east-1, eu-west-2");
   fill("new-agent-languages", "en, es");
+  fill("new-agent-success-metric", "95% eval pass rate before canary.");
+  fill("new-agent-escalation-policy", "Escalate policy conflicts.");
 }
 
-function makeSaveCommitment() {
-  return vi.fn(async (_agentId: string, _input: CommitmentDraftInput) => ({
-    id: "commit_1",
-    agent_id: "agt_new",
+function makeCreateIntake(result: Partial<AgentIntakeCreateResult> = {}) {
+  return vi.fn(async (_workspaceId: string, input: AgentIntakeCreateInput) => ({
+    id: result.id ?? "intake_1",
     workspace_id: "ws_1",
-    version: 1,
-    body: _input.body,
-    structured_summary: {
-      responsibility: _input.body.business_responsibility,
-      audience: _input.body.target_users,
-      owner: _input.body.owner_user_id,
-      backup_owner: _input.body.backup_owner_user_id,
-      risk: _input.body.worst_case_failure,
-      channels: _input.body.channels,
-      systems_touched: _input.body.systems_touched,
-      regions: _input.body.regions,
-      languages: _input.body.languages,
-      readiness: "complete" as const,
-      missing_required_fields: [],
+    agent_id: result.agent?.id ?? "agt_new",
+    state: "draft_ready" as const,
+    creation_path: input.creation_path,
+    jobs: [],
+    artifact_reports: [],
+    intent_map: [],
+    contradictions: [],
+    sensitive_data_findings: [],
+    candidate_tools: [],
+    candidate_channels: [],
+    candidate_memory_policy: {},
+    candidate_eval_cases: [],
+    risk_notes: [],
+    missing_information: [],
+    readiness: {
+      score: 74,
+      ready: ["Commitment Document drafted"],
+      needs_attention: [],
+      landing: `/agents/${result.agent?.id ?? "agt_new"}`,
     },
-    owner_user_id: _input.body.owner_user_id,
-    status: "draft" as const,
-    content_hash: "hash",
-    created_from: _input.created_from ?? "studio:test",
+    created_object_refs: {},
+    created_by: "owner-1",
     created_at: "2026-05-01T00:00:00Z",
     updated_at: "2026-05-01T00:00:00Z",
-    accepted_at: null,
-    superseded_at: null,
+    agent: {
+      id: result.agent?.id ?? "agt_new",
+      name: input.agent_name,
+      slug: input.slug,
+      description: input.contract.business_responsibility,
+      active_version: null,
+      updated_at: "2026-05-01T00:00:00Z",
+      workspace_id: "ws_1",
+    },
+    commitment: {
+      id: "commit_1",
+      agent_id: result.agent?.id ?? "agt_new",
+      workspace_id: "ws_1",
+      version: 1,
+      body: input.contract,
+      structured_summary: {
+        responsibility: input.contract.business_responsibility,
+        audience: input.contract.target_users,
+        owner: input.contract.owner_user_id,
+        backup_owner: input.contract.backup_owner_user_id,
+        risk: input.contract.worst_case_failure,
+        channels: input.contract.channels,
+        systems_touched: input.contract.systems_touched,
+        regions: input.contract.regions,
+        languages: input.contract.languages,
+        readiness: "complete" as const,
+        missing_required_fields: [],
+      },
+      owner_user_id: input.contract.owner_user_id,
+      status: "draft" as const,
+      content_hash: "hash",
+      created_from: "agent_intake:test",
+      created_at: "2026-05-01T00:00:00Z",
+      updated_at: "2026-05-01T00:00:00Z",
+      accepted_at: null,
+      superseded_at: null,
+    },
   }));
 }
 
@@ -82,14 +112,23 @@ describe("NewAgentModal", () => {
     push.mockReset();
   });
 
-  it("opens the dialog and submits to cp-api, then redirects to the detail page", async () => {
-    const createAgent = makeCreate({ id: "agt_42" });
-    const saveCommitmentDraft = makeSaveCommitment();
+  it("opens the dialog and submits governed intake, then redirects to the workbench", async () => {
+    const createAgentIntake = makeCreateIntake({
+      agent: {
+        id: "agt_42",
+        name: "Sales Bot",
+        slug: "sales-bot",
+        description: "",
+        active_version: null,
+        updated_at: "2026-05-01T00:00:00Z",
+        workspace_id: "ws_1",
+      },
+    });
     render(
       <NewAgentModal
         existingSlugs={["support"]}
-        createAgent={createAgent}
-        saveCommitmentDraft={saveCommitmentDraft}
+        workspaceId="ws_1"
+        createAgentIntake={createAgentIntake}
       />,
     );
 
@@ -99,36 +138,41 @@ describe("NewAgentModal", () => {
     fill("new-agent-name", "Sales Bot");
     fill("new-agent-slug", "sales-bot");
     fillContract();
+    fill("new-agent-artifact-name", "refund_policy.pdf");
+    fill("new-agent-artifact-text", "Always cite the May refund policy.");
     fireEvent.click(screen.getByTestId("new-agent-submit"));
 
     await waitFor(() => {
-      expect(createAgent).toHaveBeenCalledWith({
-        name: "Sales Bot",
-        slug: "sales-bot",
-        description: "Resolve billing cancellations safely.",
-      });
-    });
-    expect(saveCommitmentDraft).toHaveBeenCalledWith(
-      "agt_42",
-      expect.objectContaining({
-        created_from: "studio:new_agent_wizard",
-        body: expect.objectContaining({
-          channels: ["web", "whatsapp", "voice"],
-          owner_user_id: "maya@acme.test",
+      expect(createAgentIntake).toHaveBeenCalledWith(
+        "ws_1",
+        expect.objectContaining({
+          agent_name: "Sales Bot",
+          slug: "sales-bot",
+          creation_path: "business_intent",
+          contract: expect.objectContaining({
+            channels: ["web", "whatsapp", "voice"],
+            owner_user_id: "maya@acme.test",
+          }),
+          artifacts: [
+            expect.objectContaining({
+              name: "refund_policy.pdf",
+              text: "Always cite the May refund policy.",
+            }),
+          ],
         }),
-      }),
-    );
-    expect(push).toHaveBeenCalledWith("/agents/agt_42/contract");
+      );
+    });
+    expect(push).toHaveBeenCalledWith("/agents/agt_42?intake=intake_1");
     expect(screen.queryByTestId("new-agent-modal")).not.toBeInTheDocument();
   });
 
   it("blocks submission when slug collides with an existing agent", () => {
-    const createAgent = makeCreate();
+    const createAgentIntake = makeCreateIntake();
     render(
       <NewAgentModal
         existingSlugs={["support"]}
-        createAgent={createAgent}
-        saveCommitmentDraft={makeSaveCommitment()}
+        workspaceId="ws_1"
+        createAgentIntake={createAgentIntake}
       />,
     );
 
@@ -144,17 +188,17 @@ describe("NewAgentModal", () => {
     ).toBe(true);
 
     fireEvent.click(screen.getByTestId("new-agent-submit"));
-    expect(createAgent).not.toHaveBeenCalled();
+    expect(createAgentIntake).not.toHaveBeenCalled();
     expect(push).not.toHaveBeenCalled();
   });
 
   it("rejects malformed slugs before round-tripping", () => {
-    const createAgent = makeCreate();
+    const createAgentIntake = makeCreateIntake();
     render(
       <NewAgentModal
         existingSlugs={[]}
-        createAgent={createAgent}
-        saveCommitmentDraft={makeSaveCommitment()}
+        workspaceId="ws_1"
+        createAgentIntake={createAgentIntake}
       />,
     );
 
@@ -168,18 +212,18 @@ describe("NewAgentModal", () => {
     expect(
       (screen.getByTestId("new-agent-submit") as HTMLButtonElement).disabled,
     ).toBe(true);
-    expect(createAgent).not.toHaveBeenCalled();
+    expect(createAgentIntake).not.toHaveBeenCalled();
   });
 
   it("surfaces a server error and keeps the dialog open", async () => {
-    const createAgent = vi.fn(async () => {
-      throw new Error("cp-api POST /agents -> 500");
+    const createAgentIntake = vi.fn(async () => {
+      throw new Error("cp-api POST /agent-intakes -> 500");
     });
     render(
       <NewAgentModal
         existingSlugs={[]}
-        createAgent={createAgent}
-        saveCommitmentDraft={makeSaveCommitment()}
+        workspaceId="ws_1"
+        createAgentIntake={createAgentIntake}
       />,
     );
 
@@ -200,8 +244,8 @@ describe("NewAgentModal", () => {
     render(
       <NewAgentModal
         existingSlugs={[]}
-        createAgent={makeCreate()}
-        saveCommitmentDraft={makeSaveCommitment()}
+        workspaceId="ws_1"
+        createAgentIntake={makeCreateIntake()}
       />,
     );
 

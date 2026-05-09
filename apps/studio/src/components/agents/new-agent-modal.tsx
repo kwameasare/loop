@@ -4,20 +4,19 @@ import { useId, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import {
-  type AgentSummary,
-  type CreateAgentInput,
-  createAgent as defaultCreateAgent,
-} from "@/lib/cp-api";
-import {
   EMPTY_COMMITMENT_BODY,
   type CommitmentBody,
-  type CommitmentDocument,
-  type CommitmentDraftInput,
   commitmentFieldLabel,
   missingCommitmentFields,
   parseList,
-  saveCommitmentDraft as defaultSaveCommitmentDraft,
 } from "@/lib/agent-commitment";
+import {
+  createAgentIntake as defaultCreateAgentIntake,
+  type AgentIntakeArtifactInput,
+  type AgentIntakeCreateInput,
+  type AgentIntakeCreateResult,
+  type AgentIntakePath,
+} from "@/lib/agent-intake";
 import {
   Dialog,
   DialogContent,
@@ -32,13 +31,13 @@ const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 export interface NewAgentModalProps {
   /** Slugs already used in this workspace; submit is blocked if name collides. */
   existingSlugs: string[];
-  /** Override for tests so we don't hit the real cp-api. */
-  createAgent?: (input: CreateAgentInput) => Promise<AgentSummary>;
-  /** Override for tests so the creation wizard can seed the contract without cp-api. */
-  saveCommitmentDraft?: (
-    agentId: string,
-    input: CommitmentDraftInput,
-  ) => Promise<CommitmentDocument>;
+  /** Active workspace receiving the governed intake. */
+  workspaceId?: string | null | undefined;
+  /** Override for tests so the wizard doesn't hit the real cp-api. */
+  createAgentIntake?: (
+    workspaceId: string,
+    input: AgentIntakeCreateInput,
+  ) => Promise<AgentIntakeCreateResult>;
 }
 
 type Status =
@@ -54,17 +53,29 @@ type Status =
  */
 export function NewAgentModal({
   existingSlugs,
-  createAgent = defaultCreateAgent,
-  saveCommitmentDraft = defaultSaveCommitmentDraft,
+  workspaceId,
+  createAgentIntake = defaultCreateAgentIntake,
 }: NewAgentModalProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [creationPath, setCreationPath] =
+    useState<AgentIntakePath>("business_intent");
   const [contract, setContract] = useState<CommitmentBody>({
     ...EMPTY_COMMITMENT_BODY,
     channels: ["web"],
     languages: ["en"],
+  });
+  const [capabilities, setCapabilities] = useState<string[]>([
+    "Answer from knowledge",
+  ]);
+  const [artifact, setArtifact] = useState<AgentIntakeArtifactInput>({
+    name: "",
+    kind: "transcript",
+    text: "",
+    source_ref: "",
   });
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const slugErrorId = useId();
@@ -81,6 +92,7 @@ export function NewAgentModal({
       ? "An agent with this slug already exists in the workspace."
       : null;
   const missingContract = missingCommitmentFields(contract);
+  const effectiveWorkspaceId = workspaceId?.trim() || "local-workspace";
   const canSubmit =
     trimmedName.length > 0 &&
     trimmedSlug.length > 0 &&
@@ -89,13 +101,17 @@ export function NewAgentModal({
     status.kind !== "submitting";
 
   function reset() {
+    setStep(0);
     setName("");
     setSlug("");
+    setCreationPath("business_intent");
     setContract({
       ...EMPTY_COMMITMENT_BODY,
       channels: ["web"],
       languages: ["en"],
     });
+    setCapabilities(["Answer from knowledge"]);
+    setArtifact({ name: "", kind: "transcript", text: "", source_ref: "" });
     setStatus({ kind: "idle" });
   }
 
@@ -106,27 +122,48 @@ export function NewAgentModal({
     setContract((current) => ({ ...current, [field]: value }));
   }
 
+  function toggleCapability(capability: string) {
+    setCapabilities((current) =>
+      current.includes(capability)
+        ? current.filter((item) => item !== capability)
+        : [...current, capability],
+    );
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canSubmit) return;
     setStatus({ kind: "submitting" });
     try {
-      const created = await createAgent({
-        name: trimmedName,
+      const artifacts =
+        artifact.name.trim() ||
+        artifact.text.trim() ||
+        artifact.source_ref.trim()
+          ? [
+              {
+                ...artifact,
+                name: artifact.name.trim() || "intake-notes",
+              },
+            ]
+          : [];
+      const result = await createAgentIntake(effectiveWorkspaceId, {
+        agent_name: trimmedName,
         slug: trimmedSlug,
-        description: contract.business_responsibility.trim(),
-      });
-      await saveCommitmentDraft(created.id, {
-        body: contract,
-        created_from: "studio:new_agent_wizard",
+        creation_path: creationPath,
+        contract,
+        capabilities,
+        artifacts,
       });
       setOpen(false);
       reset();
-      router.push(`/agents/${created.id}/contract`);
+      router.push(`/agents/${result.agent.id}?intake=${result.id}`);
     } catch (err) {
       setStatus({
         kind: "error",
-        message: err instanceof Error ? err.message : "Failed to create agent.",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Failed to create governed agent intake.",
       });
     }
   }
@@ -161,12 +198,85 @@ export function NewAgentModal({
           noValidate
         >
           <DialogHeader>
-            <DialogTitle>Create agent contract</DialogTitle>
+            <DialogTitle>Create governed agent intake</DialogTitle>
             <DialogDescription>
-              Define what this agent is accountable for before any behavior,
-              tools, channels, or deployments are configured.
+              Start from business responsibility, artifacts, channels, and risk.
+              Studio creates the draft agent, contract, sandbox channels, mock
+              tool contracts, memory policy, and starter evals together.
             </DialogDescription>
           </DialogHeader>
+
+          <ol
+            className="grid gap-2 text-xs md:grid-cols-4"
+            aria-label="Agent contract wizard steps"
+          >
+            {["Mission", "Boundaries", "Capabilities", "Readiness"].map(
+              (label, index) => (
+                <li key={label}>
+                  <button
+                    type="button"
+                    onClick={() => setStep(index)}
+                    aria-current={step === index ? "step" : undefined}
+                    className={[
+                      "w-full rounded-md border px-3 py-2 text-left transition-colors",
+                      step === index
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "bg-background text-muted-foreground hover:bg-muted/50",
+                    ].join(" ")}
+                  >
+                    <span className="block font-semibold">{label}</span>
+                    <span>Step {index + 1}</span>
+                  </button>
+                </li>
+              ),
+            )}
+          </ol>
+
+          <fieldset className="grid gap-3 rounded-md border bg-muted/30 p-4">
+            <legend className="px-1 text-sm font-medium">Creation path</legend>
+            <div className="grid gap-2 md:grid-cols-3">
+              {[
+                {
+                  value: "business_intent",
+                  label: "Business intent",
+                  detail: "Describe the job and seed a governed draft.",
+                },
+                {
+                  value: "legacy_import",
+                  label: "Legacy import",
+                  detail:
+                    "Use Botpress, Dialogflow, Rasa, or transcript input.",
+                },
+                {
+                  value: "enterprise_template",
+                  label: "Enterprise template",
+                  detail: "Clone an approved internal pattern.",
+                },
+              ].map((option) => (
+                <label
+                  key={option.value}
+                  className="flex cursor-pointer gap-2 rounded-md border bg-background p-3 text-sm"
+                >
+                  <input
+                    type="radio"
+                    name="creation-path"
+                    value={option.value}
+                    checked={creationPath === option.value}
+                    onChange={(event) =>
+                      setCreationPath(event.target.value as AgentIntakePath)
+                    }
+                  />
+                  <span>
+                    <span className="block font-medium">{option.label}</span>
+                    <span className="text-muted-foreground">
+                      {option.detail}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
           <div className="grid gap-4 rounded-md border bg-muted/30 p-4 md:grid-cols-2">
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Name</span>
@@ -319,7 +429,167 @@ export function NewAgentModal({
                 />
               </label>
             </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Success metric</span>
+                <input
+                  value={contract.success_metric}
+                  onChange={(e) =>
+                    updateContract("success_metric", e.target.value)
+                  }
+                  data-testid="new-agent-success-metric"
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Compliance domain</span>
+                <input
+                  value={contract.compliance_domain}
+                  onChange={(e) =>
+                    updateContract("compliance_domain", e.target.value)
+                  }
+                  data-testid="new-agent-compliance-domain"
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Expected volume</span>
+                <input
+                  value={contract.expected_volume}
+                  onChange={(e) =>
+                    updateContract("expected_volume", e.target.value)
+                  }
+                  data-testid="new-agent-expected-volume"
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Budget target</span>
+                <input
+                  value={contract.budget_target}
+                  onChange={(e) =>
+                    updateContract("budget_target", e.target.value)
+                  }
+                  data-testid="new-agent-budget-target"
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm md:col-span-2">
+                <span className="font-medium">Escalation policy</span>
+                <textarea
+                  value={contract.escalation_policy}
+                  onChange={(e) =>
+                    updateContract("escalation_policy", e.target.value)
+                  }
+                  rows={2}
+                  data-testid="new-agent-escalation-policy"
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+            </div>
           </div>
+
+          <fieldset className="grid gap-3 rounded-md border bg-muted/30 p-4">
+            <legend className="px-1 text-sm font-medium">
+              Capabilities to seed
+            </legend>
+            <div className="grid gap-2 md:grid-cols-2">
+              {[
+                "Answer from knowledge",
+                "Search customer/account data",
+                "Create or update records",
+                "Trigger workflows",
+                "Handoff to human",
+                "Send notifications",
+                "Voice interaction",
+                "Channel-specific messaging",
+              ].map((capability) => (
+                <label
+                  key={capability}
+                  className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={capabilities.includes(capability)}
+                    onChange={() => toggleCapability(capability)}
+                  />
+                  <span>{capability}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="grid gap-3 rounded-md border bg-muted/30 p-4">
+            <legend className="px-1 text-sm font-medium">
+              Artifact intake
+            </legend>
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_12rem]">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Artifact name or URL</span>
+                <input
+                  value={artifact.name}
+                  onChange={(e) =>
+                    setArtifact((current) => ({
+                      ...current,
+                      name: e.target.value,
+                    }))
+                  }
+                  placeholder="refund_policy.pdf, botpress-export.bpz, OpenAPI URL"
+                  data-testid="new-agent-artifact-name"
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Kind</span>
+                <select
+                  value={artifact.kind}
+                  onChange={(e) =>
+                    setArtifact((current) => ({
+                      ...current,
+                      kind: e.target.value as AgentIntakeArtifactInput["kind"],
+                    }))
+                  }
+                  data-testid="new-agent-artifact-kind"
+                  className="rounded-md border bg-background px-2 py-1"
+                >
+                  {[
+                    "pdf",
+                    "faq",
+                    "runbook",
+                    "transcript",
+                    "botpress_export",
+                    "dialogflow_export",
+                    "rasa_export",
+                    "openapi",
+                    "postman",
+                    "curl",
+                    "devtools_fetch",
+                    "other",
+                  ].map((kind) => (
+                    <option key={kind} value={kind}>
+                      {kind.replace(/_/g, " ")}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-sm md:col-span-2">
+                <span className="font-medium">Paste content or notes</span>
+                <textarea
+                  value={artifact.text}
+                  onChange={(e) =>
+                    setArtifact((current) => ({
+                      ...current,
+                      text: e.target.value,
+                    }))
+                  }
+                  rows={4}
+                  placeholder="Paste transcript excerpts, policy text, cURL, Copy as fetch, or migration notes. Credentials can stay mocked."
+                  data-testid="new-agent-artifact-text"
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+            </div>
+          </fieldset>
 
           {missingContract.length > 0 ? (
             <p
@@ -340,6 +610,20 @@ export function NewAgentModal({
               {status.message}
             </p>
           ) : null}
+          <div className="grid gap-2 rounded-md border bg-card p-3 text-xs text-muted-foreground md:grid-cols-3">
+            <span>
+              Creates <strong className="text-foreground">Commitment</strong> v1
+              from this contract.
+            </span>
+            <span>
+              Seeds <strong className="text-foreground">channels/tools</strong>{" "}
+              in sandbox or mock mode.
+            </span>
+            <span>
+              Adds <strong className="text-foreground">starter evals</strong>{" "}
+              before any deploy action exists.
+            </span>
+          </div>
           <div className="flex justify-end gap-2">
             <button
               type="button"
@@ -355,7 +639,9 @@ export function NewAgentModal({
               data-testid="new-agent-submit"
               className="rounded-md bg-primary px-3 py-1 text-sm font-medium text-primary-foreground disabled:opacity-50"
             >
-              {status.kind === "submitting" ? "Creating…" : "Create contract"}
+              {status.kind === "submitting"
+                ? "Analyzing intake…"
+                : "Create governed draft"}
             </button>
           </div>
         </form>
