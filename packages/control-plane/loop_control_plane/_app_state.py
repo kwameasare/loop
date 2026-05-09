@@ -12,6 +12,7 @@ from loop_memory.inmemory import InMemorySessionMemoryStore, InMemoryUserMemoryS
 from loop_control_plane._app_agents import AgentRegistry, PostgresAgentRegistry
 from loop_control_plane.agent_commitments import CommitmentRegistry
 from loop_control_plane.agent_versions import AgentVersionService
+from loop_control_plane.agent_workflow import AgentWorkflowRegistry
 from loop_control_plane.api_keys import ApiKeyService, PostgresApiKeyService
 from loop_control_plane.api_keys_api import ApiKeyAPI
 from loop_control_plane.audit_events import (
@@ -222,6 +223,9 @@ class CpApiState:
         self.channel_bindings = ChannelBindingRegistry()
         # Agent-flow implementation: tools require durable safety contracts.
         self.tool_contracts = ToolContractRegistry()
+        # Agent-flow implementation: branch/change-set/release-candidate
+        # workflow between draft edits and preflight.
+        self.agent_workflows = AgentWorkflowRegistry()
         # Agent-flow implementation: durable memory policies govern every
         # persistent memory write before activation.
         self.memory_policies = MemoryPolicyRegistry()
