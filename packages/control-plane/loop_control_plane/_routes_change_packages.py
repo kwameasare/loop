@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Request
@@ -12,7 +12,10 @@ from loop_control_plane.change_packages import (
     ChangePackageApprovalAction,
     ChangePackageGenerate,
     change_package_payload,
+    infer_change_risk,
+    infer_change_types,
 )
+from loop_control_plane.preapproved_classes import RiskCeiling, preapproved_class_payload
 
 router = APIRouter(prefix="/v1/agents", tags=["ChangePackages"])
 
@@ -105,10 +108,31 @@ async def generate_change_package(
         caller_sub=caller_sub,
     )
     commitment = await request.app.state.cp.agent_commitments.current(agent=agent)
+    change_types = infer_change_types(body)
+    risk = infer_change_risk(body)
+    preapproved = await request.app.state.cp.preapproved_classes.applicable(
+        agent=agent,
+        change_types=change_types,
+        risk=cast(RiskCeiling, risk),
+        actor_sub=caller_sub,
+    )
     package = await request.app.state.cp.change_packages.generate(
         agent=agent,
         commitment=commitment,
         body=body,
+        pre_approved_classes=[
+            {
+                **preapproved_class_payload(record),
+                "matched_change_types": change_types,
+                "matched_risk": risk,
+            }
+            for record in preapproved
+        ],
+    )
+    await request.app.state.cp.preapproved_classes.mark_used(
+        agent=agent,
+        class_ids=[record.id for record in preapproved],
+        package_id=package.id,
     )
     _audit(
         request,
@@ -121,6 +145,9 @@ async def generate_change_package(
             "content_hash": package.content_hash,
             "commitment_document_id": package.commitment_document_id,
             "status": package.status,
+            "change_types": change_types,
+            "risk": risk,
+            "pre_approved_classes": [record.id for record in preapproved],
         },
     )
     return change_package_payload(package)

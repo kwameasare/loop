@@ -53,6 +53,7 @@ from loop_control_plane.mcp_marketplace import (
 )
 from loop_control_plane.memory_policies import MemoryPolicyRegistry
 from loop_control_plane.migration_runs import MigrationRunRegistry
+from loop_control_plane.preapproved_classes import PreApprovedClassRegistry
 from loop_control_plane.saml import SamlValidator, StubSamlValidator
 from loop_control_plane.secrets import InMemorySecretsBackend, SecretsBackend
 from loop_control_plane.simulator_feedback import SimulatorFeedbackRegistry
@@ -223,6 +224,8 @@ class CpApiState:
         self.agent_commitments = CommitmentRegistry()
         # Agent-flow implementation: preflight produces immutable Change Packages.
         self.change_packages = ChangePackageRegistry()
+        # Agent-flow implementation: explicit time-boxed pre-approved classes.
+        self.preapproved_classes = PreApprovedClassRegistry()
         # Agent-flow implementation: every agent owns peer channel bindings.
         self.channel_bindings = ChannelBindingRegistry()
         # Agent-flow implementation: tools require durable safety contracts.
