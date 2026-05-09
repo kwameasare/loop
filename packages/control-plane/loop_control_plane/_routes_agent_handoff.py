@@ -114,6 +114,9 @@ async def _handoff_model(request: Request, *, agent: Any) -> dict[str, Any]:
         agent_id=agent.id,
     )
     transfers = await cp.agent_handoffs.list_for_agent(agent=agent)
+    comment_resolutions = list(
+        getattr(cp, "ux_wireup", {}).get("comment_resolutions", {}).get(str(agent.id), [])
+    )
     risks: list[dict[str, str]] = []
     missing = missing_required_fields(commitment.body)
     if missing:
@@ -205,6 +208,23 @@ async def _handoff_model(request: Request, *, agent: Any) -> dict[str, Any]:
             summary=f"{len(incidents)} incident record(s).",
             count=len(incidents),
             evidence_refs=[f"incident/{item.id}" for item in incidents[:5]],
+        ),
+        _section(
+            section_id="important-comments",
+            title="Important reviewer comments",
+            summary=(
+                f"{len(comment_resolutions)} resolved reviewer comment(s), "
+                "including comments converted to eval cases."
+            ),
+            count=len(comment_resolutions),
+            evidence_refs=[
+                (
+                    f"comment/{item.get('comment_id')}"
+                    if not item.get("case_id")
+                    else f"comment/{item.get('comment_id')} -> eval/{item.get('case_id')}"
+                )
+                for item in comment_resolutions[-5:]
+            ],
         ),
     ]
     return {

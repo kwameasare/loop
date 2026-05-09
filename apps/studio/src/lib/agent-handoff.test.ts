@@ -11,6 +11,9 @@ describe("agent handoff client", () => {
     const model = await fetchAgentHandoff("agent_1");
     expect(model.agent.id).toBe("agent_1");
     expect(model.open_risks[0]?.id).toBe("commitment_missing_fields");
+    expect(model.walkthrough_sections.map((section) => section.id)).toContain(
+      "important-comments",
+    );
   });
 
   it("posts ownership transfer to the durable handoff endpoint", async () => {
