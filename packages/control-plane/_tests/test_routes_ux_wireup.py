@@ -458,6 +458,80 @@ def test_channel_bindings_are_peer_agent_objects_with_readiness(
     }
 
 
+def test_deployment_start_creates_evidence_pack_from_approved_change_package(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    package = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "from_version_id": "v1",
+            "to_version_id": "v2",
+            "summary": "Promote approved web and WhatsApp canary.",
+            "eval_results_ref": "eval/run/v2",
+            "replay_results_ref": "replay/run/v2",
+            "rollback_target_version_id": "v1",
+        },
+    ).json()
+    submitted = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{package['id']}/submit",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert submitted.status_code == 200, submitted.text
+    for approval_id in ("owner", "compliance"):
+        approved = client.post(
+            f"/v1/agents/{agent_id}/change-packages/{package['id']}/approvals",
+            headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+            json={"approval_id": approval_id, "decision": "approve"},
+        )
+        assert approved.status_code == 200, approved.text
+
+    start = client.post(
+        f"/v1/agents/{agent_id}/deployments/start",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "change_package_id": package["id"],
+            "version_id": "v2",
+            "traffic_percent": 10,
+            "channel_scope": ["web_chat", "whatsapp"],
+            "region_scope": ["us-east-1"],
+            "auto_rollback_thresholds": {"error_rate": 0.02},
+        },
+    )
+    assert start.status_code == 201, start.text
+    deployment = start.json()["deployment"]
+    evidence_pack = start.json()["evidence_pack"]
+    assert deployment["status"] == "canary"
+    assert deployment["trafficPercent"] == 10
+    assert deployment["evidencePackId"] == evidence_pack["id"]
+    assert evidence_pack["change_package_id"] == package["id"]
+    assert evidence_pack["version_manifest"]["content_hash"] == package["content_hash"]
+
+    promoted = client.post(
+        f"/v1/agents/{agent_id}/deployments/{deployment['id']}/promote",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert promoted.status_code == 200, promoted.text
+    assert promoted.json()["status"] == "live"
+    assert promoted.json()["trafficPercent"] == 100
+
+    packs = client.get(
+        f"/v1/agents/{agent_id}/evidence-packs",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert packs.status_code == 200, packs.text
+    assert packs.json()["items"][0]["id"] == evidence_pack["id"]
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "deployment:start",
+        "deployment:promote",
+    }
+
+
 def test_comment_resolution_can_create_eval_case(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:

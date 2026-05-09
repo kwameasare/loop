@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { DeployTimeline } from "./deploy-timeline";
+import { buildLocalChangePackage } from "@/lib/change-package";
 import type { Deployment } from "@/lib/deploys";
 
 function mkDep(overrides: Partial<Deployment>): Deployment {
@@ -27,12 +28,22 @@ describe("DeployTimeline", () => {
         agentId="a"
         initialDeployments={[
           mkDep({ id: "d1", status: "canary", trafficPercent: 25 }),
-          mkDep({ id: "d2", status: "live", trafficPercent: 75, versionId: "v0" }),
+          mkDep({
+            id: "d2",
+            status: "live",
+            trafficPercent: 75,
+            versionId: "v0",
+          }),
         ]}
       />,
     );
-    expect(screen.getByTestId("deploy-row-d1")).toHaveAttribute("data-status", "canary");
-    expect(screen.getByTestId("deploy-current-canary")).toHaveTextContent("25%");
+    expect(screen.getByTestId("deploy-row-d1")).toHaveAttribute(
+      "data-status",
+      "canary",
+    );
+    expect(screen.getByTestId("deploy-current-canary")).toHaveTextContent(
+      "25%",
+    );
     expect(screen.getByTestId("deploy-current-live")).toHaveTextContent("v0");
   });
 
@@ -50,14 +61,24 @@ describe("DeployTimeline", () => {
 
   it("promote replaces the canary row with the live deployment and supersedes prior live", async () => {
     const promote = vi.fn(async () =>
-      mkDep({ id: "d1", status: "live", trafficPercent: 100, promotedAt: "now" }),
+      mkDep({
+        id: "d1",
+        status: "live",
+        trafficPercent: 100,
+        promotedAt: "now",
+      }),
     );
     render(
       <DeployTimeline
         agentId="a"
         initialDeployments={[
           mkDep({ id: "d1", status: "canary", trafficPercent: 25 }),
-          mkDep({ id: "d2", status: "live", trafficPercent: 75, versionId: "v0" }),
+          mkDep({
+            id: "d2",
+            status: "live",
+            trafficPercent: 75,
+            versionId: "v0",
+          }),
         ]}
         promote={promote}
       />,
@@ -66,22 +87,34 @@ describe("DeployTimeline", () => {
       fireEvent.click(screen.getByTestId("deploy-promote-d1"));
     });
     expect(promote).toHaveBeenCalledWith("a", "d1");
-    expect(screen.getByTestId("deploy-row-d1")).toHaveAttribute("data-status", "live");
+    expect(screen.getByTestId("deploy-row-d1")).toHaveAttribute(
+      "data-status",
+      "live",
+    );
     expect(screen.getByTestId("deploy-row-d2")).toHaveAttribute(
       "data-status",
       "superseded",
     );
-    expect(screen.getByTestId("deploy-toast-success")).toHaveTextContent("Promoted");
+    expect(screen.getByTestId("deploy-toast-success")).toHaveTextContent(
+      "Promoted",
+    );
   });
 
   it("rollback flips a live deployment and surfaces a toast", async () => {
     const rollback = vi.fn(async () =>
-      mkDep({ id: "d1", status: "rolled_back", trafficPercent: 0, rolledBackAt: "now" }),
+      mkDep({
+        id: "d1",
+        status: "rolled_back",
+        trafficPercent: 0,
+        rolledBackAt: "now",
+      }),
     );
     render(
       <DeployTimeline
         agentId="a"
-        initialDeployments={[mkDep({ id: "d1", status: "live", trafficPercent: 100 })]}
+        initialDeployments={[
+          mkDep({ id: "d1", status: "live", trafficPercent: 100 }),
+        ]}
         rollback={rollback}
       />,
     );
@@ -93,7 +126,9 @@ describe("DeployTimeline", () => {
       "data-status",
       "rolled_back",
     );
-    expect(screen.getByTestId("deploy-toast-success")).toHaveTextContent("Rolled back");
+    expect(screen.getByTestId("deploy-toast-success")).toHaveTextContent(
+      "Rolled back",
+    );
   });
 
   it("surfaces an error toast if the action throws", async () => {
@@ -111,5 +146,50 @@ describe("DeployTimeline", () => {
       fireEvent.click(screen.getByTestId("deploy-pause-d1"));
     });
     expect(screen.getByTestId("deploy-toast-error")).toHaveTextContent("boom");
+  });
+
+  it("starts canary from an approved Change Package and shows the evidence pack", async () => {
+    const changePackage = {
+      ...buildLocalChangePackage("a"),
+      id: "cp_1",
+      status: "approved" as const,
+      to_version_id: "v2",
+      evidence_pack_id: "ep_cp_1",
+    };
+    const startCanary = vi.fn(async () => ({
+      deployment: mkDep({
+        id: "dep_new",
+        status: "canary",
+        versionId: "v2",
+        trafficPercent: 5,
+        evidencePackId: "ep_1",
+      }),
+    }));
+    render(
+      <DeployTimeline
+        agentId="a"
+        approvedChangePackage={changePackage}
+        initialDeployments={[]}
+        startCanary={startCanary}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("deploy-start-canary"));
+    });
+
+    expect(startCanary).toHaveBeenCalledWith(
+      "a",
+      expect.objectContaining({
+        change_package_id: "cp_1",
+        version_id: "v2",
+      }),
+    );
+    expect(screen.getByTestId("deploy-row-dep_new")).toHaveTextContent(
+      "Evidence pack",
+    );
+    expect(screen.getByTestId("deploy-toast-success")).toHaveTextContent(
+      "Started canary",
+    );
   });
 });

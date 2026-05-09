@@ -27,6 +27,7 @@ from loop_control_plane._routes_conversations import (
 from loop_control_plane._routes_conversations import (
     router_conversations as conversations_router,
 )
+from loop_control_plane._routes_deployments import router as deployments_router
 from loop_control_plane._routes_dsr import router as dsr_router
 from loop_control_plane._routes_evals import (
     router_suites as eval_suites_router,
@@ -103,6 +104,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         change_packages_router,
         # Agent-flow implementation: omnichannel bindings are agent-scoped peers.
         channel_bindings_router,
+        # Agent-flow implementation: rollout state generates Evidence Packs.
+        deployments_router,
         # UX wire-up: Studio Tools Room reads active version tool bindings.
         agent_tools_router,
         # UX wire-up: Studio Memory Studio reads runtime memory stores.

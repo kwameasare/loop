@@ -7,6 +7,7 @@ import {
   pauseDeployment,
   promoteDeployment,
   rollbackDeployment,
+  startCanaryDeployment,
   type Deployment,
 } from "./deploys";
 
@@ -71,7 +72,8 @@ describe("listDeployments cp-api mode", () => {
       token: "tok",
     });
     expect(items).toHaveLength(1);
-    const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock.calls[0];
+    const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0];
     expect(call[0]).toBe("https://api.loop.dev/v1/agents/agt_x/deployments");
   });
 
@@ -80,18 +82,101 @@ describe("listDeployments cp-api mode", () => {
       ok: true,
       status: 200,
       json: async () => ({
-        id: "dep_001", agentId: "a", versionId: "v", status: "live",
-        trafficPercent: 100, createdAt: "", promotedAt: "now",
-        pausedAt: null, rolledBackAt: null, notes: null,
+        id: "dep_001",
+        agentId: "a",
+        versionId: "v",
+        status: "live",
+        trafficPercent: 100,
+        createdAt: "",
+        promotedAt: "now",
+        pausedAt: null,
+        rolledBackAt: null,
+        notes: null,
       }),
     })) as unknown as typeof fetch;
     await promoteDeployment("a", "dep_001", {
       fetcher,
       baseUrl: "https://api.loop.dev",
     });
-    const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock.calls[0];
-    expect(call[0]).toBe("https://api.loop.dev/v1/agents/a/deployments/dep_001/promote");
+    const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0];
+    expect(call[0]).toBe(
+      "https://api.loop.dev/v1/agents/a/deployments/dep_001/promote",
+    );
     expect((call[1] as { method: string }).method).toBe("POST");
+  });
+
+  it("starts a canary deployment from an approved change package", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            deployment: {
+              id: "dep_new",
+              agentId: "agt_x",
+              versionId: "v2",
+              changePackageId: "cp_1",
+              evidencePackId: "ep_1",
+              status: "canary",
+              trafficPercent: 10,
+              createdAt: "2026-05-09T00:00:00Z",
+              promotedAt: null,
+              pausedAt: null,
+              rolledBackAt: null,
+              notes: null,
+            },
+            evidence_pack: {
+              id: "ep_1",
+              workspace_id: "ws_1",
+              agent_id: "agt_x",
+              version_id: "v2",
+              deployment_id: "dep_new",
+              change_package_id: "cp_1",
+              version_manifest: {},
+              behavior_diff_ref: "change_package.semantic_diff",
+              tool_permission_diff_ref: "change_package.tool_changes",
+              knowledge_diff_ref: "change_package.knowledge_changes",
+              memory_policy_ref: "change_package.memory_changes",
+              channel_deployment_plan_ref: "deployment.channel_scope",
+              eval_results_ref: "eval/run",
+              approval_records_ref: "change_package.required_approvals",
+              canary_results_ref: "deployment/dep_new/canary",
+              rollback_plan_ref: "v1",
+              audit_log_ref: "audit/deployment/dep_new",
+              created_at: "2026-05-09T00:00:00Z",
+              export_formats: ["pdf", "json"],
+            },
+          }),
+          { status: 201, headers: { "content-type": "application/json" } },
+        ),
+    );
+
+    const result = await startCanaryDeployment(
+      "agt_x",
+      {
+        change_package_id: "cp_1",
+        version_id: "v2",
+        traffic_percent: 10,
+        channel_scope: ["web_chat", "whatsapp"],
+      },
+      {
+        fetcher: fetcher as unknown as typeof fetch,
+        baseUrl: "https://api.loop.dev",
+      },
+    );
+
+    expect(result.deployment.evidencePackId).toBe("ep_1");
+    const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0]!;
+    expect(call[0]).toBe(
+      "https://api.loop.dev/v1/agents/agt_x/deployments/start",
+    );
+    expect(
+      JSON.parse(String((call[1] as RequestInit | undefined)?.body)),
+    ).toMatchObject({
+      change_package_id: "cp_1",
+      channel_scope: ["web_chat", "whatsapp"],
+    });
   });
 
   it("rollback throws on non-ok response", async () => {
@@ -101,7 +186,10 @@ describe("listDeployments cp-api mode", () => {
       json: async () => ({}),
     })) as unknown as typeof fetch;
     await expect(
-      rollbackDeployment("a", "dep_x", { fetcher, baseUrl: "https://api.loop.dev" }),
+      rollbackDeployment("a", "dep_x", {
+        fetcher,
+        baseUrl: "https://api.loop.dev",
+      }),
     ).rejects.toThrow(/500/);
   });
 });

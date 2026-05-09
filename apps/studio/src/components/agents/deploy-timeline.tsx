@@ -6,14 +6,28 @@ import {
   pauseDeployment as defaultPause,
   promoteDeployment as defaultPromote,
   rollbackDeployment as defaultRollback,
+  startCanaryDeployment as defaultStartCanary,
   type Deployment,
 } from "@/lib/deploys";
+import type { ChangePackage } from "@/lib/change-package";
 
 type ActionFn = (agentId: string, depId: string) => Promise<Deployment>;
+type StartFn = (
+  agentId: string,
+  input: {
+    change_package_id: string;
+    version_id?: string;
+    traffic_percent?: number;
+    channel_scope?: string[];
+    notes?: string | null;
+  },
+) => Promise<{ deployment: Deployment }>;
 
 export interface DeployTimelineProps {
   agentId: string;
   initialDeployments: Deployment[];
+  approvedChangePackage?: ChangePackage | null;
+  startCanary?: StartFn;
   promote?: ActionFn;
   pause?: ActionFn;
   rollback?: ActionFn;
@@ -46,6 +60,8 @@ function statusColor(status: Deployment["status"]): string {
 export function DeployTimeline({
   agentId,
   initialDeployments,
+  approvedChangePackage = null,
+  startCanary = defaultStartCanary,
   promote = defaultPromote,
   pause = defaultPause,
   rollback = defaultRollback,
@@ -61,7 +77,8 @@ export function DeployTimeline({
     setBusy(`${dep.id}:${action}`);
     setToast(null);
     try {
-      const fn = action === "promote" ? promote : action === "pause" ? pause : rollback;
+      const fn =
+        action === "promote" ? promote : action === "pause" ? pause : rollback;
       const updated = await fn(agentId, dep.id);
       setItems((prev) => {
         const next = prev.map((d) => (d.id === updated.id ? updated : d));
@@ -95,13 +112,57 @@ export function DeployTimeline({
     }
   }
 
+  async function handleStartCanary() {
+    if (!approvedChangePackage) return;
+    setBusy("start-canary");
+    setToast(null);
+    try {
+      const result = await startCanary(agentId, {
+        change_package_id: approvedChangePackage.id,
+        version_id: approvedChangePackage.to_version_id,
+        traffic_percent: 5,
+        channel_scope: ["web_chat"],
+        notes: `Started from ${approvedChangePackage.evidence_pack_id}`,
+      });
+      setItems((prev) => [result.deployment, ...prev]);
+      setToast({
+        kind: "success",
+        message: `Started canary ${result.deployment.id}; evidence pack ${result.deployment.evidencePackId ?? "created"}.`,
+      });
+    } catch (err) {
+      setToast({
+        kind: "error",
+        message: (err as Error).message ?? "start canary failed.",
+      });
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const canary = items.find((d) => d.status === "canary");
   const live = items.find((d) => d.status === "live");
 
   return (
     <section className="flex flex-col gap-4" data-testid="deploy-timeline">
       <header className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">Deploys</h2>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Deploys</h2>
+            <p className="text-xs text-muted-foreground">
+              Rollout starts only from an approved Change Package and creates an
+              Evidence Pack.
+            </p>
+          </div>
+          <button
+            className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            data-testid="deploy-start-canary"
+            disabled={!approvedChangePackage || busy !== null}
+            onClick={handleStartCanary}
+            type="button"
+          >
+            {busy === "start-canary" ? "Starting..." : "Start canary"}
+          </button>
+        </div>
         <p
           className="text-xs text-muted-foreground"
           data-testid="deploy-current-canary"
@@ -114,15 +175,14 @@ export function DeployTimeline({
           className="text-xs text-muted-foreground"
           data-testid="deploy-current-live"
         >
-          {live ? `Live: ${live.versionId} at ${live.trafficPercent}%.` : "No live deployment."}
+          {live
+            ? `Live: ${live.versionId} at ${live.trafficPercent}%.`
+            : "No live deployment."}
         </p>
       </header>
 
       {items.length === 0 ? (
-        <p
-          className="text-sm text-muted-foreground"
-          data-testid="deploy-empty"
-        >
+        <p className="text-sm text-muted-foreground" data-testid="deploy-empty">
           No deployments yet for this agent.
         </p>
       ) : (
@@ -149,6 +209,12 @@ export function DeployTimeline({
                     </p>
                     {dep.notes ? (
                       <p className="text-xs italic">{dep.notes}</p>
+                    ) : null}
+                    {dep.evidencePackId ? (
+                      <p className="text-xs">
+                        Evidence pack:{" "}
+                        <span className="font-mono">{dep.evidencePackId}</span>
+                      </p>
                     ) : null}
                   </div>
                   <div className="flex gap-1">

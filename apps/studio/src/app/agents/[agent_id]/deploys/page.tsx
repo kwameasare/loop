@@ -38,6 +38,12 @@ export default async function AgentDeploysPage({
       />
       <DeployTimeline
         agentId={params.agent_id}
+        approvedChangePackage={
+          changePackage.status === "approved" ||
+          changePackage.status === "deployable"
+            ? changePackage
+            : null
+        }
         initialDeployments={deployments}
       />
     </div>
