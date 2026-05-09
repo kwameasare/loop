@@ -32,6 +32,7 @@ export type SimulatorSeededContextId =
   | "blank";
 
 export type SimulatorToolMode = "mock" | "live";
+export type SimulatorEvidenceMode = "fixture" | "empty";
 
 export interface SimulatorConfig {
   channel: SimulatorChannel;
@@ -281,6 +282,12 @@ export const DEFAULT_SIMULATOR_CONFIG: SimulatorConfig = {
   toolMode: "mock",
 };
 
+export const EMPTY_SIMULATOR_CONFIG: SimulatorConfig = {
+  ...DEFAULT_SIMULATOR_CONFIG,
+  seededContextId: "blank",
+  diffAgainst: "none",
+};
+
 function byId<T extends { id: string }>(items: T[], id: string): T {
   return items.find((item) => item.id === id) ?? items[0]!;
 }
@@ -454,7 +461,9 @@ export function parseSimulatorCommand(
 export function buildSimulatorRun(
   config: SimulatorConfig,
   agentId: string,
+  evidenceMode: SimulatorEvidenceMode = "fixture",
 ): SimulatorRunDetail {
+  const emptyMode = evidenceMode === "empty";
   const channel = byId(SIMULATOR_CHANNELS, config.channel);
   const persona = byId(SIMULATOR_PERSONAS, config.personaId);
   const model = byId(SIMULATOR_MODELS, config.modelAlias);
@@ -465,13 +474,13 @@ export function buildSimulatorRun(
   const evalSuite = targetUxFixtures.evals[0]!;
   const memoryFact = targetUxFixtures.memory[0]!;
   const contextLabel =
-    config.seededContextId === "blank"
+    emptyMode || config.seededContextId === "blank"
       ? "No seeded context"
       : config.seededContextId === "scene_escalation_legal_threat"
         ? scene.name
         : trace.title;
   const contextEvidence =
-    config.seededContextId === "blank"
+    emptyMode || config.seededContextId === "blank"
       ? "No trace or scene context attached to this run."
       : config.seededContextId === "scene_escalation_legal_threat"
         ? `${scene.id}: ${scene.summary}`
@@ -482,31 +491,43 @@ export function buildSimulatorRun(
   const replayLabel =
     config.replayTurn === null
       ? "No replay turn queued"
-      : `Replaying turn ${config.replayTurn} from ${trace.id}`;
+      : emptyMode
+        ? `Replaying turn ${config.replayTurn} from the current draft context.`
+        : `Replaying turn ${config.replayTurn} from ${trace.id}`;
   const injected = config.injectedContext
     ? `\nInjected context: ${config.injectedContext}`
     : "";
   const disabledList =
     config.disabledTools.length > 0 ? config.disabledTools.join(", ") : "none";
 
-  const modelInput = [
-    `agent=${agentId}`,
-    `channel=${channel.id}`,
-    `persona=${persona.label}`,
-    `model=${model.id}`,
-    `memory=${memory.id}`,
-    `tools_disabled=${disabledList}`,
-    `seed=${contextLabel}`,
-    `user="${persona.prompt}"${injected}`,
-  ].join("\n");
+  const modelInput = emptyMode
+    ? [
+        `agent=${agentId}`,
+        `channel=${channel.id}`,
+        `model=${model.id}`,
+        "No simulated turn has been sent yet.",
+      ].join("\n")
+    : [
+        `agent=${agentId}`,
+        `channel=${channel.id}`,
+        `persona=${persona.label}`,
+        `model=${model.id}`,
+        `memory=${memory.id}`,
+        `tools_disabled=${disabledList}`,
+        `seed=${contextLabel}`,
+        `user="${persona.prompt}"${injected}`,
+      ].join("\n");
 
-  const productionOutput =
-    "I can help with the renewal cancellation. I will check the order and cite the current refund policy before suggesting next steps.";
-  const draftOutput = lookupDisabled
-    ? "I can explain the cancellation policy, but order lookup is disabled in this run, so I cannot verify refund eligibility."
-    : refundDisabled
-      ? "I found the renewal and can summarize the refund window. Refund issuance is disabled, so I will hand off the money-moving step."
-      : "I found the renewal, cited the current policy, and can prepare the next safe refund step for approval.";
+  const productionOutput = emptyMode
+    ? "No production baseline loaded for this agent."
+    : "I can help with the renewal cancellation. I will check the order and cite the current refund policy before suggesting next steps.";
+  const draftOutput = emptyMode
+    ? "Send a turn to generate draft output and trace evidence."
+    : lookupDisabled
+      ? "I can explain the cancellation policy, but order lookup is disabled in this run, so I cannot verify refund eligibility."
+      : refundDisabled
+        ? "I found the renewal and can summarize the refund window. Refund issuance is disabled, so I will hand off the money-moving step."
+        : "I found the renewal, cited the current policy, and can prepare the next safe refund step for approval.";
 
   const baseLatency =
     config.modelAlias === "fast-draft"
@@ -546,50 +567,58 @@ export function buildSimulatorRun(
     modelOutput: draftOutput,
     productionOutput,
     draftOutput,
-    traceId: trace.id,
+    traceId: emptyMode ? "trace.pending" : trace.id,
     replayLabel,
     costUsd,
     latencyMs,
-    policyFlags: [
-      refundDisabled
-        ? "Money-moving tool disabled; handoff required."
-        : "Money-moving tool stays gated by approval policy.",
-      config.toolMode === "mock"
-        ? "Tool calls run in mock mode."
-        : "Live tools require workspace permission.",
-    ],
+    policyFlags: emptyMode
+      ? ["No policy checks have run for this draft yet."]
+      : [
+          refundDisabled
+            ? "Money-moving tool disabled; handoff required."
+            : "Money-moving tool stays gated by approval policy.",
+          config.toolMode === "mock"
+            ? "Tool calls run in mock mode."
+            : "Live tools require workspace permission.",
+        ],
     unsupported,
-    toolCalls: targetUxFixtures.tools.map((tool) => {
-      const disabled = config.disabledTools.includes(tool.name);
-      return {
-        name: tool.name,
-        status: disabled
-          ? "disabled"
-          : config.toolMode === "live" && tool.authMode === "secret"
-            ? "blocked"
-            : config.toolMode === "live"
-              ? "live"
-              : "mocked",
-        evidence: disabled
-          ? "Disabled by simulator control or /disable command."
-          : `${tool.owner}; ${tool.sideEffect}; ${tool.authMode} auth.`,
-      };
-    }),
-    retrievedChunks: [
-      {
-        source: "refund_policy_2026.pdf",
-        excerpt:
-          "Annual renewals can be reviewed during the current refund window.",
-        evidence: trace.spans[0]?.evidence ?? trace.id,
-      },
-      {
-        source: scene.id,
-        excerpt: scene.summary,
-        evidence: `Scene source: ${scene.source}; eval linked: ${scene.evalLinked ? "yes" : "no"}.`,
-      },
-    ],
+    toolCalls: emptyMode
+      ? []
+      : targetUxFixtures.tools.map((tool) => {
+          const disabled = config.disabledTools.includes(tool.name);
+          return {
+            name: tool.name,
+            status: disabled
+              ? "disabled"
+              : config.toolMode === "live" && tool.authMode === "secret"
+                ? "blocked"
+                : config.toolMode === "live"
+                  ? "live"
+                  : "mocked",
+            evidence: disabled
+              ? "Disabled by simulator control or /disable command."
+              : `${tool.owner}; ${tool.sideEffect}; ${tool.authMode} auth.`,
+          };
+        }),
+    retrievedChunks: emptyMode
+      ? []
+      : [
+          {
+            source: "refund_policy_2026.pdf",
+            excerpt:
+              "Annual renewals can be reviewed during the current refund window.",
+            evidence: trace.spans[0]?.evidence ?? trace.id,
+          },
+          {
+            source: scene.id,
+            excerpt: scene.summary,
+            evidence: `Scene source: ${scene.source}; eval linked: ${scene.evalLinked ? "yes" : "no"}.`,
+          },
+        ],
     memoryEvents:
-      config.memoryMode === "cleared"
+      emptyMode
+        ? []
+        : config.memoryMode === "cleared"
         ? [
             {
               kind: "blocked",
@@ -625,59 +654,84 @@ export function buildSimulatorRun(
                     : memoryFact.policy,
               },
             ],
-    evalScores: [
-      {
-        scorer: evalSuite.name,
-        score: `${evalSuite.passRate}% pass`,
-        evidence: `${evalSuite.id}; ${evalSuite.coverage}`,
-      },
-      {
-        scorer: "Channel constraint check",
-        score: channel.id === "sms" ? "Needs concise rewrite" : "Pass",
-        evidence: channel.constraint,
-      },
-    ],
-    waterfall: [
-      { label: "Channel ingress", durationMs: 82, evidence: channel.delivery },
-      ...trace.spans.map((span) => ({
-        label: span.label,
-        durationMs: span.durationMs,
-        evidence: span.evidence ?? span.status,
-      })),
-      {
-        label: "Channel delivery",
-        durationMs: 96,
-        evidence: channel.constraint,
-      },
-    ],
-    diffRows: [
-      {
-        label: "Model",
-        production: "production",
-        draft: model.label,
-        evidence: model.impact,
-      },
-      {
-        label: "Memory",
-        production: "Current memory",
-        draft: memory.label,
-        evidence: memory.evidence,
-      },
-      {
-        label: "Tools",
-        production: "lookup_order and issue_refund available",
-        draft:
-          config.disabledTools.length > 0
-            ? `${config.disabledTools.join(", ")} disabled`
-            : "No tools disabled",
-        evidence: "Simulator tool allow/deny set.",
-      },
-      {
-        label: "Replay",
-        production: trace.version,
-        draft: replayLabel,
-        evidence: `Diff against ${config.diffAgainst}.`,
-      },
-    ],
+    evalScores: emptyMode
+      ? [
+          {
+            scorer: "No eval suite loaded",
+            score: "Unsupported",
+            evidence: "Run a turn and save it as eval coverage.",
+          },
+        ]
+      : [
+          {
+            scorer: evalSuite.name,
+            score: `${evalSuite.passRate}% pass`,
+            evidence: `${evalSuite.id}; ${evalSuite.coverage}`,
+          },
+          {
+            scorer: "Channel constraint check",
+            score: channel.id === "sms" ? "Needs concise rewrite" : "Pass",
+            evidence: channel.constraint,
+          },
+        ],
+    waterfall: emptyMode
+      ? [
+          {
+            label: "No run yet",
+            durationMs: 0,
+            evidence: "Send a simulated turn to create spans.",
+          },
+        ]
+      : [
+          { label: "Channel ingress", durationMs: 82, evidence: channel.delivery },
+          ...trace.spans.map((span) => ({
+            label: span.label,
+            durationMs: span.durationMs,
+            evidence: span.evidence ?? span.status,
+          })),
+          {
+            label: "Channel delivery",
+            durationMs: 96,
+            evidence: channel.constraint,
+          },
+        ],
+    diffRows: emptyMode
+      ? [
+          {
+            label: "Baseline",
+            production: "No production output loaded",
+            draft: "No draft output yet",
+            evidence: "Run the simulator to create a diff.",
+          },
+        ]
+      : [
+          {
+            label: "Model",
+            production: "production",
+            draft: model.label,
+            evidence: model.impact,
+          },
+          {
+            label: "Memory",
+            production: "Current memory",
+            draft: memory.label,
+            evidence: memory.evidence,
+          },
+          {
+            label: "Tools",
+            production: "lookup_order and issue_refund available",
+            draft:
+              config.disabledTools.length > 0
+                ? `${config.disabledTools.join(", ")} disabled`
+                : "No tools disabled",
+            evidence: "Simulator tool allow/deny set.",
+          },
+          {
+            label: "Replay",
+            production: trace.version,
+            draft: replayLabel,
+            evidence: `Diff against ${config.diffAgainst}.`,
+          },
+        ],
   };
 }

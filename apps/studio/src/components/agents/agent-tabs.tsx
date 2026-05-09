@@ -7,27 +7,31 @@ export interface AgentTabSpec {
   /** Path segment relative to /agents/{id} (empty string for overview). */
   segment: string;
   label: string;
+  summary: string;
 }
 
 export const AGENT_TABS: AgentTabSpec[] = [
-  { segment: "", label: "Overview" },
-  { segment: "behavior", label: "Behavior" },
-  { segment: "map", label: "Map" },
-  { segment: "conductor", label: "Conductor" },
-  { segment: "versions", label: "Versions" },
-  { segment: "channels", label: "Channels" },
-  { segment: "tools", label: "Tools" },
-  { segment: "kb", label: "Knowledge" },
-  { segment: "memory", label: "Memory" },
-  { segment: "deploys", label: "Deploys" },
-  { segment: "secrets", label: "Secrets" },
-  { segment: "simulator", label: "Simulator" },
+  { segment: "", label: "Overview", summary: "State and next work" },
+  { segment: "contract", label: "Contract", summary: "Commitment document" },
+  { segment: "behavior", label: "Behavior", summary: "Instructions and policy" },
+  { segment: "channels", label: "Channels", summary: "Web, chat, email, voice" },
+  { segment: "tools", label: "Tools", summary: "Sandbox and live contracts" },
+  { segment: "kb", label: "Knowledge", summary: "Sources and retrieval" },
+  { segment: "memory", label: "Memory", summary: "Retention and privacy" },
+  { segment: "simulator", label: "Simulator", summary: "Manual and scripted tests" },
+  { segment: "evals", label: "Evals", summary: "Coverage and gates" },
+  { segment: "traces", label: "Traces", summary: "Evidence and replay" },
+  { segment: "deploys", label: "Deployments", summary: "Preflight and rollout" },
+  { segment: "observe", label: "Observability", summary: "Health and incidents" },
+  { segment: "governance", label: "Governance", summary: "Approvals and audit" },
+  { segment: "history", label: "History", summary: "Handoff walkthrough" },
 ];
 
 export interface AgentTabsProps {
   agentId: string;
   /** Override for tests. */
   pathname?: string;
+  orientation?: "horizontal" | "vertical";
 }
 
 /**
@@ -36,7 +40,11 @@ export interface AgentTabsProps {
  * stay consistent. Each tab is rendered as a real route segment, so
  * Next.js code-splits the tab content lazily on first navigation.
  */
-export function AgentTabs({ agentId, pathname }: AgentTabsProps) {
+export function AgentTabs({
+  agentId,
+  pathname,
+  orientation = "horizontal",
+}: AgentTabsProps) {
   const routePathname = usePathname();
   const currentRaw = pathname ?? routePathname ?? "";
   const base = `/agents/${agentId}`;
@@ -48,7 +56,12 @@ export function AgentTabs({ agentId, pathname }: AgentTabsProps) {
       role="tablist"
       aria-label="Agent sections"
       data-testid="agent-tabs"
-      className="flex flex-wrap gap-1 border-b"
+      aria-orientation={orientation}
+      className={
+        orientation === "vertical"
+          ? "flex flex-col gap-1"
+          : "flex flex-wrap gap-1 border-b"
+      }
     >
       {AGENT_TABS.map((tab) => {
         const href = tab.segment ? `${base}/${tab.segment}` : base;
@@ -62,13 +75,23 @@ export function AgentTabs({ agentId, pathname }: AgentTabsProps) {
             aria-current={active ? "page" : undefined}
             data-testid={`agent-tab-${tab.segment || "overview"}`}
             className={
-              "px-3 py-2 text-sm font-medium border-b-2 -mb-px " +
-              (active
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground")
+              orientation === "vertical"
+                ? "rounded-md border px-3 py-2 text-sm transition-colors " +
+                  (active
+                    ? "border-primary bg-primary/10 text-foreground"
+                    : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground")
+                : "px-3 py-2 text-sm font-medium border-b-2 -mb-px " +
+                  (active
+                    ? "border-primary text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground")
             }
           >
-            {tab.label}
+            <span className="block font-medium">{tab.label}</span>
+            {orientation === "vertical" ? (
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                {tab.summary}
+              </span>
+            ) : null}
           </Link>
         );
       })}

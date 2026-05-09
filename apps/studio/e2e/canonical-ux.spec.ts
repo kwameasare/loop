@@ -28,6 +28,12 @@ async function openAgents(page: Page) {
   await expect(page.getByRole("heading", { name: "Agents" })).toBeVisible();
 }
 
+async function openAgentWorkbench(page: Page) {
+  await seedLoopSession(page);
+  await page.goto("/agents/agent-enterprise-support");
+  await expect(page.getByTestId("agent-detail-shell")).toBeVisible();
+}
+
 async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() =>
     Math.max(
@@ -111,3 +117,36 @@ for (const viewport of VIEWPORTS) {
     await expect(page.getByTestId("command-palette")).toBeHidden();
   });
 }
+
+test("agent workbench keeps sections local and avoids fixture evidence", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openAgentWorkbench(page);
+
+  await expect(page.getByTestId("agent-local-nav")).toBeVisible();
+  await expect(page.getByTestId("agent-local-topbar")).toContainText(
+    "Production is not live",
+  );
+  await expect(page.getByTestId("agent-tab-contract")).toBeVisible();
+  await expect(page.getByTestId("agent-tab-evals")).toBeVisible();
+  await expect(page.getByTestId("agent-tab-traces")).toBeVisible();
+  await expect(page.getByTestId("agent-tab-governance")).toBeVisible();
+  await expect(page.getByTestId("agent-state-sentence")).toContainText(
+    "create a commitment",
+  );
+  await expect(page.getByTestId("agent-outline-commitment")).toContainText(
+    "No versioned Commitment Document loaded",
+  );
+  await expect(page.getByText("trace_refund_742")).toHaveCount(0);
+  await expect(page.getByText("I need to cancel my annual renewal")).toHaveCount(
+    0,
+  );
+
+  await page.getByTestId("agent-tab-contract").click();
+  await expect(page).toHaveURL(/\/agents\/agent-enterprise-support\/contract$/);
+  await expect(page.getByTestId("agent-section-placeholder")).toContainText(
+    "Commitment Document",
+  );
+});

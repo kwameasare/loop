@@ -82,6 +82,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§11",
   },
   {
+    route: "/agents/[agent_id]/contract",
+    verb: "build",
+    label: "Agent contract",
+    purpose:
+      "Commitment Document, ownership, boundaries, success metrics, and escalation policy.",
+    anchor: "§11",
+  },
+  {
     route: "/agents/[agent_id]/map",
     verb: "build",
     label: "Agent map",
@@ -114,6 +122,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§5",
   },
   {
+    route: "/agents/[agent_id]/evals",
+    verb: "test",
+    label: "Agent evals",
+    purpose:
+      "Agent-scoped eval coverage, source traces, expected behavior, and release gates.",
+    anchor: "§15",
+  },
+  {
     route: "/channels",
     verb: "build",
     label: "Workspace channels",
@@ -143,6 +159,22 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§8",
   },
   {
+    route: "/agents/[agent_id]/governance",
+    verb: "govern",
+    label: "Agent governance",
+    purpose:
+      "Agent-scoped approvals, policy requirements, secrets, audit, and evidence export.",
+    anchor: "§24",
+  },
+  {
+    route: "/agents/[agent_id]/history",
+    verb: "govern",
+    label: "Agent history",
+    purpose:
+      "Handoff walkthrough from commitments, changes, approvals, deploys, incidents, and risks.",
+    anchor: "§24",
+  },
+  {
     route: "/agents/[agent_id]/kb",
     verb: "build",
     label: "Agent knowledge",
@@ -155,6 +187,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     label: "Agent secrets",
     purpose: "Per-agent credentials under workspace policy.",
     anchor: "§5",
+  },
+  {
+    route: "/agents/[agent_id]/observe",
+    verb: "observe",
+    label: "Agent observability",
+    purpose:
+      "Agent-scoped health, incidents, drift, cost, latency, channel failures, and production tail.",
+    anchor: "§20",
   },
   {
     route: "/agents/[agent_id]/simulator",
@@ -170,6 +210,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     purpose:
       "Catalog, schema, auth, safety contract, mock/live, and draft-from-request flow (§12).",
     anchor: "§12",
+  },
+  {
+    route: "/agents/[agent_id]/traces",
+    verb: "observe",
+    label: "Agent traces",
+    purpose:
+      "Agent-scoped trace evidence, replay references, span timeline, and eval conversion.",
+    anchor: "§10",
   },
   {
     route: "/agents/[agent_id]/versions",

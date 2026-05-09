@@ -9,16 +9,19 @@ describe("AgentTabs", () => {
     const tabs = screen.getAllByRole("tab");
     expect(tabs).toHaveLength(AGENT_TABS.length);
     expect(tabs[0]).toHaveAttribute("href", "/agents/agt_42");
-    expect(tabs[1]).toHaveAttribute("href", "/agents/agt_42/behavior");
-    expect(tabs[2]).toHaveAttribute("href", "/agents/agt_42/map");
-    expect(tabs[3]).toHaveAttribute("href", "/agents/agt_42/conductor");
-    expect(tabs[4]).toHaveAttribute("href", "/agents/agt_42/versions");
-    expect(tabs[5]).toHaveAttribute("href", "/agents/agt_42/channels");
-    expect(tabs[6]).toHaveAttribute("href", "/agents/agt_42/tools");
-    expect(tabs[7]).toHaveAttribute("href", "/agents/agt_42/kb");
-    expect(tabs[8]).toHaveAttribute("href", "/agents/agt_42/memory");
-    expect(tabs[9]).toHaveAttribute("href", "/agents/agt_42/deploys");
-    expect(tabs[10]).toHaveAttribute("href", "/agents/agt_42/secrets");
+    expect(tabs[1]).toHaveAttribute("href", "/agents/agt_42/contract");
+    expect(tabs[2]).toHaveAttribute("href", "/agents/agt_42/behavior");
+    expect(tabs[3]).toHaveAttribute("href", "/agents/agt_42/channels");
+    expect(tabs[4]).toHaveAttribute("href", "/agents/agt_42/tools");
+    expect(tabs[5]).toHaveAttribute("href", "/agents/agt_42/kb");
+    expect(tabs[6]).toHaveAttribute("href", "/agents/agt_42/memory");
+    expect(tabs[7]).toHaveAttribute("href", "/agents/agt_42/simulator");
+    expect(tabs[8]).toHaveAttribute("href", "/agents/agt_42/evals");
+    expect(tabs[9]).toHaveAttribute("href", "/agents/agt_42/traces");
+    expect(tabs[10]).toHaveAttribute("href", "/agents/agt_42/deploys");
+    expect(tabs[11]).toHaveAttribute("href", "/agents/agt_42/observe");
+    expect(tabs[12]).toHaveAttribute("href", "/agents/agt_42/governance");
+    expect(tabs[13]).toHaveAttribute("href", "/agents/agt_42/history");
   });
 
   it("marks the overview tab active for the bare agent route", () => {
@@ -26,15 +29,15 @@ describe("AgentTabs", () => {
     const overview = screen.getByTestId("agent-tab-overview");
     expect(overview).toHaveAttribute("aria-selected", "true");
     expect(overview).toHaveAttribute("aria-current", "page");
-    expect(screen.getByTestId("agent-tab-versions")).toHaveAttribute(
+    expect(screen.getByTestId("agent-tab-deploys")).toHaveAttribute(
       "aria-selected",
       "false",
     );
   });
 
   it("highlights the active tab from the pathname", () => {
-    render(<AgentTabs agentId="agt_42" pathname="/agents/agt_42/versions" />);
-    expect(screen.getByTestId("agent-tab-versions")).toHaveAttribute(
+    render(<AgentTabs agentId="agt_42" pathname="/agents/agt_42/history" />);
+    expect(screen.getByTestId("agent-tab-history")).toHaveAttribute(
       "aria-selected",
       "true",
     );
@@ -51,6 +54,23 @@ describe("AgentTabs", () => {
     expect(screen.getByTestId("agent-tab-tools")).toHaveAttribute(
       "aria-selected",
       "true",
+    );
+  });
+
+  it("renders vertical workbench navigation summaries", () => {
+    render(
+      <AgentTabs
+        agentId="agt_42"
+        pathname="/agents/agt_42/contract"
+        orientation="vertical"
+      />,
+    );
+    expect(screen.getByRole("tablist")).toHaveAttribute(
+      "aria-orientation",
+      "vertical",
+    );
+    expect(screen.getByTestId("agent-tab-contract")).toHaveTextContent(
+      "Commitment document",
     );
   });
 });

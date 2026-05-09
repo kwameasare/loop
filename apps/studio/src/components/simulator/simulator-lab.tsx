@@ -8,6 +8,7 @@ import { PersonaSimulatorPanel } from "@/components/simulator/persona-simulator"
 import { EvidenceCallout, LiveBadge, StatePanel } from "@/components/target";
 import {
   DEFAULT_SIMULATOR_CONFIG,
+  EMPTY_SIMULATOR_CONFIG,
   SIMULATOR_CHANNELS,
   SIMULATOR_MEMORY_MODES,
   SIMULATOR_MODELS,
@@ -15,6 +16,7 @@ import {
   buildSimulatorRun,
   parseSimulatorCommand,
   type SimulatorConfig,
+  type SimulatorEvidenceMode,
   type SimulatorMemoryMode,
   type SimulatorModelAlias,
   type SimulatorPersonaId,
@@ -59,6 +61,7 @@ export interface SimulatorLabProps {
   agentId: string;
   invoke: SimulatorInvoke;
   initialConfig?: SimulatorConfig;
+  evidenceMode?: SimulatorEvidenceMode;
 }
 
 const INITIAL_STATE: PanelState = {
@@ -181,6 +184,7 @@ export function SimulatorLab({
   agentId,
   invoke,
   initialConfig = DEFAULT_SIMULATOR_CONFIG,
+  evidenceMode = "fixture",
 }: SimulatorLabProps) {
   const [config, setConfig] = useState<SimulatorConfig>(initialConfig);
   const [prompt, setPrompt] = useState("");
@@ -193,9 +197,20 @@ export function SimulatorLab({
     SIMULATOR_CHANNELS.find((channel) => channel.id === config.channel) ??
     SIMULATOR_CHANNELS[0]!;
   const run = useMemo(
-    () => buildSimulatorRun(config, agentId),
-    [agentId, config],
+    () => buildSimulatorRun(config, agentId, evidenceMode),
+    [agentId, config, evidenceMode],
   );
+  const seededContextOptions =
+    evidenceMode === "empty"
+      ? [{ value: "blank", label: "Blank run" }]
+      : [
+          { value: "trace_refund_742", label: "Trace refund 742" },
+          {
+            value: "scene_escalation_legal_threat",
+            label: "Escalation scene",
+          },
+          { value: "blank", label: "Blank run" },
+        ];
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -296,7 +311,7 @@ export function SimulatorLab({
   }
 
   function resetLab() {
-    setConfig(DEFAULT_SIMULATOR_CONFIG);
+    setConfig(evidenceMode === "empty" ? EMPTY_SIMULATOR_CONFIG : initialConfig);
     setState(INITIAL_STATE);
     setPrompt("");
     setTimeline([]);
@@ -421,11 +436,11 @@ export function SimulatorLab({
               })
             }
           >
-            <option value="trace_refund_742">Trace refund 742</option>
-            <option value="scene_escalation_legal_threat">
-              Escalation scene
-            </option>
-            <option value="blank">Blank run</option>
+            {seededContextOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </label>
         <label className="flex flex-col gap-1 sm:col-span-2">
