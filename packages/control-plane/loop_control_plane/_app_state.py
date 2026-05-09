@@ -50,6 +50,7 @@ from loop_control_plane.mcp_marketplace import (
     TrustedPublisherVerifier,
 )
 from loop_control_plane.memory_policies import MemoryPolicyRegistry
+from loop_control_plane.migration_runs import MigrationRunRegistry
 from loop_control_plane.saml import SamlValidator, StubSamlValidator
 from loop_control_plane.secrets import InMemorySecretsBackend, SecretsBackend
 from loop_control_plane.tool_contracts import ToolContractRegistry
@@ -233,6 +234,9 @@ class CpApiState:
         self.deployments = DeploymentRegistry()
         # Agent-flow implementation: incidents link deploy events, traces, and evals.
         self.incidents = IncidentRegistry()
+        # Agent-flow implementation: migration import, parity, cutover, and
+        # lineage are durable workspace objects, not derived page fixtures.
+        self.migration_runs = MigrationRunRegistry()
         if not self.marketplace_store.servers:
             publisher = MarketplacePublisher(
                 store=self.marketplace_store,

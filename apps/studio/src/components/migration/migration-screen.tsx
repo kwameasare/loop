@@ -15,6 +15,7 @@ import {
   type MigrationReadiness,
   type ReviewItem,
 } from "@/lib/migration";
+import type { ReactNode } from "react";
 
 export interface MigrationScreenProps {
   /**
@@ -25,6 +26,7 @@ export interface MigrationScreenProps {
   className?: string;
   readiness?: MigrationReadiness;
   reviewItems?: readonly ReviewItem[];
+  migrationRunsSlot?: ReactNode;
 }
 
 /**
@@ -37,6 +39,7 @@ export function MigrationScreen({
   className,
   readiness = MIGRATION_READINESS,
   reviewItems = REVIEW_ITEMS,
+  migrationRunsSlot,
 }: MigrationScreenProps) {
   const severityCounts = countReviewItemsBySeverity(reviewItems);
   const blockingPath =
@@ -59,8 +62,8 @@ export function MigrationScreen({
         <p className="max-w-3xl text-sm text-muted-foreground">
           Migration is a first-class entry into Loop Studio. Every supported
           source advertises whether its importer is verified, planned, or
-          aspirational. Import never ends with &ldquo;done&rdquo; — it ends
-          with parity measured, deploy gated, and rollback armed.
+          aspirational. Import never ends with &ldquo;done&rdquo; — it ends with
+          parity measured, deploy gated, and rollback armed.
         </p>
       </header>
 
@@ -104,12 +107,15 @@ export function MigrationScreen({
           />
         }
       >
-        {blockingPath} Advisory: {severityCounts.advisory}, FYI: {severityCounts.fyi}.
+        {blockingPath} Advisory: {severityCounts.advisory}, FYI:{" "}
+        {severityCounts.fyi}.
       </StatePanel>
 
       <MigrationEntry />
 
       <SourceGrid />
+
+      {migrationRunsSlot}
 
       <ImportWizard />
 

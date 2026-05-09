@@ -50,6 +50,9 @@ from loop_control_plane._routes_incidents import (
 )
 from loop_control_plane._routes_kb import router as kb_router
 from loop_control_plane._routes_marketplace import router as marketplace_router
+from loop_control_plane._routes_migration_imports import (
+    router as migration_imports_router,
+)
 from loop_control_plane._routes_migration_parity import (
     router as migration_parity_router,
 )
@@ -148,6 +151,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         marketplace_router,
         # UX wire-up: AI Co-Builder suggestions derive from live workspace state.
         cobuilder_router,
+        # Agent-flow implementation: imports create durable migration lineage.
+        migration_imports_router,
         # UX wire-up: Migration parity board derives from imported agent state.
         migration_parity_router,
         # UX punch-list: canonical realtime, replay, governance, dashboards,

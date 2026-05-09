@@ -10,7 +10,9 @@ from fastapi import APIRouter, Query, Request
 
 from loop_control_plane._app_common import CALLER
 from loop_control_plane.authorize import authorize_workspace_access
+from loop_control_plane.migration_runs import MigrationRunRecord
 from loop_control_plane.trace_search import TraceQuery
+from loop_control_plane.workspaces import WorkspaceError
 
 router = APIRouter(prefix="/v1/workspaces", tags=["Migration"])
 
@@ -137,11 +139,158 @@ async def _latest_version(cp: Any, workspace_id: UUID, agent_id: UUID) -> Any | 
     return max(versions, key=lambda version: version.version, default=None)
 
 
+def _lineage_from_run(run: MigrationRunRecord) -> dict[str, Any]:
+    return {
+        "importId": run.id,
+        "source": run.source,
+        "archive": run.archive_name,
+        "importedAt": run.created_at.isoformat(),
+        "archiveSha": run.archive_sha,
+        "steps": [
+            {
+                "id": step.id,
+                "label": step.label,
+                "status": step.status,
+                "evidenceRef": step.evidence_ref,
+                "detail": step.detail,
+            }
+            for step in run.lineage_steps
+        ],
+    }
+
+
+def _mode_for_inventory(kind: str) -> str:
+    if kind in {"integrations", "tools", "custom_hooks"}:
+        return "risk"
+    if kind in {"transcripts", "intents"}:
+        return "behavior"
+    if kind in {"channels"}:
+        return "cost"
+    return "structure"
+
+
+def _diffs_from_run(run: MigrationRunRecord) -> list[dict[str, Any]]:
+    return [
+        _diff(
+            diff_id=f"diff_{item.id}",
+            mode=_mode_for_inventory(item.kind),
+            source_path=f"{run.source}.{item.kind}",
+            target_path=item.loop_target,
+            severity=item.severity,
+            summary=(
+                f"{item.count} {item.label.lower()} mapped to {item.loop_target} "
+                f"with {item.confidence}% confidence."
+            ),
+            evidence_ref=item.evidence_ref,
+        )
+        for item in run.inventory
+    ]
+
+
+def _repairs_from_run(run: MigrationRunRecord) -> list[dict[str, Any]]:
+    repairs: list[dict[str, Any]] = []
+    for item in run.inventory:
+        if item.severity == "blocking":
+            repairs.append(
+                _repair(
+                    repair_id=f"rep_{item.id}",
+                    diff_id=f"diff_{item.id}",
+                    rationale=(
+                        f"{item.label} need an explicit Loop owner, credential, "
+                        "or policy review before cutover."
+                    ),
+                    grounding_ref=item.evidence_ref,
+                    confidence="high" if item.confidence >= 70 else "medium",
+                    patch_summary=f"Resolve {item.label.lower()} mapping for {item.loop_target}.",
+                )
+            )
+    return repairs
+
+
+async def _workspace_from_run(
+    *,
+    request: Request,
+    workspace_id: UUID,
+    run: MigrationRunRecord,
+) -> dict[str, Any]:
+    traces = (
+        await request.app.state.cp.trace_search.run(
+            TraceQuery(
+                workspace_id=workspace_id,
+                agent_id=run.target_agent_id,
+                page_size=8,
+            )
+        )
+    ).items
+    replay = [
+        {
+            "id": f"rp_{index + 1:03d}",
+            "transcript": f"Production trace {trace.trace_id[:8]} replayed against migration target.",
+            "status": "regress" if trace.error else "pass",
+            "expectedTarget": f"{run.source}.trace.{trace.trace_id[:8]}",
+            "observedTarget": f"loop.agent.{run.target_agent_id}",
+            "evidenceRef": f"trace/{trace.trace_id}",
+        }
+        for index, trace in enumerate(traces)
+    ]
+    if not replay:
+        replay = [
+            {
+                "id": "rp_generated_parity",
+                "transcript": (
+                    f"{run.readiness.parity_total} imported transcripts generated parity "
+                    "cases for the migration branch."
+                ),
+                "status": "pass" if run.readiness.parity_total else "skipped",
+                "expectedTarget": f"{run.source}.golden_set",
+                "observedTarget": f"loop.agent.{run.target_agent_id}",
+                "evidenceRef": f"migration/{run.id}/parity",
+            }
+        ]
+    return {
+        "migrationRun": run.model_dump(mode="json"),
+        "lineage": _lineage_from_run(run),
+        "readiness": {
+            "overallScore": run.readiness.overall_score,
+            "parityPassing": run.readiness.parity_passing,
+            "parityTotal": run.readiness.parity_total,
+            "blockingCount": run.readiness.blocking_count,
+            "advisoryCount": run.readiness.advisory_count,
+        },
+        "diffs": _diffs_from_run(run),
+        "replay": replay,
+        "repairs": _repairs_from_run(run),
+        "cutover": {
+            "id": f"cut_{run.id}",
+            "shadow": {
+                "durationMinutes": 60 if run.readiness.parity_total else 0,
+                "turns": run.readiness.parity_total,
+                "agreement": run.readiness.overall_score,
+                "divergences": run.readiness.blocking_count + run.readiness.advisory_count,
+                "costPerTurnDelta": "+0.000",
+                "evidenceRef": f"migration/{run.id}/shadow",
+            },
+            "stages": [
+                {
+                    "id": stage.id,
+                    "percent": stage.percent,
+                    "durationMinutes": stage.duration_minutes,
+                    "status": stage.status,
+                    "guardrails": stage.guardrails,
+                }
+                for stage in run.cutover_stages
+            ],
+            "rollbackTriggers": run.rollback_triggers,
+        },
+    }
+
+
 @router.get("/{workspace_id}/migration/parity")
 async def get_migration_parity(
     request: Request,
     workspace_id: UUID,
     source: str = Query(default="botpress"),
+    migration_id: str | None = Query(default=None),
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
     cp = request.app.state.cp
@@ -150,6 +299,23 @@ async def get_migration_parity(
         workspace_id=workspace_id,
         user_sub=caller_sub,
     )
+    run: MigrationRunRecord | None = None
+    try:
+        if migration_id:
+            run = await cp.migration_runs.get(
+                workspace_id=workspace_id,
+                migration_id=migration_id,
+            )
+        else:
+            run = await cp.migration_runs.latest_for_workspace(workspace_id)
+    except WorkspaceError:
+        run = None
+    if run is not None:
+        return await _workspace_from_run(
+            request=request,
+            workspace_id=workspace_id,
+            run=run,
+        )
     agents = await cp.agents.list_for_workspace(workspace_id)
     agent = agents[0] if agents else None
     latest = await _latest_version(cp, workspace_id, agent.id) if agent else None
@@ -159,11 +325,7 @@ async def get_migration_parity(
     meta = _migration_meta(spec)
     tools = _list_from_spec(spec, "tools", "tool_ids", "tool_grants")
     prompt = _text_from_spec(spec, "system_prompt", "prompt", "instructions", "behavior")
-    traces = (
-        await cp.trace_search.run(
-            TraceQuery(workspace_id=workspace_id, page_size=8)
-        )
-    ).items
+    traces = (await cp.trace_search.run(TraceQuery(workspace_id=workspace_id, page_size=8))).items
     evidence_base = f"audit/migration/{workspace_id}/{source}"
 
     lineage_steps = [
@@ -255,9 +417,7 @@ async def get_migration_parity(
             mode="risk",
             source_path=f"{source}.actions",
             target_path="tools.safety_contracts",
-            severity=(
-                "blocking" if any(_has_side_effect_tool(tool) for tool in tools) else "ok"
-            ),
+            severity=("blocking" if any(_has_side_effect_tool(tool) for tool in tools) else "ok"),
             summary=(
                 "Side-effect capable imported tools require safety contracts."
                 if any(_has_side_effect_tool(tool) for tool in tools)
