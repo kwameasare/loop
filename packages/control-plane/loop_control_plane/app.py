@@ -27,6 +27,9 @@ from loop_control_plane._routes_budgets import router as budgets_router
 from loop_control_plane._routes_change_packages import router as change_packages_router
 from loop_control_plane._routes_channel_bindings import router as channel_bindings_router
 from loop_control_plane._routes_cobuilder import router as cobuilder_router
+from loop_control_plane._routes_compliance_review import (
+    router as compliance_review_router,
+)
 from loop_control_plane._routes_conversations import (
     router_agents_conv as agent_conversations_router,
 )
@@ -145,6 +148,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         # Agent-flow implementation: incidents connect rollbacks, traces, and evals.
         agent_incidents_router,
         workspace_incidents_router,
+        # Agent-flow implementation: compliance reviewers get evidence, not raw config.
+        compliance_review_router,
         # UX wire-up: Studio Tools Room reads active version tool bindings.
         agent_tools_router,
         # UX wire-up: Studio Memory Studio reads runtime memory stores.

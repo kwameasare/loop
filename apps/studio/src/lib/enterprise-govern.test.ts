@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   APPROVAL_REQUESTS,
   AUDIT_EVENTS,
   BYOK_KEYS,
+  COMPLIANCE_REVIEW_FIXTURE,
   PRIVATE_SKILLS,
   PROCUREMENT_DOCS,
   POLICY_CONSEQUENCES,
@@ -12,6 +13,8 @@ import {
   RESIDENCY_ZONES,
   SSO_SUMMARIES,
   buildRbacMatrix,
+  createComplianceEvidenceExport,
+  fetchComplianceReview,
   filterAudit,
   pendingApprovals,
   rbacAllowed,
@@ -84,5 +87,59 @@ describe("fixtures carry evidence refs", () => {
     for (const row of all) {
       expect(row.evidenceRef).toMatch(/^(audit|policy)\//);
     }
+  });
+});
+
+describe("compliance review client", () => {
+  it("returns fixture-backed compliance review when cp-api is unavailable", async () => {
+    const model = await fetchComplianceReview("workspace_1", { baseUrl: "" });
+
+    expect(model.workspace_id).toBe("workspace_1");
+    expect(model.summary.pending_approvals).toBeGreaterThan(0);
+    expect(model.tool_grants[0]?.reviewer_action).toContain("Block live use");
+    expect(model.industry_probe_libraries[0]?.id).toBe("regulated-support");
+  });
+
+  it("posts evidence export requests to the workspace compliance endpoint", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        id: "cex_1",
+        workspace_id: "workspace_1",
+        agent_id: "agent_1",
+        format: "json",
+        status: "ready",
+        sections: ["approvals"],
+        artifact_refs: ["change-package/cp_1"],
+        summary: COMPLIANCE_REVIEW_FIXTURE.summary,
+        download_url:
+          "/v1/workspaces/workspace_1/compliance-review/evidence-exports/cex_1",
+        generated_by: "owner-1",
+        generated_at: "2026-05-09T00:00:00Z",
+      }),
+    );
+
+    const exportResult = await createComplianceEvidenceExport(
+      "workspace_1",
+      {
+        agent_id: "agent_1",
+        format: "json",
+        include_sections: ["approvals"],
+      },
+      { baseUrl: "https://cp.test", fetcher, token: "tok" },
+    );
+
+    expect(exportResult.id).toBe("cex_1");
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/workspaces/workspace_1/compliance-review/evidence-export",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ authorization: "Bearer tok" }),
+      }),
+    );
+    const [, init] = fetcher.mock.calls[0]!;
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      agent_id: "agent_1",
+      include_sections: ["approvals"],
+    });
   });
 });

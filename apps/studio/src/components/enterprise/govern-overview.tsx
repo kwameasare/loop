@@ -6,6 +6,7 @@ import {
   APPROVAL_REQUESTS,
   AUDIT_EVENTS,
   BYOK_KEYS,
+  COMPLIANCE_REVIEW_FIXTURE,
   PRIVATE_SKILLS,
   PROCUREMENT_DOCS,
   POLICY_CONSEQUENCES,
@@ -14,12 +15,17 @@ import {
   RESIDENCY_ZONES,
   SSO_SUMMARIES,
   WHITELABEL_DEFAULT,
+  createComplianceEvidenceExport,
   filterAudit,
   rbacAllowed,
+  type ComplianceEvidenceExport,
+  type ComplianceEvidenceExportInput,
+  type ComplianceReviewModel,
   type AuditCategory,
 } from "@/lib/enterprise-govern";
 
 const SECTIONS = [
+  { id: "compliance", label: "Compliance review" },
   { id: "sso", label: "SSO / SCIM" },
   { id: "rbac", label: "RBAC matrix" },
   { id: "approvals", label: "Approvals" },
@@ -48,6 +54,10 @@ const STATUS_TONE: Record<string, string> = {
   stale: "bg-amber-50 text-amber-700 border-amber-200",
   info: "bg-slate-50 text-slate-600 border-slate-200",
   blocking: "bg-rose-50 text-rose-700 border-rose-200",
+  low: "bg-slate-50 text-slate-600 border-slate-200",
+  medium: "bg-amber-50 text-amber-700 border-amber-200",
+  high: "bg-rose-50 text-rose-700 border-rose-200",
+  critical: "bg-red-50 text-red-700 border-red-200",
 };
 
 function pill(status: string): string {
@@ -57,9 +67,26 @@ function pill(status: string): string {
   );
 }
 
-export function GovernOverview(): JSX.Element {
-  const [section, setSection] = useState<SectionId>("sso");
-  const [auditCategory, setAuditCategory] = useState<AuditCategory | "all">("all");
+export interface GovernOverviewProps {
+  compliance?: ComplianceReviewModel;
+  createExport?: (
+    workspaceId: string,
+    input: ComplianceEvidenceExportInput,
+  ) => Promise<ComplianceEvidenceExport>;
+}
+
+export function GovernOverview({
+  compliance = COMPLIANCE_REVIEW_FIXTURE,
+  createExport = createComplianceEvidenceExport,
+}: GovernOverviewProps): JSX.Element {
+  const [section, setSection] = useState<SectionId>("compliance");
+  const [auditCategory, setAuditCategory] = useState<AuditCategory | "all">(
+    "all",
+  );
+  const [exporting, setExporting] = useState(false);
+  const [exportResult, setExportResult] =
+    useState<ComplianceEvidenceExport | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const auditRows = useMemo(
     () =>
@@ -69,6 +96,35 @@ export function GovernOverview(): JSX.Element {
       ),
     [auditCategory],
   );
+
+  async function handleEvidenceExport() {
+    setExporting(true);
+    setExportError(null);
+    setExportResult(null);
+    try {
+      const result = await createExport(compliance.workspace_id, {
+        format: "json",
+        include_sections: [
+          "change_packages",
+          "approvals",
+          "incidents",
+          "audit_events",
+          "tool_grants",
+          "memory_policies",
+          "channel_readiness",
+        ],
+      });
+      setExportResult(result);
+    } catch (error) {
+      setExportError(
+        error instanceof Error
+          ? error.message
+          : "Could not create compliance evidence export.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div data-testid="govern-overview" className="space-y-6">
@@ -113,6 +169,270 @@ export function GovernOverview(): JSX.Element {
         data-testid={`govern-pane-${section}`}
         className="space-y-3"
       >
+        {section === "compliance" && (
+          <div className="space-y-4" data-testid="compliance-review-pane">
+            <div className="grid gap-3 md:grid-cols-4">
+              {[
+                ["Pending approvals", compliance.summary.pending_approvals],
+                ["Tool reviews", compliance.summary.tool_reviews],
+                ["Memory reviews", compliance.summary.memory_reviews],
+                ["Open incidents", compliance.summary.open_incidents],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded border p-3">
+                  <div className="text-xs text-slate-500">{label}</div>
+                  <div className="mt-1 text-2xl font-semibold">{value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded border p-3">
+              <div>
+                <h2 className="text-sm font-semibold">Evidence export</h2>
+                <p className="text-sm text-slate-600">
+                  Exports Commitment, Change Package, eval/replay refs,
+                  approvals, incidents, audit, tool, memory, and channel
+                  evidence for review.
+                </p>
+              </div>
+              <button
+                type="button"
+                data-testid="compliance-export"
+                className="rounded border px-3 py-1.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-60"
+                disabled={exporting}
+                onClick={() => void handleEvidenceExport()}
+              >
+                {exporting ? "Exporting" : "Create evidence export"}
+              </button>
+            </div>
+            {exportResult ? (
+              <div
+                className="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"
+                data-testid="compliance-export-result"
+              >
+                Export {exportResult.id} is ready with{" "}
+                {exportResult.artifact_refs.length} artifact refs.
+              </div>
+            ) : null}
+            {exportError ? (
+              <div
+                className="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+                role="alert"
+              >
+                {exportError}
+              </div>
+            ) : null}
+
+            <div className="grid gap-3 lg:grid-cols-2">
+              <section className="rounded border p-3">
+                <h2 className="text-sm font-semibold">
+                  Approval queue by risk
+                </h2>
+                <ul className="mt-3 space-y-2">
+                  {compliance.approval_queue.map((item) => (
+                    <li
+                      key={item.id}
+                      className="rounded border p-3"
+                      data-testid={`compliance-approval-${item.id}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-medium">{item.subject}</div>
+                          <div className="text-sm text-slate-600">
+                            {item.agent_name} · {item.role} · {item.reason}
+                          </div>
+                        </div>
+                        <span className={pill(item.risk_class)}>
+                          {item.risk_class}
+                        </span>
+                      </div>
+                      <div className="mt-1 break-all text-xs text-slate-400">
+                        evidence: {item.evidence_ref}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="rounded border p-3">
+                <h2 className="text-sm font-semibold">Policy violations</h2>
+                <ul className="mt-3 space-y-2">
+                  {compliance.policy_violations.length ? (
+                    compliance.policy_violations.map((item) => (
+                      <li
+                        key={item.id}
+                        className="rounded border p-3"
+                        data-testid={`compliance-policy-${item.id}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium">{item.title}</span>
+                          <span className={pill(item.severity)}>
+                            {item.severity}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-sm text-slate-600">
+                          {item.target}
+                        </div>
+                        <div className="mt-1 break-all text-xs text-slate-400">
+                          evidence: {item.evidence_ref}
+                        </div>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="rounded border p-3 text-sm text-slate-500">
+                      No policy violations in the current review window.
+                    </li>
+                  )}
+                </ul>
+              </section>
+
+              <section className="rounded border p-3">
+                <h2 className="text-sm font-semibold">Tool grant review</h2>
+                <ul className="mt-3 space-y-2">
+                  {compliance.tool_grants.map((item) => (
+                    <li
+                      key={item.id}
+                      className="rounded border p-3"
+                      data-testid={`compliance-tool-${item.id}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-medium">{item.name}</div>
+                          <div className="text-sm text-slate-600">
+                            {item.agent_name} · {item.side_effect_level}
+                            {item.pii_access ? " · PII" : ""}
+                            {item.money_movement ? " · money movement" : ""}
+                          </div>
+                        </div>
+                        <span className={pill(item.live_status)}>
+                          {item.live_status}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm text-slate-700">
+                        {item.reviewer_action}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="rounded border p-3">
+                <h2 className="text-sm font-semibold">Memory policy review</h2>
+                <ul className="mt-3 space-y-2">
+                  {compliance.memory_policies.map((item) => (
+                    <li
+                      key={item.id}
+                      className="rounded border p-3"
+                      data-testid={`compliance-memory-${item.id}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-medium">{item.scope} memory</div>
+                          <div className="text-sm text-slate-600">
+                            {item.agent_name} · {item.retention}
+                          </div>
+                        </div>
+                        <span className={pill(item.approval_status)}>
+                          {item.approval_status}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm text-slate-700">
+                        {item.reviewer_action}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="rounded border p-3">
+                <h2 className="text-sm font-semibold">
+                  Channel compliance readiness
+                </h2>
+                <ul className="mt-3 space-y-2">
+                  {compliance.channel_readiness.map((item) => (
+                    <li
+                      key={item.id}
+                      className="rounded border p-3"
+                      data-testid={`compliance-channel-${item.id}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-medium">
+                            {item.channel_type.replace(/_/g, " ")}
+                          </div>
+                          <div className="text-sm text-slate-600">
+                            {item.agent_name} · {item.provider}
+                          </div>
+                        </div>
+                        <span className={pill(item.status)}>{item.status}</span>
+                      </div>
+                      <p className="mt-2 text-sm text-slate-700">
+                        {item.reviewer_action}
+                      </p>
+                      {item.blocking_checks.length ? (
+                        <div className="mt-2 text-xs text-slate-500">
+                          {item.blocking_checks.length} readiness blocker(s)
+                        </div>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="rounded border p-3">
+                <h2 className="text-sm font-semibold">
+                  Incident investigation
+                </h2>
+                <ul className="mt-3 space-y-2">
+                  {compliance.incidents.map((item) => (
+                    <li
+                      key={item.id}
+                      className="rounded border p-3"
+                      data-testid={`compliance-incident-${item.id}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-medium">{item.trigger}</div>
+                          <div className="text-sm text-slate-600">
+                            {item.agent_name} ·{" "}
+                            {item.affected_conversation_count} conversations
+                            affected
+                          </div>
+                        </div>
+                        <span className={pill(item.severity)}>
+                          {item.severity}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="rounded border p-3 lg:col-span-2">
+                <h2 className="text-sm font-semibold">
+                  Industry probe libraries
+                </h2>
+                <ul className="mt-3 grid gap-2 md:grid-cols-2">
+                  {compliance.industry_probe_libraries.map((item) => (
+                    <li
+                      key={item.id}
+                      className="rounded border p-3"
+                      data-testid={`compliance-probe-${item.id}`}
+                    >
+                      <div className="font-medium">{item.name}</div>
+                      <div className="mt-1 text-sm text-slate-600">
+                        Required for {item.required_for.join(", ")}
+                      </div>
+                      <div className="mt-1 break-all text-xs text-slate-400">
+                        evidence: {item.evidence_ref}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+          </div>
+        )}
+
         {section === "sso" && (
           <ul className="space-y-2">
             {SSO_SUMMARIES.map((s) => (
@@ -136,10 +456,7 @@ export function GovernOverview(): JSX.Element {
 
         {section === "rbac" && (
           <div className="overflow-x-auto">
-            <table
-              data-testid="rbac-matrix"
-              className="w-full text-sm border"
-            >
+            <table data-testid="rbac-matrix" className="w-full text-sm border">
               <thead className="bg-slate-50">
                 <tr>
                   <th className="text-left p-2 border-b">Role × resource</th>
@@ -155,8 +472,9 @@ export function GovernOverview(): JSX.Element {
                   <tr key={role} data-testid={`rbac-row-${role}`}>
                     <td className="p-2 border-b font-medium">{role}</td>
                     {RBAC_RESOURCES.map((res) => {
-                      const can = (a: "view" | "edit" | "approve" | "destroy" | "export") =>
-                        rbacAllowed(role, res, a);
+                      const can = (
+                        a: "view" | "edit" | "approve" | "destroy" | "export",
+                      ) => rbacAllowed(role, res, a);
                       const verbs: string[] = [];
                       if (can("view")) verbs.push("view");
                       if (can("edit")) verbs.push("edit");
@@ -191,7 +509,8 @@ export function GovernOverview(): JSX.Element {
                 <div>
                   <div className="font-medium">{a.subject}</div>
                   <div className="text-sm text-slate-600">
-                    {a.kind.replace(/_/g, " ")} · {a.requester} → {a.approvers.join(", ")}
+                    {a.kind.replace(/_/g, " ")} · {a.requester} →{" "}
+                    {a.approvers.join(", ")}
                   </div>
                   <div className="text-xs text-slate-400 mt-1">
                     age: {a.ageMinutes}m · evidence: {a.evidenceRef}
@@ -233,11 +552,13 @@ export function GovernOverview(): JSX.Element {
                 >
                   <div className="flex items-center gap-2 text-sm">
                     <span className={pill(e.category)}>{e.category}</span>
-                    <span className="font-mono text-xs text-slate-500">{e.ts}</span>
+                    <span className="font-mono text-xs text-slate-500">
+                      {e.ts}
+                    </span>
                   </div>
                   <div className="mt-1 text-sm">
-                    <span className="font-medium">{e.actor}</span> · {e.action} ·{" "}
-                    <span className="text-slate-600">{e.target}</span>
+                    <span className="font-medium">{e.actor}</span> · {e.action}{" "}
+                    · <span className="text-slate-600">{e.target}</span>
                   </div>
                   <div className="text-xs text-slate-400 mt-1">
                     evidence: {e.evidenceRef}
@@ -276,7 +597,9 @@ export function GovernOverview(): JSX.Element {
                         evidence: {z.evidenceRef}
                       </div>
                     </div>
-                    <span className={pill(z.active ? "active" : "not_configured")}>
+                    <span
+                      className={pill(z.active ? "active" : "not_configured")}
+                    >
                       {z.active ? "active" : "off"}
                     </span>
                   </li>
@@ -319,7 +642,9 @@ export function GovernOverview(): JSX.Element {
             <dt className="text-slate-500">Domain</dt>
             <dd className="font-mono text-xs">{WHITELABEL_DEFAULT.domain}</dd>
             <dt className="text-slate-500">Email-from</dt>
-            <dd className="font-mono text-xs">{WHITELABEL_DEFAULT.emailFrom}</dd>
+            <dd className="font-mono text-xs">
+              {WHITELABEL_DEFAULT.emailFrom}
+            </dd>
             <dt className="text-slate-500">Primary color</dt>
             <dd>
               <span
@@ -332,7 +657,9 @@ export function GovernOverview(): JSX.Element {
               </span>
             </dd>
             <dt className="text-slate-500">Evidence</dt>
-            <dd className="font-mono text-xs">{WHITELABEL_DEFAULT.evidenceRef}</dd>
+            <dd className="font-mono text-xs">
+              {WHITELABEL_DEFAULT.evidenceRef}
+            </dd>
           </dl>
         )}
 
@@ -379,7 +706,11 @@ export function GovernOverview(): JSX.Element {
                     evidence: {s.evidenceRef}
                   </div>
                 </div>
-                <span className={pill(s.visibility === "private" ? "active" : "info")}>
+                <span
+                  className={pill(
+                    s.visibility === "private" ? "active" : "info",
+                  )}
+                >
                   {s.visibility}
                 </span>
               </li>
@@ -399,7 +730,9 @@ export function GovernOverview(): JSX.Element {
                   <div className="font-medium">{p.trigger}</div>
                   <span className={pill(p.severity)}>{p.severity}</span>
                 </div>
-                <div className="text-sm text-slate-600 mt-1">{p.consequence}</div>
+                <div className="text-sm text-slate-600 mt-1">
+                  {p.consequence}
+                </div>
                 <div className="text-xs text-slate-400 mt-1">
                   evidence: {p.evidenceRef}
                 </div>
