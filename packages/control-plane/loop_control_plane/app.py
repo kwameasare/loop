@@ -59,6 +59,9 @@ from loop_control_plane._routes_migration_parity import (
     router as migration_parity_router,
 )
 from loop_control_plane._routes_secrets import router as secrets_router
+from loop_control_plane._routes_simulator_feedback import (
+    router as simulator_feedback_router,
+)
 from loop_control_plane._routes_traces_usage import router as telemetry_router
 from loop_control_plane._routes_traces_usage import router_traces as traces_router
 from loop_control_plane._routes_ux_wireup import router_agents as ux_agents_router
@@ -121,6 +124,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         agent_handoff_router,
         # Agent-flow implementation: intake creates governed drafts, not empty agents.
         agent_intake_router,
+        # Agent-flow implementation: first proof ratings become evals and behavior notes.
+        simulator_feedback_router,
         # Agent-flow implementation: preflight Change Package contract.
         change_packages_router,
         # Agent-flow implementation: omnichannel bindings are agent-scoped peers.
