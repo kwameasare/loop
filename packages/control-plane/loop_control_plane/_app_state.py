@@ -10,6 +10,7 @@ from uuid import UUID
 from loop_memory.inmemory import InMemorySessionMemoryStore, InMemoryUserMemoryStore
 
 from loop_control_plane._app_agents import AgentRegistry, PostgresAgentRegistry
+from loop_control_plane.adversarial_catches import AdversarialCatchRegistry
 from loop_control_plane.agent_commitments import CommitmentRegistry
 from loop_control_plane.agent_handoff import AgentHandoffRegistry
 from loop_control_plane.agent_intake import AgentIntakeRegistry
@@ -244,6 +245,8 @@ class CpApiState:
         self.agent_handoffs = AgentHandoffRegistry()
         # Agent-flow implementation: first proof ratings become structured artifacts.
         self.simulator_feedback = SimulatorFeedbackRegistry()
+        # Agent-flow implementation: adversarial probes surface calm catch questions.
+        self.adversarial_catches = AdversarialCatchRegistry()
         # Agent-flow implementation: intake is a durable draft-generation object.
         self.agent_intakes = AgentIntakeRegistry()
         # Agent-flow implementation: migration import, parity, cutover, and

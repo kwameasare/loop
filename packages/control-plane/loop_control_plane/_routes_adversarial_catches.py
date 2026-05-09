@@ -1,0 +1,208 @@
+from __future__ import annotations
+
+from typing import Any
+from uuid import UUID
+
+from fastapi import APIRouter, Request
+
+from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
+from loop_control_plane.adversarial_catches import (
+    AdversarialProbeRunCreate,
+    CatchResolutionCreate,
+    catch_payload,
+    probe_run_payload,
+)
+from loop_control_plane.audit_events import record_audit_event
+from loop_control_plane.authorize import Role, authorize_workspace_access
+from loop_control_plane.eval_suites import EvalCaseCreate
+
+router = APIRouter(prefix="/v1/agents", tags=["AdversarialCatches"])
+
+
+async def _agent(
+    request: Request,
+    *,
+    agent_id: UUID,
+    workspace_id: UUID,
+    caller_sub: str,
+) -> Any:
+    await authorize_workspace_access(
+        workspaces=request.app.state.cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    return await request.app.state.cp.agents.get(
+        workspace_id=workspace_id,
+        agent_id=agent_id,
+    )
+
+
+def _audit(
+    request: Request,
+    *,
+    workspace_id: UUID,
+    caller_sub: str,
+    action: str,
+    resource_id: str,
+    payload: object | None = None,
+) -> None:
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action=action,
+        resource_type="adversarial_catch",
+        resource_id=resource_id,
+        store=request.app.state.cp.audit_events,
+        request_id=request_id(request),
+        payload=payload,
+    )
+
+
+@router.post("/{agent_id}/adversarial-probes/run", status_code=201)
+async def run_adversarial_probe(
+    request: Request,
+    agent_id: UUID,
+    body: AdversarialProbeRunCreate,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+    )
+    run, catches = await cp.adversarial_catches.run_probe(
+        agent=agent,
+        body=body,
+        actor_sub=caller_sub,
+    )
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="adversarial_probe:run",
+        resource_id=run.id,
+        payload={
+            "agent_id": str(agent.id),
+            "rule_id": body.rule_id,
+            "risk_class": body.risk_class,
+            "catch_count": len(catches),
+        },
+    )
+    return {
+        "run": probe_run_payload(run),
+        "catches": [catch_payload(catch) for catch in catches],
+    }
+
+
+@router.get("/{agent_id}/catches")
+async def list_catches(
+    request: Request,
+    agent_id: UUID,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+    )
+    rows = await cp.adversarial_catches.list_for_agent(agent=agent)
+    return {"items": [catch_payload(row) for row in rows]}
+
+
+@router.post("/{agent_id}/catches/{catch_id}/resolve")
+async def resolve_catch(
+    request: Request,
+    agent_id: UUID,
+    catch_id: str,
+    body: CatchResolutionCreate,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+    )
+    catches = await cp.adversarial_catches.list_for_agent(agent=agent)
+    current = next((item for item in catches if item.id == catch_id), None)
+    if current is None:
+        # Let the registry raise the domain-shaped error.
+        current = await cp.adversarial_catches.resolve(
+            agent=agent,
+            catch_id=catch_id,
+            body=body,
+            eval_case_refs=[],
+            actor_sub=caller_sub,
+        )
+        return catch_payload(current)
+
+    eval_refs: list[dict[str, str]] = []
+    if body.create_eval_cases and not body.dismiss_reason:
+        suite = await cp.eval_suites.get_or_create_suite(
+            workspace_id=workspace_id,
+            name="Adversarial catches",
+            dataset_ref=f"agent:{agent.id}:adversarial-catches",
+            metrics=["behavior_match", "risk_handling", "regression_guard"],
+            actor_sub=caller_sub,
+        )
+        for label, expected in (
+            ("accepted interpretation", body.intended_interpretation),
+            ("rejected interpretation", body.rejected_interpretation),
+        ):
+            if not expected.strip():
+                continue
+            case = await cp.eval_suites.add_case(
+                workspace_id=workspace_id,
+                suite_id=suite.id,
+                body=EvalCaseCreate(
+                    name=f"Catch {current.id}: {label}",
+                    input={
+                        "rule_id": current.rule_id,
+                        "rule_text": current.rule_text,
+                        "scenario": current.generated_scenario,
+                        "question": current.question,
+                    },
+                    expected={"outcome": expected},
+                    scorers=[
+                        {
+                            "kind": "llm_judge",
+                            "config": {"rubric": "adversarial catch interpretation"},
+                        }
+                    ],
+                    source="adversarial_catch",
+                    source_ref=current.evidence_ref,
+                    attachments=[current.evidence_ref],
+                ),
+                actor_sub=caller_sub,
+            )
+            eval_refs.append({"suite_id": str(suite.id), "case_id": str(case.id)})
+
+    resolved = await cp.adversarial_catches.resolve(
+        agent=agent,
+        catch_id=catch_id,
+        body=body,
+        eval_case_refs=eval_refs,
+        actor_sub=caller_sub,
+    )
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="adversarial_catch:resolve",
+        resource_id=resolved.id,
+        payload={
+            "agent_id": str(agent.id),
+            "status": resolved.status,
+            "eval_cases": eval_refs,
+        },
+    )
+    return catch_payload(resolved)

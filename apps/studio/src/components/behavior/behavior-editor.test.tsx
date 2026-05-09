@@ -80,6 +80,9 @@ describe("BehaviorEditor", () => {
     expect(screen.getByTestId("failure-repair-loop")).toHaveTextContent(
       "Save failure as eval",
     );
+    expect(screen.getByTestId("adversarial-catch-panel")).toHaveTextContent(
+      "Ask the calm adversarial question",
+    );
   });
 
   it("previews style-transfer rewrites with eval deltas", async () => {
