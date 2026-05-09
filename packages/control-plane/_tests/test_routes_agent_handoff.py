@@ -64,6 +64,17 @@ def test_handoff_walkthrough_and_owner_transfer_are_audited(
         "authorization": _bearer_for("owner-1"),
         "x-loop-workspace-id": str(workspace_id),
     }
+    comment = client.post(
+        f"/v1/agents/{agent_id}/comments/cmt_handoff/resolve",
+        headers=headers,
+        json={
+            "expected_behavior": "Escalate legal threats before quoting refunds.",
+            "failure_reason": "Reviewer found a missed legal-threat escalation.",
+            "also_create_eval_case": True,
+            "source_trace": "trace_handoff_1",
+        },
+    )
+    assert comment.status_code == 200, comment.text
 
     initial = client.get(f"/v1/agents/{agent_id}/handoff", headers=headers)
 
@@ -72,6 +83,15 @@ def test_handoff_walkthrough_and_owner_transfer_are_audited(
     assert initial_body["agent"]["id"] == str(agent_id)
     assert any(risk["id"] == "commitment_missing_fields" for risk in initial_body["open_risks"])
     assert any(section["id"] == "commitments" for section in initial_body["walkthrough_sections"])
+    comments_section = next(
+        section
+        for section in initial_body["walkthrough_sections"]
+        if section["id"] == "important-comments"
+    )
+    assert comments_section["count"] == 1
+    assert comments_section["evidence_refs"] == [
+        "comment/cmt_handoff -> eval/eval_comment_cmt_handoff"
+    ]
 
     transferred = client.post(
         f"/v1/agents/{agent_id}/handoff/transfer",

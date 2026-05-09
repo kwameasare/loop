@@ -104,6 +104,13 @@ export function localAgentHandoff(agentId: string): AgentHandoffModel {
         count: 0,
         evidence_refs: [],
       },
+      {
+        id: "important-comments",
+        title: "Important reviewer comments",
+        summary: "No resolved reviewer comments loaded.",
+        count: 0,
+        evidence_refs: [],
+      },
     ],
     transfers: [],
     generated_at: LOCAL_NOW,
