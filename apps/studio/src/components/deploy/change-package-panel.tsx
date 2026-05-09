@@ -5,9 +5,11 @@ import { FileCheck2, LockKeyhole, PackageCheck } from "lucide-react";
 
 import {
   type ChangePackage,
+  type ChangePackageApprovalDecision,
   type ChangePackageGenerateInput,
   buildLocalChangePackage,
   generateChangePackage as defaultGenerateChangePackage,
+  recordChangePackageApproval as defaultRecordChangePackageApproval,
   submitChangePackage as defaultSubmitChangePackage,
 } from "@/lib/change-package";
 import { cn } from "@/lib/utils";
@@ -23,12 +25,23 @@ interface ChangePackagePanelProps {
     agentId: string,
     packageId: string,
   ) => Promise<ChangePackage>;
+  recordChangePackageApproval?: (
+    agentId: string,
+    packageId: string,
+    input: {
+      approval_id: string;
+      decision: ChangePackageApprovalDecision;
+      comment?: string;
+    },
+    currentPackage: ChangePackage,
+  ) => Promise<ChangePackage>;
 }
 
 type PanelState =
   | { kind: "idle" }
   | { kind: "generating" }
   | { kind: "submitting" }
+  | { kind: "reviewing"; approvalId: string }
   | { kind: "error"; message: string };
 
 const STATUS_CLASS: Record<string, string> = {
@@ -60,14 +73,29 @@ export function ChangePackagePanel({
   initialPackage,
   generateChangePackage = defaultGenerateChangePackage,
   submitChangePackage = defaultSubmitChangePackage,
+  recordChangePackageApproval = (
+    approvalAgentId,
+    packageId,
+    input,
+    currentPackage,
+  ) =>
+    defaultRecordChangePackageApproval(approvalAgentId, packageId, input, {
+      fallbackPackage: currentPackage,
+    }),
 }: ChangePackagePanelProps) {
   const [changePackage, setChangePackage] = useState<ChangePackage>(
     initialPackage ?? buildLocalChangePackage(agentId),
   );
   const [state, setState] = useState<PanelState>({ kind: "idle" });
-  const busy = state.kind === "generating" || state.kind === "submitting";
+  const busy =
+    state.kind === "generating" ||
+    state.kind === "submitting" ||
+    state.kind === "reviewing";
   const hasGenerated = changePackage.status !== "draft";
   const canSubmit = changePackage.status === "generated" && !busy;
+  const isReviewableStatus =
+    changePackage.status === "submitted" || changePackage.status === "approved";
+  const canReview = isReviewableStatus && !busy;
 
   async function handleGenerate() {
     setState({ kind: "generating" });
@@ -118,6 +146,39 @@ export function ChangePackagePanel({
           error instanceof Error
             ? error.message
             : "Failed to submit Change Package.",
+      });
+    }
+  }
+
+  async function handleApproval(
+    approvalId: string,
+    decision: ChangePackageApprovalDecision,
+  ) {
+    if (!canReview) return;
+    setState({ kind: "reviewing", approvalId });
+    try {
+      const reviewed = await recordChangePackageApproval(
+        agentId,
+        changePackage.id,
+        {
+          approval_id: approvalId,
+          decision,
+          comment:
+            decision === "approve"
+              ? "Reviewed Change Package evidence and content hash."
+              : "Reviewer requested changes before promotion.",
+        },
+        changePackage,
+      );
+      setChangePackage(reviewed);
+      setState({ kind: "idle" });
+    } catch (error) {
+      setState({
+        kind: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to record approval decision.",
       });
     }
   }
@@ -270,6 +331,8 @@ export function ChangePackagePanel({
               <h3 className="text-sm font-semibold">Approval requirements</h3>
               <p className="mt-1 text-xs text-muted-foreground">
                 Approvers review this package, not raw implementation details.
+                Each approval binds to hash{" "}
+                <code>{changePackage.content_hash.slice(0, 12)}</code>.
               </p>
             </div>
           </div>
@@ -284,12 +347,64 @@ export function ChangePackagePanel({
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium">{approval.role}</span>
                     <span className="text-xs text-muted-foreground">
-                      {approval.required ? "required" : "optional"}
+                      {approval.state ??
+                        (approval.satisfied ? "approved" : "requested")}{" "}
+                      · {approval.required ? "required" : "optional"}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {approval.reason}
                   </p>
+                  {approval.content_hash ? (
+                    <p className="mt-1 font-mono text-[0.7rem] text-muted-foreground">
+                      hash {approval.content_hash.slice(0, 12)}
+                    </p>
+                  ) : null}
+                  {approval.invalidated_reason ? (
+                    <p className="mt-1 text-xs text-destructive">
+                      {approval.invalidated_reason}
+                    </p>
+                  ) : null}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {!approval.satisfied && isReviewableStatus ? (
+                      <button
+                        type="button"
+                        className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                        disabled={!canReview}
+                        onClick={() => handleApproval(approval.id, "approve")}
+                        data-testid={`change-package-approve-${approval.id}`}
+                      >
+                        {state.kind === "reviewing" &&
+                        state.approvalId === approval.id
+                          ? "Recording..."
+                          : "Approve"}
+                      </button>
+                    ) : null}
+                    {isReviewableStatus ? (
+                      <button
+                        type="button"
+                        className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                        disabled={!canReview}
+                        onClick={() =>
+                          handleApproval(approval.id, "request_changes")
+                        }
+                        data-testid={`change-package-request-${approval.id}`}
+                      >
+                        Request changes
+                      </button>
+                    ) : null}
+                    {approval.satisfied && isReviewableStatus ? (
+                      <button
+                        type="button"
+                        className="rounded-md border border-destructive/40 px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                        disabled={!canReview}
+                        onClick={() => handleApproval(approval.id, "revoke")}
+                        data-testid={`change-package-revoke-${approval.id}`}
+                      >
+                        Revoke
+                      </button>
+                    ) : null}
+                  </div>
                 </li>
               ))
             ) : (

@@ -329,6 +329,36 @@ def test_change_package_preflight_links_commitment_evidence_and_stales_on_change
     assert submitted.json()["status"] == "submitted"
     assert submitted.json()["submitted_at"] is not None
 
+    owner_approval = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{body['id']}/approvals",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={"approval_id": "owner", "decision": "approve", "comment": "Owner reviewed."},
+    )
+    assert owner_approval.status_code == 200, owner_approval.text
+    assert owner_approval.json()["status"] == "submitted"
+    assert owner_approval.json()["approval_status"] == "partially_approved"
+    owner = owner_approval.json()["required_approvals"][0]
+    assert owner["content_hash"] == body["content_hash"]
+    assert owner["state"] == "approved"
+
+    compliance_approval = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{body['id']}/approvals",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "approval_id": "compliance",
+            "decision": "approve",
+            "comment": "Evidence is sufficient.",
+        },
+    )
+    assert compliance_approval.status_code == 200, compliance_approval.text
+    assert compliance_approval.json()["status"] == "approved"
+    assert compliance_approval.json()["approval_status"] == "approved"
+    assert all(
+        approval.get("content_hash") == body["content_hash"]
+        for approval in compliance_approval.json()["required_approvals"]
+        if approval["required"]
+    )
+
     changed = client.post(
         f"/v1/agents/{agent_id}/change-packages/preflight",
         headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
@@ -349,6 +379,9 @@ def test_change_package_preflight_links_commitment_evidence_and_stales_on_change
         headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
     ).json()["items"]
     assert [item["status"] for item in history] == ["stale", "generated"]
+    assert history[0]["approval_status"] == "stale"
+    assert history[0]["required_approvals"][0]["state"] == "invalidated"
+    assert history[0]["required_approvals"][0]["satisfied"] is False
 
     audit = client.get(
         f"/v1/audit-events?workspace_id={workspace_id}",
@@ -357,6 +390,7 @@ def test_change_package_preflight_links_commitment_evidence_and_stales_on_change
     assert {event["action"] for event in audit} >= {
         "change_package:generate",
         "change_package:submit",
+        "change_package:approval",
     }
 
 

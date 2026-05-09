@@ -38,6 +38,29 @@ export interface ChangePackageApproval {
   required: boolean;
   satisfied: boolean;
   reason: string;
+  state?: string;
+  actor_sub?: string;
+  decided_at?: string;
+  content_hash?: string;
+  comment?: string;
+  invalidated_at?: string;
+  invalidated_reason?: string;
+}
+
+export type ChangePackageApprovalDecision =
+  | "approve"
+  | "reject"
+  | "request_changes"
+  | "revoke";
+
+export interface ChangePackageApprovalInput {
+  approval_id: string;
+  decision: ChangePackageApprovalDecision;
+  comment?: string;
+}
+
+export interface ChangePackageApprovalOptions extends UxWireupClientOptions {
+  fallbackPackage?: ChangePackage;
 }
 
 export interface ChangePackage {
@@ -166,4 +189,82 @@ export async function submitChangePackage(
       },
     },
   );
+}
+
+export async function recordChangePackageApproval(
+  agentId: string,
+  packageId: string,
+  input: ChangePackageApprovalInput,
+  opts: ChangePackageApprovalOptions = {},
+): Promise<ChangePackage> {
+  return cpJson<ChangePackage>(
+    `/agents/${encodeURIComponent(agentId)}/change-packages/${encodeURIComponent(
+      packageId,
+    )}/approvals`,
+    {
+      ...opts,
+      method: "POST",
+      body: input,
+      fallback: applyLocalApproval(
+        opts.fallbackPackage ?? buildLocalChangePackage(agentId),
+        packageId,
+        input,
+      ),
+    },
+  );
+}
+
+export function applyLocalApproval(
+  changePackage: ChangePackage,
+  packageId: string,
+  input: ChangePackageApprovalInput,
+): ChangePackage {
+  const now = new Date().toISOString();
+  const approvals = changePackage.required_approvals.map((approval) => {
+    if (approval.id !== input.approval_id) return approval;
+    if (input.decision === "approve") {
+      return {
+        ...approval,
+        satisfied: true,
+        state: "approved",
+        decided_at: now,
+        content_hash: changePackage.content_hash,
+        comment: input.comment ?? "",
+      };
+    }
+    return {
+      ...approval,
+      satisfied: false,
+      state: input.decision,
+      decided_at: now,
+      content_hash: changePackage.content_hash,
+      comment: input.comment ?? "",
+    };
+  });
+  const required = approvals.filter((approval) => approval.required);
+  const approved = required.filter((approval) => approval.satisfied);
+  const approval_status =
+    input.decision === "approve"
+      ? approved.length === required.length
+        ? "approved"
+        : approved.length
+          ? "partially_approved"
+          : "blocked"
+      : input.decision;
+  const status =
+    approval_status === "approved"
+      ? "approved"
+      : input.decision === "approve"
+        ? "submitted"
+        : input.decision === "revoke"
+          ? "revoked"
+          : "changes_requested";
+  return {
+    ...changePackage,
+    id: packageId,
+    required_approvals: approvals,
+    approval_status,
+    status,
+    updated_at: now,
+  };
 }

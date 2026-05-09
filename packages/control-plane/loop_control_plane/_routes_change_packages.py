@@ -9,6 +9,7 @@ from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import authorize_workspace_access
 from loop_control_plane.change_packages import (
+    ChangePackageApprovalAction,
     ChangePackageGenerate,
     change_package_payload,
 )
@@ -151,6 +152,44 @@ async def submit_change_package(
         resource_id=package.id,
         payload={
             "agent_id": str(agent_id),
+            "content_hash": package.content_hash,
+            "status": package.status,
+        },
+    )
+    return change_package_payload(package)
+
+
+@router.post("/{agent_id}/change-packages/{package_id}/approvals")
+async def record_change_package_approval(
+    request: Request,
+    agent_id: UUID,
+    package_id: str,
+    body: ChangePackageApprovalAction,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+    )
+    package = await request.app.state.cp.change_packages.record_approval(
+        agent=agent,
+        package_id=package_id,
+        action=body,
+        actor_sub=caller_sub,
+    )
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="change_package:approval",
+        resource_id=package.id,
+        payload={
+            "agent_id": str(agent_id),
+            "approval_id": body.approval_id,
+            "decision": body.decision,
             "content_hash": package.content_hash,
             "status": package.status,
         },

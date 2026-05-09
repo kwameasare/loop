@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildLocalChangePackage,
+  recordChangePackageApproval,
   fetchCurrentChangePackage,
   generateChangePackage,
   submitChangePackage,
@@ -85,6 +86,51 @@ describe("change package client", () => {
     expect(JSON.parse(String(init?.body))).toMatchObject({
       summary: "Promote draft.",
       to_version_id: "v2",
+    });
+  });
+
+  it("records approval decisions through the content-hash endpoint", async () => {
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ...buildLocalChangePackage("agt_1"),
+            id: "cp_1",
+            status: "approved",
+            approval_status: "approved",
+            required_approvals: [
+              {
+                id: "owner",
+                role: "Agent owner",
+                required: true,
+                satisfied: true,
+                state: "approved",
+                reason: "Owner approved.",
+                content_hash: "hash_123",
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+    );
+
+    const reviewed = await recordChangePackageApproval(
+      "agt_1",
+      "cp_1",
+      { approval_id: "owner", decision: "approve", comment: "Looks safe." },
+      { fetcher },
+    );
+
+    expect(reviewed.status).toBe("approved");
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agt_1/change-packages/cp_1/approvals",
+      expect.objectContaining({ method: "POST" }),
+    );
+    const [, init] = fetcher.mock.calls[0]!;
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      approval_id: "owner",
+      decision: "approve",
+      comment: "Looks safe.",
     });
   });
 });

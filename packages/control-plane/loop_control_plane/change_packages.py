@@ -4,7 +4,7 @@ import asyncio
 import json
 from datetime import UTC, datetime
 from hashlib import sha256
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -35,6 +35,14 @@ class ChangePackageGenerate(BaseModel):
     memory_changes: list[dict[str, Any]] = Field(default_factory=list, max_length=50)
     knowledge_changes: list[dict[str, Any]] = Field(default_factory=list, max_length=50)
     rollback_target_version_id: str = Field(default="last-known-safe", max_length=160)
+
+
+class ChangePackageApprovalAction(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    approval_id: str = Field(max_length=120)
+    decision: Literal["approve", "reject", "request_changes", "revoke"] = "approve"
+    comment: str = Field(default="", max_length=1200)
 
 
 class ChangePackageRecord(BaseModel):
@@ -105,6 +113,7 @@ def _required_approvals(
             "role": "Agent owner",
             "required": True,
             "satisfied": False,
+            "state": "requested",
             "reason": f"Owner must approve Commitment v{commitment.version}.",
         },
         {
@@ -112,9 +121,45 @@ def _required_approvals(
             "role": "Compliance reviewer",
             "required": high_risk,
             "satisfied": False,
+            "state": "requested" if high_risk else "not_required",
             "reason": "Required for production or unaccepted commitment changes.",
         },
     ]
+
+
+def _approval_status(approvals: list[dict[str, Any]]) -> str:
+    required = [item for item in approvals if item.get("required")]
+    if not required:
+        return "not_required"
+    approved = [item for item in required if item.get("satisfied")]
+    if len(approved) == len(required):
+        return "approved"
+    if approved:
+        return "partially_approved"
+    return "blocked"
+
+
+def _invalidate_approvals(
+    approvals: list[dict[str, Any]],
+    *,
+    now: datetime,
+    reason: str,
+) -> list[dict[str, Any]]:
+    invalidated: list[dict[str, Any]] = []
+    for approval in approvals:
+        if approval.get("satisfied") or approval.get("state") == "approved":
+            invalidated.append(
+                {
+                    **approval,
+                    "satisfied": False,
+                    "state": "invalidated",
+                    "invalidated_at": now.isoformat(),
+                    "invalidated_reason": reason,
+                }
+            )
+        else:
+            invalidated.append(approval)
+    return invalidated
 
 
 def build_change_package(
@@ -199,9 +244,7 @@ def build_change_package(
         memory_changes=body.memory_changes,
         knowledge_changes=body.knowledge_changes,
         required_approvals=claims["required_approvals"],
-        approval_status="blocked"
-        if any(item["required"] for item in claims["required_approvals"])
-        else "not_required",
+        approval_status=_approval_status(claims["required_approvals"]),
         rollback_target_version_id=body.rollback_target_version_id,
         evidence_pack_id=f"ep_{package_id.removeprefix('cp_')}",
         evidence=evidence,
@@ -255,7 +298,17 @@ class ChangePackageRegistry:
                     return latest
                 if latest.status in {"generated", "submitted", "approved", "deployable"}:
                     existing_items[-1] = latest.model_copy(
-                        update={"status": "stale", "stale_at": now, "updated_at": now}
+                        update={
+                            "status": "stale",
+                            "approval_status": "stale",
+                            "required_approvals": _invalidate_approvals(
+                                latest.required_approvals,
+                                now=now,
+                                reason="A newer Change Package changed the content hash.",
+                            ),
+                            "stale_at": now,
+                            "updated_at": now,
+                        }
                     )
             existing_items.append(candidate)
             return candidate
@@ -276,4 +329,91 @@ class ChangePackageRegistry:
                 )
                 items[index] = submitted
                 return submitted
+        raise WorkspaceError(f"unknown change package: {package_id}")
+
+    async def record_approval(
+        self,
+        *,
+        agent: AgentRecord,
+        package_id: str,
+        action: ChangePackageApprovalAction,
+        actor_sub: str,
+    ) -> ChangePackageRecord:
+        async with self._lock:
+            items = self._items.get(agent.id, [])
+            for index, item in enumerate(items):
+                if item.id != package_id:
+                    continue
+                if item.status == "stale":
+                    raise WorkspaceError(
+                        f"change package {package_id} is stale and cannot be approved"
+                    )
+                if item.status not in {"submitted", "approved", "deployable"}:
+                    raise WorkspaceError(
+                        f"change package {package_id} must be submitted before approval"
+                    )
+                now = datetime.now(UTC)
+                approvals = list(item.required_approvals)
+                updated = False
+                for approval_index, approval in enumerate(approvals):
+                    if approval.get("id") != action.approval_id:
+                        continue
+                    updated = True
+                    if action.decision == "approve":
+                        approvals[approval_index] = {
+                            **approval,
+                            "satisfied": True,
+                            "state": "approved",
+                            "actor_sub": actor_sub,
+                            "decided_at": now.isoformat(),
+                            "content_hash": item.content_hash,
+                            "comment": action.comment,
+                        }
+                    elif action.decision == "revoke":
+                        approvals[approval_index] = {
+                            **approval,
+                            "satisfied": False,
+                            "state": "revoked",
+                            "actor_sub": actor_sub,
+                            "decided_at": now.isoformat(),
+                            "content_hash": item.content_hash,
+                            "comment": action.comment,
+                        }
+                    else:
+                        approvals[approval_index] = {
+                            **approval,
+                            "satisfied": False,
+                            "state": action.decision,
+                            "actor_sub": actor_sub,
+                            "decided_at": now.isoformat(),
+                            "content_hash": item.content_hash,
+                            "comment": action.comment,
+                        }
+                    break
+                if not updated:
+                    raise WorkspaceError(f"unknown approval requirement: {action.approval_id}")
+
+                approval_status = _approval_status(approvals)
+                status = item.status
+                if action.decision == "approve" and approval_status == "approved":
+                    status = "approved"
+                elif action.decision == "approve":
+                    status = "submitted"
+                elif action.decision in {"reject", "request_changes"}:
+                    approval_status = action.decision
+                    status = "changes_requested"
+                elif action.decision == "revoke":
+                    approval_status = "revoked"
+                    status = "revoked"
+
+                reviewed = item.model_copy(
+                    update={
+                        "required_approvals": approvals,
+                        "approval_status": approval_status,
+                        "status": status,
+                        "updated_at": now,
+                    }
+                )
+                items[index] = reviewed
+                return reviewed
         raise WorkspaceError(f"unknown change package: {package_id}")
