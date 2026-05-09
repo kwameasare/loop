@@ -11,6 +11,7 @@ from loop_memory.inmemory import InMemorySessionMemoryStore, InMemoryUserMemoryS
 
 from loop_control_plane._app_agents import AgentRegistry, PostgresAgentRegistry
 from loop_control_plane.agent_commitments import CommitmentRegistry
+from loop_control_plane.agent_handoff import AgentHandoffRegistry
 from loop_control_plane.agent_versions import AgentVersionService
 from loop_control_plane.agent_workflow import AgentWorkflowRegistry
 from loop_control_plane.api_keys import ApiKeyService, PostgresApiKeyService
@@ -234,6 +235,8 @@ class CpApiState:
         self.deployments = DeploymentRegistry()
         # Agent-flow implementation: incidents link deploy events, traces, and evals.
         self.incidents = IncidentRegistry()
+        # Agent-flow implementation: ownership transfer and history walkthrough.
+        self.agent_handoffs = AgentHandoffRegistry()
         # Agent-flow implementation: migration import, parity, cutover, and
         # lineage are durable workspace objects, not derived page fixtures.
         self.migration_runs = MigrationRunRegistry()

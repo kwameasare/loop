@@ -1,24 +1,21 @@
-import { AgentSectionPlaceholder } from "@/components/agents/agent-section-placeholder";
+import { AgentHistoryWalkthrough } from "@/components/agents/agent-history-walkthrough";
+import { fetchAgentHandoff, localAgentHandoff } from "@/lib/agent-handoff";
+
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: { agent_id: string };
 }
 
-export default function AgentHistoryPage({ params }: PageProps) {
+export default async function AgentHistoryPage({ params }: PageProps) {
+  let model = localAgentHandoff(params.agent_id);
+  try {
+    model = await fetchAgentHandoff(params.agent_id);
+  } catch {
+    model = localAgentHandoff(params.agent_id);
+  }
+
   return (
-    <AgentSectionPlaceholder
-      title="History"
-      purpose="The history walkthrough supports handoff: a new owner should understand commitments, changes, approvals, deploys, rollbacks, incidents, comments, and open risks without oral tradition."
-      requiredObjects={[
-        "Commitment versions",
-        "Change packages",
-        "Approvals",
-        "Deployments and rollbacks",
-        "Incidents",
-        "Open risks",
-      ]}
-      primaryHref={`/agents/${params.agent_id}/versions`}
-      primaryLabel="Open versions"
-    />
+    <AgentHistoryWalkthrough agentId={params.agent_id} initialModel={model} />
   );
 }
