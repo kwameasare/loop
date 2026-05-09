@@ -36,6 +36,53 @@ export interface EstateHealthSummary {
   blocked_deploys: number;
 }
 
+export interface EstateSharedDependency {
+  id: string;
+  type: "tool" | "channel" | string;
+  name: string;
+  agents: Array<{
+    agent_id: string;
+    agent_name: string;
+    contract_id?: string;
+    live_status?: string;
+    side_effect_level?: string;
+    pii_access?: boolean;
+    money_movement?: boolean;
+    evidence_ref: string;
+  }>;
+  risk: "low" | "medium" | "high" | "critical" | string;
+  detail: string;
+  evidence_ref: string;
+}
+
+export interface EstateChannelHealth {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  channel_type: string;
+  status: string;
+  blocking_checks: number;
+  last_failure_at: string | null;
+  evidence_ref: string;
+}
+
+export interface EstateFailureCluster {
+  id: string;
+  kind: "incident" | "trace_cluster" | string;
+  severity: "low" | "medium" | "high" | "critical" | string;
+  title: string;
+  affected: number;
+  href: string;
+  evidence_ref: string;
+}
+
+export interface EstateBackgroundJob {
+  id: string;
+  status: string;
+  output_count: number;
+  evidence_ref: string;
+}
+
 export interface EstateHealth {
   workspace_id: string | null;
   generated_at: string;
@@ -43,6 +90,11 @@ export interface EstateHealth {
   provenance: string[];
   summary: EstateHealthSummary;
   attention: EstateAttentionItem[];
+  shared_dependencies: EstateSharedDependency[];
+  channel_health: EstateChannelHealth[];
+  failure_clusters: EstateFailureCluster[];
+  background_jobs: EstateBackgroundJob[];
+  next_actions: EstateAttentionItem[];
   degraded_reason?: string | undefined;
 }
 
@@ -116,6 +168,11 @@ export function deriveEstateHealthFromAgents(
       agents_draft: draftAgents.length,
     },
     attention,
+    shared_dependencies: [],
+    channel_health: [],
+    failure_clusters: [],
+    background_jobs: [],
+    next_actions: attention.slice(0, 5),
     degraded_reason: options.degradedReason,
   };
 }

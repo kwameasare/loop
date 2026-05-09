@@ -143,6 +143,195 @@ export function EstateOverview({ health }: { health: EstateHealth }) {
         />
       </div>
 
+      <div className="grid gap-4 xl:grid-cols-2">
+        <div
+          className="rounded-md border bg-card"
+          data-testid="estate-shared-dependencies"
+        >
+          <div className="border-b px-4 py-3">
+            <h2 className="text-base font-semibold">Shared dependency risk</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Cross-agent tools and dependencies that can create fleet-wide
+              blast radius.
+            </p>
+          </div>
+          {health.shared_dependencies.length ? (
+            <ol className="divide-y">
+              {health.shared_dependencies.map((item) => (
+                <li key={item.id} className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">{item.name}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {item.detail}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-md px-2 py-0.5 text-xs font-medium",
+                        severityClass(
+                          item.risk === "critical" || item.risk === "high"
+                            ? "critical"
+                            : item.risk === "medium"
+                              ? "watch"
+                              : "ready",
+                        ),
+                      )}
+                    >
+                      {item.risk}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {item.agents.map((agent) => agent.agent_name).join(", ")}
+                  </p>
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">
+                    evidence: {item.evidence_ref}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="p-4 text-sm text-muted-foreground">
+              No shared dependency risk detected.
+            </div>
+          )}
+        </div>
+
+        <div
+          className="rounded-md border bg-card"
+          data-testid="estate-failure-clusters"
+        >
+          <div className="border-b px-4 py-3">
+            <h2 className="text-base font-semibold">Cross-agent failures</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Failure clusters, incidents, and trace errors that can become
+              tasks or evals.
+            </p>
+          </div>
+          {health.failure_clusters.length ? (
+            <ol className="divide-y">
+              {health.failure_clusters.map((item) => (
+                <li key={item.id} className="p-4">
+                  <Link href={item.href} className="group block">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold">{item.title}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {item.affected} affected conversation(s)
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "rounded-md px-2 py-0.5 text-xs font-medium",
+                          severityClass(
+                            item.severity === "critical" ||
+                              item.severity === "high"
+                              ? "critical"
+                              : item.severity === "medium"
+                                ? "watch"
+                                : "ready",
+                          ),
+                        )}
+                      >
+                        {item.severity}
+                      </span>
+                    </div>
+                    <p className="mt-2 font-mono text-xs text-muted-foreground">
+                      evidence: {item.evidence_ref}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="p-4 text-sm text-muted-foreground">
+              No cross-agent failure clusters detected.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <div
+          className="rounded-md border bg-card"
+          data-testid="estate-channels"
+        >
+          <div className="border-b px-4 py-3">
+            <h2 className="text-base font-semibold">Channel health</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Channel readiness across the fleet, not just voice.
+            </p>
+          </div>
+          {health.channel_health.length ? (
+            <ol className="divide-y">
+              {health.channel_health.map((item) => (
+                <li key={item.id} className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {item.agent_name} ·{" "}
+                        {item.channel_type.replace(/_/g, " ")}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {item.blocking_checks} readiness blocker(s)
+                      </p>
+                    </div>
+                    <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="mt-2 font-mono text-xs text-muted-foreground">
+                    evidence: {item.evidence_ref}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="p-4 text-sm text-muted-foreground">
+              No configured channel blockers detected.
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-md border bg-card" data-testid="estate-jobs">
+          <div className="border-b px-4 py-3">
+            <h2 className="text-base font-semibold">
+              Background analysis jobs
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Drift, failure, cost, latency, knowledge, and handoff detectors
+              that feed the estate queue.
+            </p>
+          </div>
+          {health.background_jobs.length ? (
+            <ol className="divide-y">
+              {health.background_jobs.map((job) => (
+                <li
+                  key={job.id}
+                  className="flex items-start justify-between gap-3 p-4"
+                >
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {job.id.replace(/_/g, " ")}
+                    </p>
+                    <p className="mt-1 font-mono text-xs text-muted-foreground">
+                      evidence: {job.evidence_ref}
+                    </p>
+                  </div>
+                  <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    {job.status} · {job.output_count}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="p-4 text-sm text-muted-foreground">
+              No estate analysis jobs have run yet.
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="rounded-md border bg-card" data-testid="estate-attention">
         <div className="border-b px-4 py-3">
           <div className="flex items-center gap-2">

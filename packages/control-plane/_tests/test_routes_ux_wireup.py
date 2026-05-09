@@ -233,6 +233,45 @@ def test_estate_health_derives_claims_from_workspace_objects(
         json={"title": "Safer refunds", "payload": {"prompt": "require approval"}},
     )
     assert changeset.status_code == 201, changeset.text
+    tool = client.put(
+        f"/v1/agents/{agent_id}/tool-contracts/refund_payment",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "name": "Refund payment",
+            "side_effect_level": "money_movement",
+            "pii_access": True,
+            "money_movement": True,
+            "sandbox_status": "sandbox",
+            "owner_user_id": "finance@acme",
+            "failure_behavior": "Escalate failed refunds.",
+            "compensation_behavior": "",
+        },
+    )
+    assert tool.status_code == 200, tool.text
+    channel = client.post(
+        f"/v1/agents/{agent_id}/channel-bindings",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "channel_type": "whatsapp",
+            "provider": "Meta Cloud API",
+            "display_name": "WhatsApp support",
+            "status": "draft",
+        },
+    )
+    assert channel.status_code == 201, channel.text
+    incident = client.post(
+        f"/v1/agents/{agent_id}/incidents/anomaly",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "severity": "high",
+            "trigger": "Refund quote regressed in WhatsApp canary.",
+            "affected_trace_ids": ["trace_refund_1"],
+            "affected_conversation_count": 4,
+            "channel_scope": ["whatsapp"],
+            "created_from": "test",
+        },
+    )
+    assert incident.status_code == 201, incident.text
 
     response = client.get(
         f"/v1/workspaces/{workspace_id}/estate-health",
@@ -247,12 +286,22 @@ def test_estate_health_derives_claims_from_workspace_objects(
     assert body["summary"]["agents_draft"] == 1
     assert body["summary"]["pending_approvals"] == 1
     assert body["summary"]["trace_errors"] == 1
+    assert body["summary"]["open_incidents"] == 1
     assert {item["id"] for item in body["attention"]} >= {
         "pending-approvals",
         "trace-errors",
+        "open-incidents",
         f"draft-agent-{agent_id}",
     }
     assert all(item["source"] for item in body["attention"])
+    assert body["shared_dependencies"][0]["id"] == "tool:refund_payment"
+    assert body["channel_health"][0]["channel_type"] == "whatsapp"
+    assert body["failure_clusters"][0]["kind"] == "incident"
+    assert {
+        "cluster_failures",
+        "detect_drift",
+        "summarize_operator_takeovers",
+    } <= {job["id"] for job in body["background_jobs"]}
 
 
 def test_agent_commitment_contract_can_be_drafted_accepted_and_versioned(
