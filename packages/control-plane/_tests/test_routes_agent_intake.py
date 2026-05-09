@@ -191,7 +191,12 @@ def test_enterprise_template_intake_clones_approved_defaults(
         headers=_auth(),
     )
     assert templates.status_code == 200, templates.text
-    assert "tmpl_support_agent" in {item["id"] for item in templates.json()["items"]}
+    support_template = next(
+        item for item in templates.json()["items"] if item["id"] == "tmpl_support_agent"
+    )
+    assert support_template["summary"].startswith("Policy-grounded")
+    assert support_template["contract"]["channels"] == ["web", "whatsapp", "email"]
+    assert support_template["artifacts"][0]["source_ref"].startswith("template/tmpl_support_agent")
 
     response = client.post(
         f"/v1/workspaces/{workspace_id}/agent-intakes",

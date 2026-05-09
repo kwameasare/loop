@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   createAgentIntake,
+  listAgentIntakeTemplates,
   type AgentIntakeCreateInput,
 } from "@/lib/agent-intake";
 import { EMPTY_COMMITMENT_BODY } from "@/lib/agent-commitment";
@@ -131,5 +132,74 @@ describe("createAgentIntake", () => {
     expect(result.state).toBe("draft_ready");
     expect(result.agent.slug).toBe("billing-support");
     expect(result.candidate_eval_cases).toHaveLength(3);
+  });
+});
+
+describe("listAgentIntakeTemplates", () => {
+  it("loads approved template defaults from cp-api", async () => {
+    const fetcher = vi.fn(
+      async (
+        url: Parameters<typeof fetch>[0],
+        init?: Parameters<typeof fetch>[1],
+      ) => {
+        expect(String(url)).toBe(
+          "https://api.loop.test/v1/workspaces/ws_1/agent-intake-templates",
+        );
+        expect(init?.method).toBe("GET");
+        return new Response(
+          JSON.stringify({
+            items: [
+              {
+                id: "tmpl_regulated_support",
+                name: "Regulated support",
+                summary: "Reviewed template for regulated support.",
+                channels: ["web", "telegram"],
+                systems_touched: ["case system"],
+                contract: {
+                  business_responsibility: "Resolve regulated support cases.",
+                  channels: ["web", "telegram"],
+                  systems_touched: ["case system"],
+                },
+                capabilities: ["Answer with policy evidence"],
+                artifacts: [
+                  {
+                    name: "regulated-support-template.md",
+                    kind: "runbook",
+                    text: "Cite policy before every regulated answer.",
+                    source_ref: "template/tmpl_regulated_support/runbook",
+                  },
+                ],
+              },
+            ],
+          }),
+          { status: 200 },
+        );
+      },
+    ) as unknown as typeof fetch;
+
+    const catalog = await listAgentIntakeTemplates("ws_1", {
+      baseUrl: "https://api.loop.test",
+      fetcher,
+    });
+
+    expect(catalog.items[0]).toMatchObject({
+      id: "tmpl_regulated_support",
+      contract: {
+        business_responsibility: "Resolve regulated support cases.",
+      },
+    });
+  });
+
+  it("falls back to local approved templates without a cp-api base URL", async () => {
+    const catalog = await listAgentIntakeTemplates("local-workspace");
+
+    expect(catalog.items.map((template) => template.id)).toContain(
+      "tmpl_support_agent",
+    );
+    expect(catalog.items[0]?.contract.channels).toEqual([
+      "web",
+      "whatsapp",
+      "email",
+    ]);
   });
 });

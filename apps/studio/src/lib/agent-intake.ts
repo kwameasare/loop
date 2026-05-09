@@ -53,6 +53,100 @@ export interface AgentIntakeCreateInput {
   template_id?: string;
 }
 
+export interface AgentIntakeTemplate {
+  id: string;
+  name: string;
+  summary: string;
+  channels: string[];
+  systems_touched: string[];
+  contract: Partial<CommitmentBody>;
+  capabilities: string[];
+  artifacts: AgentIntakeArtifactInput[];
+}
+
+export interface AgentIntakeTemplateList {
+  items: AgentIntakeTemplate[];
+}
+
+export const LOCAL_AGENT_INTAKE_TEMPLATES: AgentIntakeTemplate[] = [
+  {
+    id: "tmpl_support_agent",
+    name: "Enterprise support agent",
+    summary: "Policy-grounded web, WhatsApp, and email support.",
+    channels: ["web", "whatsapp", "email"],
+    systems_touched: ["crm", "billing api"],
+    contract: {
+      business_responsibility:
+        "Resolve support questions using approved policy and escalation paths.",
+      target_users: "Enterprise customers and support operators.",
+      worst_case_failure:
+        "Promises refunds, legal positions, or account actions outside approved policy.",
+      channels: ["web", "whatsapp", "email"],
+      systems_touched: ["crm", "billing api"],
+      regions: ["us-east-1", "eu-west-2"],
+      languages: ["en"],
+      success_metric: "95% eval pass rate before canary.",
+      compliance_domain: "SOC2 support operations",
+      expected_volume: "10k turns per month",
+      budget_target: "$0.08 per resolved turn",
+      out_of_scope: "Legal advice and refunds above policy.",
+      escalation_policy:
+        "Escalate policy conflicts, legal threats, and refund exceptions to the support lead.",
+    },
+    capabilities: [
+      "Answer policy-backed support questions",
+      "Escalate billing and legal risk",
+      "Preserve channel formatting",
+    ],
+    artifacts: [
+      {
+        name: "enterprise-support-template.md",
+        kind: "runbook",
+        text: "Use approved policy. Escalate legal threats. Never refund outside policy.",
+        source_ref: "template/tmpl_support_agent/runbook",
+      },
+    ],
+  },
+  {
+    id: "tmpl_voice_receptionist",
+    name: "Voice receptionist",
+    summary: "Voice and SMS receptionist with handoff-safe routing.",
+    channels: ["voice", "sms"],
+    systems_touched: ["calendar", "crm"],
+    contract: {
+      business_responsibility:
+        "Handle inbound calls, answer basic questions, and route callers to the right team.",
+      target_users: "Prospects, customers, and operators calling the business.",
+      worst_case_failure:
+        "Books, cancels, or promises appointments without confirmation.",
+      channels: ["voice", "sms"],
+      systems_touched: ["calendar", "crm"],
+      regions: ["us-east-1"],
+      languages: ["en"],
+      success_metric: "90% successful route or callback capture.",
+      compliance_domain: "Customer communications",
+      expected_volume: "3k calls per month",
+      budget_target: "$0.12 per handled call",
+      out_of_scope: "Medical, legal, or financial advice.",
+      escalation_policy:
+        "Escalate urgent, regulated, or frustrated callers to the human queue.",
+    },
+    capabilities: [
+      "Answer front-desk questions",
+      "Schedule handoffs",
+      "Collect callback context",
+    ],
+    artifacts: [
+      {
+        name: "voice-receptionist-template.md",
+        kind: "runbook",
+        text: "Confirm identity before scheduling. Keep speech concise. Escalate urgent callers.",
+        source_ref: "template/tmpl_voice_receptionist/runbook",
+      },
+    ],
+  },
+];
+
 export interface AgentIntakeRecord {
   id: string;
   workspace_id: string;
@@ -235,6 +329,19 @@ export async function createAgentIntake(
       method: "POST",
       body: input,
       fallback: localIntakeResult(input, workspaceId),
+    },
+  );
+}
+
+export async function listAgentIntakeTemplates(
+  workspaceId: string,
+  opts: UxWireupClientOptions = {},
+): Promise<AgentIntakeTemplateList> {
+  return cpJson<AgentIntakeTemplateList>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/agent-intake-templates`,
+    {
+      ...opts,
+      fallback: { items: LOCAL_AGENT_INTAKE_TEMPLATES },
     },
   );
 }
