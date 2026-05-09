@@ -1,4 +1,5 @@
 export { CanarySlider } from "./canary-slider";
+export { ChangePackagePanel } from "./change-package-panel";
 export { DeployTimeline } from "./deploy-timeline";
 export { EnvironmentStrip } from "./environment-strip";
 export { FlightDeckScreen } from "./flight-deck-screen";

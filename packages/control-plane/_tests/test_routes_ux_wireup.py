@@ -285,6 +285,81 @@ def test_agent_commitment_contract_can_be_drafted_accepted_and_versioned(
     }
 
 
+def test_change_package_preflight_links_commitment_evidence_and_stales_on_change(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    package = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "branch_id": "main/draft",
+            "change_set_id": "cs_refund",
+            "release_candidate_id": "rc_refund_v2",
+            "from_version_id": "v1",
+            "to_version_id": "v2",
+            "target_environment": "production",
+            "summary": "Promote safer refund handling to canary.",
+            "semantic_diff": [
+                {
+                    "dimension": "behavior",
+                    "summary": "Requires account verification before refund answer.",
+                    "evidence_ref": "trace/replay/refund-account-check",
+                }
+            ],
+            "eval_results_ref": "eval/run/refund-v2",
+            "replay_results_ref": "replay/run/refund-v2",
+            "cost_summary": "+$0.002 per turn estimated.",
+            "latency_summary": "+80 ms p95 estimated.",
+            "channel_readiness_summary": "Web and WhatsApp ready; voice blocked.",
+            "rollback_target_version_id": "v1",
+        },
+    )
+    assert package.status_code == 201, package.text
+    body = package.json()
+    assert body["status"] == "generated"
+    assert body["commitment_document_id"].startswith("commit_")
+    assert body["evidence"]["commitment"] == body["commitment_document_id"]
+    assert body["required_approvals"][0]["role"] == "Agent owner"
+
+    submitted = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{body['id']}/submit",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert submitted.status_code == 200, submitted.text
+    assert submitted.json()["status"] == "submitted"
+    assert submitted.json()["submitted_at"] is not None
+
+    changed = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "branch_id": "main/draft",
+            "change_set_id": "cs_refund",
+            "release_candidate_id": "rc_refund_v3",
+            "from_version_id": "v1",
+            "to_version_id": "v3",
+            "summary": "Promote safer refund handling plus Spanish copy.",
+        },
+    )
+    assert changed.status_code == 201, changed.text
+    assert changed.json()["id"] != body["id"]
+
+    history = client.get(
+        f"/v1/agents/{agent_id}/change-packages",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    ).json()["items"]
+    assert [item["status"] for item in history] == ["stale", "generated"]
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "change_package:generate",
+        "change_package:submit",
+    }
+
+
 def test_comment_resolution_can_create_eval_case(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:
