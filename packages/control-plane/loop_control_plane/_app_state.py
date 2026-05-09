@@ -10,6 +10,7 @@ from uuid import UUID
 from loop_memory.inmemory import InMemorySessionMemoryStore, InMemoryUserMemoryStore
 
 from loop_control_plane._app_agents import AgentRegistry, PostgresAgentRegistry
+from loop_control_plane.agent_commitments import CommitmentRegistry
 from loop_control_plane.agent_versions import AgentVersionService
 from loop_control_plane.api_keys import ApiKeyService, PostgresApiKeyService
 from loop_control_plane.api_keys_api import ApiKeyAPI
@@ -228,6 +229,9 @@ class CpApiState:
         # P0.4: agent versions service depends on AgentRegistry; built
         # in __post_init__ so it shares the same agent storage map.
         self.agent_versions = AgentVersionService(self.agents)
+        # Agent-flow implementation: every agent has a current versioned
+        # Commitment Document before it can become a deployable commitment.
+        self.agent_commitments = CommitmentRegistry()
         if not self.marketplace_store.servers:
             publisher = MarketplacePublisher(
                 store=self.marketplace_store,

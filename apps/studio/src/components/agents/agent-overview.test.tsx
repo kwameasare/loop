@@ -6,6 +6,10 @@ import {
   AgentOverview,
   type AgentOverviewProps,
 } from "@/components/agents/agent-overview";
+import {
+  EMPTY_COMMITMENT_BODY,
+  buildLocalCommitmentDocument,
+} from "@/lib/agent-commitment";
 
 const BASE_PROPS: AgentOverviewProps = {
   id: "ag_1",
@@ -105,6 +109,39 @@ describe("AgentOverview", () => {
     );
     expect(screen.queryByText("trace_refund_742")).not.toBeInTheDocument();
     expect(screen.queryByText("I need to cancel my annual renewal")).toBeNull();
+  });
+
+  it("uses an accepted Commitment Document as the workbench purpose and commitment evidence", () => {
+    const body = {
+      ...EMPTY_COMMITMENT_BODY,
+      business_responsibility: "Resolve support billing escalations.",
+      target_users: "Enterprise admins.",
+      owner_user_id: "maya@acme.test",
+      worst_case_failure: "Refunds an ineligible account.",
+      channels: ["web", "telegram"],
+      systems_touched: ["billing"],
+      regions: ["eu-west-2"],
+      languages: ["en"],
+    };
+    const commitment = {
+      ...buildLocalCommitmentDocument("ag_1", body),
+      id: "commit_accepted",
+      version: 3,
+      status: "accepted" as const,
+      accepted_at: "2026-05-09T12:00:00Z",
+    };
+
+    render(<AgentOverview {...BASE_PROPS} commitment={commitment} />);
+
+    expect(screen.getByTestId("agent-outline-purpose")).toHaveTextContent(
+      "Resolve support billing escalations",
+    );
+    expect(screen.getByTestId("agent-outline-commitment")).toHaveTextContent(
+      "accepted v3",
+    );
+    expect(screen.getByTestId("agent-workbench-profile")).toHaveTextContent(
+      "maya@acme.test",
+    );
   });
 
   it("surfaces degraded cached-data evidence when live agent data is unavailable", () => {

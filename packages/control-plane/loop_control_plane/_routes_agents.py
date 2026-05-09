@@ -31,6 +31,7 @@ async def create_agent(
     runtime = request.app.state.cp
     await _authorise(request, workspace_id=workspace_id, caller_sub=caller_sub)
     agent = await runtime.agents.create(workspace_id=workspace_id, body=body)
+    await runtime.agent_commitments.ensure_current(agent=agent, created_from="agent:create")
     record_audit_event(
         workspace_id=workspace_id,
         actor_sub=caller_sub,

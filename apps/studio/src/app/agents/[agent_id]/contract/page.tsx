@@ -1,24 +1,25 @@
-import { AgentSectionPlaceholder } from "@/components/agents/agent-section-placeholder";
+import { AgentContractPanel } from "@/components/agents/agent-contract-panel";
+import {
+  buildLocalCommitmentDocument,
+  fetchCurrentCommitment,
+} from "@/lib/agent-commitment";
 
 interface PageProps {
   params: { agent_id: string };
 }
 
-export default function AgentContractPage({ params }: PageProps) {
+export default async function AgentContractPage({ params }: PageProps) {
+  let commitment = buildLocalCommitmentDocument(params.agent_id);
+  try {
+    commitment = await fetchCurrentCommitment(params.agent_id);
+  } catch {
+    commitment = buildLocalCommitmentDocument(params.agent_id);
+  }
+
   return (
-    <AgentSectionPlaceholder
-      title="Contract"
-      purpose="The Commitment Document defines responsibility, boundaries, owners, success metrics, worst-case failure, channels, and escalation policy for this agent."
-      requiredObjects={[
-        "Commitment Document",
-        "Owner and backup owner",
-        "Scope and out-of-scope behavior",
-        "Success metrics",
-        "Escalation policy",
-        "Version history",
-      ]}
-      primaryHref={`/agents/${params.agent_id}`}
-      primaryLabel="Return to overview work queue"
+    <AgentContractPanel
+      agentId={params.agent_id}
+      initialDocument={commitment}
     />
   );
 }
