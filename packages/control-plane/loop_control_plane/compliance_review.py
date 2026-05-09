@@ -270,8 +270,12 @@ def build_compliance_review_payload(
                     "side_effect_level": contract.side_effect_level,
                     "pii_access": contract.pii_access,
                     "money_movement": contract.money_movement,
+                    "rate_limits": contract.rate_limits,
+                    "budget_limits": contract.budget_limits,
                     "sandbox_status": contract.sandbox_status,
                     "live_status": contract.live_status,
+                    "owner_user_id": contract.owner_user_id,
+                    "approval_policy_id": contract.approval_policy_id,
                     "reviewer_action": _reviewer_action_for_tool(contract),
                     "content_hash": contract.content_hash,
                     "evidence_ref": f"tool-contract/{contract.id}",
@@ -350,6 +354,117 @@ def build_compliance_review_payload(
         for row in audit_rows
         if "policy" in row["action"] or "violation" in row["action"]
     ]
+    policy_conflicts: list[dict[str, Any]] = []
+    for row in tool_grants:
+        if row["money_movement"] and not row["budget_limits"]:
+            policy_conflicts.append(
+                {
+                    "id": f"{row['id']}:missing-budget-cap",
+                    "agent_id": row["agent_id"],
+                    "agent_name": row["agent_name"],
+                    "severity": "high",
+                    "policy": "money_movement_requires_budget_caps",
+                    "summary": f"{row['name']} can move money but has no budget cap.",
+                    "reviewer_action": "Block live use until per-action and per-turn caps are explicit.",
+                    "evidence_ref": row["evidence_ref"],
+                }
+            )
+        if row["pii_access"] and not row["approval_policy_id"]:
+            policy_conflicts.append(
+                {
+                    "id": f"{row['id']}:missing-approval-policy",
+                    "agent_id": row["agent_id"],
+                    "agent_name": row["agent_name"],
+                    "severity": "medium",
+                    "policy": "pii_tool_requires_approval_policy",
+                    "summary": f"{row['name']} reads PII without an approval policy binding.",
+                    "reviewer_action": "Bind a reviewer policy or keep the tool in sandbox.",
+                    "evidence_ref": row["evidence_ref"],
+                }
+            )
+    for row in memory_policies:
+        if row["approval_status"] in {"blocked", "review_required"}:
+            policy_conflicts.append(
+                {
+                    "id": f"{row['id']}:memory-review",
+                    "agent_id": row["agent_id"],
+                    "agent_name": row["agent_name"],
+                    "severity": "high" if row["approval_status"] == "blocked" else "medium",
+                    "policy": "durable_memory_requires_privacy_review",
+                    "summary": f"{row['scope']} memory needs reviewer action before activation.",
+                    "reviewer_action": row["reviewer_action"],
+                    "evidence_ref": row["evidence_ref"],
+                }
+            )
+
+    data_access_changes: list[dict[str, Any]] = []
+    for row in tool_grants:
+        if row["pii_access"] or row["money_movement"]:
+            data_access_changes.append(
+                {
+                    "id": f"tool-access:{row['id']}",
+                    "agent_id": row["agent_id"],
+                    "agent_name": row["agent_name"],
+                    "surface": "tool",
+                    "target": row["name"],
+                    "access": [
+                        label
+                        for label, enabled in (
+                            ("PII", row["pii_access"]),
+                            ("money movement", row["money_movement"]),
+                        )
+                        if enabled
+                    ],
+                    "state": row["live_status"],
+                    "reviewer_action": row["reviewer_action"],
+                    "evidence_ref": row["evidence_ref"],
+                }
+            )
+    for row in memory_policies:
+        if row["scope"] in {"user", "workspace"} or row["allowed_memory_types"]:
+            data_access_changes.append(
+                {
+                    "id": f"memory-access:{row['id']}",
+                    "agent_id": row["agent_id"],
+                    "agent_name": row["agent_name"],
+                    "surface": "memory",
+                    "target": f"{row['scope']} memory",
+                    "access": row["allowed_memory_types"],
+                    "state": row["approval_status"],
+                    "reviewer_action": row["reviewer_action"],
+                    "evidence_ref": row["evidence_ref"],
+                }
+            )
+
+    stale_risk_reviews: list[dict[str, Any]] = []
+    for agent in agent_list:
+        for package in change_packages_by_agent.get(agent.id, []):
+            if package.approval_status == "stale" or package.stale_at is not None:
+                stale_risk_reviews.append(
+                    {
+                        "id": f"stale-review:{package.id}",
+                        "agent_id": str(agent.id),
+                        "agent_name": agent.name,
+                        "change_package_id": package.id,
+                        "severity": "high",
+                        "summary": "Risk review is stale after the Change Package changed.",
+                        "reviewer_action": "Re-request approvals bound to the latest content hash.",
+                        "evidence_ref": f"change-package/{package.id}",
+                    }
+                )
+            elif package.approval_status in {"blocked", "stale"}:
+                stale_risk_reviews.append(
+                    {
+                        "id": f"blocked-review:{package.id}",
+                        "agent_id": str(agent.id),
+                        "agent_name": agent.name,
+                        "change_package_id": package.id,
+                        "severity": "medium",
+                        "summary": "Risk review is blocked and must be resolved before rollout.",
+                        "reviewer_action": "Open the approval queue and resolve reviewer comments.",
+                        "evidence_ref": f"change-package/{package.id}",
+                    }
+                )
 
     open_incidents = [row for row in incident_rows if row["status"] not in {"resolved", "archived"}]
     review_required_tools = [
@@ -359,6 +474,46 @@ def build_compliance_review_payload(
         row for row in memory_policies if row["approval_status"] in {"blocked", "review_required"}
     ]
     channel_blockers = [row for row in channel_readiness if row["blocking_checks"]]
+    review_jobs = [
+        {
+            "id": "run_industry_probe_suite",
+            "status": "available",
+            "output_count": len(probe_library_payloads()),
+            "reviewer_action": "Attach required probe suites to high-risk agents before approval.",
+            "evidence_ref": "probe-library/index",
+        },
+        {
+            "id": "detect_policy_conflicts",
+            "status": "action_required" if policy_conflicts else "clear",
+            "output_count": len(policy_conflicts),
+            "reviewer_action": "Resolve high and medium policy conflicts before production approval.",
+            "evidence_ref": "compliance-review/policy-conflicts",
+        },
+        {
+            "id": "summarize_data_access_changes",
+            "status": "ready" if data_access_changes else "clear",
+            "output_count": len(data_access_changes),
+            "reviewer_action": "Review PII, memory, and money movement access changes across agents.",
+            "evidence_ref": "compliance-review/data-access",
+        },
+        {
+            "id": "generate_evidence_export",
+            "status": "available",
+            "output_count": len(approval_queue)
+            + len(tool_grants)
+            + len(memory_policies)
+            + len(incident_rows),
+            "reviewer_action": "Create an evidence export for formal review or audit handoff.",
+            "evidence_ref": "compliance-review/evidence-export",
+        },
+        {
+            "id": "flag_stale_risk_review",
+            "status": "action_required" if stale_risk_reviews else "clear",
+            "output_count": len(stale_risk_reviews),
+            "reviewer_action": "Invalidate stale approvals and re-run review on the current hash.",
+            "evidence_ref": "compliance-review/stale-risk",
+        },
+    ]
 
     return {
         "workspace_id": str(workspace_id),
@@ -371,9 +526,16 @@ def build_compliance_review_payload(
             "memory_reviews": len(review_required_memory),
             "channel_blockers": len(channel_blockers),
             "open_incidents": len(open_incidents),
+            "policy_conflicts": len(policy_conflicts),
+            "data_access_changes": len(data_access_changes),
+            "stale_risk_reviews": len(stale_risk_reviews),
         },
         "approval_queue": approval_queue,
         "policy_violations": policy_violations,
+        "policy_conflicts": policy_conflicts,
+        "data_access_changes": data_access_changes,
+        "stale_risk_reviews": stale_risk_reviews,
+        "review_jobs": review_jobs,
         "tool_grants": tool_grants,
         "memory_policies": memory_policies,
         "channel_readiness": channel_readiness,
