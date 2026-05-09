@@ -41,6 +41,12 @@ from loop_control_plane._routes_evals import (
 from loop_control_plane._routes_health import router as health_router
 from loop_control_plane._routes_inbox import router_inbox as inbox_router
 from loop_control_plane._routes_inbox import router_workspaces as workspace_inbox_router
+from loop_control_plane._routes_incidents import (
+    router_agents as agent_incidents_router,
+)
+from loop_control_plane._routes_incidents import (
+    router_workspaces as workspace_incidents_router,
+)
 from loop_control_plane._routes_kb import router as kb_router
 from loop_control_plane._routes_marketplace import router as marketplace_router
 from loop_control_plane._routes_migration_parity import (
@@ -109,6 +115,9 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         channel_bindings_router,
         # Agent-flow implementation: rollout state generates Evidence Packs.
         deployments_router,
+        # Agent-flow implementation: incidents connect rollbacks, traces, and evals.
+        agent_incidents_router,
+        workspace_incidents_router,
         # UX wire-up: Studio Tools Room reads active version tool bindings.
         agent_tools_router,
         # UX wire-up: Studio Memory Studio reads runtime memory stores.

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Request
+from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
@@ -16,6 +17,14 @@ from loop_control_plane.deployments import (
 from loop_control_plane.workspaces import WorkspaceError
 
 router = APIRouter(prefix="/v1/agents", tags=["Deployments"])
+
+
+class DeploymentActionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mode: Literal["manual", "auto"] = "manual"
+    trigger: str = Field(default="", max_length=500)
+    reason: str = Field(default="", max_length=1200)
 
 
 async def _agent(
@@ -132,6 +141,7 @@ async def _deployment_action(
     agent_id: UUID,
     deployment_id: str,
     action: str,
+    body: DeploymentActionBody | None,
     caller_sub: str,
     workspace_id: UUID,
 ) -> dict[str, Any]:
@@ -154,6 +164,34 @@ async def _deployment_action(
         resource_id=deployment.id,
         payload={"agent_id": str(agent_id), "status": deployment.status},
     )
+    if action == "rollback":
+        details = body or DeploymentActionBody()
+        incident = await request.app.state.cp.incidents.create_for_rollback(
+            agent=agent,
+            deployment_id=deployment.id,
+            version_id=deployment.version_id,
+            actor_sub=caller_sub,
+            mode=details.mode,
+            trigger=details.trigger,
+            reason=details.reason,
+        )
+        record_audit_event(
+            workspace_id=workspace_id,
+            actor_sub=caller_sub,
+            action="incident:create_auto_rollback"
+            if details.mode == "auto"
+            else "incident:create_from_rollback",
+            resource_type="incident",
+            resource_id=incident.id,
+            store=request.app.state.cp.audit_events,
+            request_id=request_id(request),
+            payload={
+                "agent_id": str(agent_id),
+                "deployment_id": deployment.id,
+                "rollback_action_ref": incident.rollback_action_ref,
+                "trigger": incident.trigger,
+            },
+        )
     return deployment_payload(deployment)
 
 
@@ -170,6 +208,7 @@ async def promote_deployment(
         agent_id=agent_id,
         deployment_id=deployment_id,
         action="promote",
+        body=None,
         caller_sub=caller_sub,
         workspace_id=workspace_id,
     )
@@ -188,6 +227,7 @@ async def pause_deployment(
         agent_id=agent_id,
         deployment_id=deployment_id,
         action="pause",
+        body=None,
         caller_sub=caller_sub,
         workspace_id=workspace_id,
     )
@@ -198,6 +238,7 @@ async def rollback_deployment(
     request: Request,
     agent_id: UUID,
     deployment_id: str,
+    body: DeploymentActionBody | None = None,
     caller_sub: str = CALLER,
     workspace_id: UUID = ACTIVE_WORKSPACE,
 ) -> dict[str, Any]:
@@ -206,6 +247,7 @@ async def rollback_deployment(
         agent_id=agent_id,
         deployment_id=deployment_id,
         action="rollback",
+        body=body,
         caller_sub=caller_sub,
         workspace_id=workspace_id,
     )

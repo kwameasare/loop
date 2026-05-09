@@ -13,8 +13,14 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ConfidenceMeter, EvidenceCallout, LiveBadge } from "@/components/target";
+import {
+  ConfidenceMeter,
+  EvidenceCallout,
+  LiveBadge,
+} from "@/components/target";
+import { seedIncidentEvalCases } from "@/lib/incidents";
 import { pinObservatoryMetric } from "@/lib/observatory";
+import type { IncidentRecord } from "@/lib/incidents";
 import type {
   AmbientAgentHealth,
   ObservatoryAnomaly,
@@ -49,12 +55,20 @@ function MetricCard({
   pinned?: boolean;
 }) {
   return (
-    <article className="rounded-md border bg-card p-4" data-testid={`observatory-metric-${metric.id}`}>
+    <article
+      className="rounded-md border bg-card p-4"
+      data-testid={`observatory-metric-${metric.id}`}
+    >
       <div className="flex items-start justify-between gap-3">
         <p className="text-xs font-semibold uppercase text-muted-foreground">
           {metric.label}
         </p>
-        <span className={cn("rounded-md border px-2 py-0.5 text-xs", TONE_CLASS[metric.tone])}>
+        <span
+          className={cn(
+            "rounded-md border px-2 py-0.5 text-xs",
+            TONE_CLASS[metric.tone],
+          )}
+        >
           {metric.tone}
         </span>
       </div>
@@ -89,17 +103,29 @@ function AnomalyCard({
   return (
     <article className="rounded-md border bg-card p-4">
       <div className="flex items-start gap-3">
-        <AlertTriangle className="mt-0.5 h-5 w-5 text-warning" aria-hidden={true} />
+        <AlertTriangle
+          className="mt-0.5 h-5 w-5 text-warning"
+          aria-hidden={true}
+        />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <h3 className="text-sm font-semibold">{anomaly.title}</h3>
-            <span className={cn("rounded-md border px-2 py-0.5 text-xs", SEVERITY_TONE[anomaly.severity])}>
+            <span
+              className={cn(
+                "rounded-md border px-2 py-0.5 text-xs",
+                SEVERITY_TONE[anomaly.severity],
+              )}
+            >
               {anomaly.severity}
             </span>
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">{anomaly.evidence}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {anomaly.evidence}
+          </p>
           <p className="mt-3 text-sm">{anomaly.nextAction}</p>
-          <p className="mt-2 text-xs text-muted-foreground">Owner: {anomaly.owner}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Owner: {anomaly.owner}
+          </p>
           <Button
             type="button"
             variant={acknowledged ? "subtle" : "outline"}
@@ -117,7 +143,10 @@ function AnomalyCard({
 
 function AgentHealthArc({ agent }: { agent: AmbientAgentHealth }) {
   return (
-    <article className="rounded-md border bg-card p-4" data-testid={`ambient-health-${agent.id}`}>
+    <article
+      className="rounded-md border bg-card p-4"
+      data-testid={`ambient-health-${agent.id}`}
+    >
       <div className="flex items-center gap-3">
         <div
           className={cn(
@@ -138,7 +167,8 @@ function AgentHealthArc({ agent }: { agent: AmbientAgentHealth }) {
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold">{agent.name}</h3>
           <p className="text-xs text-muted-foreground">
-            {agent.evalPassRate}% eval - {agent.p95LatencyMs} ms p95 - {agent.escalationRate}% escalation
+            {agent.evalPassRate}% eval - {agent.p95LatencyMs} ms p95 -{" "}
+            {agent.escalationRate}% escalation
           </p>
         </div>
       </div>
@@ -157,13 +187,17 @@ function TailRow({ event }: { event: ProductionTailEvent }) {
     <article className="border-b px-3 py-3 text-sm last:border-b-0">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-xs text-muted-foreground">{event.time}</span>
+          <span className="font-mono text-xs text-muted-foreground">
+            {event.time}
+          </span>
           <span className="rounded-md border bg-background px-2 py-0.5 text-xs">
             {event.channel}
           </span>
         </div>
         <span className="flex items-center gap-2">
-          <span className="font-mono text-xs text-muted-foreground">{event.traceId}</span>
+          <span className="font-mono text-xs text-muted-foreground">
+            {event.traceId}
+          </span>
           <span
             className={cn(
               "h-2.5 w-2.5 rounded-full",
@@ -181,6 +215,132 @@ function TailRow({ event }: { event: ProductionTailEvent }) {
   );
 }
 
+function IncidentResponsePanel({
+  incidents,
+}: {
+  incidents: readonly IncidentRecord[];
+}) {
+  const [seeded, setSeeded] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+
+  async function seedIncident(incident: IncidentRecord) {
+    setBusy(incident.id);
+    try {
+      const response = await seedIncidentEvalCases(
+        incident.agent_id,
+        incident.id,
+      );
+      setSeeded((current) => ({
+        ...current,
+        [incident.id]: response.suite_id,
+      }));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <section className="space-y-3" data-testid="observatory-incidents">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-warning" aria-hidden={true} />
+          <h2 className="text-lg font-semibold">Incident response</h2>
+        </div>
+        <LiveBadge tone={incidents.length > 0 ? "paused" : "live"}>
+          {incidents.length > 0 ? `${incidents.length} active` : "clear"}
+        </LiveBadge>
+      </div>
+
+      {incidents.length === 0 ? (
+        <article className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
+          No active incidents. Rollback, pause, anomaly, and seeded eval records
+          will appear here when production needs containment.
+        </article>
+      ) : (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {incidents.map((incident) => {
+            const seededSuite =
+              seeded[incident.id] ?? incident.candidate_eval_suite_id;
+            return (
+              <article
+                key={incident.id}
+                className="rounded-md border bg-card p-4"
+                data-testid={`incident-card-${incident.id}`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">
+                      {incident.severity} incident
+                    </p>
+                    <h3 className="mt-1 text-sm font-semibold">
+                      {incident.trigger}
+                    </h3>
+                  </div>
+                  <span
+                    className={cn(
+                      "rounded-md border px-2 py-0.5 text-xs",
+                      incident.status === "contained"
+                        ? "border-info/40 bg-info/10 text-info"
+                        : incident.status === "resolved"
+                          ? "border-success/40 bg-success/10 text-success"
+                          : "border-warning/40 bg-warning/10 text-warning",
+                    )}
+                  >
+                    {incident.status}
+                  </span>
+                </div>
+                <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt className="text-muted-foreground">Affected</dt>
+                    <dd>
+                      {incident.affected_conversation_count} conversations ·{" "}
+                      {incident.affected_trace_ids.length} traces
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Rollback</dt>
+                    <dd className="break-all">
+                      {incident.rollback_action_ref || "not executed"}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {incident.root_cause_hypothesis}
+                </p>
+                <p className="mt-2 text-sm">{incident.proposed_fix}</p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant={seededSuite ? "subtle" : "outline"}
+                    size="sm"
+                    disabled={busy === incident.id}
+                    onClick={() => void seedIncident(incident)}
+                    data-testid={`incident-seed-${incident.id}`}
+                  >
+                    {busy === incident.id
+                      ? "Seeding evals"
+                      : seededSuite
+                        ? "Eval suite seeded"
+                        : "Seed incident evals"}
+                  </Button>
+                  {seededSuite ? (
+                    <span
+                      className="text-xs text-muted-foreground"
+                      data-testid={`incident-suite-${incident.id}`}
+                    >
+                      {seededSuite}
+                    </span>
+                  ) : null}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function ObservatoryScreen({
   model,
   workspaceId,
@@ -192,7 +352,10 @@ export function ObservatoryScreen({
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
   const [pinned, setPinned] = useState<string[]>([]);
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6" data-testid="observatory-screen">
+    <main
+      className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6"
+      data-testid="observatory-screen"
+    >
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase text-muted-foreground">
@@ -212,12 +375,19 @@ export function ObservatoryScreen({
           variant="outline"
           onClick={() => setPaused((current) => !current)}
         >
-          {paused ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
+          {paused ? (
+            <Play className="mr-2 h-4 w-4" />
+          ) : (
+            <Pause className="mr-2 h-4 w-4" />
+          )}
           {paused ? "Resume tail" : "Pause tail"}
         </Button>
       </header>
 
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" data-testid="observatory-dashboards">
+      <section
+        className="grid gap-3 md:grid-cols-2 xl:grid-cols-3"
+        data-testid="observatory-dashboards"
+      >
         {model.metrics.map((metric) => (
           <MetricCard
             key={metric.id}
@@ -252,7 +422,9 @@ export function ObservatoryScreen({
               acknowledged={acknowledged.includes(anomaly.id)}
               onAcknowledge={() =>
                 setAcknowledged((current) =>
-                  current.includes(anomaly.id) ? current : [...current, anomaly.id],
+                  current.includes(anomaly.id)
+                    ? current
+                    : [...current, anomaly.id],
                 )
               }
             />
@@ -269,7 +441,12 @@ export function ObservatoryScreen({
               {paused ? "paused" : "streaming"}
             </LiveBadge>
           </div>
-          <div className={cn("overflow-hidden rounded-md border bg-card", paused && "opacity-70")}>
+          <div
+            className={cn(
+              "overflow-hidden rounded-md border bg-card",
+              paused && "opacity-70",
+            )}
+          >
             {model.tail.map((event) => (
               <TailRow key={event.id} event={event} />
             ))}
@@ -280,12 +457,14 @@ export function ObservatoryScreen({
             confidence={86}
             source="observatory/anomaly-ranking"
           >
-            Fix the legal synonym cluster before raising canary above 25%.
-            It is the only high-severity anomaly with production replay evidence
-            and active deploy exposure.
+            Fix the legal synonym cluster before raising canary above 25%. It is
+            the only high-severity anomaly with production replay evidence and
+            active deploy exposure.
           </EvidenceCallout>
         </div>
       </section>
+
+      <IncidentResponsePanel incidents={model.incidents} />
 
       <section className="space-y-3" data-testid="ambient-health-arcs">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -302,7 +481,10 @@ export function ObservatoryScreen({
         </div>
       </section>
 
-      <section className="rounded-md border bg-card p-4" data-testid="observatory-second-monitor">
+      <section
+        className="rounded-md border bg-card p-4"
+        data-testid="observatory-second-monitor"
+      >
         <div className="flex items-start gap-3">
           <BarChart3 className="mt-0.5 h-5 w-5 text-info" aria-hidden={true} />
           <div>

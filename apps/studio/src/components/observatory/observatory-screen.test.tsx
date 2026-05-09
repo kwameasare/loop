@@ -15,6 +15,12 @@ describe("ObservatoryScreen", () => {
       "Anomaly cards",
     );
     expect(screen.getByText("Production tail")).toBeInTheDocument();
+    expect(screen.getByTestId("observatory-incidents")).toHaveTextContent(
+      "Incident response",
+    );
+    expect(screen.getByTestId("observatory-incidents")).toHaveTextContent(
+      "error_rate breached",
+    );
     expect(screen.getByTestId("ambient-health-arcs")).toHaveTextContent(
       "Ambient agent health",
     );
@@ -26,5 +32,15 @@ describe("ObservatoryScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: /pause tail/i }));
 
     expect(screen.getByText("paused")).toBeInTheDocument();
+  });
+
+  it("seeds incident evals from the incident panel", async () => {
+    render(<ObservatoryScreen model={OBSERVATORY_MODEL} />);
+
+    fireEvent.click(screen.getByTestId("incident-seed-inc_rollback_schema"));
+
+    expect(
+      await screen.findByTestId("incident-suite-inc_rollback_schema"),
+    ).toHaveTextContent("suite_incident_regressions_local");
   });
 });

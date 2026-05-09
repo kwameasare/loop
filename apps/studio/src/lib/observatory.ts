@@ -13,6 +13,7 @@ import {
   type InboxClientOptions,
   type InboxItem,
 } from "@/lib/inbox";
+import { listWorkspaceIncidents, type IncidentRecord } from "@/lib/incidents";
 import { targetUxFixtures } from "@/lib/target-ux";
 import {
   searchTraces,
@@ -63,6 +64,7 @@ export interface AmbientAgentHealth {
 export interface ObservatoryModel {
   metrics: readonly ObservatoryMetric[];
   anomalies: readonly ObservatoryAnomaly[];
+  incidents: readonly IncidentRecord[];
   tail: readonly ProductionTailEvent[];
   agents: readonly AmbientAgentHealth[];
 }
@@ -138,14 +140,18 @@ function tracesForAgent(traces: readonly TraceSummary[]) {
   return groups;
 }
 
-function usageCentsByAgent(records: readonly UsageRecord[]): Map<string, number> {
+function usageCentsByAgent(
+  records: readonly UsageRecord[],
+): Map<string, number> {
   const month = monthBoundsUTC(Date.now());
   const summary = summariseCosts([...records], {
     workspace_id: records[0]?.workspace_id ?? "",
     period_start_ms: month.period_start_ms,
     period_end_ms: month.period_end_ms,
   });
-  return new Map(summary.by_agent.map((agent) => [agent.agent_id, agent.cents]));
+  return new Map(
+    summary.by_agent.map((agent) => [agent.agent_id, agent.cents]),
+  );
 }
 
 export function buildObservatoryModel(args: {
@@ -153,6 +159,7 @@ export function buildObservatoryModel(args: {
   traces: readonly TraceSummary[];
   usage: readonly UsageRecord[];
   inbox: readonly InboxItem[];
+  incidents?: readonly IncidentRecord[];
   nowMs: number;
 }): ObservatoryModel {
   const traces = [...args.traces].sort(
@@ -197,7 +204,8 @@ export function buildObservatoryModel(args: {
       title: "Production trace errors need triage",
       severity: errorCount >= 5 ? "critical" : "high",
       evidence: `${errorCount} of ${totalTraces} recent traces ended in error.`,
-      nextAction: "Open the failed trace cluster and promote one failure into an eval case.",
+      nextAction:
+        "Open the failed trace cluster and promote one failure into an eval case.",
       owner: "Runtime owner",
     });
   }
@@ -207,7 +215,8 @@ export function buildObservatoryModel(args: {
       title: "P95 latency is outside the interactive budget",
       severity: p95LatencyMs > 4_000 ? "high" : "medium",
       evidence: `Recent p95 is ${formatLatency(p95LatencyMs)} across ${totalTraces} traces.`,
-      nextAction: "Open the latency budget view and target the slowest span family first.",
+      nextAction:
+        "Open the latency budget view and target the slowest span family first.",
       owner: "Platform integrations",
     });
   }
@@ -217,8 +226,27 @@ export function buildObservatoryModel(args: {
       title: "Human handoff queue has unresolved work",
       severity: openInbox.length >= 10 ? "high" : "medium",
       evidence: `${openInbox.length} escalations are pending or claimed.`,
-      nextAction: "Route the oldest pending escalation, then convert the final resolution into an eval.",
+      nextAction:
+        "Route the oldest pending escalation, then convert the final resolution into an eval.",
       owner: "Support operations",
+    });
+  }
+  const activeIncidents = [...(args.incidents ?? [])].filter(
+    (incident) =>
+      incident.status !== "resolved" && incident.status !== "archived",
+  );
+  if (activeIncidents.length > 0) {
+    const highest = activeIncidents[0]!;
+    anomalies.unshift({
+      id: `incident_${highest.id}`,
+      title: "Incident response is active",
+      severity: highest.severity,
+      evidence: `${highest.trigger}; ${highest.affected_conversation_count} conversations flagged.`,
+      nextAction:
+        highest.candidate_eval_suite_id === null
+          ? "Seed candidate regression evals from the incident report."
+          : "Review the seeded eval suite before staging the fix.",
+      owner: highest.created_by,
     });
   }
   if (anomalies.length === 0) {
@@ -229,7 +257,8 @@ export function buildObservatoryModel(args: {
       evidence: `${totalTraces} traces, ${openInbox.length} open escalations, ${formatUSD(
         costSummary.total_cents,
       )} month-to-date usage.`,
-      nextAction: "Keep the production tail pinned while the next canary bakes.",
+      nextAction:
+        "Keep the production tail pinned while the next canary bakes.",
       owner: "Workspace owner",
     });
   }
@@ -350,6 +379,7 @@ export function buildObservatoryModel(args: {
       },
     ],
     anomalies,
+    incidents: activeIncidents,
     tail: traces.slice(0, 8).map((trace) => ({
       id: trace.id,
       time: formatTime(trace.started_at_ms),
@@ -372,7 +402,7 @@ export async function fetchObservatoryModel(
   if (!hasCpApiBase(opts.baseUrl)) return OBSERVATORY_MODEL;
   const nowMs = Date.now();
   const month = monthBoundsUTC(nowMs);
-  const [traces, usage, inbox] = await Promise.all([
+  const [traces, usage, inbox, incidents] = await Promise.all([
     searchTraces(workspaceId, { page_size: 100 }, opts).then(
       (result) => result.traces,
     ),
@@ -382,12 +412,14 @@ export async function fetchObservatoryModel(
       opts,
     ),
     listInbox(workspaceId, opts).then((result) => result.items),
+    listWorkspaceIncidents(workspaceId, opts).then((result) => result.items),
   ]);
   return buildObservatoryModel({
     workspaceId,
     traces,
     usage,
     inbox,
+    incidents,
     nowMs,
   });
 }
@@ -445,7 +477,8 @@ export const OBSERVATORY_MODEL: ObservatoryModel = {
       value: "1.18 s",
       delta: "-180 ms under draft",
       tone: "watching",
-      nextAction: "Batch entitlement lookup with order lookup to save another 90 ms.",
+      nextAction:
+        "Batch entitlement lookup with order lookup to save another 90 ms.",
     },
     {
       id: "cost",
@@ -477,7 +510,8 @@ export const OBSERVATORY_MODEL: ObservatoryModel = {
       value: "12% canary",
       delta: "1 approval missing",
       tone: "watching",
-      nextAction: "Ask Trust Review to approve the Spanish refund regression fix.",
+      nextAction:
+        "Ask Trust Review to approve the Spanish refund regression fix.",
     },
   ],
   anomalies: [
@@ -485,8 +519,10 @@ export const OBSERVATORY_MODEL: ObservatoryModel = {
       id: "anom_legal_synonym",
       title: "Attorney synonym misses legal handoff rule",
       severity: "high",
-      evidence: "17 production-like variants failed in replay and persona simulation.",
-      nextAction: "Patch the escalation classifier, then replay the affected scene.",
+      evidence:
+        "17 production-like variants failed in replay and persona simulation.",
+      nextAction:
+        "Patch the escalation classifier, then replay the affected scene.",
       owner: "CX Policy",
     },
     {
@@ -504,6 +540,46 @@ export const OBSERVATORY_MODEL: ObservatoryModel = {
       evidence: "lookup_order adds 180 ms where the voice budget is 160 ms.",
       nextAction: "Use preview batching before enabling phone canary.",
       owner: "Platform Integrations",
+    },
+  ],
+  incidents: [
+    {
+      id: "inc_rollback_schema",
+      workspace_id: "workspace_fixture",
+      agent_id: "agent_support",
+      deployment_id: "dep_v24",
+      severity: "high",
+      trigger: "error_rate breached 4% for web_chat canary",
+      status: "contained",
+      affected_trace_ids: ["trace_refund_742", "trace_legal_synonym"],
+      affected_conversation_count: 17,
+      root_cause_hypothesis: "Tool schema changed upstream during canary.",
+      rollback_action_ref: "deployment/dep_v24/rollback",
+      proposed_fix:
+        "Pin the tool schema, replay affected traces, and create a Change Package with regression coverage.",
+      candidate_eval_suite_id: null,
+      channel_scope: ["web_chat"],
+      timeline: [
+        {
+          kind: "incident_created",
+          at: "2026-05-09T03:12:00.000Z",
+          summary: "Incident created from auto_rollback.",
+        },
+        {
+          kind: "containment",
+          at: "2026-05-09T03:12:38.000Z",
+          summary: "Auto-rollback moved traffic away from v24.",
+        },
+      ],
+      report: {
+        rollback_status: "executed",
+        suspected_cause: "Tool schema changed upstream during canary.",
+        proposed_fix:
+          "Pin the tool schema, replay affected traces, and create a Change Package with regression coverage.",
+      },
+      created_at: "2026-05-09T03:12:00.000Z",
+      created_by: "loop-system",
+      resolved_at: null,
     },
   ],
   tail: [
