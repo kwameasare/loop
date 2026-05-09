@@ -50,6 +50,9 @@ out mark and paged on-call from the same workflow.
 | 2026-05-08T06:00:23Z | `aws` | `na-east` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25539688384) | `a39787930af9` |
 | 2026-05-08T06:00:32Z | `azure` | `eu-west` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25539688384) | `a39787930af9` |
 | 2026-05-08T06:00:25Z | `gcp` | `apac-sg` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25539688384) | `a39787930af9` |
+| 2026-05-09T06:06:54Z | `aws` | `na-east` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25593681332) | `6d7dea3aadd3` |
+| 2026-05-09T06:07:09Z | `azure` | `eu-west` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25593681332) | `6d7dea3aadd3` |
+| 2026-05-09T06:06:54Z | `gcp` | `apac-sg` | RED | [run](https://github.com/kwameasare/loop/actions/runs/25593681332) | `6d7dea3aadd3` |
 <!-- CLOUD_PROOF_HISTORY:END -->
 
 ## Evidence sources
