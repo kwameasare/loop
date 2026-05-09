@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from loop_control_plane._app_common import domain_error, package_version
 from loop_control_plane._app_state import CpApiState
+from loop_control_plane._routes_agent_commitments import router as agent_commitments_router
 from loop_control_plane._routes_agent_conductor import router as agent_conductor_router
 from loop_control_plane._routes_agent_memory import router as agent_memory_router
 from loop_control_plane._routes_agent_tools import router as agent_tools_router
@@ -94,6 +95,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         traces_router,
         # P0.4: agent version create/list/promote.
         agent_versions_router,
+        # Agent-flow implementation: versioned Commitment Document contract.
+        agent_commitments_router,
         # UX wire-up: Studio Tools Room reads active version tool bindings.
         agent_tools_router,
         # UX wire-up: Studio Memory Studio reads runtime memory stores.

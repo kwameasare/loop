@@ -19,11 +19,12 @@ function slugFromAgentId(agentId: string): string {
 function fallbackAgent(agentId: string): AgentSummary {
   return {
     id: agentId,
-    name: slugFromAgentId(agentId)
-      .split("-")
-      .filter(Boolean)
-      .map((part) => part[0]?.toUpperCase() + part.slice(1))
-      .join(" ") || "Unavailable agent",
+    name:
+      slugFromAgentId(agentId)
+        .split("-")
+        .filter(Boolean)
+        .map((part) => part[0]?.toUpperCase() + part.slice(1))
+        .join(" ") || "Unavailable agent",
     description: "Live agent data is unavailable for this request.",
     slug: slugFromAgentId(agentId),
     active_version: null,
@@ -44,7 +45,7 @@ export async function getAgentDetailData(
         : "cp-api did not return this agent.";
     return {
       agent: fallbackAgent(agentId),
-      degradedReason: `Showing cached target fixture because live agent data is unavailable. Evidence: ${message}`,
+      degradedReason: `Live agent data is unavailable for this request. Evidence: ${message}`,
     };
   }
 }

@@ -6,6 +6,10 @@ import {
   AgentOverview,
   type DeploySummary,
 } from "@/components/agents/agent-overview";
+import {
+  buildLocalCommitmentDocument,
+  fetchCurrentCommitment,
+} from "@/lib/agent-commitment";
 import { getAgentDetailData } from "./agent-detail-data";
 
 interface AgentOverviewPageProps {
@@ -16,6 +20,12 @@ export default async function AgentOverviewPage({
   params,
 }: AgentOverviewPageProps) {
   const { agent, degradedReason } = await getAgentDetailData(params.agent_id);
+  let commitment = buildLocalCommitmentDocument(params.agent_id);
+  try {
+    commitment = await fetchCurrentCommitment(params.agent_id);
+  } catch {
+    commitment = buildLocalCommitmentDocument(params.agent_id);
+  }
 
   // Derive last-deploy summary from the agent summary until a dedicated
   // deploys endpoint is wired. active_version serves as a version proxy;
@@ -38,6 +48,7 @@ export default async function AgentOverviewPage({
       lastDeploy={lastDeploy}
       dataState={degradedReason ? "degraded" : "live"}
       degradedReason={degradedReason}
+      commitment={commitment}
     />
   );
 }

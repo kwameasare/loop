@@ -23,6 +23,7 @@ import {
   type ObjectState,
   type TrustState,
 } from "@/lib/design-tokens";
+import type { CommitmentDocument } from "@/lib/agent-commitment";
 import type { TargetDeploy, TargetEvalSuite } from "@/lib/target-ux";
 import { cn } from "@/lib/utils";
 import {
@@ -115,6 +116,7 @@ export interface AgentOverviewProps {
   dataState?: AgentWorkbenchDataState;
   degradedReason?: string | undefined;
   workbench?: Partial<AgentWorkbenchData>;
+  commitment?: CommitmentDocument | undefined;
   /** Called when the user saves a new description. Allows integration with server actions. */
   onDescriptionSave?: (newDescription: string) => void;
 }
@@ -231,7 +233,11 @@ function buildSections(input: {
   evalSuite: TargetEvalSuite;
   deploy: TargetDeploy;
   hasProduction: boolean;
+  commitment?: CommitmentDocument | undefined;
 }): AgentWorkbenchSection[] {
+  const commitmentMissing =
+    input.commitment?.structured_summary.missing_required_fields ?? [];
+  const commitmentAccepted = input.commitment?.status === "accepted";
   return [
     {
       id: "purpose",
@@ -250,13 +256,31 @@ function buildSections(input: {
     {
       id: "commitment",
       label: "Commitment",
-      current: "No versioned Commitment Document loaded in this workbench.",
-      lastChangedBy: "No commitment version loaded",
-      diffFromProduction: "Preflight cannot cite an active commitment yet.",
-      validation:
-        "Create or accept the Agent Contract before production promotion.",
-      evidence: "commitment.unconfigured",
-      status: "blocked",
+      current: input.commitment
+        ? `${input.commitment.status} v${input.commitment.version}: ${
+            input.commitment.structured_summary.responsibility ||
+            "Responsibility not described"
+          }`
+        : "No versioned Commitment Document loaded in this workbench.",
+      lastChangedBy: input.commitment?.owner_user_id
+        ? `Owned by ${input.commitment.owner_user_id}`
+        : "No commitment owner loaded",
+      diffFromProduction: input.hasProduction
+        ? "Production deploy must reference an accepted commitment hash."
+        : "No production baseline exists yet.",
+      validation: commitmentAccepted
+        ? "Accepted Commitment Document can be cited by preflight."
+        : commitmentMissing.length
+          ? `Missing ${commitmentMissing.length} required contract field${
+              commitmentMissing.length === 1 ? "" : "s"
+            }.`
+          : "Commitment draft is complete but not accepted.",
+      evidence: input.commitment?.id ?? "commitment.unconfigured",
+      status: commitmentAccepted
+        ? "healthy"
+        : commitmentMissing.length
+          ? "blocked"
+          : "watching",
     },
     {
       id: "behavior",
@@ -343,7 +367,8 @@ function buildSections(input: {
         ? `Active version can roll back only when a rollback target exists.`
         : "No production deployment exists yet.",
       validation:
-        input.deploy.blockedReason ?? "Generate a Change Package before deploy.",
+        input.deploy.blockedReason ??
+        "Generate a Change Package before deploy.",
       evidence: input.deploy.id,
       status: input.deploy.blockedReason ? "blocked" : "watching",
     },
@@ -353,8 +378,7 @@ function buildSections(input: {
       current: "Approval policy and audit requirements are not loaded here.",
       lastChangedBy: "No governance packet loaded",
       diffFromProduction: "Approval content hash unavailable until preflight.",
-      validation:
-        "High-risk changes must produce an immutable Change Package.",
+      validation: "High-risk changes must produce an immutable Change Package.",
       evidence: "governance.unconfigured",
       status: "watching",
     },
@@ -376,10 +400,14 @@ function createDefaultWorkbenchData(
   props: Pick<
     AgentOverviewProps,
     "id" | "name" | "description" | "model" | "activeVersion" | "updatedAt"
-  >,
+  > & { commitment?: CommitmentDocument | undefined },
 ): AgentWorkbenchData {
-  const purpose = props.description || "No purpose has been accepted yet.";
-  const hasProduction = props.activeVersion !== null && props.activeVersion !== undefined;
+  const purpose =
+    props.commitment?.body.business_responsibility ||
+    props.description ||
+    "No purpose has been accepted yet.";
+  const hasProduction =
+    props.activeVersion !== null && props.activeVersion !== undefined;
   const objectState: ObjectState = hasProduction ? "production" : "draft";
   const trust: TrustState = hasProduction ? "watching" : "blocked";
   const modelAliases = props.model ? [props.model] : ["No model configured"];
@@ -393,7 +421,9 @@ function createDefaultWorkbenchData(
     confidence: "unsupported",
   };
   const deploy: TargetDeploy = {
-    id: hasProduction ? `agent.${props.id}.active_version` : "deploy.unconfigured",
+    id: hasProduction
+      ? `agent.${props.id}.active_version`
+      : "deploy.unconfigured",
     agentId: props.id,
     objectState,
     canaryPercent: hasProduction ? 100 : 0,
@@ -422,9 +452,9 @@ function createDefaultWorkbenchData(
     : `You are drafting agent ${props.name || props.id}. Production is not live; create a commitment, channel binding, eval suite, and Change Package before deploy.`;
 
   return {
-    ownerTeam: "Unassigned",
+    ownerTeam: props.commitment?.owner_user_id || "Unassigned",
     purpose,
-    supportedChannels: [],
+    supportedChannels: props.commitment?.body.channels ?? [],
     modelAliases,
     objectState,
     trust,
@@ -457,11 +487,13 @@ function createDefaultWorkbenchData(
       evalSuite,
       deploy,
       hasProduction,
+      commitment: props.commitment,
     }),
     diff: {
       before: hasProduction ? lastProductionVersion : "No production baseline",
       after: "No draft diff loaded",
-      impact: "Run a preview, save an eval, and generate preflight before shipping.",
+      impact:
+        "Run a preview, save an eval, and generate preflight before shipping.",
     },
     livePreview: {
       prompt: "No preview run loaded.",
@@ -485,7 +517,8 @@ function createDefaultWorkbenchData(
       {
         id: "approval",
         label: "Generate Change Package",
-        description: "Preflight must collect diff, eval, channel, tool, and rollback evidence.",
+        description:
+          "Preflight must collect diff, eval, channel, tool, and rollback evidence.",
         evidence: deploy.id,
         disabledReason:
           deploy.requiredApprovals === 0
@@ -495,7 +528,8 @@ function createDefaultWorkbenchData(
       {
         id: "rollback",
         label: "Open history walkthrough",
-        description: "Review previous versions, incidents, approvals, and open risks.",
+        description:
+          "Review previous versions, incidents, approvals, and open risks.",
         evidence: "history.empty",
       },
     ],
@@ -561,6 +595,7 @@ export function AgentOverview({
   dataState = "live",
   degradedReason,
   workbench,
+  commitment,
   onDescriptionSave,
 }: AgentOverviewProps) {
   const [description, setDescription] = useState(initialDescription);
@@ -576,10 +611,20 @@ export function AgentOverview({
           model,
           activeVersion,
           updatedAt,
+          commitment,
         }),
         workbench,
       ),
-    [activeVersion, description, id, model, name, updatedAt, workbench],
+    [
+      activeVersion,
+      commitment,
+      description,
+      id,
+      model,
+      name,
+      updatedAt,
+      workbench,
+    ],
   );
   const objectTreatment = OBJECT_STATE_TREATMENTS[data.objectState];
   const trustTreatment = TRUST_STATE_TREATMENTS[data.trust];

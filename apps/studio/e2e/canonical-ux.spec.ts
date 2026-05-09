@@ -137,16 +137,19 @@ test("agent workbench keeps sections local and avoids fixture evidence", async (
     "create a commitment",
   );
   await expect(page.getByTestId("agent-outline-commitment")).toContainText(
-    "No versioned Commitment Document loaded",
+    "draft v0",
   );
   await expect(page.getByText("trace_refund_742")).toHaveCount(0);
-  await expect(page.getByText("I need to cancel my annual renewal")).toHaveCount(
-    0,
-  );
+  await expect(
+    page.getByText("I need to cancel my annual renewal"),
+  ).toHaveCount(0);
 
   await page.getByTestId("agent-tab-contract").click();
   await expect(page).toHaveURL(/\/agents\/agent-enterprise-support\/contract$/);
-  await expect(page.getByTestId("agent-section-placeholder")).toContainText(
+  await expect(page.getByTestId("agent-contract-panel")).toContainText(
     "Commitment Document",
+  );
+  await expect(page.getByTestId("contract-missing-fields")).toContainText(
+    "Business responsibility",
   );
 });

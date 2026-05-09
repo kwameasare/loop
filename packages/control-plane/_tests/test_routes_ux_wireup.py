@@ -206,6 +206,85 @@ def test_estate_health_derives_claims_from_workspace_objects(
     assert all(item["source"] for item in body["attention"])
 
 
+def test_agent_commitment_contract_can_be_drafted_accepted_and_versioned(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    current = client.get(
+        f"/v1/agents/{agent_id}/commitment/current",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert current.status_code == 200, current.text
+    assert current.json()["status"] == "draft"
+    assert current.json()["version"] == 1
+    assert "target_users" in current.json()["structured_summary"]["missing_required_fields"]
+
+    body = {
+        "business_responsibility": "Resolve billing cancellation requests safely.",
+        "target_users": "Existing enterprise customers and support operators.",
+        "owner_user_id": "maya@acme.test",
+        "backup_owner_user_id": "diego@acme.test",
+        "worst_case_failure": "Incorrectly promises a refund outside policy.",
+        "channels": ["web", "whatsapp", "voice"],
+        "systems_touched": ["billing", "crm"],
+        "regions": ["us-east-1", "eu-west-2"],
+        "languages": ["en", "es"],
+        "success_metric": "95% eval pass rate before canary.",
+        "compliance_domain": "SOC2 support operations",
+        "expected_volume": "20k turns per month",
+        "launch_date": "2026-06-01",
+        "budget_target": "$0.08 per resolved turn",
+        "out_of_scope": "Legal advice and payment disputes above $500.",
+        "escalation_policy": "Escalate policy conflicts to support lead.",
+    }
+    drafted = client.post(
+        f"/v1/agents/{agent_id}/commitment",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={"body": body, "created_from": "studio:new_agent_wizard"},
+    )
+    assert drafted.status_code == 201, drafted.text
+    assert drafted.json()["structured_summary"]["readiness"] == "complete"
+    assert drafted.json()["owner_user_id"] == "maya@acme.test"
+
+    accepted = client.post(
+        f"/v1/agents/{agent_id}/commitment/accept",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert accepted.status_code == 200, accepted.text
+    assert accepted.json()["status"] == "accepted"
+    assert accepted.json()["accepted_at"] is not None
+
+    revised = {
+        **body,
+        "business_responsibility": "Resolve billing and plan-change requests safely.",
+    }
+    versioned = client.post(
+        f"/v1/agents/{agent_id}/commitment",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={"body": revised, "created_from": "studio:contract_edit"},
+    )
+    assert versioned.status_code == 201, versioned.text
+    assert versioned.json()["version"] == 2
+    assert versioned.json()["status"] == "draft"
+
+    history = client.get(
+        f"/v1/agents/{agent_id}/commitments",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert [item["status"] for item in history.json()["items"]] == [
+        "superseded",
+        "draft",
+    ]
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "commitment:draft_save",
+        "commitment:accept",
+    }
+
+
 def test_comment_resolution_can_create_eval_case(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:
