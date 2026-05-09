@@ -8,9 +8,11 @@
  * BYOK, whitelabel, procurement evidence, private skill library,
  * policy/audit consequences.
  *
- * Pure data + helpers; no I/O. The cp-api adapter will replace the
- * fixtures when the backend is wired.
+ * The Compliance Reviewer model is now cp-api wired; the remaining constants
+ * still provide deterministic offline defaults for local Studio previews.
  */
+
+import { cpJson, type UxWireupClientOptions } from "@/lib/ux-wireup";
 
 // ---------------------------------------------------------------------------
 // SSO / SCIM connection summary
@@ -99,7 +101,10 @@ export const RBAC_RESOURCES: readonly RbacResource[] = [
   "audit",
 ] as const;
 
-const ROLE_TEMPLATES: Record<RbacRole, Partial<Record<RbacResource, RbacAction[]>>> = {
+const ROLE_TEMPLATES: Record<
+  RbacRole,
+  Partial<Record<RbacResource, RbacAction[]>>
+> = {
   viewer: {
     agents: ["view"],
     deploys: ["view"],
@@ -157,7 +162,13 @@ export function rbacAllowed(
 
 export function buildRbacMatrix(): readonly RbacCell[] {
   const cells: RbacCell[] = [];
-  const actions: RbacAction[] = ["view", "edit", "approve", "destroy", "export"];
+  const actions: RbacAction[] = [
+    "view",
+    "edit",
+    "approve",
+    "destroy",
+    "export",
+  ];
   for (const role of RBAC_ROLES) {
     for (const resource of RBAC_RESOURCES) {
       for (const action of actions) {
@@ -325,6 +336,352 @@ export function filterAudit(
     if (filter.actor && !e.actor.includes(filter.actor)) return false;
     return true;
   });
+}
+
+// ---------------------------------------------------------------------------
+// Compliance Reviewer workspace model
+// ---------------------------------------------------------------------------
+
+export type ComplianceRiskClass = "low" | "medium" | "high" | "critical";
+
+export interface ComplianceReviewSummary {
+  agents: number;
+  pending_approvals: number;
+  policy_violations: number;
+  tool_reviews: number;
+  memory_reviews: number;
+  channel_blockers: number;
+  open_incidents: number;
+}
+
+export interface ComplianceApprovalQueueItem {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  change_package_id: string;
+  subject: string;
+  role: string;
+  state: string;
+  risk_class: ComplianceRiskClass;
+  reason: string;
+  content_hash: string;
+  evidence_ref: string;
+}
+
+export interface CompliancePolicyViolation {
+  id: string;
+  title: string;
+  severity: ComplianceRiskClass | "medium";
+  target: string;
+  status: string;
+  evidence_ref: string;
+}
+
+export interface ComplianceToolGrant {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  tool_id: string;
+  name: string;
+  side_effect_level: string;
+  pii_access: boolean;
+  money_movement: boolean;
+  sandbox_status: string;
+  live_status: string;
+  reviewer_action: string;
+  content_hash: string;
+  evidence_ref: string;
+}
+
+export interface ComplianceMemoryPolicy {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  scope: string;
+  allowed_memory_types: string[];
+  retention: string;
+  consent_requirement: string;
+  pii_policy: string;
+  delete_behavior: string;
+  approval_status: string;
+  reviewer_action: string;
+  content_hash: string;
+  evidence_ref: string;
+}
+
+export interface ComplianceChannelReadiness {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  channel_type: string;
+  provider: string;
+  status: string;
+  blocking_checks: Array<{
+    id: string;
+    label: string;
+    status: string;
+    evidence_ref: string;
+    message: string;
+  }>;
+  reviewer_action: string;
+  evidence_ref: string;
+}
+
+export interface ComplianceIncident {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  severity: string;
+  status: string;
+  trigger: string;
+  affected_conversation_count: number;
+  rollback_action_ref: string;
+  candidate_eval_suite_id: string | null;
+  evidence_ref: string;
+}
+
+export interface ComplianceAuditEvent {
+  id: string;
+  occurred_at: string;
+  actor_sub: string;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  payload_hash: string | null;
+  outcome: string;
+  evidence_ref: string;
+}
+
+export interface ComplianceProbeLibrary {
+  id: string;
+  name: string;
+  required_for: string[];
+  status: string;
+  evidence_ref: string;
+}
+
+export interface ComplianceReviewModel {
+  workspace_id: string;
+  generated_at: string;
+  summary: ComplianceReviewSummary;
+  approval_queue: ComplianceApprovalQueueItem[];
+  policy_violations: CompliancePolicyViolation[];
+  tool_grants: ComplianceToolGrant[];
+  memory_policies: ComplianceMemoryPolicy[];
+  channel_readiness: ComplianceChannelReadiness[];
+  incidents: ComplianceIncident[];
+  audit_events: ComplianceAuditEvent[];
+  industry_probe_libraries: ComplianceProbeLibrary[];
+}
+
+export interface ComplianceEvidenceExportInput {
+  agent_id?: string;
+  format?: "json" | "pdf" | "csv";
+  include_sections?: string[];
+}
+
+export interface ComplianceEvidenceExport {
+  id: string;
+  workspace_id: string;
+  agent_id: string | null;
+  format: "json" | "pdf" | "csv";
+  status: "ready";
+  sections: string[];
+  artifact_refs: string[];
+  summary: ComplianceReviewSummary;
+  download_url: string;
+  generated_by: string;
+  generated_at: string;
+}
+
+export const COMPLIANCE_REVIEW_FIXTURE: ComplianceReviewModel = {
+  workspace_id: "workspace_local",
+  generated_at: new Date(0).toISOString(),
+  summary: {
+    agents: 1,
+    pending_approvals: 2,
+    policy_violations: 1,
+    tool_reviews: 1,
+    memory_reviews: 1,
+    channel_blockers: 1,
+    open_incidents: 1,
+  },
+  approval_queue: [
+    {
+      id: "cp_refund:compliance",
+      agent_id: "agent_support",
+      agent_name: "Support Concierge",
+      change_package_id: "cp_refund",
+      subject: "Allow production refund automation.",
+      role: "Compliance reviewer",
+      state: "requested",
+      risk_class: "high",
+      reason: "Required for production or unaccepted commitment changes.",
+      content_hash: "hash_refund",
+      evidence_ref: "change-package/cp_refund",
+    },
+  ],
+  policy_violations: [
+    {
+      id: "audit_policy_1",
+      title: "policy.violation",
+      severity: "high",
+      target: "agents/support-concierge refund>$500",
+      status: "success",
+      evidence_ref: "audit/audit_policy_1",
+    },
+  ],
+  tool_grants: [
+    {
+      id: "tc_refund",
+      agent_id: "agent_support",
+      agent_name: "Support Concierge",
+      tool_id: "refund_payment",
+      name: "Refund payment",
+      side_effect_level: "money_movement",
+      pii_access: true,
+      money_movement: true,
+      sandbox_status: "sandbox",
+      live_status: "blocked",
+      reviewer_action:
+        "Block live use until budget caps, owners, and compensation behavior are fixed.",
+      content_hash: "hash_tool_refund",
+      evidence_ref: "tool-contract/tc_refund",
+    },
+  ],
+  memory_policies: [
+    {
+      id: "mp_user",
+      agent_id: "agent_support",
+      agent_name: "Support Concierge",
+      scope: "user",
+      allowed_memory_types: ["customer_preference"],
+      retention: "Retain for 90 days.",
+      consent_requirement: "Ask before storing support preferences.",
+      pii_policy: "May include personal support preferences.",
+      delete_behavior: "Delete on user request with audit trail.",
+      approval_status: "review_required",
+      reviewer_action: "Review privacy implications before activation.",
+      content_hash: "hash_memory_user",
+      evidence_ref: "memory-policy/mp_user",
+    },
+  ],
+  channel_readiness: [
+    {
+      id: "cb_whatsapp",
+      agent_id: "agent_support",
+      agent_name: "Support Concierge",
+      channel_type: "whatsapp",
+      provider: "Meta Cloud API",
+      status: "draft",
+      blocking_checks: [
+        {
+          id: "business_verified",
+          label: "Business identity verified",
+          status: "failed",
+          evidence_ref: "channel/whatsapp/business",
+          message: "Business identity is not verified.",
+        },
+      ],
+      reviewer_action: "Resolve readiness blockers before production traffic.",
+      evidence_ref: "channel-binding/cb_whatsapp",
+    },
+  ],
+  incidents: [
+    {
+      id: "inc_refund",
+      agent_id: "agent_support",
+      agent_name: "Support Concierge",
+      severity: "high",
+      status: "open",
+      trigger: "Refund quote regressed in WhatsApp canary.",
+      affected_conversation_count: 4,
+      rollback_action_ref: "",
+      candidate_eval_suite_id: null,
+      evidence_ref: "incident/inc_refund",
+    },
+  ],
+  audit_events: [
+    {
+      id: "audit_1",
+      occurred_at: new Date(0).toISOString(),
+      actor_sub: "owner-1",
+      action: "change_package:generate",
+      resource_type: "change_package",
+      resource_id: "cp_refund",
+      payload_hash: "hash_audit",
+      outcome: "success",
+      evidence_ref: "audit/audit_1",
+    },
+  ],
+  industry_probe_libraries: [
+    {
+      id: "regulated-support",
+      name: "Regulated support probes",
+      required_for: ["pii", "refunds", "escalation", "data_export"],
+      status: "available",
+      evidence_ref: "probe-library/regulated-support",
+    },
+  ],
+};
+
+export async function fetchComplianceReview(
+  workspaceId: string,
+  opts: UxWireupClientOptions = {},
+): Promise<ComplianceReviewModel> {
+  return cpJson<ComplianceReviewModel>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/compliance-review`,
+    {
+      fallback: {
+        ...COMPLIANCE_REVIEW_FIXTURE,
+        workspace_id: workspaceId,
+      },
+      ...opts,
+    },
+  );
+}
+
+export async function createComplianceEvidenceExport(
+  workspaceId: string,
+  input: ComplianceEvidenceExportInput,
+  opts: UxWireupClientOptions = {},
+): Promise<ComplianceEvidenceExport> {
+  return cpJson<ComplianceEvidenceExport>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/compliance-review/evidence-export`,
+    {
+      method: "POST",
+      body: input,
+      fallback: {
+        id: "cex_local",
+        workspace_id: workspaceId,
+        agent_id: input.agent_id ?? null,
+        format: input.format ?? "json",
+        status: "ready",
+        sections: input.include_sections ?? [
+          "change_packages",
+          "approvals",
+          "audit_events",
+        ],
+        artifact_refs: [
+          ...COMPLIANCE_REVIEW_FIXTURE.approval_queue.map(
+            (row) => row.evidence_ref,
+          ),
+          ...COMPLIANCE_REVIEW_FIXTURE.tool_grants.map(
+            (row) => row.evidence_ref,
+          ),
+          ...COMPLIANCE_REVIEW_FIXTURE.memory_policies.map(
+            (row) => row.evidence_ref,
+          ),
+          ...COMPLIANCE_REVIEW_FIXTURE.incidents.map((row) => row.evidence_ref),
+        ],
+        summary: COMPLIANCE_REVIEW_FIXTURE.summary,
+        download_url: `/v1/workspaces/${workspaceId}/compliance-review/evidence-exports/cex_local`,
+        generated_by: "local-studio",
+        generated_at: new Date(0).toISOString(),
+      },
+      ...opts,
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -529,7 +886,8 @@ export const POLICY_CONSEQUENCES: readonly PolicyConsequence[] = [
   {
     id: "pc_1",
     trigger: "Three policy violations on the same agent in 24h",
-    consequence: "Agent paused; rollback to last known-good. Notify owner + compliance.",
+    consequence:
+      "Agent paused; rollback to last known-good. Notify owner + compliance.",
     severity: "blocking",
     evidenceRef: "policy/pc_1",
   },
@@ -557,7 +915,8 @@ export const POLICY_CONSEQUENCES: readonly PolicyConsequence[] = [
   {
     id: "pc_5",
     trigger: "External share approved",
-    consequence: "Audit event recorded; recipient receives revocable, expiring link.",
+    consequence:
+      "Audit event recorded; recipient receives revocable, expiring link.",
     severity: "info",
     evidenceRef: "policy/pc_5",
   },
