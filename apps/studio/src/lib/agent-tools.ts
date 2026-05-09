@@ -13,6 +13,7 @@ import type {
   TrustState,
 } from "@/lib/design-tokens";
 import { targetUxFixtures, type TargetUXFixture } from "@/lib/target-ux";
+import { localToolContracts, type ToolContract } from "@/lib/tool-contracts";
 
 export type AgentToolKind = "mcp" | "http";
 
@@ -156,6 +157,7 @@ export interface ToolsRoomData {
   objectState: ObjectState;
   trust: TrustState;
   tools: ToolsRoomTool[];
+  toolContracts: ToolContract[];
   catalogEvidence: string;
   degradedReason?: string | undefined;
 }
@@ -349,6 +351,7 @@ export function createToolsRoomData(
   agentId: string,
   liveTools: AgentTool[] = [],
   fixture: TargetUXFixture = targetUxFixtures,
+  toolContracts: ToolContract[] = [],
 ): ToolsRoomData {
   const agent =
     fixture.agents.find((candidate) => candidate.id === agentId) ??
@@ -409,6 +412,13 @@ export function createToolsRoomData(
     objectState: fixture.workspace.objectState,
     trust: fixture.workspace.trust,
     tools: [...tools, ...liveOnlyTools],
+    toolContracts:
+      toolContracts.length > 0
+        ? toolContracts
+        : localToolContracts(
+            agentId,
+            [...tools, ...liveOnlyTools].map((tool) => tool.id),
+          ),
     catalogEvidence:
       "targetUxFixtures.tools plus live cp-api bindings when /agents/{id}/tools is available",
   };

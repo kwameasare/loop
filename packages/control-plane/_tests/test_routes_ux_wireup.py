@@ -507,6 +507,63 @@ def test_channel_bindings_are_peer_agent_objects_with_readiness(
     }
 
 
+def test_tool_contracts_default_sandbox_promote_live_and_invalidate_on_change(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    contract_body = {
+        "name": "issue_refund",
+        "description": "Create a refund only after policy and approval checks.",
+        "side_effect_level": "money_movement",
+        "pii_access": False,
+        "money_movement": True,
+        "rate_limits": {"per_minute": 20},
+        "budget_limits": {"max_per_call_cents": 50_000, "daily_cents": 250_000},
+        "sandbox_status": "sandbox",
+        "owner_user_id": "maya@acme.test",
+        "approval_policy_id": "policy-refund-tool",
+        "failure_behavior": "Escalate instead of promising a refund.",
+        "compensation_behavior": "Void pending refund when downstream write fails.",
+    }
+    created = client.put(
+        f"/v1/agents/{agent_id}/tool-contracts/issue_refund",
+        headers=_auth(),
+        json=contract_body,
+    )
+    assert created.status_code == 200, created.text
+    assert created.json()["sandbox_status"] == "sandbox"
+    assert created.json()["live_status"] == "disabled"
+    assert created.json()["budget_limits"]["max_per_call_cents"] == 50_000
+
+    promoted = client.post(
+        f"/v1/agents/{agent_id}/tool-contracts/issue_refund/promote",
+        headers=_auth(),
+    )
+    assert promoted.status_code == 200, promoted.text
+    assert promoted.json()["live_status"] == "approved"
+
+    changed = client.put(
+        f"/v1/agents/{agent_id}/tool-contracts/issue_refund",
+        headers=_auth(),
+        json={**contract_body, "budget_limits": {"max_per_call_cents": 25_000}},
+    )
+    assert changed.status_code == 200, changed.text
+    assert changed.json()["live_status"] == "review_required"
+    assert changed.json()["approval_invalidated_at"] is not None
+
+    listed = client.get(f"/v1/agents/{agent_id}/tool-contracts", headers=_auth())
+    assert listed.status_code == 200, listed.text
+    assert listed.json()["items"][0]["tool_id"] == "issue_refund"
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "tool_contract:upsert",
+        "tool_contract:promote",
+    }
+
+
 def test_deployment_start_creates_evidence_pack_from_approved_change_package(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:

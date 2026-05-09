@@ -50,6 +50,7 @@ from loop_control_plane.mcp_marketplace import (
 )
 from loop_control_plane.saml import SamlValidator, StubSamlValidator
 from loop_control_plane.secrets import InMemorySecretsBackend, SecretsBackend
+from loop_control_plane.tool_contracts import ToolContractRegistry
 from loop_control_plane.trace_search import (
     InMemoryTraceStore,
     TraceSearchService,
@@ -218,6 +219,8 @@ class CpApiState:
         self.change_packages = ChangePackageRegistry()
         # Agent-flow implementation: every agent owns peer channel bindings.
         self.channel_bindings = ChannelBindingRegistry()
+        # Agent-flow implementation: tools require durable safety contracts.
+        self.tool_contracts = ToolContractRegistry()
         # Agent-flow implementation: rollout state creates deployed evidence packs.
         self.deployments = DeploymentRegistry()
         # Agent-flow implementation: incidents link deploy events, traces, and evals.
