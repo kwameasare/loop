@@ -352,6 +352,9 @@ export interface ComplianceReviewSummary {
   memory_reviews: number;
   channel_blockers: number;
   open_incidents: number;
+  policy_conflicts: number;
+  data_access_changes: number;
+  stale_risk_reviews: number;
 }
 
 export interface ComplianceApprovalQueueItem {
@@ -374,6 +377,48 @@ export interface CompliancePolicyViolation {
   severity: ComplianceRiskClass | "medium";
   target: string;
   status: string;
+  evidence_ref: string;
+}
+
+export interface CompliancePolicyConflict {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  severity: ComplianceRiskClass | "medium";
+  policy: string;
+  summary: string;
+  reviewer_action: string;
+  evidence_ref: string;
+}
+
+export interface ComplianceDataAccessChange {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  surface: "tool" | "memory" | string;
+  target: string;
+  access: string[];
+  state: string;
+  reviewer_action: string;
+  evidence_ref: string;
+}
+
+export interface ComplianceStaleRiskReview {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  change_package_id: string;
+  severity: ComplianceRiskClass | "medium";
+  summary: string;
+  reviewer_action: string;
+  evidence_ref: string;
+}
+
+export interface ComplianceReviewJob {
+  id: string;
+  status: "available" | "action_required" | "ready" | "clear" | string;
+  output_count: number;
+  reviewer_action: string;
   evidence_ref: string;
 }
 
@@ -468,6 +513,10 @@ export interface ComplianceReviewModel {
   summary: ComplianceReviewSummary;
   approval_queue: ComplianceApprovalQueueItem[];
   policy_violations: CompliancePolicyViolation[];
+  policy_conflicts: CompliancePolicyConflict[];
+  data_access_changes: ComplianceDataAccessChange[];
+  stale_risk_reviews: ComplianceStaleRiskReview[];
+  review_jobs: ComplianceReviewJob[];
   tool_grants: ComplianceToolGrant[];
   memory_policies: ComplianceMemoryPolicy[];
   channel_readiness: ComplianceChannelReadiness[];
@@ -555,6 +604,9 @@ export const COMPLIANCE_REVIEW_FIXTURE: ComplianceReviewModel = {
     memory_reviews: 1,
     channel_blockers: 1,
     open_incidents: 1,
+    policy_conflicts: 3,
+    data_access_changes: 2,
+    stale_risk_reviews: 0,
   },
   approval_queue: [
     {
@@ -579,6 +631,63 @@ export const COMPLIANCE_REVIEW_FIXTURE: ComplianceReviewModel = {
       target: "agents/support-concierge refund>$500",
       status: "success",
       evidence_ref: "audit/audit_policy_1",
+    },
+  ],
+  policy_conflicts: [
+    {
+      id: "tc_refund:missing-budget-cap",
+      agent_id: "agent_support",
+      agent_name: "Support Concierge",
+      severity: "high",
+      policy: "money_movement_requires_budget_caps",
+      summary: "Refund payment can move money but has no budget cap.",
+      reviewer_action:
+        "Block live use until per-action and per-turn caps are explicit.",
+      evidence_ref: "tool-contract/tc_refund",
+    },
+  ],
+  data_access_changes: [
+    {
+      id: "tool-access:tc_refund",
+      agent_id: "agent_support",
+      agent_name: "Support Concierge",
+      surface: "tool",
+      target: "Refund payment",
+      access: ["PII", "money movement"],
+      state: "blocked",
+      reviewer_action:
+        "Block live use until budget caps, owners, and compensation behavior are fixed.",
+      evidence_ref: "tool-contract/tc_refund",
+    },
+    {
+      id: "memory-access:mp_user",
+      agent_id: "agent_support",
+      agent_name: "Support Concierge",
+      surface: "memory",
+      target: "user memory",
+      access: ["customer_preference"],
+      state: "review_required",
+      reviewer_action: "Review privacy implications before activation.",
+      evidence_ref: "memory-policy/mp_user",
+    },
+  ],
+  stale_risk_reviews: [],
+  review_jobs: [
+    {
+      id: "detect_policy_conflicts",
+      status: "action_required",
+      output_count: 3,
+      reviewer_action:
+        "Resolve high and medium policy conflicts before production approval.",
+      evidence_ref: "compliance-review/policy-conflicts",
+    },
+    {
+      id: "summarize_data_access_changes",
+      status: "ready",
+      output_count: 2,
+      reviewer_action:
+        "Review PII, memory, and money movement access changes across agents.",
+      evidence_ref: "compliance-review/data-access",
     },
   ],
   tool_grants: [

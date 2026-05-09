@@ -172,11 +172,20 @@ def test_compliance_review_aggregates_reviewer_surfaces(
     assert body["summary"]["memory_reviews"] == 1
     assert body["summary"]["channel_blockers"] >= 1
     assert body["summary"]["open_incidents"] == 1
+    assert body["summary"]["policy_conflicts"] == 3
+    assert body["summary"]["data_access_changes"] == 2
     assert "Compliance reviewer" in {row["role"] for row in body["approval_queue"]}
     assert body["tool_grants"][0]["reviewer_action"].startswith("Block live use")
     assert body["memory_policies"][0]["reviewer_action"].startswith("Review")
     assert body["channel_readiness"][0]["blocking_checks"]
     assert body["incidents"][0]["trigger"] == "Refund quote regressed in WhatsApp canary."
+    assert {
+        "detect_policy_conflicts",
+        "summarize_data_access_changes",
+        "flag_stale_risk_review",
+    }.issubset({row["id"] for row in body["review_jobs"]})
+    assert body["policy_conflicts"][0]["reviewer_action"]
+    assert body["data_access_changes"][0]["surface"] == "tool"
     assert body["industry_probe_libraries"][0]["id"] == "regulated-support"
     assert body["industry_probe_libraries"][0]["case_count"] == 3
 

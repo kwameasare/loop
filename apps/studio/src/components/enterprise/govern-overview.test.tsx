@@ -22,6 +22,15 @@ describe("GovernOverview", () => {
     expect(
       screen.getByTestId("compliance-incident-inc_refund"),
     ).toHaveTextContent("WhatsApp canary");
+    expect(
+      screen.getByTestId("compliance-job-detect_policy_conflicts"),
+    ).toHaveTextContent("action_required");
+    expect(
+      screen.getByTestId("compliance-conflict-tc_refund:missing-budget-cap"),
+    ).toHaveTextContent("budget cap");
+    expect(
+      screen.getByTestId("compliance-access-tool-access:tc_refund"),
+    ).toHaveTextContent("money movement");
   });
 
   it("creates compliance evidence exports from the default pane", async () => {
@@ -41,6 +50,9 @@ describe("GovernOverview", () => {
         memory_reviews: 1,
         channel_blockers: 1,
         open_incidents: 1,
+        policy_conflicts: 0,
+        data_access_changes: 0,
+        stale_risk_reviews: 0,
       },
       download_url:
         "/v1/workspaces/workspace_local/compliance-review/evidence-exports/cex_1",

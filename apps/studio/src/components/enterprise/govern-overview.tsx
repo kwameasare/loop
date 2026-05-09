@@ -61,6 +61,8 @@ const STATUS_TONE: Record<string, string> = {
   medium: "bg-amber-50 text-amber-700 border-amber-200",
   high: "bg-rose-50 text-rose-700 border-rose-200",
   critical: "bg-red-50 text-red-700 border-red-200",
+  action_required: "bg-rose-50 text-rose-700 border-rose-200",
+  clear: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
 function pill(status: string): string {
@@ -207,7 +209,7 @@ export function GovernOverview({
                 ["Pending approvals", compliance.summary.pending_approvals],
                 ["Tool reviews", compliance.summary.tool_reviews],
                 ["Memory reviews", compliance.summary.memory_reviews],
-                ["Open incidents", compliance.summary.open_incidents],
+                ["Policy conflicts", compliance.summary.policy_conflicts],
               ].map(([label, value]) => (
                 <div key={label} className="rounded border p-3">
                   <div className="text-xs text-slate-500">{label}</div>
@@ -252,6 +254,37 @@ export function GovernOverview({
                 {exportError}
               </div>
             ) : null}
+
+            <section className="rounded border p-3">
+              <h2 className="text-sm font-semibold">Derived compliance jobs</h2>
+              <ul className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                {compliance.review_jobs.map((job) => (
+                  <li
+                    key={job.id}
+                    className="rounded border p-3"
+                    data-testid={`compliance-job-${job.id}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-medium">
+                          {job.id.replace(/_/g, " ")}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {job.output_count} output(s)
+                        </div>
+                      </div>
+                      <span className={pill(job.status)}>{job.status}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-slate-700">
+                      {job.reviewer_action}
+                    </p>
+                    <div className="mt-2 break-all text-xs text-slate-400">
+                      evidence: {job.evidence_ref}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
 
             <div className="grid gap-3 lg:grid-cols-2">
               <section className="rounded border p-3">
@@ -311,6 +344,78 @@ export function GovernOverview({
                   ) : (
                     <li className="rounded border p-3 text-sm text-slate-500">
                       No policy violations in the current review window.
+                    </li>
+                  )}
+                </ul>
+              </section>
+
+              <section className="rounded border p-3">
+                <h2 className="text-sm font-semibold">Policy conflicts</h2>
+                <ul className="mt-3 space-y-2">
+                  {compliance.policy_conflicts.length ? (
+                    compliance.policy_conflicts.map((item) => (
+                      <li
+                        key={item.id}
+                        className="rounded border p-3"
+                        data-testid={`compliance-conflict-${item.id}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-medium">
+                              {item.policy.replace(/_/g, " ")}
+                            </div>
+                            <div className="mt-1 text-sm text-slate-600">
+                              {item.summary}
+                            </div>
+                          </div>
+                          <span className={pill(item.severity)}>
+                            {item.severity}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm text-slate-700">
+                          {item.reviewer_action}
+                        </p>
+                        <div className="mt-1 break-all text-xs text-slate-400">
+                          evidence: {item.evidence_ref}
+                        </div>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="rounded border p-3 text-sm text-slate-500">
+                      No derived policy conflicts in this review window.
+                    </li>
+                  )}
+                </ul>
+              </section>
+
+              <section className="rounded border p-3">
+                <h2 className="text-sm font-semibold">Data access changes</h2>
+                <ul className="mt-3 space-y-2">
+                  {compliance.data_access_changes.length ? (
+                    compliance.data_access_changes.map((item) => (
+                      <li
+                        key={item.id}
+                        className="rounded border p-3"
+                        data-testid={`compliance-access-${item.id}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-medium">{item.target}</div>
+                            <div className="mt-1 text-sm text-slate-600">
+                              {item.agent_name} · {item.surface} ·{" "}
+                              {item.access.join(", ")}
+                            </div>
+                          </div>
+                          <span className={pill(item.state)}>{item.state}</span>
+                        </div>
+                        <p className="mt-2 text-sm text-slate-700">
+                          {item.reviewer_action}
+                        </p>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="rounded border p-3 text-sm text-slate-500">
+                      No PII, memory, or money movement access changes detected.
                     </li>
                   )}
                 </ul>
