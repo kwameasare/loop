@@ -9,6 +9,9 @@ import {
   createMigrationImport,
   listMigrationImports,
   rollbackMigrationCutover,
+  MIGRATION_SOURCES,
+  migrationSourceById,
+  type MigrationSource,
   type MigrationRun,
 } from "@/lib/migration-runs";
 import { cn } from "@/lib/utils";
@@ -46,10 +49,12 @@ export function MigrationRunsPanel({
   const [runs, setRuns] = useState<MigrationRun[]>([]);
   const [busy, setBusy] = useState<BusyState>("load");
   const [notice, setNotice] = useState<string | null>(null);
+  const [source, setSource] = useState<MigrationSource>("botpress");
   const [archiveName, setArchiveName] = useState("acme-refunds.bpz");
   const [targetName, setTargetName] = useState("Acme Imported Concierge");
   const [transcriptCount, setTranscriptCount] = useState(40);
   const activeRun = useMemo(() => latestRun(runs), [runs]);
+  const selectedSource = useMemo(() => migrationSourceById(source), [source]);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,19 +90,21 @@ export function MigrationRunsPanel({
     setNotice(null);
     try {
       const run = await createMigrationImport(workspaceId, {
-        source: "botpress",
+        source,
         archive_name: archiveName,
         archive_sha: "",
         target_agent_name: targetName,
         business_responsibility:
           "Preserve imported support behavior while proving parity before cutover.",
         channels: ["web_chat", "whatsapp"],
-        inventory: { integrations: 0, unsupported_nodes: 0 },
+        inventory: selectedSource.defaultInventory,
         transcript_count: transcriptCount,
       });
       upsertRun(run);
       onCreated?.(run);
-      setNotice("Botpress import created as an agent branch and Change Set.");
+      setNotice(
+        `${selectedSource.label} import created as an agent branch and Change Set.`,
+      );
     } catch (error) {
       setNotice(
         error instanceof Error ? error.message : "Could not create import.",
@@ -184,7 +191,7 @@ export function MigrationRunsPanel({
               id="migration-runs-heading"
               className="mt-1 text-lg font-semibold"
             >
-              Botpress import creates an agent branch, Change Set, and lineage.
+              Imports create agent branches, Change Sets, and lineage.
             </h2>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
               The source archive stays read-only. Generated Loop work lands in a
@@ -206,9 +213,28 @@ export function MigrationRunsPanel({
           ) : null}
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-[1fr_1fr_auto]">
+        <div className="grid gap-3 lg:grid-cols-[0.85fr_1fr_1fr_auto]">
           <label className="text-sm">
-            <span className="font-medium">Archive</span>
+            <span className="font-medium">Source</span>
+            <select
+              value={source}
+              onChange={(event) => {
+                const next = event.target.value as MigrationSource;
+                setSource(next);
+                setArchiveName(migrationSourceById(next).defaultArchive);
+              }}
+              className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
+              data-testid="migration-source-select"
+            >
+              {MIGRATION_SOURCES.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm">
+            <span className="font-medium">{selectedSource.archiveLabel}</span>
             <input
               value={archiveName}
               onChange={(event) => setArchiveName(event.target.value)}
@@ -240,6 +266,18 @@ export function MigrationRunsPanel({
           </label>
         </div>
 
+        <div
+          className="rounded-md border bg-background p-3"
+          data-testid="migration-source-profile"
+        >
+          <p className="text-sm font-medium">{selectedSource.description}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Accepted inputs: {selectedSource.acceptedInputs.join(", ")}. Outcome
+            parity is measured after inventory, mapping, and transcript replay;
+            source flow shape is not copied into production.
+          </p>
+        </div>
+
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -248,7 +286,9 @@ export function MigrationRunsPanel({
             className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             data-testid="migration-create-import"
           >
-            {busy === "create" ? "Creating..." : "Create Botpress import"}
+            {busy === "create"
+              ? "Creating..."
+              : `Create ${selectedSource.label} import`}
           </button>
           {activeRun ? (
             <>
@@ -288,10 +328,14 @@ export function MigrationRunsPanel({
 
         {activeRun ? (
           <div
-            className="grid gap-3 rounded-md border bg-background p-3 md:grid-cols-4"
+            className="grid gap-3 rounded-md border bg-background p-3 md:grid-cols-5"
             data-testid="migration-run-summary"
           >
             <Stat label="Agent" value={activeRun.target_agent_name} />
+            <Stat
+              label="Source"
+              value={activeRun.source_profile?.label ?? activeRun.source}
+            />
             <Stat label="Branch" value={activeRun.target_branch_id} mono />
             <Stat
               label="Change Set"

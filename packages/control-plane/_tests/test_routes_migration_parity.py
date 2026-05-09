@@ -202,3 +202,35 @@ def test_botpress_import_creates_durable_lineage_and_cutover_state(
     assert "migration:import_create" in actions
     assert "migration:cutover_advance" in actions
     assert "migration:cutover_rollback" in actions
+
+
+def test_migration_import_supports_dialogflow_cx_source_profile(
+    client: TestClient,
+) -> None:
+    workspace_id = _workspace(client)
+    headers = {"authorization": _bearer_for("owner-1")}
+
+    created = client.post(
+        f"/v1/workspaces/{workspace_id}/migrations/imports",
+        headers=headers,
+        json={
+            "source": "dialogflow_cx",
+            "archive_name": "billing-agent-cx.zip",
+            "target_agent_name": "Billing CX Migration",
+            "business_responsibility": "Preserve billing support outcomes.",
+            "channels": ["web_chat", "email"],
+            "inventory": {"webhooks": 0, "fulfillment": 0},
+            "transcript_count": 15,
+        },
+    )
+
+    assert created.status_code == 201, created.text
+    run = created.json()
+    assert run["source"] == "dialogflow_cx"
+    assert run["source_profile"]["label"] == "Dialogflow CX export"
+    assert "CX agent export zip" in run["source_profile"]["accepted_inputs"]
+    inventory = {item["kind"]: item for item in run["inventory"]}
+    assert inventory["pages"]["loop_target"] == "behavior policies + page routes"
+    assert inventory["entities"]["loop_target"] == "slot/entity extraction"
+    assert inventory["channels"]["count"] == 2
+    assert run["lineage_steps"][0]["detail"].startswith("Parsed `billing-agent-cx.zip`")

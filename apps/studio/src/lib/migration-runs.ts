@@ -14,6 +14,114 @@ export type CutoverStageStatus =
   | "in_progress"
   | "passed"
   | "halted";
+export type MigrationSource =
+  | "botpress"
+  | "dialogflow_cx"
+  | "rasa"
+  | "zendesk"
+  | "intercom"
+  | "custom_files"
+  | "conversation_transcripts";
+
+export interface MigrationSourceDefinition {
+  id: MigrationSource;
+  label: string;
+  archiveLabel: string;
+  defaultArchive: string;
+  description: string;
+  acceptedInputs: string[];
+  defaultInventory: Record<string, number>;
+}
+
+export const MIGRATION_SOURCES: readonly MigrationSourceDefinition[] = [
+  {
+    id: "botpress",
+    label: "Botpress .bpz",
+    archiveLabel: "Botpress archive",
+    defaultArchive: "acme-refunds.bpz",
+    description:
+      "Flows, nodes, KBs, actions, integrations, channels, and transcripts.",
+    acceptedInputs: ["Botpress .bpz export"],
+    defaultInventory: { integrations: 0, unsupported_nodes: 0 },
+  },
+  {
+    id: "dialogflow_cx",
+    label: "Dialogflow CX",
+    archiveLabel: "CX export",
+    defaultArchive: "dialogflow-cx-agent.zip",
+    description:
+      "Flows, pages, intents, entities, fulfillment, webhooks, and transcripts.",
+    acceptedInputs: ["CX agent export zip", "Flows/pages JSON"],
+    defaultInventory: { webhooks: 0, fulfillment: 0 },
+  },
+  {
+    id: "rasa",
+    label: "Rasa project",
+    archiveLabel: "Rasa project",
+    defaultArchive: "rasa-project.zip",
+    description:
+      "Domain, NLU, stories, rules, forms, actions, and transcripts.",
+    acceptedInputs: ["domain.yml", "nlu.yml", "stories.yml", "rules.yml"],
+    defaultInventory: { actions: 0 },
+  },
+  {
+    id: "zendesk",
+    label: "Zendesk",
+    archiveLabel: "Zendesk export",
+    defaultArchive: "zendesk-support-export.zip",
+    description:
+      "Macros, triggers, help center articles, integrations, channels, and conversations.",
+    acceptedInputs: [
+      "Automations/macros JSON",
+      "Help Center export",
+      "Conversation CSV",
+    ],
+    defaultInventory: { integrations: 0 },
+  },
+  {
+    id: "intercom",
+    label: "Intercom",
+    archiveLabel: "Intercom export",
+    defaultArchive: "intercom-content-conversations.zip",
+    description:
+      "Articles, workflows, handoff rules, integrations, channels, and conversations.",
+    acceptedInputs: [
+      "Article export",
+      "Conversation export",
+      "Fin handoff transcript",
+    ],
+    defaultInventory: { integrations: 0 },
+  },
+  {
+    id: "custom_files",
+    label: "Custom files",
+    archiveLabel: "Custom bundle",
+    defaultArchive: "agent-files.zip",
+    description:
+      "JSON, YAML, CSV, OpenAPI, tables, policy files, and transcripts.",
+    acceptedInputs: ["JSON", "YAML", "CSV", "OpenAPI", "Transcript files"],
+    defaultInventory: { integrations: 0 },
+  },
+  {
+    id: "conversation_transcripts",
+    label: "Transcripts only",
+    archiveLabel: "Transcript file",
+    defaultArchive: "support-transcripts.csv",
+    description:
+      "Infer capabilities, risks, and evals from conversation transcripts.",
+    acceptedInputs: ["CSV", "JSONL", "Chat transcripts"],
+    defaultInventory: {},
+  },
+] as const;
+
+export function migrationSourceById(
+  source: MigrationSource,
+): MigrationSourceDefinition {
+  return (
+    MIGRATION_SOURCES.find((item) => item.id === source) ??
+    MIGRATION_SOURCES[0]!
+  );
+}
 
 export interface MigrationInventoryItem {
   id: string;
@@ -62,7 +170,13 @@ export interface MigrationCutoverEvent {
 export interface MigrationRun {
   id: string;
   workspace_id: string;
-  source: string;
+  source: MigrationSource;
+  source_profile: {
+    label: string;
+    accepted_inputs: string[];
+    primary_artifacts: string[];
+    verification: string;
+  };
   archive_name: string;
   archive_sha: string;
   target_agent_id: string;
@@ -84,7 +198,7 @@ export interface MigrationRun {
 }
 
 export interface MigrationImportInput {
-  source?: string;
+  source?: MigrationSource;
   archive_name: string;
   archive_sha?: string;
   target_agent_name: string;
@@ -102,10 +216,25 @@ export interface MigrationRunsResponse {
 const LOCAL_NOW = new Date(0).toISOString();
 
 export function localMigrationRun(workspaceId: string): MigrationRun {
+  const source = migrationSourceById("botpress");
   return {
     id: "mig_local_botpress",
     workspace_id: workspaceId,
-    source: "botpress",
+    source: source.id,
+    source_profile: {
+      label: source.label,
+      accepted_inputs: [...source.acceptedInputs],
+      primary_artifacts: [
+        "intents",
+        "workflows",
+        "nodes",
+        "knowledge_sources",
+        "integrations",
+        "channels",
+        "transcripts",
+      ],
+      verification: "public_export_format",
+    },
     archive_name: "acme-refunds.bpz",
     archive_sha:
       "sha256:local00000000000000000000000000000000000000000000000000000000000",
@@ -201,6 +330,14 @@ export async function createMigrationImport(
       body: input,
       fallback: {
         ...localMigrationRun(workspaceId),
+        source: input.source ?? "botpress",
+        source_profile: {
+          ...localMigrationRun(workspaceId).source_profile,
+          label: migrationSourceById(input.source ?? "botpress").label,
+          accepted_inputs: [
+            ...migrationSourceById(input.source ?? "botpress").acceptedInputs,
+          ],
+        },
         archive_name: input.archive_name,
         target_agent_name: input.target_agent_name,
         updated_at: new Date().toISOString(),

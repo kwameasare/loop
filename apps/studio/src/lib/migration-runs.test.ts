@@ -5,12 +5,23 @@ import {
   createMigrationImport,
   listMigrationImports,
   localMigrationRun,
+  migrationSourceById,
   rollbackMigrationCutover,
 } from "./migration-runs";
 
 describe("migration-runs client", () => {
   it("falls back to empty list when no cp-api base URL is configured", async () => {
     await expect(listMigrationImports("ws_1")).resolves.toEqual({ items: [] });
+  });
+
+  it("defines import profiles for non-Botpress migration sources", () => {
+    expect(migrationSourceById("dialogflow_cx").acceptedInputs).toContain(
+      "CX agent export zip",
+    );
+    expect(migrationSourceById("rasa").defaultArchive).toBe("rasa-project.zip");
+    expect(migrationSourceById("conversation_transcripts").description).toMatch(
+      /transcripts/i,
+    );
   });
 
   it("posts import, advance, and rollback requests to the durable migration endpoints", async () => {
@@ -35,6 +46,7 @@ describe("migration-runs client", () => {
         {
           archive_name: "acme.bpz",
           target_agent_name: "Acme Import",
+          source: "dialogflow_cx",
         },
         { baseUrl: "https://cp.example.test", fetcher },
       ),
