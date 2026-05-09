@@ -9,6 +9,7 @@ from loop_control_plane._app_state import CpApiState
 from loop_control_plane._routes_agent_commitments import router as agent_commitments_router
 from loop_control_plane._routes_agent_conductor import router as agent_conductor_router
 from loop_control_plane._routes_agent_handoff import router as agent_handoff_router
+from loop_control_plane._routes_agent_intake import router as agent_intake_router
 from loop_control_plane._routes_agent_memory import router as agent_memory_router
 from loop_control_plane._routes_agent_tools import router as agent_tools_router
 from loop_control_plane._routes_agent_versions import (
@@ -118,6 +119,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         agent_commitments_router,
         # Agent-flow implementation: ownership transfer and history walkthrough.
         agent_handoff_router,
+        # Agent-flow implementation: intake creates governed drafts, not empty agents.
+        agent_intake_router,
         # Agent-flow implementation: preflight Change Package contract.
         change_packages_router,
         # Agent-flow implementation: omnichannel bindings are agent-scoped peers.

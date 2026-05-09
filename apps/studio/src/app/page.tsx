@@ -60,7 +60,10 @@ export default async function HomePage() {
             Start from a governed contract, not a blank demo.
           </p>
           <div className="mt-4 flex flex-col gap-2">
-            <NewAgentModal existingSlugs={existingSlugs} />
+            <NewAgentModal
+              existingSlugs={existingSlugs}
+              workspaceId={workspaceId}
+            />
             <Link
               href="/migrate"
               className={buttonVariants({ variant: "outline" })}
