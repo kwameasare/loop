@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   createEmptyMemoryStudioData,
@@ -29,6 +29,12 @@ describe("MemoryStudio", () => {
     );
     expect(screen.getByTestId("memory-studio-safety")).toHaveTextContent(
       "durable user preference",
+    );
+    expect(screen.getByTestId("memory-policy-panel")).toHaveTextContent(
+      "Explicit consent required before durable write",
+    );
+    expect(screen.getByTestId("memory-policy-user")).toHaveTextContent(
+      "Privacy implications before activation",
     );
   });
 
@@ -70,6 +76,27 @@ describe("MemoryStudio", () => {
     );
     expect(screen.getByTestId("memory-studio-replay")).toHaveTextContent(
       "with-memory=cleared",
+    );
+  });
+
+  it("approves a memory policy and keeps the hash visible for preflight", async () => {
+    const data = createMemoryStudioData("agent_support");
+    const userPolicy = data.policies.find((policy) => policy.scope === "user")!;
+    const approve = vi.fn(async () => ({
+      ...userPolicy,
+      approval_status: "approved" as const,
+      approval_invalidated_at: null,
+    }));
+    render(<MemoryStudio data={data} onApprovePolicy={approve} />);
+
+    fireEvent.click(screen.getByTestId("memory-policy-approve-user"));
+
+    await waitFor(() => expect(approve).toHaveBeenCalledWith("user"));
+    expect(screen.getByTestId("memory-policy-user")).toHaveTextContent(
+      "approved",
+    );
+    expect(screen.getByTestId("memory-policy-notice")).toHaveTextContent(
+      "ready for deployment preflight",
     );
   });
 

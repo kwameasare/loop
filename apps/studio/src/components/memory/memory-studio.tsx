@@ -6,6 +6,7 @@ import {
   GitCompare,
   History,
   ShieldAlert,
+  ShieldCheck,
   Trash2,
 } from "lucide-react";
 
@@ -21,6 +22,11 @@ import {
   TRUST_STATE_TREATMENTS,
 } from "@/lib/design-tokens";
 import {
+  type MemoryPolicy,
+  type MemoryPolicyApprovalStatus,
+  type MemoryPolicyScope,
+} from "@/lib/memory-policies";
+import {
   type MemoryReplayMode,
   type MemorySafetyFlag,
   type MemoryScope,
@@ -32,6 +38,7 @@ import { cn } from "@/lib/utils";
 export interface MemoryStudioProps {
   data: MemoryStudioData;
   onDeleteEntry?: (entry: MemoryStudioEntry) => Promise<void>;
+  onApprovePolicy?: (scope: MemoryPolicyScope) => Promise<MemoryPolicy>;
 }
 
 const SCOPE_LABEL: Record<MemoryScope, string> = {
@@ -48,6 +55,21 @@ const FLAG_CLASS: Record<MemorySafetyFlag, string> = {
   conflict: "border-warning/50 bg-warning/5 text-warning",
   stale: "border-warning/50 bg-warning/5 text-warning",
   "weak-evidence": "border-warning/50 bg-warning/5 text-warning",
+};
+
+const POLICY_STATUS_CLASS: Record<MemoryPolicyApprovalStatus, string> = {
+  draft: "border-info/40 bg-info/5 text-info",
+  review_required: "border-warning/50 bg-warning/5 text-warning",
+  approved: "border-success/40 bg-success/5 text-success",
+  blocked: "border-destructive/40 bg-destructive/5 text-destructive",
+};
+
+const POLICY_SCOPE_LABEL: Record<MemoryPolicyScope, string> = {
+  turn: "Turn",
+  conversation: "Conversation",
+  session: "Session",
+  user: "User",
+  workspace: "Workspace",
 };
 
 function liveBadgeTone(
@@ -321,25 +343,167 @@ function ReplayControls({ data }: { data: MemoryStudioData }) {
   );
 }
 
-export function MemoryStudio({ data, onDeleteEntry }: MemoryStudioProps) {
+function MemoryPolicyPanel({
+  policies,
+  approvingScope,
+  notice,
+  onApprove,
+}: {
+  policies: MemoryPolicy[];
+  approvingScope: MemoryPolicyScope | null;
+  notice: string | null;
+  onApprove: (policy: MemoryPolicy) => void;
+}) {
+  return (
+    <section
+      className="rounded-md border bg-card p-4"
+      data-testid="memory-policy-panel"
+      aria-labelledby="memory-policy-heading"
+    >
+      <div className="flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              <ShieldCheck className="h-4 w-4" aria-hidden />
+              Memory policy
+            </p>
+            <p
+              id="memory-policy-heading"
+              className="mt-1 text-sm text-muted-foreground"
+            >
+              Policies define which memories may persist, how long they live,
+              what consent is required, and how deletion works before
+              activation.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-3">
+          {policies.map((policy) => {
+            const canApprove =
+              policy.approval_status !== "approved" &&
+              policy.approval_status !== "blocked";
+            return (
+              <article
+                key={policy.id}
+                className="rounded-md border bg-background p-3"
+                data-testid={`memory-policy-${policy.scope}`}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-semibold">
+                    {POLICY_SCOPE_LABEL[policy.scope]}
+                  </h3>
+                  <span
+                    className={cn(
+                      "rounded-md border px-2 py-0.5 text-xs font-medium",
+                      POLICY_STATUS_CLASS[policy.approval_status],
+                    )}
+                  >
+                    {policy.approval_status.replace("_", " ")}
+                  </span>
+                </div>
+                <dl className="mt-3 space-y-2 text-sm">
+                  <div>
+                    <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Retention
+                    </dt>
+                    <dd className="mt-1">{policy.retention}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Consent
+                    </dt>
+                    <dd className="mt-1">{policy.consent_requirement}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      PII policy
+                    </dt>
+                    <dd className="mt-1">{policy.pii_policy}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Delete behavior
+                    </dt>
+                    <dd className="mt-1">{policy.delete_behavior}</dd>
+                  </div>
+                </dl>
+                <div className="mt-3 rounded-md border bg-card p-2">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Privacy implications before activation
+                  </p>
+                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                    {policy.privacy_implications.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="mt-2 font-mono text-[0.7rem] text-muted-foreground">
+                  hash {policy.content_hash.slice(0, 12)}
+                  {policy.approval_invalidated_at
+                    ? ` · invalidated ${policy.approval_invalidated_at}`
+                    : ""}
+                </p>
+                <button
+                  type="button"
+                  disabled={!canApprove || approvingScope === policy.scope}
+                  onClick={() => onApprove(policy)}
+                  className="mt-3 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
+                  data-testid={`memory-policy-approve-${policy.scope}`}
+                >
+                  {approvingScope === policy.scope
+                    ? "Approving policy"
+                    : policy.approval_status === "approved"
+                      ? "Policy approved"
+                      : policy.approval_status === "blocked"
+                        ? "Policy blocked"
+                        : "Approve policy"}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+        {notice ? (
+          <p
+            className="rounded-md border border-info/40 bg-info/5 p-3 text-sm text-muted-foreground"
+            aria-live="polite"
+            data-testid="memory-policy-notice"
+          >
+            {notice}
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+export function MemoryStudio({
+  data,
+  onDeleteEntry,
+  onApprovePolicy,
+}: MemoryStudioProps) {
   const [entries, setEntries] = useState<MemoryStudioEntry[]>(data.entries);
+  const [policies, setPolicies] = useState<MemoryPolicy[]>(data.policies);
   const [scope, setScope] = useState<MemoryScope | "all">("all");
   const [selectedId, setSelectedId] = useState<string | null>(
     entries[0]?.id ?? null,
   );
   const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
+  const [policyNotice, setPolicyNotice] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [approvingScope, setApprovingScope] =
+    useState<MemoryPolicyScope | null>(null);
   const selectedEntry = useMemo(
     () =>
-      entries.find((entry) => entry.id === selectedId) ??
-      entries[0] ??
-      null,
+      entries.find((entry) => entry.id === selectedId) ?? entries[0] ?? null,
     [entries, selectedId],
   );
   const objectTreatment = OBJECT_STATE_TREATMENTS[data.objectState];
   const trustTreatment = TRUST_STATE_TREATMENTS[data.trust];
   const flagged = entries.filter(
     (entry) => !entry.safetyFlags.includes("none"),
+  ).length;
+  const policyReviewCount = policies.filter(
+    (policy) => policy.approval_status !== "approved",
   ).length;
 
   async function handleDelete(entry: MemoryStudioEntry): Promise<void> {
@@ -356,7 +520,7 @@ export function MemoryStudio({ data, onDeleteEntry }: MemoryStudioProps) {
       setEntries((current) => current.filter((item) => item.id !== entry.id));
       setSelectedId((current) =>
         current === entry.id
-          ? entries.find((item) => item.id !== entry.id)?.id ?? null
+          ? (entries.find((item) => item.id !== entry.id)?.id ?? null)
           : current,
       );
       setDeleteNotice(`Deleted ${entry.key}. Evidence: ${entry.sourceTrace}.`);
@@ -366,6 +530,42 @@ export function MemoryStudio({ data, onDeleteEntry }: MemoryStudioProps) {
       );
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function handleApprovePolicy(policy: MemoryPolicy): Promise<void> {
+    if (!onApprovePolicy) {
+      setPolicyNotice(
+        `${POLICY_SCOPE_LABEL[policy.scope]} policy approval queued. Hash ${policy.content_hash.slice(
+          0,
+          12,
+        )} must appear in preflight before activation.`,
+      );
+      return;
+    }
+    setApprovingScope(policy.scope);
+    setPolicyNotice(null);
+    try {
+      const approved = await onApprovePolicy(policy.scope);
+      setPolicies((current) =>
+        current.map((item) =>
+          item.scope === approved.scope ? approved : item,
+        ),
+      );
+      setPolicyNotice(
+        `${POLICY_SCOPE_LABEL[approved.scope]} policy approved. Hash ${approved.content_hash.slice(
+          0,
+          12,
+        )} is ready for deployment preflight.`,
+      );
+    } catch (err) {
+      setPolicyNotice(
+        err instanceof Error
+          ? err.message
+          : `Could not approve ${POLICY_SCOPE_LABEL[policy.scope]} policy.`,
+      );
+    } finally {
+      setApprovingScope(null);
     }
   }
 
@@ -416,9 +616,21 @@ export function MemoryStudio({ data, onDeleteEntry }: MemoryStudioProps) {
           <p className="text-xs text-muted-foreground">Retention evidence</p>
           <p className="mt-1 text-sm">{data.retentionEvidence}</p>
         </div>
+        <div className="rounded-md border bg-card p-3">
+          <p className="text-xs text-muted-foreground">
+            Policies needing review
+          </p>
+          <p className="mt-1 text-xl font-semibold">{policyReviewCount}</p>
+        </div>
       </section>
 
       <section className="grid min-w-0 gap-4">
+        <MemoryPolicyPanel
+          policies={policies}
+          approvingScope={approvingScope}
+          notice={policyNotice}
+          onApprove={(policy) => void handleApprovePolicy(policy)}
+        />
         <MemoryExplorer
           entries={entries}
           selectedId={selectedEntry?.id ?? null}

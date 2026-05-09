@@ -564,6 +564,79 @@ def test_tool_contracts_default_sandbox_promote_live_and_invalidate_on_change(
     }
 
 
+def test_memory_policies_require_trace_backed_privacy_and_invalidate_approval(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    created = client.put(
+        f"/v1/agents/{agent_id}/memory-policies/user",
+        headers=_auth(),
+        json={
+            "scope": "user",
+            "allowed_memory_types": ["preference", "support_context"],
+            "retention": "Keep confirmed preferences for 365 days.",
+            "consent_requirement": "Explicit consent required before durable write.",
+            "pii_policy": "Do not store payment data; redact personal identifiers.",
+            "delete_behavior": "Delete on user request with audit trail.",
+            "privacy_implications": [
+                "Durable preference affects future conversations for this user.",
+                "Every write must link to the source turn.",
+            ],
+            "source_trace_required": True,
+        },
+    )
+    assert created.status_code == 200, created.text
+    body = created.json()
+    assert body["scope"] == "user"
+    assert body["approval_status"] == "review_required"
+    assert body["source_trace_required"] is True
+    assert body["privacy_implications"][0].startswith("Durable preference")
+
+    approved = client.post(
+        f"/v1/agents/{agent_id}/memory-policies/user/approve",
+        headers=_auth(),
+    )
+    assert approved.status_code == 200, approved.text
+    assert approved.json()["approval_status"] == "approved"
+    assert approved.json()["approval_invalidated_at"] is None
+
+    changed = client.put(
+        f"/v1/agents/{agent_id}/memory-policies/user",
+        headers=_auth(),
+        json={
+            "scope": "user",
+            "allowed_memory_types": ["preference", "support_context"],
+            "retention": "Keep confirmed preferences for 90 days.",
+            "consent_requirement": "Explicit consent required before durable write.",
+            "pii_policy": "Do not store payment data; redact personal identifiers.",
+            "delete_behavior": "Delete on user request with audit trail.",
+            "privacy_implications": [
+                "Durable preference affects future conversations for this user.",
+                "Every write must link to the source turn.",
+            ],
+            "source_trace_required": True,
+        },
+    )
+    assert changed.status_code == 200, changed.text
+    assert changed.json()["approval_status"] == "review_required"
+    assert changed.json()["approval_invalidated_at"] is not None
+
+    listed = client.get(
+        f"/v1/agents/{agent_id}/memory-policies",
+        headers=_auth(),
+    )
+    assert listed.status_code == 200, listed.text
+    assert listed.json()["items"][0]["retention"].startswith("Keep confirmed")
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "memory_policy:upsert",
+        "memory_policy:approve",
+    }
+
+
 def test_deployment_start_creates_evidence_pack_from_approved_change_package(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:

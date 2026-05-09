@@ -3,6 +3,11 @@ import type {
   ObjectState,
   TrustState,
 } from "@/lib/design-tokens";
+import {
+  listMemoryPolicies,
+  localMemoryPolicies,
+  type MemoryPolicy,
+} from "@/lib/memory-policies";
 import { targetUxFixtures, type TargetUXFixture } from "@/lib/target-ux";
 
 export type MemoryScope = "session" | "user" | "episodic" | "scratch";
@@ -48,6 +53,7 @@ export interface MemoryStudioData {
   objectState: ObjectState;
   trust: TrustState;
   entries: MemoryStudioEntry[];
+  policies: MemoryPolicy[];
   replayResults: MemoryReplayResult[];
   retentionEvidence: string;
   degradedReason?: string | undefined;
@@ -124,11 +130,13 @@ function normalizeMemoryEntry(item: CpMemoryEntry): MemoryStudioEntry {
 export function createMemoryStudioDataFromEntries(
   agentId: string,
   entries: MemoryStudioEntry[],
+  policies = localMemoryPolicies(agentId),
 ): MemoryStudioData {
   const base = createMemoryStudioData(agentId);
   return {
     ...base,
     entries,
+    policies,
     degradedReason:
       entries.length === 0
         ? "No memory writes have been captured yet. Replay a turn or run a simulator scenario to inspect memory."
@@ -152,7 +160,7 @@ export async function fetchMemoryStudioData(
   }
   const fetcher = opts.fetcher ?? fetch;
   const params = new URLSearchParams({ user_id: userId });
-  const response = await fetcher(
+  const memoryRequest = fetcher(
     `${base}/agents/${encodeURIComponent(agentId)}/memory?${params}`,
     {
       method: "GET",
@@ -160,6 +168,11 @@ export async function fetchMemoryStudioData(
       cache: "no-store",
     },
   );
+  const policyRequest = listMemoryPolicies(agentId, opts);
+  const [response, policies] = await Promise.all([
+    memoryRequest,
+    policyRequest,
+  ]);
   if (response.status === 404) return createEmptyMemoryStudioData(agentId);
   if (!response.ok) {
     throw new Error(`cp-api GET agent memory -> ${response.status}`);
@@ -168,6 +181,7 @@ export async function fetchMemoryStudioData(
   return createMemoryStudioDataFromEntries(
     agentId,
     (body.items ?? []).map(normalizeMemoryEntry),
+    policies.items,
   );
 }
 
@@ -214,6 +228,7 @@ export function createMemoryStudioData(
     objectState: fixture.workspace.objectState,
     trust: fixture.workspace.trust,
     retentionEvidence: `${enterprise.id}: ${enterprise.evidence}`,
+    policies: localMemoryPolicies(agentId),
     entries: [
       {
         id: memory.id,

@@ -16,35 +16,65 @@ describe("memory studio cp-api client", () => {
   });
 
   it("fetches and normalizes live memory entries", async () => {
-    const fetcher = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        items: [
-          {
-            id: "user:alice:preferred_language",
-            scope: "user",
-            key: "preferred_language",
-            before: "unknown",
-            after: "English",
-            source: "runtime memory store",
-            source_trace: "not-attached",
-            retention_policy: "durable user memory",
-            updated_at: "2026-05-01T10:00:00Z",
-            writer_version: "live",
-            confidence: "medium",
-            safety_flags: ["none"],
-            deletion_state: "available",
-            deletion_reason: "delete with audit",
-            replay_impact: "removes preference",
-          },
-        ],
-      }),
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.endsWith("/memory-policies")) {
+        return new Response(
+          JSON.stringify({
+            items: [
+              {
+                id: "mp_user",
+                workspace_id: "workspace-1",
+                agent_id: "agent-1",
+                scope: "user",
+                allowed_memory_types: ["preference"],
+                retention: "365 days",
+                consent_requirement: "Explicit consent required.",
+                pii_policy: "No payment data.",
+                delete_behavior: "Delete on request.",
+                privacy_implications: ["Affects future turns."],
+                source_trace_required: true,
+                approval_status: "review_required",
+                content_hash: "hash_user",
+                approval_invalidated_at: null,
+                created_at: "2026-05-01T10:00:00Z",
+                updated_at: "2026-05-01T10:00:00Z",
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          items: [
+            {
+              id: "user:alice:preferred_language",
+              scope: "user",
+              key: "preferred_language",
+              before: "unknown",
+              after: "English",
+              source: "runtime memory store",
+              source_trace: "not-attached",
+              retention_policy: "durable user memory",
+              updated_at: "2026-05-01T10:00:00Z",
+              writer_version: "live",
+              confidence: "medium",
+              safety_flags: ["none"],
+              deletion_state: "available",
+              deletion_reason: "delete with audit",
+              replay_impact: "removes preference",
+            },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
     });
 
     const data = await fetchMemoryStudioData("agent-1", "alice", { fetcher });
 
     expect(data.entries).toHaveLength(1);
+    expect(data.policies).toHaveLength(1);
     expect(data.entries[0]).toMatchObject({
       key: "preferred_language",
       after: "English",
