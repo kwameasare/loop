@@ -57,6 +57,8 @@ describe("Tools Room data", () => {
     expect(data.tools[1].secretRef).toContain(
       "vault/data/workspace/ws_acme/agent/agent_support",
     );
+    expect(data.toolContracts[1]?.tool_id).toBe("tool_issue_refund");
+    expect(data.toolContracts[1]?.sandbox_status).toBe("sandbox");
   });
 
   it("drafts a tool from curl without retaining auth values", () => {

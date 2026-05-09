@@ -23,6 +23,12 @@ describe("ToolsRoom", () => {
     expect(screen.getByTestId("tools-room-safety")).toHaveTextContent(
       "Safety contract",
     );
+    expect(screen.getByTestId("tool-contract-panel")).toHaveTextContent(
+      "Tool contract",
+    );
+    expect(screen.getByTestId("tool-contract-panel")).toHaveTextContent(
+      "sandbox",
+    );
     expect(screen.getByTestId("tools-room-mock-live")).toHaveTextContent(
       "Mock and live status",
     );
@@ -42,12 +48,27 @@ describe("ToolsRoom", () => {
       screen.getByTestId("tools-room-production-boundary"),
     ).toHaveTextContent("Production grant blocked");
     expect(screen.getByTestId("tools-room-grant-production")).toBeDisabled();
+    expect(screen.getByTestId("tool-contract-panel")).toHaveTextContent(
+      "max_per_call_cents",
+    );
+    expect(screen.getByTestId("tool-contract-promote")).toBeEnabled();
+  });
+
+  it("promotes the selected durable tool contract live", async () => {
+    render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
+
+    fireEvent.click(screen.getByTestId("tools-room-catalog-tool_issue_refund"));
+    fireEvent.click(screen.getByTestId("tool-contract-promote"));
+
+    expect(await screen.findByText("Live approved")).toBeInTheDocument();
   });
 
   it("drafts a typed tool from a curl request and redacts auth", () => {
     render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
 
-    expect(screen.getByTestId("tools-room-source-devtools")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("tools-room-source-devtools"),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("tools-room-draft-tool"));
     const draft = screen.getByTestId("tools-room-draft");
     expect(draft).toHaveTextContent("api_example_test");

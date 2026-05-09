@@ -28,6 +28,7 @@ import {
   type ToolsRoomData,
   type ToolsRoomTool,
 } from "@/lib/agent-tools";
+import { promoteToolContract, type ToolContract } from "@/lib/tool-contracts";
 import { cn } from "@/lib/utils";
 
 export interface ToolsRoomProps {
@@ -365,6 +366,154 @@ function SafetyContract({ tool }: { tool: ToolsRoomTool | null }) {
   );
 }
 
+function formatRecord(record: Record<string, unknown>): string {
+  const entries = Object.entries(record);
+  if (entries.length === 0) return "Not set";
+  return entries.map(([key, value]) => `${key}: ${String(value)}`).join(", ");
+}
+
+function ToolContractQuestionnaire({
+  agentId,
+  tool,
+  contract,
+  onPromoted,
+}: {
+  agentId: string;
+  tool: ToolsRoomTool | null;
+  contract: ToolContract | null;
+  onPromoted: (contract: ToolContract) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!tool) return null;
+  if (!contract) {
+    return (
+      <section
+        className="min-w-0 rounded-md border bg-card p-4"
+        data-testid="tool-contract-panel"
+      >
+        <p className="text-sm font-semibold">Tool contract</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          No durable contract exists yet. Save the safety questionnaire before
+          this tool can leave sandbox.
+        </p>
+      </section>
+    );
+  }
+  const activeContract = contract;
+
+  async function promoteContract() {
+    setBusy(true);
+    setError(null);
+    try {
+      const promoted = await promoteToolContract(
+        agentId,
+        activeContract.tool_id,
+      );
+      onPromoted(promoted);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Promotion failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const canPromote =
+    contract.live_status !== "approved" &&
+    contract.live_status !== "blocked" &&
+    !contract.approval_invalidated_at;
+
+  return (
+    <section
+      className="min-w-0 rounded-md border bg-card p-4"
+      data-testid="tool-contract-panel"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <ClipboardList className="h-4 w-4" aria-hidden />
+            Tool contract
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Durable permission contract for sandbox, live promotion, money caps,
+            owner, and approval invalidation.
+          </p>
+        </div>
+        <LiveBadge
+          tone={
+            contract.live_status === "approved"
+              ? "live"
+              : contract.live_status === "blocked"
+                ? "paused"
+                : "draft"
+          }
+        >
+          {contract.live_status.replace(/_/g, " ")}
+        </LiveBadge>
+      </div>
+
+      <dl className="mt-3 grid gap-3 text-sm [grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr))]">
+        <div>
+          <dt className="text-muted-foreground">Sandbox</dt>
+          <dd>{contract.sandbox_status}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Side effect</dt>
+          <dd>{contract.side_effect_level.replace(/_/g, " ")}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Owner</dt>
+          <dd>{contract.owner_user_id || "Unassigned"}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Money caps</dt>
+          <dd>{formatRecord(contract.budget_limits)}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Rate limits</dt>
+          <dd>{formatRecord(contract.rate_limits)}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Approval policy</dt>
+          <dd>{contract.approval_policy_id || "Not set"}</dd>
+        </div>
+      </dl>
+
+      {contract.approval_invalidated_at ? (
+        <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-muted-foreground">
+          Approval invalidated at {contract.approval_invalidated_at}. Re-review
+          this contract before live use.
+        </p>
+      ) : null}
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          className="rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={!canPromote || busy}
+          onClick={() => void promoteContract()}
+          data-testid="tool-contract-promote"
+        >
+          {busy
+            ? "Promoting"
+            : contract.live_status === "approved"
+              ? "Live approved"
+              : "Promote contract live"}
+        </button>
+        <span className="text-xs text-muted-foreground">
+          Hash {contract.content_hash.slice(0, 10)}
+        </span>
+      </div>
+      {error ? (
+        <p className="mt-2 text-xs text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function MockLivePanel({ tool }: { tool: ToolsRoomTool | null }) {
   if (!tool) return null;
   return (
@@ -398,6 +547,9 @@ export function ToolsRoom({ data }: ToolsRoomProps) {
   const [selectedToolId, setSelectedToolId] = useState<string | null>(
     data.tools[0]?.id ?? null,
   );
+  const [contracts, setContracts] = useState<ToolContract[]>(
+    data.toolContracts,
+  );
   const selectedTool = useMemo(
     () =>
       data.tools.find((tool) => tool.id === selectedToolId) ??
@@ -405,6 +557,8 @@ export function ToolsRoom({ data }: ToolsRoomProps) {
       null,
     [data.tools, selectedToolId],
   );
+  const selectedContract =
+    contracts.find((contract) => contract.tool_id === selectedTool?.id) ?? null;
   const objectTreatment = OBJECT_STATE_TREATMENTS[data.objectState];
   const trustTreatment = TRUST_STATE_TREATMENTS[data.trust];
   const totalUsage = data.tools.reduce((sum, tool) => sum + tool.usage7d, 0);
@@ -473,6 +627,22 @@ export function ToolsRoom({ data }: ToolsRoomProps) {
         />
         <DetailPanel tool={selectedTool} />
         <SafetyContract tool={selectedTool} />
+        <ToolContractQuestionnaire
+          agentId={data.agentId}
+          tool={selectedTool}
+          contract={selectedContract}
+          onPromoted={(contract) =>
+            setContracts((current) => {
+              const exists = current.some((item) => item.id === contract.id);
+              if (exists) {
+                return current.map((item) =>
+                  item.id === contract.id ? contract : item,
+                );
+              }
+              return [contract, ...current];
+            })
+          }
+        />
         <MockLivePanel tool={selectedTool} />
         <InstantToolImport agentId={data.agentId} />
         <EvidenceCallout
