@@ -10,7 +10,9 @@ from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.agent_intake import (
     AgentIntakeCreate,
     agent_intake_payload,
+    apply_enterprise_template,
     build_intake_analysis,
+    template_payloads,
 )
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
@@ -90,6 +92,10 @@ async def create_agent_intake(
         user_sub=caller_sub,
         required_role=Role.ADMIN,
     )
+    try:
+        body = apply_enterprise_template(body, actor_sub=caller_sub)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     agent = await cp.agents.create(
         workspace_id=workspace_id,
@@ -200,6 +206,8 @@ async def create_agent_intake(
         "eval_suite_id": str(suite.id),
         "eval_cases": eval_refs,
     }
+    if body.template_id:
+        refs["template_id"] = body.template_id
     intake = await cp.agent_intakes.add(
         build_intake_analysis(
             body=body,
@@ -219,6 +227,7 @@ async def create_agent_intake(
         payload={
             "agent_id": str(agent.id),
             "creation_path": body.creation_path,
+            "template_id": body.template_id,
             "state": intake.state,
             "readiness_score": intake.readiness["score"],
             "artifacts": len(body.artifacts),
@@ -245,6 +254,20 @@ async def list_agent_intakes(
     )
     rows = await cp.agent_intakes.list_for_workspace(workspace_id)
     return {"items": [agent_intake_payload(row) for row in rows]}
+
+
+@router.get("/{workspace_id}/agent-intake-templates")
+async def list_agent_intake_templates(
+    request: Request,
+    workspace_id: UUID,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    await authorize_workspace_access(
+        workspaces=request.app.state.cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    return {"items": template_payloads()}
 
 
 @router.get("/{workspace_id}/agent-intakes/{intake_id}")

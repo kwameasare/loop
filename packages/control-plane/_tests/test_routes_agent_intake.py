@@ -180,3 +180,44 @@ def test_agent_intake_requires_workspace_admin(
     )
 
     assert response.status_code in (401, 403)
+
+
+def test_enterprise_template_intake_clones_approved_defaults(
+    client: TestClient,
+    workspace_id: UUID,
+) -> None:
+    templates = client.get(
+        f"/v1/workspaces/{workspace_id}/agent-intake-templates",
+        headers=_auth(),
+    )
+    assert templates.status_code == 200, templates.text
+    assert "tmpl_support_agent" in {item["id"] for item in templates.json()["items"]}
+
+    response = client.post(
+        f"/v1/workspaces/{workspace_id}/agent-intakes",
+        headers=_auth(),
+        json={
+            "agent_name": "Template Support Agent",
+            "slug": "template-support",
+            "creation_path": "enterprise_template",
+            "template_id": "tmpl_support_agent",
+            "contract": {
+                "owner_user_id": "maya@acme.test",
+                "backup_owner_user_id": "diego@acme.test",
+            },
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["creation_path"] == "enterprise_template"
+    assert body["created_object_refs"]["template_id"] == "tmpl_support_agent"
+    assert body["commitment"]["body"]["business_responsibility"].startswith(
+        "Resolve support questions"
+    )
+    assert body["commitment"]["body"]["channels"] == ["web", "whatsapp", "email"]
+    assert {tool["tool_id"] for tool in body["candidate_tools"]} == {
+        "mock_crm",
+        "mock_billing_api",
+    }
+    assert body["artifact_reports"][0]["source_ref"] == "template/tmpl_support_agent/runbook"

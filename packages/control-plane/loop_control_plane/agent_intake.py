@@ -87,6 +87,122 @@ class AgentIntakeRecord(BaseModel):
     updated_at: datetime
 
 
+ENTERPRISE_TEMPLATES: dict[str, dict[str, Any]] = {
+    "tmpl_support_agent": {
+        "name": "Enterprise support agent",
+        "capabilities": [
+            "Answer policy-backed support questions",
+            "Escalate billing and legal risk",
+            "Preserve channel formatting",
+        ],
+        "contract": {
+            "business_responsibility": "Resolve support questions using approved policy and escalation paths.",
+            "target_users": "Enterprise customers and support operators.",
+            "worst_case_failure": "Promises refunds, legal positions, or account actions outside approved policy.",
+            "channels": ["web", "whatsapp", "email"],
+            "systems_touched": ["crm", "billing api"],
+            "regions": ["us-east-1", "eu-west-2"],
+            "languages": ["en"],
+            "success_metric": "95% eval pass rate before canary.",
+            "compliance_domain": "SOC2 support operations",
+            "expected_volume": "10k turns per month",
+            "budget_target": "$0.08 per resolved turn",
+            "out_of_scope": "Legal advice and refunds above policy.",
+            "escalation_policy": "Escalate policy conflicts, legal threats, and refund exceptions to the support lead.",
+        },
+        "artifacts": [
+            {
+                "name": "enterprise-support-template.md",
+                "kind": "runbook",
+                "text": "Use approved policy. Escalate legal threats. Never refund outside policy.",
+                "source_ref": "template/tmpl_support_agent/runbook",
+            }
+        ],
+    },
+    "tmpl_voice_receptionist": {
+        "name": "Voice receptionist",
+        "capabilities": [
+            "Answer front-desk questions",
+            "Schedule handoffs",
+            "Collect callback context",
+        ],
+        "contract": {
+            "business_responsibility": "Handle inbound calls, answer basic questions, and route callers to the right team.",
+            "target_users": "Prospects, customers, and operators calling the business.",
+            "worst_case_failure": "Books, cancels, or promises appointments without confirmation.",
+            "channels": ["voice", "sms"],
+            "systems_touched": ["calendar", "crm"],
+            "regions": ["us-east-1"],
+            "languages": ["en"],
+            "success_metric": "90% successful route or callback capture.",
+            "compliance_domain": "Customer communications",
+            "expected_volume": "3k calls per month",
+            "budget_target": "$0.12 per handled call",
+            "out_of_scope": "Medical, legal, or financial advice.",
+            "escalation_policy": "Escalate urgent, regulated, or frustrated callers to the human queue.",
+        },
+        "artifacts": [
+            {
+                "name": "voice-receptionist-template.md",
+                "kind": "runbook",
+                "text": "Confirm identity before scheduling. Keep speech concise. Escalate urgent callers.",
+                "source_ref": "template/tmpl_voice_receptionist/runbook",
+            }
+        ],
+    },
+}
+
+
+def template_payloads() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": template_id,
+            "name": str(template["name"]),
+            "channels": list(template["contract"]["channels"]),
+            "systems_touched": list(template["contract"]["systems_touched"]),
+            "capabilities": list(template["capabilities"]),
+        }
+        for template_id, template in ENTERPRISE_TEMPLATES.items()
+    ]
+
+
+def apply_enterprise_template(body: AgentIntakeCreate, *, actor_sub: str) -> AgentIntakeCreate:
+    if body.creation_path != "enterprise_template":
+        return body
+
+    template_id = body.template_id or "tmpl_support_agent"
+    template = ENTERPRISE_TEMPLATES.get(template_id)
+    if template is None:
+        raise ValueError(f"unknown enterprise template: {template_id}")
+
+    contract_defaults = template["contract"]
+    contract_updates: dict[str, Any] = {}
+    for field, default in contract_defaults.items():
+        current = getattr(body.contract, field)
+        if isinstance(current, list):
+            contract_updates[field] = current or list(default)
+        else:
+            contract_updates[field] = current.strip() if current.strip() else default
+    if not body.contract.owner_user_id.strip():
+        contract_updates["owner_user_id"] = actor_sub
+    if not body.contract.backup_owner_user_id.strip():
+        contract_updates["backup_owner_user_id"] = ""
+
+    template_artifacts = [
+        AgentIntakeArtifactInput(**artifact) for artifact in template["artifacts"]
+    ]
+    artifacts = [*template_artifacts, *body.artifacts]
+    capabilities = body.capabilities or list(template["capabilities"])
+    return body.model_copy(
+        update={
+            "template_id": template_id,
+            "contract": body.contract.model_copy(update=contract_updates),
+            "artifacts": artifacts,
+            "capabilities": capabilities,
+        }
+    )
+
+
 def _normalise_token(value: str) -> str:
     token = re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
     return token or "item"
