@@ -159,14 +159,16 @@ class IncidentRegistry:
         mode: Literal["manual", "auto"] = "manual",
         trigger: str = "",
         reason: str = "",
+        affected_trace_ids: list[str] | None = None,
     ) -> IncidentRecord:
         label = "auto-rollback" if mode == "auto" else "manual rollback"
+        trace_ids = affected_trace_ids or []
         body = IncidentCreate(
             deployment_id=deployment_id,
             severity="high" if mode == "auto" else "medium",
             trigger=trigger or f"{label} executed for deployment {deployment_id}",
-            affected_trace_ids=[],
-            affected_conversation_count=0,
+            affected_trace_ids=trace_ids,
+            affected_conversation_count=len(trace_ids),
             root_cause_hypothesis=reason or "Rollback executed before root cause was confirmed.",
             rollback_action_ref=f"deployment/{deployment_id}/rollback",
             proposed_fix=(
@@ -182,6 +184,17 @@ class IncidentRegistry:
             update={
                 "timeline": [
                     *record.timeline,
+                    *(
+                        [
+                            _timeline_event(
+                                "affected_traces_collected",
+                                now,
+                                f"{len(trace_ids)} affected trace(s) attached to the incident report.",
+                            )
+                        ]
+                        if trace_ids
+                        else []
+                    ),
                     _timeline_event(
                         "containment",
                         now,
