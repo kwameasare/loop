@@ -77,6 +77,9 @@ describe("BehaviorEditor", () => {
     expect(screen.getByTestId("style-transfer-panel")).toHaveTextContent(
       "Same policy, different tone",
     );
+    expect(screen.getByTestId("failure-repair-loop")).toHaveTextContent(
+      "Save failure as eval",
+    );
   });
 
   it("previews style-transfer rewrites with eval deltas", async () => {
@@ -84,9 +87,9 @@ describe("BehaviorEditor", () => {
 
     fireEvent.click(screen.getByTestId("style-transfer-run"));
 
-    expect(await screen.findByTestId("style-transfer-results")).toHaveTextContent(
-      "formal voice",
-    );
+    expect(
+      await screen.findByTestId("style-transfer-results"),
+    ).toHaveTextContent("formal voice");
   });
 
   it("keeps apply blocked until preview policy checks pass", () => {
@@ -130,9 +133,9 @@ describe("BehaviorEditor", () => {
     render(<BehaviorEditor data={data} />);
 
     expect(screen.getByText("System prompt")).toBeInTheDocument();
-    expect(screen.getAllByText(/Answer refund questions/).length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      screen.getAllByText(/Answer refund questions/).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText("Declared tools")).toBeInTheDocument();
   });
 });

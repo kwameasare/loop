@@ -14,7 +14,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from loop_control_plane._app_common import CALLER, request_id
+from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.eval_suites import (
@@ -28,6 +28,7 @@ from loop_control_plane.eval_suites import (
 )
 
 router_workspaces = APIRouter(prefix="/v1/workspaces", tags=["Evals"])
+router_agents = APIRouter(prefix="/v1/agents", tags=["Evals"])
 router_suites = APIRouter(prefix="/v1/eval-suites", tags=["Evals"])
 
 
@@ -35,15 +36,24 @@ class ResolutionEvalCaseBody(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
     id: str = Field(min_length=1, max_length=256)
     title: str = Field(min_length=1, max_length=256)
-    expected_outcome: str = Field(
-        min_length=1, max_length=4096, alias="expectedOutcome"
-    )
-    failure_reason: str = Field(
-        min_length=1, max_length=1024, alias="failureReason"
-    )
+    expected_outcome: str = Field(min_length=1, max_length=4096, alias="expectedOutcome")
+    failure_reason: str = Field(min_length=1, max_length=1024, alias="failureReason")
     linked_trace: str = Field(min_length=1, max_length=512, alias="linkedTrace")
     attachments: list[str] = Field(default_factory=list)
     source: str = Field(default="operator-resolution", max_length=128)
+
+
+class ObservedFailureEvalCaseBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    sentence_id: str = Field(min_length=1, max_length=256)
+    sentence_text: str = Field(min_length=1, max_length=4096)
+    trace_id: str = Field(min_length=1, max_length=512)
+    failure_reason: str = Field(min_length=1, max_length=1024)
+    expected_outcome: str = Field(min_length=1, max_length=4096)
+    proposed_fix: str = Field(min_length=1, max_length=4096)
+    replay_ref: str = Field(default="replay/not-run", max_length=512)
+    source: str = Field(default="behavior-fix", max_length=128)
 
 
 @router_workspaces.get("/{workspace_id}/eval-suites")
@@ -170,6 +180,90 @@ async def create_case_from_resolution(
     }
 
 
+@router_agents.post("/{agent_id}/eval-cases/from-observed-failure", status_code=201)
+async def create_case_from_observed_failure(
+    request: Request,
+    agent_id: UUID,
+    body: ObservedFailureEvalCaseBody,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    await cp.agents.get(workspace_id=workspace_id, agent_id=agent_id)
+    suite = await cp.eval_suites.get_or_create_suite(
+        workspace_id=workspace_id,
+        name="Observed behavior failures",
+        dataset_ref="observed-behavior-failures",
+        metrics=["behavior_match", "regression_guard", "groundedness"],
+        actor_sub=caller_sub,
+    )
+    case = await cp.eval_suites.add_case(
+        workspace_id=workspace_id,
+        suite_id=suite.id,
+        body=EvalCaseCreate(
+            name=f"Fix observed failure for {body.sentence_id}",
+            input={
+                "agent_id": str(agent_id),
+                "sentence_id": body.sentence_id,
+                "sentence_text": body.sentence_text,
+                "trace_id": body.trace_id,
+                "failure_reason": body.failure_reason,
+                "replay_ref": body.replay_ref,
+            },
+            expected={
+                "outcome": body.expected_outcome,
+                "proposed_fix": body.proposed_fix,
+            },
+            scorers=[
+                {
+                    "kind": "llm_judge",
+                    "config": {"rubric": "observed failure expected behavior"},
+                },
+                {
+                    "kind": "trace_regression",
+                    "config": {
+                        "trace_id": body.trace_id,
+                        "replay_ref": body.replay_ref,
+                    },
+                },
+            ],
+            source=body.source,
+            source_ref=body.trace_id,
+            attachments=[body.replay_ref, body.sentence_id],
+        ),
+        actor_sub=caller_sub,
+    )
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="eval:case:create_from_observed_failure",
+        resource_type="eval_case",
+        store=cp.audit_events,
+        resource_id=str(case.id),
+        request_id=request_id(request),
+        payload={
+            "agent_id": str(agent_id),
+            "case_id": str(case.id),
+            "suite_id": str(suite.id),
+            "sentence_id": body.sentence_id,
+            "trace_id": body.trace_id,
+            "replay_ref": body.replay_ref,
+        },
+    )
+    return {
+        "ok": True,
+        "suite_id": str(suite.id),
+        "case_id": str(case.id),
+        "case": serialise_case(case),
+    }
+
+
 async def _suite_workspace(request: Request, suite_id: UUID) -> UUID:
     cp = request.app.state.cp
     suite = cp.eval_suites._suites.get(suite_id)  # type: ignore[attr-defined]
@@ -192,9 +286,7 @@ async def list_runs(
         user_sub=caller_sub,
     )
     try:
-        rows = await cp.eval_suites.list_runs(
-            workspace_id=workspace_id, suite_id=suite_id
-        )
+        rows = await cp.eval_suites.list_runs(workspace_id=workspace_id, suite_id=suite_id)
     except EvalError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return {"items": [serialise_run(r) for r in rows]}
@@ -214,9 +306,7 @@ async def list_cases(
         user_sub=caller_sub,
     )
     try:
-        rows = await cp.eval_suites.list_cases(
-            workspace_id=workspace_id, suite_id=suite_id
-        )
+        rows = await cp.eval_suites.list_cases(workspace_id=workspace_id, suite_id=suite_id)
     except EvalError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return {"items": [serialise_case(case) for case in rows]}
@@ -296,4 +386,4 @@ async def start_run(
     return serialise_run(run)
 
 
-__all__ = ["router_suites", "router_workspaces"]
+__all__ = ["router_agents", "router_suites", "router_workspaces"]
