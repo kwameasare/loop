@@ -15,11 +15,14 @@ import {
   RESIDENCY_ZONES,
   SSO_SUMMARIES,
   WHITELABEL_DEFAULT,
+  attachComplianceProbeSuite,
   createComplianceEvidenceExport,
   filterAudit,
   rbacAllowed,
   type ComplianceEvidenceExport,
   type ComplianceEvidenceExportInput,
+  type ComplianceProbeSuiteAttachInput,
+  type ComplianceProbeSuiteAttachResult,
   type ComplianceReviewModel,
   type AuditCategory,
 } from "@/lib/enterprise-govern";
@@ -73,11 +76,17 @@ export interface GovernOverviewProps {
     workspaceId: string,
     input: ComplianceEvidenceExportInput,
   ) => Promise<ComplianceEvidenceExport>;
+  attachProbeSuite?: (
+    workspaceId: string,
+    libraryId: string,
+    input?: ComplianceProbeSuiteAttachInput,
+  ) => Promise<ComplianceProbeSuiteAttachResult>;
 }
 
 export function GovernOverview({
   compliance = COMPLIANCE_REVIEW_FIXTURE,
   createExport = createComplianceEvidenceExport,
+  attachProbeSuite = attachComplianceProbeSuite,
 }: GovernOverviewProps): JSX.Element {
   const [section, setSection] = useState<SectionId>("compliance");
   const [auditCategory, setAuditCategory] = useState<AuditCategory | "all">(
@@ -87,6 +96,10 @@ export function GovernOverview({
   const [exportResult, setExportResult] =
     useState<ComplianceEvidenceExport | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [attachingProbeId, setAttachingProbeId] = useState<string | null>(null);
+  const [probeResult, setProbeResult] =
+    useState<ComplianceProbeSuiteAttachResult | null>(null);
+  const [probeError, setProbeError] = useState<string | null>(null);
 
   const auditRows = useMemo(
     () =>
@@ -123,6 +136,24 @@ export function GovernOverview({
       );
     } finally {
       setExporting(false);
+    }
+  }
+
+  async function handleAttachProbeSuite(libraryId: string) {
+    setAttachingProbeId(libraryId);
+    setProbeError(null);
+    setProbeResult(null);
+    try {
+      const result = await attachProbeSuite(compliance.workspace_id, libraryId);
+      setProbeResult(result);
+    } catch (error) {
+      setProbeError(
+        error instanceof Error
+          ? error.message
+          : "Could not attach compliance probe suite.",
+      );
+    } finally {
+      setAttachingProbeId(null);
     }
   }
 
@@ -418,7 +449,26 @@ export function GovernOverview({
                       className="rounded border p-3"
                       data-testid={`compliance-probe-${item.id}`}
                     >
-                      <div className="font-medium">{item.name}</div>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="font-medium">{item.name}</div>
+                          <div className="mt-1 text-xs text-slate-500">
+                            {item.case_count} required cases ·{" "}
+                            {item.metrics.join(", ")}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="rounded border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:border-slate-900 hover:text-slate-950 disabled:cursor-wait disabled:opacity-50"
+                          disabled={attachingProbeId === item.id}
+                          data-testid={`attach-probe-${item.id}`}
+                          onClick={() => void handleAttachProbeSuite(item.id)}
+                        >
+                          {attachingProbeId === item.id
+                            ? "Attaching"
+                            : "Attach suite"}
+                        </button>
+                      </div>
                       <div className="mt-1 text-sm text-slate-600">
                         Required for {item.required_for.join(", ")}
                       </div>
@@ -428,6 +478,29 @@ export function GovernOverview({
                     </li>
                   ))}
                 </ul>
+                {probeResult ? (
+                  <div
+                    className="mt-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900"
+                    data-testid="compliance-probe-result"
+                  >
+                    Attached {probeResult.library_name} to{" "}
+                    {probeResult.suite_count} agent(s); added{" "}
+                    {probeResult.case_count} case(s).
+                    <div className="mt-1 text-xs text-emerald-700">
+                      {probeResult.attached_agents
+                        .map((agent) => agent.suite.name)
+                        .join(", ") || "No high-risk agents required it."}
+                    </div>
+                  </div>
+                ) : null}
+                {probeError ? (
+                  <div
+                    className="mt-3 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"
+                    data-testid="compliance-probe-error"
+                  >
+                    {probeError}
+                  </div>
+                ) : null}
               </section>
             </div>
           </div>

@@ -457,6 +457,8 @@ export interface ComplianceProbeLibrary {
   name: string;
   required_for: string[];
   status: string;
+  case_count: number;
+  metrics: string[];
   evidence_ref: string;
 }
 
@@ -492,6 +494,54 @@ export interface ComplianceEvidenceExport {
   download_url: string;
   generated_by: string;
   generated_at: string;
+}
+
+export interface ComplianceProbeSuiteAttachInput {
+  agent_id?: string;
+}
+
+export interface ComplianceProbeSuiteCase {
+  id: string;
+  suite_id: string;
+  workspace_id: string;
+  name: string;
+  input: Record<string, unknown>;
+  expected: Record<string, unknown>;
+  scorers: Array<Record<string, unknown>>;
+  source: string;
+  source_ref: string;
+  attachments: string[];
+  created_at: string;
+  created_by: string;
+}
+
+export interface ComplianceProbeSuiteSummary {
+  id: string;
+  workspace_id: string;
+  name: string;
+  dataset_ref: string;
+  metrics: string[];
+  created_at: string;
+  created_by: string;
+}
+
+export interface ComplianceProbeSuiteAttachedAgent {
+  agent_id: string;
+  agent_name: string;
+  suite: ComplianceProbeSuiteSummary;
+  cases_added: ComplianceProbeSuiteCase[];
+  cases_existing: number;
+  evidence_ref: string;
+}
+
+export interface ComplianceProbeSuiteAttachResult {
+  library_id: string;
+  library_name: string;
+  status: "attached" | "no_recommended_agents";
+  attached_agents: ComplianceProbeSuiteAttachedAgent[];
+  suite_count: number;
+  case_count: number;
+  audit_ref: string;
 }
 
 export const COMPLIANCE_REVIEW_FIXTURE: ComplianceReviewModel = {
@@ -620,6 +670,8 @@ export const COMPLIANCE_REVIEW_FIXTURE: ComplianceReviewModel = {
       name: "Regulated support probes",
       required_for: ["pii", "refunds", "escalation", "data_export"],
       status: "available",
+      case_count: 3,
+      metrics: ["policy_adherence", "groundedness", "pii_minimization"],
       evidence_ref: "probe-library/regulated-support",
     },
   ],
@@ -678,6 +730,51 @@ export async function createComplianceEvidenceExport(
         download_url: `/v1/workspaces/${workspaceId}/compliance-review/evidence-exports/cex_local`,
         generated_by: "local-studio",
         generated_at: new Date(0).toISOString(),
+      },
+      ...opts,
+    },
+  );
+}
+
+export async function attachComplianceProbeSuite(
+  workspaceId: string,
+  libraryId: string,
+  input: ComplianceProbeSuiteAttachInput = {},
+  opts: UxWireupClientOptions = {},
+): Promise<ComplianceProbeSuiteAttachResult> {
+  return cpJson<ComplianceProbeSuiteAttachResult>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/compliance-review/probe-libraries/${encodeURIComponent(libraryId)}/attach`,
+    {
+      method: "POST",
+      body: input,
+      fallback: {
+        library_id: libraryId,
+        library_name:
+          COMPLIANCE_REVIEW_FIXTURE.industry_probe_libraries.find(
+            (library) => library.id === libraryId,
+          )?.name ?? "Compliance probe library",
+        status: "attached",
+        attached_agents: [
+          {
+            agent_id: "agent_support",
+            agent_name: "Support Concierge",
+            suite: {
+              id: "suite_regulated_support",
+              workspace_id: workspaceId,
+              name: "Regulated support probes: support-concierge",
+              dataset_ref: "compliance-probes/regulated-support/agent_support",
+              metrics: ["policy_adherence", "groundedness"],
+              created_at: new Date(0).toISOString(),
+              created_by: "local-studio",
+            },
+            cases_added: [],
+            cases_existing: 3,
+            evidence_ref: "eval-suite/suite_regulated_support",
+          },
+        ],
+        suite_count: 1,
+        case_count: 0,
+        audit_ref: `audit/compliance:probe_suite_attach/${libraryId}`,
       },
       ...opts,
     },

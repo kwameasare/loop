@@ -63,6 +63,65 @@ describe("GovernOverview", () => {
     );
   });
 
+  it("attaches industry probe libraries as required eval suites", async () => {
+    const attachProbeSuite = vi.fn(async () => ({
+      library_id: "regulated-support",
+      library_name: "Regulated support probes",
+      status: "attached" as const,
+      attached_agents: [
+        {
+          agent_id: "agent_support",
+          agent_name: "Support Concierge",
+          suite: {
+            id: "suite_regulated_support",
+            workspace_id: "workspace_local",
+            name: "Regulated support probes: support-concierge",
+            dataset_ref: "compliance-probes/regulated-support/agent_support",
+            metrics: ["policy_adherence"],
+            created_at: "2026-05-09T00:00:00Z",
+            created_by: "owner-1",
+          },
+          cases_added: [
+            {
+              id: "case_1",
+              suite_id: "suite_regulated_support",
+              workspace_id: "workspace_local",
+              name: "Support Concierge: refund cap",
+              input: {},
+              expected: {},
+              scorers: [],
+              source: "industry_probe_suite",
+              source_ref: "probe-library/regulated-support/refund-cap",
+              attachments: ["agent/agent_support"],
+              created_at: "2026-05-09T00:00:00Z",
+              created_by: "owner-1",
+            },
+          ],
+          cases_existing: 0,
+          evidence_ref: "eval-suite/suite_regulated_support",
+        },
+      ],
+      suite_count: 1,
+      case_count: 1,
+      audit_ref: "audit/compliance:probe_suite_attach/regulated-support",
+    }));
+
+    render(<GovernOverview attachProbeSuite={attachProbeSuite} />);
+
+    fireEvent.click(screen.getByTestId("attach-probe-regulated-support"));
+
+    expect(
+      await screen.findByTestId("compliance-probe-result"),
+    ).toHaveTextContent("added 1 case");
+    expect(screen.getByTestId("compliance-probe-result")).toHaveTextContent(
+      "Regulated support probes: support-concierge",
+    );
+    expect(attachProbeSuite).toHaveBeenCalledWith(
+      "workspace_local",
+      "regulated-support",
+    );
+  });
+
   it("renders SSO summaries on the SSO tab", () => {
     render(<GovernOverview />);
     fireEvent.click(screen.getByTestId("govern-tab-sso"));
