@@ -217,9 +217,7 @@ async def replay_against_draft(
     body: ReplayAgainstDraftBody,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(
-        request, agent_id=agent_id, caller_sub=caller_sub
-    )
+    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
     diffs = [_replay_diff_for_trace(trace_id, body.draft_branch_ref) for trace_id in body.trace_ids]
     _audit(
         request,
@@ -246,9 +244,7 @@ async def replay_version_diff(
     body: ReplayAgainstDraftBody,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(
-        request, agent_id=agent_id, caller_sub=caller_sub
-    )
+    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
     left = body.compare_version_ref or "production"
     items = []
     for trace_id in body.trace_ids:
@@ -270,6 +266,125 @@ async def replay_version_diff(
 # ---------------------------------------------------------------------------
 # §20.3 Observatory custom dashboards + homepage pins
 # ---------------------------------------------------------------------------
+
+
+@router_workspaces.get("/{workspace_id}/estate-health")
+async def get_estate_health(
+    request: Request,
+    workspace_id: UUID,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    """Workspace-level control-plane health for the Studio entry screen.
+
+    This route deliberately derives every claim from workspace-scoped
+    product objects instead of fixture narratives. It is the backend
+    contract for the estate-first home page in
+    ``PROPOSED_AGENT_FLOW_MERGED.md``.
+    """
+
+    cp = request.app.state.cp
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    agents = await cp.agents.list_for_workspace(workspace_id)
+    traces = await cp.trace_search.run(TraceQuery(workspace_id=workspace_id, page_size=200))
+    pending_inbox = cp.inbox_queue.list_pending(workspace_id)
+    changesets = list(_bucket(request, "changesets").get(str(workspace_id), []))
+    pending_changesets = [changeset for changeset in changesets if not changeset.get("approvals")]
+    eval_suites = await cp.eval_suites.list_suites(workspace_id)
+    audit_events = tuple(cp.audit_events.list_for_workspace(workspace_id))
+
+    draft_agents = [agent for agent in agents if agent.active_version is None]
+    production_agents = [agent for agent in agents if agent.active_version is not None]
+    error_traces = [trace for trace in traces.items if trace.error]
+    attention: list[dict[str, Any]] = []
+
+    if pending_inbox:
+        attention.append(
+            {
+                "id": "pending-inbox",
+                "severity": "critical",
+                "title": f"{len(pending_inbox)} human handoff item(s) pending",
+                "detail": "Operators need a decision before these conversations can close.",
+                "href": "/inbox",
+                "source": "inbox_queue.list_pending",
+            }
+        )
+    if pending_changesets:
+        attention.append(
+            {
+                "id": "pending-approvals",
+                "severity": "critical",
+                "title": f"{len(pending_changesets)} change set(s) need approval",
+                "detail": "Release candidates cannot promote until approval evidence is complete.",
+                "href": "/deploys",
+                "source": "approval_changesets",
+            }
+        )
+    if error_traces:
+        attention.append(
+            {
+                "id": "trace-errors",
+                "severity": "watch",
+                "title": f"{len(error_traces)} recent trace error(s)",
+                "detail": "Investigate the failing turns before shipping related changes.",
+                "href": "/traces?only_errors=true",
+                "source": "trace_search.only_errors",
+            }
+        )
+    for agent in draft_agents[:5]:
+        attention.append(
+            {
+                "id": f"draft-agent-{agent.id}",
+                "severity": "watch",
+                "title": f"{agent.name} has no production version",
+                "detail": agent.description
+                or "Finish behavior, eval gates, approvals, and deployment.",
+                "href": f"/agents/{agent.id}",
+                "source": f"agents/{agent.id}.active_version",
+            }
+        )
+    if not agents:
+        attention.append(
+            {
+                "id": "no-agents",
+                "severity": "ready",
+                "title": "No agents registered",
+                "detail": "Create or import the first governed agent for this workspace.",
+                "href": "/agents",
+                "source": "agents.list",
+            }
+        )
+
+    return {
+        "workspace_id": str(workspace_id),
+        "generated_at": datetime.now(UTC).isoformat(),
+        "data_source": "live",
+        "provenance": [
+            "agents.list_for_workspace",
+            "trace_search.run",
+            "inbox_queue.list_pending",
+            "eval_suites.list_suites",
+            "audit_events.list_for_workspace",
+            "ux_wireup.approval_changesets",
+        ],
+        "summary": {
+            "agents_total": len(agents),
+            "agents_production": len(production_agents),
+            "agents_draft": len(draft_agents),
+            "pending_handoffs": len(pending_inbox),
+            "pending_approvals": len(pending_changesets),
+            "trace_errors": len(error_traces),
+            "trace_count": len(traces.items),
+            "eval_suites": len(eval_suites),
+            "audit_events": len(audit_events),
+            "open_incidents": 0,
+            "blocked_deploys": len(pending_changesets),
+        },
+        "attention": attention[:8],
+    }
 
 
 class DashboardBody(BaseModel):
@@ -465,9 +580,7 @@ async def resolve_comment_as_spec(
     body: CommentResolutionBody,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(
-        request, agent_id=agent_id, caller_sub=caller_sub
-    )
+    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
     case_id = f"eval_comment_{comment_id}"
     result = {
         "comment_id": comment_id,
@@ -618,9 +731,7 @@ async def get_agent_edit_history(
     agent_id: UUID,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(
-        request, agent_id=agent_id, caller_sub=caller_sub
-    )
+    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
     versions = await request.app.state.cp.agent_versions.list_for_agent(
         workspace_id=workspace_id,
         agent_id=agent_id,
@@ -764,7 +875,12 @@ async def rotate_encryption_key(
     item = _bucket(request, "encryption").get(str(workspace_id))
     if item is None:
         raise HTTPException(status_code=404, detail="key not bound")
-    item = {**item, "version": int(item["version"]) + 1, "status": "bound", "rotated_at": datetime.now(UTC).isoformat()}
+    item = {
+        **item,
+        "version": int(item["version"]) + 1,
+        "status": "bound",
+        "rotated_at": datetime.now(UTC).isoformat(),
+    }
     _bucket(request, "encryption")[str(workspace_id)] = item
     _audit(
         request,
@@ -902,9 +1018,7 @@ async def get_sentence_telemetry(
     agent_id: UUID,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(
-        request, agent_id=agent_id, caller_sub=caller_sub
-    )
+    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
     traces = await request.app.state.cp.trace_search.run(
         TraceQuery(workspace_id=workspace_id, agent_id=agent_id, page_size=100)
     )
@@ -935,9 +1049,7 @@ async def inverse_retrieval(
     body: InverseRetrievalBody,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(
-        request, agent_id=agent_id, caller_sub=caller_sub
-    )
+    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
     traces = await request.app.state.cp.trace_search.run(
         TraceQuery(workspace_id=workspace_id, agent_id=agent_id, page_size=20)
     )
@@ -1108,7 +1220,10 @@ async def provision_voice_number(
         "status": "provisioned",
         "compliance": [
             {"id": "business_profile", "status": "ready"},
-            {"id": "10dlc_registration", "status": "pending" if body.country == "US" else "not_required"},
+            {
+                "id": "10dlc_registration",
+                "status": "pending" if body.country == "US" else "not_required",
+            },
             {"id": "livekit_sip_trunk", "status": "ready"},
         ],
         "sip_route": f"livekit://workspace/{workspace_id}/voice/{uuid4().hex[:8]}",
@@ -1149,9 +1264,7 @@ async def run_persona_test(
     body: PersonaTestBody,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(
-        request, agent_id=agent_id, caller_sub=caller_sub
-    )
+    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
     personas = [
         "journalist",
         "english-as-second-language",
@@ -1194,9 +1307,7 @@ async def latency_budget(
     body: LatencyBudgetBody,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(
-        request, agent_id=agent_id, caller_sub=caller_sub
-    )
+    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
     spans = [
         {"id": "system", "label": "System", "ms": 70, "kind": "runtime"},
         {"id": "llm", "label": "LLM", "ms": 430, "kind": "model"},
@@ -1261,9 +1372,7 @@ async def context_ablation(
     body: ContextAblationBody,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(
-        request, agent_id=agent_id, caller_sub=caller_sub
-    )
+    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
     defaults = {
         "prompt_sections": True,
         "kb_chunks": True,
@@ -1328,12 +1437,8 @@ async def empty_state_suggestions(
     surface: str = Query(pattern="^(evals|kb|inbox)$"),
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(
-        request, agent_id=agent_id, caller_sub=caller_sub
-    )
-    traces = await request.app.state.cp.trace_store.search(
-        TraceQuery(workspace_id=workspace_id)
-    )
+    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
+    traces = await request.app.state.cp.trace_store.search(TraceQuery(workspace_id=workspace_id))
     trace_count = len(traces)
     suggestions = {
         "evals": [
@@ -1392,9 +1497,7 @@ async def create_pair_debug_audio_session(
         "expires_at": (datetime.now(UTC) + timedelta(minutes=30)).isoformat(),
         "audit_ref": f"pair-debug-audio/{workspace_id}/{body.agent_id}",
     }
-    _bucket(request, "pair_debug_audio").setdefault(str(workspace_id), []).append(
-        session
-    )
+    _bucket(request, "pair_debug_audio").setdefault(str(workspace_id), []).append(session)
     _audit(
         request,
         workspace_id=workspace_id,
@@ -1475,7 +1578,11 @@ async def replay_scene(
         user_sub=caller_sub,
     )
     scene = next(
-        (item for item in _bucket(request, "scenes").get(str(workspace_id), []) if item["id"] == scene_id),
+        (
+            item
+            for item in _bucket(request, "scenes").get(str(workspace_id), [])
+            if item["id"] == scene_id
+        ),
         None,
     )
     if scene is None:
@@ -1500,9 +1607,7 @@ async def import_tool_from_text(
     body: ToolImportBody,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(
-        request, agent_id=agent_id, caller_sub=caller_sub
-    )
+    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
     lowered = body.source.lower()
     name = "imported_tool"
     if "stripe" in lowered:
@@ -1552,7 +1657,12 @@ async def semantic_diff(
         summaries.append("You added a refusal boundary for medical advice.")
     if not summaries:
         summaries.append("The behavior changed; review eval deltas before promotion.")
-    return {"items": [{"summary": summary, "evidence_ref": f"semantic-diff/{agent_id}/{index}"} for index, summary in enumerate(summaries)]}
+    return {
+        "items": [
+            {"summary": summary, "evidence_ref": f"semantic-diff/{agent_id}/{index}"}
+            for index, summary in enumerate(summaries)
+        ]
+    }
 
 
 class StyleTransferBody(BaseModel):
@@ -1594,9 +1704,7 @@ async def regression_bisect(
     body: BisectBody,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(
-        request, agent_id=agent_id, caller_sub=caller_sub
-    )
+    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
     versions = await request.app.state.cp.agent_versions.list_for_agent(
         workspace_id=workspace_id,
         agent_id=agent_id,

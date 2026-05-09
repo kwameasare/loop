@@ -18,6 +18,7 @@
 
 import { Auth0Provider, type AppState } from "@auth0/auth0-react";
 import type { ReactNode } from "react";
+import { AuthModeProvider } from "@/lib/auth-mode";
 
 export interface AuthProviderProps {
   children: ReactNode;
@@ -64,32 +65,36 @@ export function AuthProvider({ children, config, envName }: AuthProviderProps) {
       throw new Error("Auth0 config required in production");
     }
     // Allow the studio to render without Auth0 wired (tests, preview).
-    return <>{children}</>;
+    return (
+      <AuthModeProvider auth0Configured={false}>{children}</AuthModeProvider>
+    );
   }
   return (
-    <Auth0Provider
-      domain={domain}
-      clientId={clientId}
-      // PKCE is the default for SPAs in @auth0/auth0-react v2; we make
-      // the intent explicit here so reviewers don't have to guess.
-      authorizationParams={{
-        redirect_uri: redirectUri,
-        audience,
-        scope: "openid profile email offline_access",
-      }}
-      useRefreshTokens
-      cacheLocation="memory"
-      // S151: route the user back to ``appState.returnTo`` (set by
-      // /login) after the post-callback round-trip.
-      onRedirectCallback={(appState?: AppState) => {
-        if (typeof window === "undefined") return;
-        const target = appState?.returnTo;
-        if (typeof target === "string" && target.startsWith("/")) {
-          window.history.replaceState({}, document.title, target);
-        }
-      }}
-    >
-      {children}
-    </Auth0Provider>
+    <AuthModeProvider auth0Configured={true}>
+      <Auth0Provider
+        domain={domain}
+        clientId={clientId}
+        // PKCE is the default for SPAs in @auth0/auth0-react v2; we make
+        // the intent explicit here so reviewers don't have to guess.
+        authorizationParams={{
+          redirect_uri: redirectUri,
+          audience,
+          scope: "openid profile email offline_access",
+        }}
+        useRefreshTokens
+        cacheLocation="memory"
+        // S151: route the user back to ``appState.returnTo`` (set by
+        // /login) after the post-callback round-trip.
+        onRedirectCallback={(appState?: AppState) => {
+          if (typeof window === "undefined") return;
+          const target = appState?.returnTo;
+          if (typeof target === "string" && target.startsWith("/")) {
+            window.history.replaceState({}, document.title, target);
+          }
+        }}
+      >
+        {children}
+      </Auth0Provider>
+    </AuthModeProvider>
   );
 }

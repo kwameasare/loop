@@ -50,6 +50,7 @@ function buildCsp() {
     `connect-src ${connectSrc}`,
     scriptSrc,
     "style-src 'self' 'unsafe-inline'",
+    "worker-src 'self' blob:",
     "object-src 'none'",
     "form-action 'self'",
   ].join("; ");

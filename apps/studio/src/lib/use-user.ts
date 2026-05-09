@@ -19,6 +19,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
+import { useAuth0Configured } from "@/lib/auth-mode";
 import { readSessionToken } from "@/lib/cp-auth-exchange";
 
 export interface User {
@@ -32,13 +33,6 @@ export interface UseUserResult {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-}
-
-function isAuth0Configured(): boolean {
-  return (
-    typeof process !== "undefined" &&
-    Boolean(process.env.NEXT_PUBLIC_AUTH0_DOMAIN)
-  );
 }
 
 /** Same key used by ``cp-auth-exchange.ts``. Exported as a constant
@@ -97,25 +91,22 @@ function localUserFromSession(): User | null {
 }
 
 function useLocalSession(): UseUserResult {
-  // Synchronous initial state: on the client, read sessionStorage
-  // during first render so we never report ``isLoading: true`` past
-  // the initial mount. The previous version used an
-  // ``hydrated``-flag + ``useEffect`` dance, but under React Strict
-  // Mode (Next.js dev double-render) the effect race meant the
-  // "Checking session…" placeholder could stick around. This shape
-  // matches what ``cp-auth-exchange`` already does in
-  // ``readSessionToken`` (returns null on the server, real value on
-  // the client) so SSR gets ``user: null`` and the client mount
-  // immediately re-renders with the real value.
-  const [user, setUser] = useState<User | null>(() => localUserFromSession());
+  // Keep the first client render aligned with SSR. Reading
+  // sessionStorage before hydration makes protected routes swap from
+  // "Checking session…" on the server to authenticated content on the
+  // client and trips a root hydration error. The effect below is still
+  // deterministic: it synchronously reads the stored cp-api session on
+  // mount, then listens for cross-tab updates.
+  const [state, setState] = useState<{
+    hydrated: boolean;
+    user: User | null;
+  }>({ hydrated: false, user: null });
 
   useEffect(() => {
-    // Re-read on mount in case the client-only sessionStorage read
-    // returned different data than the SSR hydration assumed.
-    setUser(localUserFromSession());
+    setState({ hydrated: true, user: localUserFromSession() });
     function onStorage(event: StorageEvent) {
       if (event.key !== SESSION_STORAGE_KEY) return;
-      setUser(localUserFromSession());
+      setState({ hydrated: true, user: localUserFromSession() });
     }
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -123,15 +114,11 @@ function useLocalSession(): UseUserResult {
 
   return useMemo<UseUserResult>(
     () => ({
-      user,
-      isAuthenticated: Boolean(user),
-      // No "loading" state for the local path — sessionStorage is
-      // synchronous. RequireAuth either redirects to /login (no
-      // session) or renders children (session present), no
-      // intermediate "checking" placeholder.
-      isLoading: false,
+      user: state.user,
+      isAuthenticated: Boolean(state.user),
+      isLoading: !state.hydrated,
     }),
-    [user],
+    [state],
   );
 }
 
@@ -158,7 +145,11 @@ export function useUser(): UseUserResult {
   // Hooks must run unconditionally — call both, return one. The
   // unused branch is cheap (just reads from useAuth0's context or a
   // single useEffect on mount).
+  const auth0Configured = useAuth0Configured();
   const auth0 = useAuth0Session();
   const local = useLocalSession();
-  return isAuth0Configured() ? auth0 : local;
+  if (!auth0Configured) return local;
+  if (auth0.isAuthenticated) return auth0;
+  if (local.isAuthenticated) return local;
+  return auth0;
 }
