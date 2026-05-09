@@ -20,15 +20,25 @@ vi.mock("next/link", () => ({
 }));
 
 describe("MigrationRunsPanel", () => {
-  it("creates a durable Botpress import run and exposes parity/cutover controls", async () => {
+  it("creates a durable migration import run and exposes parity/cutover controls", async () => {
     const onCreated = vi.fn();
     render(<MigrationRunsPanel workspaceId="ws_local" onCreated={onCreated} />);
 
     await screen.findByText(/No migration run yet/i);
+    fireEvent.change(screen.getByTestId("migration-source-select"), {
+      target: { value: "rasa" },
+    });
+    expect(screen.getByTestId("migration-source-profile")).toHaveTextContent(
+      "Domain, NLU, stories",
+    );
+    expect(screen.getByTestId("migration-archive-input")).toHaveValue(
+      "rasa-project.zip",
+    );
     fireEvent.click(screen.getByTestId("migration-create-import"));
 
     await screen.findByTestId("migration-run-summary");
     expect(onCreated).toHaveBeenCalledTimes(1);
+    expect(onCreated.mock.calls[0]?.[0]).toMatchObject({ source: "rasa" });
     expect(screen.getByTestId("migration-run-summary").textContent).toContain(
       "Acme Imported Concierge",
     );

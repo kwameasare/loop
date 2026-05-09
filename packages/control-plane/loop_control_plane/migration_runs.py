@@ -10,6 +10,15 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane.workspaces import WorkspaceError
 
+MigrationSource = Literal[
+    "botpress",
+    "dialogflow_cx",
+    "rasa",
+    "zendesk",
+    "intercom",
+    "custom_files",
+    "conversation_transcripts",
+]
 MigrationRunStatus = Literal[
     "imported",
     "mapped",
@@ -25,7 +34,7 @@ CutoverStageStatus = Literal["pending", "in_progress", "passed", "halted"]
 class MigrationImportCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    source: str = Field(default="botpress", min_length=1, max_length=80)
+    source: MigrationSource = "botpress"
     archive_name: str = Field(default="botpress-export.bpz", min_length=1, max_length=240)
     archive_sha: str = Field(default="", max_length=128)
     target_agent_name: str = Field(default="Imported Support Agent", min_length=1, max_length=64)
@@ -109,7 +118,8 @@ class MigrationRunRecord(BaseModel):
 
     id: str
     workspace_id: UUID
-    source: str
+    source: MigrationSource
+    source_profile: dict[str, Any]
     archive_name: str
     archive_sha: str
     target_agent_id: UUID
@@ -180,6 +190,7 @@ class MigrationRunRegistry:
                 id=f"mig_{uuid4().hex[:12]}",
                 workspace_id=workspace_id,
                 source=body.source,
+                source_profile=_source_profile(body.source),
                 archive_name=body.archive_name,
                 archive_sha=_archive_sha(body, workspace_id),
                 target_agent_id=target_agent_id,
@@ -319,26 +330,207 @@ def _archive_sha(body: MigrationImportCreate, workspace_id: UUID) -> str:
     return f"sha256:{workspace_id.hex:0<64}"[:71]
 
 
+def _source_profile(source: MigrationSource) -> dict[str, Any]:
+    profiles: dict[MigrationSource, dict[str, Any]] = {
+        "botpress": {
+            "label": "Botpress .bpz",
+            "accepted_inputs": ["Botpress .bpz export"],
+            "primary_artifacts": [
+                "intents",
+                "workflows",
+                "nodes",
+                "knowledge_sources",
+                "integrations",
+                "channels",
+                "transcripts",
+            ],
+            "verification": "public_export_format",
+        },
+        "dialogflow_cx": {
+            "label": "Dialogflow CX export",
+            "accepted_inputs": ["CX agent export zip", "flows/pages JSON"],
+            "primary_artifacts": [
+                "flows",
+                "pages",
+                "intents",
+                "entities",
+                "fulfillment",
+                "webhooks",
+                "transcripts",
+            ],
+            "verification": "public_export_format",
+        },
+        "rasa": {
+            "label": "Rasa project/YAML",
+            "accepted_inputs": [
+                "Rasa project zip",
+                "domain.yml",
+                "nlu.yml",
+                "stories.yml",
+                "rules.yml",
+            ],
+            "primary_artifacts": [
+                "intents",
+                "entities",
+                "stories",
+                "rules",
+                "actions",
+                "forms",
+                "transcripts",
+            ],
+            "verification": "public_project_files",
+        },
+        "zendesk": {
+            "label": "Zendesk exports",
+            "accepted_inputs": [
+                "Automations/macros JSON",
+                "Help Center export",
+                "conversation CSV",
+            ],
+            "primary_artifacts": [
+                "macros",
+                "triggers",
+                "help_center_articles",
+                "integrations",
+                "channels",
+                "transcripts",
+            ],
+            "verification": "export_and_api_shapes",
+        },
+        "intercom": {
+            "label": "Intercom content/conversations",
+            "accepted_inputs": ["Article export", "conversation export", "Fin handoff transcript"],
+            "primary_artifacts": [
+                "articles",
+                "workflows",
+                "handoff_rules",
+                "integrations",
+                "channels",
+                "transcripts",
+            ],
+            "verification": "export_and_api_shapes",
+        },
+        "custom_files": {
+            "label": "Custom JSON/YAML/CSV",
+            "accepted_inputs": ["JSON", "YAML", "CSV", "OpenAPI", "transcripts"],
+            "primary_artifacts": [
+                "custom_objects",
+                "policies",
+                "integrations",
+                "tables",
+                "channels",
+                "transcripts",
+            ],
+            "verification": "schema_inferred",
+        },
+        "conversation_transcripts": {
+            "label": "Conversation transcripts only",
+            "accepted_inputs": ["CSV", "JSONL", "chat transcripts"],
+            "primary_artifacts": [
+                "transcripts",
+                "conversation_clusters",
+                "failure_examples",
+                "candidate_eval_cases",
+                "channels",
+            ],
+            "verification": "behavior_inferred_from_transcripts",
+        },
+    }
+    return profiles[source]
+
+
+def _default_inventory_for(source: MigrationSource) -> dict[str, int]:
+    return {
+        "botpress": {
+            "intents": 42,
+            "workflows": 19,
+            "nodes": 88,
+            "knowledge_sources": 13,
+            "integrations": 4,
+            "channels": 3,
+        },
+        "dialogflow_cx": {
+            "flows": 8,
+            "pages": 47,
+            "intents": 31,
+            "entities": 12,
+            "fulfillment": 5,
+            "webhooks": 3,
+        },
+        "rasa": {
+            "intents": 38,
+            "entities": 10,
+            "stories": 24,
+            "rules": 18,
+            "actions": 6,
+            "forms": 5,
+        },
+        "zendesk": {
+            "macros": 35,
+            "triggers": 14,
+            "help_center_articles": 120,
+            "integrations": 3,
+            "channels": 4,
+        },
+        "intercom": {
+            "articles": 90,
+            "workflows": 12,
+            "handoff_rules": 9,
+            "integrations": 4,
+            "channels": 3,
+        },
+        "custom_files": {
+            "custom_objects": 20,
+            "policies": 8,
+            "integrations": 2,
+            "tables": 4,
+            "channels": 1,
+        },
+        "conversation_transcripts": {
+            "conversation_clusters": 12,
+            "failure_examples": 8,
+            "candidate_eval_cases": 20,
+            "channels": 1,
+        },
+    }[source]
+
+
 def _inventory_from_body(
     body: MigrationImportCreate,
     *,
     workspace_id: UUID,
 ) -> list[MigrationInventoryItem]:
     counts = {
-        "intents": 42,
-        "workflows": 19,
-        "nodes": 88,
-        "knowledge_sources": 13,
-        "integrations": 4,
+        **_default_inventory_for(body.source),
         "channels": max(1, len(body.channels)),
         "transcripts": body.transcript_count,
         **body.inventory,
     }
     targets = {
+        "actions": "tool contracts",
+        "articles": "knowledge sources",
+        "candidate_eval_cases": "eval cases",
+        "conversation_clusters": "capabilities + eval scenarios",
+        "custom_objects": "mapping review queue",
+        "entities": "slot/entity extraction",
+        "failure_examples": "regression eval cases",
+        "flows": "behavior policies + page routes",
+        "forms": "data collection rules",
+        "fulfillment": "tool contracts + sandbox mocks",
+        "handoff_rules": "escalation policy",
+        "help_center_articles": "knowledge sources",
         "intents": "capabilities",
+        "macros": "behavior snippets + evals",
         "workflows": "behavior policies + eval scenarios",
         "nodes": "behavior routines",
         "knowledge_sources": "knowledge sources",
+        "pages": "behavior policies + page routes",
+        "policies": "behavior policies",
+        "rules": "behavior constraints",
+        "stories": "conversation routines + evals",
+        "tables": "reference data",
+        "triggers": "routing rules + escalations",
+        "webhooks": "tool contracts",
         "integrations": "tool contracts",
         "channels": "channel bindings",
         "transcripts": "parity eval suite",
@@ -349,10 +541,29 @@ def _inventory_from_body(
             continue
         severity: MigrationInventorySeverity = "ok"
         confidence = 92
-        if kind in {"integrations", "custom_hooks", "unsupported_nodes"}:
+        if kind in {
+            "actions",
+            "fulfillment",
+            "integrations",
+            "custom_hooks",
+            "unsupported_nodes",
+            "webhooks",
+        }:
             severity = "blocking"
             confidence = 58
-        elif kind in {"workflows", "nodes", "channels"}:
+        elif kind in {
+            "channels",
+            "conversation_clusters",
+            "custom_objects",
+            "flows",
+            "forms",
+            "nodes",
+            "pages",
+            "rules",
+            "stories",
+            "triggers",
+            "workflows",
+        }:
             severity = "advisory"
             confidence = 76
         target = targets.get(kind, "review queue")
@@ -470,7 +681,7 @@ def _cutover_stages(readiness: MigrationReadinessRecord) -> list[MigrationCutove
     ]
 
 
-def _rollback_triggers(workspace_id: UUID, source: str) -> list[dict[str, Any]]:
+def _rollback_triggers(workspace_id: UUID, source: MigrationSource) -> list[dict[str, Any]]:
     base = f"audit/migration/{workspace_id}/{source}/rollback"
     return [
         {
