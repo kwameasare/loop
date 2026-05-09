@@ -34,6 +34,7 @@ export interface EstateHealthSummary {
   audit_events: number;
   open_incidents: number;
   blocked_deploys: number;
+  owner_risks: number;
 }
 
 export interface EstateSharedDependency {
@@ -83,6 +84,18 @@ export interface EstateBackgroundJob {
   evidence_ref: string;
 }
 
+export interface EstateOwnerRisk {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  severity: "critical" | "watch" | string;
+  owner_user_id: string;
+  backup_owner_user_id: string;
+  detail: string;
+  href: string;
+  evidence_ref: string;
+}
+
 export interface EstateHealth {
   workspace_id: string | null;
   generated_at: string;
@@ -93,6 +106,7 @@ export interface EstateHealth {
   shared_dependencies: EstateSharedDependency[];
   channel_health: EstateChannelHealth[];
   failure_clusters: EstateFailureCluster[];
+  owner_risks: EstateOwnerRisk[];
   background_jobs: EstateBackgroundJob[];
   next_actions: EstateAttentionItem[];
   degraded_reason?: string | undefined;
@@ -114,6 +128,7 @@ const EMPTY_SUMMARY: EstateHealthSummary = {
   audit_events: 0,
   open_incidents: 0,
   blocked_deploys: 0,
+  owner_risks: 0,
 };
 
 function nowIso(): string {
@@ -171,6 +186,7 @@ export function deriveEstateHealthFromAgents(
     shared_dependencies: [],
     channel_health: [],
     failure_clusters: [],
+    owner_risks: [],
     background_jobs: [],
     next_actions: attention.slice(0, 5),
     degraded_reason: options.degradedReason,
