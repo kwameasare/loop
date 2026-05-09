@@ -48,6 +48,7 @@ from loop_control_plane.mcp_marketplace import (
     MarketplacePublisher,
     TrustedPublisherVerifier,
 )
+from loop_control_plane.memory_policies import MemoryPolicyRegistry
 from loop_control_plane.saml import SamlValidator, StubSamlValidator
 from loop_control_plane.secrets import InMemorySecretsBackend, SecretsBackend
 from loop_control_plane.tool_contracts import ToolContractRegistry
@@ -221,6 +222,9 @@ class CpApiState:
         self.channel_bindings = ChannelBindingRegistry()
         # Agent-flow implementation: tools require durable safety contracts.
         self.tool_contracts = ToolContractRegistry()
+        # Agent-flow implementation: durable memory policies govern every
+        # persistent memory write before activation.
+        self.memory_policies = MemoryPolicyRegistry()
         # Agent-flow implementation: rollout state creates deployed evidence packs.
         self.deployments = DeploymentRegistry()
         # Agent-flow implementation: incidents link deploy events, traces, and evals.

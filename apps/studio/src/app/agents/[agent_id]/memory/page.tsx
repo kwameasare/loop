@@ -10,6 +10,7 @@ import {
   type MemoryStudioData,
   type MemoryStudioEntry,
 } from "@/lib/memory-studio";
+import { approveMemoryPolicy } from "@/lib/memory-policies";
 import { useUser } from "@/lib/use-user";
 
 interface AgentMemoryPageProps {
@@ -62,7 +63,10 @@ function AgentMemoryPageBody({ agentId }: { agentId: string }): JSX.Element {
   }
   if (!data) {
     return (
-      <p className="p-6 text-sm text-muted-foreground" data-testid="memory-loading">
+      <p
+        className="p-6 text-sm text-muted-foreground"
+        data-testid="memory-loading"
+      >
         Loading memory…
       </p>
     );
@@ -73,6 +77,7 @@ function AgentMemoryPageBody({ agentId }: { agentId: string }): JSX.Element {
       onDeleteEntry={(entry: MemoryStudioEntry) =>
         deleteMemoryStudioEntry(agentId, entry, user.sub)
       }
+      onApprovePolicy={(scope) => approveMemoryPolicy(agentId, scope)}
     />
   );
 }
