@@ -1,5 +1,6 @@
 import { WebChannelCard } from "@/components/agents/web-channel-card";
 import { ChannelBindingsPanel } from "@/components/channels/channel-bindings-panel";
+import { ChannelPreviewMatrix } from "@/components/channels/channel-preview-matrix";
 import { ChannelTypeGrid } from "@/components/channels/channel-type-grid";
 import {
   buildLocalChannelBindings,
@@ -56,6 +57,7 @@ export default async function AgentChannelsPage({
         agentId={params.agent_id}
         initialBindings={bindings}
       />
+      <ChannelPreviewMatrix agentId={params.agent_id} bindings={bindings} />
       <section className="rounded-md border bg-card p-4">
         <div className="mb-3">
           <h3 className="text-sm font-semibold">Web chat embed</h3>

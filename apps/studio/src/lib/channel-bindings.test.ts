@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   buildLocalChannelBindings,
+  buildLocalPreviewMatrix,
+  createChannelPreviewEvalCase,
   listChannelBindings,
+  previewChannelMatrix,
   upsertChannelBinding,
 } from "./channel-bindings";
 
@@ -67,5 +70,86 @@ describe("channel-bindings client", () => {
       channel_type: "whatsapp",
       provider: "Meta Cloud API",
     });
+  });
+
+  it("builds a local channel preview matrix with formatting failures", () => {
+    const bindings = buildLocalChannelBindings("agt_1").map((binding) =>
+      binding.channel_type === "sms"
+        ? { ...binding, status: "draft" as const }
+        : binding,
+    );
+    const matrix = buildLocalPreviewMatrix(
+      "agt_1",
+      {
+        scenario_title: "Duplicate charge",
+        user_message: "I was charged twice.",
+        expected_outcome:
+          "Acknowledge the duplicate charge, verify the account, explain the refund path, mention the SLA, explain escalation, and include opt-out language for short-message channels.",
+        channel_types: ["sms"],
+      },
+      bindings,
+    );
+
+    expect(matrix.rows).toHaveLength(1);
+    expect(matrix.rows[0]?.channel_type).toBe("sms");
+    expect(matrix.rows[0]?.formatting_failures[0]?.id).toBe("sms_too_long");
+  });
+
+  it("previews a channel matrix and saves a formatting failure through cp-api", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+      const url = String(input);
+      if (url.endsWith("/eval-cases")) {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            suite_id: "suite_1",
+            case_id: "case_1",
+            case: {},
+          }),
+          { status: 201, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response(
+        JSON.stringify(
+          buildLocalPreviewMatrix("agt_1", {
+            scenario_title: "Duplicate charge",
+            user_message: "I was charged twice.",
+            expected_outcome: "Verify the charge and explain the refund path.",
+            channel_types: ["whatsapp"],
+          }),
+        ),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    });
+
+    const matrix = await previewChannelMatrix(
+      "agt_1",
+      {
+        scenario_title: "Duplicate charge",
+        user_message: "I was charged twice.",
+        expected_outcome: "Verify the charge and explain the refund path.",
+        channel_types: ["whatsapp"],
+      },
+      { baseUrl: "https://cp.test", fetcher },
+    );
+    const saved = await createChannelPreviewEvalCase(
+      "agt_1",
+      {
+        ...matrix.rows[0]!.eval_case_seed,
+        failure_reason: "WhatsApp template is missing.",
+      },
+      { baseUrl: "https://cp.test", fetcher },
+    );
+
+    expect(matrix.summary.channels).toBeGreaterThan(0);
+    expect(saved.case_id).toBe("case_1");
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agt_1/channel-bindings/preview-matrix",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agt_1/channel-bindings/preview-matrix/eval-cases",
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 });
