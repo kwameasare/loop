@@ -178,6 +178,56 @@ def test_compliance_review_aggregates_reviewer_surfaces(
     assert body["channel_readiness"][0]["blocking_checks"]
     assert body["incidents"][0]["trigger"] == "Refund quote regressed in WhatsApp canary."
     assert body["industry_probe_libraries"][0]["id"] == "regulated-support"
+    assert body["industry_probe_libraries"][0]["case_count"] == 3
+
+
+def test_compliance_probe_library_attaches_required_eval_suite(
+    client: TestClient,
+    workspace_id: UUID,
+    agent_id: UUID,
+) -> None:
+    _seed_compliance_inputs(client, workspace_id=workspace_id, agent_id=agent_id)
+
+    response = client.post(
+        f"/v1/workspaces/{workspace_id}/compliance-review/probe-libraries/regulated-support/attach",
+        headers=_auth(),
+        json={},
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["status"] == "attached"
+    assert body["suite_count"] == 1
+    assert body["case_count"] == 3
+    attached = body["attached_agents"][0]
+    assert attached["agent_id"] == str(agent_id)
+    assert attached["suite"]["name"] == "Regulated support probes: refund-agent"
+    assert {case["source"] for case in attached["cases_added"]} == {"industry_probe_suite"}
+
+    suites = client.get(
+        f"/v1/workspaces/{workspace_id}/eval-suites",
+        headers=_auth(),
+    )
+    assert suites.status_code == 200, suites.text
+    suite_id = attached["suite"]["id"]
+    assert suite_id in {item["id"] for item in suites.json()["items"]}
+
+    cases = client.get(f"/v1/eval-suites/{suite_id}/cases", headers=_auth())
+    assert cases.status_code == 200, cases.text
+    assert len(cases.json()["items"]) == 3
+
+    repeated = client.post(
+        f"/v1/workspaces/{workspace_id}/compliance-review/probe-libraries/regulated-support/attach",
+        headers=_auth(),
+        json={},
+    )
+    assert repeated.status_code == 201, repeated.text
+    assert repeated.json()["case_count"] == 0
+    assert repeated.json()["attached_agents"][0]["cases_existing"] == 3
+
+    audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=_auth())
+    assert audit.status_code == 200, audit.text
+    assert "compliance:probe_suite_attach" in {item["action"] for item in audit.json()["items"]}
 
 
 def test_compliance_evidence_export_is_audited(
