@@ -6,6 +6,9 @@ from fastapi import FastAPI
 
 from loop_control_plane._app_common import domain_error, package_version
 from loop_control_plane._app_state import CpApiState
+from loop_control_plane._routes_adversarial_catches import (
+    router as adversarial_catches_router,
+)
 from loop_control_plane._routes_agent_commitments import router as agent_commitments_router
 from loop_control_plane._routes_agent_conductor import router as agent_conductor_router
 from loop_control_plane._routes_agent_handoff import router as agent_handoff_router
@@ -129,6 +132,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         agent_intake_router,
         # Agent-flow implementation: first proof ratings become evals and behavior notes.
         simulator_feedback_router,
+        # Agent-flow implementation: adversarial catches ask calm rule questions.
+        adversarial_catches_router,
         # Agent-flow implementation: time-boxed approval corridors are explicit.
         preapproved_classes_router,
         # Agent-flow implementation: preflight Change Package contract.
