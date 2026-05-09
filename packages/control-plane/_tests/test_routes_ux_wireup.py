@@ -334,6 +334,159 @@ def test_agent_commitment_contract_can_be_drafted_accepted_and_versioned(
     }
 
 
+def test_branch_change_set_and_release_candidate_state_machine(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    branch = client.post(
+        f"/v1/agents/{agent_id}/branches",
+        headers=_auth(),
+        json={"name": "refund-policy-fix", "base_version_id": "v12"},
+    )
+    assert branch.status_code == 201, branch.text
+    branch_body = branch.json()
+    assert branch_body["status"] == "active"
+    assert branch_body["base_version_id"] == "v12"
+
+    change_set = client.post(
+        f"/v1/agents/{agent_id}/change-sets",
+        headers=_auth(),
+        json={
+            "branch_id": branch_body["id"],
+            "name": "Use current refund policy",
+            "summary": "Fix archived policy citation on cancellation requests.",
+            "source_type": "failed_eval",
+            "source_refs": ["eval/refund/current-policy"],
+            "changed_objects": [
+                {
+                    "type": "behavior",
+                    "id": "behavior.refund_policy",
+                    "summary": "Cite May 2026 policy before refund window.",
+                }
+            ],
+        },
+    )
+    assert change_set.status_code == 201, change_set.text
+    cs_body = change_set.json()
+    assert cs_body["status"] == "draft"
+    assert cs_body["source_refs"] == ["eval/refund/current-policy"]
+
+    premature = client.post(
+        f"/v1/agents/{agent_id}/change-sets/{cs_body['id']}/release-candidates",
+        headers=_auth(),
+        json={"required_eval_suites": ["refund-core"], "required_approvals": ["owner"]},
+    )
+    assert premature.status_code == 400, premature.text
+
+    ready_for_tests = client.post(
+        f"/v1/agents/{agent_id}/change-sets/{cs_body['id']}/ready-for-tests",
+        headers=_auth(),
+    )
+    assert ready_for_tests.status_code == 200, ready_for_tests.text
+    assert ready_for_tests.json()["status"] == "ready_for_tests"
+
+    failed_tests = client.post(
+        f"/v1/agents/{agent_id}/change-sets/{cs_body['id']}/ready-for-review",
+        headers=_auth(),
+        json={
+            "eval_results_ref": "eval/run/refund-core/red",
+            "required_eval_suites": ["refund-core"],
+            "passed": False,
+        },
+    )
+    assert failed_tests.status_code == 400, failed_tests.text
+
+    ready_for_review = client.post(
+        f"/v1/agents/{agent_id}/change-sets/{cs_body['id']}/ready-for-review",
+        headers=_auth(),
+        json={
+            "eval_results_ref": "eval/run/refund-core/green",
+            "required_eval_suites": ["refund-core"],
+            "passed": True,
+        },
+    )
+    assert ready_for_review.status_code == 200, ready_for_review.text
+    assert ready_for_review.json()["status"] == "ready_for_review"
+
+    rc = client.post(
+        f"/v1/agents/{agent_id}/change-sets/{cs_body['id']}/release-candidates",
+        headers=_auth(),
+        json={"required_eval_suites": ["refund-core"], "required_approvals": ["owner"]},
+    )
+    assert rc.status_code == 201, rc.text
+    rc_body = rc.json()
+    assert rc_body["status"] == "ready_for_approval"
+    assert rc_body["change_set_id"] == cs_body["id"]
+    assert rc_body["candidate_version_id"]
+    assert rc_body["readiness"][0]["status"] == "passed"
+
+    blocked = client.post(
+        f"/v1/agents/{agent_id}/release-candidates/{rc_body['id']}/gate",
+        headers=_auth(),
+        json={
+            "gate_id": "eval:refund-core",
+            "status": "failed",
+            "evidence_ref": "eval/run/refund-core/regressed",
+            "message": "Refund current-policy eval regressed.",
+        },
+    )
+    assert blocked.status_code == 200, blocked.text
+    assert blocked.json()["status"] == "blocked"
+
+    blocked_approval = client.post(
+        f"/v1/agents/{agent_id}/release-candidates/{rc_body['id']}/approve",
+        headers=_auth(),
+        json={"approval_id": "owner", "comment": "Reviewed."},
+    )
+    assert blocked_approval.status_code == 400, blocked_approval.text
+
+    unblocked = client.post(
+        f"/v1/agents/{agent_id}/release-candidates/{rc_body['id']}/gate",
+        headers=_auth(),
+        json={
+            "gate_id": "eval:refund-core",
+            "status": "passed",
+            "evidence_ref": "eval/run/refund-core/green",
+            "message": "Required eval suite passed.",
+        },
+    )
+    assert unblocked.status_code == 200, unblocked.text
+    assert unblocked.json()["status"] == "ready_for_approval"
+
+    approved = client.post(
+        f"/v1/agents/{agent_id}/release-candidates/{rc_body['id']}/approve",
+        headers=_auth(),
+        json={"approval_id": "owner", "comment": "Reviewed Change Package input."},
+    )
+    assert approved.status_code == 200, approved.text
+    assert approved.json()["status"] == "deployable"
+
+    workflow = client.get(f"/v1/agents/{agent_id}/workflow", headers=_auth())
+    assert workflow.status_code == 200, workflow.text
+    assert workflow.json()["branches"][0]["id"] == branch_body["id"]
+    assert workflow.json()["change_sets"][0]["status"] == "converted_to_release_candidate"
+    assert workflow.json()["release_candidates"][0]["id"] == rc_body["id"]
+
+    versions = client.get(f"/v1/agents/{agent_id}/versions", headers=_auth())
+    assert versions.status_code == 200, versions.text
+    version_spec = versions.json()["items"][0]["spec"]
+    assert version_spec["branch_id"] == branch_body["id"]
+    assert version_spec["change_set_id"] == cs_body["id"]
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "agent_workflow:branch_create",
+        "agent_workflow:change_set_create",
+        "agent_workflow:change_set_ready_for_tests",
+        "agent_workflow:change_set_ready_for_review",
+        "agent_workflow:release_candidate_create",
+        "agent_workflow:release_candidate_gate",
+        "agent_workflow:release_candidate_approve",
+    }
+
+
 def test_change_package_preflight_links_commitment_evidence_and_stales_on_change(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:

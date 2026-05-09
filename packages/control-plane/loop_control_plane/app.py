@@ -13,6 +13,7 @@ from loop_control_plane._routes_agent_tools import router as agent_tools_router
 from loop_control_plane._routes_agent_versions import (
     router as agent_versions_router,
 )
+from loop_control_plane._routes_agent_workflow import router as agent_workflow_router
 from loop_control_plane._routes_agents import router as agents_router
 from loop_control_plane._routes_api_keys import router as api_keys_router
 from loop_control_plane._routes_audit import router as audit_router
@@ -107,6 +108,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         traces_router,
         # P0.4: agent version create/list/promote.
         agent_versions_router,
+        # Agent-flow implementation: branch -> change set -> release candidate.
+        agent_workflow_router,
         # Agent-flow implementation: versioned Commitment Document contract.
         agent_commitments_router,
         # Agent-flow implementation: preflight Change Package contract.
