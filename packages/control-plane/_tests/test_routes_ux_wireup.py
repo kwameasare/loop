@@ -709,6 +709,68 @@ def test_channel_bindings_are_peer_agent_objects_with_readiness(
     }
 
 
+def test_channel_preview_matrix_and_formatting_eval_case(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    for channel_type, provider in [
+        ("whatsapp", "Meta Cloud API"),
+        ("sms", "Twilio SMS"),
+        ("email", "Loop Mail Router"),
+    ]:
+        created = client.post(
+            f"/v1/agents/{agent_id}/channel-bindings",
+            headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+            json={
+                "channel_type": channel_type,
+                "provider": provider,
+                "display_name": f"Acme {channel_type}",
+                "identity_config": {"owner": "support"},
+                "auth_config_ref": f"secret://channels/{channel_type}/acme",
+            },
+        )
+        assert created.status_code == 201, created.text
+
+    matrix = client.post(
+        f"/v1/agents/{agent_id}/channel-bindings/preview-matrix",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "scenario_title": "Duplicate charge",
+            "user_message": "I was charged twice for my renewal.",
+            "expected_outcome": (
+                "Acknowledge the duplicate charge, verify the account, explain the "
+                "refund path, mention the SLA, explain escalation, and include "
+                "opt-out language for short-message channels."
+            ),
+            "channel_types": ["whatsapp", "sms", "email"],
+        },
+    )
+    assert matrix.status_code == 200, matrix.text
+    body = matrix.json()
+    assert body["summary"]["channels"] == 3
+    rows = {row["channel_type"]: row for row in body["rows"]}
+    assert rows["whatsapp"]["rendered_preview"].startswith("Acknowledge")
+    assert rows["email"]["rendered_preview"].startswith("Subject: Duplicate charge")
+    sms_length_failure = next(
+        failure for failure in rows["sms"]["formatting_failures"] if failure["id"] == "sms_too_long"
+    )
+
+    seed = rows["sms"]["eval_case_seed"]
+    saved = client.post(
+        f"/v1/agents/{agent_id}/channel-bindings/preview-matrix/eval-cases",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={**seed, "failure_reason": sms_length_failure["message"]},
+    )
+    assert saved.status_code == 201, saved.text
+    assert saved.json()["case"]["source"] == "channel-preview-matrix"
+    assert saved.json()["case"]["input"]["channel_type"] == "sms"
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert "channel_binding:preview_eval_case" in {event["action"] for event in audit}
+
+
 def test_tool_contracts_default_sandbox_promote_live_and_invalidate_on_change(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:

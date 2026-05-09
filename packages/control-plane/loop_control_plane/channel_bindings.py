@@ -65,6 +65,36 @@ class ChannelReadinessUpdate(BaseModel):
     message: str = Field(default="", max_length=500)
 
 
+class ChannelPreviewMatrixRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    scenario_title: str = Field(default="Duplicate charge", min_length=1, max_length=180)
+    user_message: str = Field(
+        default="I was charged twice for my renewal. What happens now?",
+        min_length=1,
+        max_length=1000,
+    )
+    expected_outcome: str = Field(
+        default="Acknowledge the duplicate charge, verify the account, explain the refund path, and offer escalation.",
+        min_length=1,
+        max_length=2000,
+    )
+    channel_types: list[ChannelType] = Field(default_factory=list, max_length=9)
+
+
+class ChannelPreviewEvalCaseCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    scenario_title: str = Field(min_length=1, max_length=180)
+    channel_type: ChannelType
+    binding_id: str = Field(min_length=1, max_length=120)
+    user_message: str = Field(min_length=1, max_length=1000)
+    rendered_preview: str = Field(min_length=1, max_length=4000)
+    expected_outcome: str = Field(min_length=1, max_length=2000)
+    failure_reason: str = Field(min_length=1, max_length=1000)
+    source_ref: str = Field(default="channel-preview-matrix", max_length=512)
+
+
 class ChannelBindingRecord(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 

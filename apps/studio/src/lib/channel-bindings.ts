@@ -56,6 +56,65 @@ export interface ChannelBindingListResponse {
   items: ChannelBinding[];
 }
 
+export interface ChannelPreviewFailure {
+  id: string;
+  severity: "blocker" | "warning";
+  message: string;
+  expected_outcome: string;
+}
+
+export interface ChannelPreviewEvalCaseSeed {
+  scenario_title: string;
+  channel_type: ChannelBindingType;
+  binding_id: string;
+  user_message: string;
+  rendered_preview: string;
+  expected_outcome: string;
+  failure_reason: string;
+  source_ref: string;
+}
+
+export interface ChannelPreviewRow {
+  binding_id: string;
+  channel_type: ChannelBindingType;
+  display_name: string;
+  provider: string;
+  binding_status: ChannelBindingStatus;
+  readiness_state: "not_configured" | "needs_readiness" | "blocked" | "ready";
+  rendered_preview: string;
+  adaptation_notes: string[];
+  constraints: string[];
+  formatting_failures: ChannelPreviewFailure[];
+  eval_case_seed: ChannelPreviewEvalCaseSeed;
+}
+
+export interface ChannelPreviewMatrixRequest {
+  scenario_title: string;
+  user_message: string;
+  expected_outcome: string;
+  channel_types: ChannelBindingType[];
+}
+
+export interface ChannelPreviewMatrixResponse {
+  agent_id: string;
+  scenario_title: string;
+  user_message: string;
+  expected_outcome: string;
+  rows: ChannelPreviewRow[];
+  summary: {
+    channels: number;
+    formatting_failures: number;
+    ready_channels: number;
+  };
+}
+
+export interface ChannelPreviewEvalCaseResponse {
+  ok: boolean;
+  suite_id: string;
+  case_id: string;
+  case: Record<string, unknown>;
+}
+
 export interface ChannelBindingInput {
   channel_type: ChannelBindingType;
   provider?: string;
@@ -182,6 +241,126 @@ export function buildLocalChannelBindings(agentId: string): ChannelBinding[] {
   }));
 }
 
+function previewText(
+  channelType: ChannelBindingType,
+  scenarioTitle: string,
+  userMessage: string,
+  expectedOutcome: string,
+) {
+  const compact =
+    expectedOutcome.length > 140
+      ? `${expectedOutcome.slice(0, 139).trim()}...`
+      : expectedOutcome;
+  if (channelType === "email") {
+    return `Subject: ${scenarioTitle}\n\n${expectedOutcome}\n\nOriginal message: ${userMessage}`;
+  }
+  if (channelType === "voice") {
+    return `Spoken answer: ${compact} Then ask one confirmation question.`;
+  }
+  if (channelType === "sms") {
+    return expectedOutcome.length > 180
+      ? `${expectedOutcome.slice(0, 179).trim()}...`
+      : expectedOutcome;
+  }
+  if (channelType === "webhook_api") {
+    return JSON.stringify(
+      { scenario: scenarioTitle, message: userMessage, expected: compact },
+      null,
+      2,
+    );
+  }
+  return `${compact}\n\nChannel controls preserve the same agent behavior.`;
+}
+
+function localReadinessState(
+  binding: ChannelBinding,
+): ChannelPreviewRow["readiness_state"] {
+  if (binding.status === "not_configured") return "not_configured";
+  const required = binding.readiness.filter(
+    (check) => check.status !== "not_required",
+  );
+  if (required.some((check) => check.status === "failed")) return "blocked";
+  if (required.every((check) => check.status === "passed")) return "ready";
+  return "needs_readiness";
+}
+
+export function buildLocalPreviewMatrix(
+  agentId: string,
+  input: ChannelPreviewMatrixRequest,
+  bindings = buildLocalChannelBindings(agentId),
+): ChannelPreviewMatrixResponse {
+  const selected = new Set(input.channel_types);
+  const rows = bindings
+    .filter(
+      (binding) => selected.size === 0 || selected.has(binding.channel_type),
+    )
+    .map((binding) => {
+      const rendered = previewText(
+        binding.channel_type,
+        input.scenario_title,
+        input.user_message,
+        input.expected_outcome,
+      );
+      const failures: ChannelPreviewFailure[] = [];
+      if (binding.status === "not_configured") {
+        failures.push({
+          id: `${binding.channel_type}_not_configured`,
+          severity: "blocker",
+          message: `${binding.display_name} is not configured.`,
+          expected_outcome: "Configure the channel binding before rollout.",
+        });
+      }
+      if (binding.channel_type === "sms" && rendered.length > 160) {
+        failures.push({
+          id: "sms_too_long",
+          severity: "warning",
+          message: "SMS preview exceeds 160 characters.",
+          expected_outcome: input.expected_outcome.slice(0, 140),
+        });
+      }
+      return {
+        binding_id: binding.id,
+        channel_type: binding.channel_type,
+        display_name: binding.display_name,
+        provider: binding.provider,
+        binding_status: binding.status,
+        readiness_state: localReadinessState(binding),
+        rendered_preview: rendered,
+        adaptation_notes: [
+          `Adapted for ${channelLabel(binding.channel_type)}.`,
+        ],
+        constraints: binding.readiness.slice(0, 3).map((check) => check.label),
+        formatting_failures: failures,
+        eval_case_seed: {
+          scenario_title: input.scenario_title,
+          channel_type: binding.channel_type,
+          binding_id: binding.id,
+          user_message: input.user_message,
+          rendered_preview: rendered,
+          expected_outcome: input.expected_outcome,
+          failure_reason: failures[0]?.message ?? "",
+          source_ref: `channel-preview/${binding.id}/${input.scenario_title}`,
+        },
+      } satisfies ChannelPreviewRow;
+    });
+  return {
+    agent_id: agentId,
+    scenario_title: input.scenario_title,
+    user_message: input.user_message,
+    expected_outcome: input.expected_outcome,
+    rows,
+    summary: {
+      channels: rows.length,
+      formatting_failures: rows.reduce(
+        (count, row) => count + row.formatting_failures.length,
+        0,
+      ),
+      ready_channels: rows.filter((row) => row.readiness_state === "ready")
+        .length,
+    },
+  };
+}
+
 export async function listChannelBindings(
   agentId: string,
   opts: UxWireupClientOptions = {},
@@ -215,6 +394,46 @@ export async function upsertChannelBinding(
         display_name: input.display_name ?? channelLabel(input.channel_type),
         status: input.status ?? "draft",
         updated_at: new Date().toISOString(),
+      },
+    },
+  );
+}
+
+export async function previewChannelMatrix(
+  agentId: string,
+  input: ChannelPreviewMatrixRequest,
+  opts: UxWireupClientOptions = {},
+): Promise<ChannelPreviewMatrixResponse> {
+  return cpJson<ChannelPreviewMatrixResponse>(
+    `/agents/${encodeURIComponent(agentId)}/channel-bindings/preview-matrix`,
+    {
+      ...opts,
+      method: "POST",
+      body: input,
+      fallback: buildLocalPreviewMatrix(agentId, input),
+    },
+  );
+}
+
+export async function createChannelPreviewEvalCase(
+  agentId: string,
+  input: ChannelPreviewEvalCaseSeed,
+  opts: UxWireupClientOptions = {},
+): Promise<ChannelPreviewEvalCaseResponse> {
+  return cpJson<ChannelPreviewEvalCaseResponse>(
+    `/agents/${encodeURIComponent(agentId)}/channel-bindings/preview-matrix/eval-cases`,
+    {
+      ...opts,
+      method: "POST",
+      body: input,
+      fallback: {
+        ok: true,
+        suite_id: "local_channel_formatting_failures",
+        case_id: `local_${input.channel_type}_${input.binding_id}`,
+        case: {
+          source: "channel-preview-matrix",
+          source_ref: input.source_ref,
+        },
       },
     },
   );
