@@ -117,3 +117,88 @@ def test_migration_parity_requires_workspace_membership(
     )
 
     assert response.status_code in (401, 403)
+
+
+def test_botpress_import_creates_durable_lineage_and_cutover_state(
+    client: TestClient,
+) -> None:
+    workspace_id = _workspace(client)
+    headers = {"authorization": _bearer_for("owner-1")}
+
+    created = client.post(
+        f"/v1/workspaces/{workspace_id}/migrations/imports",
+        headers=headers,
+        json={
+            "source": "botpress",
+            "archive_name": "acme-refunds.bpz",
+            "archive_sha": "sha256:" + ("c" * 64),
+            "target_agent_name": "Acme Imported Concierge",
+            "business_responsibility": "Preserve refund support behavior.",
+            "channels": ["web_chat", "whatsapp"],
+            "inventory": {"integrations": 0, "unsupported_nodes": 0},
+            "transcript_count": 20,
+        },
+    )
+
+    assert created.status_code == 201, created.text
+    run = created.json()
+    assert run["source"] == "botpress"
+    assert run["target_agent_id"]
+    assert run["target_branch_id"].startswith("br_")
+    assert run["target_change_set_id"].startswith("cs_")
+    assert run["commitment_document_id"].startswith("commit_")
+    assert run["readiness"]["parity_total"] == 20
+    assert run["cutover_stages"][0]["status"] == "in_progress"
+
+    agents = client.get(
+        "/v1/agents",
+        headers={**headers, "x-loop-workspace-id": str(workspace_id)},
+    ).json()["items"]
+    assert any(agent["id"] == run["target_agent_id"] for agent in agents)
+
+    workflow = client.get(
+        f"/v1/agents/{run['target_agent_id']}/workflow",
+        headers=headers,
+    ).json()
+    assert workflow["branches"][0]["id"] == run["target_branch_id"]
+    assert workflow["change_sets"][0]["id"] == run["target_change_set_id"]
+
+    parity = client.get(
+        f"/v1/workspaces/{workspace_id}/migration/parity",
+        headers=headers,
+        params={"migration_id": run["id"]},
+    )
+    assert parity.status_code == 200, parity.text
+    parity_body = parity.json()
+    assert parity_body["migrationRun"]["id"] == run["id"]
+    assert parity_body["lineage"]["archive"] == "acme-refunds.bpz"
+    assert parity_body["lineage"]["steps"][3]["id"] == "branch"
+    assert any(diff["sourcePath"] == "botpress.intents" for diff in parity_body["diffs"])
+
+    advanced = client.post(
+        f"/v1/workspaces/{workspace_id}/migrations/imports/{run['id']}/cutover/advance",
+        headers=headers,
+        json={"stage_id": "canary_1pct", "evidence_ref": "audit/canary/green"},
+    )
+
+    assert advanced.status_code == 200, advanced.text
+    advanced_body = advanced.json()
+    assert advanced_body["status"] == "cutover_active"
+    assert advanced_body["cutover_stages"][0]["status"] == "passed"
+    assert advanced_body["cutover_stages"][1]["status"] == "in_progress"
+
+    rolled_back = client.post(
+        f"/v1/workspaces/{workspace_id}/migrations/imports/{run['id']}/cutover/rollback",
+        headers=headers,
+        json={"trigger_id": "manual", "reason": "operator test"},
+    )
+
+    assert rolled_back.status_code == 200, rolled_back.text
+    assert rolled_back.json()["status"] == "rolled_back"
+    actions = [
+        event.action
+        for event in client.app.state.cp.audit_events.list_for_workspace(workspace_id)  # type: ignore[attr-defined]
+    ]
+    assert "migration:import_create" in actions
+    assert "migration:cutover_advance" in actions
+    assert "migration:cutover_rollback" in actions

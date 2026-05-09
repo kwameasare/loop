@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
-import { MigrationScreen } from "@/components/migration";
+import { MigrationRunsPanel, MigrationScreen } from "@/components/migration";
 import {
   fetchMigrationParityWorkspace,
   type MigrationParityWorkspace,
@@ -28,14 +28,17 @@ export default function MigratePage() {
 function readinessFromParity(
   workspace: MigrationParityWorkspace,
 ): MigrationReadiness {
-  const okSteps = workspace.lineage.steps.filter((step) => step.status === "ok");
+  const okSteps = workspace.lineage.steps.filter(
+    (step) => step.status === "ok",
+  );
   return {
     overallScore: workspace.readiness.overallScore,
     cleanlyImported: okSteps.length,
     needsReview:
       workspace.readiness.blockingCount + workspace.readiness.advisoryCount,
     secretsToReconnect: workspace.repairs.length,
-    unsupported: workspace.diffs.filter((diff) => diff.severity !== "ok").length,
+    unsupported: workspace.diffs.filter((diff) => diff.severity !== "ok")
+      .length,
     parityPassing: workspace.readiness.parityPassing,
     parityTotal: workspace.readiness.parityTotal,
   };
@@ -59,14 +62,21 @@ function reviewItemFromDiff(diff: DiffEntry): ReviewItem {
     severity: severityForDiff(diff),
     sourceSummary: diff.sourcePath,
     loopSummary: diff.targetPath,
-    confidence: diff.severity === "blocking" ? 58 : diff.severity === "advisory" ? 76 : 92,
+    confidence:
+      diff.severity === "blocking"
+        ? 58
+        : diff.severity === "advisory"
+          ? 76
+          : 92,
     evidence: `${diff.summary} · ${diff.evidenceRef}`,
   };
 }
 
 function MigratePageBody() {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
-  const [workspace, setWorkspace] = useState<MigrationParityWorkspace | null>(null);
+  const [workspace, setWorkspace] = useState<MigrationParityWorkspace | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -80,7 +90,9 @@ function MigratePageBody() {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Could not load migration");
+        setError(
+          err instanceof Error ? err.message : "Could not load migration",
+        );
       });
     return () => {
       cancelled = true;
@@ -116,7 +128,20 @@ function MigratePageBody() {
           {error}
         </p>
       ) : null}
-      <MigrationScreen readiness={readiness} reviewItems={reviewItems} />
+      <MigrationScreen
+        readiness={readiness}
+        reviewItems={reviewItems}
+        migrationRunsSlot={
+          <MigrationRunsPanel
+            workspaceId={active.id}
+            onCreated={(run) => {
+              void fetchMigrationParityWorkspace(active.id, {
+                migrationId: run.id,
+              }).then(setWorkspace);
+            }}
+          />
+        }
+      />
     </>
   );
 }

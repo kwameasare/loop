@@ -17,8 +17,10 @@ import type {
   RepairSuggestion,
   RollbackTrigger,
 } from "./migration-parity";
+import type { MigrationRun } from "./migration-runs";
 
 export interface MigrationParityWorkspace {
+  migrationRun?: MigrationRun;
   lineage: ImportLineage;
   readiness: ParityReadiness;
   diffs: readonly DiffEntry[];
@@ -32,6 +34,7 @@ export interface MigrationParityClientOptions {
   token?: string;
   baseUrl?: string;
   source?: "botpress";
+  migrationId?: string;
 }
 
 function cpApiBaseUrl(override?: string): string {
@@ -40,7 +43,9 @@ function cpApiBaseUrl(override?: string): string {
     process.env.LOOP_CP_API_BASE_URL ??
     process.env.NEXT_PUBLIC_LOOP_API_URL;
   if (!raw) {
-    throw new Error("LOOP_CP_API_BASE_URL is required for migration parity calls");
+    throw new Error(
+      "LOOP_CP_API_BASE_URL is required for migration parity calls",
+    );
   }
   const trimmed = raw.replace(/\/$/, "");
   return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
@@ -80,6 +85,7 @@ export async function fetchMigrationParityWorkspace(
   const params = new URLSearchParams({
     source: opts.source ?? "botpress",
   });
+  if (opts.migrationId) params.set("migration_id", opts.migrationId);
   const response = await (opts.fetcher ?? fetch)(
     `${base}/workspaces/${encodeURIComponent(
       workspaceId,
