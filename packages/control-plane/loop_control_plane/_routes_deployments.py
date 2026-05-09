@@ -14,6 +14,7 @@ from loop_control_plane.deployments import (
     deployment_payload,
     evidence_pack_payload,
 )
+from loop_control_plane.trace_search import TraceQuery
 from loop_control_plane.workspaces import WorkspaceError
 
 router = APIRouter(prefix="/v1/agents", tags=["Deployments"])
@@ -166,6 +167,10 @@ async def _deployment_action(
     )
     if action == "rollback":
         details = body or DeploymentActionBody()
+        traces = await request.app.state.cp.trace_search.run(
+            TraceQuery(workspace_id=workspace_id, agent_id=agent.id, page_size=25)
+        )
+        affected_trace_ids = [trace.trace_id for trace in traces.items]
         incident = await request.app.state.cp.incidents.create_for_rollback(
             agent=agent,
             deployment_id=deployment.id,
@@ -174,6 +179,7 @@ async def _deployment_action(
             mode=details.mode,
             trigger=details.trigger,
             reason=details.reason,
+            affected_trace_ids=affected_trace_ids,
         )
         record_audit_event(
             workspace_id=workspace_id,
@@ -189,6 +195,7 @@ async def _deployment_action(
                 "agent_id": str(agent_id),
                 "deployment_id": deployment.id,
                 "rollback_action_ref": incident.rollback_action_ref,
+                "affected_trace_count": len(affected_trace_ids),
                 "trigger": incident.trigger,
             },
         )

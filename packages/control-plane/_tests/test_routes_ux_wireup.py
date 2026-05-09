@@ -1026,7 +1026,8 @@ def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:
     live = _start_live_deployment(client, workspace_id, agent_id)
-    _add_trace(client, workspace_id, agent_id, "5" * 32)
+    trace_id = "5" * 32
+    _add_trace(client, workspace_id, agent_id, trace_id)
 
     rolled_back = client.post(
         f"/v1/agents/{agent_id}/deployments/{live['id']}/rollback",
@@ -1049,8 +1050,12 @@ def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
     assert incident["status"] == "contained"
     assert incident["deployment_id"] == live["id"]
     assert incident["rollback_action_ref"] == f"deployment/{live['id']}/rollback"
+    assert incident["affected_trace_ids"] == [trace_id]
+    assert incident["affected_conversation_count"] == 1
     assert incident["report"]["suspected_cause"].startswith("Tool schema")
+    assert incident["report"]["candidate_regression_tests"] == [trace_id]
     assert incident["report"]["rollback_status"] == "executed"
+    assert "affected_traces_collected" in {event["kind"] for event in incident["timeline"]}
 
     seeded = client.post(
         f"/v1/agents/{agent_id}/incidents/{incident['id']}/eval-cases",
@@ -1061,6 +1066,7 @@ def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
     assert seeded.json()["suite_id"]
     assert seeded.json()["case_ids"]
     assert seeded.json()["incident"]["candidate_eval_suite_id"] == seeded.json()["suite_id"]
+    assert len(seeded.json()["case_ids"]) == 1
 
     workspace_incidents = client.get(
         f"/v1/workspaces/{workspace_id}/incidents",
@@ -1078,6 +1084,13 @@ def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
         "incident:create_auto_rollback",
         "incident:eval_cases_seeded",
     }
+    rollback_incident_audit = next(
+        event for event in audit if event["action"] == "incident:create_auto_rollback"
+    )
+    payload = client.app.state.cp.audit_events.fetch_payload(  # type: ignore[attr-defined]
+        rollback_incident_audit["payload_hash"]
+    )
+    assert payload["affected_trace_count"] == 1
 
 
 def test_comment_resolution_can_create_eval_case(
