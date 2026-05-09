@@ -416,6 +416,49 @@ export function ChangePackagePanel({
         </article>
       </div>
 
+      <article
+        className="rounded-md border bg-background p-4"
+        data-testid="change-package-preapprovals"
+      >
+        <h3 className="text-sm font-semibold">Pre-approved class usage</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          These are time-boxed approval corridors, not hidden bypasses. Excluded
+          tool, memory, channel, budget, or PII changes must still request
+          review.
+        </p>
+        {changePackage.pre_approved_classes.length ? (
+          <ul className="mt-3 grid gap-2 text-sm md:grid-cols-2">
+            {changePackage.pre_approved_classes.map((item) => (
+              <li key={item.id} className="rounded-md border bg-card p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <code className="text-xs">{item.id}</code>
+                  <span className="rounded-md border px-2 py-0.5 text-xs text-muted-foreground">
+                    {item.status}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Allowed: {item.allowed_change_types.join(", ")}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Excluded: {item.excluded_change_types.join(", ") || "none"}
+                </p>
+                <p className="mt-1 text-xs">
+                  Matched: {item.matched_change_types?.join(", ") || "n/a"} ·
+                  risk {item.matched_risk ?? item.risk_ceiling}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Expires {item.expires_at}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 text-sm text-muted-foreground">
+            No pre-approved class covered this package.
+          </p>
+        )}
+      </article>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <article className="rounded-md border bg-background p-4">
           <h3 className="text-sm font-semibold">Semantic diff</h3>

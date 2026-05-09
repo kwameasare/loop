@@ -25,6 +25,7 @@ describe("change package client", () => {
     expect(local.status).toBe("draft");
     expect(local.summary).toMatch(/No preflight Change Package/);
     expect(local.content_hash).toBe("unconfigured");
+    expect(local.pre_approved_classes).toEqual([]);
   });
 
   it("fetches the current change package", async () => {

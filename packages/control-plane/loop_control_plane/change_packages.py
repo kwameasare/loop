@@ -68,6 +68,7 @@ class ChangePackageRecord(BaseModel):
     memory_changes: list[dict[str, Any]]
     knowledge_changes: list[dict[str, Any]]
     required_approvals: list[dict[str, Any]]
+    pre_approved_classes: list[dict[str, Any]]
     approval_status: str
     rollback_target_version_id: str
     evidence_pack_id: str
@@ -105,26 +106,63 @@ def _default_semantic_diff(body: ChangePackageGenerate) -> list[dict[str, Any]]:
 def _required_approvals(
     commitment: CommitmentDocumentRecord,
     body: ChangePackageGenerate,
+    pre_approved_classes: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     high_risk = body.target_environment == "production" or commitment.status != "accepted"
+    covered = bool(pre_approved_classes) and commitment.status == "accepted"
+    preapproval_reason = (
+        f"Covered by pre-approved class {pre_approved_classes[0]['id']}." if covered else ""
+    )
     return [
         {
             "id": "owner",
             "role": "Agent owner",
             "required": True,
-            "satisfied": False,
-            "state": "requested",
-            "reason": f"Owner must approve Commitment v{commitment.version}.",
+            "satisfied": covered,
+            "state": "pre_approved" if covered else "requested",
+            "reason": preapproval_reason or f"Owner must approve Commitment v{commitment.version}.",
         },
         {
             "id": "compliance",
             "role": "Compliance reviewer",
-            "required": high_risk,
-            "satisfied": False,
-            "state": "requested" if high_risk else "not_required",
-            "reason": "Required for production or unaccepted commitment changes.",
+            "required": high_risk and not covered,
+            "satisfied": covered,
+            "state": "pre_approved" if covered else ("requested" if high_risk else "not_required"),
+            "reason": preapproval_reason
+            or "Required for production or unaccepted commitment changes.",
         },
     ]
+
+
+def infer_change_types(body: ChangePackageGenerate) -> list[str]:
+    change_types = {
+        str(row.get("dimension", "")).strip().lower()
+        for row in body.semantic_diff
+        if row.get("dimension")
+    }
+    if body.tool_changes:
+        change_types.add("tool")
+    if body.memory_changes:
+        change_types.add("memory")
+    if body.knowledge_changes:
+        change_types.add("knowledge")
+    if body.channel_readiness_summary:
+        change_types.add("channel")
+    if not change_types:
+        change_types.add("instruction")
+    return sorted(change_types)
+
+
+def infer_change_risk(body: ChangePackageGenerate) -> str:
+    if body.tool_changes or body.memory_changes:
+        return "high"
+    if body.target_environment == "production" and (
+        "pii" in body.risk_summary.lower() or "payment" in body.risk_summary.lower()
+    ):
+        return "high"
+    if body.target_environment == "production":
+        return "low"
+    return "low"
 
 
 def _approval_status(approvals: list[dict[str, Any]]) -> str:
@@ -171,6 +209,7 @@ def build_change_package(
     status: str,
     created_at: datetime,
     updated_at: datetime,
+    pre_approved_classes: list[dict[str, Any]] | None = None,
 ) -> ChangePackageRecord:
     semantic_diff = _default_semantic_diff(body)
     summary = body.summary or (
@@ -189,6 +228,7 @@ def build_change_package(
     channel_summary = body.channel_readiness_summary or (
         "At least one channel readiness check must pass before canary."
     )
+    preapprovals = pre_approved_classes or []
     evidence = {
         "commitment": commitment.id,
         "semantic_diff": "change_package.semantic_diff",
@@ -199,6 +239,7 @@ def build_change_package(
         "latency": "change_package.latency_summary",
         "channels": "change_package.channel_readiness_summary",
         "rollback": body.rollback_target_version_id,
+        "pre_approved_classes": ",".join(item["id"] for item in preapprovals),
     }
     claims = {
         "agent_id": str(agent.id),
@@ -218,7 +259,8 @@ def build_change_package(
         "tool_changes": body.tool_changes,
         "memory_changes": body.memory_changes,
         "knowledge_changes": body.knowledge_changes,
-        "required_approvals": _required_approvals(commitment, body),
+        "required_approvals": _required_approvals(commitment, body, preapprovals),
+        "pre_approved_classes": preapprovals,
         "rollback_target_version_id": body.rollback_target_version_id,
         "evidence": evidence,
     }
@@ -244,6 +286,7 @@ def build_change_package(
         memory_changes=body.memory_changes,
         knowledge_changes=body.knowledge_changes,
         required_approvals=claims["required_approvals"],
+        pre_approved_classes=preapprovals,
         approval_status=_approval_status(claims["required_approvals"]),
         rollback_target_version_id=body.rollback_target_version_id,
         evidence_pack_id=f"ep_{package_id.removeprefix('cp_')}",
@@ -279,6 +322,7 @@ class ChangePackageRegistry:
         agent: AgentRecord,
         commitment: CommitmentDocumentRecord,
         body: ChangePackageGenerate,
+        pre_approved_classes: list[dict[str, Any]] | None = None,
     ) -> ChangePackageRecord:
         async with self._lock:
             now = datetime.now(UTC)
@@ -291,6 +335,7 @@ class ChangePackageRegistry:
                 status="generated",
                 created_at=now,
                 updated_at=now,
+                pre_approved_classes=pre_approved_classes,
             )
             if existing_items:
                 latest = existing_items[-1]

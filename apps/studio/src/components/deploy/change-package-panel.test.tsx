@@ -64,6 +64,49 @@ describe("ChangePackagePanel", () => {
     expect(screen.getByTestId("change-package-evidence")).toHaveTextContent(
       "commit_1",
     );
+    expect(screen.getByTestId("change-package-preapprovals")).toHaveTextContent(
+      "No pre-approved class",
+    );
+  });
+
+  it("shows pre-approved class usage without hiding excluded boundaries", () => {
+    render(
+      <ChangePackagePanel
+        agentId="agt_1"
+        initialPackage={makePackage({
+          approval_status: "approved",
+          required_approvals: [
+            {
+              id: "owner",
+              role: "Agent owner",
+              required: true,
+              satisfied: true,
+              state: "pre_approved",
+              reason: "Covered by pre-approved class pac_123.",
+            },
+          ],
+          pre_approved_classes: [
+            {
+              id: "pac_123",
+              allowed_change_types: ["instruction"],
+              excluded_change_types: ["tool", "memory", "channel", "budget"],
+              risk_ceiling: "low",
+              expires_at: "2026-05-16T00:00:00Z",
+              status: "active",
+              matched_change_types: ["instruction"],
+              matched_risk: "low",
+            },
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.getByTestId("change-package-preapprovals")).toHaveTextContent(
+      "pac_123",
+    );
+    expect(screen.getByTestId("change-package-preapprovals")).toHaveTextContent(
+      "Excluded: tool, memory, channel, budget",
+    );
   });
 
   it("generates preflight from an empty package", async () => {

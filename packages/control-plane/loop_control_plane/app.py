@@ -58,6 +58,9 @@ from loop_control_plane._routes_migration_imports import (
 from loop_control_plane._routes_migration_parity import (
     router as migration_parity_router,
 )
+from loop_control_plane._routes_preapproved_classes import (
+    router as preapproved_classes_router,
+)
 from loop_control_plane._routes_secrets import router as secrets_router
 from loop_control_plane._routes_simulator_feedback import (
     router as simulator_feedback_router,
@@ -126,6 +129,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         agent_intake_router,
         # Agent-flow implementation: first proof ratings become evals and behavior notes.
         simulator_feedback_router,
+        # Agent-flow implementation: time-boxed approval corridors are explicit.
+        preapproved_classes_router,
         # Agent-flow implementation: preflight Change Package contract.
         change_packages_router,
         # Agent-flow implementation: omnichannel bindings are agent-scoped peers.

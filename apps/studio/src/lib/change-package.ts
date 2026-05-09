@@ -47,6 +47,23 @@ export interface ChangePackageApproval {
   invalidated_reason?: string;
 }
 
+export interface PreApprovedClassUse {
+  id: string;
+  workspace_id?: string;
+  agent_id?: string;
+  granted_by_user_id?: string;
+  granted_to_user_id?: string;
+  team_id?: string;
+  allowed_change_types: string[];
+  excluded_change_types: string[];
+  risk_ceiling: "low" | "medium" | "high";
+  expires_at: string;
+  status: string;
+  reason?: string;
+  matched_change_types?: string[];
+  matched_risk?: string;
+}
+
 export type ChangePackageApprovalDecision =
   | "approve"
   | "reject"
@@ -84,6 +101,7 @@ export interface ChangePackage {
   memory_changes: Array<Record<string, unknown>>;
   knowledge_changes: Array<Record<string, unknown>>;
   required_approvals: ChangePackageApproval[];
+  pre_approved_classes: PreApprovedClassUse[];
   approval_status: string;
   rollback_target_version_id: string;
   evidence_pack_id: string;
@@ -122,6 +140,7 @@ export function buildLocalChangePackage(agentId: string): ChangePackage {
     memory_changes: [],
     knowledge_changes: [],
     required_approvals: [],
+    pre_approved_classes: [],
     approval_status: "not_requested",
     rollback_target_version_id: "none",
     evidence_pack_id: "evidence_pack_unconfigured",
