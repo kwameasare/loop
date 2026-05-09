@@ -152,4 +152,14 @@ test("agent workbench keeps sections local and avoids fixture evidence", async (
   await expect(page.getByTestId("contract-missing-fields")).toContainText(
     "Business responsibility",
   );
+
+  await page.getByTestId("agent-tab-deploys").click();
+  await expect(page).toHaveURL(/\/agents\/agent-enterprise-support\/deploys$/);
+  await expect(page.getByTestId("change-package-panel")).toContainText(
+    "Change Package",
+  );
+  await expect(page.getByTestId("change-package-status")).toContainText(
+    "draft",
+  );
+  await expect(page.getByText("trace_refund_742")).toHaveCount(0);
 });

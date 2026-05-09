@@ -1,0 +1,279 @@
+from __future__ import annotations
+
+import asyncio
+import json
+from datetime import UTC, datetime
+from hashlib import sha256
+from typing import Any
+from uuid import UUID, uuid4
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from loop_control_plane._app_agents import AgentRecord
+from loop_control_plane.agent_commitments import CommitmentDocumentRecord
+from loop_control_plane.workspaces import WorkspaceError
+
+
+class ChangePackageGenerate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    branch_id: str = Field(default="main/draft", max_length=160)
+    change_set_id: str = Field(default="manual-change-set", max_length=160)
+    release_candidate_id: str = Field(default="rc-current", max_length=160)
+    from_version_id: str = Field(default="production", max_length=160)
+    to_version_id: str = Field(default="draft", max_length=160)
+    target_environment: str = Field(default="production", max_length=64)
+    summary: str = Field(default="", max_length=2000)
+    semantic_diff: list[dict[str, Any]] = Field(default_factory=list, max_length=50)
+    eval_results_ref: str = Field(default="evals/not-run", max_length=240)
+    replay_results_ref: str = Field(default="replay/not-run", max_length=240)
+    risk_summary: str = Field(default="", max_length=1200)
+    cost_summary: str = Field(default="", max_length=800)
+    latency_summary: str = Field(default="", max_length=800)
+    channel_readiness_summary: str = Field(default="", max_length=1200)
+    tool_changes: list[dict[str, Any]] = Field(default_factory=list, max_length=50)
+    memory_changes: list[dict[str, Any]] = Field(default_factory=list, max_length=50)
+    knowledge_changes: list[dict[str, Any]] = Field(default_factory=list, max_length=50)
+    rollback_target_version_id: str = Field(default="last-known-safe", max_length=160)
+
+
+class ChangePackageRecord(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    id: str
+    workspace_id: UUID
+    agent_id: UUID
+    branch_id: str
+    from_version_id: str
+    to_version_id: str
+    commitment_document_id: str
+    commitment_document_version: int
+    summary: str
+    semantic_diff: list[dict[str, Any]]
+    eval_results_ref: str
+    replay_results_ref: str
+    risk_summary: str
+    cost_summary: str
+    latency_summary: str
+    channel_readiness_summary: str
+    tool_changes: list[dict[str, Any]]
+    memory_changes: list[dict[str, Any]]
+    knowledge_changes: list[dict[str, Any]]
+    required_approvals: list[dict[str, Any]]
+    approval_status: str
+    rollback_target_version_id: str
+    evidence_pack_id: str
+    evidence: dict[str, str]
+    content_hash: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    submitted_at: datetime | None = None
+    stale_at: datetime | None = None
+
+
+def _hash_payload(payload: object) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+    return sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _default_semantic_diff(body: ChangePackageGenerate) -> list[dict[str, Any]]:
+    if body.semantic_diff:
+        return body.semantic_diff
+    return [
+        {
+            "dimension": "behavior",
+            "summary": "Draft behavior is ready for replay comparison.",
+            "evidence_ref": body.replay_results_ref,
+        },
+        {
+            "dimension": "channels",
+            "summary": "Channel readiness must be checked before canary.",
+            "evidence_ref": "channels/readiness",
+        },
+    ]
+
+
+def _required_approvals(
+    commitment: CommitmentDocumentRecord,
+    body: ChangePackageGenerate,
+) -> list[dict[str, Any]]:
+    high_risk = body.target_environment == "production" or commitment.status != "accepted"
+    return [
+        {
+            "id": "owner",
+            "role": "Agent owner",
+            "required": True,
+            "satisfied": False,
+            "reason": f"Owner must approve Commitment v{commitment.version}.",
+        },
+        {
+            "id": "compliance",
+            "role": "Compliance reviewer",
+            "required": high_risk,
+            "satisfied": False,
+            "reason": "Required for production or unaccepted commitment changes.",
+        },
+    ]
+
+
+def build_change_package(
+    *,
+    agent: AgentRecord,
+    commitment: CommitmentDocumentRecord,
+    body: ChangePackageGenerate,
+    package_id: str,
+    status: str,
+    created_at: datetime,
+    updated_at: datetime,
+) -> ChangePackageRecord:
+    semantic_diff = _default_semantic_diff(body)
+    summary = body.summary or (
+        f"Promotes {agent.name} from {body.from_version_id} to "
+        f"{body.to_version_id} for {body.target_environment}."
+    )
+    risk_summary = body.risk_summary or (
+        "Blocked until the Commitment Document is accepted."
+        if commitment.status != "accepted"
+        else "No unresolved commitment blocker detected."
+    )
+    cost_summary = body.cost_summary or "No cost increase claimed without usage evidence."
+    latency_summary = (
+        body.latency_summary or "No latency regression claimed without trace evidence."
+    )
+    channel_summary = body.channel_readiness_summary or (
+        "At least one channel readiness check must pass before canary."
+    )
+    evidence = {
+        "commitment": commitment.id,
+        "semantic_diff": "change_package.semantic_diff",
+        "eval_results": body.eval_results_ref,
+        "replay_results": body.replay_results_ref,
+        "risk": "change_package.risk_summary",
+        "cost": "change_package.cost_summary",
+        "latency": "change_package.latency_summary",
+        "channels": "change_package.channel_readiness_summary",
+        "rollback": body.rollback_target_version_id,
+    }
+    claims = {
+        "agent_id": str(agent.id),
+        "branch_id": body.branch_id,
+        "from_version_id": body.from_version_id,
+        "to_version_id": body.to_version_id,
+        "commitment_document_id": commitment.id,
+        "commitment_document_version": commitment.version,
+        "summary": summary,
+        "semantic_diff": semantic_diff,
+        "eval_results_ref": body.eval_results_ref,
+        "replay_results_ref": body.replay_results_ref,
+        "risk_summary": risk_summary,
+        "cost_summary": cost_summary,
+        "latency_summary": latency_summary,
+        "channel_readiness_summary": channel_summary,
+        "tool_changes": body.tool_changes,
+        "memory_changes": body.memory_changes,
+        "knowledge_changes": body.knowledge_changes,
+        "required_approvals": _required_approvals(commitment, body),
+        "rollback_target_version_id": body.rollback_target_version_id,
+        "evidence": evidence,
+    }
+    content_hash = _hash_payload(claims)
+    return ChangePackageRecord(
+        id=package_id,
+        workspace_id=agent.workspace_id,
+        agent_id=agent.id,
+        branch_id=body.branch_id,
+        from_version_id=body.from_version_id,
+        to_version_id=body.to_version_id,
+        commitment_document_id=commitment.id,
+        commitment_document_version=commitment.version,
+        summary=summary,
+        semantic_diff=semantic_diff,
+        eval_results_ref=body.eval_results_ref,
+        replay_results_ref=body.replay_results_ref,
+        risk_summary=risk_summary,
+        cost_summary=cost_summary,
+        latency_summary=latency_summary,
+        channel_readiness_summary=channel_summary,
+        tool_changes=body.tool_changes,
+        memory_changes=body.memory_changes,
+        knowledge_changes=body.knowledge_changes,
+        required_approvals=claims["required_approvals"],
+        approval_status="blocked"
+        if any(item["required"] for item in claims["required_approvals"])
+        else "not_required",
+        rollback_target_version_id=body.rollback_target_version_id,
+        evidence_pack_id=f"ep_{package_id.removeprefix('cp_')}",
+        evidence=evidence,
+        content_hash=content_hash,
+        status=status,
+        created_at=created_at,
+        updated_at=updated_at,
+    )
+
+
+def change_package_payload(record: ChangePackageRecord) -> dict[str, Any]:
+    return record.model_dump(mode="json")
+
+
+class ChangePackageRegistry:
+    def __init__(self) -> None:
+        self._items: dict[UUID, list[ChangePackageRecord]] = {}
+        self._lock = asyncio.Lock()
+
+    async def list_for_agent(self, *, agent: AgentRecord) -> list[ChangePackageRecord]:
+        async with self._lock:
+            return list(self._items.get(agent.id, []))
+
+    async def current(self, *, agent: AgentRecord) -> ChangePackageRecord | None:
+        async with self._lock:
+            items = self._items.get(agent.id, [])
+            return items[-1] if items else None
+
+    async def generate(
+        self,
+        *,
+        agent: AgentRecord,
+        commitment: CommitmentDocumentRecord,
+        body: ChangePackageGenerate,
+    ) -> ChangePackageRecord:
+        async with self._lock:
+            now = datetime.now(UTC)
+            existing_items = self._items.setdefault(agent.id, [])
+            candidate = build_change_package(
+                agent=agent,
+                commitment=commitment,
+                body=body,
+                package_id=f"cp_{uuid4().hex[:12]}",
+                status="generated",
+                created_at=now,
+                updated_at=now,
+            )
+            if existing_items:
+                latest = existing_items[-1]
+                if latest.content_hash == candidate.content_hash and latest.status != "stale":
+                    return latest
+                if latest.status in {"generated", "submitted", "approved", "deployable"}:
+                    existing_items[-1] = latest.model_copy(
+                        update={"status": "stale", "stale_at": now, "updated_at": now}
+                    )
+            existing_items.append(candidate)
+            return candidate
+
+    async def submit(self, *, agent: AgentRecord, package_id: str) -> ChangePackageRecord:
+        async with self._lock:
+            items = self._items.get(agent.id, [])
+            for index, item in enumerate(items):
+                if item.id != package_id:
+                    continue
+                if item.status != "generated":
+                    raise WorkspaceError(
+                        f"change package {package_id} cannot be submitted from {item.status}"
+                    )
+                now = datetime.now(UTC)
+                submitted = item.model_copy(
+                    update={"status": "submitted", "submitted_at": now, "updated_at": now}
+                )
+                items[index] = submitted
+                return submitted
+        raise WorkspaceError(f"unknown change package: {package_id}")

@@ -25,6 +25,7 @@ from loop_control_plane.auth_exchange import (
     RefreshTokenStore,
 )
 from loop_control_plane.budgets import BudgetService
+from loop_control_plane.change_packages import ChangePackageRegistry
 from loop_control_plane.conversations import ConversationService
 from loop_control_plane.data_deletion import (
     DataDeletionEmailNotifier,
@@ -75,9 +76,7 @@ def _default_audit_event_store() -> AuditEventStore:
         # give us a URL, the audit trail would silently fall back to
         # in-memory (and lose every event on pod restart). Refuse to
         # start instead.
-        raise RuntimeError(
-            "LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set"
-        )
+        raise RuntimeError("LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set")
     return PostgresAuditEventStore.from_url(db_url)
 
 
@@ -87,9 +86,7 @@ def _default_refresh_token_store() -> RefreshTokenStore:
         return InMemoryRefreshTokenStore()
     db_url = os.environ.get("LOOP_CP_DB_URL")
     if not db_url:
-        raise RuntimeError(
-            "LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set"
-        )
+        raise RuntimeError("LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set")
     return PostgresRefreshTokenStore.from_url(db_url)
 
 
@@ -107,9 +104,7 @@ def _default_workspace_service() -> WorkspaceService | PostgresWorkspaceService:
         return WorkspaceService()
     db_url = os.environ.get("LOOP_CP_DB_URL")
     if not db_url:
-        raise RuntimeError(
-            "LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set"
-        )
+        raise RuntimeError("LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set")
     return PostgresWorkspaceService.from_url(db_url)
 
 
@@ -119,9 +114,7 @@ def _default_agent_registry() -> AgentRegistry | PostgresAgentRegistry:
         return AgentRegistry()
     db_url = os.environ.get("LOOP_CP_DB_URL")
     if not db_url:
-        raise RuntimeError(
-            "LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set"
-        )
+        raise RuntimeError("LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set")
     return PostgresAgentRegistry.from_url(db_url)
 
 
@@ -131,9 +124,7 @@ def _default_api_key_service() -> ApiKeyService | PostgresApiKeyService:
         return ApiKeyService()
     db_url = os.environ.get("LOOP_CP_DB_URL")
     if not db_url:
-        raise RuntimeError(
-            "LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set"
-        )
+        raise RuntimeError("LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set")
     return PostgresApiKeyService.from_url(db_url)
 
 
@@ -163,20 +154,14 @@ class CpApiState:
         default_factory=_default_workspace_service
     )
     audit_events: AuditEventStore = field(default_factory=_default_audit_event_store)
-    agents: AgentRegistry | PostgresAgentRegistry = field(
-        default_factory=_default_agent_registry
-    )
+    agents: AgentRegistry | PostgresAgentRegistry = field(default_factory=_default_agent_registry)
     refresh_store: RefreshTokenStore = field(default_factory=_default_refresh_token_store)
     saml_validator: SamlValidator = field(default_factory=_default_saml_validator)
     # P0.8b: GDPR DSR (Data Subject Request) infra. Default impls are
     # in-memory + recording for dev/tests; production wires Postgres-
     # backed store + a real job queue + an email transport.
-    data_deletion_store: DataDeletionStore = field(
-        default_factory=InMemoryDataDeletionStore
-    )
-    data_deletion_queue: DataDeletionJobQueue = field(
-        default_factory=InMemoryDataDeletionJobQueue
-    )
+    data_deletion_store: DataDeletionStore = field(default_factory=InMemoryDataDeletionStore)
+    data_deletion_queue: DataDeletionJobQueue = field(default_factory=InMemoryDataDeletionJobQueue)
     data_deletion_notifier: DataDeletionEmailNotifier = field(
         default_factory=RecordingDataDeletionEmailNotifier
     )
@@ -191,9 +176,7 @@ class CpApiState:
     trace_store: TraceStore = field(default_factory=InMemoryTraceStore)
     usage_ledger: UsageLedger = field(default_factory=UsageLedger)
     # UX wire-up: Memory Studio reads the same memory store surface used by runtime.
-    user_memory_store: InMemoryUserMemoryStore = field(
-        default_factory=InMemoryUserMemoryStore
-    )
+    user_memory_store: InMemoryUserMemoryStore = field(default_factory=InMemoryUserMemoryStore)
     session_memory_store: InMemorySessionMemoryStore = field(
         default_factory=InMemorySessionMemoryStore
     )
@@ -210,9 +193,7 @@ class CpApiState:
     # P0.4 (eval suites + runs):
     eval_suites: EvalSuiteService = field(default_factory=EvalSuiteService)
     # UX wire-up: first-party MCP marketplace browse catalog.
-    marketplace_store: InMemoryMarketplaceStore = field(
-        default_factory=InMemoryMarketplaceStore
-    )
+    marketplace_store: InMemoryMarketplaceStore = field(default_factory=InMemoryMarketplaceStore)
     # Canonical UX punch-list wire-up state. These maps are intentionally
     # in-memory for dev/tests and mirror the route contract a persistent
     # implementation will back with workspace-scoped tables.
@@ -221,9 +202,7 @@ class CpApiState:
 
     def __post_init__(self) -> None:
         self.workspace_api = WorkspaceAPI(workspaces=self.workspaces)
-        self.api_key_api = ApiKeyAPI(
-            api_keys=self.api_keys, workspaces=self.workspaces
-        )
+        self.api_key_api = ApiKeyAPI(api_keys=self.api_keys, workspaces=self.workspaces)
         self.trace_search = TraceSearchService(self.trace_store)
         self.inbox_api = InboxAPI(queue=self.inbox_queue)
         # P0.4: agent versions service depends on AgentRegistry; built
@@ -232,6 +211,8 @@ class CpApiState:
         # Agent-flow implementation: every agent has a current versioned
         # Commitment Document before it can become a deployable commitment.
         self.agent_commitments = CommitmentRegistry()
+        # Agent-flow implementation: preflight produces immutable Change Packages.
+        self.change_packages = ChangePackageRegistry()
         if not self.marketplace_store.servers:
             publisher = MarketplacePublisher(
                 store=self.marketplace_store,
