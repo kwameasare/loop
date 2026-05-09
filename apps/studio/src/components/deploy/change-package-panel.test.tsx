@@ -120,4 +120,52 @@ describe("ChangePackagePanel", () => {
       "submitted",
     );
   });
+
+  it("records approval decisions against the package content hash", async () => {
+    const reviewed = makePackage({
+      status: "approved",
+      approval_status: "approved",
+      required_approvals: [
+        {
+          id: "owner",
+          role: "Agent owner",
+          required: true,
+          satisfied: true,
+          state: "approved",
+          reason: "Owner must approve Commitment v2.",
+          content_hash: "abcdef1234567890",
+        },
+      ],
+    });
+    const recordChangePackageApproval = vi.fn(async () => reviewed);
+    render(
+      <ChangePackagePanel
+        agentId="agt_1"
+        initialPackage={makePackage({ status: "submitted" })}
+        generateChangePackage={vi.fn()}
+        submitChangePackage={vi.fn()}
+        recordChangePackageApproval={recordChangePackageApproval}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("change-package-approve-owner"));
+
+    await waitFor(() => {
+      expect(recordChangePackageApproval).toHaveBeenCalledWith(
+        "agt_1",
+        "cp_1",
+        expect.objectContaining({
+          approval_id: "owner",
+          decision: "approve",
+        }),
+        expect.objectContaining({ content_hash: "abcdef1234567890" }),
+      );
+    });
+    expect(screen.getByTestId("change-package-status")).toHaveTextContent(
+      "approved",
+    );
+    expect(
+      screen.getByTestId("change-package-approval-owner"),
+    ).toHaveTextContent("hash abcdef123456");
+  });
 });
