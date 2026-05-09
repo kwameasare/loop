@@ -55,6 +55,7 @@ from loop_control_plane.memory_policies import MemoryPolicyRegistry
 from loop_control_plane.migration_runs import MigrationRunRegistry
 from loop_control_plane.saml import SamlValidator, StubSamlValidator
 from loop_control_plane.secrets import InMemorySecretsBackend, SecretsBackend
+from loop_control_plane.simulator_feedback import SimulatorFeedbackRegistry
 from loop_control_plane.tool_contracts import ToolContractRegistry
 from loop_control_plane.trace_search import (
     InMemoryTraceStore,
@@ -238,6 +239,8 @@ class CpApiState:
         self.incidents = IncidentRegistry()
         # Agent-flow implementation: ownership transfer and history walkthrough.
         self.agent_handoffs = AgentHandoffRegistry()
+        # Agent-flow implementation: first proof ratings become structured artifacts.
+        self.simulator_feedback = SimulatorFeedbackRegistry()
         # Agent-flow implementation: intake is a durable draft-generation object.
         self.agent_intakes = AgentIntakeRegistry()
         # Agent-flow implementation: migration import, parity, cutover, and

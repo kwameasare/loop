@@ -24,6 +24,12 @@ import {
   type SimulatorToolMode,
 } from "@/lib/emulator-lab";
 import type { TurnEvent } from "@/lib/sdk-types";
+import {
+  rateSimulatorTurn as defaultRateSimulatorTurn,
+  type FirstProofRating,
+  type SimulatorTurnRatingRecord,
+  type SimulatorTurnRatingInput,
+} from "@/lib/simulator-feedback";
 import { cn } from "@/lib/utils";
 
 export type SimulatorInvoke = (
@@ -62,6 +68,10 @@ export interface SimulatorLabProps {
   invoke: SimulatorInvoke;
   initialConfig?: SimulatorConfig;
   evidenceMode?: SimulatorEvidenceMode;
+  rateTurn?: (
+    agentId: string,
+    input: SimulatorTurnRatingInput,
+  ) => Promise<SimulatorTurnRatingRecord>;
 }
 
 const INITIAL_STATE: PanelState = {
@@ -185,12 +195,20 @@ export function SimulatorLab({
   invoke,
   initialConfig = DEFAULT_SIMULATOR_CONFIG,
   evidenceMode = "fixture",
+  rateTurn = defaultRateSimulatorTurn,
 }: SimulatorLabProps) {
   const [config, setConfig] = useState<SimulatorConfig>(initialConfig);
   const [prompt, setPrompt] = useState("");
   const [state, setState] = useState<PanelState>(INITIAL_STATE);
   const [running, setRunning] = useState(false);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [lastPrompt, setLastPrompt] = useState("");
+  const [issueAnnotation, setIssueAnnotation] = useState("");
+  const [saveAsEval, setSaveAsEval] = useState(true);
+  const [ratingSaving, setRatingSaving] = useState(false);
+  const [ratingResult, setRatingResult] =
+    useState<SimulatorTurnRatingRecord | null>(null);
+  const [ratingError, setRatingError] = useState<string | null>(null);
   const inputId = useId();
 
   const selectedChannel =
@@ -276,6 +294,10 @@ export function SimulatorLab({
     }
     setRunning(true);
     setState(INITIAL_STATE);
+    setLastPrompt(text);
+    setIssueAnnotation("");
+    setRatingResult(null);
+    setRatingError(null);
     appendTimeline(
       "Turn queued",
       `${selectedChannel.label} as ${run.personaLabel}`,
@@ -311,10 +333,50 @@ export function SimulatorLab({
   }
 
   function resetLab() {
-    setConfig(evidenceMode === "empty" ? EMPTY_SIMULATOR_CONFIG : initialConfig);
+    setConfig(
+      evidenceMode === "empty" ? EMPTY_SIMULATOR_CONFIG : initialConfig,
+    );
     setState(INITIAL_STATE);
     setPrompt("");
+    setLastPrompt("");
+    setIssueAnnotation("");
+    setRatingResult(null);
+    setRatingError(null);
     setTimeline([]);
+  }
+
+  async function submitRating(rating: FirstProofRating) {
+    if (!lastPrompt || ratingSaving) return;
+    setRatingSaving(true);
+    setRatingError(null);
+    try {
+      const result = await rateTurn(agentId, {
+        rating,
+        prompt: lastPrompt,
+        final_answer: state.finalAnswer ?? state.tokens ?? run.draftOutput,
+        channel: config.channel,
+        trace_id: run.traceId,
+        issue_annotation: issueAnnotation,
+        save_as_eval: saveAsEval,
+        cost_usd: run.costUsd,
+        latency_ms: run.latencyMs,
+      });
+      setRatingResult(result);
+      appendTimeline(
+        `Rated ${rating}`,
+        result.eval_case_ref
+          ? `Created eval case ${result.eval_case_ref.case_id}.`
+          : `Created ${result.candidate_artifact.kind}.`,
+      );
+    } catch (err) {
+      setRatingError(
+        err instanceof Error
+          ? err.message
+          : "Failed to save first-proof rating.",
+      );
+    } finally {
+      setRatingSaving(false);
+    }
   }
 
   return (
@@ -642,6 +704,98 @@ export function SimulatorLab({
             </p>
             <p className="whitespace-pre-wrap">{state.finalAnswer}</p>
           </div>
+        ) : null}
+
+        {lastPrompt ? (
+          <section
+            className="rounded-md border bg-background p-3"
+            data-testid="first-proof-rating"
+            aria-label="First proof turn rating"
+          >
+            <div className="flex flex-col gap-1">
+              <h3 className="text-sm font-semibold">
+                Convert this turn into structure
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Rate the turn. Good becomes preservation evidence; bad becomes a
+                regression candidate; risky becomes a rule; unclear becomes a
+                clarification note.
+              </p>
+            </div>
+            <label className="mt-3 flex flex-col gap-1 text-xs">
+              <span className="font-medium">Issue or expected behavior</span>
+              <textarea
+                value={issueAnnotation}
+                rows={3}
+                onChange={(event) => setIssueAnnotation(event.target.value)}
+                data-testid="first-proof-annotation"
+                placeholder="Example: should cite the refund policy and escalate exceptions."
+                className="rounded-md border bg-card px-2 py-1 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </label>
+            <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={saveAsEval}
+                onChange={(event) => setSaveAsEval(event.target.checked)}
+                data-testid="first-proof-save-eval"
+              />
+              Save the resulting artifact as an eval case
+            </label>
+            <div className="mt-3 grid gap-2 sm:grid-cols-4">
+              {(
+                [
+                  ["good", "Good"],
+                  ["bad", "Bad"],
+                  ["risky", "Risky"],
+                  ["unclear", "Unclear"],
+                ] as const
+              ).map(([rating, label]) => (
+                <button
+                  key={rating}
+                  type="button"
+                  disabled={ratingSaving}
+                  onClick={() => void submitRating(rating)}
+                  data-testid={`first-proof-rate-${rating}`}
+                  className="rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {ratingError ? (
+              <p
+                role="alert"
+                className="mt-3 text-xs text-destructive"
+                data-testid="first-proof-error"
+              >
+                {ratingError}
+              </p>
+            ) : null}
+            {ratingResult ? (
+              <div
+                className="mt-3 rounded-md border bg-muted/40 p-3 text-xs"
+                data-testid="first-proof-result"
+              >
+                <p className="font-semibold">
+                  {ratingResult.candidate_artifact.title}
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  {ratingResult.candidate_artifact.kind}
+                </p>
+                {ratingResult.eval_case_ref ? (
+                  <p className="mt-2">
+                    Eval case created:{" "}
+                    <code>{ratingResult.eval_case_ref.case_id}</code>
+                  </p>
+                ) : (
+                  <p className="mt-2">
+                    Saved as a candidate behavior artifact.
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </section>
         ) : null}
 
         <div className="grid min-w-0 gap-3" data-testid="sim-result-view">

@@ -1,0 +1,85 @@
+import { describe, expect, it, vi } from "vitest";
+
+import { rateSimulatorTurn } from "@/lib/simulator-feedback";
+
+describe("rateSimulatorTurn", () => {
+  it("posts first-proof turn feedback to cp-api", async () => {
+    const fetcher = vi.fn(
+      async (
+        _url: Parameters<typeof fetch>[0],
+        init?: Parameters<typeof fetch>[1],
+      ) => {
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          rating: "bad",
+          prompt: "Can I get a refund after deadline?",
+          save_as_eval: true,
+        });
+        return new Response(
+          JSON.stringify({
+            id: "simrate_1",
+            workspace_id: "ws_1",
+            agent_id: "agt_1",
+            rating: "bad",
+            prompt: "Can I get a refund after deadline?",
+            final_answer: "Yes.",
+            channel: "web",
+            trace_id: "trace_1",
+            issue_annotation: "Should escalate.",
+            candidate_artifact: {
+              kind: "regression_eval_candidate",
+              title: "Prevent this failure from recurring",
+              expected_outcome: "Should escalate.",
+              source: "first_proof",
+              trace_id: "trace_1",
+            },
+            eval_case_ref: {
+              suite_id: "suite_1",
+              case_id: "case_1",
+            },
+            cost_usd: 0.01,
+            latency_ms: 800,
+            created_by: "owner-1",
+            created_at: "2026-05-01T00:00:00Z",
+          }),
+          { status: 201 },
+        );
+      },
+    ) as unknown as typeof fetch;
+
+    const result = await rateSimulatorTurn(
+      "agt_1",
+      {
+        rating: "bad",
+        prompt: "Can I get a refund after deadline?",
+        final_answer: "Yes.",
+        channel: "web",
+        trace_id: "trace_1",
+        issue_annotation: "Should escalate.",
+        save_as_eval: true,
+        cost_usd: 0.01,
+        latency_ms: 800,
+      },
+      { baseUrl: "https://api.loop.test", fetcher },
+    );
+
+    expect(result.eval_case_ref?.case_id).toBe("case_1");
+  });
+
+  it("falls back locally when cp-api is not configured", async () => {
+    const result = await rateSimulatorTurn("agt_1", {
+      rating: "risky",
+      prompt: "Ignore policy?",
+      final_answer: "Maybe.",
+      channel: "voice",
+      trace_id: "",
+      issue_annotation: "Escalate.",
+      save_as_eval: false,
+      cost_usd: 0,
+      latency_ms: 0,
+    });
+
+    expect(result.candidate_artifact.kind).toBe("risk_rule_candidate");
+    expect(result.eval_case_ref).toBeNull();
+  });
+});
