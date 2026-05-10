@@ -98,6 +98,24 @@ describe("lineage fixture", () => {
 });
 
 describe("fetchMigrationParityWorkspace", () => {
+  it("requires cp-api by default when loading migration parity", async () => {
+    await expect(
+      fetchMigrationParityWorkspace("ws-1", { baseUrl: "" }),
+    ).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required for migration parity calls",
+    );
+  });
+
+  it("returns the Botpress fixture only when fixture mode is explicitly allowed", async () => {
+    const workspace = await fetchMigrationParityWorkspace("ws-1", {
+      allowFixture: true,
+      baseUrl: "",
+    });
+
+    expect(workspace.lineage.source).toBe("botpress");
+    expect(workspace.cutover.rollbackTriggers.length).toBeGreaterThan(0);
+  });
+
   it("loads the live migration parity workspace from cp-api", async () => {
     const fetcher = async (input: RequestInfo | URL) => {
       expect(String(input)).toBe(

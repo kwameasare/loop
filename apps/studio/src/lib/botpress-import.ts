@@ -1,11 +1,9 @@
 /**
- * Botpress import fixture (UX302).
+ * Botpress import fixture and live parity client (UX302).
  *
- * Provides a realistic lineage + diff + replay set for the parity
- * harness so the migration parity workspace renders end-to-end without
- * a live import. The fixture deliberately includes one blocking
- * structure diff, one cost regression, and one risk advisory so the UI
- * exercises every severity tone.
+ * The realistic lineage + diff + replay set is available only through
+ * explicit test/demo opt-in. Route-facing clients require cp-api so
+ * migration parity never claims a fake import is live.
  */
 
 import type {
@@ -35,6 +33,7 @@ export interface MigrationParityClientOptions {
   baseUrl?: string;
   source?: "botpress";
   migrationId?: string;
+  allowFixture?: boolean;
 }
 
 function cpApiBaseUrl(override?: string): string {
@@ -77,7 +76,11 @@ export async function fetchMigrationParityWorkspace(
   try {
     base = cpApiBaseUrl(opts.baseUrl);
   } catch (err) {
-    if (err instanceof Error && /LOOP_CP_API_BASE_URL/.test(err.message)) {
+    if (
+      opts.allowFixture &&
+      err instanceof Error &&
+      /LOOP_CP_API_BASE_URL/.test(err.message)
+    ) {
       return createFixtureMigrationParityWorkspace();
     }
     throw err;
