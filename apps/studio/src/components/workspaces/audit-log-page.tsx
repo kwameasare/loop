@@ -224,7 +224,7 @@ export function AuditLogPage({
       {errorMessage && (
         <p
           data-testid="audit-log-error"
-          className="text-sm text-red-600"
+          className="text-sm text-destructive"
           role="alert"
         >
           {errorMessage}

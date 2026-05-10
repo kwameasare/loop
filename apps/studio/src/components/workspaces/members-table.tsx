@@ -86,7 +86,7 @@ export function MembersTable({
   return (
     <div className="flex flex-col gap-2">
       {error ? (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
       ) : null}

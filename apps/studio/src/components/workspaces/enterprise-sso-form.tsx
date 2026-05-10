@@ -141,7 +141,7 @@ export function EnterpriseSsoForm({ status, onSubmit, errorMessage }: Enterprise
       {(localError || errorMessage) && (
         <p
           data-testid="enterprise-sso-error"
-          className="text-sm text-red-600"
+          className="text-sm text-destructive"
           role="alert"
         >
           {localError ?? errorMessage}

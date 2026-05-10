@@ -113,7 +113,7 @@ export function WorkspaceCreateForm({ onSubmit, initialRegion }: WorkspaceCreate
       <p
         data-testid="workspace-create-region-notice"
         role="note"
-        className="rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-xs text-amber-900 dark:text-amber-200"
+        className="rounded-md border border-warning/40 bg-warning/10 p-2 text-xs text-warning"
       >
         <strong>Region cannot be changed after the workspace is created.</strong>{" "}
         All data, telemetry, and inference for this workspace will stay in the selected
@@ -122,7 +122,7 @@ export function WorkspaceCreateForm({ onSubmit, initialRegion }: WorkspaceCreate
       </p>
 
       {error ? (
-        <p data-testid="workspace-create-error" role="alert" className="text-sm text-red-600">
+        <p data-testid="workspace-create-error" role="alert" className="text-sm text-destructive">
           {error}
         </p>
       ) : null}
