@@ -29,7 +29,7 @@ import type { ChangePackage } from "@/lib/change-package";
 import type { ChannelBinding } from "@/lib/channel-bindings";
 import type { EvalSuite } from "@/lib/evals";
 import type { AgentHandoffModel } from "@/lib/agent-handoff";
-import type { AgentIntakeRecord } from "@/lib/agent-intake";
+import type { AgentIntakeJob, AgentIntakeRecord } from "@/lib/agent-intake";
 import type {
   AgentBranch,
   AgentChangeSet,
@@ -1810,6 +1810,35 @@ function recordLabel(
   return fallback;
 }
 
+function intakeJobProgress(job: AgentIntakeJob): number {
+  const raw = job.progress_percent;
+  if (typeof raw !== "number" || Number.isNaN(raw)) {
+    return job.state === "completed" || job.state === "skipped" ? 100 : 0;
+  }
+  return Math.max(0, Math.min(100, Math.round(raw)));
+}
+
+function intakeJobTone(job: AgentIntakeJob): string {
+  if (job.state === "failed") {
+    return "border-destructive/40 bg-destructive/5 text-destructive";
+  }
+  if (job.recoverable || job.state === "needs_recovery") {
+    return "border-warning/50 bg-warning/10 text-warning";
+  }
+  if (job.state === "completed") {
+    return "border-success/40 bg-success/5 text-success";
+  }
+  return "border-muted bg-muted/40 text-muted-foreground";
+}
+
+function intakeArtifactRecoveryLabel(record: Record<string, unknown>): string {
+  const error = recordLabel(record, ["error"], "");
+  if (error) return error;
+  const action = recordLabel(record, ["recovery_action"], "");
+  if (action) return action.replaceAll("_", " ");
+  return "";
+}
+
 interface IntakeReadinessItem {
   id: string;
   label: string;
@@ -2080,13 +2109,55 @@ function IntakeLandingPanel({
       <div className="mt-4 grid gap-3 lg:grid-cols-3">
         <div className="rounded-md border bg-background/70 p-3">
           <h4 className="text-sm font-semibold">Analysis jobs</h4>
-          <ul className="mt-2 space-y-1 text-sm" data-testid="intake-jobs">
+          <ul className="mt-2 space-y-2 text-sm" data-testid="intake-jobs">
             {intakeRecord.jobs.length > 0 ? (
-              intakeRecord.jobs.map((job) => (
-                <li key={job.name}>
-                  {job.name}: {job.state} ({job.count})
-                </li>
-              ))
+              intakeRecord.jobs.map((job) => {
+                const progress = intakeJobProgress(job);
+                const partialCount = job.partial_result_count ?? job.count;
+                return (
+                  <li key={job.name} className="rounded-md border p-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-medium">
+                          {job.name}: {job.state} ({job.count})
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {partialCount} partial result
+                          {partialCount === 1 ? "" : "s"} in{" "}
+                          {job.partial_results_ref ?? "intake analysis"}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "rounded-md border px-2 py-0.5 text-xs font-medium",
+                          intakeJobTone(job),
+                        )}
+                      >
+                        {progress}%
+                      </span>
+                    </div>
+                    <div
+                      aria-label={`${job.name} progress`}
+                      aria-valuemax={100}
+                      aria-valuemin={0}
+                      aria-valuenow={progress}
+                      className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
+                      role="progressbar"
+                    >
+                      <div
+                        className="h-full rounded-full bg-info transition-[width] duration-300 ease-out"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    {(job.recoverable || job.error) && (
+                      <p className="mt-1 text-xs text-warning">
+                        Recoverable:{" "}
+                        {job.error || "review the partial result and continue."}
+                      </p>
+                    )}
+                  </li>
+                );
+              })
             ) : (
               <li className="text-muted-foreground">No jobs returned.</li>
             )}
@@ -2166,12 +2237,18 @@ function IntakeLandingPanel({
           <h4 className="text-sm font-semibold">Artifacts parsed</h4>
           <ul className="mt-2 space-y-1 text-sm" data-testid="intake-artifacts">
             {intakeRecord.artifact_reports.length > 0 ? (
-              intakeRecord.artifact_reports.slice(0, 5).map((artifact, idx) => (
-                <li key={idx}>
-                  {recordLabel(artifact, ["name", "source_ref"], "artifact")} -{" "}
-                  {recordLabel(artifact, ["status", "kind"], "review")}
-                </li>
-              ))
+              intakeRecord.artifact_reports.slice(0, 5).map((artifact, idx) => {
+                const recovery = intakeArtifactRecoveryLabel(artifact);
+                return (
+                  <li key={idx}>
+                    {recordLabel(artifact, ["name", "source_ref"], "artifact")} -{" "}
+                    {recordLabel(artifact, ["status", "kind"], "review")}
+                    {recovery ? (
+                      <span className="text-warning"> - {recovery}</span>
+                    ) : null}
+                  </li>
+                );
+              })
             ) : (
               <li className="text-muted-foreground">No artifacts returned.</li>
             )}

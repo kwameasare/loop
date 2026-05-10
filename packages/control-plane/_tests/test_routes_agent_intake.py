@@ -222,6 +222,84 @@ def test_agent_intake_creates_governed_draft_and_seed_objects(
     }
 
 
+def test_agent_intake_surfaces_recoverable_artifact_parse_failures(
+    client: TestClient,
+    workspace_id: UUID,
+) -> None:
+    response = client.post(
+        f"/v1/workspaces/{workspace_id}/agent-intakes",
+        headers=_auth(),
+            json={
+                "agent_name": "Artifact Recovery Agent",
+                "slug": "artifact-recovery",
+                "creation_path": "business_intent",
+                "contract": _contract(),
+            "capabilities": ["Answer cancellation questions"],
+            "artifacts": [
+                {
+                    "name": "broken-openapi.yaml",
+                    "kind": "openapi",
+                    "text": "info:\n  title: Broken API",
+                    "source_ref": "upload/broken-openapi.yaml",
+                },
+                {
+                    "name": "empty-runbook.md",
+                    "kind": "runbook",
+                    "text": "",
+                    "source_ref": "",
+                },
+                {
+                    "name": "valid-runbook.md",
+                    "kind": "runbook",
+                    "text": "Always escalate billing exceptions.",
+                    "source_ref": "upload/valid-runbook.md",
+                },
+            ],
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    reports = {report["name"]: report for report in body["artifact_reports"]}
+    assert reports["broken-openapi.yaml"]["status"] == "failed"
+    assert reports["broken-openapi.yaml"]["recoverable"] is True
+    assert reports["broken-openapi.yaml"][
+        "recovery_action"
+    ] == "replace_openapi_or_continue_without_source"
+    assert reports["empty-runbook.md"]["status"] == "needs_content"
+    assert reports["empty-runbook.md"]["recoverable"] is True
+    parse_job = next(job for job in body["jobs"] if job["name"] == "parse_artifacts")
+    assert parse_job["state"] == "needs_recovery"
+    assert parse_job["progress_percent"] == 100
+    assert parse_job["partial_results_ref"] == "artifact_reports"
+    assert parse_job["partial_result_count"] == 3
+    assert parse_job["recoverable"] is True
+    assert "OpenAPI artifact" in parse_job["error"]
+    assert {tool["tool_id"] for tool in body["candidate_tools"]} == {
+        "mock_billing_api",
+        "mock_crm",
+    }
+    assert {source["name"] for source in body["candidate_knowledge_sources"]} == {
+        "valid-runbook.md"
+    }
+    assert any(
+        "broken-openapi.yaml needs recovery" in item
+        for item in body["readiness"]["needs_attention"]
+    )
+
+    progress = client.get(
+        f"/v1/workspaces/{workspace_id}/agent-intakes/{body['id']}/progress",
+        headers=_auth(),
+    )
+    assert progress.status_code == 200, progress.text
+    progress_body = progress.json()
+    assert progress_body["state"] == "draft_ready"
+    assert progress_body["partial_results"]["artifact_reports"][0]["name"] == (
+        "broken-openapi.yaml"
+    )
+    assert progress_body["jobs"][0]["partial_results_ref"] == "artifact_reports"
+
+
 def test_agent_intake_requires_workspace_admin(
     client: TestClient,
     workspace_id: UUID,

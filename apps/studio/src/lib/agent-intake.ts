@@ -68,6 +68,17 @@ export interface AgentIntakeTemplateList {
   items: AgentIntakeTemplate[];
 }
 
+export interface AgentIntakeJob {
+  name: string;
+  state: string;
+  count: number;
+  progress_percent?: number;
+  partial_results_ref?: string;
+  partial_result_count?: number;
+  recoverable?: boolean;
+  error?: string;
+}
+
 export const LOCAL_AGENT_INTAKE_TEMPLATES: AgentIntakeTemplate[] = [
   {
     id: "tmpl_support_agent",
@@ -153,7 +164,7 @@ export interface AgentIntakeRecord {
   agent_id: string;
   state: AgentIntakeState;
   creation_path: AgentIntakePath;
-  jobs: Array<{ name: string; state: string; count: number }>;
+  jobs: AgentIntakeJob[];
   artifact_reports: Array<Record<string, unknown>>;
   intent_map: Array<Record<string, unknown>>;
   contradictions: Array<Record<string, unknown>>;
@@ -177,6 +188,27 @@ export interface AgentIntakeRecord {
   updated_at: string;
   agent?: AgentSummary;
   commitment?: CommitmentDocument;
+}
+
+export interface AgentIntakeProgress {
+  id: string;
+  agent_id: string;
+  state: AgentIntakeState;
+  jobs: AgentIntakeJob[];
+  readiness: AgentIntakeRecord["readiness"];
+  partial_results: {
+    artifact_reports: Array<Record<string, unknown>>;
+    intent_map: Array<Record<string, unknown>>;
+    contradictions: Array<Record<string, unknown>>;
+    sensitive_data_findings: Array<Record<string, unknown>>;
+    candidate_tools: Array<Record<string, unknown>>;
+    candidate_knowledge_sources: Array<Record<string, unknown>>;
+    candidate_channels: Array<Record<string, unknown>>;
+    candidate_eval_cases: Array<Record<string, unknown>>;
+    risk_notes: Array<Record<string, unknown>>;
+    missing_information: Array<Record<string, unknown>>;
+  };
+  updated_at: string;
 }
 
 export interface AgentIntakeCreateResult extends AgentIntakeRecord {
@@ -223,6 +255,20 @@ function localIntakeResult(
   const agent = localAgent(input, workspaceId);
   const channels = input.contract.channels.filter(Boolean);
   const tools = input.contract.systems_touched.filter(Boolean);
+  const localJob = (
+    name: string,
+    count: number,
+    partialResultsRef: string,
+  ): AgentIntakeJob => ({
+    name,
+    state: "completed",
+    count,
+    progress_percent: 100,
+    partial_results_ref: partialResultsRef,
+    partial_result_count: count,
+    recoverable: false,
+    error: "",
+  });
   return {
     id: `intake_${input.slug || "local"}`,
     workspace_id: workspaceId,
@@ -230,19 +276,11 @@ function localIntakeResult(
     state: "draft_ready",
     creation_path: input.creation_path,
     jobs: [
-      {
-        name: "parse_artifacts",
-        state: "completed",
-        count: input.artifacts.length,
-      },
-      {
-        name: "extract_intents",
-        state: "completed",
-        count: input.capabilities.length + 1,
-      },
-      { name: "infer_tools", state: "completed", count: tools.length },
-      { name: "infer_channels", state: "completed", count: channels.length },
-      { name: "draft_agent_plan", state: "completed", count: 1 },
+      localJob("parse_artifacts", input.artifacts.length, "artifact_reports"),
+      localJob("extract_intents", input.capabilities.length + 1, "intent_map"),
+      localJob("infer_tools", tools.length, "candidate_tools"),
+      localJob("infer_channels", channels.length, "candidate_channels"),
+      localJob("draft_agent_plan", 1, "created_object_refs"),
     ],
     artifact_reports: input.artifacts.map((artifact) => ({
       name: artifact.name,
@@ -386,6 +424,23 @@ export async function getAgentIntake(
       ...opts,
       allowFallback: false,
       fallback: undefined as unknown as AgentIntakeRecord,
+    },
+  );
+}
+
+export async function getAgentIntakeProgress(
+  workspaceId: string,
+  intakeId: string,
+  opts: AgentIntakeOptions = {},
+): Promise<AgentIntakeProgress> {
+  return cpJson<AgentIntakeProgress>(
+    `/workspaces/${encodeURIComponent(
+      workspaceId,
+    )}/agent-intakes/${encodeURIComponent(intakeId)}/progress`,
+    {
+      ...opts,
+      allowFallback: false,
+      fallback: undefined as unknown as AgentIntakeProgress,
     },
   );
 }

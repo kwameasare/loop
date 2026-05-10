@@ -186,6 +186,12 @@ def _failed_generation_intake(
             if job["name"] == "draft_agent_plan"
             else job["state"],
             "error": str(exc) if job["name"] == "draft_agent_plan" else "",
+            "progress_percent": 100
+            if job["name"] != "draft_agent_plan"
+            else min(int(job.get("progress_percent", 0)), 80),
+            "recoverable": True
+            if job["name"] == "draft_agent_plan"
+            else job.get("recoverable", False),
         }
         for job in base.jobs
     ]
@@ -241,6 +247,8 @@ def _manual_continue_intake(
             if job["name"] == "draft_agent_plan"
             else job["state"],
             "error": "",
+            "progress_percent": job.get("progress_percent", 100),
+            "recoverable": job.get("recoverable", False),
         }
         for job in record.jobs
     ]
@@ -870,3 +878,42 @@ async def get_agent_intake(
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"unknown intake: {intake_id}") from exc
     return agent_intake_payload(record)
+
+
+@router.get("/{workspace_id}/agent-intakes/{intake_id}/progress")
+async def get_agent_intake_progress(
+    request: Request,
+    workspace_id: UUID,
+    intake_id: str,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    try:
+        record = await cp.agent_intakes.get(workspace_id=workspace_id, intake_id=intake_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"unknown intake: {intake_id}") from exc
+    return {
+        "id": record.id,
+        "agent_id": str(record.agent_id),
+        "state": record.state,
+        "jobs": record.jobs,
+        "readiness": record.readiness,
+        "partial_results": {
+            "artifact_reports": record.artifact_reports,
+            "intent_map": record.intent_map,
+            "contradictions": record.contradictions,
+            "sensitive_data_findings": record.sensitive_data_findings,
+            "candidate_tools": record.candidate_tools,
+            "candidate_knowledge_sources": record.candidate_knowledge_sources,
+            "candidate_channels": record.candidate_channels,
+            "candidate_eval_cases": record.candidate_eval_cases,
+            "risk_notes": record.risk_notes,
+            "missing_information": record.missing_information,
+        },
+        "updated_at": record.updated_at.isoformat(),
+    }
