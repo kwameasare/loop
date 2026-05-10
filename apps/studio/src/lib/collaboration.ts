@@ -139,7 +139,7 @@ export interface PairDebugSession {
 
 export interface CollaborationWorkspace {
   presence: readonly PresenceUser[];
-  changeset: Changeset;
+  changeset: Changeset | null;
   pairDebug: PairDebugSession;
 }
 
@@ -361,6 +361,13 @@ export const FIXTURE_PAIR_DEBUG: PairDebugSession = {
   ],
 };
 
+export const EMPTY_PAIR_DEBUG: PairDebugSession = {
+  id: "pd_empty",
+  participants: [],
+  playheadMs: 0,
+  trace: [],
+};
+
 function traceKind(category: Trace["spans"][number]["category"]): TraceEvent["kind"] {
   if (category === "tool" || category === "retrieval") return "tool_call";
   if (category === "llm") return "model_call";
@@ -390,27 +397,24 @@ function pairDebugFromTrace(trace: Trace): PairDebugSession {
 function changesetFromAudit(
   workspaceId: string,
   latestAction: string | null,
-): Changeset {
-  const evidenceRef = latestAction
-    ? `audit/${workspaceId}/${latestAction}`
-    : `audit/${workspaceId}/no-recent-write`;
+): Changeset | null {
+  if (!latestAction) return null;
+  const evidenceRef = `audit/${workspaceId}/${latestAction}`;
   return {
     id: `cs_${workspaceId.slice(0, 8)}`,
-    title: latestAction
-      ? `Review impact of ${latestAction}`
-      : "No pending changeset in the live audit window",
-    authorDisplay: latestAction ? "Workspace actor" : "Loop system",
+    title: `Review impact of ${latestAction}`,
+    authorDisplay: "Workspace actor",
     createdAt: new Date().toISOString(),
     evidenceRef,
     approvals: [
       {
         axis: "behavior",
-        state: latestAction ? "pending" : "approved",
+        state: "pending",
         evidenceRef: `${evidenceRef}/behavior`,
       },
       {
         axis: "eval",
-        state: latestAction ? "pending" : "approved",
+        state: "pending",
         evidenceRef: `${evidenceRef}/eval`,
       },
       {
@@ -456,7 +460,7 @@ export async function fetchCollaborationWorkspace(
         },
       ],
       changeset: changesetFromAudit(workspaceId, latestAction),
-      pairDebug: trace ? pairDebugFromTrace(trace) : FIXTURE_PAIR_DEBUG,
+      pairDebug: trace ? pairDebugFromTrace(trace) : EMPTY_PAIR_DEBUG,
     };
   } catch (err) {
     if (
@@ -464,9 +468,9 @@ export async function fetchCollaborationWorkspace(
       /LOOP_CP_API_BASE_URL is required/.test(err.message)
     ) {
       return {
-        presence: FIXTURE_PRESENCE,
-        changeset: FIXTURE_CHANGESET,
-        pairDebug: FIXTURE_PAIR_DEBUG,
+        presence: [],
+        changeset: null,
+        pairDebug: EMPTY_PAIR_DEBUG,
       };
     }
     throw err;

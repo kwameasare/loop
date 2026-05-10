@@ -21,6 +21,7 @@ export function PairDebugPanel(props: PairDebugPanelProps): JSX.Element {
   const focused = eventAtPlayhead(current);
   const max = current.trace[current.trace.length - 1]?.offsetMs ?? 0;
   const min = current.trace[0]?.offsetMs ?? 0;
+  const hasTrace = current.trace.length > 0;
 
   function jumpTo(offsetMs: number): void {
     const next = setPlayhead(current, offsetMs);
@@ -42,21 +43,29 @@ export function PairDebugPanel(props: PairDebugPanelProps): JSX.Element {
       </header>
       <PresenceBar users={current.participants} />
       <div className="rounded-md border bg-muted/45 p-3 text-xs">
-        <p data-testid="playhead-readout">
-          Playhead: <strong>{current.playheadMs}ms</strong>
-          {focused ? ` · ${focused.kind} · ${focused.summary}` : ""}
-        </p>
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={20}
-          value={current.playheadMs}
-          onChange={(e) => jumpTo(Number(e.target.value))}
-          aria-label="Trace playhead"
-          data-testid="playhead-scrubber"
-          className="mt-2 w-full"
-        />
+        {hasTrace ? (
+          <>
+            <p data-testid="playhead-readout">
+              Playhead: <strong>{current.playheadMs}ms</strong>
+              {focused ? ` · ${focused.kind} · ${focused.summary}` : ""}
+            </p>
+            <input
+              type="range"
+              min={min}
+              max={max}
+              step={20}
+              value={current.playheadMs}
+              onChange={(e) => jumpTo(Number(e.target.value))}
+              aria-label="Trace playhead"
+              data-testid="playhead-scrubber"
+              className="mt-2 w-full"
+            />
+          </>
+        ) : (
+          <p data-testid="playhead-empty">
+            No trace loaded for pair debugging.
+          </p>
+        )}
       </div>
       <ol className="space-y-1" data-testid="trace-events">
         {current.trace.map((ev) => {

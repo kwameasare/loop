@@ -8,13 +8,11 @@ import { PairDebugPanel } from "@/components/collaboration/pair-debug-panel";
 import { PresenceBar } from "@/components/collaboration/presence-bar";
 import { CommentThreadView } from "@/components/comments/comment-thread";
 import {
+  EMPTY_PAIR_DEBUG,
   fetchCollaborationWorkspace,
-  FIXTURE_CHANGESET,
-  FIXTURE_PAIR_DEBUG,
-  FIXTURE_PRESENCE,
   type CollaborationWorkspace,
 } from "@/lib/collaboration";
-import { FIXTURE_THREADS } from "@/lib/comments";
+import type { CommentThread } from "@/lib/comments";
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
 
 const ME = { id: "u_kojo", display: "Kojo A." };
@@ -30,10 +28,11 @@ export default function CollaborateReviewPage(): JSX.Element {
 function CollaborateReviewPageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
   const [workspace, setWorkspace] = useState<CollaborationWorkspace>({
-    presence: FIXTURE_PRESENCE,
-    changeset: FIXTURE_CHANGESET,
-    pairDebug: FIXTURE_PAIR_DEBUG,
+    presence: [],
+    changeset: null,
+    pairDebug: EMPTY_PAIR_DEBUG,
   });
+  const [threads] = useState<readonly CommentThread[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -88,12 +87,30 @@ function CollaborateReviewPageBody(): JSX.Element {
         ) : null}
       </header>
       <PresenceBar users={workspace.presence} />
-      <ChangesetApprovals changeset={workspace.changeset} />
-      <div className="grid gap-4 lg:grid-cols-2">
-        {FIXTURE_THREADS.map((t) => (
-          <CommentThreadView key={t.id} thread={t} currentUser={ME} />
-        ))}
-      </div>
+      {workspace.changeset ? (
+        <ChangesetApprovals changeset={workspace.changeset} />
+      ) : (
+        <section
+          className="rounded-md border bg-card p-4 text-sm text-muted-foreground"
+          data-testid="changeset-empty"
+        >
+          No pending changeset in the live audit window.
+        </section>
+      )}
+      {threads.length > 0 ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {threads.map((t) => (
+            <CommentThreadView key={t.id} thread={t} currentUser={ME} />
+          ))}
+        </div>
+      ) : (
+        <section
+          className="rounded-md border bg-card p-4 text-sm text-muted-foreground"
+          data-testid="comments-empty"
+        >
+          No live comment threads loaded for this workspace.
+        </section>
+      )}
       <PairDebugPanel session={workspace.pairDebug} />
     </main>
   );
