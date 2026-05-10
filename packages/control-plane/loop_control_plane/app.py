@@ -76,6 +76,8 @@ from loop_control_plane._routes_preapproved_classes import (
     router as preapproved_classes_router,
 )
 from loop_control_plane._routes_secrets import router as secrets_router
+from loop_control_plane._routes_secrets import router_agents as agent_secrets_router
+from loop_control_plane._routes_secrets import router_secret_refs as secret_refs_router
 from loop_control_plane._routes_simulator_feedback import (
     router as simulator_feedback_router,
 )
@@ -129,6 +131,10 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         # P0.4: workspace API-key + secrets routes.
         api_keys_router,
         secrets_router,
+        # Agent-flow implementation: Studio consumes secret references,
+        # never plaintext credential values, from agent-scoped routes.
+        agent_secrets_router,
+        secret_refs_router,
         # P0.4: traces search + usage list routes.
         telemetry_router,
         traces_router,
