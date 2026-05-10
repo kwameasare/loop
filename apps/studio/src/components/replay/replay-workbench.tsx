@@ -95,17 +95,32 @@ function FutureReplayPanel({
   const [forked, setForked] = useState(false);
   const [savedEval, setSavedEval] = useState(false);
   const [runningFutureReplay, setRunningFutureReplay] = useState(false);
+  const [futureReplayError, setFutureReplayError] = useState<string | null>(null);
   const [liveReplay, setLiveReplay] = useState(model.selectedReplay);
   const replay = liveReplay;
   async function handleReplayAgainstDraft() {
     setRunningFutureReplay(true);
+    setFutureReplayError(null);
     try {
       const result = await replayAgainstDraft(selected.agentId, {
         traceIds: [selected.traceId],
         draftBranchRef: selected.draftVersion,
         compareVersionRef: selected.sourceVersion,
       });
-      setLiveReplay(result.items[0] ?? model.selectedReplay);
+      const nextReplay = result.items[0];
+      if (!nextReplay) {
+        setFutureReplayError(
+          "Replay completed without a draft diff. No local replay was substituted.",
+        );
+        return;
+      }
+      setLiveReplay(nextReplay);
+    } catch (err) {
+      setFutureReplayError(
+        err instanceof Error
+          ? err.message
+          : "Could not replay production turns against the draft.",
+      );
     } finally {
       setRunningFutureReplay(false);
     }
@@ -200,6 +215,12 @@ function FutureReplayPanel({
           {forked ? "A branch can now start from the selected frame. " : ""}
           {savedEval ? "This conversation is queued as a regression eval. " : ""}
           The action is local to the draft until promotion gates pass.
+        </StatePanel>
+      ) : null}
+
+      {futureReplayError ? (
+        <StatePanel state="degraded" title="Replay against draft unavailable">
+          {futureReplayError}
         </StatePanel>
       ) : null}
 

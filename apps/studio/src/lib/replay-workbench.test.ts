@@ -113,4 +113,17 @@ describe("fetchReplayWorkbenchModel", () => {
       compare_version_ref: "v22",
     });
   });
+
+  it("requires cp-api for replay-against-draft", async () => {
+    await expect(
+      replayAgainstDraft(
+        "agent-1",
+        {
+          traceIds: ["trace-prod-1"],
+          draftBranchRef: "draft/refund",
+        },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow(/LOOP_CP_API_BASE_URL is required/i);
+  });
 });

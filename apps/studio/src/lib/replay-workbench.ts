@@ -447,13 +447,6 @@ export async function replayAgainstDraft(
   args: { traceIds: readonly string[]; draftBranchRef: string; compareVersionRef?: string },
   opts: UxWireupClientOptions = {},
 ): Promise<{ items: readonly FutureReplaySummary[] }> {
-  const fallback: { items: FutureReplaySummary[] } = {
-    items: args.traceIds.map((traceId) => ({
-      ...selectedReplay,
-      conversationId: traceId,
-      mostLikelyBreak: `Local replay compares ${traceId} against ${args.draftBranchRef}.`,
-    })),
-  };
   const body = await cpJson<{
     items?: Array<{
       trace_id: string;
@@ -478,10 +471,11 @@ export async function replayAgainstDraft(
         draft_branch_ref: args.draftBranchRef,
         compare_version_ref: args.compareVersionRef,
       },
+      allowFallback: false,
       fallback: { items: [] },
     },
-  ).catch(() => ({ items: [] }));
-  if (!body.items?.length) return fallback;
+  );
+  if (!body.items?.length) return { items: [] };
   return {
     items: body.items.map((item) => ({
       conversationId: item.trace_id,
