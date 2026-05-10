@@ -2200,6 +2200,52 @@ def test_comment_resolution_can_create_eval_case(
     assert response.json()["case_id"] == "eval_comment_cmt_123"
 
 
+def test_workspace_comment_threads_are_listed_for_review(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    thread = {
+        "id": "th_live_refund",
+        "agentId": str(agent_id),
+        "anchor": {
+            "objectId": "trace-prod-1",
+            "kind": "transcript_turn",
+            "authoredAt": "v23",
+        },
+        "observedAt": "v23",
+        "comments": [
+            {
+                "id": "cmt_live_refund",
+                "threadId": "th_live_refund",
+                "authorId": "reviewer-1",
+                "authorDisplay": "Reviewer",
+                "body": "The agent should refund premium customers directly.",
+                "createdAt": "2026-05-09T00:00:00Z",
+                "anchor": {
+                    "objectId": "trace-prod-1",
+                    "kind": "transcript_turn",
+                    "authoredAt": "v23",
+                },
+                "evidenceRef": "audit/comments/cmt_live_refund",
+            }
+        ],
+    }
+    ux_wireup = client.app.state.cp.ux_wireup  # type: ignore[attr-defined]
+    ux_wireup.setdefault("comment_threads", {}).setdefault(str(workspace_id), []).append(
+        thread
+    )
+
+    response = client.get(
+        f"/v1/workspaces/{workspace_id}/comment-threads",
+        headers=_auth(),
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["items"][0]["id"] == "th_live_refund"
+    assert body["items"][0]["agentId"] == str(agent_id)
+    assert body["items"][0]["comments"][0]["id"] == "cmt_live_refund"
+
+
 def test_approval_edit_invalidates_content_hash_bound_approval(
     client: TestClient, workspace_id: UUID
 ) -> None:

@@ -11,6 +11,8 @@
  * eval spec so the conversation captures a permanent regression test.
  */
 
+import { cpJson, type UxWireupClientOptions } from "@/lib/ux-wireup";
+
 export type CommentObjectKind =
   | "flow_node"
   | "transcript_turn"
@@ -39,12 +41,22 @@ export interface Comment {
 
 export interface CommentThread {
   id: string;
+  /** Agent that owns this thread when a resolution can become an eval case. */
+  agentId?: string;
   anchor: CommentAnchor;
   /** Latest version observed for the anchored object. */
   observedAt: string;
   comments: readonly Comment[];
   resolution?: ThreadResolution;
 }
+
+export interface CommentThreadsResponse {
+  items: CommentThread[];
+}
+
+type CommentThreadsClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
 
 export type ResolutionKind = "eval_spec" | "wontfix" | "duplicate";
 
@@ -103,6 +115,20 @@ export function resolveThreadAsEval(
   };
 }
 
+export async function fetchCommentThreads(
+  workspaceId: string,
+  opts: CommentThreadsClientOptions = {},
+): Promise<CommentThreadsResponse> {
+  return cpJson<CommentThreadsResponse>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/comment-threads`,
+    {
+      ...opts,
+      allowFallback: opts.allowFixture === true,
+      fallback: { items: [...FIXTURE_THREADS] },
+    },
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
@@ -110,6 +136,7 @@ export function resolveThreadAsEval(
 export const FIXTURE_THREADS: readonly CommentThread[] = [
   {
     id: "th_refund_escalate",
+    agentId: "agent_refund",
     anchor: {
       objectId: "node_refund_escalate",
       kind: "flow_node",
@@ -149,6 +176,7 @@ export const FIXTURE_THREADS: readonly CommentThread[] = [
   },
   {
     id: "th_kb_chunk_callbacks",
+    agentId: "agent_refund",
     anchor: {
       objectId: "kb_chunk_callbacks",
       kind: "kb_chunk",

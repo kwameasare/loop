@@ -1080,6 +1080,21 @@ async def create_homepage_pin(
 # ---------------------------------------------------------------------------
 
 
+@router_workspaces.get("/{workspace_id}/comment-threads")
+async def list_comment_threads(
+    request: Request,
+    workspace_id: UUID,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    await authorize_workspace_access(
+        workspaces=request.app.state.cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    items = _bucket(request, "comment_threads").get(str(workspace_id), [])
+    return {"items": items}
+
+
 class CommentResolutionBody(BaseModel):
     expected_behavior: str = Field(min_length=1, max_length=2000)
     failure_reason: str = Field(min_length=1, max_length=1000)
