@@ -9,16 +9,16 @@ import {
 } from "@/lib/migration-parity";
 
 const STAGE_TONE: Record<string, string> = {
-  passed: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  in_progress: "bg-sky-50 text-sky-700 border-sky-200",
-  pending: "bg-slate-50 text-slate-600 border-slate-200",
-  halted: "bg-rose-50 text-rose-700 border-rose-200",
+  passed: "border-success/30 bg-success/10 text-success",
+  in_progress: "border-info/30 bg-info/10 text-info",
+  pending: "border-border bg-muted text-muted-foreground",
+  halted: "border-destructive/30 bg-destructive/10 text-destructive",
 };
 
 function pill(status: string): string {
   return (
     "inline-flex items-center px-2 py-0.5 text-xs font-medium border rounded " +
-    (STAGE_TONE[status] ?? "bg-slate-50 text-slate-600 border-slate-200")
+    (STAGE_TONE[status] ?? "border-border bg-muted text-muted-foreground")
   );
 }
 
@@ -52,7 +52,7 @@ export function CutoverPanel({
     <div data-testid="cutover-panel" className="space-y-4">
       <header className="space-y-1">
         <h2 className="text-xl font-semibold">Shadow → canary → cutover</h2>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted-foreground">
           Traffic moves only after every guardrail passes. Rollback triggers stay
           armed throughout.
         </p>
@@ -62,7 +62,7 @@ export function CutoverPanel({
         <div
           role="alert"
           data-testid="cutover-validation-error"
-          className="border border-rose-200 bg-rose-50 text-rose-700 text-sm rounded p-3"
+          className="rounded border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
         >
           {blockingValidation}
         </div>
@@ -79,7 +79,7 @@ export function CutoverPanel({
           label="Cost / turn delta"
           value={plan.shadow.costPerTurnDelta}
         />
-        <div className="md:col-span-4 text-xs text-slate-400">
+        <div className="md:col-span-4 text-xs text-muted-foreground">
           divergences: {plan.shadow.divergences} · evidence: {plan.shadow.evidenceRef}
         </div>
       </section>
@@ -100,7 +100,7 @@ export function CutoverPanel({
                   <div className="font-medium">
                     {stage.percent}% · {stage.durationMinutes}m bake
                   </div>
-                  <ul className="text-xs text-slate-500 mt-1 space-y-0.5">
+                  <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
                     {stage.guardrails.map((g) => (
                       <li key={g}>· {g}</li>
                     ))}
@@ -125,7 +125,7 @@ export function CutoverPanel({
                           );
                         }
                       }}
-                      className="px-2 py-1 text-xs border rounded hover:bg-slate-50"
+                      className="px-2 py-1 text-xs border rounded hover:bg-muted"
                     >
                       Advance
                     </button>
@@ -149,8 +149,8 @@ export function CutoverPanel({
               <div className="text-sm font-medium">
                 {t.metric} · {t.threshold}
               </div>
-              <div className="text-sm text-slate-600">{t.action}</div>
-              <div className="text-xs text-slate-400">evidence: {t.evidenceRef}</div>
+              <div className="text-sm text-muted-foreground">{t.action}</div>
+              <div className="text-xs text-muted-foreground">evidence: {t.evidenceRef}</div>
             </li>
           ))}
         </ul>
@@ -163,7 +163,7 @@ export function CutoverPanel({
               setRolledBack(true);
               onRollback?.("manual");
             }}
-            className="px-3 py-1.5 text-sm border rounded text-rose-700 border-rose-300 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded border border-destructive/40 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Manual rollback
           </button>
@@ -171,7 +171,7 @@ export function CutoverPanel({
           <div
             role="status"
             data-testid="rollback-confirmation"
-            className="border border-rose-200 bg-rose-50 text-rose-700 text-sm rounded p-3"
+            className="rounded border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
           >
             Rollback issued. Traffic restored to source. Audit event recorded.
           </div>
@@ -182,7 +182,7 @@ export function CutoverPanel({
         <div
           role="alert"
           data-testid="cutover-advance-error"
-          className="border border-rose-200 bg-rose-50 text-rose-700 text-sm rounded p-3"
+          className="rounded border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
         >
           {validationError}
         </div>
@@ -194,7 +194,7 @@ export function CutoverPanel({
 function Stat({ label, value }: { label: string; value: string }): JSX.Element {
   return (
     <div>
-      <div className="text-xs text-slate-500">{label}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-lg font-semibold">{value}</div>
     </div>
   );
