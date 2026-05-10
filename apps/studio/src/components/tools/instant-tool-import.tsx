@@ -78,15 +78,23 @@ export function InstantToolImport({ agentId }: { agentId: string }) {
   const [liveContract, setLiveContract] =
     useState<ImportedToolContractPreview | null>(null);
   const [added, setAdded] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function draftLiveTool() {
+  function previewTool() {
     setAdded(false);
     setError(null);
     setLiveImportId(null);
     setLiveContract(null);
-    const nextDraft = draftToolFromRequest(input, source);
+    setDraft(draftToolFromRequest(input, source));
+  }
+
+  async function addToLibrary() {
+    setAdded(false);
+    setError(null);
+    const nextDraft = draft ?? draftToolFromRequest(input, source);
     setDraft(nextDraft);
+    setSaving(true);
     try {
       const result = await cpJson<ImportedToolResponse>(
         `/agents/${encodeURIComponent(agentId)}/tools/import`,
@@ -102,10 +110,13 @@ export function InstantToolImport({ agentId }: { agentId: string }) {
       );
       setLiveImportId(result.tool_id);
       setLiveContract(result.tool_contract ?? null);
+      setAdded(true);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not import this tool.",
       );
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -159,7 +170,7 @@ export function InstantToolImport({ agentId }: { agentId: string }) {
           <button
             type="button"
             className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-            onClick={() => void draftLiveTool()}
+            onClick={previewTool}
             data-testid="tools-room-draft-tool"
           >
             <Code2 className="h-4 w-4" aria-hidden />
@@ -168,12 +179,12 @@ export function InstantToolImport({ agentId }: { agentId: string }) {
           <button
             type="button"
             className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-60"
-            onClick={() => setAdded(true)}
-            disabled={!liveImportId}
+            onClick={() => void addToLibrary()}
+            disabled={!draft || saving || added}
             data-testid="tools-room-add-library"
           >
             <LibraryBig className="h-4 w-4" aria-hidden />
-            Add to library
+            {saving ? "Saving..." : added ? "Saved to sandbox" : "Add sandbox draft"}
           </button>
         </div>
         {error ? (
