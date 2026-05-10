@@ -4,33 +4,22 @@
  * S594: ``/workspaces/new`` page.
  *
  * Hosts the ``WorkspaceCreateForm`` and wires its submit handler to
- * the live (or stubbed) cp-api workspace-create endpoint. Once the
- * cp-api endpoint stabilises (epic E5/S023) this swaps from the local
- * stub to the generated client without a UI change.
+ * the cp-api workspace-create endpoint. Workspace creation is a
+ * persisted enterprise object mutation; Studio must not post to a
+ * same-origin placeholder or fabricate a tenant.
  */
 
 import { useRouter } from "next/navigation";
 
 import { WorkspaceCreateForm } from "@/components/workspaces/workspace-create-form";
 import type { WorkspaceCreate } from "@/lib/openapi-types";
+import { createWorkspace as createWorkspaceOnControlPlane } from "@/lib/workspaces";
 
 export default function NewWorkspacePage() {
   const router = useRouter();
 
   async function createWorkspace(payload: WorkspaceCreate): Promise<void> {
-    // POST /v1/workspaces — uses native fetch so we don't pull in a
-    // client lib here. The cp-api will derive region from the body
-    // and refuse subsequent updates that change it (S593).
-    const res = await fetch("/v1/workspaces", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Workspace creation failed (${res.status}): ${text || "unknown error"}`);
-    }
-    const created = (await res.json()) as { slug?: string };
+    const created = await createWorkspaceOnControlPlane(payload);
     if (created.slug) {
       router.push(`/?ws=${encodeURIComponent(created.slug)}`);
     } else {

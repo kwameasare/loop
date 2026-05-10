@@ -10,10 +10,10 @@
  * control plane (S593) and the workspace row is region-bound for the
  * lifetime of the tenant.
  *
- * On submit we POST to ``/v1/workspaces`` (mirrored from
- * ``Operations.PostWorkspaces`` in openapi-types.ts). The submit
- * handler is a prop so the page route can swap in a real client; this
- * keeps the form testable in isolation without faking ``fetch``.
+ * On submit the page posts to cp-api ``/v1/workspaces`` (mirrored
+ * from ``Operations.PostWorkspaces`` in openapi-types.ts). The submit
+ * handler is a prop so the form stays testable without faking global
+ * fetch or fabricating a tenant.
  */
 
 import { useEffect, useState } from "react";
