@@ -8,6 +8,17 @@ import {
 } from "./memory-policies";
 
 describe("memory-policies client", () => {
+  const userPolicyInput = {
+    scope: "user" as const,
+    allowed_memory_types: ["preference"],
+    retention: "Keep confirmed preferences for 90 days.",
+    consent_requirement: "Explicit consent required.",
+    pii_policy: "No secrets or payment data.",
+    delete_behavior: "Delete on request.",
+    privacy_implications: ["Affects future user conversations."],
+    source_trace_required: true,
+  };
+
   it("builds local policy fallbacks with privacy implications", () => {
     const policies = localMemoryPolicies("agent-1");
 
@@ -55,16 +66,7 @@ describe("memory-policies client", () => {
     });
     const updated = await upsertMemoryPolicy(
       "agent-1",
-      {
-        scope: "user",
-        allowed_memory_types: ["preference"],
-        retention: "Keep confirmed preferences for 90 days.",
-        consent_requirement: "Explicit consent required.",
-        pii_policy: "No secrets or payment data.",
-        delete_behavior: "Delete on request.",
-        privacy_implications: ["Affects future user conversations."],
-        source_trace_required: true,
-      },
+      userPolicyInput,
       { baseUrl: "https://cp.test", fetcher },
     );
     const approved = await approveMemoryPolicy("agent-1", "user", {
@@ -79,5 +81,53 @@ describe("memory-policies client", () => {
       "https://cp.test/v1/agents/agent-1/memory-policies/user",
       expect.objectContaining({ method: "PUT" }),
     );
+  });
+
+  it("does not fabricate memory policy state without cp-api", async () => {
+    await expect(
+      listMemoryPolicies("agent-1", { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      upsertMemoryPolicy("agent-1", userPolicyInput, { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      approveMemoryPolicy("agent-1", "user", { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps deterministic memory policy behavior explicitly opt-in", async () => {
+    await expect(
+      listMemoryPolicies("agent-1", {
+        baseUrl: "",
+        allowFixture: true,
+      }),
+    ).resolves.toMatchObject({
+      items: expect.arrayContaining([
+        expect.objectContaining({ scope: "user" }),
+      ]),
+    });
+
+    await expect(
+      upsertMemoryPolicy("agent-1", userPolicyInput, {
+        baseUrl: "",
+        allowFixture: true,
+      }),
+    ).resolves.toMatchObject({
+      scope: "user",
+      approval_status: "review_required",
+      retention: "Keep confirmed preferences for 90 days.",
+    });
+
+    await expect(
+      approveMemoryPolicy("agent-1", "user", {
+        baseUrl: "",
+        allowFixture: true,
+      }),
+    ).resolves.toMatchObject({
+      scope: "user",
+      approval_status: "approved",
+    });
   });
 });

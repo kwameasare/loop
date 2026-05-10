@@ -48,6 +48,10 @@ export type MemoryPolicyInput = Pick<
   | "source_trace_required"
 >;
 
+type MemoryPolicyClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 const LOCAL_NOW = new Date(0).toISOString();
 
 export function localMemoryPolicies(agentId: string): MemoryPolicy[] {
@@ -121,12 +125,13 @@ export function localMemoryPolicies(agentId: string): MemoryPolicy[] {
 
 export async function listMemoryPolicies(
   agentId: string,
-  opts: UxWireupClientOptions = {},
+  opts: MemoryPolicyClientOptions = {},
 ): Promise<MemoryPoliciesResponse> {
   return cpJson<MemoryPoliciesResponse>(
     `/agents/${encodeURIComponent(agentId)}/memory-policies`,
     {
       ...opts,
+      allowFallback: opts.allowFixture === true,
       fallback: { items: localMemoryPolicies(agentId) },
     },
   );
@@ -135,7 +140,7 @@ export async function listMemoryPolicies(
 export async function upsertMemoryPolicy(
   agentId: string,
   input: MemoryPolicyInput,
-  opts: UxWireupClientOptions = {},
+  opts: MemoryPolicyClientOptions = {},
 ): Promise<MemoryPolicy> {
   return cpJson<MemoryPolicy>(
     `/agents/${encodeURIComponent(agentId)}/memory-policies/${encodeURIComponent(
@@ -145,6 +150,7 @@ export async function upsertMemoryPolicy(
       ...opts,
       method: "PUT",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...localMemoryPolicies(agentId).find(
           (policy) => policy.scope === input.scope,
@@ -163,7 +169,7 @@ export async function upsertMemoryPolicy(
 export async function approveMemoryPolicy(
   agentId: string,
   scope: MemoryPolicyScope,
-  opts: UxWireupClientOptions = {},
+  opts: MemoryPolicyClientOptions = {},
 ): Promise<MemoryPolicy> {
   const fallback =
     localMemoryPolicies(agentId).find((policy) => policy.scope === scope) ??
@@ -175,6 +181,7 @@ export async function approveMemoryPolicy(
     {
       ...opts,
       method: "POST",
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...fallback,
         approval_status: "approved",
