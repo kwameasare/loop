@@ -30,6 +30,15 @@ describe("MemoryStudio", () => {
     expect(screen.getByTestId("memory-studio-safety")).toHaveTextContent(
       "durable user preference",
     );
+    expect(screen.getByTestId("memory-write-preview")).toHaveTextContent(
+      "Memory write preview",
+    );
+    expect(screen.getByTestId("memory-write-preview")).toHaveTextContent(
+      "Proposed value",
+    );
+    expect(screen.getByTestId("memory-write-preview")).toHaveTextContent(
+      "Approve automatically under current policy",
+    );
     expect(screen.getByTestId("memory-policy-panel")).toHaveTextContent(
       "Explicit consent required before durable write",
     );
@@ -38,10 +47,30 @@ describe("MemoryStudio", () => {
     );
   });
 
-  it("filters across session, user, episodic, and scratch memory", () => {
+  it("filters across enterprise and runtime memory scopes", () => {
     render(<MemoryStudio data={createMemoryStudioData("agent_support")} />);
 
-    fireEvent.click(screen.getByTestId("memory-scope-episodic"));
+    expect(screen.getByTestId("memory-scope-account")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("memory-scope-organization"),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("memory-scope-task")).toBeInTheDocument();
+    expect(screen.getByTestId("memory-scope-agent")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("memory-scope-account"));
+    expect(screen.getByTestId("memory-studio-explorer")).toHaveTextContent(
+      "account_plan_tier",
+    );
+    expect(screen.getByTestId("memory-studio-explorer")).not.toHaveTextContent(
+      "active_order_lookup",
+    );
+
+    fireEvent.click(screen.getByTestId("memory-scope-organization"));
+    expect(screen.getByTestId("memory-studio-explorer")).toHaveTextContent(
+      "escalation_contract_owner",
+    );
+
+    fireEvent.click(screen.getByTestId("memory-scope-task"));
     expect(screen.getByTestId("memory-studio-explorer")).toHaveTextContent(
       "refund_policy_context",
     );
@@ -52,6 +81,11 @@ describe("MemoryStudio", () => {
     fireEvent.click(screen.getByTestId("memory-scope-scratch"));
     expect(screen.getByTestId("memory-studio-explorer")).toHaveTextContent(
       "active_order_lookup",
+    );
+
+    fireEvent.click(screen.getByTestId("memory-scope-agent"));
+    expect(screen.getByTestId("memory-studio-explorer")).toHaveTextContent(
+      "refund_exception_guardrail",
     );
   });
 
