@@ -94,12 +94,20 @@ def test_adversarial_probe_creates_calm_catch_and_resolution_eval_cases(
         json={
             "intended_interpretation": "Apply the cap cumulatively per conversation.",
             "rejected_interpretation": "Do not split a refund into multiple calls to bypass cap.",
+            "proposed_patch": (
+                "Never approve refunds over $500 cumulatively within one conversation "
+                "without manual review."
+            ),
             "create_eval_cases": True,
         },
     )
     assert resolved.status_code == 200, resolved.text
     body = resolved.json()
     assert body["status"] == "resolved"
+    assert (
+        body["resolution"]["proposed_patch"]
+        == "Never approve refunds over $500 cumulatively within one conversation without manual review."
+    )
     assert len(body["eval_case_refs"]) == 2
 
     listed = client.get(

@@ -64,6 +64,21 @@ function defaultRejected(catchItem: AdversarialCatch | null): string {
   return "Do not let the agent silently pick an ambiguous interpretation.";
 }
 
+function defaultProposedPatch(
+  catchItem: AdversarialCatch | null,
+  intendedInterpretation: string,
+): string {
+  if (!catchItem) return "";
+  if (catchItem.question.toLowerCase().includes("cumulatively")) {
+    return "Never approve refunds over $500 cumulatively within one conversation without manual review.";
+  }
+  const intended = intendedInterpretation.trim();
+  if (intended) {
+    return `${catchItem.rule_text.trim()} Clarification: ${intended}`;
+  }
+  return `${catchItem.rule_text.trim()} Clarify the intended interpretation before promotion.`;
+}
+
 export function AdversarialCatchPanel({
   agentId,
   sentence,
@@ -79,6 +94,7 @@ export function AdversarialCatchPanel({
   const [resolved, setResolved] = useState<AdversarialCatch | null>(null);
   const [intended, setIntended] = useState("");
   const [rejected, setRejected] = useState("");
+  const [proposedPatch, setProposedPatch] = useState("");
   const [dismissReason, setDismissReason] = useState("");
   const [createEvalCases, setCreateEvalCases] = useState(true);
   const [budgetTokens, setBudgetTokens] = useState(2000);
@@ -96,6 +112,7 @@ export function AdversarialCatchPanel({
     setResolved(null);
     setIntended("");
     setRejected("");
+    setProposedPatch("");
     setDismissReason("");
     setError(null);
     if (!sentenceId) return;
@@ -114,11 +131,19 @@ export function AdversarialCatchPanel({
           response.items.find((item) => item.rule_id === sentenceId) ??
           null;
         setCatchItem(matching);
-        setResolved(
-          matching && matching.status !== "open" ? matching : null,
+        setResolved(matching && matching.status !== "open" ? matching : null);
+        const nextIntended =
+          matching?.resolution?.intended_interpretation ??
+          defaultIntended(matching);
+        setIntended(nextIntended);
+        setRejected(
+          matching?.resolution?.rejected_interpretation ??
+            defaultRejected(matching),
         );
-        setIntended(defaultIntended(matching));
-        setRejected(defaultRejected(matching));
+        setProposedPatch(
+          matching?.resolution?.proposed_patch ??
+            defaultProposedPatch(matching, nextIntended),
+        );
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -157,9 +182,11 @@ export function AdversarialCatchPanel({
     try {
       const response = await runProbe(agentId, probeInput);
       const nextCatch = response.catches[0] ?? null;
+      const nextIntended = defaultIntended(nextCatch);
       setCatchItem(nextCatch);
-      setIntended(defaultIntended(nextCatch));
+      setIntended(nextIntended);
       setRejected(defaultRejected(nextCatch));
+      setProposedPatch(defaultProposedPatch(nextCatch, nextIntended));
       setDismissReason("");
     } catch (err) {
       setError(
@@ -180,6 +207,7 @@ export function AdversarialCatchPanel({
       const response = await resolveCatch(agentId, catchItem.id, {
         intended_interpretation: kind === "resolve" ? intended : "",
         rejected_interpretation: kind === "resolve" ? rejected : "",
+        proposed_patch: kind === "resolve" ? proposedPatch : "",
         dismiss_reason:
           kind === "dismiss"
             ? dismissReason.trim() || "Builder dismissed this catch as covered."
@@ -329,6 +357,16 @@ export function AdversarialCatchPanel({
             />
           </label>
 
+          <label className="block text-xs font-medium text-muted-foreground">
+            Proposed behavior patch
+            <textarea
+              className="mt-1 min-h-20 w-full rounded-md border bg-background p-2 text-sm text-foreground"
+              value={proposedPatch}
+              onChange={(event) => setProposedPatch(event.currentTarget.value)}
+              data-testid="catch-proposed-patch"
+            />
+          </label>
+
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <input
               type="checkbox"
@@ -360,6 +398,7 @@ export function AdversarialCatchPanel({
                 resolving ||
                 !intended.trim() ||
                 !rejected.trim() ||
+                !proposedPatch.trim() ||
                 catchItem.status !== "open"
               }
               onClick={() => void handleResolve("resolve")}
@@ -393,7 +432,7 @@ export function AdversarialCatchPanel({
               <p data-testid="adversarial-catch-result">
                 {resolved.status === "dismissed"
                   ? "No eval cases were created."
-                  : `${resolved.eval_case_refs.length} eval cases were created from this answer.`}
+                  : `${resolved.eval_case_refs.length} eval cases were created from this answer. Proposed patch: ${resolved.resolution?.proposed_patch ?? proposedPatch}`}
               </p>
             </StatePanel>
           ) : null}

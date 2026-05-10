@@ -71,6 +71,8 @@ describe("AdversarialCatchPanel", () => {
           "Apply the cap cumulatively across the whole conversation.",
         rejected_interpretation:
           "Do not allow multiple tool calls to bypass the cap.",
+        proposed_patch:
+          "Never approve refunds over $500 cumulatively within one conversation without manual review.",
         dismiss_reason: "",
         created_by: "owner",
         created_at: "2026-05-09T00:00:00Z",
@@ -109,17 +111,25 @@ describe("AdversarialCatchPanel", () => {
     fireEvent.change(screen.getByTestId("catch-rejected"), {
       target: { value: "Cap applies only per tool call." },
     });
+    fireEvent.change(screen.getByTestId("catch-proposed-patch"), {
+      target: {
+        value:
+          "Never approve refunds over $500 cumulatively within one conversation without manual review.",
+      },
+    });
     fireEvent.click(screen.getByTestId("resolve-adversarial-catch"));
 
     expect(
       await screen.findByTestId("adversarial-catch-result"),
-    ).toHaveTextContent("2 eval cases");
+    ).toHaveTextContent("Proposed patch");
     expect(resolveCatch).toHaveBeenCalledWith(
       "agent_support",
       "catch_refund_cap",
       expect.objectContaining({
         intended_interpretation: "Cap applies cumulatively per conversation.",
         rejected_interpretation: "Cap applies only per tool call.",
+        proposed_patch:
+          "Never approve refunds over $500 cumulatively within one conversation without manual review.",
         create_eval_cases: true,
       }),
     );
@@ -172,6 +182,7 @@ describe("AdversarialCatchPanel", () => {
       resolution: {
         intended_interpretation: "",
         rejected_interpretation: "",
+        proposed_patch: "",
         dismiss_reason: "Covered by existing policy tests.",
         created_by: "owner",
         created_at: "2026-05-09T00:00:00Z",
@@ -225,7 +236,8 @@ describe("AdversarialCatchPanel", () => {
     const linkedCatch: AdversarialCatch = {
       ...CATCH,
       id: "catch_linked_refund_cap",
-      question: "Should the refund cap include all refunds in one conversation?",
+      question:
+        "Should the refund cap include all refunds in one conversation?",
       evidence_ref: "adversarial_probe/probe_refund_cap/linked",
     };
     const listCatches = vi.fn(async () => ({

@@ -36,6 +36,7 @@ class CatchResolutionCreate(BaseModel):
 
     intended_interpretation: str = Field(default="", max_length=2048)
     rejected_interpretation: str = Field(default="", max_length=2048)
+    proposed_patch: str = Field(default="", max_length=4096)
     dismiss_reason: str = Field(default="", max_length=1200)
     create_eval_cases: bool = True
 
@@ -247,6 +248,7 @@ class AdversarialCatchRegistry:
                         "resolution": {
                             "intended_interpretation": body.intended_interpretation,
                             "rejected_interpretation": body.rejected_interpretation,
+                            "proposed_patch": body.proposed_patch,
                             "dismiss_reason": body.dismiss_reason,
                             "created_by": actor_sub,
                             "created_at": now.isoformat(),
