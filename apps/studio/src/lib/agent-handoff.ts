@@ -127,6 +127,34 @@ export function localAgentHandoff(agentId: string): AgentHandoffModel {
         evidence_refs: [],
       },
       {
+        id: "tool-grants",
+        title: "Tool grants and contracts",
+        summary: "No live tool contracts loaded.",
+        count: 0,
+        evidence_refs: [],
+      },
+      {
+        id: "memory-policies",
+        title: "Memory policy changes",
+        summary: "No live memory policies loaded.",
+        count: 0,
+        evidence_refs: [],
+      },
+      {
+        id: "eval-coverage",
+        title: "Current eval coverage",
+        summary: "No agent-scoped eval evidence loaded.",
+        count: 0,
+        evidence_refs: [],
+      },
+      {
+        id: "risk-posture",
+        title: "Current risk posture",
+        summary: "One local risk is open.",
+        count: 1,
+        evidence_refs: [`commitment/${commitment.id}`],
+      },
+      {
         id: "important-comments",
         title: "Important reviewer comments",
         summary: "No resolved reviewer comments loaded.",
@@ -247,6 +275,14 @@ function evidenceHrefForAgent(agentId: string, evidenceRef: string): string {
       return `/agents/${encodedAgentId}/deploys?change_package_id=${encodedId}`;
     case "deployment":
       return `/agents/${encodedAgentId}/deploys?deployment_id=${encodedId}`;
+    case "tool-contract":
+      return `/agents/${encodedAgentId}/tools?tool_contract_id=${encodedId}`;
+    case "memory-policy":
+      return `/agents/${encodedAgentId}/memory?policy_id=${encodedId}`;
+    case "channel-binding":
+      return `/agents/${encodedAgentId}/channels?binding_id=${encodedId}`;
+    case "eval-suite":
+      return `/agents/${encodedAgentId}/evals?suite_id=${encodedId}`;
     case "incident":
       return `/agents/${encodedAgentId}/observe?incident_id=${encodedId}`;
     case "comment":

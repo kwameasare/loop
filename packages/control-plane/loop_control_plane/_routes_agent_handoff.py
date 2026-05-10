@@ -18,6 +18,7 @@ from loop_control_plane.agent_handoff import (
 )
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
+from loop_control_plane.channel_bindings import channel_readiness_state
 from loop_control_plane.workspaces import WorkspaceError
 
 router = APIRouter(prefix="/v1/agents", tags=["AgentHandoff"])
@@ -109,6 +110,33 @@ async def _handoff_model(request: Request, *, agent: Any) -> dict[str, Any]:
         workspace_id=agent.workspace_id,
         agent_id=agent.id,
     )
+    tool_contracts = await cp.tool_contracts.list_for_agent(agent=agent)
+    memory_policies = await cp.memory_policies.list_for_agent(agent=agent)
+    channel_bindings = await cp.channel_bindings.list_for_agent(agent=agent)
+    eval_suites = await cp.eval_suites.list_suites(agent.workspace_id)
+    agent_eval_refs: list[str] = []
+    agent_eval_case_count = 0
+    for suite in eval_suites:
+        suite_ref = f"eval-suite/{suite.id}"
+        try:
+            cases = await cp.eval_suites.list_cases(
+                workspace_id=agent.workspace_id,
+                suite_id=suite.id,
+            )
+        except Exception:
+            cases = []
+        suite_is_agent_scoped = suite.dataset_ref.startswith(f"agent:{agent.id}:")
+        case_refs = [
+            f"eval/{case.id}"
+            for case in cases
+            if suite_is_agent_scoped
+            or str(agent.id) in case.source_ref
+            or str(agent.id) in case.attachments
+        ]
+        if suite_is_agent_scoped or case_refs:
+            agent_eval_refs.append(suite_ref)
+            agent_eval_refs.extend(case_refs[:4])
+            agent_eval_case_count += len(case_refs)
     versions = await cp.agent_versions.list_for_agent(
         workspace_id=agent.workspace_id,
         agent_id=agent.id,
@@ -158,6 +186,44 @@ async def _handoff_model(request: Request, *, agent: Any) -> dict[str, Any]:
                 evidence_ref=f"incident/{open_incidents[0].id}",
             )
         )
+    blocked_tool_contracts = [
+        contract
+        for contract in tool_contracts
+        if contract.live_status in {"blocked", "review_required"}
+        or contract.approval_invalidated_at is not None
+    ]
+    if blocked_tool_contracts:
+        risks.append(
+            _risk(
+                risk_id="tool_contract_review_required",
+                severity="advisory",
+                title="Tool contract review is required",
+                detail=(
+                    f"{len(blocked_tool_contracts)} tool contract(s) are blocked, "
+                    "review-required, or invalidated."
+                ),
+                evidence_ref=f"tool-contract/{blocked_tool_contracts[0].id}",
+            )
+        )
+    blocked_memory_policies = [
+        policy
+        for policy in memory_policies
+        if policy.approval_status in {"blocked", "review_required"}
+        or policy.approval_invalidated_at is not None
+    ]
+    if blocked_memory_policies:
+        risks.append(
+            _risk(
+                risk_id="memory_policy_review_required",
+                severity="advisory",
+                title="Memory policy review is required",
+                detail=(
+                    f"{len(blocked_memory_policies)} memory policy/policies are "
+                    "blocked, review-required, or invalidated."
+                ),
+                evidence_ref=f"memory-policy/{blocked_memory_policies[0].id}",
+            )
+        )
     live_deployments = [
         deployment
         for deployment in deployments
@@ -171,6 +237,25 @@ async def _handoff_model(request: Request, *, agent: Any) -> dict[str, Any]:
                 title="Rollout is not settled",
                 detail=f"{len(live_deployments)} deployment(s) are still active.",
                 evidence_ref=f"deployment/{live_deployments[0].id}",
+            )
+        )
+    expected_channels = set(commitment.body.channels) or {
+        binding.channel_type for binding in channel_bindings if binding.status != "not_configured"
+    }
+    channel_blockers = [
+        binding
+        for binding in channel_bindings
+        if binding.channel_type in expected_channels
+        and channel_readiness_state(binding) != "ready"
+    ]
+    if channel_blockers:
+        risks.append(
+            _risk(
+                risk_id="channel_readiness_incomplete",
+                severity="advisory",
+                title="Channel readiness is incomplete",
+                detail=f"{len(channel_blockers)} channel binding(s) still have readiness blockers.",
+                evidence_ref=f"channel-binding/{channel_blockers[0].id}",
             )
         )
     sections = [
@@ -208,6 +293,50 @@ async def _handoff_model(request: Request, *, agent: Any) -> dict[str, Any]:
             summary=f"{len(incidents)} incident record(s).",
             count=len(incidents),
             evidence_refs=[f"incident/{item.id}" for item in incidents[:5]],
+        ),
+        _section(
+            section_id="tool-grants",
+            title="Tool grants and contracts",
+            summary=(
+                f"{len(tool_contracts)} durable tool contract(s), "
+                f"{len(blocked_tool_contracts)} requiring review."
+            ),
+            count=len(tool_contracts),
+            evidence_refs=[f"tool-contract/{item.id}" for item in tool_contracts[:5]],
+        ),
+        _section(
+            section_id="memory-policies",
+            title="Memory policy changes",
+            summary=(
+                f"{len(memory_policies)} memory policy/policies, "
+                f"{len(blocked_memory_policies)} requiring review."
+            ),
+            count=len(memory_policies),
+            evidence_refs=[f"memory-policy/{item.id}" for item in memory_policies[:5]],
+        ),
+        _section(
+            section_id="eval-coverage",
+            title="Current eval coverage",
+            summary=(
+                f"{len(agent_eval_refs)} agent-scoped eval evidence ref(s), "
+                f"{agent_eval_case_count} case(s)."
+            ),
+            count=agent_eval_case_count,
+            evidence_refs=agent_eval_refs[:5],
+        ),
+        _section(
+            section_id="risk-posture",
+            title="Current risk posture",
+            summary=(
+                f"{len(risks)} open risk(s): "
+                + (
+                    ", ".join(risk["id"] for risk in risks[:4])
+                    if risks
+                    else "none"
+                )
+            ),
+            count=len(risks),
+            evidence_refs=[risk["evidence_ref"] for risk in risks[:5]],
         ),
         _section(
             section_id="important-comments",

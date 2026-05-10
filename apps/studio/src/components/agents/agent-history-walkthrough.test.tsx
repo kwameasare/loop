@@ -56,10 +56,25 @@ describe("AgentHistoryWalkthrough", () => {
       },
     );
 
+    const initialModel = {
+      ...localAgentHandoff("agent_1"),
+      walkthrough_sections: localAgentHandoff(
+        "agent_1",
+      ).walkthrough_sections.map((section) =>
+        section.id === "tool-grants"
+          ? {
+              ...section,
+              count: 1,
+              evidence_refs: ["tool-contract/tc_refund"],
+            }
+          : section,
+      ),
+    };
+
     render(
       <AgentHistoryWalkthrough
         agentId="agent_1"
-        initialModel={localAgentHandoff("agent_1")}
+        initialModel={initialModel}
         transferAgentOwner={transferAgentOwner}
       />,
     );
@@ -73,12 +88,30 @@ describe("AgentHistoryWalkthrough", () => {
     expect(
       screen.getByTestId("walkthrough-section-commitments"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("walkthrough-section-tool-grants"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("walkthrough-section-memory-policies"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("walkthrough-section-eval-coverage"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("walkthrough-section-risk-posture"),
+    ).toBeInTheDocument();
     const commitmentLinks = screen.getAllByTestId(
       "handoff-evidence-link-commitment_commitment_unconfigured",
     );
     expect(commitmentLinks[0]).toHaveAttribute(
       "href",
       "/agents/agent_1/contract?commitment_id=commitment_unconfigured",
+    );
+    expect(
+      screen.getByTestId("handoff-evidence-link-tool-contract_tc_refund"),
+    ).toHaveAttribute(
+      "href",
+      "/agents/agent_1/tools?tool_contract_id=tc_refund",
     );
 
     fireEvent.change(screen.getByTestId("handoff-new-owner"), {
