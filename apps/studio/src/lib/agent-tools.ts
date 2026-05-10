@@ -125,6 +125,19 @@ export interface ToolsRoomTool {
   costPer1kUsd: number;
   evalCoveragePercent: number;
   evalConfidence: ConfidenceLevel;
+  successRatePercent: number;
+  p95LatencyMs: number;
+  retryRatePercent: number;
+  failedCalls7d: number;
+  piiSent7d: number;
+  lastSchemaChangeAt: string;
+  environment: string;
+  dataClassification: string;
+  idempotency: string;
+  allowedChannels: string[];
+  approvalRequirements: string;
+  auditRequirements: string;
+  compensationBehavior: string;
   timeoutMs: number;
   retryPolicy: string;
   rateLimit: string;
@@ -134,6 +147,7 @@ export interface ToolsRoomTool {
   productionBoundary: string;
   productionNextStep: string;
   schema: ToolSchemaField[];
+  outputSchema: ToolSchemaField[];
   sampleCall: string;
   mockResponse: string;
   safety: ToolSafetyContract;
@@ -263,6 +277,33 @@ function toolFromFixture(
     costPer1kUsd: isMoneyMovement ? 3.42 : 0.28,
     evalCoveragePercent: isMoneyMovement ? 84 : evalSuite.passRate,
     evalConfidence: evalSuite.confidence,
+    successRatePercent: isMoneyMovement ? 97.2 : 99.6,
+    p95LatencyMs: isMoneyMovement ? 840 : 210,
+    retryRatePercent: isMoneyMovement ? 0 : 0.7,
+    failedCalls7d: isMoneyMovement ? 14 : 5,
+    piiSent7d: isMoneyMovement ? 0 : 0,
+    lastSchemaChangeAt: isMoneyMovement
+      ? "2026-05-02T14:22:00Z"
+      : "2026-04-28T09:10:00Z",
+    environment: isMoneyMovement ? "staging" : "production",
+    dataClassification: isMoneyMovement
+      ? "financial action; no raw card data"
+      : "customer order metadata",
+    idempotency: isMoneyMovement
+      ? "Required: order_id + amount_cents + policy window"
+      : "Read-only; idempotent by request",
+    allowedChannels: isMoneyMovement
+      ? ["web_chat", "email"]
+      : ["web_chat", "whatsapp", "slack", "teams", "email"],
+    approvalRequirements: isMoneyMovement
+      ? "Release Manager approval and money cap review"
+      : "Tool owner review for schema changes",
+    auditRequirements: isMoneyMovement
+      ? "tool.refund.requested with reason and trace"
+      : "tool.order.lookup with trace span",
+    compensationBehavior: isMoneyMovement
+      ? "Create reversal ticket; no automatic retry"
+      : "Retry lookup or answer with uncertainty",
     timeoutMs: isMoneyMovement ? 3_000 : 1_500,
     retryPolicy: isMoneyMovement
       ? "No automatic retry; idempotency key required."
@@ -321,6 +362,39 @@ function toolFromFixture(
             required: false,
             sensitive: false,
             description: "Include refund and cancellation entitlement details.",
+          },
+        ],
+    outputSchema: isMoneyMovement
+      ? [
+          {
+            name: "refund_id",
+            type: "string",
+            required: true,
+            sensitive: false,
+            description: "Refund request identifier.",
+          },
+          {
+            name: "status",
+            type: "string",
+            required: true,
+            sensitive: false,
+            description: "Approval or completion status.",
+          },
+        ]
+      : [
+          {
+            name: "refund_window",
+            type: "string",
+            required: true,
+            sensitive: false,
+            description: "Policy window returned by lookup.",
+          },
+          {
+            name: "entitlements",
+            type: "json",
+            required: false,
+            sensitive: false,
+            description: "Entitlement summary for behavior grounding.",
           },
         ],
     sampleCall: isMoneyMovement
@@ -391,6 +465,19 @@ export function createToolsRoomData(
       costPer1kUsd: 0,
       evalCoveragePercent: 0,
       evalConfidence: "unsupported",
+      successRatePercent: 0,
+      p95LatencyMs: 0,
+      retryRatePercent: 0,
+      failedCalls7d: 0,
+      piiSent7d: 0,
+      lastSchemaChangeAt: "Not reviewed",
+      environment: "draft",
+      dataClassification: "Unclassified",
+      idempotency: "Review required",
+      allowedChannels: [],
+      approvalRequirements: "Review required",
+      auditRequirements: "Review required",
+      compensationBehavior: "Review required",
       timeoutMs: 1_000,
       retryPolicy: "Review required before retry policy is active.",
       rateLimit: "Review required",
@@ -401,6 +488,7 @@ export function createToolsRoomData(
         "Production grant unavailable until schema and auth are reviewed.",
       productionNextStep: "Complete safety contract and save a mock response.",
       schema: [],
+      outputSchema: [],
       sampleCall: "No sample call captured yet.",
       mockResponse: "{}",
       safety: {
