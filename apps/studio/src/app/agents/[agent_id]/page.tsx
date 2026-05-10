@@ -15,6 +15,7 @@ import {
   type ChannelBinding,
 } from "@/lib/channel-bindings";
 import { listDeployments, type Deployment } from "@/lib/deploys";
+import { listToolContracts, type ToolContract } from "@/lib/tool-contracts";
 import { getAgentDetailData } from "./agent-detail-data";
 
 interface AgentOverviewPageProps {
@@ -103,11 +104,23 @@ export default async function AgentOverviewPage({
       "Could not load channel bindings.",
     );
   }
+  let toolContracts: ToolContract[] = [];
+  let toolsDegradedReason: string | undefined;
+  try {
+    const result = await listToolContracts(params.agent_id);
+    toolContracts = result.items;
+  } catch (error) {
+    toolsDegradedReason = errorMessage(
+      error,
+      "Could not load tool contracts.",
+    );
+  }
   const combinedDegradedReason = [
     degradedReason,
     commitmentDegradedReason,
     deploymentsDegradedReason,
     channelsDegradedReason,
+    toolsDegradedReason,
   ]
     .filter(Boolean)
     .join(" ");
@@ -133,6 +146,8 @@ export default async function AgentOverviewPage({
       degradedReason={combinedDegradedReason || undefined}
       channelBindings={channelBindings}
       channelsDegradedReason={channelsDegradedReason}
+      toolContracts={toolContracts}
+      toolsDegradedReason={toolsDegradedReason}
       commitment={commitment}
     />
   );

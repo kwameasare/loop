@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildLocalCommitmentDocument } from "@/lib/agent-commitment";
 import { buildLocalChannelBindings } from "@/lib/channel-bindings";
+import { localToolContracts } from "@/lib/tool-contracts";
 
 import AgentOverviewPage from "./page";
 
@@ -93,6 +94,14 @@ describe("AgentOverviewPage", () => {
           ),
         });
       }
+      if (url.endsWith("/agents/agent_live/tool-contracts")) {
+        return Response.json({
+          items: localToolContracts("agent_live", [
+            "lookup_order",
+            "refund_payment",
+          ]),
+        });
+      }
       if (url.endsWith("/agents/agent_live")) {
         return Response.json({
           id: "agent_live",
@@ -118,6 +127,9 @@ describe("AgentOverviewPage", () => {
     );
     expect(screen.getByTestId("agent-outline-channels")).toHaveTextContent(
       "1/9 channel binding ready",
+    );
+    expect(screen.getByTestId("agent-outline-tools")).toHaveTextContent(
+      "2 tool contracts loaded",
     );
     expect(screen.queryByTestId("overview-deploy-unavailable")).toBeNull();
   });

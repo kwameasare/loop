@@ -26,6 +26,7 @@ import {
 } from "@/lib/design-tokens";
 import type { CommitmentDocument } from "@/lib/agent-commitment";
 import type { ChannelBinding } from "@/lib/channel-bindings";
+import type { ToolContract } from "@/lib/tool-contracts";
 import type { TargetDeploy, TargetEvalSuite } from "@/lib/target-ux";
 import { cn } from "@/lib/utils";
 import {
@@ -126,6 +127,8 @@ export interface AgentOverviewProps {
   degradedReason?: string | undefined;
   channelBindings?: ChannelBinding[] | undefined;
   channelsDegradedReason?: string | undefined;
+  toolContracts?: ToolContract[] | undefined;
+  toolsDegradedReason?: string | undefined;
   workbench?: Partial<AgentWorkbenchData>;
   commitment?: CommitmentDocument | undefined;
   /** Called when the user saves a new description. Allows integration with server actions. */
@@ -148,6 +151,16 @@ const STATUS_CLASS: Record<WorkbenchSectionStatus, string> = {
 
 interface ChannelWorkbenchSummary {
   supportedChannels: string[];
+  current: string;
+  lastChangedBy: string;
+  diffFromProduction: string;
+  validation: string;
+  evidence: string;
+  status: WorkbenchSectionStatus;
+}
+
+interface ToolWorkbenchSummary {
+  count: number;
   current: string;
   lastChangedBy: string;
   diffFromProduction: string;
@@ -277,6 +290,106 @@ function summarizeChannels(
   };
 }
 
+function hasBudgetCaps(contract: ToolContract): boolean {
+  return Object.keys(contract.budget_limits ?? {}).length > 0;
+}
+
+function summarizeToolContracts(
+  contracts: readonly ToolContract[] | undefined,
+  degradedReason?: string | undefined,
+): ToolWorkbenchSummary {
+  const all = contracts ?? [];
+  const moneyMoving = all.filter(
+    (contract) =>
+      contract.money_movement ||
+      contract.side_effect_level === "money_movement",
+  );
+  const reviewRequired = all.filter(
+    (contract) => contract.live_status === "review_required",
+  );
+  const blocked = all.filter((contract) => contract.live_status === "blocked");
+  const missingCaps = moneyMoving.filter((contract) => !hasBudgetCaps(contract));
+
+  if (degradedReason) {
+    return {
+      count: all.length,
+      current:
+        "Tool contract evidence is degraded; Studio is not claiming live tool readiness.",
+      lastChangedBy: "Live tool contract registry unavailable",
+      diffFromProduction: "No live tool diff loaded.",
+      validation: degradedReason,
+      evidence: "tool_contracts.degraded",
+      status: "watching",
+    };
+  }
+
+  if (all.length === 0) {
+    return {
+      count: 0,
+      current: "No tool contracts loaded.",
+      lastChangedBy: "No tool contract loaded",
+      diffFromProduction: "No tool contract diff loaded.",
+      validation: "New tools must start in sandbox and classify side effects.",
+      evidence: "tool_contracts.empty",
+      status: "blocked",
+    };
+  }
+
+  if (blocked.length > 0 || missingCaps.length > 0) {
+    return {
+      count: all.length,
+      current: `${all.length} tool contract${
+        all.length === 1 ? "" : "s"
+      } loaded; ${blocked.length} blocked; ${missingCaps.length} money-moving without caps.`,
+      lastChangedBy: "Loaded from tool contracts",
+      diffFromProduction:
+        "Production must stay blocked for unsafe or uncapped tool grants.",
+      validation:
+        missingCaps.length > 0
+          ? `Add budget caps before promoting ${missingCaps
+              .map((contract) => contract.name)
+              .join(", ")}.`
+          : `Resolve blocked live grants for ${blocked
+              .map((contract) => contract.name)
+              .join(", ")}.`,
+      evidence: [...blocked, ...missingCaps]
+        .map((contract) => contract.id)
+        .join(", "),
+      status: "blocked",
+    };
+  }
+
+  if (reviewRequired.length > 0) {
+    return {
+      count: all.length,
+      current: `${all.length} tool contract${
+        all.length === 1 ? "" : "s"
+      } loaded; ${moneyMoving.length} money-moving; ${reviewRequired.length} review-required.`,
+      lastChangedBy: "Loaded from tool contracts",
+      diffFromProduction:
+        "Live mode requires explicit promotion for review-required tools.",
+      validation: `Request approval before live use of ${reviewRequired
+        .map((contract) => contract.name)
+        .join(", ")}.`,
+      evidence: reviewRequired.map((contract) => contract.id).join(", "),
+      status: "blocked",
+    };
+  }
+
+  return {
+    count: all.length,
+    current: `${all.length} tool contract${
+      all.length === 1 ? "" : "s"
+    } loaded; ${moneyMoving.length} money-moving.`,
+    lastChangedBy: "Loaded from tool contracts",
+    diffFromProduction:
+      "Tool grants are governed by side-effect, owner, budget, and live status.",
+    validation: "Tool contracts are classified and ready for gated use.",
+    evidence: all.map((contract) => contract.id).join(", "),
+    status: "healthy",
+  };
+}
+
 function EditDescriptionModal({
   open,
   initial,
@@ -376,6 +489,7 @@ function buildSections(input: {
   deploy: TargetDeploy;
   hasProduction: boolean;
   channelSummary: ChannelWorkbenchSummary;
+  toolSummary: ToolWorkbenchSummary;
   commitment?: CommitmentDocument | undefined;
 }): AgentWorkbenchSection[] {
   const commitmentMissing =
@@ -451,12 +565,12 @@ function buildSections(input: {
     {
       id: "tools",
       label: "Tools",
-      current: input.toolPermissionSummary,
-      lastChangedBy: "No tool contract loaded",
-      diffFromProduction: "No tool contract diff loaded.",
-      validation: "New tools must start in sandbox and classify side effects.",
-      evidence: "tool_contracts.unconfigured",
-      status: "blocked",
+      current: input.toolSummary.current,
+      lastChangedBy: input.toolSummary.lastChangedBy,
+      diffFromProduction: input.toolSummary.diffFromProduction,
+      validation: input.toolSummary.validation,
+      evidence: input.toolSummary.evidence,
+      status: input.toolSummary.status,
     },
     {
       id: "knowledge",
@@ -552,6 +666,8 @@ function createDefaultWorkbenchData(
     | "updatedAt"
     | "channelBindings"
     | "channelsDegradedReason"
+    | "toolContracts"
+    | "toolsDegradedReason"
   > & { commitment?: CommitmentDocument | undefined },
 ): AgentWorkbenchData {
   const purpose =
@@ -600,6 +716,10 @@ function createDefaultWorkbenchData(
   const toolPermissionSummary = "No tool contracts loaded.";
   const knowledgeSummary = "No knowledge sources loaded.";
   const memoryPolicy = "No durable memory policy loaded.";
+  const toolSummary = summarizeToolContracts(
+    props.toolContracts,
+    props.toolsDegradedReason,
+  );
   const channelSummary = summarizeChannels(
     props.channelBindings,
     props.channelsDegradedReason,
@@ -656,10 +776,10 @@ function createDefaultWorkbenchData(
     budgetCap: "No budget cap loaded.",
     escalationRule: "No escalation rule loaded.",
     evalGate,
-    toolPermissionSummary,
+    toolPermissionSummary: toolSummary.current,
     knowledgeSummary,
     deploySummary,
-    toolsCount: 0,
+    toolsCount: toolSummary.count,
     knowledgeSources: 0,
     memoryFacts: 0,
     evalSuite,
@@ -675,6 +795,7 @@ function createDefaultWorkbenchData(
       deploy,
       hasProduction,
       channelSummary,
+      toolSummary,
       commitment: props.commitment,
     }),
     diff: {
@@ -828,6 +949,8 @@ export function AgentOverview({
   degradedReason,
   channelBindings,
   channelsDegradedReason,
+  toolContracts,
+  toolsDegradedReason,
   workbench,
   commitment,
   onDescriptionSave,
@@ -850,6 +973,8 @@ export function AgentOverview({
           updatedAt,
           channelBindings,
           channelsDegradedReason,
+          toolContracts,
+          toolsDegradedReason,
           commitment,
         }),
         workbench,
@@ -867,6 +992,8 @@ export function AgentOverview({
       updatedAt,
       channelBindings,
       channelsDegradedReason,
+      toolContracts,
+      toolsDegradedReason,
       workbench,
     ],
   );
@@ -1201,9 +1328,15 @@ export function AgentOverview({
             </p>
           </div>
           <div className="flex gap-2 text-xs text-muted-foreground">
-            <span>{data.toolsCount} tools</span>
-            <span>{data.knowledgeSources} sources</span>
-            <span>{data.memoryFacts} memory facts</span>
+            <span data-testid="agent-outline-tools-count">
+              {data.toolsCount} tools
+            </span>
+            <span data-testid="agent-outline-sources-count">
+              {data.knowledgeSources} sources
+            </span>
+            <span data-testid="agent-outline-memory-count">
+              {data.memoryFacts} memory facts
+            </span>
           </div>
         </div>
         <div className="grid gap-3" data-testid="agent-outline">

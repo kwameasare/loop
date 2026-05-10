@@ -11,6 +11,7 @@ import {
   buildLocalCommitmentDocument,
 } from "@/lib/agent-commitment";
 import { buildLocalChannelBindings } from "@/lib/channel-bindings";
+import { localToolContracts } from "@/lib/tool-contracts";
 
 const BASE_PROPS: AgentOverviewProps = {
   id: "ag_1",
@@ -192,6 +193,28 @@ describe("AgentOverview", () => {
     );
     expect(screen.getByTestId("overview-channels")).toHaveTextContent(
       "WhatsApp",
+    );
+  });
+
+  it("surfaces tool contract risk from real tool contracts", () => {
+    render(
+      <AgentOverview
+        {...BASE_PROPS}
+        toolContracts={localToolContracts("ag_1", [
+          "lookup_order",
+          "refund_payment",
+        ])}
+      />,
+    );
+
+    expect(screen.getByTestId("agent-outline-tools")).toHaveTextContent(
+      "2 tool contracts loaded; 1 money-moving; 1 review-required.",
+    );
+    expect(screen.getByTestId("agent-outline-tools")).toHaveTextContent(
+      "Request approval before live use of refund_payment",
+    );
+    expect(screen.getByTestId("agent-outline-tools-count")).toHaveTextContent(
+      "2 tools",
     );
   });
 
