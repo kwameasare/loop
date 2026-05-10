@@ -6,8 +6,15 @@
  * shared trace playhead.
  */
 
-import { TRACE_CLIENT, TRACE_PRODUCER, TRACE_SERVER } from "@/lib/design-tokens";
-import { listAuditEvents, type ListAuditEventsOptions } from "@/lib/audit-events";
+import {
+  TRACE_CLIENT,
+  TRACE_PRODUCER,
+  TRACE_SERVER,
+} from "@/lib/design-tokens";
+import {
+  listAuditEvents,
+  type ListAuditEventsOptions,
+} from "@/lib/audit-events";
 import {
   fetchTraceByTurnId,
   searchTraces,
@@ -41,7 +48,11 @@ export interface PresenceUser {
 
 export type ApprovalAxis = "behavior" | "eval" | "cost" | "latency";
 
-export type ApprovalState = "pending" | "approved" | "rejected" | "changes_requested";
+export type ApprovalState =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "changes_requested";
 
 export interface AxisApproval {
   axis: ApprovalAxis;
@@ -110,9 +121,7 @@ export function isChangesetReadyToMerge(cs: Changeset): boolean {
 }
 
 export function pendingAxes(cs: Changeset): readonly ApprovalAxis[] {
-  return cs.approvals
-    .filter((a) => a.state !== "approved")
-    .map((a) => a.axis);
+  return cs.approvals.filter((a) => a.state !== "approved").map((a) => a.axis);
 }
 
 // ---------------------------------------------------------------------------
@@ -131,6 +140,7 @@ export interface TraceEvent {
 
 export interface PairDebugSession {
   id: string;
+  agentId?: string;
   trace: readonly TraceEvent[];
   participants: readonly PresenceUser[];
   /** Current playhead offset in ms; clamped within trace range. */
@@ -320,6 +330,7 @@ export const FIXTURE_CHANGESET: Changeset = {
 
 export const FIXTURE_PAIR_DEBUG: PairDebugSession = {
   id: "pd_001",
+  agentId: "agent_fixture",
   participants: FIXTURE_PRESENCE.slice(0, 2),
   playheadMs: 1200,
   trace: [
@@ -373,7 +384,9 @@ export const EMPTY_PAIR_DEBUG: PairDebugSession = {
   trace: [],
 };
 
-function traceKind(category: Trace["spans"][number]["category"]): TraceEvent["kind"] {
+function traceKind(
+  category: Trace["spans"][number]["category"],
+): TraceEvent["kind"] {
   if (category === "tool" || category === "retrieval") return "tool_call";
   if (category === "llm") return "model_call";
   if (category === "policy" || category === "budget") return "guardrail";
@@ -385,7 +398,9 @@ function pairDebugFromTrace(trace: Trace): PairDebugSession {
   const spans = [...trace.spans].sort((a, b) => a.start_ns - b.start_ns);
   const traceEvents: TraceEvent[] = spans.map((span) => ({
     id: span.id,
-    ts: new Date(Date.UTC(2026, 4, 7) + span.start_ns / 1_000_000).toISOString(),
+    ts: new Date(
+      Date.UTC(2026, 4, 7) + span.start_ns / 1_000_000,
+    ).toISOString(),
     offsetMs: Math.round(span.start_ns / 1_000_000),
     kind: traceKind(span.category),
     summary: `${span.name} ${span.status}`,
@@ -393,6 +408,7 @@ function pairDebugFromTrace(trace: Trace): PairDebugSession {
   }));
   return {
     id: `pd_${trace.id.slice(0, 12)}`,
+    ...(trace.agentId ? { agentId: trace.agentId } : {}),
     participants: FIXTURE_PRESENCE.slice(0, 1),
     playheadMs: traceEvents[0]?.offsetMs ?? 0,
     trace: traceEvents.length > 0 ? traceEvents : FIXTURE_PAIR_DEBUG.trace,
