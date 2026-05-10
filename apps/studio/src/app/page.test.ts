@@ -1,8 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { homeContextWarnings, resolveHomeWorkspaceId } from "./page";
 
+const ORIGINAL_WORKSPACE = process.env.LOOP_DEFAULT_WORKSPACE_ID;
+
+function restoreEnv(key: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[key];
+  } else {
+    process.env[key] = value;
+  }
+}
+
 describe("resolveHomeWorkspaceId", () => {
+  afterEach(() => {
+    restoreEnv("LOOP_DEFAULT_WORKSPACE_ID", ORIGINAL_WORKSPACE);
+  });
+
   it("uses an existing agent workspace when agents are present", () => {
     expect(
       resolveHomeWorkspaceId(
@@ -37,6 +51,7 @@ describe("resolveHomeWorkspaceId", () => {
   });
 
   it("does not invent a local workspace id", () => {
+    delete process.env.LOOP_DEFAULT_WORKSPACE_ID;
     expect(resolveHomeWorkspaceId([], [], undefined)).toBeNull();
   });
 });
