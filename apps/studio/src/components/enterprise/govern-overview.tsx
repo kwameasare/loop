@@ -249,11 +249,25 @@ export function GovernOverview({
             </div>
             {exportResult ? (
               <div
-                className="rounded border border-success/30 bg-success/10 p-3 text-sm text-success"
+                className="space-y-2 rounded border border-success/30 bg-success/10 p-3 text-sm text-success"
                 data-testid="compliance-export-result"
               >
-                Export {exportResult.id} is ready with{" "}
-                {exportResult.artifact_refs.length} artifact refs.
+                <p>
+                  Export {exportResult.id} is ready with{" "}
+                  {exportResult.artifact_refs.length} artifact refs.
+                </p>
+                <a
+                  href={exportResult.download_url}
+                  className="inline-flex rounded border border-success/40 px-2 py-1 text-xs font-medium hover:bg-success/15"
+                  data-testid="compliance-export-download"
+                >
+                  Open export
+                </a>
+                {exportResult.secret_policy ? (
+                  <p className="text-xs text-success/80">
+                    {exportResult.secret_policy}
+                  </p>
+                ) : null}
               </div>
             ) : null}
             {exportError ? (

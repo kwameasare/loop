@@ -262,7 +262,25 @@ def test_compliance_evidence_export_is_audited(
     assert export["sections"] == ["change_packages", "approvals", "audit_events"]
     assert any(ref.startswith("change-package/") for ref in export["artifact_refs"])
     assert export["download_url"].endswith(export["id"])
+    assert export["expires_at"]
+    assert "plaintext credentials" in export["secret_policy"]
+
+    download = client.get(export["download_url"], headers=_auth())
+    assert download.status_code == 200, download.text
+    downloaded = download.json()
+    assert downloaded["id"] == export["id"]
+    assert downloaded["sections"] == export["sections"]
+    assert downloaded["artifact_refs"] == export["artifact_refs"]
+
+    missing = client.get(
+        f"/v1/workspaces/{workspace_id}/compliance-review/evidence-exports/cex_missing",
+        headers=_auth(),
+    )
+    assert missing.status_code == 404
 
     audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=_auth())
     assert audit.status_code == 200, audit.text
-    assert "compliance:evidence_export" in {item["action"] for item in audit.json()["items"]}
+    assert {
+        "compliance:evidence_export",
+        "compliance:evidence_export_download",
+    }.issubset({item["action"] for item in audit.json()["items"]})

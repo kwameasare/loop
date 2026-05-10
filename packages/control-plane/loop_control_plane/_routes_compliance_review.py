@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -19,6 +20,10 @@ from loop_control_plane.compliance_review import (
 from loop_control_plane.eval_suites import serialise_case, serialise_suite
 
 router = APIRouter(prefix="/v1/workspaces", tags=["ComplianceReview"])
+
+
+def _export_bucket(request: Request) -> dict[str, dict[str, Any]]:
+    return request.app.state.cp.ux_wireup.setdefault("compliance_evidence_exports", {})
 
 
 async def _review_payload(
@@ -240,6 +245,12 @@ async def create_compliance_evidence_export(
         evidence_packs_by_agent=evidence_packs_by_agent,
         actor_sub=caller_sub,
     )
+    export["expires_at"] = (datetime.now(UTC) + timedelta(days=7)).isoformat()
+    export["secret_policy"] = (
+        "Raw secrets, plaintext credentials, and customer PII are never included "
+        "in compliance evidence exports."
+    )
+    _export_bucket(request)[export["id"]] = export
     record_audit_event(
         workspace_id=workspace_id,
         actor_sub=caller_sub,
@@ -253,6 +264,41 @@ async def create_compliance_evidence_export(
             "format": body.format,
             "sections": export["sections"],
             "artifact_count": len(export["artifact_refs"]),
+        },
+    )
+    return export
+
+
+@router.get("/{workspace_id}/compliance-review/evidence-exports/{export_id}")
+async def download_compliance_evidence_export(
+    request: Request,
+    workspace_id: UUID,
+    export_id: str,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    await authorize_workspace_access(
+        workspaces=request.app.state.cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    export = _export_bucket(request).get(export_id)
+    if export is None or export.get("workspace_id") != str(workspace_id):
+        raise HTTPException(status_code=404, detail="compliance evidence export not found")
+    if datetime.fromisoformat(str(export["expires_at"])) <= datetime.now(UTC):
+        raise HTTPException(status_code=410, detail="compliance evidence export expired")
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="compliance:evidence_export_download",
+        resource_type="compliance_evidence_export",
+        resource_id=export_id,
+        store=request.app.state.cp.audit_events,
+        request_id=request_id(request),
+        payload={
+            "agent_id": export.get("agent_id"),
+            "format": export.get("format"),
+            "sections": export.get("sections", []),
+            "artifact_count": len(export.get("artifact_refs", [])),
         },
     )
     return export

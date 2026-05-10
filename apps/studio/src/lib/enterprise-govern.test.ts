@@ -131,6 +131,9 @@ describe("compliance review client", () => {
           "/v1/workspaces/workspace_1/compliance-review/evidence-exports/cex_1",
         generated_by: "owner-1",
         generated_at: "2026-05-09T00:00:00Z",
+        expires_at: "2026-05-16T00:00:00Z",
+        secret_policy:
+          "Raw secrets, plaintext credentials, and customer PII are never included in compliance evidence exports.",
       }),
     );
 
@@ -145,6 +148,8 @@ describe("compliance review client", () => {
     );
 
     expect(exportResult.id).toBe("cex_1");
+    expect(exportResult.expires_at).toBe("2026-05-16T00:00:00Z");
+    expect(exportResult.secret_policy).toContain("plaintext credentials");
     expect(fetcher).toHaveBeenCalledWith(
       "https://cp.test/v1/workspaces/workspace_1/compliance-review/evidence-export",
       expect.objectContaining({
