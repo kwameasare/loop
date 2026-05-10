@@ -27,6 +27,7 @@ import {
 import type { CommitmentDocument } from "@/lib/agent-commitment";
 import type { ChannelBinding } from "@/lib/channel-bindings";
 import type { EvalSuite } from "@/lib/evals";
+import type { KbDocument } from "@/lib/kb";
 import type { MemoryPolicy } from "@/lib/memory-policies";
 import type { ToolContract } from "@/lib/tool-contracts";
 import type { TargetDeploy, TargetEvalSuite } from "@/lib/target-ux";
@@ -135,6 +136,8 @@ export interface AgentOverviewProps {
   memoryDegradedReason?: string | undefined;
   evalSuites?: EvalSuite[] | undefined;
   evalsDegradedReason?: string | undefined;
+  knowledgeDocuments?: KbDocument[] | undefined;
+  knowledgeDegradedReason?: string | undefined;
   workbench?: Partial<AgentWorkbenchData>;
   commitment?: CommitmentDocument | undefined;
   /** Called when the user saves a new description. Allows integration with server actions. */
@@ -176,6 +179,16 @@ interface ToolWorkbenchSummary {
 }
 
 interface MemoryWorkbenchSummary {
+  count: number;
+  current: string;
+  lastChangedBy: string;
+  diffFromProduction: string;
+  validation: string;
+  evidence: string;
+  status: WorkbenchSectionStatus;
+}
+
+interface KnowledgeWorkbenchSummary {
   count: number;
   current: string;
   lastChangedBy: string;
@@ -571,6 +584,89 @@ function summarizeEvalSuites(
   };
 }
 
+function summarizeKnowledgeDocuments(
+  documents: readonly KbDocument[] | undefined,
+  degradedReason?: string | undefined,
+): KnowledgeWorkbenchSummary {
+  const all = documents ?? [];
+  const ready = all.filter((document) => document.status === "ready");
+  const indexing = all.filter((document) => document.status === "indexing");
+  const errored = all.filter((document) => document.status === "error");
+  const totalBytes = all.reduce((sum, document) => sum + document.bytes, 0);
+
+  if (degradedReason) {
+    return {
+      count: all.length,
+      current:
+        "Knowledge source evidence is degraded; Studio is not claiming retrieval readiness.",
+      lastChangedBy: "Live KB document registry unavailable",
+      diffFromProduction: "No retrieval diff loaded.",
+      validation: degradedReason,
+      evidence: "knowledge_sources.degraded",
+      status: "watching",
+    };
+  }
+
+  if (all.length === 0) {
+    return {
+      count: 0,
+      current: "No knowledge sources loaded.",
+      lastChangedBy: "No knowledge source loaded",
+      diffFromProduction: "No retrieval diff loaded.",
+      validation: "Add sources and run retrieval checks before first proof.",
+      evidence: "knowledge_sources.empty",
+      status: "watching",
+    };
+  }
+
+  if (errored.length > 0) {
+    return {
+      count: all.length,
+      current: `${all.length} knowledge source${
+        all.length === 1 ? "" : "s"
+      } loaded; ${errored.length} failed sync${
+        errored.length === 1 ? "" : "s"
+      }.`,
+      lastChangedBy: "Loaded from KB document registry",
+      diffFromProduction:
+        "Failed knowledge syncs must block promotion for affected answers.",
+      validation: `Fix failed source${errored.length === 1 ? "" : "s"}: ${errored
+        .map((document) => document.name)
+        .join(", ")}.`,
+      evidence: errored.map((document) => document.id).join(", "),
+      status: "blocked",
+    };
+  }
+
+  if (indexing.length > 0) {
+    return {
+      count: all.length,
+      current: `${all.length} knowledge source${
+        all.length === 1 ? "" : "s"
+      } loaded; ${ready.length} ready; ${indexing.length} indexing.`,
+      lastChangedBy: "Loaded from KB document registry",
+      diffFromProduction: "Retrieval readiness is pending indexing completion.",
+      validation:
+        "Wait for indexing and run retrieval checks before first proof.",
+      evidence: indexing.map((document) => document.id).join(", "),
+      status: "watching",
+    };
+  }
+
+  return {
+    count: all.length,
+    current: `${ready.length} knowledge source${
+      ready.length === 1 ? "" : "s"
+    } ready; ${(totalBytes / 1024).toFixed(1)} KB indexed.`,
+    lastChangedBy: "Loaded from KB document registry",
+    diffFromProduction:
+      "Retrieval changes must be covered by source and chunk evidence.",
+    validation: "Knowledge sources are indexed; run retrieval evals before deploy.",
+    evidence: ready.map((document) => document.id).join(", "),
+    status: "healthy",
+  };
+}
+
 function EditDescriptionModal({
   open,
   initial,
@@ -662,7 +758,6 @@ function liveBadgeTone(state: ObjectState) {
 function buildSections(input: {
   purpose: string;
   toolPermissionSummary: string;
-  knowledgeSummary: string;
   memoryPolicy: string;
   evalGate: string;
   deploySummary: string;
@@ -672,6 +767,7 @@ function buildSections(input: {
   channelSummary: ChannelWorkbenchSummary;
   toolSummary: ToolWorkbenchSummary;
   memorySummary: MemoryWorkbenchSummary;
+  knowledgeSummary: KnowledgeWorkbenchSummary;
   commitment?: CommitmentDocument | undefined;
 }): AgentWorkbenchSection[] {
   const commitmentMissing =
@@ -757,12 +853,12 @@ function buildSections(input: {
     {
       id: "knowledge",
       label: "Knowledge",
-      current: input.knowledgeSummary,
-      lastChangedBy: "No knowledge source loaded",
-      diffFromProduction: "No retrieval diff loaded.",
-      validation: "Add sources and run retrieval checks before first proof.",
-      evidence: "knowledge_sources.unconfigured",
-      status: "watching",
+      current: input.knowledgeSummary.current,
+      lastChangedBy: input.knowledgeSummary.lastChangedBy,
+      diffFromProduction: input.knowledgeSummary.diffFromProduction,
+      validation: input.knowledgeSummary.validation,
+      evidence: input.knowledgeSummary.evidence,
+      status: input.knowledgeSummary.status,
     },
     {
       id: "memory",
@@ -854,6 +950,8 @@ function createDefaultWorkbenchData(
     | "memoryDegradedReason"
     | "evalSuites"
     | "evalsDegradedReason"
+    | "knowledgeDocuments"
+    | "knowledgeDegradedReason"
   > & { commitment?: CommitmentDocument | undefined },
 ): AgentWorkbenchData {
   const purpose =
@@ -895,7 +993,6 @@ function createDefaultWorkbenchData(
         }),
   };
   const toolPermissionSummary = "No tool contracts loaded.";
-  const knowledgeSummary = "No knowledge sources loaded.";
   const memoryPolicy = "No durable memory policy loaded.";
   const toolSummary = summarizeToolContracts(
     props.toolContracts,
@@ -904,6 +1001,10 @@ function createDefaultWorkbenchData(
   const memorySummary = summarizeMemoryPolicies(
     props.memoryPolicies,
     props.memoryDegradedReason,
+  );
+  const knowledgeSummary = summarizeKnowledgeDocuments(
+    props.knowledgeDocuments,
+    props.knowledgeDegradedReason,
   );
   const channelSummary = summarizeChannels(
     props.channelBindings,
@@ -962,17 +1063,16 @@ function createDefaultWorkbenchData(
     escalationRule: "No escalation rule loaded.",
     evalGate,
     toolPermissionSummary: toolSummary.current,
-    knowledgeSummary,
+    knowledgeSummary: knowledgeSummary.current,
     deploySummary,
     toolsCount: toolSummary.count,
-    knowledgeSources: 0,
+    knowledgeSources: knowledgeSummary.count,
     memoryFacts: memorySummary.count,
     evalSuite,
     deploy,
     sections: buildSections({
       purpose,
       toolPermissionSummary,
-      knowledgeSummary,
       memoryPolicy,
       evalGate,
       deploySummary,
@@ -982,6 +1082,7 @@ function createDefaultWorkbenchData(
       channelSummary,
       toolSummary,
       memorySummary,
+      knowledgeSummary,
       commitment: props.commitment,
     }),
     diff: {
@@ -1141,6 +1242,8 @@ export function AgentOverview({
   memoryDegradedReason,
   evalSuites,
   evalsDegradedReason,
+  knowledgeDocuments,
+  knowledgeDegradedReason,
   workbench,
   commitment,
   onDescriptionSave,
@@ -1169,6 +1272,8 @@ export function AgentOverview({
           memoryDegradedReason,
           evalSuites,
           evalsDegradedReason,
+          knowledgeDocuments,
+          knowledgeDegradedReason,
           commitment,
         }),
         workbench,
@@ -1192,6 +1297,8 @@ export function AgentOverview({
       memoryDegradedReason,
       evalSuites,
       evalsDegradedReason,
+      knowledgeDocuments,
+      knowledgeDegradedReason,
       workbench,
     ],
   );

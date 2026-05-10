@@ -8,7 +8,15 @@ interface AgentKbPageProps {
 }
 
 export default async function AgentKbPage({ params }: AgentKbPageProps) {
-  const { items, degraded_reason } = await listKbDocuments(params.agent_id);
+  const { items, degraded_reason } = await listKbDocuments(
+    params.agent_id,
+  ).catch((error: unknown) => ({
+    items: [],
+    degraded_reason:
+      error instanceof Error
+        ? `Knowledge service error: ${error.message}`
+        : "Knowledge service error: Studio cannot verify source documents right now.",
+  }));
   return (
     <div data-testid="agent-kb">
       <KnowledgeAtelier
