@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createBehaviorEditorData,
@@ -10,6 +10,13 @@ import {
 import { BehaviorEditor } from "./behavior-editor";
 
 describe("BehaviorEditor", () => {
+  const previousBaseUrl = process.env.LOOP_CP_API_BASE_URL;
+
+  afterEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = previousBaseUrl;
+    vi.unstubAllGlobals();
+  });
+
   it("renders the behavior surface with three modes, semantic diff, eval coverage, and preview", () => {
     render(<BehaviorEditor data={createBehaviorEditorData("agent_support")} />);
 
@@ -98,6 +105,20 @@ describe("BehaviorEditor", () => {
   });
 
   it("previews style-transfer rewrites with eval deltas", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        items: [
+          {
+            voice: "formal",
+            rewrite: "Answer refund questions with a formal policy citation.",
+            eval_delta: 0.02,
+            evidence_ref: "style-transfer/agent_support/formal",
+          },
+        ],
+      }),
+    );
+    vi.stubGlobal("fetch", fetcher);
     render(<BehaviorEditor data={createBehaviorEditorData("agent_support")} />);
 
     fireEvent.click(screen.getByTestId("style-transfer-run"));
@@ -105,6 +126,22 @@ describe("BehaviorEditor", () => {
     expect(
       await screen.findByTestId("style-transfer-results"),
     ).toHaveTextContent("formal voice");
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agent_support/style-transfer",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("requires backend style-transfer before showing voice rewrites", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+    render(<BehaviorEditor data={createBehaviorEditorData("agent_support")} />);
+
+    fireEvent.click(screen.getByTestId("style-transfer-run"));
+
+    expect(
+      await screen.findByText(/LOOP_CP_API_BASE_URL is required/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("style-transfer-results")).not.toBeInTheDocument();
   });
 
   it("keeps apply blocked until preview policy checks pass", () => {

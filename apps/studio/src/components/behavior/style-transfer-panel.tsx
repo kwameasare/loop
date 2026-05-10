@@ -29,12 +29,14 @@ export function StyleTransferPanel({
     if (!trimmed) return;
     setRunning(true);
     setError(null);
+    setItems([]);
     try {
       const result = await cpJson<{ items: StyleTransferItem[] }>(
         `/agents/${encodeURIComponent(agentId)}/style-transfer`,
         {
           method: "POST",
           body: { section: trimmed },
+          allowFallback: false,
           fallback: {
             items: ["formal", "casual", "empathetic", "concise", "expert"].map(
               (voice, index) => ({
