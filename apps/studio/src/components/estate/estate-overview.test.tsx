@@ -23,6 +23,7 @@ const HEALTH: EstateHealth = {
     open_incidents: 0,
     blocked_deploys: 1,
     owner_risks: 1,
+    open_catches: 2,
   },
   attention: [
     {
@@ -138,6 +139,8 @@ describe("EstateOverview", () => {
       "Live cp-api",
     );
     expect(screen.getByTestId("estate-overview")).toHaveTextContent("12");
+    expect(screen.getByTestId("estate-overview")).toHaveTextContent("Catches");
+    expect(screen.getByTestId("estate-overview")).toHaveTextContent("2");
     expect(screen.getByTestId("estate-attention")).toHaveTextContent(
       "1 change set needs approval",
     );

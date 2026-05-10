@@ -88,6 +88,7 @@ describe("estate health", () => {
         open_incidents: 0,
         blocked_deploys: 1,
         owner_risks: 0,
+        open_catches: 0,
       },
       attention: [],
       rollout_health: [

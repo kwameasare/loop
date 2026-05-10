@@ -36,6 +36,7 @@ export interface EstateHealthSummary {
   open_incidents: number;
   blocked_deploys: number;
   owner_risks: number;
+  open_catches: number;
 }
 
 export interface EstateSharedDependency {
@@ -149,6 +150,7 @@ const EMPTY_SUMMARY: EstateHealthSummary = {
   open_incidents: 0,
   blocked_deploys: 0,
   owner_risks: 0,
+  open_catches: 0,
 };
 
 function nowIso(): string {

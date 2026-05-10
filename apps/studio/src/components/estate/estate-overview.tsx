@@ -148,6 +148,12 @@ export function EstateOverview({ health }: { health: EstateHealth }) {
           detail={`${summary.trace_errors} trace error(s), ${summary.eval_suites} eval suite(s)`}
           icon={TestTube2}
         />
+        <Metric
+          label="Catches"
+          value={summary.open_catches}
+          detail="Open adversarial questions waiting for builder interpretation"
+          icon={AlertTriangle}
+        />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
