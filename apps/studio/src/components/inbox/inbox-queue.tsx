@@ -105,7 +105,7 @@ export function InboxQueue(props: InboxQueueProps) {
       <header className="flex flex-wrap items-center gap-2 text-sm">
         <select
           aria-label="Filter by team"
-          className="rounded border px-2 py-1"
+          className="rounded border bg-background px-2 py-1"
           data-testid="queue-filter-team"
           onChange={(e) => {
             setTeamId(e.target.value);
@@ -122,7 +122,7 @@ export function InboxQueue(props: InboxQueueProps) {
         </select>
         <select
           aria-label="Filter by agent"
-          className="rounded border px-2 py-1"
+          className="rounded border bg-background px-2 py-1"
           data-testid="queue-filter-agent"
           onChange={(e) => {
             setAgentId(e.target.value);
@@ -139,7 +139,7 @@ export function InboxQueue(props: InboxQueueProps) {
         </select>
         <select
           aria-label="Filter by channel"
-          className="rounded border px-2 py-1"
+          className="rounded border bg-background px-2 py-1"
           data-testid="queue-filter-channel"
           onChange={(e) => {
             setChannel(e.target.value as InboxChannel | "all");
@@ -155,7 +155,7 @@ export function InboxQueue(props: InboxQueueProps) {
         </select>
         <select
           aria-label="Filter by status"
-          className="rounded border px-2 py-1"
+          className="rounded border bg-background px-2 py-1"
           data-testid="queue-filter-status"
           onChange={(e) => {
             setStatus(e.target.value as InboxStatus | "all");
@@ -179,7 +179,7 @@ export function InboxQueue(props: InboxQueueProps) {
 
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm" data-testid="queue-table">
-          <thead className="bg-zinc-50 text-left text-xs uppercase text-zinc-500">
+          <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
             <tr>
               {SORTABLE.map((col) => {
                 const isActive = sortBy === col.key;
@@ -187,7 +187,7 @@ export function InboxQueue(props: InboxQueueProps) {
                 return (
                   <th className="px-3 py-2" key={col.key}>
                     <button
-                      className="flex items-center gap-1 text-xs font-semibold uppercase text-zinc-500 hover:text-zinc-900"
+                      className="flex items-center gap-1 text-xs font-semibold uppercase text-muted-foreground hover:text-foreground"
                       data-testid={`queue-sort-${col.key}`}
                       onClick={() => toggleSort(col.key)}
                       type="button"
@@ -205,14 +205,17 @@ export function InboxQueue(props: InboxQueueProps) {
           <tbody>
             {result.items.length === 0 ? (
               <tr data-testid="queue-empty">
-                <td className="px-3 py-6 text-center text-zinc-500" colSpan={7}>
+                <td
+                  className="px-3 py-6 text-center text-muted-foreground"
+                  colSpan={7}
+                >
                   No items match the current filters.
                 </td>
               </tr>
             ) : (
               result.items.map((item) => (
                 <tr
-                  className="border-t hover:bg-zinc-50"
+                  className="border-t hover:bg-muted"
                   data-testid={`queue-row-${item.id}`}
                   key={item.id}
                 >
@@ -221,7 +224,7 @@ export function InboxQueue(props: InboxQueueProps) {
                   </td>
                   <td className="px-3 py-2 font-medium">
                     <Link
-                      className="text-blue-600 hover:underline"
+                      className="text-info hover:underline"
                       data-testid={`queue-link-${item.id}`}
                       href={`/inbox/conversation/${encodeURIComponent(
                         item.conversation_id,
@@ -235,10 +238,10 @@ export function InboxQueue(props: InboxQueueProps) {
                     <span
                       className={
                         item.status === "pending"
-                          ? "rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-700"
+                          ? "rounded border border-warning/30 bg-warning/10 px-2 py-0.5 text-xs text-warning"
                           : item.status === "claimed"
-                            ? "rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700"
-                            : "rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700"
+                            ? "rounded border border-info/30 bg-info/10 px-2 py-0.5 text-xs text-info"
+                            : "rounded border border-success/30 bg-success/10 px-2 py-0.5 text-xs text-success"
                       }
                     >
                       {item.status}
@@ -251,7 +254,7 @@ export function InboxQueue(props: InboxQueueProps) {
                     {agentName.get(item.agent_id) ?? item.agent_id}
                   </td>
                   <td
-                    className="px-3 py-2 text-xs text-zinc-600"
+                    className="px-3 py-2 text-xs text-muted-foreground"
                     data-testid={`queue-preview-${item.id}`}
                   >
                     <span className="line-clamp-1">
@@ -271,7 +274,7 @@ export function InboxQueue(props: InboxQueueProps) {
         </span>
         <div className="flex gap-2">
           <button
-            className="rounded border px-2 py-1 disabled:opacity-50"
+            className="rounded border bg-background px-2 py-1 hover:bg-muted disabled:opacity-50"
             data-testid="queue-prev"
             disabled={result.page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -280,7 +283,7 @@ export function InboxQueue(props: InboxQueueProps) {
             Prev
           </button>
           <button
-            className="rounded border px-2 py-1 disabled:opacity-50"
+            className="rounded border bg-background px-2 py-1 hover:bg-muted disabled:opacity-50"
             data-testid="queue-next"
             disabled={result.page >= result.page_count}
             onClick={() => setPage((p) => p + 1)}

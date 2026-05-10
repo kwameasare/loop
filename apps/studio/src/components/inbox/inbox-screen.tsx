@@ -219,7 +219,7 @@ export function InboxScreen(props: Props): JSX.Element {
       <main className="flex-1 rounded-lg border" data-testid="inbox-detail">
         {actionError ? (
           <p
-            className="border-b px-6 py-3 text-sm text-red-600"
+            className="border-b px-6 py-3 text-sm text-destructive"
             role="alert"
             data-testid="inbox-action-error"
           >
