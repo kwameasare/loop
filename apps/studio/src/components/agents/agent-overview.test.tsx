@@ -209,6 +209,35 @@ describe("AgentOverview", () => {
       "href",
       "/agents/ag_1/contract",
     );
+    expect(screen.getByTestId("agent-intake-landing")).toHaveTextContent(
+      "Draft readiness checklist",
+    );
+    expect(screen.getByTestId("intake-readiness-commitment")).toHaveTextContent(
+      "Commitment accepted",
+    );
+    expect(screen.getByTestId("intake-readiness-commitment")).toHaveTextContent(
+      "blocked",
+    );
+    expect(
+      screen
+        .getByTestId("intake-readiness-commitment")
+        .querySelector("a"),
+    ).toHaveAttribute("href", "/agents/ag_1/contract");
+    expect(screen.getByTestId("intake-readiness-channels")).toHaveTextContent(
+      "1 draft channel binding created",
+    );
+    expect(
+      screen.getByTestId("intake-readiness-channels").querySelector("a"),
+    ).toHaveAttribute("href", "/agents/ag_1/channels");
+    expect(screen.getByTestId("intake-readiness-tools")).toHaveTextContent(
+      "1 mock tool contract created",
+    );
+    expect(screen.getByTestId("intake-readiness-risk")).toHaveTextContent(
+      "No unresolved intake risk",
+    );
+    expect(screen.getByTestId("intake-readiness-preflight")).toHaveTextContent(
+      "Generate a Change Package",
+    );
   });
 
   it("does not fake intake details when the focused intake cannot load", () => {
