@@ -55,7 +55,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, State> {
       return (
         <div
           data-testid="error-boundary-fallback"
-          className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900"
+          className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
         >
           <p className="font-semibold">Something went wrong.</p>
           <p className="mt-1 text-xs">{error.message}</p>
@@ -63,7 +63,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, State> {
             type="button"
             onClick={this.reset}
             data-testid="error-boundary-reset"
-            className="mt-2 rounded-md border border-red-300 px-2 py-1 text-xs"
+            className="mt-2 rounded-md border border-destructive/30 bg-background px-2 py-1 text-xs hover:bg-destructive/10"
           >
             Try again
           </button>
