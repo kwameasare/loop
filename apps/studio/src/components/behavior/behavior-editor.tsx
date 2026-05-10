@@ -215,6 +215,26 @@ function SentenceButton({
           <RiskBadge key={flag.id} flag={flag} />
         ))}
       </span>
+      {selected ? (
+        <span
+          className="mt-3 grid gap-1 sm:grid-cols-4"
+          data-testid={`behavior-context-actions-${sentence.id}`}
+        >
+          {(
+            ["Explain", "Show source", "Fix this", "Save as eval"] as const
+          ).map((action) => (
+            <span
+              key={action}
+              className="rounded-md border bg-card px-2 py-1 text-center text-xs font-medium text-foreground"
+              data-testid={`behavior-action-${action
+                .toLowerCase()
+                .replace(/\s+/g, "-")}-${sentence.id}`}
+            >
+              {action}
+            </span>
+          ))}
+        </span>
+      ) : null}
     </button>
   );
 }
