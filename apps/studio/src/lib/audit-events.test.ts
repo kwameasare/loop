@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { EMPTY_FILTERS } from "@/components/workspaces/audit-log-page";
-import { filterAuditRows, listAuditEvents } from "./audit-events";
+import {
+  AUDIT_EVENTS_CP_API_REQUIRED,
+  filterAuditRows,
+  listAuditEvents,
+} from "./audit-events";
 
 describe("audit-events", () => {
   it("loads and maps cp-api audit events", async () => {
@@ -36,6 +40,12 @@ describe("audit-events", () => {
       action: "agent.promote",
       resourceType: "agent_version",
     });
+  });
+
+  it("fails closed when cp-api base URL is not configured", async () => {
+    await expect(listAuditEvents("ws-1")).rejects.toThrow(
+      AUDIT_EVENTS_CP_API_REQUIRED,
+    );
   });
 
   it("filters rows by action and outcome", () => {

@@ -247,5 +247,7 @@ describe("AuditLogPage (S631)", () => {
       />,
     );
     expect(screen.getByTestId("audit-log-error").textContent).toMatch(/500/);
+    expect(screen.getByTestId("audit-log-unavailable")).toBeInTheDocument();
+    expect(screen.queryByTestId("audit-log-empty")).not.toBeInTheDocument();
   });
 });

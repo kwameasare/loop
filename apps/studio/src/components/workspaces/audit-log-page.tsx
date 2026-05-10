@@ -251,7 +251,15 @@ export function AuditLogPage({
                 </td>
               </tr>
             )}
-            {!loading && events.length === 0 && (
+            {!loading && errorMessage && events.length === 0 && (
+              <tr data-testid="audit-log-unavailable">
+                <td colSpan={6} className="px-2 py-3 text-xs text-muted-foreground">
+                  Audit events are unavailable. Resolve the control-plane
+                  connection to inspect workspace evidence.
+                </td>
+              </tr>
+            )}
+            {!loading && !errorMessage && events.length === 0 && (
               <tr data-testid="audit-log-empty">
                 <td colSpan={6} className="px-2 py-3 text-xs text-muted-foreground">
                   No audit events match the current filters.
