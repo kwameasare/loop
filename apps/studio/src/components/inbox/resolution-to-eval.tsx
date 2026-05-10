@@ -59,7 +59,7 @@ export function ResolutionToEval({
   if (savedSuiteId) {
     return (
       <section
-        className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900"
+        className="rounded-lg border border-success/40 bg-success/10 p-3 text-sm text-success"
         data-testid="resolution-to-eval-saved"
       >
         <p className="font-medium">Saved as eval case · suite {savedSuiteId}</p>
@@ -73,22 +73,22 @@ export function ResolutionToEval({
 
   return (
     <section
-      className="space-y-3 rounded-lg border bg-white p-3 text-sm"
+      className="space-y-3 rounded-lg border bg-card p-3 text-sm"
       data-testid="resolution-to-eval"
       aria-label="Save resolution as eval case"
     >
       <header>
         <h3 className="text-sm font-semibold">Save resolution as eval case</h3>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted-foreground">
           One click promotes this human resolution into the eval suite. The
           trace, tool evidence, and retrieval chunks are attached automatically.
         </p>
       </header>
 
       <label className="block text-xs">
-        <span className="font-medium text-zinc-700">Expected outcome</span>
+        <span className="font-medium text-foreground">Expected outcome</span>
         <textarea
-          className="mt-1 w-full rounded border px-2 py-1 text-sm"
+          className="mt-1 w-full rounded border bg-background px-2 py-1 text-sm"
           data-testid="resolution-expected"
           rows={3}
           value={draft.expectedOutcome}
@@ -99,9 +99,9 @@ export function ResolutionToEval({
       </label>
 
       <label className="block text-xs">
-        <span className="font-medium text-zinc-700">Failure reason</span>
+        <span className="font-medium text-foreground">Failure reason</span>
         <input
-          className="mt-1 w-full rounded border px-2 py-1 text-sm"
+          className="mt-1 w-full rounded border bg-background px-2 py-1 text-sm"
           data-testid="resolution-failure-reason"
           value={draft.failureReason}
           onChange={(e) =>
@@ -110,7 +110,7 @@ export function ResolutionToEval({
         />
       </label>
 
-      <ul className="rounded border bg-zinc-50 p-2 text-xs" data-testid="resolution-attachments">
+      <ul className="rounded border bg-muted/45 p-2 text-xs" data-testid="resolution-attachments">
         <li>
           Linked trace: <span className="font-mono">{ctx.resolutionEvidenceRef}</span>
         </li>
@@ -120,7 +120,7 @@ export function ResolutionToEval({
 
       {errorMsg ? (
         <p
-          className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700"
+          className="rounded border border-destructive/40 bg-destructive/10 px-2 py-1 text-xs text-destructive"
           data-testid="resolution-to-eval-error"
           role="alert"
         >
@@ -131,7 +131,7 @@ export function ResolutionToEval({
       <div className="flex justify-end">
         <button
           type="button"
-          className="rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           data-testid="resolution-save-eval"
           disabled={
             busy ||
