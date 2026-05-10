@@ -13,6 +13,7 @@ export interface ProductionConversationCandidate {
   title: string;
   agentName: string;
   agentId: string;
+  channelBindingId: string | undefined;
   sourceVersion: string;
   draftVersion: string;
   snapshotId: string;
@@ -92,12 +93,46 @@ export interface ReplayWorkbenchModel {
   degradedReason?: string | undefined;
 }
 
+export interface ReplayForkResult {
+  ok: true;
+  branch: {
+    id: string;
+    name: string;
+    base_version_id: string;
+    status: string;
+  };
+  change_set: {
+    id: string;
+    name: string;
+    source_type: string;
+    source_refs: string[];
+    status: string;
+  };
+  evidence_refs: string[];
+  next_url: string;
+}
+
+export interface ReplayEvalCaseResult {
+  ok: true;
+  suite_id: string;
+  case_id: string;
+  case: {
+    id: string;
+    name: string;
+    source: string;
+    source_ref: string;
+  };
+  evidence_refs: string[];
+  next_url: string;
+}
+
 const conversations: readonly ProductionConversationCandidate[] = [
   {
     id: "prod_refund_legal",
     title: "Cancellation with legal threat",
     agentName: "Acme Support Concierge",
     agentId: "11111111-1111-4111-8111-111111111111",
+    channelBindingId: "web_chat",
     sourceVersion: "v23.1.4",
     draftVersion: "draft/refund-clarity",
     snapshotId: "snap_refund_may",
@@ -111,6 +146,7 @@ const conversations: readonly ProductionConversationCandidate[] = [
     title: "Spanish refund paraphrase",
     agentName: "Acme Support Concierge",
     agentId: "11111111-1111-4111-8111-111111111111",
+    channelBindingId: "whatsapp",
     sourceVersion: "v23.1.4",
     draftVersion: "draft/refund-clarity",
     snapshotId: "snap_refund_may",
@@ -124,6 +160,7 @@ const conversations: readonly ProductionConversationCandidate[] = [
     title: "Angry repeat customer asks for manager",
     agentName: "Acme Support Concierge",
     agentId: "11111111-1111-4111-8111-111111111111",
+    channelBindingId: "web_chat",
     sourceVersion: "v23.1.4",
     draftVersion: "draft/refund-clarity",
     snapshotId: "snap_refund_may",
@@ -323,6 +360,7 @@ function liveConversation(trace: TraceSummary, index: number): ProductionConvers
     title: trace.root_name || `Production turn ${index + 1}`,
     agentName: trace.agent_name,
     agentId: trace.agent_id,
+    channelBindingId: trace.channel_binding_id,
     sourceVersion: "production",
     draftVersion: "active draft",
     snapshotId: `snap-${trace.id.slice(0, 8)}`,
@@ -503,4 +541,105 @@ export async function replayAgainstDraft(
       })),
     })),
   };
+}
+
+export async function forkReplayFrame(
+  agentId: string,
+  args: {
+    traceId: string;
+    frameId: string;
+    sourceVersionRef: string;
+    snapshotId?: string;
+    evidenceRef: string;
+    purpose: string;
+  },
+  opts: UxWireupClientOptions = {},
+): Promise<ReplayForkResult> {
+  return cpJson<ReplayForkResult>(
+    `/agents/${encodeURIComponent(agentId)}/replay/forks`,
+    {
+      ...opts,
+      method: "POST",
+      body: {
+        trace_id: args.traceId,
+        frame_id: args.frameId,
+        source_version_ref: args.sourceVersionRef,
+        snapshot_id: args.snapshotId,
+        evidence_ref: args.evidenceRef,
+        purpose: args.purpose,
+      },
+      allowFallback: false,
+      fallback: {
+        ok: true,
+        branch: {
+          id: "",
+          name: "",
+          base_version_id: args.sourceVersionRef,
+          status: "active",
+        },
+        change_set: {
+          id: "",
+          name: "",
+          source_type: "trace_replay_frame",
+          source_refs: [],
+          status: "draft",
+        },
+        evidence_refs: [],
+        next_url: "",
+      },
+    },
+  );
+}
+
+export async function saveReplayAsEvalCase(
+  agentId: string,
+  args: {
+    title: string;
+    traceId: string;
+    frameId: string;
+    sourceVersionRef: string;
+    draftBranchRef: string;
+    channel: string;
+    snapshotId?: string;
+    expectedBehavior: string;
+    failureReason: string;
+    replayRef: string;
+    riskTags: readonly string[];
+  },
+  opts: UxWireupClientOptions = {},
+): Promise<ReplayEvalCaseResult> {
+  return cpJson<ReplayEvalCaseResult>(
+    `/agents/${encodeURIComponent(agentId)}/replay/eval-cases`,
+    {
+      ...opts,
+      method: "POST",
+      body: {
+        title: args.title,
+        trace_id: args.traceId,
+        frame_id: args.frameId,
+        source_version_ref: args.sourceVersionRef,
+        draft_branch_ref: args.draftBranchRef,
+        channel: args.channel,
+        snapshot_id: args.snapshotId,
+        expected_behavior: args.expectedBehavior,
+        failure_reason: args.failureReason,
+        replay_ref: args.replayRef,
+        risk_tags: args.riskTags,
+      },
+      allowFallback: false,
+      fallback: {
+        ok: true,
+        suite_id: "",
+        case_id: "",
+        case: {
+          id: "",
+          name: args.title,
+          source: "production-replay",
+          source_ref: args.traceId,
+        },
+        evidence_refs: [],
+        next_url: "",
+      },
+    },
+  );
 }

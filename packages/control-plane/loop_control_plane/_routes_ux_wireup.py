@@ -19,8 +19,15 @@ from pydantic import BaseModel, Field
 from starlette.websockets import WebSocketDisconnect
 
 from loop_control_plane._app_common import CALLER, request_id
+from loop_control_plane.agent_workflow import (
+    BranchCreate,
+    ChangeSetCreate,
+    branch_payload,
+    change_set_payload,
+)
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
+from loop_control_plane.eval_suites import EvalCaseCreate, serialise_case
 from loop_control_plane.tool_contracts import ToolContractUpsert, tool_contract_payload
 from loop_control_plane.trace_search import TraceQuery
 
@@ -40,6 +47,26 @@ async def _agent_workspace(request: Request, agent_id: UUID) -> UUID:
     if agent is None:
         raise HTTPException(status_code=404, detail="unknown agent")
     return agent.workspace_id
+
+
+async def _authorize_agent_record(
+    request: Request,
+    *,
+    agent_id: UUID,
+    caller_sub: str,
+    required_role: Role | None = None,
+) -> Any:
+    cp = request.app.state.cp
+    agent = getattr(cp.agents, "_agents", {}).get(agent_id)
+    if agent is None:
+        raise HTTPException(status_code=404, detail="unknown agent")
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=agent.workspace_id,
+        user_sub=caller_sub,
+        required_role=required_role,
+    )
+    return agent
 
 
 async def _authorize_agent(
@@ -149,6 +176,38 @@ class ReplayAgainstDraftBody(BaseModel):
     trace_ids: list[str] = Field(min_length=1, max_length=100)
     draft_branch_ref: str = Field(min_length=1, max_length=128)
     compare_version_ref: str | None = Field(default=None, max_length=128)
+
+
+class ReplayForkBody(BaseModel):
+    trace_id: str = Field(min_length=1, max_length=160)
+    frame_id: str = Field(min_length=1, max_length=160)
+    source_version_ref: str = Field(default="production", max_length=160)
+    draft_branch_ref: str | None = Field(default=None, max_length=160)
+    snapshot_id: str | None = Field(default=None, max_length=160)
+    evidence_ref: str = Field(min_length=1, max_length=512)
+    purpose: str = Field(default="Investigate replay frame", max_length=512)
+
+
+class ReplayEvalCaseBody(BaseModel):
+    title: str = Field(min_length=1, max_length=256)
+    trace_id: str = Field(min_length=1, max_length=160)
+    frame_id: str = Field(min_length=1, max_length=160)
+    source_version_ref: str = Field(min_length=1, max_length=160)
+    draft_branch_ref: str = Field(min_length=1, max_length=160)
+    channel: str = Field(default="unknown", max_length=120)
+    snapshot_id: str | None = Field(default=None, max_length=160)
+    expected_behavior: str = Field(min_length=1, max_length=4096)
+    failure_reason: str = Field(min_length=1, max_length=1200)
+    replay_ref: str = Field(min_length=1, max_length=512)
+    risk_tags: list[str] = Field(default_factory=list, max_length=25)
+
+
+def _safe_ref(value: str, *, max_length: int = 40) -> str:
+    lowered = value.strip().lower()
+    safe = "".join(ch if ch.isalnum() else "-" for ch in lowered)
+    while "--" in safe:
+        safe = safe.replace("--", "-")
+    return safe.strip("-")[:max_length] or uuid4().hex[:8]
 
 
 def _replay_diff_for_trace(trace_id: str, draft_ref: str) -> dict[str, Any]:
@@ -262,6 +321,173 @@ async def replay_version_diff(
         payload=body.model_dump(mode="json"),
     )
     return {"items": items}
+
+
+@router_agents.post("/{agent_id}/replay/forks", status_code=201)
+async def fork_replay_frame(
+    request: Request,
+    agent_id: UUID,
+    body: ReplayForkBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    agent = await _authorize_agent_record(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    cp = request.app.state.cp
+    branch_name = body.draft_branch_ref or (
+        "fork/"
+        f"{_safe_ref(body.trace_id, max_length=12)}-"
+        f"{_safe_ref(body.frame_id, max_length=24)}"
+    )
+    branch = await cp.agent_workflows.create_branch(
+        agent=agent,
+        body=BranchCreate(name=branch_name, base_version_id=body.source_version_ref),
+        actor_sub=caller_sub,
+    )
+    change_set = await cp.agent_workflows.create_change_set(
+        agent=agent,
+        body=ChangeSetCreate(
+            branch_id=branch.id,
+            name=f"Replay fork from {body.frame_id}",
+            summary=body.purpose,
+            source_type="trace_replay_frame",
+            source_refs=[
+                body.trace_id,
+                body.frame_id,
+                body.evidence_ref,
+                *([body.snapshot_id] if body.snapshot_id else []),
+            ],
+            changed_objects=[
+                {
+                    "type": "replay_frame",
+                    "id": body.frame_id,
+                    "trace_id": body.trace_id,
+                    "source_version_ref": body.source_version_ref,
+                    "snapshot_id": body.snapshot_id,
+                    "evidence_ref": body.evidence_ref,
+                    "purpose": body.purpose,
+                }
+            ],
+        ),
+        actor_sub=caller_sub,
+    )
+    _audit(
+        request,
+        workspace_id=agent.workspace_id,
+        caller_sub=caller_sub,
+        action="replay:fork_from_frame",
+        resource_type="agent_branch",
+        resource_id=branch.id,
+        payload={
+            "agent_id": str(agent_id),
+            "trace_id": body.trace_id,
+            "frame_id": body.frame_id,
+            "change_set_id": change_set.id,
+            "evidence_ref": body.evidence_ref,
+        },
+    )
+    return {
+        "ok": True,
+        "branch": branch_payload(branch),
+        "change_set": change_set_payload(change_set),
+        "evidence_refs": [body.trace_id, body.frame_id, body.evidence_ref],
+        "next_url": f"/agents/{agent_id}/workflow?branch_id={branch.id}",
+    }
+
+
+@router_agents.post("/{agent_id}/replay/eval-cases", status_code=201)
+async def create_replay_eval_case(
+    request: Request,
+    agent_id: UUID,
+    body: ReplayEvalCaseBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    agent = await _authorize_agent_record(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    cp = request.app.state.cp
+    suite = await cp.eval_suites.get_or_create_suite(
+        workspace_id=agent.workspace_id,
+        name="Production replay regressions",
+        dataset_ref="production-replay-regressions",
+        metrics=["behavior_match", "trace_regression", "channel_format"],
+        actor_sub=caller_sub,
+    )
+    attachments = [
+        body.trace_id,
+        body.frame_id,
+        body.replay_ref,
+        *([body.snapshot_id] if body.snapshot_id else []),
+    ]
+    case = await cp.eval_suites.add_case(
+        workspace_id=agent.workspace_id,
+        suite_id=suite.id,
+        body=EvalCaseCreate(
+            name=body.title,
+            input={
+                "agent_id": str(agent_id),
+                "source_trace": body.trace_id,
+                "frame_id": body.frame_id,
+                "channel": body.channel,
+                "source_version_ref": body.source_version_ref,
+                "draft_branch_ref": body.draft_branch_ref,
+                "snapshot_id": body.snapshot_id,
+                "failure_reason": body.failure_reason,
+                "risk_tags": body.risk_tags,
+            },
+            expected={"behavior": body.expected_behavior},
+            scorers=[
+                {
+                    "kind": "trace_regression",
+                    "config": {
+                        "trace_id": body.trace_id,
+                        "frame_id": body.frame_id,
+                        "replay_ref": body.replay_ref,
+                    },
+                },
+                {
+                    "kind": "llm_judge",
+                    "config": {"rubric": "expected replay behavior"},
+                },
+            ],
+            source="production-replay",
+            source_ref=body.trace_id,
+            attachments=attachments,
+        ),
+        actor_sub=caller_sub,
+    )
+    _audit(
+        request,
+        workspace_id=agent.workspace_id,
+        caller_sub=caller_sub,
+        action="replay:eval_case_create",
+        resource_type="eval_case",
+        resource_id=str(case.id),
+        payload={
+            "agent_id": str(agent_id),
+            "suite_id": str(suite.id),
+            "trace_id": body.trace_id,
+            "frame_id": body.frame_id,
+            "source_version_ref": body.source_version_ref,
+            "draft_branch_ref": body.draft_branch_ref,
+            "channel": body.channel,
+            "risk_tags": body.risk_tags,
+        },
+    )
+    return {
+        "ok": True,
+        "suite_id": str(suite.id),
+        "case_id": str(case.id),
+        "case": serialise_case(case),
+        "evidence_refs": attachments,
+        "next_url": f"/agents/{agent_id}/evals?case_id={case.id}",
+    }
 
 
 # ---------------------------------------------------------------------------
