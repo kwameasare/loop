@@ -1,5 +1,3 @@
-import { targetUxFixtures } from "@/lib/target-ux";
-
 /**
  * Cost dashboard data + reducers.
  *
@@ -121,49 +119,6 @@ const DEFAULT_RATES: RatesCentsPerUnit = {
   tool_calls: 50,
   retrievals: 10,
 };
-
-const TRACE_LINE_ITEMS: CostLineItem[] = [
-  {
-    id: "model_input",
-    label: "Model input",
-    formula: "812 input tokens x trace meter",
-    cents: 1.22,
-    evidence: "trace_refund_742 span_answer input_usd",
-    state: "ready",
-  },
-  {
-    id: "model_output",
-    label: "Model output",
-    formula: "146 output tokens x trace meter",
-    cents: 2.54,
-    evidence: "trace_refund_742 span_answer output_usd",
-    state: "ready",
-  },
-  {
-    id: "tool_lookup",
-    label: "Tool calls",
-    formula: "lookup_order tool meter",
-    cents: 0.4,
-    evidence: "trace_refund_742 span_tool tool_usd",
-    state: "ready",
-  },
-  {
-    id: "retrieval",
-    label: "Retrieval",
-    formula: "refund_policy top-k retrieval",
-    cents: 0.16,
-    evidence: "trace_refund_742 span_context tool_usd",
-    state: "ready",
-  },
-  {
-    id: "runtime",
-    label: "Runtime",
-    formula: "No runtime meter emitted",
-    cents: 0,
-    evidence: "Unsupported: usage rollup has no runtime line item",
-    state: "unsupported",
-  },
-];
 
 export type CostFilters = {
   agent_id: string;
@@ -623,6 +578,7 @@ function topCostBy(
     | "customer_segment"
     | "tool_name"
     | "retrieval_source"
+    | "trace_id"
   >,
   rates: RatesCentsPerUnit = DEFAULT_RATES,
 ): { label: string; cents: number } | null {
@@ -638,6 +594,47 @@ function topCostBy(
       .map(([label, cents]) => ({ label, cents }))
       .sort((a, b) => b.cents - a.cents)[0] ?? null
   );
+}
+
+function lineItemFromMetric(
+  records: UsageRecord[],
+  metric: UsageMetric,
+  input: {
+    id: string;
+    label: string;
+    formula: string;
+    unsupported: string;
+    rates: RatesCentsPerUnit;
+  },
+): CostLineItem {
+  const matching = records.filter((record) => record.metric === metric);
+  const quantity = matching.reduce((sum, record) => sum + record.quantity, 0);
+  if (quantity <= 0) {
+    return {
+      id: input.id,
+      label: input.label,
+      formula: input.unsupported,
+      cents: 0,
+      evidence: `Unsupported: no ${metric} usage rows in the current filter`,
+      state: "unsupported",
+    };
+  }
+  const traceIds = [
+    ...new Set(
+      matching.flatMap((record) => (record.trace_id ? [record.trace_id] : [])),
+    ),
+  ];
+  return {
+    id: input.id,
+    label: input.label,
+    formula: `${quantity.toLocaleString()} ${input.formula}`,
+    cents: quantity * (input.rates[metric] ?? 0),
+    evidence:
+      traceIds.length > 0
+        ? `Usage rollup trace evidence: ${traceIds.slice(0, 3).join(", ")}`
+        : `Usage rollup ${metric} metadata`,
+    state: "ready",
+  };
 }
 
 function surfaceFromTop(
@@ -688,23 +685,54 @@ export function buildCostCapacityModel(
     rates_cents_per_unit: rates,
   });
   const turns = totalTurns(records);
-  const activeAgent =
-    targetUxFixtures.agents.find(
-      (agent) => agent.id === targetUxFixtures.workspace.activeAgentId,
-    ) ?? targetUxFixtures.agents[0];
-  const perTurnCents =
-    turns > 0
-      ? summary.total_cents / turns
-      : (activeAgent?.costPerTurnUsd ?? 0) * 100;
-  const traceCostCents = (activeAgent?.costPerTurnUsd ?? 0) * 100;
+  const hasTurns = turns > 0;
+  const perTurnCents = hasTurns ? summary.total_cents / turns : 0;
   const topAgent = summary.by_agent[0]
     ? {
         label: summary.by_agent[0].agent_name,
         cents: summary.by_agent[0].cents,
       }
     : null;
+  const topTrace = topCostBy(records, "trace_id", rates);
 
-  const lineItems = TRACE_LINE_ITEMS.map((item) => ({ ...item }));
+  const lineItems: CostLineItem[] = [
+    lineItemFromMetric(records, "tokens.in", {
+      id: "model_input",
+      label: "Model input",
+      formula: "input token units x configured rate",
+      unsupported: "No input-token meter emitted",
+      rates,
+    }),
+    lineItemFromMetric(records, "tokens.out", {
+      id: "model_output",
+      label: "Model output",
+      formula: "output token units x configured rate",
+      unsupported: "No output-token meter emitted",
+      rates,
+    }),
+    lineItemFromMetric(records, "tool_calls", {
+      id: "tool_lookup",
+      label: "Tool calls",
+      formula: "tool-call units x configured rate",
+      unsupported: "No tool-call meter emitted",
+      rates,
+    }),
+    lineItemFromMetric(records, "retrievals", {
+      id: "retrieval",
+      label: "Retrieval",
+      formula: "retrieval units x configured rate",
+      unsupported: "No retrieval meter emitted",
+      rates,
+    }),
+    {
+      id: "runtime",
+      label: "Runtime",
+      formula: "No runtime meter emitted",
+      cents: 0,
+      evidence: "Unsupported: usage rollup has no runtime line item",
+      state: "unsupported",
+    },
+  ];
   const totalLineItemCents = lineItems.reduce(
     (sum, item) => sum + item.cents,
     0,
@@ -717,23 +745,21 @@ export function buildCostCapacityModel(
         label: "Per turn",
         value: formatUSD(perTurnCents),
         detail:
-          turns > 0
+          hasTurns
             ? `${Math.round(turns).toLocaleString()} turns in current filter`
-            : `${activeAgent?.name ?? "Active agent"} target fixture`,
+            : "Unsupported",
         evidence:
-          turns > 0
+          hasTurns
             ? "Usage rollup turn_count metadata"
-            : "Shared target UX active agent costPerTurnUsd",
-        state: turns > 0 ? "ready" : "degraded",
+            : "Unsupported: no turn_count metadata in the current filter",
+        state: hasTurns ? "ready" : "unsupported",
       },
-      {
-        id: "per_trace",
-        label: "Per trace",
-        value: formatUSD(traceCostCents),
-        detail: "trace_refund_742",
-        evidence: "Trace Theater fixture cost summary",
-        state: "ready",
-      },
+      surfaceFromTop(
+        "per_trace",
+        "Per trace",
+        topTrace,
+        "Usage rollup trace_id metadata",
+      ),
       surfaceFromTop(
         "per_agent",
         "Per agent",
