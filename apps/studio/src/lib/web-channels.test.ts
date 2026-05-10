@@ -88,13 +88,14 @@ describe("web-channels (cp-api mode)", () => {
     expect(headers.authorization).toBe("Bearer studio-token");
   });
 
-  it("getWebChannel maps 404 to disabled binding", async () => {
+  it("getWebChannel marks 404 as degraded instead of a deliberately disabled channel", async () => {
     const fetcher = vi.fn(async () => new Response("", { status: 404 }));
     const binding = await getWebChannel("agt_demo", {
       fetcher: fetcher as unknown as typeof fetch,
       baseUrl: "https://api.example.com/v1",
     });
     expect(binding.status).toBe("disabled");
+    expect(binding.degradedReason).toMatch(/web channel route returned 404/i);
   });
 
   it("disableWebChannel surfaces non-2xx as Error", async () => {
