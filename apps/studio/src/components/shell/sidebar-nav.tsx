@@ -130,6 +130,13 @@ export function buildNavSections(
           summary: "Preflight, canary, rollback, approvals",
           icon: Rocket,
         },
+        {
+          id: "deploy-safety",
+          href: "/deploy/safety",
+          label: "Pre-Promote Safety",
+          summary: "What could break, replay diffs, live bisect, snapshots",
+          icon: ShieldCheck,
+        },
         ...(agentId
           ? [
               {

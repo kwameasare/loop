@@ -67,6 +67,10 @@ describe("SidebarNav", () => {
     const active = screen.getByTestId("nav-agents");
     expect(active).toHaveAttribute("aria-current", "page");
     fireEvent.click(screen.getByRole("button", { name: /ship/i }));
+    expect(screen.getByTestId("nav-deploy-safety")).toHaveAttribute(
+      "href",
+      "/deploy/safety",
+    );
     const inactive = screen.getByTestId("nav-money");
     expect(inactive).not.toHaveAttribute("aria-current");
   });
@@ -84,6 +88,11 @@ describe("SidebarNav", () => {
         .flatMap((section) => section.items)
         .find((item) => item.id === "deploys")?.href,
     ).toBe("/deploys");
+    expect(
+      withoutAgent
+        .flatMap((section) => section.items)
+        .find((item) => item.id === "deploy-safety")?.href,
+    ).toBe("/deploy/safety");
     expect(
       withoutAgent
         .flatMap((section) => section.items)
