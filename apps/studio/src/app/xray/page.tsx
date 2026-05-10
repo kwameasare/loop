@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import { StatePanel } from "@/components/target";
 import { AgentXrayPanel } from "@/components/trace/xray/agent-xray-panel";
 import { fetchAgentXrayTraces } from "@/lib/agent-xray";
@@ -41,7 +42,15 @@ function XrayPageBody(): JSX.Element {
     };
   }, [active]);
 
-  if (wsLoading || !active || (!traces && !error)) {
+  if (wsLoading) {
+    return (
+      <main className="mx-auto w-full max-w-7xl p-6">
+        <p className="text-sm text-muted-foreground">Loading Agent X-Ray...</p>
+      </main>
+    );
+  }
+  if (!active) return <WorkspaceRequiredState title="Agent X-Ray" />;
+  if (!traces && !error) {
     return (
       <main className="mx-auto w-full max-w-7xl p-6">
         <p className="text-sm text-muted-foreground">Loading Agent X-Ray...</p>

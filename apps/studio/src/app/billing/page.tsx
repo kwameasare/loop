@@ -17,6 +17,7 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { BillingPanel } from "@/components/billing/billing-panel";
 import { InvoiceList } from "@/components/billing/invoice-list";
 import { UpdatePaymentMethod } from "@/components/billing/update-payment-method";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   fetchBillingSummary,
   fetchInvoices,
@@ -63,7 +64,7 @@ function BillingPageBody(): JSX.Element {
     };
   }, [active]);
 
-  if (wsLoading || !active) {
+  if (wsLoading) {
     return (
       <main className="container mx-auto p-6">
         <p
@@ -75,6 +76,7 @@ function BillingPageBody(): JSX.Element {
       </main>
     );
   }
+  if (!active) return <WorkspaceRequiredState title="Billing" />;
   if (error) {
     return (
       <main className="container mx-auto p-6">

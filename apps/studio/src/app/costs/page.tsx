@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { CostPageClient } from "@/components/cost/cost-page-client";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   fetchUsageRecords,
   monthBoundsUTC,
@@ -60,7 +61,7 @@ function CostsPageBody(): JSX.Element {
     };
   }, [active, window_.period_start_ms, window_.period_end_ms]);
 
-  if (wsLoading || !active) {
+  if (wsLoading) {
     return (
       <p
         className="p-6 text-sm text-muted-foreground"
@@ -70,6 +71,7 @@ function CostsPageBody(): JSX.Element {
       </p>
     );
   }
+  if (!active) return <WorkspaceRequiredState title="Costs" />;
   if (error) {
     return (
       <p className="p-6 text-sm text-destructive" role="alert">

@@ -6,6 +6,7 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { CoBuilderPanel } from "@/components/ai-cobuilder/co-builder-panel";
 import { RubberDuck } from "@/components/ai-cobuilder/rubber-duck";
 import { SecondPairOfEyes } from "@/components/ai-cobuilder/second-pair-of-eyes";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   fetchCoBuilderWorkspace,
   type CoBuilderWorkspace,
@@ -46,7 +47,15 @@ function CoBuilderPageBody(): JSX.Element {
     };
   }, [active]);
 
-  if (wsLoading || !active || (!workspace && !error)) {
+  if (wsLoading) {
+    return (
+      <main className="mx-auto max-w-6xl p-6">
+        <p className="text-sm text-muted-foreground">Loading Co-Builder...</p>
+      </main>
+    );
+  }
+  if (!active) return <WorkspaceRequiredState title="AI Co-Builder" />;
+  if (!workspace && !error) {
     return (
       <main className="mx-auto max-w-6xl p-6">
         <p className="text-sm text-muted-foreground">Loading Co-Builder...</p>

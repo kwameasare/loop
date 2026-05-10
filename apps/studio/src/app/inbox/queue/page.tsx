@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { InboxQueue } from "@/components/inbox/inbox-queue";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   listInbox,
   type InboxItem,
@@ -53,13 +54,14 @@ function InboxQueuePageBody(): JSX.Element {
     return ids.map((id) => ({ id, name: id.slice(0, 8) }));
   }, [items]);
 
-  if (wsLoading || !active) {
+  if (wsLoading) {
     return (
       <main className="container mx-auto p-6">
         <p className="text-sm text-muted-foreground">Loading inbox queue...</p>
       </main>
     );
   }
+  if (!active) return <WorkspaceRequiredState title="Inbox Queue" />;
 
   return (
     <main className="container mx-auto p-6">

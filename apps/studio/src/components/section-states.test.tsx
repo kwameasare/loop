@@ -7,6 +7,7 @@ import {
   SectionLoading,
   SectionPermissionBlocked,
   SectionStale,
+  WorkspaceRequiredState,
 } from "./section-states";
 
 describe("section states", () => {
@@ -73,6 +74,25 @@ describe("section states", () => {
     );
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Policy: production.deploy requires owner",
+    );
+  });
+
+  it("WorkspaceRequiredState makes missing workspace explicit", () => {
+    render(<WorkspaceRequiredState title="Observatory" />);
+
+    expect(screen.getByTestId("workspace-required")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Permission needed for Observatory",
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "No authorized workspace is loaded.",
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Studio will not substitute local fixture data.",
+    );
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+      "href",
+      "/login",
     );
   });
 });

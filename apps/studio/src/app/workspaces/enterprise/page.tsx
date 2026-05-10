@@ -13,6 +13,7 @@
 import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   EnterpriseSsoForm,
   type EnterpriseSsoSubmitPayload,
@@ -84,13 +85,14 @@ function EnterpriseSsoBody() {
     }
   }
 
-  if (wsLoading || !active) {
+  if (wsLoading) {
     return (
       <main className="flex flex-col gap-4 p-6">
         <p className="text-sm text-muted-foreground">Loading…</p>
       </main>
     );
   }
+  if (!active) return <WorkspaceRequiredState title="Enterprise SSO" />;
 
   return (
     <main className="flex flex-col gap-4 p-6">

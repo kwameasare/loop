@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { GovernOverview } from "@/components/enterprise/govern-overview";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   fetchComplianceReview,
   type ComplianceReviewModel,
@@ -44,7 +45,17 @@ function EnterpriseGovernPageBody(): JSX.Element {
     };
   }, [active]);
 
-  if (isLoading || !active || (!model && !error)) {
+  if (isLoading) {
+    return (
+      <main className="mx-auto max-w-6xl p-6">
+        <p className="text-sm text-muted-foreground">
+          Loading compliance review…
+        </p>
+      </main>
+    );
+  }
+  if (!active) return <WorkspaceRequiredState title="Compliance Review" />;
+  if (!model && !error) {
     return (
       <main className="mx-auto max-w-6xl p-6">
         <p className="text-sm text-muted-foreground">

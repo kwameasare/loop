@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { FlightDeckScreen } from "@/components/deploy";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   fetchDeployFlightModel,
   getDeployFlightModel,
@@ -44,7 +45,7 @@ function DeploysPageBody() {
     };
   }, [active]);
 
-  if (wsLoading || !active) {
+  if (wsLoading) {
     return (
       <main className="p-6">
         <p className="text-sm text-muted-foreground">
@@ -53,6 +54,7 @@ function DeploysPageBody() {
       </main>
     );
   }
+  if (!active) return <WorkspaceRequiredState title="Deployments" />;
 
   return (
     <>

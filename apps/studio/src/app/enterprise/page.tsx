@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { IdpConnectPanel } from "@/components/enterprise/idp-connect-panel";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   fetchSamlConfig,
   postSamlConfig,
@@ -69,7 +70,17 @@ function EnterprisePageBody(): JSX.Element {
     };
   }
 
-  if (wsLoading || !active || (!config && !error)) {
+  if (wsLoading) {
+    return (
+      <main className="container mx-auto p-6">
+        <p className="text-sm text-muted-foreground" data-testid="enterprise-loading">
+          Loading SAML configuration…
+        </p>
+      </main>
+    );
+  }
+  if (!active) return <WorkspaceRequiredState title="Enterprise" />;
+  if (!config && !error) {
     return (
       <main className="container mx-auto p-6">
         <p className="text-sm text-muted-foreground" data-testid="enterprise-loading">
