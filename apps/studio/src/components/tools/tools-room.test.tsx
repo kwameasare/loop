@@ -93,6 +93,20 @@ describe("ToolsRoom", () => {
   });
 
   it("drafts a typed tool from a curl request and redacts auth", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        tool_id: "tool_import_live",
+        tool_contract: {
+          id: "tc_import_live",
+          sandbox_status: "sandbox",
+          live_status: "review_required",
+          side_effect_level: "money_movement",
+          money_movement: true,
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetcher);
     render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
 
     expect(
@@ -111,6 +125,22 @@ describe("ToolsRoom", () => {
 
     fireEvent.click(screen.getByTestId("tools-room-add-library"));
     expect(draft).toHaveTextContent("Added to the draft tool library");
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agent_support/tools/import",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("shows backend-required errors instead of adding a local imported tool", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+    render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
+
+    fireEvent.click(screen.getByTestId("tools-room-draft-tool"));
+
+    expect(
+      await screen.findByText(/LOOP_CP_API_BASE_URL is required/i),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("tools-room-add-library")).toBeDisabled();
   });
 
   it("renders an empty state with the import flow still available", () => {

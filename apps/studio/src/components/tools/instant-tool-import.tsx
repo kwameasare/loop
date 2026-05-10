@@ -78,24 +78,35 @@ export function InstantToolImport({ agentId }: { agentId: string }) {
   const [liveContract, setLiveContract] =
     useState<ImportedToolContractPreview | null>(null);
   const [added, setAdded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function draftLiveTool() {
     setAdded(false);
+    setError(null);
+    setLiveImportId(null);
+    setLiveContract(null);
     const nextDraft = draftToolFromRequest(input, source);
     setDraft(nextDraft);
-    const result = await cpJson<ImportedToolResponse>(
-      `/agents/${encodeURIComponent(agentId)}/tools/import`,
-      {
-        method: "POST",
-        body: { source: input, source_kind: source },
-        fallback: {
-          tool_id: "tool_local_import",
-          tool_contract: fallbackContract(nextDraft),
+    try {
+      const result = await cpJson<ImportedToolResponse>(
+        `/agents/${encodeURIComponent(agentId)}/tools/import`,
+        {
+          method: "POST",
+          body: { source: input, source_kind: source },
+          allowFallback: false,
+          fallback: {
+            tool_id: "tool_local_import",
+            tool_contract: fallbackContract(nextDraft),
+          },
         },
-      },
-    );
-    setLiveImportId(result.tool_id);
-    setLiveContract(result.tool_contract ?? null);
+      );
+      setLiveImportId(result.tool_id);
+      setLiveContract(result.tool_contract ?? null);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not import this tool.",
+      );
+    }
   }
 
   return (
@@ -158,13 +169,21 @@ export function InstantToolImport({ agentId }: { agentId: string }) {
             type="button"
             className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-60"
             onClick={() => setAdded(true)}
-            disabled={!draft}
+            disabled={!liveImportId}
             data-testid="tools-room-add-library"
           >
             <LibraryBig className="h-4 w-4" aria-hidden />
             Add to library
           </button>
         </div>
+        {error ? (
+          <p
+            className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+            role="alert"
+          >
+            {error}
+          </p>
+        ) : null}
         {draft ? (
           <DraftSummary
             draft={draft}
