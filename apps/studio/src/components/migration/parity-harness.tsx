@@ -17,21 +17,21 @@ import {
 const MODES: readonly DiffMode[] = ["structure", "behavior", "cost", "risk"];
 
 const STATUS_TONE: Record<string, string> = {
-  ok: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  pass: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  improve: "bg-sky-50 text-sky-700 border-sky-200",
-  warn: "bg-amber-50 text-amber-700 border-amber-200",
-  advisory: "bg-amber-50 text-amber-700 border-amber-200",
-  regress: "bg-rose-50 text-rose-700 border-rose-200",
-  blocking: "bg-rose-50 text-rose-700 border-rose-200",
-  error: "bg-rose-50 text-rose-700 border-rose-200",
-  skipped: "bg-slate-50 text-slate-500 border-slate-200",
+  ok: "border-success/30 bg-success/10 text-success",
+  pass: "border-success/30 bg-success/10 text-success",
+  improve: "border-info/30 bg-info/10 text-info",
+  warn: "border-warning/30 bg-warning/10 text-warning",
+  advisory: "border-warning/30 bg-warning/10 text-warning",
+  regress: "border-destructive/30 bg-destructive/10 text-destructive",
+  blocking: "border-destructive/30 bg-destructive/10 text-destructive",
+  error: "border-destructive/30 bg-destructive/10 text-destructive",
+  skipped: "border-border bg-muted text-muted-foreground",
 };
 
 function pill(status: string): string {
   return (
     "inline-flex items-center px-2 py-0.5 text-xs font-medium border rounded " +
-    (STATUS_TONE[status] ?? "bg-slate-50 text-slate-600 border-slate-200")
+    (STATUS_TONE[status] ?? "border-border bg-muted text-muted-foreground")
   );
 }
 
@@ -71,7 +71,7 @@ export function ParityHarness({
     <div data-testid="parity-harness" className="space-y-6">
       <header className="space-y-1">
         <h2 className="text-xl font-semibold">Parity harness</h2>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted-foreground">
           Lineage, diffs, replay, and grounded repair for the imported Botpress
           archive.
         </p>
@@ -97,7 +97,7 @@ export function ParityHarness({
       <section data-testid="parity-lineage" className="border rounded p-3 space-y-2">
         <header className="flex items-center justify-between">
           <h3 className="text-sm font-medium">Import lineage</h3>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-muted-foreground">
             <span className="font-mono">{lineage.archive}</span> ·{" "}
             <span className="font-mono">{lineage.archiveSha.slice(0, 23)}…</span>
           </div>
@@ -111,8 +111,8 @@ export function ParityHarness({
             >
               <div>
                 <div className="font-medium">{step.label}</div>
-                <div className="text-slate-600">{step.detail}</div>
-                <div className="text-xs text-slate-400">
+                <div className="text-muted-foreground">{step.detail}</div>
+                <div className="text-xs text-muted-foreground">
                   evidence: {step.evidenceRef}
                 </div>
               </div>
@@ -137,8 +137,8 @@ export function ParityHarness({
                 className={
                   "px-3 py-1.5 text-sm capitalize border-b-2 -mb-px " +
                   (active
-                    ? "border-slate-900 text-slate-900"
-                    : "border-transparent text-slate-500 hover:text-slate-800")
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground")
                 }
               >
                 {m}
@@ -150,7 +150,7 @@ export function ParityHarness({
           {filteredDiffs.length === 0 && (
             <li
               data-testid="parity-empty"
-              className="text-sm text-slate-500 border rounded p-3"
+              className="text-sm text-muted-foreground border rounded p-3"
             >
               No {mode} diffs.
             </li>
@@ -169,11 +169,11 @@ export function ParityHarness({
                 </div>
                 <span className={pill(d.severity)}>{d.severity}</span>
               </div>
-              <div className="text-sm text-slate-600">{d.summary}</div>
+              <div className="text-sm text-muted-foreground">{d.summary}</div>
               {d.delta && (
-                <div className="text-xs text-slate-500">delta: {d.delta}</div>
+                <div className="text-xs text-muted-foreground">delta: {d.delta}</div>
               )}
-              <div className="text-xs text-slate-400">evidence: {d.evidenceRef}</div>
+              <div className="text-xs text-muted-foreground">evidence: {d.evidenceRef}</div>
             </li>
           ))}
         </ul>
@@ -185,7 +185,7 @@ export function ParityHarness({
       >
         <header className="flex items-center justify-between">
           <h3 className="text-sm font-medium">Parity replay</h3>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-muted-foreground">
             {replaySummary.pass} pass · {replaySummary.regress} regress ·{" "}
             {replaySummary.improve} improve · {replaySummary.skipped} skipped
           </div>
@@ -199,11 +199,11 @@ export function ParityHarness({
             >
               <div>
                 <div className="font-medium">{c.transcript}</div>
-                <div className="text-slate-600 text-xs">
+                <div className="text-muted-foreground text-xs">
                   expected: <span className="font-mono">{c.expectedTarget}</span>{" "}
                   · observed: <span className="font-mono">{c.observedTarget}</span>
                 </div>
-                <div className="text-xs text-slate-400">evidence: {c.evidenceRef}</div>
+                <div className="text-xs text-muted-foreground">evidence: {c.evidenceRef}</div>
               </div>
               <span className={pill(c.status)}>{c.status}</span>
             </li>
@@ -217,7 +217,7 @@ export function ParityHarness({
       >
         <h3 className="text-sm font-medium">Grounded repair suggestions</h3>
         {repairs.length === 0 && (
-          <p className="text-sm text-slate-500">No repairs proposed.</p>
+          <p className="text-sm text-muted-foreground">No repairs proposed.</p>
         )}
         <ul className="space-y-2">
           {repairs.map((r) => {
@@ -231,8 +231,8 @@ export function ParityHarness({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-sm font-medium">{r.patchSummary}</div>
-                    <div className="text-sm text-slate-600">{r.rationale}</div>
-                    <div className="text-xs text-slate-400 mt-1">
+                    <div className="text-sm text-muted-foreground">{r.rationale}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
                       grounded in: {r.groundingRef} · confidence: {r.confidence}
                     </div>
                   </div>
@@ -251,7 +251,7 @@ export function ParityHarness({
                         setAcceptedRepairs((prev) => ({ ...prev, [r.id]: true }));
                         onAcceptRepair?.(r);
                       }}
-                      className="px-2 py-1 text-xs border rounded hover:bg-slate-50"
+                      className="px-2 py-1 text-xs border rounded hover:bg-muted"
                     >
                       Accept
                     </button>
@@ -277,7 +277,7 @@ function Stat({
 }): JSX.Element {
   return (
     <div>
-      <div className="text-xs text-slate-500">{label}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
       <div className="flex items-center gap-2">
         <div className="text-lg font-semibold">{value}</div>
         {tone && <span className={pill(tone)}>{tone}</span>}

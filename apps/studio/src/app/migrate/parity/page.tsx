@@ -110,11 +110,11 @@ function MigrationParityPageBody(): JSX.Element {
       className="mx-auto max-w-6xl p-6 space-y-8"
     >
       <header className="space-y-1 border-b pb-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Migrate · Parity & cutover
         </p>
         <h1 className="text-2xl font-semibold">Botpress parity workspace</h1>
-        <p className="text-sm text-slate-600 max-w-3xl">
+        <p className="text-sm text-muted-foreground max-w-3xl">
           Lineage stays attached to every diff and repair. Cutover only runs
           after shadow agreement, and rollback triggers stay armed throughout.
         </p>
