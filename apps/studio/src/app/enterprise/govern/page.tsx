@@ -57,7 +57,7 @@ function EnterpriseGovernPageBody(): JSX.Element {
   if (error) {
     return (
       <main className="mx-auto max-w-6xl p-6">
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
       </main>

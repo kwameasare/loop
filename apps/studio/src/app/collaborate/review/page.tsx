@@ -72,11 +72,11 @@ function CollaborateReviewPageBody(): JSX.Element {
       className="mx-auto max-w-6xl space-y-6 p-6"
     >
       <header className="space-y-1 border-b pb-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Collaborate · Review
         </p>
         <h1 className="text-2xl font-semibold">Review &amp; pair debug</h1>
-        <p className="max-w-3xl text-sm text-slate-600">
+        <p className="max-w-3xl text-sm text-muted-foreground">
           Comments anchor to stable object IDs and survive versions.
           Changesets surface behavior, eval, cost, and latency approvals.
           Pair debugging keeps the trace playhead in sync.

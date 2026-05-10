@@ -32,7 +32,7 @@ export function ToolsList({ tools }: { tools: AgentTool[] }) {
               </p>
             ) : null}
             {tool.source ? (
-              <p className="mt-1 font-mono text-xs text-zinc-500">
+              <p className="mt-1 font-mono text-xs text-muted-foreground">
                 {tool.source}
               </p>
             ) : null}
