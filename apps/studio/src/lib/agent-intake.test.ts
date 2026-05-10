@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   createAgentIntake,
+  getAgentIntake,
   listAgentIntakeTemplates,
   type AgentIntakeCreateInput,
 } from "@/lib/agent-intake";
@@ -144,6 +145,64 @@ describe("createAgentIntake", () => {
     expect(result.state).toBe("draft_ready");
     expect(result.agent.slug).toBe("billing-support");
     expect(result.candidate_eval_cases).toHaveLength(3);
+  });
+});
+
+describe("getAgentIntake", () => {
+  it("loads a persisted intake record without fixture fallback", async () => {
+    const fetcher = vi.fn(
+      async (
+        url: Parameters<typeof fetch>[0],
+        init?: Parameters<typeof fetch>[1],
+      ) => {
+        expect(String(url)).toBe(
+          "https://api.loop.test/v1/workspaces/ws_1/agent-intakes/intake_1",
+        );
+        expect(init?.method).toBe("GET");
+        return Response.json({
+          id: "intake_1",
+          workspace_id: "ws_1",
+          agent_id: "agt_1",
+          state: "draft_ready",
+          creation_path: "business_intent",
+          jobs: [{ name: "parse_artifacts", state: "completed", count: 1 }],
+          artifact_reports: [],
+          intent_map: [],
+          contradictions: [],
+          sensitive_data_findings: [],
+          candidate_tools: [],
+          candidate_channels: [],
+          candidate_memory_policy: {},
+          candidate_eval_cases: [],
+          risk_notes: [],
+          missing_information: [],
+          readiness: {
+            score: 82,
+            ready: ["Commitment Document drafted"],
+            needs_attention: [],
+            landing: "/agents/agt_1",
+          },
+          created_object_refs: {},
+          created_by: "owner-1",
+          created_at: "2026-05-01T00:00:00Z",
+          updated_at: "2026-05-01T00:00:00Z",
+        });
+      },
+    ) as unknown as typeof fetch;
+
+    const record = await getAgentIntake("ws_1", "intake_1", {
+      baseUrl: "https://api.loop.test",
+      fetcher,
+    });
+
+    expect(record.id).toBe("intake_1");
+    expect(record.jobs[0]?.name).toBe("parse_artifacts");
+  });
+
+  it("does not fabricate an intake record when cp-api is unavailable", async () => {
+    await expect(getAgentIntake("ws_1", "intake_1")).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required",
+    );
   });
 });
 

@@ -342,6 +342,23 @@ export async function createAgentIntake(
   );
 }
 
+export async function getAgentIntake(
+  workspaceId: string,
+  intakeId: string,
+  opts: AgentIntakeOptions = {},
+): Promise<AgentIntakeRecord> {
+  return cpJson<AgentIntakeRecord>(
+    `/workspaces/${encodeURIComponent(
+      workspaceId,
+    )}/agent-intakes/${encodeURIComponent(intakeId)}`,
+    {
+      ...opts,
+      allowFallback: false,
+      fallback: undefined as unknown as AgentIntakeRecord,
+    },
+  );
+}
+
 export async function listAgentIntakeTemplates(
   workspaceId: string,
   opts: AgentIntakeTemplateOptions = {},
