@@ -369,7 +369,7 @@ export interface ImportLineage {
   steps: LineageStep[];
 }
 
-export type InboxChannel = "web" | "voice" | "sms" | "whatsapp" | "slack";
+export type InboxChannel = "web" | "web_chat" | "whatsapp" | "telegram" | "slack" | "teams" | "sms" | "email" | "voice" | "webhook_api";
 
 export interface InboxClaimRequest {
   now_ms?: number;
@@ -378,6 +378,7 @@ export interface InboxClaimRequest {
 
 export interface InboxEscalateRequest {
   agent_id: string;
+  channel?: InboxChannel;
   conversation_id: string;
   last_message_excerpt?: string;
   now_ms?: number;
