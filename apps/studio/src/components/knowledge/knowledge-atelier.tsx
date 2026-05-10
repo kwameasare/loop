@@ -29,10 +29,13 @@ import {
   formatScore,
   getKnowledgeAtelierModel,
   markKnowledgeChunkSuperseded as defaultMarkKnowledgeChunkSuperseded,
+  saveRetrievalEvalCase as defaultSaveRetrievalEvalCase,
   sourceKindLabel,
   type KnowledgeAtelierModel,
   type KnowledgeSource,
   type KnowledgeSyncStatus,
+  type RetrievalEvalCaseInput,
+  type RetrievalEvalCaseResult,
   type RetrievalCandidate,
   type SupersedeKnowledgeChunkInput,
   type SupersedeKnowledgeChunkResult,
@@ -47,6 +50,10 @@ export interface KnowledgeAtelierProps {
     chunkId: string,
     input: SupersedeKnowledgeChunkInput,
   ) => Promise<SupersedeKnowledgeChunkResult>;
+  saveRetrievalEval?: (
+    agentId: string,
+    input: RetrievalEvalCaseInput,
+  ) => Promise<RetrievalEvalCaseResult>;
 }
 
 function statusTone(
@@ -246,10 +253,15 @@ export function KnowledgeAtelier({
   initialDocuments,
   degradedReason,
   supersedeChunk = defaultMarkKnowledgeChunkSuperseded,
+  saveRetrievalEval = defaultSaveRetrievalEvalCase,
 }: KnowledgeAtelierProps) {
   const [documents, setDocuments] = useState(initialDocuments);
   const [query, setQuery] = useState("");
-  const [savedEval, setSavedEval] = useState<string | null>(null);
+  const [savedEval, setSavedEval] = useState<RetrievalEvalCaseResult | null>(
+    null,
+  );
+  const [savingEval, setSavingEval] = useState(false);
+  const [saveEvalError, setSaveEvalError] = useState<string | null>(null);
   const [supersededChunkIds, setSupersededChunkIds] = useState<string[]>([]);
   const [supersedingChunkId, setSupersedingChunkId] = useState<string | null>(
     null,
@@ -294,6 +306,7 @@ export function KnowledgeAtelier({
     [model],
   );
   const activeQuery = query.trim() || model.retrievalLab.defaultQuery;
+  const topCandidate = model.retrievalLab.candidates[0];
 
   async function upload(input: UploadKbDocumentInput): Promise<KbDocument> {
     const doc = await uploadKbDocument(input);
@@ -343,6 +356,37 @@ export function KnowledgeAtelier({
       );
     } finally {
       setSupersedingChunkId(null);
+    }
+  }
+
+  async function saveRetrievalSeed() {
+    if (!topCandidate) return;
+    setSavingEval(true);
+    setSavedEval(null);
+    setSaveEvalError(null);
+    try {
+      const result = await saveRetrievalEval(agentId, {
+        query: activeQuery,
+        topChunkId: topCandidate.chunkId,
+        candidateChunkIds: model.retrievalLab.candidates.map(
+          (candidate) => candidate.chunkId,
+        ),
+        metadataFilters: model.retrievalLab.metadataFilters,
+        expectedCitation: topCandidate.citationPreview,
+        evidenceRef: model.retrievalLab.evalSeedEvidence,
+        missedCandidateIds: model.retrievalLab.missedCandidates.map(
+          (candidate) => candidate.chunkId,
+        ),
+      });
+      setSavedEval(result);
+    } catch (err) {
+      setSaveEvalError(
+        err instanceof Error
+          ? err.message
+          : "Could not save this retrieval query as an eval case.",
+      );
+    } finally {
+      setSavingEval(false);
     }
   }
 
@@ -561,21 +605,18 @@ export function KnowledgeAtelier({
               onChange={(event) => {
                 setQuery(event.target.value);
                 setSavedEval(null);
+                setSaveEvalError(null);
               }}
               placeholder={model.retrievalLab.defaultQuery}
               value={query}
             />
             <button
               className="rounded-md border bg-background px-3 py-2 text-sm font-medium target-transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={model.retrievalLab.candidates.length === 0}
-              onClick={() =>
-                setSavedEval(
-                  `Saved retrieval eval seed for "${activeQuery}" from ${model.retrievalLab.evalSeedEvidence}`,
-                )
-              }
+              disabled={!topCandidate || savingEval}
+              onClick={() => void saveRetrievalSeed()}
               type="button"
             >
-              Save as retrieval eval
+              {savingEval ? "Saving eval..." : "Save as retrieval eval"}
             </button>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
@@ -584,7 +625,16 @@ export function KnowledgeAtelier({
           </p>
           {savedEval ? (
             <p className="mt-3 text-sm text-info" role="status">
-              {savedEval}
+              Retrieval eval {savedEval.case_id} saved from{" "}
+              {model.retrievalLab.evalSeedEvidence}.
+            </p>
+          ) : null}
+          {saveEvalError ? (
+            <p
+              className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+              role="alert"
+            >
+              {saveEvalError}
             </p>
           ) : null}
         </div>

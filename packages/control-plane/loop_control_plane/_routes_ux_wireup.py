@@ -1557,6 +1557,100 @@ class InverseRetrievalBody(BaseModel):
     chunk_id: str = Field(min_length=1, max_length=160)
 
 
+class RetrievalEvalCaseBody(BaseModel):
+    query: str = Field(min_length=1, max_length=1000)
+    top_chunk_id: str = Field(min_length=1, max_length=160)
+    candidate_chunk_ids: list[str] = Field(default_factory=list, max_length=25)
+    metadata_filters: list[str] = Field(default_factory=list, max_length=50)
+    expected_citation: str = Field(min_length=1, max_length=1000)
+    evidence_ref: str = Field(min_length=1, max_length=512)
+    missed_candidate_ids: list[str] = Field(default_factory=list, max_length=25)
+
+
+@router_agents.post("/{agent_id}/kb/retrieval-eval-cases", status_code=201)
+async def create_retrieval_eval_case(
+    request: Request,
+    agent_id: UUID,
+    body: RetrievalEvalCaseBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    agent = await _authorize_agent_record(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    cp = request.app.state.cp
+    suite = await cp.eval_suites.get_or_create_suite(
+        workspace_id=agent.workspace_id,
+        name="Retrieval regressions",
+        dataset_ref="retrieval-regressions",
+        metrics=["citation_match", "retrieval_rank", "groundedness"],
+        actor_sub=caller_sub,
+    )
+    case = await cp.eval_suites.add_case(
+        workspace_id=agent.workspace_id,
+        suite_id=suite.id,
+        body=EvalCaseCreate(
+            name=f"Retrieval: {body.query[:80]}",
+            input={
+                "agent_id": str(agent_id),
+                "query": body.query,
+                "top_chunk_id": body.top_chunk_id,
+                "candidate_chunk_ids": body.candidate_chunk_ids,
+                "metadata_filters": body.metadata_filters,
+                "missed_candidate_ids": body.missed_candidate_ids,
+                "evidence_ref": body.evidence_ref,
+            },
+            expected={"citation": body.expected_citation},
+            scorers=[
+                {
+                    "kind": "retrieval_rank",
+                    "config": {
+                        "required_chunk_id": body.top_chunk_id,
+                        "candidate_chunk_ids": body.candidate_chunk_ids,
+                    },
+                },
+                {
+                    "kind": "citation_match",
+                    "config": {"expected_citation": body.expected_citation},
+                },
+            ],
+            source="knowledge-retrieval",
+            source_ref=body.evidence_ref,
+            attachments=[
+                body.evidence_ref,
+                body.top_chunk_id,
+                *body.candidate_chunk_ids[:10],
+                *body.missed_candidate_ids[:10],
+            ],
+        ),
+        actor_sub=caller_sub,
+    )
+    _audit(
+        request,
+        workspace_id=agent.workspace_id,
+        caller_sub=caller_sub,
+        action="knowledge:retrieval_eval_case_create",
+        resource_type="eval_case",
+        resource_id=str(case.id),
+        payload={
+            "agent_id": str(agent_id),
+            "suite_id": str(suite.id),
+            "query": body.query,
+            "top_chunk_id": body.top_chunk_id,
+            "evidence_ref": body.evidence_ref,
+        },
+    )
+    return {
+        "ok": True,
+        "suite_id": str(suite.id),
+        "case_id": str(case.id),
+        "case": serialise_case(case),
+        "next_url": f"/agents/{agent_id}/evals?case_id={case.id}",
+    }
+
+
 @router_agents.post("/{agent_id}/kb/inverse-retrieval")
 async def inverse_retrieval(
     request: Request,

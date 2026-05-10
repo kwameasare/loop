@@ -156,6 +156,29 @@ export interface SupersedeKnowledgeChunkResult {
   evidence_ref: string;
 }
 
+export interface RetrievalEvalCaseInput {
+  query: string;
+  topChunkId: string;
+  candidateChunkIds: string[];
+  metadataFilters: string[];
+  expectedCitation: string;
+  evidenceRef: string;
+  missedCandidateIds: string[];
+}
+
+export interface RetrievalEvalCaseResult {
+  ok: true;
+  suite_id: string;
+  case_id: string;
+  case: {
+    id: string;
+    name: string;
+    source: string;
+    source_ref: string;
+  };
+  next_url: string;
+}
+
 type KnowledgeClientOptions = UxWireupClientOptions;
 
 const REFERENCE_NOW = new Date("2026-05-06T00:00:00Z");
@@ -617,6 +640,42 @@ export async function markKnowledgeChunkSuperseded(
         superseded_at: new Date(0).toISOString(),
         reason: input.reason,
         evidence_ref: `knowledge/${chunkId}/superseded`,
+      },
+    },
+  );
+}
+
+export async function saveRetrievalEvalCase(
+  agentId: string,
+  input: RetrievalEvalCaseInput,
+  opts: KnowledgeClientOptions = {},
+): Promise<RetrievalEvalCaseResult> {
+  return cpJson<RetrievalEvalCaseResult>(
+    `/agents/${encodeURIComponent(agentId)}/kb/retrieval-eval-cases`,
+    {
+      ...opts,
+      method: "POST",
+      body: {
+        query: input.query,
+        top_chunk_id: input.topChunkId,
+        candidate_chunk_ids: input.candidateChunkIds,
+        metadata_filters: input.metadataFilters,
+        expected_citation: input.expectedCitation,
+        evidence_ref: input.evidenceRef,
+        missed_candidate_ids: input.missedCandidateIds,
+      },
+      allowFallback: false,
+      fallback: {
+        ok: true,
+        suite_id: "",
+        case_id: "",
+        case: {
+          id: "",
+          name: `Retrieval: ${input.query.slice(0, 80)}`,
+          source: "knowledge-retrieval",
+          source_ref: input.evidenceRef,
+        },
+        next_url: "",
       },
     },
   );

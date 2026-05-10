@@ -2209,6 +2209,26 @@ def test_behavior_telemetry_inverse_retrieval_voice_and_scenes(
     assert inverse.status_code == 200, inverse.text
     assert inverse.json()["items"][0]["trace_id"] == trace_id
 
+    retrieval_eval = client.post(
+        f"/v1/agents/{agent_id}/kb/retrieval-eval-cases",
+        headers=_auth(),
+        json={
+            "query": "How do refunds work after final sale?",
+            "top_chunk_id": "chunk_refunds",
+            "candidate_chunk_ids": ["chunk_refunds", "chunk_legal"],
+            "metadata_filters": ["locale:any", "workspace:acme"],
+            "expected_citation": "refund_policy.pdf#p3",
+            "evidence_ref": "retrieval.final_sale_refund.requires_exception",
+            "missed_candidate_ids": ["chunk_exception"],
+        },
+    )
+    assert retrieval_eval.status_code == 201, retrieval_eval.text
+    assert retrieval_eval.json()["case"]["source"] == "knowledge-retrieval"
+    assert (
+        retrieval_eval.json()["case"]["expected"]["citation"]
+        == "refund_policy.pdf#p3"
+    )
+
     number = client.post(
         f"/v1/workspaces/{workspace_id}/voice/numbers/provision",
         headers=_auth(),
