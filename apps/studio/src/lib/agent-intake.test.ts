@@ -81,6 +81,9 @@ describe("createAgentIntake", () => {
               slug: "billing-support",
               description: "",
               active_version: null,
+              object_state: "draft",
+              state_reason: "Commitment Document is still draft.",
+              state_evidence_ref: "commitment/commit_1",
               updated_at: "2026-05-01T00:00:00Z",
             },
             commitment: {
