@@ -179,6 +179,36 @@ describe("ChangePackagePanel", () => {
     );
   });
 
+  it("surfaces expired approval requests inline", () => {
+    render(
+      <ChangePackagePanel
+        agentId="agt_1"
+        initialPackage={makePackage({
+          status: "changes_requested",
+          approval_status: "expired",
+          required_approvals: [
+            {
+              id: "compliance",
+              role: "Compliance reviewer",
+              required: true,
+              satisfied: false,
+              state: "expired",
+              reason: "Compliance review required.",
+              expired_reason: "Compliance review SLA elapsed.",
+            },
+          ],
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByTestId("change-package-approval-expired-compliance"),
+    ).toHaveTextContent("Compliance review SLA elapsed.");
+    expect(
+      screen.getByTestId("change-package-approval-compliance"),
+    ).toHaveTextContent("expired");
+  });
+
   it("shows pre-approved class usage without hiding excluded boundaries", () => {
     render(
       <ChangePackagePanel

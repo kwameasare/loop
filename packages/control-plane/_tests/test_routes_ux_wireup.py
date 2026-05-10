@@ -1373,6 +1373,57 @@ def test_change_package_preflight_requires_approved_release_candidate_when_named
     assert "must be approved or deployable" in blocked.json()["message"]
 
 
+def test_change_package_requested_approvals_can_expire(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    package = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "from_version_id": "v1",
+            "to_version_id": "v2",
+            "target_environment": "production",
+            "summary": "Promote refund policy update.",
+            "risk_summary": "Production refund policy changed.",
+        },
+    )
+    assert package.status_code == 201, package.text
+
+    submitted = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{package.json()['id']}/submit",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert submitted.status_code == 200, submitted.text
+    assert submitted.json()["approval_status"] == "blocked"
+
+    expired = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{package.json()['id']}/approvals/expire",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "approval_ids": ["compliance"],
+            "reason": "Compliance review SLA elapsed.",
+        },
+    )
+    assert expired.status_code == 200, expired.text
+    body = expired.json()
+    assert body["status"] == "changes_requested"
+    assert body["approval_status"] == "expired"
+    compliance = next(
+        item for item in body["required_approvals"] if item["id"] == "compliance"
+    )
+    assert compliance["state"] == "expired"
+    assert compliance["satisfied"] is False
+    assert compliance["expired_reason"] == "Compliance review SLA elapsed."
+    owner = next(item for item in body["required_approvals"] if item["id"] == "owner")
+    assert owner["state"] == "requested"
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert "change_package:approval_expire" in {event["action"] for event in audit}
+
+
 def test_channel_bindings_are_peer_agent_objects_with_readiness(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:

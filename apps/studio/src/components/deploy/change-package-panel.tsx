@@ -518,6 +518,14 @@ export function ChangePackagePanel({
                       {approval.invalidated_reason}
                     </p>
                   ) : null}
+                  {approval.expired_reason ? (
+                    <p
+                      className="mt-1 text-xs text-warning"
+                      data-testid={`change-package-approval-expired-${approval.id}`}
+                    >
+                      {approval.expired_reason}
+                    </p>
+                  ) : null}
                   <div className="mt-2 flex flex-wrap gap-2">
                     {!approval.satisfied && isReviewableStatus ? (
                       <button
