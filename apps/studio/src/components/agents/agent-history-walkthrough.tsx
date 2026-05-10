@@ -4,6 +4,7 @@ import { useState } from "react";
 import { History, ShieldAlert, UserRoundCheck } from "lucide-react";
 
 import {
+  evidenceLinksForAgent,
   transferAgentOwner as defaultTransferAgentOwner,
   type AgentHandoffModel,
   type HandoffRisk,
@@ -24,6 +25,34 @@ const RISK_CLASS: Record<string, string> = {
 
 function riskIds(risks: HandoffRisk[]): string[] {
   return risks.map((risk) => risk.id);
+}
+
+function EvidenceRefLinks({
+  agentId,
+  evidenceRef,
+}: {
+  agentId: string;
+  evidenceRef: string;
+}) {
+  const links = evidenceLinksForAgent(agentId, evidenceRef);
+  return (
+    <>
+      {links.map((link, index) => (
+        <span key={`${link.ref}-${index}`}>
+          {index > 0 ? (
+            <span className="mx-1 text-muted-foreground">{"->"}</span>
+          ) : null}
+          <a
+            className="rounded-sm underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            href={link.href}
+            data-testid={`handoff-evidence-link-${link.ref.replace(/[^a-zA-Z0-9_-]/g, "_")}`}
+          >
+            {link.ref}
+          </a>
+        </span>
+      ))}
+    </>
+  );
 }
 
 export function AgentHistoryWalkthrough({
@@ -127,7 +156,10 @@ export function AgentHistoryWalkthrough({
                         {risk.detail}
                       </p>
                       <p className="mt-2 font-mono text-xs text-muted-foreground">
-                        {risk.evidence_ref}
+                        <EvidenceRefLinks
+                          agentId={agentId}
+                          evidenceRef={risk.evidence_ref}
+                        />
                       </p>
                     </div>
                     <span
@@ -234,7 +266,7 @@ export function AgentHistoryWalkthrough({
                       key={ref}
                       className="truncate font-mono text-xs text-muted-foreground"
                     >
-                      {ref}
+                      <EvidenceRefLinks agentId={agentId} evidenceRef={ref} />
                     </li>
                   ))}
                 </ul>
