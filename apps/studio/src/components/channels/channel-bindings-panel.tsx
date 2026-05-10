@@ -69,6 +69,7 @@ const CHANNEL_PROFILE: Record<
     attachments: string;
     fallback: string;
     policy: string;
+    requiredConfig: string[];
   }
 > = {
   web_chat: {
@@ -82,6 +83,14 @@ const CHANNEL_PROFILE: Record<
     attachments: "Images and documents when enabled",
     fallback: "Human handoff or email capture",
     policy: "Web answer policy",
+    requiredConfig: [
+      "Embed snippet",
+      "Domain allowlist",
+      "Theme",
+      "Session identity",
+      "Handoff route",
+      "Transcript capture",
+    ],
   },
   whatsapp: {
     messageFormat: "Template-safe text with numbered options",
@@ -94,6 +103,14 @@ const CHANNEL_PROFILE: Record<
     attachments: "Provider-approved media only",
     fallback: "SMS or human queue",
     policy: "WhatsApp formatting policy",
+    requiredConfig: [
+      "Business account",
+      "Provider connection",
+      "Template approvals",
+      "Session window policy",
+      "Media policy",
+      "Opt-in/out policy",
+    ],
   },
   telegram: {
     messageFormat: "Bot text with commands and quick replies",
@@ -106,6 +123,13 @@ const CHANNEL_PROFILE: Record<
     attachments: "Images and documents when enabled",
     fallback: "Human queue link",
     policy: "Telegram bot policy",
+    requiredConfig: [
+      "Bot token",
+      "Command policy",
+      "Group/direct policy",
+      "Attachment policy",
+      "Abuse controls",
+    ],
   },
   slack: {
     messageFormat: "Threaded internal answer with actions",
@@ -118,6 +142,14 @@ const CHANNEL_PROFILE: Record<
     attachments: "Files per workspace policy",
     fallback: "Thread escalation",
     policy: "Internal collaboration policy",
+    requiredConfig: [
+      "Workspace installation",
+      "Mention policy",
+      "Thread policy",
+      "Slash commands",
+      "Internal identity mapping",
+      "Private channel policy",
+    ],
   },
   teams: {
     messageFormat: "Threaded Teams answer with action cards",
@@ -130,6 +162,14 @@ const CHANNEL_PROFILE: Record<
     attachments: "Files per tenant policy",
     fallback: "Thread escalation",
     policy: "Internal collaboration policy",
+    requiredConfig: [
+      "Workspace installation",
+      "Mention policy",
+      "Thread policy",
+      "Slash commands",
+      "Internal identity mapping",
+      "Private channel policy",
+    ],
   },
   sms: {
     messageFormat: "Short plain text",
@@ -142,6 +182,13 @@ const CHANNEL_PROFILE: Record<
     attachments: "MMS only when enabled",
     fallback: "Voice callback or human queue",
     policy: "SMS brevity and compliance policy",
+    requiredConfig: [
+      "Number",
+      "Provider",
+      "Opt-out policy",
+      "Carrier compliance",
+      "Message length policy",
+    ],
   },
   email: {
     messageFormat: "Structured email with summary and next steps",
@@ -154,6 +201,14 @@ const CHANNEL_PROFILE: Record<
     attachments: "Workspace attachment policy",
     fallback: "Ticket queue",
     policy: "Email support policy",
+    requiredConfig: [
+      "Inbox",
+      "Sender identity",
+      "Routing rules",
+      "Attachment policy",
+      "SLA policy",
+      "Signature policy",
+    ],
   },
   voice: {
     messageFormat: "Short spoken answer with confirmation prompts",
@@ -166,6 +221,15 @@ const CHANNEL_PROFILE: Record<
     attachments: "Not applicable",
     fallback: "Transfer or callback",
     policy: "Voice brevity and safety policy",
+    requiredConfig: [
+      "Phone number",
+      "ASR provider",
+      "TTS provider",
+      "Barge-in policy",
+      "Transfer policy",
+      "Recording policy",
+      "Latency budget",
+    ],
   },
   webhook_api: {
     messageFormat: "Signed JSON payload",
@@ -178,6 +242,14 @@ const CHANNEL_PROFILE: Record<
     attachments: "URLs or structured payload references",
     fallback: "Retry queue and dead-letter log",
     policy: "Webhook API contract policy",
+    requiredConfig: [
+      "Endpoint",
+      "Auth",
+      "Signature verification",
+      "Retry policy",
+      "Idempotency key",
+      "Rate limits",
+    ],
   },
 };
 
@@ -468,6 +540,23 @@ export function ChannelBindingsPanel({
                   value={binding.status.replace("_", " ")}
                 />
               </dl>
+
+              <div
+                className="mt-3 rounded-md border bg-card/70 p-2"
+                data-testid={`channel-required-config-${binding.channel_type}`}
+              >
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Required configuration
+                </p>
+                <ul className="mt-2 grid gap-1 text-xs text-muted-foreground">
+                  {profile.requiredConfig.map((item) => (
+                    <li key={item} className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
               <ul className="mt-3 space-y-1">
                 {binding.readiness.slice(0, 4).map((check) => (
