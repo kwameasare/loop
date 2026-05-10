@@ -235,7 +235,12 @@ async def create_agent_intake(
     )
     return {
         **agent_intake_payload(intake),
-        "agent": agent_payload(agent),
+        "agent": {
+            **agent_payload(agent),
+            "object_state": "draft",
+            "state_reason": "Commitment Document is still draft.",
+            "state_evidence_ref": f"commitment/{commitment.id}",
+        },
         "commitment": commitment.model_dump(mode="json"),
     }
 
