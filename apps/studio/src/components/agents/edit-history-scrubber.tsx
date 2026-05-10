@@ -17,21 +17,46 @@ interface EditHistoryItem {
 export function EditHistoryScrubber({ agentId }: { agentId: string }): JSX.Element {
   const [items, setItems] = useState<EditHistoryItem[]>([]);
   const [index, setIndex] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    setError(null);
+    setItems([]);
     void cpJson<{ items: EditHistoryItem[] }>(
       `/agents/${encodeURIComponent(agentId)}/edit-history`,
       {
+        allowFallback: false,
         fallback: { items: [] },
       },
-    ).then((next) => {
-      if (!cancelled) setItems(next.items);
-    });
+    )
+      .then((next) => {
+        if (!cancelled) setItems(next.items);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Could not load edit history.",
+          );
+        }
+      });
     return () => {
       cancelled = true;
     };
   }, [agentId]);
+
+  if (error) {
+    return (
+      <section
+        className="rounded-md border border-warning/40 bg-warning/10 p-4 text-sm text-warning"
+        data-testid="edit-history-unavailable"
+      >
+        {error}
+      </section>
+    );
+  }
 
   if (items.length === 0) {
     return (
