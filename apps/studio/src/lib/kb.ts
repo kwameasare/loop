@@ -6,7 +6,8 @@
  *   - ``POST /v1/agents/{id}/kb/documents``  (multipart/form-data)
  *   - ``DELETE /v1/agents/{id}/kb/documents/{doc_id}``
  * are mirrored here. When no cp-api base URL is configured the helpers
- * fall back to in-memory fixtures so the UX is still demo-able.
+ * use an empty in-memory store so the UX can still exercise upload/delete
+ * without inventing knowledge sources.
  *
  * Upload uses XHR so we can surface a real progress percentage; a
  * pluggable ``uploader`` keeps the unit tests deterministic.
@@ -51,24 +52,11 @@ function authHeaders(opts: KbHelperOptions): Record<string, string> {
   return headers;
 }
 
-const FIXTURE_DOCS: Record<string, KbDocument[]> = {};
+const LOCAL_DOCS: Record<string, KbDocument[]> = {};
 
-function fixtureFor(agentId: string): KbDocument[] {
-  if (!FIXTURE_DOCS[agentId]) {
-    FIXTURE_DOCS[agentId] = [
-      {
-        id: "doc_seed_handbook",
-        agentId,
-        name: "support_handbook.md",
-        contentType: "text/markdown",
-        bytes: 12_345,
-        status: "ready",
-        uploadedAt: "2026-04-01T12:00:00Z",
-        lastRefreshedAt: null,
-      },
-    ];
-  }
-  return FIXTURE_DOCS[agentId]!;
+function localDocsFor(agentId: string): KbDocument[] {
+  LOCAL_DOCS[agentId] ??= [];
+  return LOCAL_DOCS[agentId]!;
 }
 
 export async function listKbDocuments(
@@ -76,7 +64,7 @@ export async function listKbDocuments(
   opts: KbHelperOptions = {},
 ): Promise<{ items: KbDocument[] }> {
   const base = resolveBase(opts);
-  if (!base) return { items: [...fixtureFor(agentId)] };
+  if (!base) return { items: [...localDocsFor(agentId)] };
   const f = opts.fetcher ?? fetch;
   const response = await f(
     `${base}/agents/${encodeURIComponent(agentId)}/kb/documents`,
@@ -101,7 +89,7 @@ export async function deleteKbDocument(
 ): Promise<{ documentId: string }> {
   const base = resolveBase(opts);
   if (!base) {
-    const docs = fixtureFor(input.agentId);
+    const docs = localDocsFor(input.agentId);
     const idx = docs.findIndex((d) => d.id === input.documentId);
     if (idx >= 0) docs.splice(idx, 1);
     return { documentId: input.documentId };
@@ -192,7 +180,7 @@ export async function uploadKbDocument(
       uploadedAt: new Date().toISOString(),
       lastRefreshedAt: null,
     };
-    fixtureFor(input.agentId).push(doc);
+    localDocsFor(input.agentId).push(doc);
     return doc;
   }
   const url = `${base}/agents/${encodeURIComponent(input.agentId)}/kb/documents`;
