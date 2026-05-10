@@ -80,6 +80,27 @@ describe("ChannelBindingsPanel", () => {
     );
   });
 
+  it("disables setup when channel state is degraded", () => {
+    const upsertChannelBinding = vi.fn();
+    render(
+      <ChannelBindingsPanel
+        agentId="agt_1"
+        initialBindings={buildLocalChannelBindings("agt_1")}
+        degradedReason="Channel binding status requires cp-api. Studio is showing setup requirements only."
+        upsertChannelBinding={upsertChannelBinding}
+      />,
+    );
+
+    expect(screen.getByTestId("channel-bindings-degraded")).toHaveTextContent(
+      "Live channel state is unavailable",
+    );
+    const draftButton = screen.getByTestId("channel-binding-draft-whatsapp");
+    expect(draftButton).toBeDisabled();
+    expect(draftButton).toHaveTextContent("Backend required");
+    fireEvent.click(draftButton);
+    expect(upsertChannelBinding).not.toHaveBeenCalled();
+  });
+
   it("shows an explicit backend requirement instead of drafting locally", async () => {
     process.env.LOOP_CP_API_BASE_URL = "";
     render(

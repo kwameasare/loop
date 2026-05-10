@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 interface ChannelBindingsPanelProps {
   agentId: string;
   initialBindings: ChannelBinding[];
+  degradedReason?: string | undefined;
   upsertChannelBinding?: (
     agentId: string,
     input: ChannelBindingInput,
@@ -72,9 +73,20 @@ function sortedBindings(bindings: ChannelBinding[]) {
   ) as ChannelBinding[];
 }
 
+function draftButtonLabel(
+  binding: ChannelBinding,
+  busyType: ChannelBindingType | null,
+  degradedReason?: string | undefined,
+) {
+  if (degradedReason) return "Backend required";
+  if (busyType === binding.channel_type) return "Saving...";
+  return binding.status === "not_configured" ? "Start setup" : "Update draft";
+}
+
 export function ChannelBindingsPanel({
   agentId,
   initialBindings,
+  degradedReason,
   upsertChannelBinding = defaultUpsertChannelBinding,
 }: ChannelBindingsPanelProps) {
   const [bindings, setBindings] = useState(() =>
@@ -148,6 +160,17 @@ export function ChannelBindingsPanel({
         </p>
       ) : null}
 
+      {degradedReason ? (
+        <div
+          className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+          data-testid="channel-bindings-degraded"
+          role="status"
+        >
+          <p className="font-medium">Live channel state is unavailable.</p>
+          <p className="mt-1 text-xs">{degradedReason}</p>
+        </div>
+      ) : null}
+
       <div className="grid gap-3 xl:grid-cols-3">
         {ordered.map((binding) => {
           const Icon = ICONS[binding.channel_type];
@@ -218,15 +241,13 @@ export function ChannelBindingsPanel({
               <button
                 type="button"
                 className="mt-3 w-full rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted disabled:opacity-50"
-                disabled={busyType === binding.channel_type}
+                disabled={
+                  busyType === binding.channel_type || Boolean(degradedReason)
+                }
                 onClick={() => void handleDraft(binding.channel_type)}
                 data-testid={`channel-binding-draft-${binding.channel_type}`}
               >
-                {busyType === binding.channel_type
-                  ? "Saving..."
-                  : binding.status === "not_configured"
-                    ? "Start setup"
-                    : "Update draft"}
+                {draftButtonLabel(binding, busyType, degradedReason)}
               </button>
             </article>
           );
