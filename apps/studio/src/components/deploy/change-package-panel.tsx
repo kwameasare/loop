@@ -137,6 +137,8 @@ export function ChangePackagePanel({
   const isFocused =
     Boolean(focusedChangePackageId) &&
     focusedChangePackageId === changePackage.id;
+  const changePackagePanelFocused =
+    focusedPanel === "change-package" || focusedPanel === "promotion";
   const releaseCandidateFocused = focusedPanel === "release-candidate";
   const rollbackFocused = focusedPanel === "rollback";
 
@@ -230,10 +232,12 @@ export function ChangePackagePanel({
     <section
       className={cn(
         "space-y-4 rounded-md border bg-card p-5",
-        isFocused ? "ring-2 ring-focus ring-offset-2 ring-offset-background" : "",
+        isFocused || changePackagePanelFocused
+          ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+          : "",
       )}
       data-testid="change-package-panel"
-      data-focused={isFocused ? "true" : "false"}
+      data-focused={isFocused || changePackagePanelFocused ? "true" : "false"}
       aria-labelledby="change-package-heading"
     >
       {isFocused ? (
@@ -254,6 +258,17 @@ export function ChangePackagePanel({
           {releaseCandidateFocused
             ? "release candidate evidence is highlighted."
             : "rollback target evidence is highlighted."}
+        </p>
+      ) : null}
+      {changePackagePanelFocused ? (
+        <p
+          className="rounded-md border border-info/40 bg-info/5 px-3 py-2 text-sm text-info"
+          data-testid="change-package-focused-workbench-panel"
+        >
+          Opened from Workbench control:{" "}
+          {focusedPanel === "promotion"
+            ? "review the Change Package before starting promotion."
+            : "Change Package evidence is highlighted."}
         </p>
       ) : null}
       {degradedReason ? (

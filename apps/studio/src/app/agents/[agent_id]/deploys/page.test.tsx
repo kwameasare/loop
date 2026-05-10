@@ -35,4 +35,27 @@ describe("AgentDeploysPage", () => {
       screen.getByTestId("change-package-release-candidate-card"),
     ).toHaveAttribute("data-focused", "true");
   });
+
+  it("focuses promotion controls from Workbench deploy links", async () => {
+    delete process.env.LOOP_CP_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+
+    render(
+      await AgentDeploysPage({
+        params: { agent_id: "agent_deploy" },
+        searchParams: { panel: "promotion" },
+      }),
+    );
+
+    expect(
+      screen.getByTestId("change-package-focused-workbench-panel"),
+    ).toHaveTextContent("review the Change Package before starting promotion");
+    expect(screen.getByTestId("deploy-focused-panel")).toHaveTextContent(
+      "promotion controls are highlighted",
+    );
+    expect(screen.getByTestId("rollout-plan-controls")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+  });
 });

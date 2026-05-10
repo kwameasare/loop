@@ -371,7 +371,8 @@ export function DeployTimeline({
     (d) => d.status === "canary" || d.status === "ramp",
   );
   const live = items.find((d) => d.status === "live");
-  const rolloutFocused = focusedPanel === "rollout";
+  const rolloutFocused =
+    focusedPanel === "rollout" || focusedPanel === "promotion";
   const rollbackFocused = focusedPanel === "rollback";
   const evidenceById = new Map(evidencePacks.map((pack) => [pack.id, pack]));
   const deploymentEvidenceIds = new Set(
@@ -388,8 +389,10 @@ export function DeployTimeline({
           data-testid="deploy-focused-panel"
         >
           Opened from evidence link:{" "}
-          {rolloutFocused
-            ? "rollout controls are highlighted."
+          {focusedPanel === "promotion"
+            ? "promotion controls are highlighted."
+            : rolloutFocused
+              ? "rollout controls are highlighted."
             : "rollback candidates are highlighted."}
         </p>
       ) : null}
