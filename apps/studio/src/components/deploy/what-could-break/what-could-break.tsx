@@ -22,9 +22,9 @@ const TIER_LABEL: Record<LikelihoodTier, string> = {
 };
 
 const TIER_TONE: Record<LikelihoodTier, string> = {
-  high: "border-rose-200 bg-rose-50 text-rose-700",
-  medium: "border-amber-200 bg-amber-50 text-amber-700",
-  low: "border-slate-200 bg-slate-50 text-slate-600",
+  high: "border-destructive/30 bg-destructive/10 text-destructive",
+  medium: "border-warning/30 bg-warning/10 text-warning",
+  low: "border-border bg-muted text-muted-foreground",
 };
 
 export function WhatCouldBreak(props: WhatCouldBreakProps): JSX.Element {
@@ -36,7 +36,7 @@ export function WhatCouldBreak(props: WhatCouldBreakProps): JSX.Element {
     return (
       <section
         data-testid="what-could-break-empty"
-        className="rounded-md border border-slate-200 bg-white p-4 text-sm text-slate-600"
+        className="rounded-md border bg-card p-4 text-sm text-muted-foreground"
       >
         No behavior changes detected vs. production. Pre-promote replay still
         recommended.
@@ -48,17 +48,17 @@ export function WhatCouldBreak(props: WhatCouldBreakProps): JSX.Element {
     <section
       data-testid="what-could-break"
       aria-labelledby="wcb-title"
-      className="rounded-md border border-slate-200 bg-white p-4 space-y-3"
+      className="space-y-3 rounded-md border bg-card p-4"
     >
       <header className="flex items-baseline justify-between">
         <h3 id="wcb-title" className="text-sm font-semibold">
           What could break
         </h3>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Top {top.length} likely behavior changes vs. production
         </p>
       </header>
-      <ul className="divide-y divide-slate-100" data-testid="wcb-list">
+      <ul className="divide-y divide-border" data-testid="wcb-list">
         {top.map((change) => {
           const isOpen = openId === change.id;
           return (
@@ -78,7 +78,7 @@ export function WhatCouldBreak(props: WhatCouldBreakProps): JSX.Element {
                   <p className="truncate text-sm font-medium">
                     {change.surface}
                   </p>
-                  <p className="truncate text-xs text-slate-500">
+                  <p className="truncate text-xs text-muted-foreground">
                     {change.summary}
                   </p>
                 </div>
@@ -88,7 +88,7 @@ export function WhatCouldBreak(props: WhatCouldBreakProps): JSX.Element {
                   >
                     {TIER_LABEL[change.likelihood]}
                   </span>
-                  <span className="text-xs tabular-nums text-slate-500">
+                  <span className="text-xs tabular-nums text-muted-foreground">
                     {change.confidence}%
                   </span>
                 </div>
@@ -97,24 +97,24 @@ export function WhatCouldBreak(props: WhatCouldBreakProps): JSX.Element {
                 <div
                   id={`wcb-detail-${change.id}`}
                   data-testid={`wcb-detail-${change.id}`}
-                  className="mt-2 space-y-2 rounded-md bg-slate-50 p-3 text-xs"
+                  className="mt-2 space-y-2 rounded-md bg-muted p-3 text-xs"
                 >
                   <p>
-                    <strong className="text-slate-700">Old:</strong>{" "}
+                    <strong className="text-foreground">Old:</strong>{" "}
                     {change.oldBehavior}
                   </p>
                   <p>
-                    <strong className="text-slate-700">New:</strong>{" "}
+                    <strong className="text-foreground">New:</strong>{" "}
                     {change.newBehavior}
                   </p>
-                  <p className="text-slate-500">
+                  <p className="text-muted-foreground">
                     Exemplar transcript:{" "}
-                    <code className="rounded bg-white px-1 py-0.5">
+                    <code className="rounded bg-background px-1 py-0.5">
                       {change.exemplarTranscriptId}
                     </code>
                     {" · "}
                     Evidence:{" "}
-                    <code className="rounded bg-white px-1 py-0.5">
+                    <code className="rounded bg-background px-1 py-0.5">
                       {change.evidenceRef}
                     </code>
                   </p>
@@ -123,7 +123,7 @@ export function WhatCouldBreak(props: WhatCouldBreakProps): JSX.Element {
                       type="button"
                       data-testid={`wcb-inspect-${change.id}`}
                       onClick={() => onInspect(change)}
-                      className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium hover:bg-slate-50"
+                      className="rounded-md border bg-background px-2 py-1 text-xs font-medium hover:bg-muted"
                     >
                       Open replay diff
                     </button>

@@ -7,9 +7,9 @@ interface RegressionBisectProps {
 }
 
 const STATUS_TONE: Record<BisectStatus, string> = {
-  pass: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  regress: "border-rose-200 bg-rose-50 text-rose-700",
-  skip: "border-slate-200 bg-slate-50 text-slate-600",
+  pass: "border-success/30 bg-success/10 text-success",
+  regress: "border-destructive/30 bg-destructive/10 text-destructive",
+  skip: "border-border bg-muted text-muted-foreground",
 };
 
 export function RegressionBisect(props: RegressionBisectProps): JSX.Element {
@@ -18,29 +18,33 @@ export function RegressionBisect(props: RegressionBisectProps): JSX.Element {
     <section
       data-testid="regression-bisect"
       aria-labelledby="bisect-title"
-      className="rounded-md border border-slate-200 bg-white p-4 space-y-3"
+      className="space-y-3 rounded-md border bg-card p-4"
     >
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 id="bisect-title" className="text-sm font-semibold">
           Regression bisect · {result.caseId}
         </h3>
-        <p className="text-xs text-slate-500">Confidence {result.confidence}%</p>
+        <p className="text-xs text-muted-foreground">
+          Confidence {result.confidence}%
+        </p>
       </header>
-      <div className="grid gap-3 rounded-md bg-slate-50 p-3 text-xs sm:grid-cols-2">
+      <div className="grid gap-3 rounded-md bg-muted p-3 text-xs sm:grid-cols-2">
         <p data-testid="bisect-expected">
-          <strong className="text-slate-700">Expected:</strong> {result.expected}
+          <strong className="text-foreground">Expected:</strong> {result.expected}
         </p>
         <p data-testid="bisect-observed">
-          <strong className="text-slate-700">Observed:</strong> {result.observed}
+          <strong className="text-foreground">Observed:</strong> {result.observed}
         </p>
-        <p className="sm:col-span-2 text-slate-600">{result.transcript}</p>
+        <p className="text-muted-foreground sm:col-span-2">
+          {result.transcript}
+        </p>
       </div>
       <div
         data-testid="bisect-culprit"
-        className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700"
+        className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive"
       >
         Culprit:{" "}
-        <code className="rounded bg-white px-1 py-0.5">
+        <code className="rounded bg-background px-1 py-0.5">
           {result.culpritCommit}
         </code>
         {" · "}confidence {result.confidence}%
@@ -54,11 +58,11 @@ export function RegressionBisect(props: RegressionBisectProps): JSX.Element {
               data-testid={`bisect-step-${step.commit}`}
               className={`flex items-center gap-3 rounded-md border px-3 py-2 text-xs ${
                 isCulprit
-                  ? "border-rose-300 bg-rose-50"
-                  : "border-slate-200 bg-white"
+                  ? "border-destructive/40 bg-destructive/10"
+                  : "bg-card"
               }`}
             >
-              <code className="font-mono text-[11px] text-slate-700">
+              <code className="font-mono text-[11px] text-foreground">
                 {step.commit}
               </code>
               <span
@@ -66,8 +70,12 @@ export function RegressionBisect(props: RegressionBisectProps): JSX.Element {
               >
                 {step.status}
               </span>
-              <span className="flex-1 text-slate-600">{step.summary}</span>
-              <code className="text-[11px] text-slate-400">{step.evidenceRef}</code>
+              <span className="flex-1 text-muted-foreground">
+                {step.summary}
+              </span>
+              <code className="text-[11px] text-muted-foreground">
+                {step.evidenceRef}
+              </code>
             </li>
           );
         })}
