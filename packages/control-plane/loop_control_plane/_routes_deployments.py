@@ -4,10 +4,10 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
+from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import authorize_workspace_access
 from loop_control_plane.channel_bindings import (
@@ -67,15 +67,21 @@ async def _agent(
     request: Request,
     *,
     agent_id: UUID,
-    workspace_id: UUID,
     caller_sub: str,
+    workspace_id: UUID | None = None,
 ) -> Any:
+    cp = request.app.state.cp
+    if workspace_id is None:
+        agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
+        if agent is None:
+            raise HTTPException(status_code=404, detail="unknown agent")
+        workspace_id = agent.workspace_id
     await authorize_workspace_access(
-        workspaces=request.app.state.cp.workspaces,
+        workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
     )
-    return await request.app.state.cp.agents.get(
+    return await cp.agents.get(
         workspace_id=workspace_id,
         agent_id=agent_id,
     )
@@ -243,7 +249,7 @@ async def list_deployments(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -261,7 +267,7 @@ async def start_deployment(
     agent_id: UUID,
     body: DeploymentStart,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -269,6 +275,7 @@ async def start_deployment(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    workspace_id = agent.workspace_id
     change_package = await _change_package(
         request,
         agent=agent,
@@ -330,7 +337,7 @@ async def _deployment_action(
     action: str,
     body: DeploymentActionBody | None,
     caller_sub: str,
-    workspace_id: UUID,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -338,6 +345,7 @@ async def _deployment_action(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    workspace_id = agent.workspace_id
     deployment = await request.app.state.cp.deployments.action(
         agent=agent,
         deployment_id=deployment_id,
@@ -402,7 +410,7 @@ async def evaluate_deployment_threshold(
     deployment_id: str,
     body: DeploymentThresholdEvaluation,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -410,6 +418,7 @@ async def evaluate_deployment_threshold(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    workspace_id = agent.workspace_id
     deployment = await _deployment(request, agent=agent, deployment_id=deployment_id)
     threshold = body.threshold
     if threshold is None:
@@ -505,7 +514,7 @@ async def promote_deployment(
     agent_id: UUID,
     deployment_id: str,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     return await _deployment_action(
         request,
@@ -525,7 +534,7 @@ async def ramp_deployment(
     deployment_id: str,
     body: DeploymentRampBody,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -533,6 +542,7 @@ async def ramp_deployment(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    workspace_id = agent.workspace_id
     deployment = await request.app.state.cp.deployments.ramp(
         agent=agent,
         deployment_id=deployment_id,
@@ -560,7 +570,7 @@ async def pause_deployment(
     agent_id: UUID,
     deployment_id: str,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     return await _deployment_action(
         request,
@@ -580,7 +590,7 @@ async def rollback_deployment(
     deployment_id: str,
     body: DeploymentActionBody | None = None,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     return await _deployment_action(
         request,
@@ -598,7 +608,7 @@ async def list_evidence_packs(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -617,7 +627,7 @@ async def export_evidence_pack(
     evidence_pack_id: str,
     body: EvidencePackExportBody,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -625,6 +635,7 @@ async def export_evidence_pack(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    workspace_id = agent.workspace_id
     pack = await _evidence_pack(request, agent=agent, evidence_pack_id=evidence_pack_id)
     if body.format not in pack.export_formats:
         raise WorkspaceError(
@@ -713,7 +724,7 @@ async def download_evidence_pack_export(
     evidence_pack_id: str,
     export_id: str,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -721,6 +732,7 @@ async def download_evidence_pack_export(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    workspace_id = agent.workspace_id
     pack = await _evidence_pack(request, agent=agent, evidence_pack_id=evidence_pack_id)
     redactions = [
         "secrets",

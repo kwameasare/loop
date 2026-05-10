@@ -14,7 +14,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
+from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.eval_suites import (
@@ -64,6 +64,29 @@ class ObservedFailureRepairBody(BaseModel):
     trace_id: str = Field(min_length=1, max_length=512)
     failure_reason: str = Field(min_length=1, max_length=1024)
     replay_ref: str = Field(default="replay/not-run", max_length=512)
+
+
+async def _agent(
+    request: Request,
+    *,
+    agent_id: UUID,
+    caller_sub: str,
+    workspace_id: UUID | None = None,
+    required_role: Role | None = None,
+) -> Any:
+    cp = request.app.state.cp
+    if workspace_id is None:
+        agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
+        if agent is None:
+            raise HTTPException(status_code=404, detail="unknown agent")
+        workspace_id = agent.workspace_id
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=required_role,
+    )
+    return await cp.agents.get(workspace_id=workspace_id, agent_id=agent_id)
 
 
 @router_workspaces.get("/{workspace_id}/eval-suites")
@@ -196,16 +219,17 @@ async def create_behavior_repair_proposal(
     agent_id: UUID,
     body: ObservedFailureRepairBody,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     cp = request.app.state.cp
-    await authorize_workspace_access(
-        workspaces=cp.workspaces,
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
         workspace_id=workspace_id,
-        user_sub=caller_sub,
         required_role=Role.ADMIN,
     )
-    await cp.agents.get(workspace_id=workspace_id, agent_id=agent_id)
+    workspace_id = agent.workspace_id
     proposal_id = f"repair_{uuid4().hex[:12]}"
     target_object = {
         "kind": "behavior_sentence",
@@ -270,16 +294,17 @@ async def create_case_from_observed_failure(
     agent_id: UUID,
     body: ObservedFailureEvalCaseBody,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     cp = request.app.state.cp
-    await authorize_workspace_access(
-        workspaces=cp.workspaces,
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
         workspace_id=workspace_id,
-        user_sub=caller_sub,
         required_role=Role.ADMIN,
     )
-    await cp.agents.get(workspace_id=workspace_id, agent_id=agent_id)
+    workspace_id = agent.workspace_id
     suite = await cp.eval_suites.get_or_create_suite(
         workspace_id=workspace_id,
         name="Observed behavior failures",

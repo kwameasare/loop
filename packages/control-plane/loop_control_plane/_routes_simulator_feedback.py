@@ -5,9 +5,9 @@ from hashlib import sha256
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 
-from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
+from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.eval_suites import EvalCaseCreate, serialise_case
@@ -27,16 +27,22 @@ async def _agent(
     request: Request,
     *,
     agent_id: UUID,
-    workspace_id: UUID,
     caller_sub: str,
+    workspace_id: UUID | None = None,
 ) -> Any:
+    cp = request.app.state.cp
+    if workspace_id is None:
+        agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
+        if agent is None:
+            raise HTTPException(status_code=404, detail="unknown agent")
+        workspace_id = agent.workspace_id
     await authorize_workspace_access(
-        workspaces=request.app.state.cp.workspaces,
+        workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
         required_role=Role.ADMIN,
     )
-    return await request.app.state.cp.agents.get(
+    return await cp.agents.get(
         workspace_id=workspace_id,
         agent_id=agent_id,
     )
@@ -90,7 +96,7 @@ async def create_simulator_run(
     agent_id: UUID,
     body: SimulatorRunCreate,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     cp = request.app.state.cp
     agent = await _agent(
@@ -99,6 +105,7 @@ async def create_simulator_run(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    workspace_id = agent.workspace_id
     trace_id = _durable_trace_id(body=body, agent_id=agent.id)
     channel_binding_id = await _channel_binding_id_for_run(
         request,
@@ -154,7 +161,7 @@ async def list_simulator_runs(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     cp = request.app.state.cp
     agent = await _agent(
@@ -173,7 +180,7 @@ async def rate_simulator_turn(
     agent_id: UUID,
     body: SimulatorTurnRatingCreate,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     cp = request.app.state.cp
     agent = await _agent(
@@ -182,6 +189,7 @@ async def rate_simulator_turn(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    workspace_id = agent.workspace_id
     candidate = candidate_artifact_for(body)
     eval_ref: dict[str, Any] | None = None
     if body.save_as_eval:
@@ -265,7 +273,7 @@ async def list_simulator_turn_ratings(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     cp = request.app.state.cp
     agent = await _agent(
