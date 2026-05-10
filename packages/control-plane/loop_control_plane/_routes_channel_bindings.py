@@ -266,6 +266,11 @@ async def upsert_channel_binding(
         agent=agent,
         body=body,
     )
+    invalidated = await request.app.state.cp.preapproved_classes.invalidate_for_change_types(
+        agent=agent,
+        change_types=["channel"],
+        reason=f"Channel binding {binding.id} changed.",
+    )
     _audit(
         request,
         workspace_id=workspace_id,
@@ -276,6 +281,9 @@ async def upsert_channel_binding(
             "agent_id": str(agent_id),
             "channel_type": binding.channel_type,
             "status": binding.status,
+            "invalidated_pre_approved_classes": [
+                record.id for record in invalidated
+            ],
         },
     )
     return channel_binding_payload(binding)

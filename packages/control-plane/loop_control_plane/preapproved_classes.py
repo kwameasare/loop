@@ -216,3 +216,39 @@ class PreApprovedClassRegistry:
                 touched.append(used)
             self._items[agent.id] = updated_rows
             return touched
+
+    async def invalidate_for_change_types(
+        self,
+        *,
+        agent: AgentRecord,
+        change_types: list[str],
+        reason: str,
+    ) -> list[PreApprovedClassRecord]:
+        requested = set(_normalise(change_types))
+        if not requested:
+            return []
+        async with self._lock:
+            rows = self._items.get(agent.id, [])
+            updated_rows = list(rows)
+            touched: list[PreApprovedClassRecord] = []
+            now = datetime.now(UTC)
+            for index, record in enumerate(rows):
+                if record.status != "active":
+                    continue
+                scope = set(record.allowed_change_types) | set(
+                    record.excluded_change_types
+                )
+                if not requested.intersection(scope):
+                    continue
+                invalidated = record.model_copy(
+                    update={
+                        "status": "invalidated",
+                        "invalidated_at": now,
+                        "updated_at": now,
+                        "reason": f"{record.reason}\nInvalidated: {reason}".strip(),
+                    }
+                )
+                updated_rows[index] = invalidated
+                touched.append(invalidated)
+            self._items[agent.id] = updated_rows
+            return touched

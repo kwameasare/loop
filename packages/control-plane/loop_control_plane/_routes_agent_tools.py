@@ -156,6 +156,11 @@ async def upsert_tool_contract(
         tool_id=tool_id,
         body=body,
     )
+    invalidated = await request.app.state.cp.preapproved_classes.invalidate_for_change_types(
+        agent=agent,
+        change_types=["tool"],
+        reason=f"Tool contract {contract.id} changed.",
+    )
     _audit(
         request,
         workspace_id=agent.workspace_id,
@@ -169,6 +174,9 @@ async def upsert_tool_contract(
             "approval_invalidated_at": contract.approval_invalidated_at.isoformat()
             if contract.approval_invalidated_at
             else None,
+            "invalidated_pre_approved_classes": [
+                record.id for record in invalidated
+            ],
         },
     )
     return tool_contract_payload(contract)

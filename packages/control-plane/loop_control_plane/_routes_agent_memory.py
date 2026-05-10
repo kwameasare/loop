@@ -179,6 +179,11 @@ async def upsert_memory_policy(
         raise HTTPException(status_code=400, detail="body scope must match path scope")
     agent = await _agent(request, agent_id, caller_sub, admin=True)
     policy = await request.app.state.cp.memory_policies.upsert(agent=agent, body=body)
+    invalidated = await request.app.state.cp.preapproved_classes.invalidate_for_change_types(
+        agent=agent,
+        change_types=["memory"],
+        reason=f"Memory policy {policy.id} changed.",
+    )
     _audit(
         request,
         workspace_id=agent.workspace_id,
@@ -193,6 +198,9 @@ async def upsert_memory_policy(
             "approval_invalidated_at": policy.approval_invalidated_at.isoformat()
             if policy.approval_invalidated_at
             else None,
+            "invalidated_pre_approved_classes": [
+                record.id for record in invalidated
+            ],
         },
     )
     return memory_policy_payload(policy)
