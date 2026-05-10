@@ -16,6 +16,14 @@ const fixture: AgentSummary[] = [
     state_evidence_ref: "deployment/dep_support",
     updated_at: "2026-04-29T12:00:00Z",
     workspace_id: "ws_1",
+    owner_user_id: "maya@acme.test",
+    backup_owner_user_id: "diego@acme.test",
+    environment: "production",
+    health_status: "watching",
+    open_issue_count: 0,
+    open_issue_sources: [],
+    commitment_document_id: "commit_support",
+    commitment_status: "accepted",
   },
   {
     id: "agt_qa",
@@ -28,6 +36,18 @@ const fixture: AgentSummary[] = [
     state_evidence_ref: "agent.draft",
     updated_at: "2026-04-28T09:30:00Z",
     workspace_id: "ws_1",
+    owner_user_id: null,
+    backup_owner_user_id: null,
+    environment: "draft",
+    health_status: "needs_attention",
+    open_issue_count: 3,
+    open_issue_sources: [
+      "commitment/commit_qa:missing:owner_user_id",
+      "commitment/commit_qa:backup_owner_missing",
+      "commitment/commit_qa:missing:worst_case_failure",
+    ],
+    commitment_document_id: "commit_qa",
+    commitment_status: "draft",
   },
 ];
 
@@ -47,6 +67,24 @@ describe("AgentsList", () => {
     expect(screen.getByTestId("agent-state-agt_qa")).toHaveTextContent("draft");
     expect(screen.getByText("deployment/dep_support")).toBeInTheDocument();
     expect(screen.getByText("agent.draft")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-ownership-agt_support")).toHaveTextContent(
+      "maya@acme.test",
+    );
+    expect(screen.getByTestId("agent-ownership-agt_support")).toHaveTextContent(
+      "diego@acme.test",
+    );
+    expect(screen.getByTestId("agent-health-agt_support")).toHaveTextContent(
+      "watching",
+    );
+    expect(screen.getByTestId("agent-open-issues-agt_support")).toHaveTextContent(
+      "No open issues",
+    );
+    expect(screen.getByTestId("agent-ownership-agt_qa")).toHaveTextContent(
+      "Unassigned owner",
+    );
+    expect(screen.getByTestId("agent-open-issues-agt_qa")).toHaveTextContent(
+      "3 open issues",
+    );
   });
 
   it("renders an empty-state when no agents exist", () => {
