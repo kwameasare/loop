@@ -1,24 +1,92 @@
-import { AgentSectionPlaceholder } from "@/components/agents/agent-section-placeholder";
+import Link from "next/link";
+
+import { EvalSuiteList } from "@/components/evals/eval-suite-list";
+import { SectionDegraded, SectionEmpty } from "@/components/section-states";
+import { listEvalSuites, type EvalSuite } from "@/lib/evals";
+import { getAgentDetailData } from "../agent-detail-data";
 
 interface PageProps {
   params: { agent_id: string };
 }
 
-export default function AgentEvalsPage({ params }: PageProps) {
+function messageFromError(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+export default async function AgentEvalsPage({ params }: PageProps) {
+  const { agent, degradedReason: agentDegradedReason } =
+    await getAgentDetailData(params.agent_id);
+  let suites: EvalSuite[] = [];
+  let evalsDegradedReason: string | undefined;
+
+  try {
+    const result = await listEvalSuites();
+    suites = result.items.filter((suite) => suite.agentId === params.agent_id);
+    evalsDegradedReason = result.degraded_reason;
+  } catch (error) {
+    evalsDegradedReason = messageFromError(
+      error,
+      "Could not load eval suites.",
+    );
+  }
+
+  const degradedEvidence = [agentDegradedReason, evalsDegradedReason]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <AgentSectionPlaceholder
-      title="Evals"
-      purpose="Eval coverage belongs inside the agent workbench so preview failures, reviewer comments, operator resolutions, and migration gaps become regression cases without leaving agent context."
-      requiredObjects={[
-        "Eval suites",
-        "Eval cases",
-        "Source trace links",
-        "Expected behavior",
-        "Risk tags",
-        "Release gate result",
-      ]}
-      primaryHref={`/evals?agent_id=${encodeURIComponent(params.agent_id)}`}
-      primaryLabel="Open Eval Foundry"
-    />
+    <section className="space-y-5" data-testid="agent-evals-page">
+      <header className="rounded-md border bg-card p-5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Agent Workbench · Evals
+        </p>
+        <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-normal">
+              Eval coverage for {agent.name || params.agent_id}
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+              Keep deploy gates close to the agent. Preview failures, reviewer
+              comments, operator resolutions, migration gaps, and production
+              traces should become regression cases with provenance.
+            </p>
+          </div>
+          <Link
+            href={`/evals?agent_id=${encodeURIComponent(params.agent_id)}`}
+            className="inline-flex w-fit rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          >
+            Open Eval Foundry
+          </Link>
+        </div>
+      </header>
+
+      {degradedEvidence ? (
+        <SectionDegraded
+          title="Agent evals"
+          description="Agent-scoped eval evidence could not fully load from the control plane. Studio will not substitute fixture suites or claim this agent has no coverage."
+          evidence={degradedEvidence}
+        />
+      ) : null}
+
+      {suites.length > 0 ? (
+        <div className="rounded-md border bg-card p-4">
+          <EvalSuiteList suites={suites} />
+        </div>
+      ) : !degradedEvidence ? (
+        <SectionEmpty
+          title="Agent evals"
+          description="No eval suites are attached to this agent yet. Create a starter suite from traces, simulator runs, operator resolutions, or migration transcripts before promoting."
+          evidence={`agent=${params.agent_id}`}
+          primaryAction={{
+            label: "Create eval suite",
+            href: `/evals?agent_id=${encodeURIComponent(params.agent_id)}`,
+          }}
+          secondaryAction={{
+            label: "Open simulator",
+            href: `/agents/${encodeURIComponent(params.agent_id)}/simulator`,
+          }}
+        />
+      ) : null}
+    </section>
   );
 }
