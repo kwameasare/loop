@@ -15,10 +15,10 @@ import {
 } from "@/lib/replay";
 
 const ROLE_BADGE: Record<Bubble["role"], string> = {
-  user: "bg-sky-100 text-sky-900",
-  agent: "bg-emerald-100 text-emerald-900",
-  tool: "bg-amber-100 text-amber-900",
-  system: "bg-zinc-100 text-zinc-700",
+  user: "border border-info/30 bg-info/10 text-info",
+  agent: "border border-success/30 bg-success/10 text-success",
+  tool: "border border-warning/30 bg-warning/10 text-warning",
+  system: "border border-border bg-muted text-muted-foreground",
 };
 
 function formatTimestamp(ms: number): string {
@@ -88,7 +88,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
   return (
     <div className="space-y-4" data-testid="replay-player">
       <div
-        className="flex flex-wrap items-center gap-3 rounded-md border bg-white p-3"
+        className="flex flex-wrap items-center gap-3 rounded-md border bg-card p-3"
         data-testid="replay-toolbar"
       >
         <label className="text-muted-foreground text-xs" htmlFor="target-version">
@@ -99,7 +99,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
           value={targetVersion}
           onChange={(event) => setTargetVersion(event.target.value)}
           data-testid="replay-target-version"
-          className="rounded border px-2 py-1 text-sm"
+          className="rounded border bg-background px-2 py-1 text-sm"
         >
           <option value="agent-v2">agent-v2</option>
           <option value="agent-canary">agent-canary</option>
@@ -109,7 +109,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
           type="button"
           onClick={onRunReplay}
           data-testid="replay-run"
-          className="rounded border bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700"
+          className="rounded border bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90"
         >
           Run replay
         </button>
@@ -124,8 +124,8 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
       </div>
 
       {diffRows.length > 0 && (
-        <section className="rounded-md border bg-white" data-testid="replay-diff">
-          <div className="grid grid-cols-[5rem_7rem_1fr_1fr] border-b px-3 py-2 text-xs font-medium text-zinc-600">
+        <section className="rounded-md border bg-card" data-testid="replay-diff">
+          <div className="grid grid-cols-[5rem_7rem_1fr_1fr] border-b px-3 py-2 text-xs font-medium text-muted-foreground">
             <span>Step</span>
             <span>Status</span>
             <span>Baseline</span>
@@ -165,7 +165,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
               role="listitem"
               data-testid="replay-bubble"
               data-role={b.role}
-              className="rounded-md border bg-white p-3 shadow-sm"
+              className="rounded-md border bg-card p-3 shadow-sm"
             >
               <div className="mb-1 flex items-center gap-2">
                 <span
@@ -187,7 +187,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
             type="button"
             onClick={onFirst}
             data-testid="replay-first"
-            className="rounded border px-2 py-1 text-xs hover:bg-zinc-50"
+            className="rounded border bg-background px-2 py-1 text-xs hover:bg-muted"
             aria-label="Jump to first step"
           >
             «
@@ -196,7 +196,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
             type="button"
             onClick={onPrev}
             data-testid="replay-prev"
-            className="rounded border px-2 py-1 text-xs hover:bg-zinc-50"
+            className="rounded border bg-background px-2 py-1 text-xs hover:bg-muted"
             aria-label="Previous boundary"
           >
             ‹
@@ -215,7 +215,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
             type="button"
             onClick={onNext}
             data-testid="replay-next"
-            className="rounded border px-2 py-1 text-xs hover:bg-zinc-50"
+            className="rounded border bg-background px-2 py-1 text-xs hover:bg-muted"
             aria-label="Next boundary"
           >
             ›
@@ -224,7 +224,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
             type="button"
             onClick={onLast}
             data-testid="replay-last"
-            className="rounded border px-2 py-1 text-xs hover:bg-zinc-50"
+            className="rounded border bg-background px-2 py-1 text-xs hover:bg-muted"
             aria-label="Jump to last step"
           >
             »
@@ -239,7 +239,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
       </div>
 
       <aside
-        className="space-y-2 rounded-md border bg-white p-4 text-sm shadow-sm"
+        className="space-y-2 rounded-md border bg-card p-4 text-sm shadow-sm"
         data-testid="replay-event-detail"
       >
         {snapshot.current === null ? (
@@ -260,7 +260,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
               <dd>{snapshot.current.actor}</dd>
             </dl>
             {snapshot.current.text.length > 0 && (
-              <pre className="overflow-x-auto whitespace-pre-wrap rounded bg-zinc-50 p-2 text-xs">
+              <pre className="overflow-x-auto whitespace-pre-wrap rounded bg-muted p-2 text-xs">
                 {snapshot.current.text}
               </pre>
             )}
