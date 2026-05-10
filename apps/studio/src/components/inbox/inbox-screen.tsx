@@ -18,6 +18,7 @@ type Props = {
   workspace_id: string;
   operator_id: string;
   now_ms: number;
+  focused_agent_id?: string | undefined;
   onClaimItem?: InboxMutation;
   onReleaseItem?: InboxMutation;
   onResolveItem?: InboxMutation;
@@ -34,18 +35,28 @@ export function InboxScreen(props: Props): JSX.Element {
   const [sentReplies, setSentReplies] = useState<Reply[]>([]);
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const scopedItems = useMemo(
+    () =>
+      items.filter(
+        (item) =>
+          item.workspace_id === props.workspace_id &&
+          (!props.focused_agent_id ||
+            item.agent_id === props.focused_agent_id),
+      ),
+    [items, props.focused_agent_id, props.workspace_id],
+  );
 
   const pending = useMemo(
-    () => listPending(items, props.workspace_id),
-    [items, props.workspace_id],
+    () => listPending(scopedItems, props.workspace_id),
+    [scopedItems, props.workspace_id],
   );
   const myClaims = useMemo(
-    () => listClaimedBy(items, props.operator_id),
-    [items, props.operator_id],
+    () => listClaimedBy(scopedItems, props.operator_id),
+    [scopedItems, props.operator_id],
   );
   const selected = useMemo(
-    () => items.find((i) => i.id === selectedId) ?? null,
-    [items, selectedId],
+    () => scopedItems.find((i) => i.id === selectedId) ?? null,
+    [scopedItems, selectedId],
   );
   const suggestionAgentId =
     selected?.agent_id ??
@@ -139,6 +150,15 @@ export function InboxScreen(props: Props): JSX.Element {
         className="w-80 shrink-0 rounded-lg border"
         data-testid="inbox-pending"
       >
+        {props.focused_agent_id ? (
+          <div
+            className="border-b bg-info/10 px-4 py-3 text-xs text-info"
+            data-testid="inbox-focused-agent"
+          >
+            Showing escalations for agent{" "}
+            <span className="font-semibold">{props.focused_agent_id}</span>.
+          </div>
+        ) : null}
         <h2 className="border-b px-4 py-3 text-sm font-semibold">
           Pending ({pending.length})
         </h2>

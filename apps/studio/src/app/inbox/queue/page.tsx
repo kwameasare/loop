@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { InboxQueue } from "@/components/inbox/inbox-queue";
@@ -24,6 +25,8 @@ export default function InboxQueuePage(): JSX.Element {
 
 function InboxQueuePageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const searchParams = useSearchParams();
+  const focusedAgentId = searchParams.get("agent_id") ?? undefined;
   const activeWorkspaceId = active?.id;
   const [items, setItems] = useState<InboxItem[]>([]);
   const [workspaceId, setWorkspaceId] = useState("");
@@ -90,6 +93,7 @@ function InboxQueuePageBody(): JSX.Element {
       </header>
       <InboxQueue
         agents={agents}
+        initialAgentId={focusedAgentId}
         items={items}
         now_ms={Date.now()}
         teams={teams}

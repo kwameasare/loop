@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { InboxScreen } from "@/components/inbox/inbox-screen";
@@ -37,6 +38,8 @@ export default function InboxPage(): JSX.Element {
 function InboxPageBody(): JSX.Element {
   const { user } = useUser();
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const searchParams = useSearchParams();
+  const focusedAgentId = searchParams.get("agent_id") ?? undefined;
   const activeWorkspaceId = active?.id;
   const [items, setItems] = useState<InboxItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +103,7 @@ function InboxPageBody(): JSX.Element {
       workspace_id={activeWorkspaceId}
       operator_id={user.sub}
       now_ms={nowMs}
+      focused_agent_id={focusedAgentId}
       onClaimItem={(item) => claimInboxItem(item.id, user.sub)}
       onReleaseItem={(item) => releaseInboxItem(item.id)}
       onResolveItem={(item) => resolveInboxItem(item.id)}
