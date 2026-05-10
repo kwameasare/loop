@@ -1,5 +1,3 @@
-import { targetUxFixtures } from "@/lib/target-ux";
-
 /**
  * S253: Eval suites/runs helpers for the studio app.
  *
@@ -26,6 +24,14 @@ export type EvalCaseSource =
   | "policy_doc"
   | "generated_adversarial"
   | "support_macro";
+
+const FIXTURE_AGENT_ID = "fixture_agent_support";
+const FIXTURE_TRACE_ID = "fixture_trace_refund_742";
+const FIXTURE_SCENE_ID = "fixture_scene_escalation_legal_threat";
+const FIXTURE_MIGRATION_ID = "fixture_migration_botpress_may";
+const FIXTURE_INBOX_TRACE_ID = "fixture_trace_handoff_legal_threat";
+const FIXTURE_PROVENANCE =
+  "Fixture mode: deterministic local-dev eval evidence, not live production data.";
 
 export interface EvalSuite {
   id: string;
@@ -173,16 +179,16 @@ function authHeaders(opts: EvalsHelperOptions): Record<string, string> {
 const FIXTURE_SUITES: EvalSuite[] = [
   {
     id: "evs_support_smoke",
-    name: targetUxFixtures.evals[0]?.name ?? "support smoke",
-    agentId: targetUxFixtures.workspace.activeAgentId,
+    name: "fixture support smoke",
+    agentId: FIXTURE_AGENT_ID,
     cases: 18,
-    lastRunAt: targetUxFixtures.evals[0]?.lastRun ?? "2026-05-06T08:30:00Z",
-    passRate: (targetUxFixtures.evals[0]?.passRate ?? 96) / 100,
+    lastRunAt: "2026-05-06T08:30:00Z",
+    passRate: 0.96,
   },
   {
     id: "evs_routing_regression",
-    name: "routing regression",
-    agentId: targetUxFixtures.workspace.activeAgentId,
+    name: "fixture routing regression",
+    agentId: FIXTURE_AGENT_ID,
     cases: 24,
     lastRunAt: "2026-05-05T17:04:55Z",
     passRate: 0.875,
@@ -215,8 +221,8 @@ const CREATION_SOURCES: EvalCreationSource[] = [
     source: "production",
     label: "Production conversations",
     count: 12,
-    evidence: `${targetUxFixtures.traces[0]!.id} and 11 related refund turns`,
-    provenance: "Production replay sample, 2026-05-06 UTC",
+    evidence: `${FIXTURE_TRACE_ID} and 11 related fixture refund turns`,
+    provenance: FIXTURE_PROVENANCE,
     actionLabel: "Save production turns",
     confidence: "high",
   },
@@ -237,7 +243,7 @@ const CREATION_SOURCES: EvalCreationSource[] = [
     count: 4,
     evidence:
       "Operators escalated legal-threat cancellations with policy notes",
-    provenance: "HITL resolution notes linked to trace_refund_742",
+    provenance: `${FIXTURE_PROVENANCE} Handoff notes are linked to ${FIXTURE_INBOX_TRACE_ID}.`,
     actionLabel: "Use resolutions",
     confidence: "medium",
   },
@@ -246,8 +252,8 @@ const CREATION_SOURCES: EvalCreationSource[] = [
     source: "migration_transcript",
     label: "Migration transcripts",
     count: 9,
-    evidence: `${targetUxFixtures.migrations[0]!.id} parity transcript sample`,
-    provenance: "Botpress import lineage snapshot",
+    evidence: `${FIXTURE_MIGRATION_ID} parity transcript sample`,
+    provenance: `${FIXTURE_PROVENANCE} Botpress import lineage sample.`,
     actionLabel: "Use migration transcript",
     confidence: "medium",
   },
@@ -269,7 +275,7 @@ const CREATION_SOURCES: EvalCreationSource[] = [
     evidence:
       "Synthetic cancellation paraphrases seeded from production traces",
     provenance:
-      "Synthetic provenance: trace_refund_742 + refund_policy_2026.pdf",
+      `Synthetic fixture provenance: ${FIXTURE_TRACE_ID} + refund_policy_2026.pdf`,
     actionLabel: "Review generated cases",
     confidence: "low",
   },
@@ -313,8 +319,8 @@ const SUITE_BUILDERS: Record<string, EvalSuiteBuilderView> = {
     ],
     datasets: ["production_refunds_may_06", "botpress_parity_refunds"],
     fixtures: [
-      targetUxFixtures.traces[0]!.id,
-      targetUxFixtures.scenes[0]!.id,
+      FIXTURE_TRACE_ID,
+      FIXTURE_SCENE_ID,
       "refund_policy_2026.pdf#p4",
     ],
     cassettes: ["cassette_refund_lookup_order_v23"],
@@ -345,8 +351,8 @@ const SUITE_BUILDERS: Record<string, EvalSuiteBuilderView> = {
     ],
     datasets: ["operator_resolution_refunds", "migration_legal_threats"],
     fixtures: [
-      targetUxFixtures.inbox[0]!.traceId,
-      targetUxFixtures.scenes[0]!.id,
+      FIXTURE_INBOX_TRACE_ID,
+      FIXTURE_SCENE_ID,
     ],
     cassettes: ["cassette_operator_handoff_v7"],
     thresholds: ["No critical route regressions", "p95 latency <= 1.5s"],
@@ -424,7 +430,7 @@ function fixtureRunDetail(runId: string): EvalRunDetail | null {
       name: "routes refund to billing",
       status: summary.failed > 0 ? "fail" : "pass",
       source: "production",
-      sourceRef: targetUxFixtures.traces[0]!.id,
+      sourceRef: FIXTURE_TRACE_ID,
       expected: "transfer to billing",
       actual: summary.failed > 0 ? "answered directly" : "transfer to billing",
       beforeOutput: "transfer to billing",
@@ -441,7 +447,7 @@ function fixtureRunDetail(runId: string): EvalRunDetail | null {
       latencyDeltaMs: 118,
       recommendedFix:
         "Add a routing assertion for annual renewals before answering directly.",
-      evidence: "trace_refund_742, refund_policy_2026.pdf#p4, eval_refunds",
+      evidence: `${FIXTURE_TRACE_ID}, refund_policy_2026.pdf#p4, eval_refunds`,
     },
     {
       caseId: "c3",
