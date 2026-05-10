@@ -4,6 +4,7 @@
  * cp-api endpoints:
  *   GET  /v1/agents/{id}/deployments                  → { items: Deployment[] }
  *   POST /v1/agents/{id}/deployments/{dep_id}/promote → Deployment
+ *   POST /v1/agents/{id}/deployments/{dep_id}/ramp    → Deployment
  *   POST /v1/agents/{id}/deployments/{dep_id}/pause   → Deployment
  *   POST /v1/agents/{id}/deployments/{dep_id}/rollback → Deployment
  *
@@ -15,6 +16,7 @@ export type DeploymentStatus =
   | "pending"
   | "shadow"
   | "canary"
+  | "ramp"
   | "live"
   | "paused"
   | "rolled_back"
@@ -203,6 +205,28 @@ function applyAction(
   return next;
 }
 
+function applyRamp(
+  deployments: Deployment[],
+  depId: string,
+  trafficPercent: number,
+): Deployment {
+  const idx = deployments.findIndex((d) => d.id === depId);
+  if (idx === -1) throw new Error(`deployment ${depId} not found`);
+  const target = deployments[idx];
+  if (!target) throw new Error(`deployment ${depId} not found`);
+  if (target.status !== "canary" && target.status !== "ramp") {
+    throw new Error(`deployment ${depId} cannot ramp from ${target.status}`);
+  }
+  const next: Deployment = {
+    ...target,
+    stage: "ramp",
+    status: "ramp",
+    trafficPercent,
+  };
+  deployments[idx] = next;
+  return next;
+}
+
 export async function listDeployments(
   agentId: string,
   opts: DeployHelperOptions = {},
@@ -310,6 +334,29 @@ export async function promoteDeployment(
   opts: DeployHelperOptions = {},
 ): Promise<Deployment> {
   return callAction(agentId, depId, "promote", opts);
+}
+
+export async function rampDeployment(
+  agentId: string,
+  depId: string,
+  trafficPercent: number,
+  opts: DeployHelperOptions = {},
+): Promise<Deployment> {
+  const base = resolveBase(opts);
+  if (!base) {
+    return applyRamp(seedFixtures(agentId), depId, trafficPercent);
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const res = await fetcher(
+    `${base}/agents/${agentId}/deployments/${depId}/ramp`,
+    {
+      method: "POST",
+      headers: authHeaders(opts),
+      body: JSON.stringify({ traffic_percent: trafficPercent }),
+    },
+  );
+  if (!res.ok) throw new Error(`ramp failed: ${res.status}`);
+  return (await res.json()) as Deployment;
 }
 
 export async function pauseDeployment(

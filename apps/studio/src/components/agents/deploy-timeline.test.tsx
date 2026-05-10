@@ -55,9 +55,47 @@ describe("DeployTimeline", () => {
         initialDeployments={[mkDep({ id: "d1", status: "rolled_back" })]}
       />,
     );
+    expect(screen.getByTestId("deploy-ramp-d1")).toBeDisabled();
     expect(screen.getByTestId("deploy-promote-d1")).toBeDisabled();
     expect(screen.getByTestId("deploy-pause-d1")).toBeDisabled();
     expect(screen.getByTestId("deploy-rollback-d1")).toBeDisabled();
+  });
+
+  it("ramps an active rollout to the selected traffic percentage", async () => {
+    const ramp = vi.fn(async () =>
+      mkDep({
+        id: "d1",
+        stage: "ramp",
+        status: "ramp",
+        trafficPercent: 50,
+      }),
+    );
+    render(
+      <DeployTimeline
+        agentId="a"
+        initialDeployments={[mkDep({ id: "d1", status: "canary" })]}
+        ramp={ramp}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.change(screen.getByTestId("deploy-ramp-slider-d1"), {
+        target: { value: "50" },
+      });
+      fireEvent.click(screen.getByTestId("deploy-ramp-d1"));
+    });
+
+    expect(ramp).toHaveBeenCalledWith("a", "d1", 50);
+    expect(screen.getByTestId("deploy-row-d1")).toHaveAttribute(
+      "data-status",
+      "ramp",
+    );
+    expect(screen.getByTestId("deploy-current-canary")).toHaveTextContent(
+      "Ramp at 50%",
+    );
+    expect(screen.getByTestId("deploy-toast-success")).toHaveTextContent(
+      "Ramped d1 to 50%",
+    );
   });
 
   it("promote replaces the canary row with the live deployment and supersedes prior live", async () => {

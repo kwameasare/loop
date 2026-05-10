@@ -45,6 +45,12 @@ class DeploymentThresholdEvaluation(BaseModel):
     reason: str = Field(default="", max_length=1200)
 
 
+class DeploymentRampBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    traffic_percent: int = Field(ge=1, le=99)
+
+
 async def _agent(
     request: Request,
     *,
@@ -485,6 +491,42 @@ async def promote_deployment(
         caller_sub=caller_sub,
         workspace_id=workspace_id,
     )
+
+
+@router.post("/{agent_id}/deployments/{deployment_id}/ramp")
+async def ramp_deployment(
+    request: Request,
+    agent_id: UUID,
+    deployment_id: str,
+    body: DeploymentRampBody,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+    )
+    deployment = await request.app.state.cp.deployments.ramp(
+        agent=agent,
+        deployment_id=deployment_id,
+        traffic_percent=body.traffic_percent,
+    )
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="deployment:ramp",
+        resource_id=deployment.id,
+        payload={
+            "agent_id": str(agent_id),
+            "stage": deployment.stage,
+            "status": deployment.status,
+            "traffic_percent": deployment.traffic_percent,
+        },
+    )
+    return deployment_payload(deployment)
 
 
 @router.post("/{agent_id}/deployments/{deployment_id}/pause")
