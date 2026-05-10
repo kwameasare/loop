@@ -2,20 +2,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   FIXTURE_INBOX,
+  FIXTURE_QUEUE,
   FIXTURE_OPERATOR_ID,
   FIXTURE_WORKSPACE_ID,
+  INBOX_CHANNELS,
   InboxStateError,
   claimInboxItem,
   claimItem,
   formatRelativeMs,
   listClaimedBy,
   listInbox,
+  listInboxQueue,
   listPending,
   releaseInboxItem,
   releaseItem,
   resolveInboxItem,
   resolveItem,
   takeoverConversation,
+  type InboxQueueOptions,
   type InboxItem,
 } from "./inbox";
 
@@ -72,6 +76,7 @@ describe("inbox listings", () => {
   it("listPending returns workspace pending oldest-first", () => {
     const out = listPending(FIXTURE_INBOX, FIXTURE_WORKSPACE_ID);
     expect(out.map((i) => i.id)).toEqual([
+      "44444444-4444-4444-4444-444444444444",
       "22222222-2222-2222-2222-222222222222",
       "11111111-1111-1111-1111-111111111111",
     ]);
@@ -107,8 +112,6 @@ describe("formatRelativeMs", () => {
     expect(formatRelativeMs(now, now + 1_000)).toBe("0s ago");
   });
 });
-
-import { listInboxQueue, FIXTURE_QUEUE, type InboxQueueOptions } from "./inbox";
 
 describe("listInboxQueue", () => {
   const baseOpts: InboxQueueOptions = { workspace_id: FIXTURE_WORKSPACE_ID };
@@ -171,6 +174,29 @@ describe("listInboxQueue", () => {
     });
     expect(result.page).toBeLessThanOrEqual(result.page_count);
   });
+
+  it("keeps every canonical channel available to queue filters", () => {
+    expect(INBOX_CHANNELS).toEqual([
+      "web_chat",
+      "whatsapp",
+      "telegram",
+      "slack",
+      "teams",
+      "sms",
+      "email",
+      "voice",
+      "webhook_api",
+    ]);
+    for (const channel of INBOX_CHANNELS) {
+      const result = listInboxQueue(FIXTURE_QUEUE, {
+        workspace_id: FIXTURE_WORKSPACE_ID,
+        channel,
+        page_size: 999,
+      });
+      expect(result.items.length).toBeGreaterThan(0);
+      expect(result.items.every((item) => item.channel === channel)).toBe(true);
+    }
+  });
 });
 
 describe("inbox cp-api client", () => {
@@ -207,7 +233,10 @@ describe("inbox cp-api client", () => {
     });
     const res = await listInbox("ws1", { fetcher });
     expect(res.items).toHaveLength(1);
-    expect(res.items[0]).toMatchObject({ team_id: "team-default", channel: "web" });
+    expect(res.items[0]).toMatchObject({
+      team_id: "team-default",
+      channel: "web",
+    });
     const [url] = fetcher.mock.calls[0];
     expect(url).toBe("https://cp.test/v1/workspaces/ws1/inbox");
   });

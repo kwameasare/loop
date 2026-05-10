@@ -28,10 +28,12 @@ def test_escalate_creates_pending_item() -> None:
         agent_id=ids["agent_id"],  # type: ignore[arg-type]
         conversation_id=ids["conversation_id"],  # type: ignore[arg-type]
         user_id="u-1",
+        channel="email",
         reason="user requested human",
         now_ms=1_700_000_000_000,
     )
     assert item.status == "pending"
+    assert item.channel == "email"
     assert item.operator_id is None
     assert q.list_pending(ids["workspace_id"]) == [item]  # type: ignore[arg-type]
 
@@ -206,11 +208,13 @@ def test_inbox_api_escalate_then_claim_then_resolve_round_trip() -> None:
             "agent_id": str(agent_id),
             "conversation_id": str(conv),
             "user_id": "u-1",
+            "channel": "teams",
             "reason": "user requested human",
             "now_ms": 1_700_000_000_000,
         },
     )
     assert created["status"] == "pending"
+    assert created["channel"] == "teams"
     pending = api.list_pending(workspace_id=ws)
     assert len(pending["items"]) == 1
     item_id = pending["items"][0]["id"]
@@ -240,6 +244,18 @@ def test_inbox_api_validation_errors_raise_inbox_error() -> None:
                 "agent_id": str(uuid4()),
                 "conversation_id": str(uuid4()),
                 "user_id": "",
+                "reason": "r",
+                "now_ms": 1,
+            },
+        )
+    with pytest.raises(InboxError):
+        api.escalate(
+            workspace_id=ws,
+            body={
+                "agent_id": str(uuid4()),
+                "conversation_id": str(uuid4()),
+                "user_id": "u",
+                "channel": "fax",
                 "reason": "r",
                 "now_ms": 1,
             },

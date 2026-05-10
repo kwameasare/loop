@@ -71,12 +71,28 @@ describe("InboxQueue", () => {
   it("filters by channel", () => {
     renderQueue(50);
     fireEvent.change(screen.getByTestId("queue-filter-channel"), {
-      target: { value: "voice" },
+      target: { value: "telegram" },
     });
     const rows = screen.getAllByTestId(/queue-row-/);
     for (const row of rows) {
-      expect(row.textContent).toMatch(/voice/);
+      expect(row.textContent).toMatch(/telegram/);
     }
+  });
+
+  it("offers every channel as a peer filter, including non-voice channels", () => {
+    renderQueue(50);
+    expect(screen.getByTestId("queue-filter-channel")).toHaveTextContent(
+      "telegram",
+    );
+    expect(screen.getByTestId("queue-filter-channel")).toHaveTextContent(
+      "teams",
+    );
+    expect(screen.getByTestId("queue-filter-channel")).toHaveTextContent(
+      "email",
+    );
+    expect(screen.getByTestId("queue-filter-channel")).toHaveTextContent(
+      "webhook_api",
+    );
   });
 
   it("initializes agent filtering from an evidence link", () => {

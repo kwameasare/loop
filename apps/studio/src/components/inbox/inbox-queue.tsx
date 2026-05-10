@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import {
   formatRelativeMs,
+  INBOX_CHANNELS,
   listInboxQueue,
   type InboxChannel,
   type InboxItem,
@@ -24,11 +25,7 @@ export interface InboxQueueProps {
 
 const CHANNELS: (InboxChannel | "all")[] = [
   "all",
-  "web",
-  "voice",
-  "sms",
-  "whatsapp",
-  "slack",
+  ...INBOX_CHANNELS,
 ];
 
 const STATUSES: (InboxStatus | "all")[] = ["all", "pending", "claimed", "resolved"];

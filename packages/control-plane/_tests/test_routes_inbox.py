@@ -57,6 +57,7 @@ def test_inbox_route_escalate_list_claim_release_resolve(
             "agent_id": str(agent_id),
             "conversation_id": str(conversation_id),
             "user_id": "user-1",
+            "channel": "telegram",
             "reason": "user requested human",
             "last_message_excerpt": "Can a person help?",
             "now_ms": 1_700_000_000_000,
@@ -64,10 +65,12 @@ def test_inbox_route_escalate_list_claim_release_resolve(
     )
     assert created.status_code == 201, created.text
     item_id = created.json()["id"]
+    assert created.json()["channel"] == "telegram"
 
     listed = client.get(f"/v1/workspaces/{workspace_id}/inbox", headers=headers)
     assert listed.status_code == 200, listed.text
     assert [item["id"] for item in listed.json()["items"]] == [item_id]
+    assert listed.json()["items"][0]["channel"] == "telegram"
 
     claimed = client.post(
         f"/v1/inbox/{item_id}/claim",

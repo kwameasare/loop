@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
-from loop_control_plane.inbox import InboxError, InboxItem, InboxQueue
+from loop_control_plane.inbox import InboxChannel, InboxError, InboxItem, InboxQueue
 
 
 def _serialise(item: InboxItem) -> dict[str, Any]:
@@ -48,6 +48,28 @@ def _require_int(name: str, value: object, *, ge: int = 0) -> int:
     return value
 
 
+_ALLOWED_CHANNELS: set[str] = {
+    "web",
+    "web_chat",
+    "whatsapp",
+    "telegram",
+    "slack",
+    "teams",
+    "sms",
+    "email",
+    "voice",
+    "webhook_api",
+}
+
+
+def _channel(value: object) -> InboxChannel:
+    if value is None:
+        return "web"
+    if isinstance(value, str) and value in _ALLOWED_CHANNELS:
+        return value  # type: ignore[return-value]
+    raise InboxError("channel must be a supported channel type")
+
+
 @dataclass
 class InboxAPI:
     """Thin façade so HTTP routers stay one-liners."""
@@ -64,6 +86,7 @@ class InboxAPI:
             user_id=_require_str("user_id", body.get("user_id")),
             reason=_require_str("reason", body.get("reason")),
             now_ms=_require_int("now_ms", body.get("now_ms")),
+            channel=_channel(body.get("channel")),
             last_message_excerpt=str(body.get("last_message_excerpt", "")),
         )
         return _serialise(item)

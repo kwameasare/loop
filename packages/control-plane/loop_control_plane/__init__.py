@@ -64,6 +64,7 @@ from loop_control_plane.errors import (
     map_to_loop_api_error,
 )
 from loop_control_plane.inbox import (
+    InboxChannel,
     InboxError,
     InboxItem,
     InboxQueue,
@@ -211,6 +212,7 @@ __all__ = [
     "InMemorySecretsBackend",
     "InMemoryStripe",
     "InboxAPI",
+    "InboxChannel",
     "InboxError",
     "InboxItem",
     "InboxQueue",
