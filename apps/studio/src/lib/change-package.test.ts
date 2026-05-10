@@ -49,6 +49,21 @@ describe("change package client", () => {
     );
   });
 
+  it("requires cp-api for the current change package by default", async () => {
+    await expect(
+      fetchCurrentChangePackage("agt_1", { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps current change package fallback explicitly opt-in", async () => {
+    await expect(
+      fetchCurrentChangePackage("agt_1", {
+        baseUrl: "",
+        allowFixture: true,
+      }),
+    ).resolves.toEqual({ item: null });
+  });
+
   it("does not fabricate preflight or approval mutations without cp-api", async () => {
     const local = buildLocalChangePackage("agt_1");
 

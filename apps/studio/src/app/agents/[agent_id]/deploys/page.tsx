@@ -23,11 +23,16 @@ export default async function AgentDeploysPage({
   }
 
   let changePackage = buildLocalChangePackage(params.agent_id);
+  let changePackageDegradedReason: string | undefined;
   try {
     changePackage =
       (await fetchCurrentChangePackage(params.agent_id)).item ?? changePackage;
-  } catch {
+  } catch (error) {
     changePackage = buildLocalChangePackage(params.agent_id);
+    changePackageDegradedReason =
+      error instanceof Error
+        ? error.message
+        : "Could not load the current Change Package.";
   }
 
   return (
@@ -35,6 +40,7 @@ export default async function AgentDeploysPage({
       <ChangePackagePanel
         agentId={params.agent_id}
         initialPackage={changePackage}
+        degradedReason={changePackageDegradedReason}
       />
       <DeployTimeline
         agentId={params.agent_id}

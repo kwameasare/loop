@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 interface ChangePackagePanelProps {
   agentId: string;
   initialPackage?: ChangePackage | null;
+  degradedReason?: string | undefined;
   generateChangePackage?: (
     agentId: string,
     input: ChangePackageGenerateInput,
@@ -71,6 +72,7 @@ function semanticSummary(item: Record<string, unknown>, index: number): string {
 export function ChangePackagePanel({
   agentId,
   initialPackage,
+  degradedReason,
   generateChangePackage = defaultGenerateChangePackage,
   submitChangePackage = defaultSubmitChangePackage,
   recordChangePackageApproval = (
@@ -91,11 +93,13 @@ export function ChangePackagePanel({
     state.kind === "generating" ||
     state.kind === "submitting" ||
     state.kind === "reviewing";
+  const backendUnavailable = Boolean(degradedReason);
   const hasGenerated = changePackage.status !== "draft";
-  const canSubmit = changePackage.status === "generated" && !busy;
+  const canSubmit =
+    changePackage.status === "generated" && !busy && !backendUnavailable;
   const isReviewableStatus =
     changePackage.status === "submitted" || changePackage.status === "approved";
-  const canReview = isReviewableStatus && !busy;
+  const canReview = isReviewableStatus && !busy && !backendUnavailable;
 
   async function handleGenerate() {
     setState({ kind: "generating" });
@@ -189,6 +193,15 @@ export function ChangePackagePanel({
       data-testid="change-package-panel"
       aria-labelledby="change-package-heading"
     >
+      {degradedReason ? (
+        <div
+          className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning"
+          data-testid="change-package-degraded"
+          role="alert"
+        >
+          Change Package backend unavailable. {degradedReason}
+        </div>
+      ) : null}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -211,7 +224,7 @@ export function ChangePackagePanel({
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={busy}
+            disabled={busy || backendUnavailable}
             className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
             data-testid="change-package-generate"
           >
