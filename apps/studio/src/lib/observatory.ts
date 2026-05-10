@@ -81,6 +81,10 @@ export interface ObservatoryClientOptions
     TracesClientOptions,
     InboxClientOptions {}
 
+type ObservatoryMutationOptions = ObservatoryClientOptions & {
+  allowFixture?: boolean;
+};
+
 function hasCpApiBase(override?: string): boolean {
   return Boolean(
     override ??
@@ -438,13 +442,14 @@ export async function fetchObservatoryModel(
 export async function pinObservatoryMetric(
   workspaceId: string,
   metric: ObservatoryMetric,
-  opts: ObservatoryClientOptions = {},
+  opts: ObservatoryMutationOptions = {},
 ): Promise<ObservatoryDashboardLayout> {
   return cpJson<ObservatoryDashboardLayout>(
     `/workspaces/${encodeURIComponent(workspaceId)}/dashboards`,
     {
       ...opts,
       method: "POST",
+      allowFallback: opts.allowFixture === true,
       body: {
         name: `${metric.label} watch`,
         layout: [
