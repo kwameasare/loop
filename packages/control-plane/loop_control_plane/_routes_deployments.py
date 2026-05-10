@@ -15,6 +15,7 @@ from loop_control_plane.channel_bindings import (
     channel_readiness_state,
 )
 from loop_control_plane.deployments import (
+    DeploymentRecord,
     DeploymentStart,
     deployment_payload,
     evidence_pack_payload,
@@ -30,6 +31,17 @@ class DeploymentActionBody(BaseModel):
 
     mode: Literal["manual", "auto"] = "manual"
     trigger: str = Field(default="", max_length=500)
+    reason: str = Field(default="", max_length=1200)
+
+
+class DeploymentThresholdEvaluation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    metric: str = Field(min_length=1, max_length=120)
+    observed: float
+    threshold: float | None = None
+    policy: Literal["pause", "rollback"] = "rollback"
+    window: str = Field(default="5m", min_length=1, max_length=80)
     reason: str = Field(default="", max_length=1200)
 
 
@@ -57,6 +69,14 @@ async def _change_package(request: Request, *, agent: Any, package_id: str) -> A
         if package.id == package_id:
             return package
     raise WorkspaceError(f"unknown change package: {package_id}")
+
+
+async def _deployment(request: Request, *, agent: Any, deployment_id: str) -> DeploymentRecord:
+    deployments = await request.app.state.cp.deployments.list_for_agent(agent=agent)
+    for deployment in deployments:
+        if deployment.id == deployment_id:
+            return deployment
+    raise WorkspaceError(f"unknown deployment: {deployment_id}")
 
 
 async def _notification_targets(request: Request, *, agent: Any, fallback: str) -> list[str]:
@@ -167,6 +187,24 @@ def _channel_blocker_message(blockers: list[dict[str, Any]]) -> str:
         f"{blocker['channel_type']} {blocker['readiness_state']}" for blocker in blockers
     )
     return f"channel readiness blocks rollout: {summary}"
+
+
+def _numeric_threshold(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return None
+    if isinstance(value, dict):
+        for key in ("threshold", "max", "value"):
+            numeric = _numeric_threshold(value.get(key))
+            if numeric is not None:
+                return numeric
+    return None
 
 
 @router.get("/{agent_id}/deployments")
@@ -324,6 +362,110 @@ async def _deployment_action(
             },
         )
     return deployment_payload(deployment)
+
+
+@router.post("/{agent_id}/deployments/{deployment_id}/thresholds/evaluate")
+async def evaluate_deployment_threshold(
+    request: Request,
+    agent_id: UUID,
+    deployment_id: str,
+    body: DeploymentThresholdEvaluation,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+    )
+    deployment = await _deployment(request, agent=agent, deployment_id=deployment_id)
+    threshold = body.threshold
+    if threshold is None:
+        threshold = _numeric_threshold(deployment.auto_rollback_thresholds.get(body.metric))
+    if threshold is None:
+        raise WorkspaceError(f"no numeric threshold configured for metric: {body.metric}")
+
+    trigger = f"{body.metric} breached {body.observed:g} > {threshold:g} over {body.window}"
+    audit_payload = {
+        "agent_id": str(agent_id),
+        "deployment_id": deployment.id,
+        "metric": body.metric,
+        "observed": body.observed,
+        "threshold": threshold,
+        "policy": body.policy,
+        "window": body.window,
+        "trigger": trigger,
+    }
+    if body.observed <= threshold:
+        _audit(
+            request,
+            workspace_id=workspace_id,
+            caller_sub=caller_sub,
+            action="deployment:threshold_evaluate",
+            resource_id=deployment.id,
+            payload={**audit_payload, "decision": "no_action", "breached": False},
+        )
+        return {
+            "decision": "no_action",
+            "breached": False,
+            "metric": body.metric,
+            "observed": body.observed,
+            "threshold": threshold,
+            "policy": body.policy,
+            "deployment": deployment_payload(deployment),
+        }
+
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="deployment:threshold_breach",
+        resource_id=deployment.id,
+        payload={**audit_payload, "decision": body.policy, "breached": True},
+    )
+    if body.policy == "pause":
+        updated = await _deployment_action(
+            request,
+            agent_id=agent_id,
+            deployment_id=deployment_id,
+            action="pause",
+            body=None,
+            caller_sub=caller_sub,
+            workspace_id=workspace_id,
+        )
+        return {
+            "decision": "paused",
+            "breached": True,
+            "metric": body.metric,
+            "observed": body.observed,
+            "threshold": threshold,
+            "policy": body.policy,
+            "deployment": updated,
+        }
+
+    updated = await _deployment_action(
+        request,
+        agent_id=agent_id,
+        deployment_id=deployment_id,
+        action="rollback",
+        body=DeploymentActionBody(
+            mode="auto",
+            trigger=trigger,
+            reason=body.reason or f"{body.metric} exceeded the configured rollout threshold.",
+        ),
+        caller_sub=caller_sub,
+        workspace_id=workspace_id,
+    )
+    return {
+        "decision": "rolled_back",
+        "breached": True,
+        "metric": body.metric,
+        "observed": body.observed,
+        "threshold": threshold,
+        "policy": body.policy,
+        "deployment": updated,
+    }
 
 
 @router.post("/{agent_id}/deployments/{deployment_id}/promote")
