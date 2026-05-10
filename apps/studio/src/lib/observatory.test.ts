@@ -216,4 +216,30 @@ describe("fetchObservatoryModel", () => {
     expect(model.tail[0]?.traceId).toBe("trace-live");
     expect(model.agents[0]?.id).toBe("agent-live");
   });
+
+  it("returns a degraded telemetry model when one live source fails", async () => {
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/traces")) {
+        return response({ message: "trace backend unavailable" }, 503);
+      }
+      return response({ items: [] });
+    });
+
+    const model = await fetchObservatoryModel("ws1", {
+      baseUrl: "https://cp.test/v1",
+      fetcher: fetcher as unknown as typeof fetch,
+    });
+
+    expect(model.degradedReason).toMatch(
+      /Live Observatory telemetry is unavailable/i,
+    );
+    expect(model.degradedReason).toMatch(/503/);
+    expect(model.tail).toEqual([]);
+    expect(model.agents).toEqual([]);
+    expect(model.metrics.every((metric) => metric.tone === "blocked")).toBe(
+      true,
+    );
+    expect(model.anomalies[0]?.id).toBe("telemetry_not_loaded");
+  });
 });
