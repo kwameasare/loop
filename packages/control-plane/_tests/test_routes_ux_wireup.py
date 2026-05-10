@@ -2567,8 +2567,15 @@ def test_tool_import_persona_semantic_diff_style_bisect_and_shares(
         },
     )
     assert share.status_code == 201, share.text
-    viewed = client.get(f"/v1/shares/{share.json()['id']}", headers=_auth())
-    assert viewed.json()["redaction_banner"].startswith("2 redaction")
+    share_body = share.json()
+    assert share_body["url"].startswith("/share/")
+    viewed_by_id = client.get(f"/v1/shares/{share_body['id']}", headers=_auth())
+    assert viewed_by_id.json()["redaction_banner"].startswith("2 redaction")
+    viewed_by_token = client.get(
+        f"/v1/shares/{share_body['url'].rsplit('/', 1)[-1]}",
+        headers=_auth(),
+    )
+    assert viewed_by_token.json()["source_id"] == "2" * 32
 
 
 def test_pair_debug_audio_and_voice_provisioner_modes(
