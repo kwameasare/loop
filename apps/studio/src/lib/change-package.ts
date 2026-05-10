@@ -78,7 +78,12 @@ export interface ChangePackageApprovalInput {
 
 export interface ChangePackageApprovalOptions extends UxWireupClientOptions {
   fallbackPackage?: ChangePackage;
+  allowFixture?: boolean;
 }
+
+type ChangePackageClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
 
 export interface ChangePackage {
   id: string;
@@ -174,7 +179,7 @@ export async function fetchCurrentChangePackage(
 export async function generateChangePackage(
   agentId: string,
   input: ChangePackageGenerateInput,
-  opts: UxWireupClientOptions = {},
+  opts: ChangePackageClientOptions = {},
 ): Promise<ChangePackage> {
   return cpJson<ChangePackage>(
     `/agents/${encodeURIComponent(agentId)}/change-packages/preflight`,
@@ -182,6 +187,7 @@ export async function generateChangePackage(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...buildLocalChangePackage(agentId),
         ...input,
@@ -195,7 +201,7 @@ export async function generateChangePackage(
 export async function submitChangePackage(
   agentId: string,
   packageId: string,
-  opts: UxWireupClientOptions = {},
+  opts: ChangePackageClientOptions = {},
 ): Promise<ChangePackage> {
   return cpJson<ChangePackage>(
     `/agents/${encodeURIComponent(agentId)}/change-packages/${encodeURIComponent(
@@ -204,6 +210,7 @@ export async function submitChangePackage(
     {
       ...opts,
       method: "POST",
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...buildLocalChangePackage(agentId),
         id: packageId,
@@ -228,6 +235,7 @@ export async function recordChangePackageApproval(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: applyLocalApproval(
         opts.fallbackPackage ?? buildLocalChangePackage(agentId),
         packageId,
