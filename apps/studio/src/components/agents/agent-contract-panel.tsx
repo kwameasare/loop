@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { CheckCircle2, FileText, ShieldAlert } from "lucide-react";
 
+import { SectionDegraded } from "@/components/section-states";
 import {
   type CommitmentBody,
   type CommitmentDocument,
@@ -150,12 +151,12 @@ export function AgentContractPanel({
   return (
     <section className="space-y-5" data-testid="agent-contract-panel">
       {degradedReason ? (
-        <div
-          className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning"
-          data-testid="contract-degraded"
-          role="alert"
-        >
-          Commitment backend unavailable. {degradedReason}
+        <div data-testid="contract-degraded">
+          <SectionDegraded
+            title="Agent Contract"
+            description="The current Commitment Document could not load from the control plane. The local form is visible for review, but save and accept are disabled until backend evidence is available."
+            evidence={degradedReason}
+          />
         </div>
       ) : null}
       <div className="rounded-md border bg-card p-5">

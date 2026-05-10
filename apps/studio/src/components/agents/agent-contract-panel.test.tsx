@@ -70,12 +70,16 @@ describe("AgentContractPanel", () => {
       />,
     );
 
-    expect(screen.getByTestId("contract-degraded")).toHaveTextContent(
-      "Commitment backend unavailable",
+    const degraded = screen.getByTestId("contract-degraded");
+    expect(degraded).toHaveTextContent("Agent Contract is degraded");
+    expect(degraded).toHaveTextContent(
+      "save and accept are disabled until backend evidence is available",
+    );
+    expect(degraded).toHaveTextContent(
+      "LOOP_CP_API_BASE_URL is required for cp-api calls",
     );
     expect(
-      (screen.getByTestId("contract-save-draft") as HTMLButtonElement)
-        .disabled,
+      (screen.getByTestId("contract-save-draft") as HTMLButtonElement).disabled,
     ).toBe(true);
     expect(
       (screen.getByTestId("contract-accept") as HTMLButtonElement).disabled,
