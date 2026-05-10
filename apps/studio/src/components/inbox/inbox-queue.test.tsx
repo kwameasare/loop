@@ -24,6 +24,23 @@ function renderQueue(pageSize = 10) {
 }
 
 describe("InboxQueue", () => {
+  it("renders an honest empty queue without fixture rows", () => {
+    render(
+      <InboxQueue
+        agents={[]}
+        items={[]}
+        now_ms={FIXTURE_NOW_MS}
+        teams={[]}
+        workspace_id={FIXTURE_WORKSPACE_ID}
+      />,
+    );
+
+    expect(screen.getByTestId("queue-count")).toHaveTextContent("0 items");
+    expect(screen.getByTestId("queue-empty")).toHaveTextContent(
+      "No items match the current filters.",
+    );
+  });
+
   it("renders rows with last-message preview and a link to detail", () => {
     renderQueue();
     expect(screen.getByTestId("queue-table")).toBeInTheDocument();
