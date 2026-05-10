@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ChannelBindingsPanel } from "./channel-bindings-panel";
 import {
   type ChannelBinding,
+  type ChannelReadinessInput,
   buildLocalChannelBindings,
 } from "@/lib/channel-bindings";
 
@@ -214,7 +215,7 @@ describe("ChannelBindingsPanel", () => {
         _agentId: string,
         _bindingId: string,
         checkId: string,
-        input: { status: "passed" | "failed"; evidence_ref?: string | null },
+        input: ChannelReadinessInput,
       ) => ({
         ...whatsapp!,
         status: "draft" as const,

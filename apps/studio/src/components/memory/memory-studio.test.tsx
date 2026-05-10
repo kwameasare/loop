@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createEmptyMemoryStudioData,
   createMemoryStudioData,
+  createMemoryStudioDataFromEntries,
 } from "@/lib/memory-studio";
 import { targetUxFixtures } from "@/lib/target-ux";
 
@@ -120,6 +121,51 @@ describe("MemoryStudio", () => {
 
     fireEvent.click(screen.getByTestId("memory-entry-mem_scratch_order"));
     expect(screen.getByTestId("memory-delete")).toBeDisabled();
+  });
+
+  it("does not fake source evidence when a durable memory write has no source trace", () => {
+    render(
+      <MemoryStudio
+        data={createMemoryStudioDataFromEntries("agent_support", [
+          {
+            id: "user:alice:preferred_timezone",
+            scope: "user",
+            key: "preferred_timezone",
+            before: "unknown",
+            after: "UTC",
+            source: "runtime memory store",
+            sourceTrace: "",
+            sourceTurnId: "",
+            sourceSpanId: "",
+            policyRef: "mp_user",
+            retentionPolicy: "durable user memory",
+            lastWrite: "2026-05-01T10:00:00Z",
+            writerVersion: "live",
+            confidence: "low",
+            safetyFlags: ["missing_source_trace"],
+            deletionState: "available",
+            deletionReason: "delete with audit",
+            replayImpact: "removes preference",
+          },
+        ])}
+      />,
+    );
+
+    expect(screen.getByTestId("memory-source-trace")).toHaveTextContent(
+      "Missing source trace",
+    );
+    expect(
+      screen.queryByRole("link", { name: /missing source trace/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("memory-write-preview")).toHaveTextContent(
+      "mp_user",
+    );
+    expect(screen.getByTestId("memory-write-preview")).toHaveTextContent(
+      "Require review before durable write",
+    );
+    expect(screen.getByTestId("memory-studio-safety")).toHaveTextContent(
+      "missing source trace",
+    );
   });
 
   it("replays with and without memory", () => {

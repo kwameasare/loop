@@ -23,9 +23,11 @@ export type MemorySafetyFlag =
   | "none"
   | "pii"
   | "secret-like"
+  | "secret_like_redacted"
   | "conflict"
   | "stale"
-  | "weak-evidence";
+  | "weak-evidence"
+  | "missing_source_trace";
 export type MemoryReplayMode = "current" | "without-memory" | "historical";
 
 export interface MemoryStudioEntry {
@@ -36,6 +38,9 @@ export interface MemoryStudioEntry {
   after: string;
   source: string;
   sourceTrace: string;
+  sourceTurnId: string;
+  sourceSpanId: string;
+  policyRef: string;
   retentionPolicy: string;
   lastWrite: string;
   writerVersion: string;
@@ -88,6 +93,9 @@ interface CpMemoryEntry {
   after: string;
   source: string;
   source_trace: string;
+  source_turn_id?: string | null;
+  source_span_id?: string | null;
+  policy_ref?: string | null;
   retention_policy: string;
   updated_at: string;
   writer_version: string;
@@ -134,7 +142,10 @@ function normalizeMemoryEntry(item: CpMemoryEntry): MemoryStudioEntry {
     before: item.before,
     after: item.after,
     source: item.source,
-    sourceTrace: item.source_trace,
+    sourceTrace: item.source_trace ?? "",
+    sourceTurnId: item.source_turn_id ?? "",
+    sourceSpanId: item.source_span_id ?? "",
+    policyRef: item.policy_ref ?? "",
     retentionPolicy: item.retention_policy,
     lastWrite: item.updated_at || "not recorded",
     writerVersion: item.writer_version,
@@ -259,6 +270,9 @@ export function createMemoryStudioData(
         after: memory.after,
         source: memory.source,
         sourceTrace: trace.id,
+        sourceTurnId: "turn_3",
+        sourceSpanId: "span_memory_write_preferred_language",
+        policyRef: "mp_local_user",
         retentionPolicy: memory.policy,
         lastWrite: "2026-05-06T08:42:00Z",
         writerVersion: trace.version,
@@ -277,6 +291,9 @@ export function createMemoryStudioData(
         after: "refund_policy_2026.pdf ranked above refund_policy_2024.pdf",
         source: "Context assembled from policy retrieval",
         sourceTrace: trace.id,
+        sourceTurnId: "turn_3",
+        sourceSpanId: "span_retrieval_policy_context",
+        policyRef: "mp_local_task",
         retentionPolicy: "episodic trace memory, 30 day retention",
         lastWrite: "2026-05-06T08:41:12Z",
         writerVersion: trace.version,
@@ -295,6 +312,9 @@ export function createMemoryStudioData(
         after: "enterprise annual",
         source: "Account lookup result approved for account-scope memory",
         sourceTrace: trace.id,
+        sourceTurnId: "turn_3",
+        sourceSpanId: "span_tool_lookup_order",
+        policyRef: "mp_local_account",
         retentionPolicy: "account memory, 90 day retention",
         lastWrite: "2026-05-06T08:42:20Z",
         writerVersion: trace.version,
@@ -314,6 +334,9 @@ export function createMemoryStudioData(
         after: "enterprise_success@acme.test",
         source: "Approved organization routing policy",
         sourceTrace: "trace_refund_742#policy_resolution",
+        sourceTurnId: "turn_4",
+        sourceSpanId: "span_policy_resolution",
+        policyRef: "mp_local_organization",
         retentionPolicy: "organization memory, policy-bound retention",
         lastWrite: "2026-05-06T08:43:03Z",
         writerVersion: trace.version,
@@ -333,6 +356,9 @@ export function createMemoryStudioData(
         after: "lookup_order result staged for this turn only",
         source: "span_tool lookup_order",
         sourceTrace: trace.id,
+        sourceTurnId: "turn_3",
+        sourceSpanId: "span_tool_lookup_order",
+        policyRef: "mp_local_scratch",
         retentionPolicy: "scratch memory, expires at turn end",
         lastWrite: "2026-05-06T08:41:31Z",
         writerVersion: trace.version,
@@ -352,6 +378,9 @@ export function createMemoryStudioData(
         after: "[redacted secret-like value]",
         source: "Rejected memory write from customer text",
         sourceTrace: trace.id,
+        sourceTurnId: "turn_3",
+        sourceSpanId: "span_memory_blocked_payment_hint",
+        policyRef: "mp_local_session",
         retentionPolicy: "session memory blocked by PII and secret policy",
         lastWrite: "2026-05-06T08:41:52Z",
         writerVersion: trace.version,
@@ -371,6 +400,9 @@ export function createMemoryStudioData(
         after: "cumulative cap across conversation",
         source: "Catch resolution accepted by builder",
         sourceTrace: "catch/cumulative_refund_cap",
+        sourceTurnId: "catch_1",
+        sourceSpanId: "span_catch_resolution",
+        policyRef: "mp_local_agent",
         retentionPolicy: "agent memory, version-bound retention",
         lastWrite: "2026-05-06T08:45:10Z",
         writerVersion: "v23.1.4-draft",
@@ -390,6 +422,9 @@ export function createMemoryStudioData(
         after: "Spanish",
         source: "Weak evidence from translated paraphrase",
         sourceTrace: "trace_refund_742#turn_8",
+        sourceTurnId: "turn_8",
+        sourceSpanId: "span_memory_candidate_language",
+        policyRef: "mp_local_user",
         retentionPolicy:
           "durable user preference requires explicit confirmation",
         lastWrite: "2026-05-06T08:44:00Z",

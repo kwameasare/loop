@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Trash2,
 } from "lucide-react";
+import Link from "next/link";
 
 import {
   ConfidenceMeter,
@@ -61,9 +62,23 @@ const FLAG_CLASS: Record<MemorySafetyFlag, string> = {
   none: "border-info/40 bg-info/5 text-info",
   pii: "border-destructive/40 bg-destructive/5 text-destructive",
   "secret-like": "border-destructive/40 bg-destructive/5 text-destructive",
+  secret_like_redacted:
+    "border-destructive/40 bg-destructive/5 text-destructive",
   conflict: "border-warning/50 bg-warning/5 text-warning",
   stale: "border-warning/50 bg-warning/5 text-warning",
   "weak-evidence": "border-warning/50 bg-warning/5 text-warning",
+  missing_source_trace: "border-warning/50 bg-warning/5 text-warning",
+};
+
+const FLAG_LABEL: Record<MemorySafetyFlag, string> = {
+  none: "none",
+  pii: "PII",
+  "secret-like": "secret-like",
+  secret_like_redacted: "secret-like redacted",
+  conflict: "conflict",
+  stale: "stale",
+  "weak-evidence": "weak evidence",
+  missing_source_trace: "missing source trace",
 };
 
 const POLICY_STATUS_CLASS: Record<MemoryPolicyApprovalStatus, string> = {
@@ -108,10 +123,17 @@ function liveBadgeTone(
 }
 
 function riskLevel(flags: MemorySafetyFlag[]) {
-  if (flags.includes("pii") || flags.includes("secret-like")) return "blocked";
+  if (
+    flags.includes("pii") ||
+    flags.includes("secret-like") ||
+    flags.includes("secret_like_redacted")
+  ) {
+    return "blocked";
+  }
   if (flags.includes("conflict") || flags.includes("weak-evidence")) {
     return "medium";
   }
+  if (flags.includes("missing_source_trace")) return "medium";
   if (flags.includes("stale")) return "low";
   return "none";
 }
@@ -119,18 +141,43 @@ function riskLevel(flags: MemorySafetyFlag[]) {
 function policyActionFor(entry: MemoryStudioEntry): string {
   if (
     entry.safetyFlags.includes("pii") ||
-    entry.safetyFlags.includes("secret-like")
+    entry.safetyFlags.includes("secret-like") ||
+    entry.safetyFlags.includes("secret_like_redacted")
   ) {
     return "Block or require human review before storage";
   }
   if (
     entry.safetyFlags.includes("conflict") ||
-    entry.safetyFlags.includes("weak-evidence")
+    entry.safetyFlags.includes("weak-evidence") ||
+    entry.safetyFlags.includes("missing_source_trace")
   ) {
     return "Require review before durable write";
   }
   if (entry.scope === "scratch") return "Expire automatically at turn end";
   return "Approve automatically under current policy";
+}
+
+function flagText(flags: MemorySafetyFlag[]): string {
+  return flags.map((flag) => FLAG_LABEL[flag]).join(", ");
+}
+
+function sourceTraceLabel(entry: MemoryStudioEntry): string {
+  return entry.sourceTrace || "Missing source trace";
+}
+
+function sourceTraceHref(sourceTrace: string): string | null {
+  if (!sourceTrace || !/^trace[_-]/.test(sourceTrace)) return null;
+  const [traceId, fragment] = sourceTrace.split("#", 2);
+  const encodedTrace = encodeURIComponent(traceId ?? sourceTrace);
+  if (!fragment) return `/traces/${encodedTrace}`;
+  return `/traces/${encodedTrace}#${encodeURIComponent(fragment)}`;
+}
+
+function confidenceEvidence(entry: MemoryStudioEntry): string {
+  if (!entry.sourceTrace) {
+    return `Source: ${entry.source}; missing source trace`;
+  }
+  return `Source: ${entry.source}; trace ${entry.sourceTrace}`;
 }
 
 function MemoryExplorer({
@@ -216,12 +263,13 @@ function MemoryExplorer({
                         FLAG_CLASS[flag],
                       )}
                     >
-                      {flag}
+                      {FLAG_LABEL[flag]}
                     </span>
                   ))}
                 </span>
                 <span className="mt-2 block text-muted-foreground">
-                  Trace: {entry.sourceTrace} · Policy: {entry.retentionPolicy}
+                  Trace: {sourceTraceLabel(entry)} · Policy:{" "}
+                  {entry.policyRef || entry.retentionPolicy}
                 </span>
               </button>
             ))}
@@ -291,7 +339,7 @@ function MemoryDetail({
           }
           level={entry.confidence}
           label="Memory confidence"
-          evidence={`Source: ${entry.source}; trace ${entry.sourceTrace}`}
+          evidence={confidenceEvidence(entry)}
         />
         <section
           className="rounded-md border bg-background p-3"
@@ -313,11 +361,48 @@ function MemoryDetail({
             </div>
             <div>
               <dt className="text-muted-foreground">Source trace</dt>
-              <dd>{entry.sourceTrace}</dd>
+              <dd data-testid="memory-source-trace">
+                {sourceTraceHref(entry.sourceTrace) ? (
+                  <Link
+                    href={sourceTraceHref(entry.sourceTrace)!}
+                    className="font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  >
+                    {entry.sourceTrace}
+                  </Link>
+                ) : (
+                  <span
+                    className={cn(
+                      entry.sourceTrace
+                        ? "text-foreground"
+                        : "font-medium text-warning",
+                    )}
+                  >
+                    {sourceTraceLabel(entry)}
+                  </span>
+                )}
+              </dd>
             </div>
+            {entry.sourceTurnId ? (
+              <div>
+                <dt className="text-muted-foreground">Source turn</dt>
+                <dd>{entry.sourceTurnId}</dd>
+              </div>
+            ) : null}
+            {entry.sourceSpanId ? (
+              <div>
+                <dt className="text-muted-foreground">Source span</dt>
+                <dd>{entry.sourceSpanId}</dd>
+              </div>
+            ) : null}
+            {entry.policyRef ? (
+              <div>
+                <dt className="text-muted-foreground">Policy ref</dt>
+                <dd>{entry.policyRef}</dd>
+              </div>
+            ) : null}
             <div>
               <dt className="text-muted-foreground">Policy check</dt>
-              <dd>{entry.safetyFlags.join(", ")}</dd>
+              <dd>{flagText(entry.safetyFlags)}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Retention</dt>
@@ -331,7 +416,7 @@ function MemoryDetail({
         </section>
         <RiskHalo
           level={riskLevel(entry.safetyFlags)}
-          label={`Safety flags: ${entry.safetyFlags.join(", ")}`}
+          label={`Safety flags: ${flagText(entry.safetyFlags)}`}
         >
           <div
             className="rounded-md bg-background p-3"
@@ -342,7 +427,7 @@ function MemoryDetail({
               Safety flags
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              {entry.safetyFlags.join(", ")}
+              {flagText(entry.safetyFlags)}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
               Retention: {entry.retentionPolicy}
@@ -728,7 +813,10 @@ export function MemoryStudio({
     if (focusedFilter !== "privacy") return;
     const privacyEntry = entries.find((entry) =>
       entry.safetyFlags.some(
-        (flag) => flag === "pii" || flag === "secret-like",
+        (flag) =>
+          flag === "pii" ||
+          flag === "secret-like" ||
+          flag === "secret_like_redacted",
       ),
     );
     if (privacyEntry) setSelectedId(privacyEntry.id);
@@ -737,7 +825,9 @@ export function MemoryStudio({
   async function handleDelete(entry: MemoryStudioEntry): Promise<void> {
     if (!onDeleteEntry) {
       setDeleteNotice(
-        `Deletion requires cp-api wiring for ${entry.key}. Evidence: ${entry.sourceTrace}.`,
+        `Deletion requires cp-api wiring for ${entry.key}. Evidence: ${sourceTraceLabel(
+          entry,
+        )}.`,
       );
       return;
     }
@@ -751,7 +841,9 @@ export function MemoryStudio({
           ? (entries.find((item) => item.id !== entry.id)?.id ?? null)
           : current,
       );
-      setDeleteNotice(`Deleted ${entry.key}. Evidence: ${entry.sourceTrace}.`);
+      setDeleteNotice(
+        `Deleted ${entry.key}. Evidence: ${sourceTraceLabel(entry)}.`,
+      );
     } catch (err) {
       setDeleteNotice(
         err instanceof Error ? err.message : `Could not delete ${entry.key}.`,

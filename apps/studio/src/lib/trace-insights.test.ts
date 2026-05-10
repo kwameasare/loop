@@ -12,7 +12,7 @@ const trace: Trace = {
       name: "model.generate",
       service: "runtime",
       kind: "server",
-      category: "model",
+      category: "llm",
       start_ns: 0,
       end_ns: 800_000_000,
       status: "ok",
