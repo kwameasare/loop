@@ -43,6 +43,100 @@ describe("AgentOverviewPage", () => {
     expect(screen.queryByTestId("overview-deploy-version")).toBeNull();
   });
 
+  it("loads the focused creation intake after agent creation redirect", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test/v1";
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.endsWith("/agents/agent_intake")) {
+        return Response.json({
+          id: "agent_intake",
+          name: "Imported Support Agent",
+          description: "Created from Botpress export.",
+          slug: "imported-support-agent",
+          active_version: null,
+          created_at: "2026-05-09T10:00:00Z",
+          workspace_id: "ws_1",
+          object_state: "draft",
+          state_reason: "Draft created from governed intake.",
+          state_evidence_ref: "agent_intake/intake_1",
+        });
+      }
+      if (
+        url.endsWith("/workspaces/ws_1/agent-intakes/intake_1")
+      ) {
+        return Response.json({
+          id: "intake_1",
+          workspace_id: "ws_1",
+          agent_id: "agent_intake",
+          state: "draft_ready",
+          creation_path: "legacy_import",
+          jobs: [
+            { name: "parse_artifacts", state: "completed", count: 1 },
+            { name: "extract_intents", state: "completed", count: 3 },
+          ],
+          artifact_reports: [
+            {
+              name: "botpress-export.json",
+              kind: "botpress_export",
+              status: "parsed",
+            },
+          ],
+          intent_map: [
+            {
+              id: "intent_refund",
+              label: "Refund question",
+              confidence: "high",
+            },
+          ],
+          contradictions: [],
+          sensitive_data_findings: [],
+          candidate_tools: [{ name: "lookup_order" }],
+          candidate_channels: [{ channel: "whatsapp", status: "draft" }],
+          candidate_memory_policy: { scope: "conversation" },
+          candidate_eval_cases: [
+            { name: "Refund handoff", source: "intake:contract" },
+          ],
+          risk_notes: [],
+          missing_information: [],
+          readiness: {
+            score: 82,
+            ready: ["Commitment Document drafted"],
+            needs_attention: ["Run first simulation suite before preflight."],
+            landing: "/agents/agent_intake",
+          },
+          created_object_refs: {},
+          created_by: "builder@example.com",
+          created_at: "2026-05-09T10:00:00Z",
+          updated_at: "2026-05-09T10:05:00Z",
+        });
+      }
+      return new Response("missing", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(
+      await AgentOverviewPage({
+        params: { agent_id: "agent_intake" },
+        searchParams: { intake: "intake_1" },
+      }),
+    );
+
+    expect(screen.getByTestId("agent-intake-landing")).toHaveTextContent(
+      "Intake intake_1",
+    );
+    expect(screen.getByTestId("intake-readiness-score")).toHaveTextContent(
+      "82%",
+    );
+    expect(screen.getByTestId("intake-artifacts")).toHaveTextContent(
+      "botpress-export.json - parsed",
+    );
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/workspaces/ws_1/agent-intakes/intake_1",
+      expect.objectContaining({ method: "GET" }),
+    );
+  });
+
   it("uses deployment history as the last-deploy source of truth", async () => {
     process.env.LOOP_CP_API_BASE_URL = "https://cp.test/v1";
     const fetcher = vi.fn<typeof fetch>(async (input) => {

@@ -13,6 +13,7 @@ import {
 import { buildLocalChangePackage } from "@/lib/change-package";
 import { buildLocalChannelBindings } from "@/lib/channel-bindings";
 import type { EvalSuite } from "@/lib/evals";
+import type { AgentIntakeRecord } from "@/lib/agent-intake";
 import { localAgentHandoff } from "@/lib/agent-handoff";
 import { localAgentWorkflow } from "@/lib/agent-workflow";
 import type { KbDocument } from "@/lib/kb";
@@ -89,6 +90,51 @@ const TRACE_SUMMARIES: TraceSummary[] = [
   },
 ];
 
+function intakeRecord(): AgentIntakeRecord {
+  return {
+    id: "intake_1",
+    workspace_id: "ws_1",
+    agent_id: "ag_1",
+    state: "draft_ready",
+    creation_path: "legacy_import",
+    jobs: [
+      { name: "parse_artifacts", state: "completed", count: 2 },
+      { name: "extract_intents", state: "completed", count: 4 },
+    ],
+    artifact_reports: [
+      {
+        name: "botpress-export.json",
+        kind: "botpress_export",
+        status: "parsed",
+      },
+    ],
+    intent_map: [
+      { id: "intent_refund", label: "Refund request", confidence: "high" },
+    ],
+    contradictions: [],
+    sensitive_data_findings: [],
+    candidate_tools: [{ name: "lookup_order" }],
+    candidate_channels: [{ channel: "whatsapp", status: "draft" }],
+    candidate_memory_policy: { scope: "conversation" },
+    candidate_eval_cases: [
+      { name: "Refund handoff", source: "intake:contract" },
+      { name: "Channel format", source: "intake:channel" },
+    ],
+    risk_notes: [],
+    missing_information: [],
+    readiness: {
+      score: 78,
+      ready: ["Commitment Document drafted"],
+      needs_attention: ["Run first simulation suite before preflight."],
+      landing: "/agents/ag_1",
+    },
+    created_object_refs: {},
+    created_by: "maya@example.com",
+    created_at: "2026-05-09T10:00:00Z",
+    updated_at: "2026-05-09T10:05:00Z",
+  };
+}
+
 describe("AgentOverview", () => {
   it("renders description text", () => {
     render(<AgentOverview {...BASE_PROPS} />);
@@ -129,6 +175,56 @@ describe("AgentOverview", () => {
     render(<AgentOverview {...BASE_PROPS} />);
     expect(screen.getByTestId("overview-deploy-status")).toHaveTextContent(
       "active",
+    );
+  });
+
+  it("renders the creation intake landing panel when deep-linked after agent creation", () => {
+    render(
+      <AgentOverview
+        {...BASE_PROPS}
+        focusedIntakeId="intake_1"
+        intakeRecord={intakeRecord()}
+      />,
+    );
+
+    expect(screen.getByTestId("agent-intake-landing")).toHaveTextContent(
+      "Created from governed intake",
+    );
+    expect(screen.getByTestId("intake-readiness-score")).toHaveTextContent(
+      "78%",
+    );
+    expect(screen.getByTestId("intake-jobs")).toHaveTextContent(
+      "parse_artifacts: completed (2)",
+    );
+    expect(screen.getByTestId("intake-created")).toHaveTextContent(
+      "1 channel candidate",
+    );
+    expect(screen.getByTestId("intake-artifacts")).toHaveTextContent(
+      "botpress-export.json - parsed",
+    );
+    expect(screen.getByTestId("intake-intents")).toHaveTextContent(
+      "Refund request - high",
+    );
+    expect(screen.getByText("Review Commitment Document")).toHaveAttribute(
+      "href",
+      "/agents/ag_1/contract",
+    );
+  });
+
+  it("does not fake intake details when the focused intake cannot load", () => {
+    render(
+      <AgentOverview
+        {...BASE_PROPS}
+        focusedIntakeId="intake_missing"
+        intakeDegradedReason="cp-api GET /agent-intakes -> 404"
+      />,
+    );
+
+    expect(screen.getByTestId("agent-intake-landing")).toHaveTextContent(
+      "Creation intake unavailable",
+    );
+    expect(screen.getByTestId("agent-intake-landing")).toHaveTextContent(
+      "intake_missing",
     );
   });
 

@@ -29,6 +29,7 @@ import type { ChangePackage } from "@/lib/change-package";
 import type { ChannelBinding } from "@/lib/channel-bindings";
 import type { EvalSuite } from "@/lib/evals";
 import type { AgentHandoffModel } from "@/lib/agent-handoff";
+import type { AgentIntakeRecord } from "@/lib/agent-intake";
 import type {
   AgentBranch,
   AgentChangeSet,
@@ -153,6 +154,9 @@ export interface AgentOverviewProps {
   tracesDegradedReason?: string | undefined;
   handoffModel?: AgentHandoffModel | undefined;
   handoffDegradedReason?: string | undefined;
+  focusedIntakeId?: string | undefined;
+  intakeRecord?: AgentIntakeRecord | undefined;
+  intakeDegradedReason?: string | undefined;
   workflow?: AgentWorkflow | undefined;
   workflowDegradedReason?: string | undefined;
   workbench?: Partial<AgentWorkbenchData>;
@@ -1793,6 +1797,177 @@ function actionHref(agentId: string, actionId: string): string {
   );
 }
 
+function recordLabel(
+  record: Record<string, unknown>,
+  keys: string[],
+  fallback: string,
+): string {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) return value;
+    if (typeof value === "number") return String(value);
+  }
+  return fallback;
+}
+
+function IntakeLandingPanel({
+  agentId,
+  focusedIntakeId,
+  intakeRecord,
+  degradedReason,
+}: {
+  agentId: string;
+  focusedIntakeId?: string | undefined;
+  intakeRecord?: AgentIntakeRecord | undefined;
+  degradedReason?: string | undefined;
+}) {
+  if (!focusedIntakeId) return null;
+
+  if (degradedReason || !intakeRecord) {
+    return (
+      <section data-testid="agent-intake-landing">
+        <StatePanel state="degraded" title="Creation intake unavailable">
+          <p>
+            Studio opened this agent from intake{" "}
+            <code>{focusedIntakeId}</code>, but the intake record could not be
+            loaded. {degradedReason}
+          </p>
+        </StatePanel>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      className="rounded-md border border-info/40 bg-info/5 p-4"
+      data-testid="agent-intake-landing"
+    >
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-info">
+            Created from governed intake
+          </p>
+          <h3 className="mt-1 text-lg font-semibold">
+            Intake {intakeRecord.id}
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Path: {intakeRecord.creation_path.replaceAll("_", " ")}. State:{" "}
+            {intakeRecord.state.replaceAll("_", " ")}.
+          </p>
+        </div>
+        <div className="rounded-md border bg-background px-3 py-2 text-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Readiness
+          </p>
+          <p className="text-lg font-semibold" data-testid="intake-readiness-score">
+            {intakeRecord.readiness.score}%
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+        <div className="rounded-md border bg-background/70 p-3">
+          <h4 className="text-sm font-semibold">Analysis jobs</h4>
+          <ul className="mt-2 space-y-1 text-sm" data-testid="intake-jobs">
+            {intakeRecord.jobs.length > 0 ? (
+              intakeRecord.jobs.map((job) => (
+                <li key={job.name}>
+                  {job.name}: {job.state} ({job.count})
+                </li>
+              ))
+            ) : (
+              <li className="text-muted-foreground">No jobs returned.</li>
+            )}
+          </ul>
+        </div>
+        <div className="rounded-md border bg-background/70 p-3">
+          <h4 className="text-sm font-semibold">Created draft objects</h4>
+          <ul className="mt-2 space-y-1 text-sm" data-testid="intake-created">
+            <li>
+              {intakeRecord.candidate_channels.length} channel candidate
+              {intakeRecord.candidate_channels.length === 1 ? "" : "s"}
+            </li>
+            <li>
+              {intakeRecord.candidate_tools.length} tool candidate
+              {intakeRecord.candidate_tools.length === 1 ? "" : "s"}
+            </li>
+            <li>
+              {intakeRecord.candidate_eval_cases.length} eval case candidate
+              {intakeRecord.candidate_eval_cases.length === 1 ? "" : "s"}
+            </li>
+          </ul>
+        </div>
+        <div className="rounded-md border bg-background/70 p-3">
+          <h4 className="text-sm font-semibold">Needs attention</h4>
+          <ul className="mt-2 space-y-1 text-sm" data-testid="intake-attention">
+            {intakeRecord.readiness.needs_attention.length > 0 ? (
+              intakeRecord.readiness.needs_attention.map((item) => (
+                <li key={item}>{item}</li>
+              ))
+            ) : (
+              <li className="text-muted-foreground">No blockers returned.</li>
+            )}
+          </ul>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        <div className="rounded-md border bg-background/70 p-3">
+          <h4 className="text-sm font-semibold">Artifacts parsed</h4>
+          <ul className="mt-2 space-y-1 text-sm" data-testid="intake-artifacts">
+            {intakeRecord.artifact_reports.length > 0 ? (
+              intakeRecord.artifact_reports.slice(0, 5).map((artifact, idx) => (
+                <li key={idx}>
+                  {recordLabel(artifact, ["name", "source_ref"], "artifact")} -{" "}
+                  {recordLabel(artifact, ["status", "kind"], "review")}
+                </li>
+              ))
+            ) : (
+              <li className="text-muted-foreground">No artifacts returned.</li>
+            )}
+          </ul>
+        </div>
+        <div className="rounded-md border bg-background/70 p-3">
+          <h4 className="text-sm font-semibold">Intents extracted</h4>
+          <ul className="mt-2 space-y-1 text-sm" data-testid="intake-intents">
+            {intakeRecord.intent_map.length > 0 ? (
+              intakeRecord.intent_map.slice(0, 5).map((intent, idx) => (
+                <li key={idx}>
+                  {recordLabel(intent, ["label", "name", "id"], "intent")} -{" "}
+                  {recordLabel(intent, ["confidence"], "unscored")}
+                </li>
+              ))
+            ) : (
+              <li className="text-muted-foreground">No intents returned.</li>
+            )}
+          </ul>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link
+          className="rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          href={`/agents/${agentId}/contract`}
+        >
+          Review Commitment Document
+        </Link>
+        <Link
+          className="rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          href={`/agents/${agentId}/simulator`}
+        >
+          Run first simulation
+        </Link>
+        <Link
+          className="rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          href={`/agents/${agentId}/evals`}
+        >
+          Review seeded evals
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 export function AgentOverview({
   id,
   name,
@@ -1823,6 +1998,9 @@ export function AgentOverview({
   tracesDegradedReason,
   handoffModel,
   handoffDegradedReason,
+  focusedIntakeId,
+  intakeRecord,
+  intakeDegradedReason,
   workflow,
   workflowDegradedReason,
   workbench,
@@ -2032,6 +2210,13 @@ export function AgentOverview({
           </StatePanel>
         </div>
       ) : null}
+
+      <IntakeLandingPanel
+        agentId={id}
+        focusedIntakeId={focusedIntakeId}
+        intakeRecord={intakeRecord}
+        degradedReason={intakeDegradedReason}
+      />
 
       {approvalBlocked ? (
         <div data-testid="agent-workbench-permission">

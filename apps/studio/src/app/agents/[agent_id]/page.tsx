@@ -21,6 +21,10 @@ import {
 import { listDeployments, type Deployment } from "@/lib/deploys";
 import { listEvalSuites, type EvalSuite } from "@/lib/evals";
 import { fetchAgentHandoff, type AgentHandoffModel } from "@/lib/agent-handoff";
+import {
+  getAgentIntake,
+  type AgentIntakeRecord,
+} from "@/lib/agent-intake";
 import { listAgentWorkflow, type AgentWorkflow } from "@/lib/agent-workflow";
 import { listKbDocuments, type KbDocument } from "@/lib/kb";
 import { listMemoryPolicies, type MemoryPolicy } from "@/lib/memory-policies";
@@ -30,6 +34,11 @@ import { getAgentDetailData } from "./agent-detail-data";
 
 interface AgentOverviewPageProps {
   params: { agent_id: string };
+  searchParams?: { intake?: string | string[] | undefined } | undefined;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 function errorMessage(error: unknown, fallback: string): string {
@@ -77,8 +86,10 @@ function deploySummaryFromHistory(
 
 export default async function AgentOverviewPage({
   params,
+  searchParams,
 }: AgentOverviewPageProps) {
   const { agent, degradedReason } = await getAgentDetailData(params.agent_id);
+  const focusedIntakeId = firstParam(searchParams?.intake);
   let commitment = buildLocalCommitmentDocument(params.agent_id);
   let commitmentDegradedReason: string | undefined;
   try {
@@ -201,6 +212,27 @@ export default async function AgentOverviewPage({
       "Could not load agent handoff history.",
     );
   }
+  let intakeRecord: AgentIntakeRecord | undefined;
+  let intakeDegradedReason: string | undefined;
+  if (focusedIntakeId) {
+    if (!agent.workspace_id || agent.workspace_id === "unavailable") {
+      intakeDegradedReason =
+        "Workspace context is required before loading the creation intake record.";
+    } else {
+      try {
+        intakeRecord = await getAgentIntake(agent.workspace_id, focusedIntakeId);
+        if (intakeRecord.agent_id !== params.agent_id) {
+          intakeDegradedReason = `Intake ${focusedIntakeId} belongs to agent ${intakeRecord.agent_id}, not ${params.agent_id}.`;
+          intakeRecord = undefined;
+        }
+      } catch (error) {
+        intakeDegradedReason = errorMessage(
+          error,
+          "Could not load the creation intake record.",
+        );
+      }
+    }
+  }
   let workflow: AgentWorkflow | undefined;
   let workflowDegradedReason: string | undefined;
   try {
@@ -224,6 +256,7 @@ export default async function AgentOverviewPage({
     changePackageDegradedReason,
     tracesDegradedReason,
     handoffDegradedReason,
+    intakeDegradedReason,
     workflowDegradedReason,
   ]
     .filter(Boolean)
@@ -264,6 +297,9 @@ export default async function AgentOverviewPage({
       tracesDegradedReason={tracesDegradedReason}
       handoffModel={handoffModel}
       handoffDegradedReason={handoffDegradedReason}
+      focusedIntakeId={focusedIntakeId}
+      intakeRecord={intakeRecord}
+      intakeDegradedReason={intakeDegradedReason}
       workflow={workflow}
       workflowDegradedReason={workflowDegradedReason}
       commitment={commitment}
