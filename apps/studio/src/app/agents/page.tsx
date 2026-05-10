@@ -14,14 +14,6 @@ export const dynamic = "force-dynamic";
  * validate uniqueness before round-tripping POST /v1/agents.
  */
 export default async function AgentsPage() {
-  const agentsResult = await listAgents()
-    .then((result) => ({ ...result, degradedReason: undefined }))
-    .catch((error) => ({
-      agents: [],
-      degradedReason:
-        error instanceof Error ? error.message : "Could not load agents.",
-    }));
-  const { agents, degradedReason: agentsDegradedReason } = agentsResult;
   const { workspaces, degraded_reason: workspacesDegradedReason } =
     await listWorkspaces().catch((error: unknown) => ({
       workspaces: [],
@@ -30,11 +22,26 @@ export default async function AgentsPage() {
           ? error.message
           : "Could not load workspace context.",
     }));
+  const initialWorkspaceId =
+    workspaces[0]?.id || process.env.LOOP_DEFAULT_WORKSPACE_ID || null;
+  const agentsResult = initialWorkspaceId
+    ? await listAgents({ workspaceId: initialWorkspaceId })
+        .then((result) => ({ ...result, degradedReason: undefined }))
+        .catch((error) => ({
+          agents: [],
+          degradedReason:
+            error instanceof Error ? error.message : "Could not load agents.",
+        }))
+    : {
+        agents: [],
+        degradedReason: "Workspace context is required before listing agents.",
+      };
+  const { agents, degradedReason: agentsDegradedReason } = agentsResult;
   const existingSlugs = agents.map((a) => a.slug).filter(Boolean);
   const workspaceId =
     agents[0]?.workspace_id ||
     workspaces[0]?.id ||
-    process.env.LOOP_DEFAULT_WORKSPACE_ID;
+    initialWorkspaceId;
   return (
     <main className="container mx-auto flex max-w-5xl flex-col gap-6 py-10">
       <header className="flex flex-col gap-2">

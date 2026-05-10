@@ -62,14 +62,6 @@ export function homeContextWarnings(
 }
 
 export default async function HomePage() {
-  const agentsResult = await listAgents()
-    .then((result) => ({ ...result, degradedReason: undefined }))
-    .catch((error: unknown) => ({
-      agents: [],
-      degradedReason:
-        error instanceof Error ? error.message : "Could not load agents.",
-    }));
-  const { agents, degradedReason: agentsDegradedReason } = agentsResult;
   const { workspaces, degraded_reason: workspacesDegradedReason } =
     await listWorkspaces().catch((error: unknown) => ({
       workspaces: [],
@@ -78,8 +70,26 @@ export default async function HomePage() {
           ? error.message
           : "Could not load workspace context.",
     }));
+  const initialWorkspaceId = resolveHomeWorkspaceId([], workspaces);
+  const agentsResult = initialWorkspaceId
+    ? await listAgents({ workspaceId: initialWorkspaceId })
+        .then((result) => ({ ...result, degradedReason: undefined }))
+        .catch((error: unknown) => ({
+          agents: [],
+          degradedReason:
+            error instanceof Error ? error.message : "Could not load agents.",
+        }))
+    : {
+        agents: [],
+        degradedReason: "Workspace context is required before listing agents.",
+      };
+  const { agents, degradedReason: agentsDegradedReason } = agentsResult;
   const existingSlugs = agents.map((agent) => agent.slug).filter(Boolean);
-  const workspaceId = resolveHomeWorkspaceId(agents, workspaces);
+  const workspaceId = resolveHomeWorkspaceId(
+    agents,
+    workspaces,
+    initialWorkspaceId ?? undefined,
+  );
   const contextWarnings = homeContextWarnings(
     agentsDegradedReason,
     workspacesDegradedReason,
