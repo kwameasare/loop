@@ -2,13 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   getAdversarialProbeBudgets,
+  listAdversarialCatches,
   resolveAdversarialCatch,
   runAdversarialProbe,
   updateAdversarialProbeBudgets,
 } from "./adversarial-catches";
 
 describe("adversarial catches client", () => {
-  it("returns a local calm catch without a cp-api base URL", async () => {
+  it("keeps deterministic calm catches explicitly opt-in", async () => {
     const response = await runAdversarialProbe(
       "agent_support",
       {
@@ -16,7 +17,7 @@ describe("adversarial catches client", () => {
         rule_text: "Never approve refunds over $500.",
         risk_class: "high",
       },
-      { baseUrl: "" },
+      { baseUrl: "", allowFixture: true },
     );
 
     expect(response.run.status).toBe("completed");
@@ -25,6 +26,24 @@ describe("adversarial catches client", () => {
       risk_class: "high",
     });
     expect(response.catches[0]?.question).toContain("cumulatively");
+
+    await expect(
+      resolveAdversarialCatch(
+        "agent_support",
+        "catch_refund_cap",
+        {
+          intended_interpretation: "Cap applies cumulatively.",
+          rejected_interpretation: "Cap applies per call.",
+          create_eval_cases: true,
+        },
+        { baseUrl: "", allowFixture: true },
+      ),
+    ).resolves.toMatchObject({
+      status: "resolved",
+      eval_case_refs: expect.arrayContaining([
+        expect.objectContaining({ case_id: "case_catch_refund_cap_accepted" }),
+      ]),
+    });
   });
 
   it("posts probe runs and catch resolutions to agent-scoped endpoints", async () => {
@@ -137,5 +156,47 @@ describe("adversarial catches client", () => {
 
     expect(current.budgets.high).toBe(4000);
     expect(updated.budgets.high).toBe(900);
+  });
+
+  it("does not fabricate catches, budgets, or resolutions without cp-api", async () => {
+    await expect(
+      runAdversarialProbe(
+        "agent_support",
+        {
+          rule_id: "sentence_refund_cap",
+          rule_text: "Never approve refunds over $500.",
+        },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      getAdversarialProbeBudgets("workspace_1", { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      updateAdversarialProbeBudgets(
+        "workspace_1",
+        { high: 900 },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      listAdversarialCatches("agent_support", { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      resolveAdversarialCatch(
+        "agent_support",
+        "catch_1",
+        {
+          intended_interpretation: "Cap applies cumulatively.",
+          rejected_interpretation: "Cap applies per call.",
+          create_eval_cases: true,
+        },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
   });
 });
