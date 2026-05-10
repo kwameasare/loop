@@ -21,11 +21,19 @@ export default async function AgentOverviewPage({
 }: AgentOverviewPageProps) {
   const { agent, degradedReason } = await getAgentDetailData(params.agent_id);
   let commitment = buildLocalCommitmentDocument(params.agent_id);
+  let commitmentDegradedReason: string | undefined;
   try {
     commitment = await fetchCurrentCommitment(params.agent_id);
-  } catch {
+  } catch (error) {
     commitment = buildLocalCommitmentDocument(params.agent_id);
+    commitmentDegradedReason =
+      error instanceof Error
+        ? error.message
+        : "Could not load the current Commitment Document.";
   }
+  const combinedDegradedReason = [degradedReason, commitmentDegradedReason]
+    .filter(Boolean)
+    .join(" ");
 
   // Derive last-deploy summary from the agent summary until a dedicated
   // deploys endpoint is wired. active_version serves as a version proxy;
@@ -49,8 +57,8 @@ export default async function AgentOverviewPage({
       stateEvidenceRef={agent.state_evidence_ref}
       updatedAt={agent.updated_at}
       lastDeploy={lastDeploy}
-      dataState={degradedReason ? "degraded" : "live"}
-      degradedReason={degradedReason}
+      dataState={combinedDegradedReason ? "degraded" : "live"}
+      degradedReason={combinedDegradedReason || undefined}
       commitment={commitment}
     />
   );

@@ -64,6 +64,24 @@ describe("agent commitment client", () => {
     );
   });
 
+  it("requires cp-api for the current Commitment Document by default", async () => {
+    await expect(
+      fetchCurrentCommitment("agt_1", { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps local current Commitment Document fallback explicitly opt-in", async () => {
+    await expect(
+      fetchCurrentCommitment("agt_1", {
+        baseUrl: "",
+        allowFixture: true,
+      }),
+    ).resolves.toMatchObject({
+      id: "commitment_unconfigured",
+      created_from: "studio:local_unconfigured",
+    });
+  });
+
   it("saves a draft Commitment Document", async () => {
     const body = {
       ...EMPTY_COMMITMENT_BODY,

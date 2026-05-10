@@ -59,6 +59,29 @@ describe("AgentContractPanel", () => {
     ).toBe(true);
   });
 
+  it("disables save and accept when the Commitment backend is unavailable", () => {
+    render(
+      <AgentContractPanel
+        agentId="agt_1"
+        initialDocument={makeDocument(COMPLETE_BODY)}
+        degradedReason="LOOP_CP_API_BASE_URL is required for cp-api calls."
+        saveDraft={vi.fn()}
+        acceptCommitment={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("contract-degraded")).toHaveTextContent(
+      "Commitment backend unavailable",
+    );
+    expect(
+      (screen.getByTestId("contract-save-draft") as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByTestId("contract-accept") as HTMLButtonElement).disabled,
+    ).toBe(true);
+  });
+
   it("saves a detailed contract draft", async () => {
     const saveDraft = vi.fn(async (_agentId: string, input) =>
       makeDocument(input.body, {
