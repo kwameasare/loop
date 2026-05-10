@@ -66,6 +66,46 @@ function tracesHref(traceQuery: string, agentId?: string): string {
   return `/traces${qs ? `?${qs}` : ""}`;
 }
 
+function reportText(
+  report: Record<string, unknown>,
+  key: string,
+  fallback = "Not recorded",
+): string {
+  const value = report[key];
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
+function reportList(
+  report: Record<string, unknown>,
+  key: string,
+  fallback: readonly string[] = [],
+): string[] {
+  const value = report[key];
+  if (!Array.isArray(value)) return [...fallback];
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
+}
+
+function reportTimeline(incident: IncidentRecord) {
+  const value = incident.report.timeline;
+  if (!Array.isArray(value)) return incident.timeline;
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const row = item as Record<string, unknown>;
+      return {
+        kind: typeof row.kind === "string" ? row.kind : "event",
+        at: typeof row.at === "string" ? row.at : "",
+        summary:
+          typeof row.summary === "string" ? row.summary : "Incident event.",
+      };
+    })
+    .filter((item): item is { kind: string; at: string; summary: string } =>
+      Boolean(item),
+    );
+}
+
 function editHrefForAffectedObject(
   anomaly: ObservatoryAnomaly,
   agentId?: string,
@@ -537,6 +577,22 @@ function IncidentResponsePanel({
               fixPackages[incident.id] ?? incident.fix_change_package_id;
             const isClosed =
               incident.status === "resolved" || incident.status === "archived";
+            const reportChannels = reportList(
+              incident.report,
+              "affected_channels",
+              incident.channel_scope,
+            );
+            const reportActions = reportList(
+              incident.report,
+              "actions_taken",
+              incident.rollback_action_ref ? [incident.rollback_action_ref] : [],
+            );
+            const candidateTests = reportList(
+              incident.report,
+              "candidate_regression_tests",
+              incident.affected_trace_ids,
+            );
+            const timeline = reportTimeline(incident);
             return (
               <article
                 key={incident.id}
@@ -601,6 +657,66 @@ function IncidentResponsePanel({
                   {incident.root_cause_hypothesis}
                 </p>
                 <p className="mt-2 text-sm">{incident.proposed_fix}</p>
+                <div
+                  className="mt-3 rounded-md border bg-background/60 p-3"
+                  data-testid={`incident-report-${incident.id}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">
+                      Generated incident report
+                    </p>
+                    <span className="rounded-md border px-2 py-0.5 text-xs text-muted-foreground">
+                      rollback {reportText(incident.report, "rollback_status")}
+                    </span>
+                  </div>
+                  <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                    <div>
+                      <dt className="text-muted-foreground">Customer impact</dt>
+                      <dd>{reportText(incident.report, "customer_impact")}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground">Channels</dt>
+                      <dd>
+                        {reportChannels.length > 0
+                          ? reportChannels.join(", ")
+                          : "All channels"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground">Actions taken</dt>
+                      <dd className="break-all">
+                        {reportActions.length > 0
+                          ? reportActions.join(", ")
+                          : "None yet"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground">
+                        Candidate regressions
+                      </dt>
+                      <dd>
+                        {candidateTests.length > 0
+                          ? `${candidateTests.length} trace-backed test(s)`
+                          : "Seed from affected traces"}
+                      </dd>
+                    </div>
+                  </dl>
+                  {timeline.length > 0 ? (
+                    <ol className="mt-3 space-y-2 text-xs">
+                      {timeline.slice(0, 4).map((event, index) => (
+                        <li
+                          key={`${event.kind}-${event.at}-${index}`}
+                          className="grid gap-2 rounded-md border bg-card px-2 py-1.5 sm:grid-cols-[7rem_minmax(0,1fr)]"
+                        >
+                          <span className="font-mono text-muted-foreground">
+                            {event.kind}
+                          </span>
+                          <span>{event.summary}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : null}
+                </div>
                 {incident.notifications.length > 0 ? (
                   <div
                     className="mt-3 rounded-md border border-info/30 bg-info/5 p-3 text-xs"

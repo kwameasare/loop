@@ -136,10 +136,29 @@ export const OBSERVATORY_MODEL: ObservatoryModel = {
         },
       ],
       report: {
+        timeline: [
+          {
+            kind: "incident_created",
+            at: "2026-05-09T03:12:00.000Z",
+            summary: "Incident created from auto_rollback.",
+          },
+          {
+            kind: "containment",
+            at: "2026-05-09T03:12:38.000Z",
+            summary: "Auto-rollback moved traffic away from v24.",
+          },
+        ],
+        trigger: "error_rate breached 4% for web_chat canary",
+        affected_trace_ids: ["trace_refund_742", "trace_legal_synonym"],
+        affected_conversations: 17,
+        affected_channels: ["web_chat"],
+        customer_impact: "17 conversations require review.",
+        actions_taken: ["deployment/dep_v24/rollback"],
         rollback_status: "executed",
         suspected_cause: "Tool schema changed upstream during canary.",
         proposed_fix:
           "Pin the tool schema, replay affected traces, and create a Change Package with regression coverage.",
+        candidate_regression_tests: ["trace_refund_742", "trace_legal_synonym"],
       },
       created_at: "2026-05-09T03:12:00.000Z",
       created_by: "loop-system",
