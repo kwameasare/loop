@@ -14,10 +14,10 @@ interface ChangesetApprovalsProps {
 }
 
 const STATE_TONE: Record<ApprovalState, string> = {
-  approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  rejected: "border-rose-200 bg-rose-50 text-rose-700",
-  changes_requested: "border-amber-200 bg-amber-50 text-amber-700",
-  pending: "border-slate-200 bg-slate-50 text-slate-600",
+  approved: "border-success bg-success/10 text-success",
+  rejected: "border-destructive bg-destructive/10 text-destructive",
+  changes_requested: "border-warning bg-warning/10 text-warning",
+  pending: "border-border bg-muted text-muted-foreground",
 };
 
 export function ChangesetApprovals(
@@ -37,7 +37,7 @@ export function ChangesetApprovals(
     <section
       data-testid={`changeset-${changeset.id}`}
       aria-labelledby={`changeset-title-${changeset.id}`}
-      className="rounded-md border border-slate-200 bg-white p-4 space-y-3"
+      className="space-y-3 rounded-md border bg-card p-4"
     >
       <header className="space-y-1">
         <h3
@@ -46,14 +46,14 @@ export function ChangesetApprovals(
         >
           {changeset.title}
         </h3>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           By {changeset.authorDisplay} · {changeset.createdAt}
         </p>
       </header>
       {validationError ? (
         <p
           data-testid={`changeset-validation-${changeset.id}`}
-          className="rounded-md border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700"
+          className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive"
         >
           {validationError}
         </p>
@@ -78,7 +78,7 @@ export function ChangesetApprovals(
             ) : null}
             {a.invalidatedAt ? (
               <p
-                className="mt-1 rounded border border-amber-200 bg-amber-100 px-2 py-1"
+                className="mt-1 rounded border border-warning/40 bg-warning/10 px-2 py-1 text-warning"
                 data-testid={`approval-invalidated-${a.axis}`}
               >
                 Approval invalidated by edit · {a.invalidatedAt}
@@ -93,7 +93,7 @@ export function ChangesetApprovals(
       <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
         <p
           data-testid={`changeset-blocked-${changeset.id}`}
-          className="text-xs text-slate-600"
+          className="text-xs text-muted-foreground"
         >
           {ready
             ? "All approvals green — ready to merge."
@@ -104,7 +104,7 @@ export function ChangesetApprovals(
           data-testid={`changeset-merge-${changeset.id}`}
           disabled={!ready}
           onClick={() => onMerge?.(changeset)}
-          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
         >
           Merge changeset
         </button>

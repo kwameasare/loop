@@ -153,7 +153,7 @@ describe("PairDebugPanel", () => {
     );
     // ev_3 @ 1180ms ≤ 1200ms → focused
     expect(screen.getByTestId("trace-event-ev_3").className).toContain(
-      "border-sky-300",
+      "border-info",
     );
   });
 
