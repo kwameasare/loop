@@ -519,7 +519,11 @@ export async function getEvalSuite(
     method: "GET",
     headers: authHeaders(opts),
   });
-  if (res.status === 404) return null;
+  if (res.status === 404) {
+    throw new Error(
+      "cp-api eval suite detail route returned 404. Studio will not turn missing control-plane evidence into a false not-found state.",
+    );
+  }
   if (!res.ok) throw new Error(`getEvalSuite failed: ${res.status}`);
   return (await res.json()) as EvalSuiteDetail;
 }
@@ -538,7 +542,11 @@ export async function getEvalRun(
     method: "GET",
     headers: authHeaders(opts),
   });
-  if (res.status === 404) return null;
+  if (res.status === 404) {
+    throw new Error(
+      "cp-api eval run detail route returned 404. Studio will not turn missing control-plane evidence into a false not-found state.",
+    );
+  }
   if (!res.ok) throw new Error(`getEvalRun failed: ${res.status}`);
   return (await res.json()) as EvalRunDetail;
 }
