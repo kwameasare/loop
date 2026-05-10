@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ChannelBindingsPanel } from "./channel-bindings-panel";
 import {
@@ -8,6 +8,16 @@ import {
 } from "@/lib/channel-bindings";
 
 describe("ChannelBindingsPanel", () => {
+  const ORIGINAL_BASE_URL = process.env.LOOP_CP_API_BASE_URL;
+
+  afterEach(() => {
+    if (ORIGINAL_BASE_URL === undefined) {
+      delete process.env.LOOP_CP_API_BASE_URL;
+    } else {
+      process.env.LOOP_CP_API_BASE_URL = ORIGINAL_BASE_URL;
+    }
+  });
+
   it("renders all peer channel bindings with voice as one card", () => {
     render(
       <ChannelBindingsPanel
@@ -67,6 +77,25 @@ describe("ChannelBindingsPanel", () => {
     });
     expect(screen.getByTestId("channel-binding-whatsapp")).toHaveTextContent(
       "draft",
+    );
+  });
+
+  it("shows an explicit backend requirement instead of drafting locally", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+    render(
+      <ChannelBindingsPanel
+        agentId="agt_1"
+        initialBindings={buildLocalChannelBindings("agt_1")}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("channel-binding-draft-whatsapp"));
+
+    expect(
+      await screen.findByText(/LOOP_CP_API_BASE_URL is required/i),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("channel-binding-whatsapp")).toHaveTextContent(
+      "not configured",
     );
   });
 });

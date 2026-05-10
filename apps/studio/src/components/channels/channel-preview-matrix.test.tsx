@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ChannelPreviewMatrix } from "./channel-preview-matrix";
 import {
@@ -9,6 +9,16 @@ import {
 } from "@/lib/channel-bindings";
 
 describe("ChannelPreviewMatrix", () => {
+  const ORIGINAL_BASE_URL = process.env.LOOP_CP_API_BASE_URL;
+
+  afterEach(() => {
+    if (ORIGINAL_BASE_URL === undefined) {
+      delete process.env.LOOP_CP_API_BASE_URL;
+    } else {
+      process.env.LOOP_CP_API_BASE_URL = ORIGINAL_BASE_URL;
+    }
+  });
+
   it("renders the same scenario across selected peer channels", async () => {
     const bindings = buildLocalChannelBindings("agt_1").map((binding) =>
       binding.channel_type === "whatsapp" || binding.channel_type === "email"
@@ -90,5 +100,24 @@ describe("ChannelPreviewMatrix", () => {
       );
     });
     expect(screen.getByText("Eval case saved: case_sms_1")).toBeInTheDocument();
+  });
+
+  it("shows an explicit backend requirement instead of rendering a fixture matrix", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+    render(
+      <ChannelPreviewMatrix
+        agentId="agt_1"
+        bindings={buildLocalChannelBindings("agt_1")}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Render preview matrix"));
+
+    expect(
+      await screen.findByText(/LOOP_CP_API_BASE_URL is required/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("channel-preview-matrix-results"),
+    ).not.toBeInTheDocument();
   });
 });

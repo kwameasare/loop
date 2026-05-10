@@ -152,4 +152,87 @@ describe("channel-bindings client", () => {
       expect.objectContaining({ method: "POST" }),
     );
   });
+
+  it("does not fabricate channel mutations or previews without cp-api", async () => {
+    const previewInput = {
+      scenario_title: "Duplicate charge",
+      user_message: "I was charged twice.",
+      expected_outcome: "Verify the charge and explain the refund path.",
+      channel_types: ["whatsapp" as const],
+    };
+
+    await expect(
+      upsertChannelBinding(
+        "agt_1",
+        { channel_type: "whatsapp", provider: "Meta Cloud API" },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      previewChannelMatrix("agt_1", previewInput, { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      createChannelPreviewEvalCase(
+        "agt_1",
+        {
+          scenario_title: "Duplicate charge",
+          channel_type: "whatsapp",
+          binding_id: "cb_1",
+          user_message: "I was charged twice.",
+          rendered_preview: "Verify the charge.",
+          expected_outcome: "Verify the charge and explain the refund path.",
+          failure_reason: "Template missing.",
+          source_ref: "test",
+        },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps deterministic channel behavior explicitly opt-in", async () => {
+    const previewInput = {
+      scenario_title: "Duplicate charge",
+      user_message: "I was charged twice.",
+      expected_outcome: "Verify the charge and explain the refund path.",
+      channel_types: ["whatsapp" as const],
+    };
+
+    await expect(
+      upsertChannelBinding(
+        "agt_1",
+        { channel_type: "whatsapp", provider: "Meta Cloud API" },
+        { baseUrl: "", allowFixture: true },
+      ),
+    ).resolves.toMatchObject({
+      channel_type: "whatsapp",
+      provider: "Meta Cloud API",
+      status: "draft",
+    });
+
+    await expect(
+      previewChannelMatrix("agt_1", previewInput, {
+        baseUrl: "",
+        allowFixture: true,
+      }),
+    ).resolves.toMatchObject({
+      summary: expect.objectContaining({ channels: 1 }),
+    });
+
+    await expect(
+      createChannelPreviewEvalCase(
+        "agt_1",
+        {
+          ...buildLocalPreviewMatrix("agt_1", previewInput).rows[0]!
+            .eval_case_seed,
+          failure_reason: "Template missing.",
+        },
+        { baseUrl: "", allowFixture: true },
+      ),
+    ).resolves.toMatchObject({
+      ok: true,
+      suite_id: "local_channel_formatting_failures",
+    });
+  });
 });

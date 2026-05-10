@@ -124,6 +124,10 @@ export interface ChannelBindingInput {
   auth_config_ref?: string | null;
 }
 
+type ChannelBindingClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 export const CHANNEL_ORDER: readonly ChannelBindingType[] = [
   "web_chat",
   "whatsapp",
@@ -377,7 +381,7 @@ export async function listChannelBindings(
 export async function upsertChannelBinding(
   agentId: string,
   input: ChannelBindingInput,
-  opts: UxWireupClientOptions = {},
+  opts: ChannelBindingClientOptions = {},
 ): Promise<ChannelBinding> {
   return cpJson<ChannelBinding>(
     `/agents/${encodeURIComponent(agentId)}/channel-bindings`,
@@ -385,6 +389,7 @@ export async function upsertChannelBinding(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...buildLocalChannelBindings(agentId).find(
           (item) => item.channel_type === input.channel_type,
@@ -402,7 +407,7 @@ export async function upsertChannelBinding(
 export async function previewChannelMatrix(
   agentId: string,
   input: ChannelPreviewMatrixRequest,
-  opts: UxWireupClientOptions = {},
+  opts: ChannelBindingClientOptions = {},
 ): Promise<ChannelPreviewMatrixResponse> {
   return cpJson<ChannelPreviewMatrixResponse>(
     `/agents/${encodeURIComponent(agentId)}/channel-bindings/preview-matrix`,
@@ -410,6 +415,7 @@ export async function previewChannelMatrix(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: buildLocalPreviewMatrix(agentId, input),
     },
   );
@@ -418,7 +424,7 @@ export async function previewChannelMatrix(
 export async function createChannelPreviewEvalCase(
   agentId: string,
   input: ChannelPreviewEvalCaseSeed,
-  opts: UxWireupClientOptions = {},
+  opts: ChannelBindingClientOptions = {},
 ): Promise<ChannelPreviewEvalCaseResponse> {
   return cpJson<ChannelPreviewEvalCaseResponse>(
     `/agents/${encodeURIComponent(agentId)}/channel-bindings/preview-matrix/eval-cases`,
@@ -426,6 +432,7 @@ export async function createChannelPreviewEvalCase(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ok: true,
         suite_id: "local_channel_formatting_failures",
