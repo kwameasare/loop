@@ -197,12 +197,13 @@ describe("ToolsRoom", () => {
     expect(draft).toHaveTextContent("Authorization header detected");
     expect(draft).toHaveTextContent("redacted");
     expect(draft).toHaveTextContent("Draft only");
+    expect(fetcher).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId("tools-room-add-library"));
     const contract = await screen.findByTestId("tools-room-import-contract");
     expect(contract).toHaveTextContent("Sandbox contract: sandbox");
     expect(contract).toHaveTextContent("money caps required");
     expect(draft).not.toHaveTextContent("Bearer <redacted>");
-
-    fireEvent.click(screen.getByTestId("tools-room-add-library"));
     expect(draft).toHaveTextContent("Added to the draft tool library");
     expect(fetcher).toHaveBeenCalledWith(
       "https://cp.test/v1/agents/agent_support/tools/import",
@@ -215,11 +216,14 @@ describe("ToolsRoom", () => {
     render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
 
     fireEvent.click(screen.getByTestId("tools-room-draft-tool"));
+    fireEvent.click(screen.getByTestId("tools-room-add-library"));
 
     expect(
       await screen.findByText(/LOOP_CP_API_BASE_URL is required/i),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("tools-room-add-library")).toBeDisabled();
+    expect(screen.getByTestId("tools-room-draft")).not.toHaveTextContent(
+      "Added to the draft tool library",
+    );
   });
 
   it("renders an empty state with the import flow still available", () => {
