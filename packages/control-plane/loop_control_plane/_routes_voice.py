@@ -346,13 +346,22 @@ async def get_voice_stage(
             "evidenceRef": f"voice/stage/{workspace_id}/handoff",
         },
     ]
+    queued_speech = (
+        "I can help with that. Before I continue, I need the account email "
+        "or order number so I can verify the current policy evidence."
+    )
+    queued_tts_start_ms = max(500, llm_ms)
     return {
         "agentName": getattr(agent, "name", "Voice Stage"),
         "callState": "staging" if phone_number != "No number provisioned" else "dev",
-        "queuedSpeech": (
-            "I can help with that. Before I continue, I need the account email "
-            "or order number so I can verify the current policy evidence."
-        ),
+        "queuedSpeech": queued_speech,
+        "queuedSpeechPreview": {
+            "text": queued_speech,
+            "textReadyMs": queued_tts_start_ms - 500,
+            "ttsStartMs": queued_tts_start_ms,
+            "llmSpanId": "llm",
+            "cancellable": True,
+        },
         "transcript": transcript,
         "waveform": [18, 34, 48, 36, 62, 76, 44, 30, 58, 82, 65, 42, 24, 50, 73, 38],
         "spans": spans,

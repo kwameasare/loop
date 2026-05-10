@@ -166,4 +166,43 @@ def test_voice_stage_composes_config_agent_and_trace(
     assert body["config"]["asr"] == "Google Speech-to-Text v2"
     assert body["config"]["tts"] == "Amazon Polly Neural"
     assert body["transcript"][0]["id"] == "trace_eeeeeeee"
+    assert (
+        body["queuedSpeechPreview"]["ttsStartMs"]
+        - body["queuedSpeechPreview"]["textReadyMs"]
+        == 500
+    )
+    assert body["queuedSpeechPreview"]["llmSpanId"] == "llm"
     assert body["demoLinks"][0]["audited"] is True
+
+
+def test_voice_number_provisioning_updates_stage_config(
+    client: TestClient, workspace_id: UUID
+) -> None:
+    headers = {"authorization": _bearer_for("owner-1")}
+    provisioned = client.post(
+        f"/v1/workspaces/{workspace_id}/voice/numbers/provision",
+        headers=headers,
+        json={
+            "country": "US",
+            "area_code": "415",
+            "capability": "voice",
+            "provider": "twilio",
+        },
+    )
+    assert provisioned.status_code == 200, provisioned.text
+    phone_number = provisioned.json()["phone_number"]
+
+    config = client.get(
+        f"/v1/workspaces/{workspace_id}/voice/config",
+        headers=headers,
+    )
+    assert config.status_code == 200, config.text
+    assert config.json()["numbers"][0]["e164"] == phone_number
+
+    stage = client.get(
+        f"/v1/workspaces/{workspace_id}/voice/stage",
+        headers=headers,
+    )
+    assert stage.status_code == 200, stage.text
+    assert stage.json()["callState"] == "staging"
+    assert stage.json()["config"]["phoneNumber"] == phone_number
