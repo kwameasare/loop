@@ -266,15 +266,7 @@ export async function fetchCoBuilderWorkspace(
   workspaceId: string,
   opts: CoBuilderClientOptions = {},
 ): Promise<CoBuilderWorkspace> {
-  let base: string;
-  try {
-    base = cpApiBaseUrl(opts.baseUrl);
-  } catch (err) {
-    if (err instanceof Error && /LOOP_CP_API_BASE_URL/.test(err.message)) {
-      return createFixtureCoBuilderWorkspace(workspaceId);
-    }
-    throw err;
-  }
+  const base = cpApiBaseUrl(opts.baseUrl);
   const params = new URLSearchParams();
   if (opts.agentId) params.set("agent_id", opts.agentId);
   const query = params.toString();
