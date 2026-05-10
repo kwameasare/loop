@@ -1,5 +1,3 @@
-import { targetUxFixtures } from "@/lib/target-ux";
-
 export type LatencySegmentId =
   | "channel_ingress"
   | "asr"
@@ -32,10 +30,18 @@ export interface LatencyBudgetSuggestion {
 
 export interface LatencyBudgetModel {
   scenario: string;
+  dataSource: "deterministic" | "trace";
+  provenance: string;
   targetMs: number;
   totalMs: number;
   segments: LatencyBudgetSegment[];
   suggestions: LatencyBudgetSuggestion[];
+}
+
+export interface BuildLatencyBudgetOptions {
+  scenario?: string | undefined;
+  provenance?: string | undefined;
+  dataSource?: LatencyBudgetModel["dataSource"] | undefined;
 }
 
 export function formatMs(ms: number): string {
@@ -53,79 +59,83 @@ export function formatSignedUsd(amount: number): string {
   return `${sign}$${Math.abs(amount).toFixed(4)}`;
 }
 
-export function buildLatencyBudgetModel(targetMs = 800): LatencyBudgetModel {
-  const trace = targetUxFixtures.traces[0];
-  const agent = targetUxFixtures.agents.find(
-    (candidate) => candidate.id === trace?.agentId,
-  );
+export function buildLatencyBudgetModel(
+  targetMs = 800,
+  options: BuildLatencyBudgetOptions = {},
+): LatencyBudgetModel {
+  const provenance =
+    options.provenance ??
+    "deterministic latency planning model; replace with trace spans when a trace is selected";
   const segments: LatencyBudgetSegment[] = [
     {
       id: "channel_ingress",
       label: "Channel ingress",
       ms: 45,
-      evidence: "trace_refund_742 span_turn gateway receive",
+      evidence: `${provenance}: channel ingress estimate`,
       state: "ready",
     },
     {
       id: "asr",
       label: "ASR",
       ms: 0,
-      evidence: "Unsupported: web chat turn has no speech input",
+      evidence: `${provenance}: no speech input in this planning model`,
       state: "unsupported",
     },
     {
       id: "model",
       label: "Model",
       ms: 428,
-      evidence: "trace_refund_742 span_answer",
+      evidence: `${provenance}: model span estimate`,
       state: "ready",
     },
     {
       id: "retrieval",
       label: "Retrieval",
       ms: 133,
-      evidence: "trace_refund_742 span_context",
+      evidence: `${provenance}: retrieval span estimate`,
       state: "ready",
     },
     {
       id: "tool_calls",
       label: "Tool calls",
       ms: 243,
-      evidence: "trace_refund_742 span_tool",
+      evidence: `${provenance}: tool-call span estimate`,
       state: "ready",
     },
     {
       id: "memory",
       label: "Memory",
       ms: 37,
-      evidence: "trace_refund_742 memory write span",
+      evidence: `${provenance}: memory write estimate`,
       state: "ready",
     },
     {
       id: "orchestration",
       label: "Orchestration",
       ms: 122,
-      evidence: "trace_refund_742 budget and runtime spans",
+      evidence: `${provenance}: orchestration estimate`,
       state: "ready",
     },
     {
       id: "tts",
       label: "TTS",
       ms: 0,
-      evidence: "Unsupported: web chat turn has no speech output",
+      evidence: `${provenance}: no speech output in this planning model`,
       state: "unsupported",
     },
     {
       id: "channel_delivery",
       label: "Channel delivery",
       ms: 22,
-      evidence: "trace_refund_742 response delivery",
+      evidence: `${provenance}: delivery estimate`,
       state: "ready",
     },
   ];
   const totalMs = segments.reduce((sum, segment) => sum + segment.ms, 0);
   return {
-    scenario: trace?.title ?? agent?.name ?? "Current turn",
+    scenario: options.scenario ?? "Static planning scenario",
+    dataSource: options.dataSource ?? "deterministic",
+    provenance,
     targetMs,
     totalMs,
     segments,
