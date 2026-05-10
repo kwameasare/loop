@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ShieldCheck, XCircle } from "lucide-react";
 
@@ -42,6 +43,12 @@ function formatDate(value: string): string {
   return Number.isNaN(timestamp)
     ? value
     : new Date(timestamp).toISOString().replace(".000Z", "Z");
+}
+
+function changePackageHref(agentId: string, packageId: string): string {
+  return `/agents/${encodeURIComponent(
+    agentId,
+  )}/deploys?change_package_id=${encodeURIComponent(packageId)}`;
 }
 
 export function PreApprovedClassesPanel({
@@ -284,9 +291,32 @@ export function PreApprovedClassesPanel({
                     {item.risk_ceiling}; expires {formatDate(item.expires_at)}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    grantee: {item.granted_to_user_id || item.team_id}; used by{" "}
-                    {item.used_by_change_packages.length} package(s)
+                    grantee: {item.granted_to_user_id || item.team_id}
                   </p>
+                  <div
+                    className="mt-2 text-xs text-muted-foreground"
+                    data-testid={`preapproved-usage-${item.id}`}
+                  >
+                    {item.used_by_change_packages.length > 0 ? (
+                      <>
+                        <span>Used by </span>
+                        <span className="inline-flex flex-wrap gap-1">
+                          {item.used_by_change_packages.map((packageId) => (
+                            <Link
+                              key={packageId}
+                              href={changePackageHref(agentId, packageId)}
+                              className="rounded-md border bg-card px-1.5 py-0.5 font-mono text-[0.7rem] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                              data-testid={`preapproved-usage-link-${packageId}`}
+                            >
+                              {packageId}
+                            </Link>
+                          ))}
+                        </span>
+                      </>
+                    ) : (
+                      <span>No Change Package has used this class yet.</span>
+                    )}
+                  </div>
                 </div>
                 <button
                   type="button"

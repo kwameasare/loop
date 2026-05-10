@@ -52,6 +52,13 @@ describe("PreApprovedClassesPanel", () => {
     expect(screen.getByTestId("preapproved-class-pac_123")).toHaveTextContent(
       "risk <= low",
     );
+    expect(screen.getByTestId("preapproved-usage-pac_123")).toHaveTextContent(
+      "Used by",
+    );
+    expect(screen.getByTestId("preapproved-usage-link-cp_1")).toHaveAttribute(
+      "href",
+      "/agents/agent_1/deploys?change_package_id=cp_1",
+    );
     fireEvent.change(screen.getByTestId("preapproved-user"), {
       target: { value: "owner@example.com" },
     });
