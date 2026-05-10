@@ -24,6 +24,7 @@ import {
   resolveInboxItem,
   type InboxItem,
 } from "@/lib/inbox";
+import { saveResolutionEvalCase } from "@/lib/inbox-resolution";
 import { useUser } from "@/lib/use-user";
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
 
@@ -65,7 +66,10 @@ function InboxPageBody(): JSX.Element {
 
   if (wsLoading) {
     return (
-      <p className="p-6 text-sm text-muted-foreground" data-testid="inbox-loading">
+      <p
+        className="p-6 text-sm text-muted-foreground"
+        data-testid="inbox-loading"
+      >
         Loading inbox…
       </p>
     );
@@ -91,7 +95,10 @@ function InboxPageBody(): JSX.Element {
   }
   if (items === null) {
     return (
-      <p className="p-6 text-sm text-muted-foreground" data-testid="inbox-loading">
+      <p
+        className="p-6 text-sm text-muted-foreground"
+        data-testid="inbox-loading"
+      >
         Loading inbox…
       </p>
     );
@@ -107,6 +114,9 @@ function InboxPageBody(): JSX.Element {
       onClaimItem={(item) => claimInboxItem(item.id, user.sub)}
       onReleaseItem={(item) => releaseInboxItem(item.id)}
       onResolveItem={(item) => resolveInboxItem(item.id)}
+      onSaveResolutionEval={(draft) =>
+        saveResolutionEvalCase(activeWorkspaceId, draft)
+      }
     />
   );
 }

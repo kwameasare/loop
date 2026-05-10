@@ -53,6 +53,7 @@ describe("InboxScreen", () => {
       screen.getByTestId("claim-11111111-1111-1111-1111-111111111111"),
     );
     expect(screen.getByTestId("composer-input")).toBeInTheDocument();
+    expect(screen.getByTestId("resolution-to-eval")).toBeInTheDocument();
     expect(screen.getByTestId("send-button")).toBeDisabled();
   });
 
@@ -104,6 +105,42 @@ describe("InboxScreen", () => {
     expect(
       (screen.getByTestId("composer-input") as HTMLTextAreaElement).value,
     ).toBe("");
+  });
+
+  it("saves a claimed operator resolution as an eval with evidence", async () => {
+    const onSaveResolutionEval = vi.fn().mockResolvedValue({
+      ok: true,
+      suite_id: "operator-resolutions",
+      case_id: "eval_resolution_1",
+    });
+    renderScreen({ onSaveResolutionEval });
+    fireEvent.click(
+      screen.getByTestId("claim-11111111-1111-1111-1111-111111111111"),
+    );
+    const input = screen.getByTestId("composer-input");
+    fireEvent.change(input, {
+      target: { value: "I confirmed the May policy and issued the refund." },
+    });
+    fireEvent.click(screen.getByTestId("send-button"));
+
+    fireEvent.click(screen.getByTestId("resolution-save-eval"));
+
+    await waitFor(() => expect(onSaveResolutionEval).toHaveBeenCalledTimes(1));
+    expect(onSaveResolutionEval).toHaveBeenCalledWith(
+      expect.objectContaining({
+        expectedOutcome: "I confirmed the May policy and issued the refund.",
+        failureReason: FIXTURE_INBOX[0].reason,
+        linkedTrace: `trace/${FIXTURE_INBOX[0].conversation_id}`,
+        source: "operator-resolution",
+      }),
+    );
+    expect(
+      await screen.findByTestId("resolution-to-eval-saved"),
+    ).toHaveTextContent("operator-resolutions");
+    expect(screen.getByTestId("resolution-eval-link")).toHaveAttribute(
+      "href",
+      "/evals?case_id=eval_resolution_1",
+    );
   });
 
   it("Release returns a claimed item to pending", () => {
