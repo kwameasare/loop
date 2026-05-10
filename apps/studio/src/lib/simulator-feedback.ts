@@ -85,6 +85,10 @@ export interface SimulatorTurnRatingRecord {
   created_at: string;
 }
 
+type SimulatorFeedbackClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 function localRating(
   agentId: string,
   input: SimulatorTurnRatingInput,
@@ -182,7 +186,7 @@ function localSimulatorRun(
 export async function createSimulatorRun(
   agentId: string,
   input: SimulatorRunInput,
-  opts: UxWireupClientOptions = {},
+  opts: SimulatorFeedbackClientOptions = {},
 ): Promise<SimulatorRunRecord> {
   return cpJson<SimulatorRunRecord>(
     `/agents/${encodeURIComponent(agentId)}/simulator/runs`,
@@ -190,6 +194,7 @@ export async function createSimulatorRun(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: localSimulatorRun(agentId, input),
     },
   );
@@ -198,7 +203,7 @@ export async function createSimulatorRun(
 export async function rateSimulatorTurn(
   agentId: string,
   input: SimulatorTurnRatingInput,
-  opts: UxWireupClientOptions = {},
+  opts: SimulatorFeedbackClientOptions = {},
 ): Promise<SimulatorTurnRatingRecord> {
   return cpJson<SimulatorTurnRatingRecord>(
     `/agents/${encodeURIComponent(agentId)}/simulator/turn-ratings`,
@@ -206,6 +211,7 @@ export async function rateSimulatorTurn(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: localRating(agentId, input),
     },
   );
