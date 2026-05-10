@@ -12,7 +12,10 @@
 import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import { TraceList } from "@/components/trace/trace-list";
 import { searchTraces, type TraceSummary } from "@/lib/traces";
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
@@ -63,9 +66,11 @@ function TracesPageBody(): JSX.Element {
   if (error) {
     return (
       <main className="container mx-auto p-6">
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
+        <SectionDegraded
+          title="Traces"
+          description="Trace evidence is unavailable. Studio will not show fixture turns or call this workspace empty when the trace backend cannot be reached."
+          evidence={error}
+        />
       </main>
     );
   }

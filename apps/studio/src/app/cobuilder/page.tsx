@@ -6,7 +6,10 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { CoBuilderPanel } from "@/components/ai-cobuilder/co-builder-panel";
 import { RubberDuck } from "@/components/ai-cobuilder/rubber-duck";
 import { SecondPairOfEyes } from "@/components/ai-cobuilder/second-pair-of-eyes";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import {
   fetchCoBuilderWorkspace,
   type CoBuilderWorkspace,
@@ -81,12 +84,11 @@ function CoBuilderPageBody(): JSX.Element {
       </header>
 
       {error ? (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          {error}
-        </p>
+        <SectionDegraded
+          title="AI Co-Builder"
+          description="Co-Builder evidence is unavailable. Studio will not show local AI actions, Rubber Duck advice, or Second Pair review as if they were live."
+          evidence={error}
+        />
       ) : null}
 
       {workspace ? (
