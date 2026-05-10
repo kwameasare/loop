@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { GovernOverview } from "./govern-overview";
+import { COMPLIANCE_REVIEW_FIXTURE } from "@/lib/enterprise-govern";
 
 describe("GovernOverview", () => {
   it("renders compliance reviewer workspace by default", () => {
@@ -140,6 +141,19 @@ describe("GovernOverview", () => {
     expect(screen.getByTestId("sso-row-saml")).toBeInTheDocument();
     expect(screen.getByTestId("sso-row-oidc")).toBeInTheDocument();
     expect(screen.getByTestId("sso-row-scim")).toBeInTheDocument();
+  });
+
+  it("does not substitute local SSO claims when compliance evidence omits SSO summaries", () => {
+    const { sso_summaries: _ssoSummaries, ...withoutSsoEvidence } =
+      COMPLIANCE_REVIEW_FIXTURE;
+
+    render(<GovernOverview compliance={withoutSsoEvidence} />);
+
+    fireEvent.click(screen.getByTestId("govern-tab-sso"));
+    expect(screen.getByTestId("sso-evidence-unavailable")).toHaveTextContent(
+      "SSO evidence unavailable",
+    );
+    expect(screen.queryByText(/EntraID/i)).not.toBeInTheDocument();
   });
 
   it("RBAC tab shows full role × resource matrix", () => {

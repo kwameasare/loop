@@ -108,6 +108,11 @@ describe("compliance review client", () => {
     expect(model.summary.pending_approvals).toBeGreaterThan(0);
     expect(model.tool_grants[0]?.reviewer_action).toContain("Block live use");
     expect(model.industry_probe_libraries[0]?.id).toBe("regulated-support");
+    expect(model.sso_summaries?.map((item) => item.protocol)).toEqual([
+      "saml",
+      "oidc",
+      "scim",
+    ]);
   });
 
   it("posts evidence export requests to the workspace compliance endpoint", async () => {
