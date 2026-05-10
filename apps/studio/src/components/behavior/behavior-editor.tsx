@@ -19,7 +19,6 @@ import {
   RiskHalo,
   StatePanel,
 } from "@/components/target";
-import { BuildToTestFlow } from "@/components/agents/build-to-test-flow";
 import { AdversarialCatchPanel } from "@/components/behavior/adversarial-catch-panel";
 import { FailureRepairLoopPanel } from "@/components/behavior/failure-repair-loop-panel";
 import { StyleTransferPanel } from "@/components/behavior/style-transfer-panel";
@@ -38,7 +37,6 @@ import {
   type BehaviorSentence,
   type BehaviorSentenceTelemetry,
 } from "@/lib/behavior";
-import { createBuildToTestFlowData } from "@/lib/target-ux/build-flow";
 import { cn } from "@/lib/utils";
 
 export interface BehaviorEditorProps {
@@ -504,7 +502,10 @@ function SelectionActionPanel({
 
   return (
     <div data-testid="behavior-selection-action-panel">
-      <StatePanel state={action === "fix" ? "stale" : "success"} title={heading}>
+      <StatePanel
+        state={action === "fix" ? "stale" : "success"}
+        title={heading}
+      >
         <p>{body}</p>
       </StatePanel>
     </div>
@@ -788,10 +789,6 @@ export function BehaviorEditor({
 
         <PreviewPanel data={data} />
       </section>
-
-      <BuildToTestFlow
-        data={createBuildToTestFlowData(data.agentId, "behavior")}
-      />
 
       <ModeSwitcher mode={mode} onModeChange={setMode} />
 
