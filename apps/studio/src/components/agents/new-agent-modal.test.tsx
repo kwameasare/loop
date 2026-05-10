@@ -62,75 +62,80 @@ function inputContract() {
 }
 
 function makeCreateIntake(result: Partial<AgentIntakeCreateResult> = {}) {
-  return vi.fn(async (_workspaceId: string, input: AgentIntakeCreateInput) => ({
-    id: result.id ?? "intake_1",
-    workspace_id: "ws_1",
-    agent_id: result.agent?.id ?? "agt_new",
-    state: result.state ?? ("draft_ready" as const),
-    creation_path: input.creation_path,
-    jobs: [],
-    artifact_reports: [],
-    intent_map: [],
-    contradictions: [],
-    sensitive_data_findings: [],
-    candidate_tools: [],
-    candidate_knowledge_sources: [],
-    candidate_channels: [],
-    candidate_memory_policy: {},
-    candidate_eval_cases: [],
-    risk_notes: [],
-    missing_information: [],
-    readiness: result.readiness ?? {
-      score: 74,
-      ready: ["Commitment Document drafted"],
-      needs_attention: [],
-      landing: `/agents/${result.agent?.id ?? "agt_new"}`,
-    },
-    created_object_refs: result.created_object_refs ?? {},
-    created_by: "owner-1",
-    created_at: "2026-05-01T00:00:00Z",
-    updated_at: "2026-05-01T00:00:00Z",
-    agent: {
-      id: result.agent?.id ?? "agt_new",
-      name: input.agent_name,
-      slug: input.slug,
-      description: input.contract.business_responsibility,
-      active_version: null,
-      object_state: "draft",
-      state_reason: "Commitment Document is still draft.",
-      state_evidence_ref: "commitment/commit_1",
-      updated_at: "2026-05-01T00:00:00Z",
+  return vi.fn(
+    async (
+      _workspaceId: string,
+      input: AgentIntakeCreateInput,
+    ): Promise<AgentIntakeCreateResult> => ({
+      id: result.id ?? "intake_1",
       workspace_id: "ws_1",
-    },
-    commitment: {
-      id: "commit_1",
       agent_id: result.agent?.id ?? "agt_new",
-      workspace_id: "ws_1",
-      version: 1,
-      body: input.contract,
-      structured_summary: {
-        responsibility: input.contract.business_responsibility,
-        audience: input.contract.target_users,
-        owner: input.contract.owner_user_id,
-        backup_owner: input.contract.backup_owner_user_id,
-        risk: input.contract.worst_case_failure,
-        channels: input.contract.channels,
-        systems_touched: input.contract.systems_touched,
-        regions: input.contract.regions,
-        languages: input.contract.languages,
-        readiness: "complete" as const,
-        missing_required_fields: [],
+      state: result.state ?? ("draft_ready" as const),
+      creation_path: input.creation_path,
+      jobs: [],
+      artifact_reports: [],
+      intent_map: [],
+      contradictions: [],
+      sensitive_data_findings: [],
+      candidate_tools: [],
+      candidate_knowledge_sources: [],
+      candidate_channels: [],
+      candidate_memory_policy: {},
+      candidate_eval_cases: [],
+      risk_notes: [],
+      missing_information: [],
+      readiness: result.readiness ?? {
+        score: 74,
+        ready: ["Commitment Document drafted"],
+        needs_attention: [],
+        landing: `/agents/${result.agent?.id ?? "agt_new"}`,
       },
-      owner_user_id: input.contract.owner_user_id,
-      status: "draft" as const,
-      content_hash: "hash",
-      created_from: "agent_intake:test",
+      created_object_refs: result.created_object_refs ?? {},
+      created_by: "owner-1",
       created_at: "2026-05-01T00:00:00Z",
       updated_at: "2026-05-01T00:00:00Z",
-      accepted_at: null,
-      superseded_at: null,
-    },
-  }));
+      agent: {
+        id: result.agent?.id ?? "agt_new",
+        name: input.agent_name,
+        slug: input.slug,
+        description: input.contract.business_responsibility,
+        active_version: null,
+        object_state: "draft" as const,
+        state_reason: "Commitment Document is still draft.",
+        state_evidence_ref: "commitment/commit_1",
+        updated_at: "2026-05-01T00:00:00Z",
+        workspace_id: "ws_1",
+      },
+      commitment: {
+        id: "commit_1",
+        agent_id: result.agent?.id ?? "agt_new",
+        workspace_id: "ws_1",
+        version: 1,
+        body: input.contract,
+        structured_summary: {
+          responsibility: input.contract.business_responsibility,
+          audience: input.contract.target_users,
+          owner: input.contract.owner_user_id,
+          backup_owner: input.contract.backup_owner_user_id,
+          risk: input.contract.worst_case_failure,
+          channels: input.contract.channels,
+          systems_touched: input.contract.systems_touched,
+          regions: input.contract.regions,
+          languages: input.contract.languages,
+          readiness: "complete" as const,
+          missing_required_fields: [],
+        },
+        owner_user_id: input.contract.owner_user_id,
+        status: "draft" as const,
+        content_hash: "hash",
+        created_from: "agent_intake:test",
+        created_at: "2026-05-01T00:00:00Z",
+        updated_at: "2026-05-01T00:00:00Z",
+        accepted_at: null,
+        superseded_at: null,
+      },
+    }),
+  );
 }
 
 describe("NewAgentModal", () => {
@@ -193,9 +198,9 @@ describe("NewAgentModal", () => {
     expect(screen.getByTestId("new-agent-channels")).toHaveValue(
       "web, whatsapp, telegram, voice",
     );
-    expect(screen.getByTestId("new-agent-step-panel-channels")).toHaveTextContent(
-      /Voice is one channel, not the category/i,
-    );
+    expect(
+      screen.getByTestId("new-agent-step-panel-channels"),
+    ).toHaveTextContent(/Voice is one channel, not the category/i);
   });
 
   it("opens the dialog and submits governed intake, then redirects to the workbench", async () => {
@@ -447,9 +452,9 @@ describe("NewAgentModal", () => {
     );
 
     fireEvent.click(screen.getByTestId("new-agent-button"));
-    expect(screen.getByTestId("new-agent-workspace-required")).toHaveTextContent(
-      /real workspace/i,
-    );
+    expect(
+      screen.getByTestId("new-agent-workspace-required"),
+    ).toHaveTextContent(/real workspace/i);
     fill("new-agent-name", "Support Bot");
     fill("new-agent-slug", "support-bot");
     fillContract();

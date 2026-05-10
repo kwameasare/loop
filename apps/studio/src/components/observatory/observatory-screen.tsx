@@ -67,20 +67,20 @@ function tracesHref(traceQuery: string, agentId?: string): string {
 }
 
 function reportText(
-  report: Record<string, unknown>,
+  report: Record<string, unknown> | null | undefined,
   key: string,
   fallback = "Not recorded",
 ): string {
-  const value = report[key];
+  const value = report?.[key];
   return typeof value === "string" && value.trim() ? value : fallback;
 }
 
 function reportList(
-  report: Record<string, unknown>,
+  report: Record<string, unknown> | null | undefined,
   key: string,
   fallback: readonly string[] = [],
 ): string[] {
-  const value = report[key];
+  const value = report?.[key];
   if (!Array.isArray(value)) return [...fallback];
   return value
     .map((item) => (typeof item === "string" ? item.trim() : ""))
@@ -88,8 +88,8 @@ function reportList(
 }
 
 function reportTimeline(incident: IncidentRecord) {
-  const value = incident.report.timeline;
-  if (!Array.isArray(value)) return incident.timeline;
+  const value = incident.report?.timeline;
+  if (!Array.isArray(value)) return incident.timeline ?? [];
   return value
     .map((item) => {
       if (!item || typeof item !== "object") return null;
@@ -644,20 +644,24 @@ function IncidentResponsePanel({
               fixPackages[incident.id] ?? incident.fix_change_package_id;
             const isClosed =
               incident.status === "resolved" || incident.status === "archived";
+            const channelScope = incident.channel_scope ?? [];
+            const affectedTraceIds = incident.affected_trace_ids ?? [];
             const reportChannels = reportList(
               incident.report,
               "affected_channels",
-              incident.channel_scope,
+              channelScope,
             );
             const reportActions = reportList(
               incident.report,
               "actions_taken",
-              incident.rollback_action_ref ? [incident.rollback_action_ref] : [],
+              incident.rollback_action_ref
+                ? [incident.rollback_action_ref]
+                : [],
             );
             const candidateTests = reportList(
               incident.report,
               "candidate_regression_tests",
-              incident.affected_trace_ids,
+              affectedTraceIds,
             );
             const timeline = reportTimeline(incident);
             return (
@@ -710,7 +714,7 @@ function IncidentResponsePanel({
                     <dt className="text-muted-foreground">Affected</dt>
                     <dd>
                       {incident.affected_conversation_count} conversations ·{" "}
-                      {incident.affected_trace_ids.length} traces
+                      {affectedTraceIds.length} traces
                     </dd>
                   </div>
                   <div>

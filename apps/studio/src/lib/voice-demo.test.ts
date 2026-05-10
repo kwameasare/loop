@@ -8,7 +8,8 @@ import {
 
 describe("voice demo client", () => {
   it("creates, reads, and starts audited voice demo links through cp-api", async () => {
-    const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
+    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+      const url = String(input);
       if (url.endsWith("/workspaces/ws_1/voice/demo-links")) {
         expect(init?.method).toBe("POST");
         expect(JSON.parse(String(init?.body))).toEqual({
@@ -68,7 +69,10 @@ describe("voice demo client", () => {
     });
 
     await expect(
-      createVoiceDemoLink("ws_1", "snap_1", { baseUrl: "https://cp.test", fetcher }),
+      createVoiceDemoLink("ws_1", "snap_1", {
+        baseUrl: "https://cp.test",
+        fetcher,
+      }),
     ).resolves.toMatchObject({ url: "/voice-demo/token_1" });
     await expect(
       fetchVoiceDemoLink("token_1", { baseUrl: "https://cp.test", fetcher }),

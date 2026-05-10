@@ -333,7 +333,10 @@ describe("eval foundry model", () => {
     const { evidence_mode, items } = await listEvalSuites({
       allowFixture: true,
     });
-    const model = getEvalFoundryModel(items, { evidenceMode: evidence_mode });
+    const model = getEvalFoundryModel(
+      items,
+      evidence_mode ? { evidenceMode: evidence_mode } : {},
+    );
     expect(model.creationSources.map((source) => source.source)).toEqual(
       expect.arrayContaining([
         "simulator_run",

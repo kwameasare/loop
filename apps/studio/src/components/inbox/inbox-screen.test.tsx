@@ -34,12 +34,15 @@ describe("InboxScreen", () => {
     renderScreen();
     const pending = screen.getByTestId("inbox-pending");
     const rows = within(pending).getAllByTestId(/^pending-row-/);
-    expect(rows).toHaveLength(2);
-    // 22... was created earlier than 11... → renders first.
+    expect(rows).toHaveLength(3);
+    // 44... was created before 22..., which was created before 11...
     expect(rows[0].getAttribute("data-testid")).toBe(
-      "pending-row-22222222-2222-2222-2222-222222222222",
+      "pending-row-44444444-4444-4444-4444-444444444444",
     );
     expect(rows[1].getAttribute("data-testid")).toBe(
+      "pending-row-22222222-2222-2222-2222-222222222222",
+    );
+    expect(rows[2].getAttribute("data-testid")).toBe(
       "pending-row-11111111-1111-1111-1111-111111111111",
     );
   });

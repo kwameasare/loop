@@ -56,29 +56,35 @@ describe("migration-runs client", () => {
         blocking_count: 1,
       },
     };
-    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.endsWith("/migrations/imports")) {
-        return Response.json(run, { status: 201 });
-      }
-      if (url.includes("/repairs/rep_inv_integrations/accept")) {
-        return Response.json({
-          ...run,
-          inventory: run.inventory.map((item) =>
-            item.id === "inv_integrations"
-              ? { ...item, severity: "ok", resolved_by_repair_id: "rep_inv_integrations" }
-              : item,
-          ),
-        });
-      }
-      if (url.includes("/cutover/advance")) {
-        return Response.json({ ...run, status: "cutover_active" });
-      }
-      if (url.includes("/cutover/rollback")) {
-        return Response.json({ ...run, status: "rolled_back" });
-      }
-      return Response.json({ items: [run] });
-    });
+    const fetcher = vi.fn(
+      async (input: RequestInfo | URL, _init?: RequestInit) => {
+        const url = String(input);
+        if (url.endsWith("/migrations/imports")) {
+          return Response.json(run, { status: 201 });
+        }
+        if (url.includes("/repairs/rep_inv_integrations/accept")) {
+          return Response.json({
+            ...run,
+            inventory: run.inventory.map((item) =>
+              item.id === "inv_integrations"
+                ? {
+                    ...item,
+                    severity: "ok",
+                    resolved_by_repair_id: "rep_inv_integrations",
+                  }
+                : item,
+            ),
+          });
+        }
+        if (url.includes("/cutover/advance")) {
+          return Response.json({ ...run, status: "cutover_active" });
+        }
+        if (url.includes("/cutover/rollback")) {
+          return Response.json({ ...run, status: "rolled_back" });
+        }
+        return Response.json({ items: [run] });
+      },
+    );
 
     await expect(
       createMigrationImport(
@@ -119,7 +125,9 @@ describe("migration-runs client", () => {
       String(input).includes("/repairs/rep_inv_integrations/accept"),
     );
     expect(repairCall?.[1]).toMatchObject({ method: "POST" });
-    expect(JSON.parse(String((repairCall?.[1] as RequestInit).body))).toMatchObject({
+    expect(
+      JSON.parse(String((repairCall?.[1] as RequestInit | undefined)?.body)),
+    ).toMatchObject({
       repair_id: "rep_inv_integrations",
     });
   });

@@ -223,9 +223,7 @@ describe("AgentOverview", () => {
       "blocked",
     );
     expect(
-      screen
-        .getByTestId("intake-readiness-commitment")
-        .querySelector("a"),
+      screen.getByTestId("intake-readiness-commitment").querySelector("a"),
     ).toHaveAttribute("href", "/agents/ag_1/contract");
     expect(screen.getByTestId("intake-readiness-channels")).toHaveTextContent(
       "1 draft channel binding created",
@@ -433,9 +431,7 @@ describe("AgentOverview", () => {
         : binding,
     );
 
-    render(
-      <AgentOverview {...BASE_PROPS} channelBindings={channelBindings} />,
-    );
+    render(<AgentOverview {...BASE_PROPS} channelBindings={channelBindings} />);
 
     expect(screen.getByTestId("agent-outline-channels")).toHaveTextContent(
       "1/9 channel binding ready: WhatsApp",
@@ -477,21 +473,16 @@ describe("AgentOverview", () => {
         : policy,
     );
 
-    render(
-      <AgentOverview
-        {...BASE_PROPS}
-        memoryPolicies={memoryPolicies}
-      />,
-    );
+    render(<AgentOverview {...BASE_PROPS} memoryPolicies={memoryPolicies} />);
 
     expect(screen.getByTestId("agent-outline-memory")).toHaveTextContent(
-      "3 memory policies loaded; 2 durable; 1 review-required.",
+      "7 memory policies loaded; 2 durable; 4 review-required.",
     );
     expect(screen.getByTestId("agent-outline-memory")).toHaveTextContent(
-      "Review user memory policy before promotion",
+      "Review user, account, organization, agent memory policy before promotion",
     );
     expect(screen.getByTestId("agent-outline-memory-count")).toHaveTextContent(
-      "3 memory rules",
+      "7 memory rules",
     );
   });
 
@@ -529,9 +520,7 @@ describe("AgentOverview", () => {
   });
 
   it("surfaces persisted trace evidence and links the latest trace", () => {
-    render(
-      <AgentOverview {...BASE_PROPS} traceSummaries={TRACE_SUMMARIES} />,
-    );
+    render(<AgentOverview {...BASE_PROPS} traceSummaries={TRACE_SUMMARIES} />);
 
     expect(screen.getByTestId("agent-outline-traces")).toHaveTextContent(
       "2 persisted traces loaded; 1 failed; latest trc_latest_error",
@@ -737,9 +726,9 @@ describe("AgentOverview", () => {
     expect(screen.getByTestId("overview-deploy-time")).toHaveTextContent(
       "Unavailable",
     );
-    expect(
-      screen.getByTestId("overview-deploy-unavailable"),
-    ).toHaveTextContent("deployment history");
+    expect(screen.getByTestId("overview-deploy-unavailable")).toHaveTextContent(
+      "deployment history",
+    );
     expect(screen.queryByTestId("overview-deploy-version")).toBeNull();
   });
 
