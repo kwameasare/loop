@@ -10,8 +10,10 @@ from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.eval_suites import EvalCaseCreate, serialise_case
 from loop_control_plane.simulator_feedback import (
+    SimulatorRunCreate,
     SimulatorTurnRatingCreate,
     candidate_artifact_for,
+    simulator_run_payload,
     simulator_turn_rating_payload,
 )
 
@@ -35,6 +37,62 @@ async def _agent(
         workspace_id=workspace_id,
         agent_id=agent_id,
     )
+
+
+@router.post("/{agent_id}/simulator/runs", status_code=201)
+async def create_simulator_run(
+    request: Request,
+    agent_id: UUID,
+    body: SimulatorRunCreate,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+    )
+    run = await cp.simulator_feedback.add_run(
+        agent=agent,
+        body=body,
+        actor_sub=caller_sub,
+    )
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="simulator_run:create",
+        resource_type="simulator_run",
+        store=cp.audit_events,
+        resource_id=run.id,
+        request_id=request_id(request),
+        payload={
+            "agent_id": str(agent.id),
+            "channel": body.channel,
+            "trace_id": body.trace_id,
+            "status": body.status,
+        },
+    )
+    return simulator_run_payload(run)
+
+
+@router.get("/{agent_id}/simulator/runs")
+async def list_simulator_runs(
+    request: Request,
+    agent_id: UUID,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+    )
+    rows = await cp.simulator_feedback.list_runs_for_agent(agent=agent)
+    return {"items": [simulator_run_payload(row) for row in rows]}
 
 
 @router.post("/{agent_id}/simulator/turn-ratings", status_code=201)
@@ -72,6 +130,7 @@ async def rate_simulator_turn(
                     "channel": body.channel,
                     "prompt": body.prompt,
                     "trace_id": body.trace_id,
+                    "simulator_run_id": body.simulator_run_id,
                     "rating": body.rating,
                     "observed_answer": body.final_answer,
                 },
@@ -87,7 +146,7 @@ async def rate_simulator_turn(
                     },
                 ],
                 source=f"first-proof:{body.rating}",
-                source_ref=body.trace_id or f"agent:{agent.id}:simulator",
+                source_ref=body.trace_id or body.simulator_run_id or f"agent:{agent.id}:simulator",
                 attachments=[body.trace_id] if body.trace_id else [],
             ),
             actor_sub=caller_sub,
@@ -117,6 +176,7 @@ async def rate_simulator_turn(
             "agent_id": str(agent.id),
             "rating": body.rating,
             "trace_id": body.trace_id,
+            "simulator_run_id": body.simulator_run_id,
             "save_as_eval": body.save_as_eval,
             "eval_case_id": eval_ref["case_id"] if eval_ref else None,
             "behavior_note_id": (

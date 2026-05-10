@@ -243,7 +243,7 @@ class CpApiState:
         self.incidents = IncidentRegistry()
         # Agent-flow implementation: ownership transfer and history walkthrough.
         self.agent_handoffs = AgentHandoffRegistry()
-        # Agent-flow implementation: first proof ratings become structured artifacts.
+        # Agent-flow implementation: first proof runs and ratings become structured artifacts.
         self.simulator_feedback = SimulatorFeedbackRegistry()
         # Agent-flow implementation: adversarial probes surface calm catch questions.
         self.adversarial_catches = AdversarialCatchRegistry()

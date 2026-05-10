@@ -8,10 +8,30 @@ export interface SimulatorTurnRatingInput {
   final_answer: string;
   channel: string;
   trace_id: string;
+  simulator_run_id?: string;
   issue_annotation: string;
   save_as_eval: boolean;
   cost_usd: number;
   latency_ms: number;
+}
+
+export interface SimulatorRunInput {
+  prompt: string;
+  final_answer: string;
+  channel: string;
+  trace_id: string;
+  config: Record<string, unknown>;
+  status: "completed" | "failed";
+  cost_usd: number;
+  latency_ms: number;
+}
+
+export interface SimulatorRunRecord extends SimulatorRunInput {
+  id: string;
+  workspace_id: string;
+  agent_id: string;
+  created_by: string;
+  created_at: string;
 }
 
 export interface SimulatorTurnRatingRecord {
@@ -23,6 +43,7 @@ export interface SimulatorTurnRatingRecord {
   final_answer: string;
   channel: string;
   trace_id: string;
+  simulator_run_id: string;
   issue_annotation: string;
   candidate_artifact: {
     kind: string;
@@ -30,6 +51,7 @@ export interface SimulatorTurnRatingRecord {
     expected_outcome: string;
     source: string;
     trace_id: string;
+    simulator_run_id: string;
   };
   eval_case_ref: null | {
     suite_id: string;
@@ -86,6 +108,7 @@ function localRating(
     workspace_id: "local",
     agent_id: agentId,
     ...input,
+    simulator_run_id: input.simulator_run_id ?? "",
     candidate_artifact: {
       kind,
       title,
@@ -95,6 +118,7 @@ function localRating(
         "Preserve the expected outcome.",
       source: "first_proof",
       trace_id: input.trace_id || "trace/not-captured",
+      simulator_run_id: input.simulator_run_id || "simulator-run/not-captured",
     },
     eval_case_ref: input.save_as_eval
       ? {
@@ -136,6 +160,36 @@ function localRating(
     created_by: "local",
     created_at: new Date(0).toISOString(),
   };
+}
+
+function localSimulatorRun(
+  agentId: string,
+  input: SimulatorRunInput,
+): SimulatorRunRecord {
+  return {
+    id: "simrun_local",
+    workspace_id: "local",
+    agent_id: agentId,
+    ...input,
+    created_by: "local",
+    created_at: new Date(0).toISOString(),
+  };
+}
+
+export async function createSimulatorRun(
+  agentId: string,
+  input: SimulatorRunInput,
+  opts: UxWireupClientOptions = {},
+): Promise<SimulatorRunRecord> {
+  return cpJson<SimulatorRunRecord>(
+    `/agents/${encodeURIComponent(agentId)}/simulator/runs`,
+    {
+      ...opts,
+      method: "POST",
+      body: input,
+      fallback: localSimulatorRun(agentId, input),
+    },
+  );
 }
 
 export async function rateSimulatorTurn(

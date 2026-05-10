@@ -133,7 +133,7 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         agent_handoff_router,
         # Agent-flow implementation: intake creates governed drafts, not empty agents.
         agent_intake_router,
-        # Agent-flow implementation: first proof ratings become evals and behavior notes.
+        # Agent-flow implementation: first proof runs and ratings become evidence.
         simulator_feedback_router,
         # Agent-flow implementation: adversarial catches ask calm rule questions.
         adversarial_catches_router,
