@@ -59,6 +59,9 @@ describe("GovernOverview", () => {
         "/v1/workspaces/workspace_local/compliance-review/evidence-exports/cex_1",
       generated_by: "owner-1",
       generated_at: "2026-05-09T00:00:00Z",
+      expires_at: "2026-05-16T00:00:00Z",
+      secret_policy:
+        "Raw secrets, plaintext credentials, and customer PII are never included in compliance evidence exports.",
     }));
 
     render(<GovernOverview createExport={createExport} />);
@@ -68,6 +71,13 @@ describe("GovernOverview", () => {
     expect(
       await screen.findByTestId("compliance-export-result"),
     ).toHaveTextContent("cex_1");
+    expect(screen.getByTestId("compliance-export-download")).toHaveAttribute(
+      "href",
+      "/v1/workspaces/workspace_local/compliance-review/evidence-exports/cex_1",
+    );
+    expect(screen.getByTestId("compliance-export-result")).toHaveTextContent(
+      "plaintext credentials",
+    );
     expect(createExport).toHaveBeenCalledWith(
       "workspace_local",
       expect.objectContaining({

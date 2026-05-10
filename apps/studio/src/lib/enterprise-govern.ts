@@ -549,6 +549,8 @@ export interface ComplianceEvidenceExport {
   download_url: string;
   generated_by: string;
   generated_at: string;
+  expires_at?: string;
+  secret_policy?: string;
 }
 
 export interface ComplianceProbeSuiteAttachInput {
@@ -856,6 +858,9 @@ export async function createComplianceEvidenceExport(
         download_url: `/v1/workspaces/${workspaceId}/compliance-review/evidence-exports/cex_local`,
         generated_by: "local-studio",
         generated_at: new Date(0).toISOString(),
+        expires_at: new Date(7 * 24 * 60 * 60 * 1000).toISOString(),
+        secret_policy:
+          "Raw secrets, plaintext credentials, and customer PII are never included in compliance evidence exports.",
       },
       ...opts,
     },
