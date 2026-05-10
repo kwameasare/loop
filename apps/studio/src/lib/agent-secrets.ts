@@ -49,7 +49,13 @@ export async function listAgentSecrets(
     `${base}/agents/${encodeURIComponent(agentId)}/secrets`,
     { method: "GET", headers: secretHeaders(opts), cache: "no-store" },
   );
-  if (response.status === 404) return { items: [] };
+  if (response.status === 404) {
+    return {
+      items: [],
+      degraded_reason:
+        "Secrets vault route returned 404. Studio will not treat an unavailable vault as an agent with no secrets.",
+    };
+  }
   if (!response.ok) {
     throw new Error(`cp-api GET /agents/${agentId}/secrets -> ${response.status}`);
   }
