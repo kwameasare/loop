@@ -188,6 +188,41 @@ describe("ObservatoryScreen", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
+  it("pins observatory metrics to the homepage through cp-api", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+      expect(String(input)).toBe(
+        "https://cp.test/v1/workspaces/ws1/homepage/pins",
+      );
+      expect(init?.method).toBe("POST");
+      expect(JSON.parse(String(init?.body))).toEqual({
+        source_type: "observatory_metric",
+        source_id: "quality",
+        title: "Quality",
+        href: "/observe?metric=quality",
+      });
+      return Response.json(
+        {
+          id: "pin_quality",
+          source_type: "observatory_metric",
+          source_id: "quality",
+          title: "Quality",
+          href: "/observe?metric=quality",
+          created_at: "2026-05-10T12:00:00.000Z",
+        },
+        { status: 201 },
+      );
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(<ObservatoryScreen model={OBSERVATORY_MODEL} workspaceId="ws1" />);
+
+    fireEvent.click(screen.getByTestId("observatory-home-pin-quality"));
+
+    expect(await screen.findByText("Pinned to home")).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
   it("turns production anomalies into tasks and eval cases", async () => {
     process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
     const fetcher = vi.fn<typeof fetch>(async (input, init) => {

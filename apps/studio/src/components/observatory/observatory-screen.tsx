@@ -24,6 +24,7 @@ import {
   seedIncidentEvalCases,
   transitionIncident,
 } from "@/lib/incidents";
+import { createHomepagePin } from "@/lib/homepage-pins";
 import {
   createObservatoryAnomalyEvalCase,
   createObservatoryAnomalyTask,
@@ -177,11 +178,17 @@ function MetricCard({
   onPin,
   pinned,
   pending,
+  homePinned,
+  homePending,
+  onPinHome,
 }: {
   metric: ObservatoryMetric;
   onPin?: () => void;
   pinned?: boolean;
   pending?: boolean;
+  homePinned?: boolean;
+  homePending?: boolean;
+  onPinHome?: () => void;
 }) {
   return (
     <article
@@ -204,18 +211,41 @@ function MetricCard({
       <p className="mt-3 text-2xl font-semibold tabular-nums">{metric.value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{metric.delta}</p>
       <p className="mt-3 text-sm">{metric.nextAction}</p>
-      {onPin ? (
-        <Button
-          type="button"
-          variant={pinned ? "subtle" : "outline"}
-          size="sm"
-          className="mt-3"
-          onClick={onPin}
-          disabled={pending || pinned}
-          data-testid={`observatory-pin-${metric.id}`}
-        >
-          {pending ? "Pinning" : pinned ? "Pinned" : "Pin chart to dashboard"}
-        </Button>
+      {onPin || onPinHome ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {onPin ? (
+            <Button
+              type="button"
+              variant={pinned ? "subtle" : "outline"}
+              size="sm"
+              onClick={onPin}
+              disabled={pending || pinned}
+              data-testid={`observatory-pin-${metric.id}`}
+            >
+              {pending
+                ? "Pinning"
+                : pinned
+                  ? "Pinned"
+                  : "Pin chart to dashboard"}
+            </Button>
+          ) : null}
+          {onPinHome ? (
+            <Button
+              type="button"
+              variant={homePinned ? "subtle" : "outline"}
+              size="sm"
+              onClick={onPinHome}
+              disabled={homePending || homePinned}
+              data-testid={`observatory-home-pin-${metric.id}`}
+            >
+              {homePending
+                ? "Saving"
+                : homePinned
+                  ? "Pinned to home"
+                  : "Pin to home"}
+            </Button>
+          ) : null}
+        </div>
       ) : null}
     </article>
   );
@@ -919,7 +949,9 @@ export function ObservatoryScreen({
   const [paused, setPaused] = useState(false);
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
   const [pinned, setPinned] = useState<string[]>([]);
+  const [homePinned, setHomePinned] = useState<string[]>([]);
   const [pinning, setPinning] = useState<string | null>(null);
+  const [homePinning, setHomePinning] = useState<string | null>(null);
   const [pinError, setPinError] = useState<string | null>(null);
   const degraded = Boolean(model.degradedReason);
 
@@ -938,6 +970,29 @@ export function ObservatoryScreen({
       );
     } finally {
       setPinning(null);
+    }
+  }
+
+  async function handleHomePin(metric: ObservatoryMetric) {
+    if (!workspaceId || homePinned.includes(metric.id)) return;
+    setHomePinning(metric.id);
+    setPinError(null);
+    try {
+      await createHomepagePin(workspaceId, {
+        source_type: "observatory_metric",
+        source_id: metric.id,
+        title: metric.label,
+        href: `/observe?metric=${encodeURIComponent(metric.id)}`,
+      });
+      setHomePinned((current) =>
+        current.includes(metric.id) ? current : [...current, metric.id],
+      );
+    } catch (err) {
+      setPinError(
+        err instanceof Error ? err.message : "Could not pin item to home.",
+      );
+    } finally {
+      setHomePinning(null);
     }
   }
 
@@ -1005,9 +1060,12 @@ export function ObservatoryScreen({
             metric={metric}
             pinned={pinned.includes(metric.id)}
             pending={pinning === metric.id}
+            homePinned={homePinned.includes(metric.id)}
+            homePending={homePinning === metric.id}
             {...(workspaceId
               ? {
                   onPin: () => void handlePin(metric),
+                  onPinHome: () => void handleHomePin(metric),
                 }
               : {})}
           />
