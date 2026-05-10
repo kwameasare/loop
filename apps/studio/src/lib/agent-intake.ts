@@ -184,6 +184,11 @@ export interface AgentIntakeCreateResult extends AgentIntakeRecord {
   commitment: CommitmentDocument;
 }
 
+export interface AgentIntakeRecoveryResult extends AgentIntakeRecord {
+  agent?: AgentSummary;
+  commitment?: CommitmentDocument;
+}
+
 export interface AgentIntakeOptions extends UxWireupClientOptions {
   workspaceId?: string;
   allowFixture?: boolean;
@@ -381,6 +386,44 @@ export async function getAgentIntake(
       ...opts,
       allowFallback: false,
       fallback: undefined as unknown as AgentIntakeRecord,
+    },
+  );
+}
+
+export async function retryAgentIntakeGeneration(
+  workspaceId: string,
+  intakeId: string,
+  opts: AgentIntakeOptions = {},
+): Promise<AgentIntakeRecoveryResult> {
+  return cpJson<AgentIntakeRecoveryResult>(
+    `/workspaces/${encodeURIComponent(
+      workspaceId,
+    )}/agent-intakes/${encodeURIComponent(intakeId)}/retry`,
+    {
+      ...opts,
+      method: "POST",
+      allowFallback: false,
+      fallback: undefined as unknown as AgentIntakeRecoveryResult,
+    },
+  );
+}
+
+export async function continueAgentIntakeManually(
+  workspaceId: string,
+  intakeId: string,
+  notes = "",
+  opts: AgentIntakeOptions = {},
+): Promise<AgentIntakeRecoveryResult> {
+  return cpJson<AgentIntakeRecoveryResult>(
+    `/workspaces/${encodeURIComponent(
+      workspaceId,
+    )}/agent-intakes/${encodeURIComponent(intakeId)}/continue-manually`,
+    {
+      ...opts,
+      method: "POST",
+      body: { notes },
+      allowFallback: false,
+      fallback: undefined as unknown as AgentIntakeRecoveryResult,
     },
   );
 }
