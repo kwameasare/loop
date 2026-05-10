@@ -23,9 +23,12 @@ export default async function AgentsPage() {
     }));
   const { agents, degradedReason: agentsDegradedReason } = agentsResult;
   const { workspaces, degraded_reason: workspacesDegradedReason } =
-    await listWorkspaces().catch(() => ({
+    await listWorkspaces().catch((error: unknown) => ({
       workspaces: [],
-      degraded_reason: "Could not load workspace context.",
+      degraded_reason:
+        error instanceof Error
+          ? error.message
+          : "Could not load workspace context.",
     }));
   const existingSlugs = agents.map((a) => a.slug).filter(Boolean);
   const workspaceId =
