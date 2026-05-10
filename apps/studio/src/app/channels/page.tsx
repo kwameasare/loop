@@ -4,13 +4,35 @@ import { ArrowRight, Bot, Radio } from "lucide-react";
 import { ChannelTypeGrid } from "@/components/channels/channel-type-grid";
 import { NewAgentModal } from "@/components/agents/new-agent-modal";
 import { buttonVariants } from "@/components/ui/button";
-import { listAgents } from "@/lib/cp-api";
+import { listAgents, type AgentSummary } from "@/lib/cp-api";
+import { listWorkspaces, type Workspace } from "@/lib/workspaces";
 
 export const dynamic = "force-dynamic";
 
+export function resolveChannelsWorkspaceId(
+  agents: AgentSummary[],
+  workspaces: Workspace[],
+  fallback: string | undefined = process.env.LOOP_DEFAULT_WORKSPACE_ID,
+): string | null {
+  return agents[0]?.workspace_id || workspaces[0]?.id || fallback || null;
+}
+
 export default async function ChannelsPage() {
-  const { agents } = await listAgents().catch(() => ({ agents: [] }));
+  const agentsResult = await listAgents()
+    .then((result) => ({ ...result, degradedReason: undefined }))
+    .catch((error: unknown) => ({
+      agents: [],
+      degradedReason:
+        error instanceof Error ? error.message : "Could not load agents.",
+    }));
+  const { agents, degradedReason: agentsDegradedReason } = agentsResult;
+  const { workspaces, degraded_reason: workspacesDegradedReason } =
+    await listWorkspaces().catch(() => ({
+      workspaces: [],
+      degraded_reason: "Could not load workspace context.",
+    }));
   const existingSlugs = agents.map((agent) => agent.slug).filter(Boolean);
+  const workspaceId = resolveChannelsWorkspaceId(agents, workspaces);
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-5 p-4 lg:p-6">
@@ -64,8 +86,30 @@ export default async function ChannelsPage() {
               memory, evals, and deploy gates stay together.
             </p>
           </div>
-          <NewAgentModal existingSlugs={existingSlugs} />
+          <NewAgentModal
+            existingSlugs={existingSlugs}
+            workspaceId={workspaceId}
+          />
         </div>
+
+        {workspacesDegradedReason ? (
+          <p
+            className="mt-4 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+            data-testid="channels-workspace-degraded"
+            role="status"
+          >
+            {workspacesDegradedReason}
+          </p>
+        ) : null}
+        {agentsDegradedReason ? (
+          <p
+            className="mt-4 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+            data-testid="channels-agents-degraded"
+            role="status"
+          >
+            Agent registry is unavailable. {agentsDegradedReason}
+          </p>
+        ) : null}
 
         {agents.length > 0 ? (
           <div className="mt-4 divide-y rounded-md border">
@@ -90,7 +134,7 @@ export default async function ChannelsPage() {
               </Link>
             ))}
           </div>
-        ) : (
+        ) : agentsDegradedReason ? null : (
           <div className="mt-4 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
             No agents yet. Create or import an agent, then bind it to web chat,
             WhatsApp, Telegram, Slack, SMS, email, or voice.
