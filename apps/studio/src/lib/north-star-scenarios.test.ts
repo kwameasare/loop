@@ -5,6 +5,7 @@ import {
   NORTH_STAR_SCENARIO_IDS,
   NORTH_STAR_SCENARIOS,
 } from "@/lib/north-star-scenarios";
+import { STUDIO_ROUTES } from "@/lib/route-audit";
 
 describe("NORTH_STAR_SCENARIOS", () => {
   it("covers every canonical scenario from §36", () => {
@@ -27,6 +28,11 @@ describe("NORTH_STAR_SCENARIOS", () => {
 });
 
 describe("findScenarioCoverageGaps", () => {
+  it("keeps every scenario route wired to the Studio IA registry", () => {
+    const known = new Set(STUDIO_ROUTES.map((entry) => entry.route));
+    expect(findScenarioCoverageGaps(known)).toEqual([]);
+  });
+
   it("returns nothing when every canonical route is known", () => {
     const known = new Set(
       Object.values(NORTH_STAR_SCENARIOS).flatMap((s) => s.routes),

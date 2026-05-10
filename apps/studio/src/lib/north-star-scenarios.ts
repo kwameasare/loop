@@ -54,8 +54,17 @@ export const NORTH_STAR_SCENARIOS: Record<NorthStarScenarioId, NorthStarScenario
       "Stage Loop and shadow traffic for one hour.",
       "Canary to 10%, watch the deploy-watch board, then promote to 100%.",
     ],
-    routes: ["/migrations", "/parity", "/deploys"],
-    proofs: ["migration.cutover.id", "parity.report_id", "deploy.production.changeset_id"],
+    routes: [
+      "/migrate",
+      "/migrate/parity",
+      "/deploy/safety",
+      "/agents/[agent_id]/deploys",
+    ],
+    proofs: [
+      "migration.cutover.id",
+      "parity.report_id",
+      "deploy.production.change_package_id",
+    ],
   },
   "diego-ships-voice": {
     id: "diego-ships-voice",
@@ -69,8 +78,14 @@ export const NORTH_STAR_SCENARIOS: Record<NorthStarScenarioId, NorthStarScenario
       "Run the voice eval suite (latency + grounded-answer + barge-in).",
       "Deploy to staging, canary 10% of inbound calls, then promote.",
     ],
-    routes: ["/templates", "/agents", "/voice", "/evals", "/deploys"],
-    proofs: ["voice.eval.run_id", "deploy.staging.changeset_id"],
+    routes: [
+      "/onboarding",
+      "/channels",
+      "/voice",
+      "/agents/[agent_id]/evals",
+      "/agents/[agent_id]/deploys",
+    ],
+    proofs: ["voice.eval.run_id", "deploy.staging.change_package_id"],
   },
   "priya-wrong-tool": {
     id: "priya-wrong-tool",
@@ -86,7 +101,13 @@ export const NORTH_STAR_SCENARIOS: Record<NorthStarScenarioId, NorthStarScenario
       "Save the original turn as a new eval case.",
       "Run the regression suite and confirm pass.",
     ],
-    routes: ["/inbox", "/traces", "/forks", "/evals"],
+    routes: [
+      "/inbox",
+      "/traces/[id]",
+      "/agents/[agent_id]/workflow",
+      "/agents/[agent_id]/tools",
+      "/agents/[agent_id]/evals",
+    ],
     proofs: ["fork.eval.run_id", "eval.run_id"],
   },
   "acme-four-eyes": {
@@ -102,7 +123,12 @@ export const NORTH_STAR_SCENARIOS: Record<NorthStarScenarioId, NorthStarScenario
       "Canary the changeset and observe deploy-watch.",
       "Export audit evidence (approvals + diffs + parity).",
     ],
-    routes: ["/changesets", "/deploys", "/audit"],
+    routes: [
+      "/deploy/safety",
+      "/collaborate/review",
+      "/agents/[agent_id]/deploys",
+      "/enterprise/audit",
+    ],
     proofs: ["changeset.approvals", "audit.export_id", "deploy.canary.percent"],
   },
   "operator-escalation": {
@@ -118,7 +144,12 @@ export const NORTH_STAR_SCENARIOS: Record<NorthStarScenarioId, NorthStarScenario
       "Save the resolution as an eval case under the right suite.",
       "Release the conversation back to the agent.",
     ],
-    routes: ["/inbox", "/traces", "/evals"],
+    routes: [
+      "/inbox",
+      "/inbox/conversation/[id]",
+      "/traces/[id]",
+      "/agents/[agent_id]/evals",
+    ],
     proofs: ["operator.handoff.id", "eval.run_id"],
   },
   "support-kb-gap": {
@@ -134,7 +165,12 @@ export const NORTH_STAR_SCENARIOS: Record<NorthStarScenarioId, NorthStarScenario
       "Run retrieval evals against the new corpus.",
       "Watch grounded-answer quality climb on the dashboard.",
     ],
-    routes: ["/knowledge", "/knowledge/atelier", "/evals"],
+    routes: [
+      "/agents/[agent_id]/observe",
+      "/agents/[agent_id]/kb",
+      "/agents/[agent_id]/evals",
+      "/observe",
+    ],
     proofs: ["kb.source_id", "eval.retrieval.run_id"],
   },
   "sam-replay-tomorrow": {
@@ -151,8 +187,19 @@ export const NORTH_STAR_SCENARIOS: Record<NorthStarScenarioId, NorthStarScenario
       "Add a missing eval case and rerun the suite.",
       "Promote only after the replay diff clears.",
     ],
-    routes: ["/agents", "/preflight", "/evals", "/deploys"],
-    proofs: ["preflight.report_id", "eval.run_id", "deploy.production.changeset_id"],
+    routes: [
+      "/agents/[agent_id]/behavior",
+      "/deploy/safety",
+      "/replay",
+      "/cobuilder",
+      "/agents/[agent_id]/evals",
+      "/agents/[agent_id]/deploys",
+    ],
+    proofs: [
+      "preflight.report_id",
+      "eval.run_id",
+      "deploy.production.change_package_id",
+    ],
   },
   "nadia-xray-cleanup": {
     id: "nadia-xray-cleanup",
@@ -167,7 +214,7 @@ export const NORTH_STAR_SCENARIOS: Record<NorthStarScenarioId, NorthStarScenario
       "Add a targeted eval for the rare branch.",
       "Confirm faster latency without losing quality on the budget visualizer.",
     ],
-    routes: ["/xray", "/traces", "/evals", "/cost"],
+    routes: ["/xray", "/traces", "/agents/[agent_id]/evals", "/costs"],
     proofs: ["xray.report_id", "eval.run_id", "cost.dashboard_id"],
   },
 };
