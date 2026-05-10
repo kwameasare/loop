@@ -103,7 +103,7 @@ export function FlowCanvas(props: FlowCanvasProps) {
         </div>
       </header>
       <div
-        aria-label="Flow canvas viewport"
+        aria-label="Agent map viewport"
         className="relative flex-1 cursor-grab overflow-hidden active:cursor-grabbing"
         data-testid="flow-viewport"
         onMouseDown={onMouseDown}
@@ -130,9 +130,9 @@ export function FlowCanvas(props: FlowCanvasProps) {
           data-testid="flow-placeholder"
         >
           <div className="rounded-lg border border-dashed bg-card/80 px-6 py-4 text-center text-sm text-muted-foreground">
-            <p className="font-medium">Flow canvas is empty.</p>
+            <p className="font-medium">Agent map is empty.</p>
             <p className="text-xs">
-              Node palette and edge editing arrive in S461.
+              Add behavior, tool, memory, or channel steps to inspect the agent.
             </p>
           </div>
         </div>

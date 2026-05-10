@@ -92,7 +92,7 @@ export const KEYBOARD_SHORTCUTS: ReadonlyArray<{
     id: "list-view",
     combo: "L",
     scope: "canvas",
-    description: "Toggle the canvas list view (keyboard-first).",
+    description: "Toggle the agent map list view (keyboard-first).",
     anchor: "§30.2",
   },
   {

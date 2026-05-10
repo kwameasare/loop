@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 const SCOPE_LABELS: Record<(typeof KEYBOARD_SHORTCUTS)[number]["scope"], string> = {
   global: "Global",
-  canvas: "Canvas / list view",
+  canvas: "Agent map / list view",
   trace: "Trace",
   review: "Review",
 };
