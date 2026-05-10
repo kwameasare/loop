@@ -28,6 +28,7 @@ export interface EstateHealthSummary {
   agents_draft: number;
   pending_handoffs: number;
   pending_approvals: number;
+  active_rollouts: number;
   trace_errors: number;
   trace_count: number;
   eval_suites: number;
@@ -64,6 +65,23 @@ export interface EstateChannelHealth {
   status: string;
   blocking_checks: number;
   last_failure_at: string | null;
+  evidence_ref: string;
+}
+
+export interface EstateRolloutHealth {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  version_id: string;
+  stage: string;
+  status: string;
+  traffic_percent: number;
+  channel_scope: string[];
+  region_scope: string[];
+  segment_scope: string[];
+  hold_time_minutes: number;
+  auto_rollback_thresholds: Record<string, unknown>;
+  evidence_pack_id: string;
   evidence_ref: string;
 }
 
@@ -104,6 +122,7 @@ export interface EstateHealth {
   summary: EstateHealthSummary;
   attention: EstateAttentionItem[];
   shared_dependencies: EstateSharedDependency[];
+  rollout_health: EstateRolloutHealth[];
   channel_health: EstateChannelHealth[];
   failure_clusters: EstateFailureCluster[];
   owner_risks: EstateOwnerRisk[];
@@ -122,6 +141,7 @@ const EMPTY_SUMMARY: EstateHealthSummary = {
   agents_draft: 0,
   pending_handoffs: 0,
   pending_approvals: 0,
+  active_rollouts: 0,
   trace_errors: 0,
   trace_count: 0,
   eval_suites: 0,
@@ -184,6 +204,7 @@ export function deriveEstateHealthFromAgents(
     },
     attention,
     shared_dependencies: [],
+    rollout_health: [],
     channel_health: [],
     failure_clusters: [],
     owner_risks: [],

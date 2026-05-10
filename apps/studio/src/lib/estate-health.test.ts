@@ -80,6 +80,7 @@ describe("estate health", () => {
         agents_draft: 1,
         pending_handoffs: 2,
         pending_approvals: 1,
+        active_rollouts: 1,
         trace_errors: 1,
         trace_count: 44,
         eval_suites: 5,
@@ -89,6 +90,24 @@ describe("estate health", () => {
         owner_risks: 0,
       },
       attention: [],
+      rollout_health: [
+        {
+          id: "dep_canary",
+          agent_id: "agt_1",
+          agent_name: "Refund Agent",
+          version_id: "v24",
+          stage: "canary",
+          status: "canary",
+          traffic_percent: 10,
+          channel_scope: ["web_chat"],
+          region_scope: ["eu-west-2"],
+          segment_scope: ["enterprise"],
+          hold_time_minutes: 30,
+          auto_rollback_thresholds: { error_rate_percent: 2 },
+          evidence_pack_id: "ep_1",
+          evidence_ref: "deployment/dep_canary",
+        },
+      ],
       shared_dependencies: [
         {
           id: "tool:refund_payment",

@@ -306,6 +306,9 @@ async def get_estate_health(
     channel_bindings_by_agent = {
         agent.id: await cp.channel_bindings.list_for_agent(agent=agent) for agent in agents
     }
+    deployments_by_agent = {
+        agent.id: await cp.deployments.list_for_agent(agent=agent) for agent in agents
+    }
     commitments_by_agent = {
         agent.id: await cp.agent_commitments.current(agent=agent) for agent in agents
     }
@@ -519,6 +522,46 @@ async def get_estate_health(
                 }
             )
 
+    rollout_health: list[dict[str, Any]] = []
+    for agent in agents:
+        for deployment in deployments_by_agent.get(agent.id, []):
+            if deployment.status in {"superseded", "live"}:
+                continue
+            rollout_health.append(
+                {
+                    "id": deployment.id,
+                    "agent_id": str(agent.id),
+                    "agent_name": agent.name,
+                    "version_id": deployment.version_id,
+                    "stage": deployment.stage,
+                    "status": deployment.status,
+                    "traffic_percent": deployment.traffic_percent,
+                    "channel_scope": deployment.channel_scope,
+                    "region_scope": deployment.region_scope,
+                    "segment_scope": deployment.segment_scope,
+                    "hold_time_minutes": deployment.hold_time_minutes,
+                    "auto_rollback_thresholds": deployment.auto_rollback_thresholds,
+                    "evidence_pack_id": deployment.evidence_pack_id,
+                    "evidence_ref": f"deployment/{deployment.id}",
+                }
+            )
+    if rollout_health:
+        paused_or_rolled_back = [
+            rollout
+            for rollout in rollout_health
+            if rollout["status"] in {"paused", "rolled_back", "failed"}
+        ]
+        attention.append(
+            {
+                "id": "active-rollouts",
+                "severity": "critical" if paused_or_rolled_back else "watch",
+                "title": f"{len(rollout_health)} active rollout(s)",
+                "detail": "Review shadow, canary, ramp, pause, and rollback posture across the fleet.",
+                "href": "/deploys",
+                "source": "deployments.list_for_agent",
+            }
+        )
+
     failure_clusters = [
         {
             "id": f"incident:{incident.id}",
@@ -598,6 +641,7 @@ async def get_estate_health(
             "change_packages.list_for_agent",
             "tool_contracts.list_for_agent",
             "channel_bindings.list_for_agent",
+            "deployments.list_for_agent",
             "incidents.list_for_workspace",
             "agent_commitments.current",
             "trace_search.run",
@@ -612,6 +656,7 @@ async def get_estate_health(
             "agents_draft": len(draft_agents),
             "pending_handoffs": len(pending_inbox),
             "pending_approvals": len(pending_changesets) + len(pending_change_packages),
+            "active_rollouts": len(rollout_health),
             "trace_errors": len(error_traces),
             "trace_count": len(traces.items),
             "eval_suites": len(eval_suites),
@@ -622,6 +667,7 @@ async def get_estate_health(
         },
         "attention": attention[:8],
         "shared_dependencies": shared_dependencies[:8],
+        "rollout_health": rollout_health[:12],
         "channel_health": channel_health[:12],
         "failure_clusters": failure_clusters[:8],
         "owner_risks": owner_risks[:12],

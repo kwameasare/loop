@@ -438,6 +438,46 @@ def test_estate_health_derives_claims_from_workspace_objects(
         },
     )
     assert incident.status_code == 201, incident.text
+    _mark_channel_ready(client, workspace_id, agent_id, "web_chat")
+    package = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "from_version_id": "v1",
+            "to_version_id": "v2",
+            "summary": "Promote canary for estate visibility.",
+            "eval_results_ref": "eval/run/v2",
+            "replay_results_ref": "replay/run/v2",
+            "rollback_target_version_id": "v1",
+        },
+    ).json()
+    submitted = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{package['id']}/submit",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert submitted.status_code == 200, submitted.text
+    for approval_id in ("owner", "compliance"):
+        approved = client.post(
+            f"/v1/agents/{agent_id}/change-packages/{package['id']}/approvals",
+            headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+            json={"approval_id": approval_id, "decision": "approve"},
+        )
+        assert approved.status_code == 200, approved.text
+    deployment = client.post(
+        f"/v1/agents/{agent_id}/deployments/start",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "change_package_id": package["id"],
+            "version_id": "v2",
+            "traffic_percent": 10,
+            "channel_scope": ["web_chat"],
+            "region_scope": ["eu-west-2"],
+            "segment_scope": ["enterprise"],
+            "hold_time_minutes": 45,
+            "auto_rollback_thresholds": {"error_rate_percent": 2},
+        },
+    )
+    assert deployment.status_code == 201, deployment.text
 
     response = client.get(
         f"/v1/workspaces/{workspace_id}/estate-health",
@@ -454,16 +494,28 @@ def test_estate_health_derives_claims_from_workspace_objects(
     assert body["summary"]["trace_errors"] == 1
     assert body["summary"]["open_incidents"] == 1
     assert body["summary"]["owner_risks"] == 1
+    assert body["summary"]["active_rollouts"] == 1
+    assert "deployments.list_for_agent" in body["provenance"]
     assert {item["id"] for item in body["attention"]} >= {
         "pending-approvals",
         "trace-errors",
         "open-incidents",
         "continuity-owner-risks",
         f"draft-agent-{agent_id}",
+        "active-rollouts",
     }
     assert all(item["source"] for item in body["attention"])
     assert body["shared_dependencies"][0]["id"] == "tool:refund_payment"
-    assert body["channel_health"][0]["channel_type"] == "whatsapp"
+    assert body["rollout_health"][0]["status"] == "canary"
+    assert body["rollout_health"][0]["traffic_percent"] == 10
+    assert body["rollout_health"][0]["channel_scope"] == ["web_chat"]
+    assert body["rollout_health"][0]["region_scope"] == ["eu-west-2"]
+    assert body["rollout_health"][0]["segment_scope"] == ["enterprise"]
+    assert body["rollout_health"][0]["evidence_ref"].startswith("deployment/")
+    assert {item["channel_type"] for item in body["channel_health"]} >= {
+        "web_chat",
+        "whatsapp",
+    }
     assert body["failure_clusters"][0]["kind"] == "incident"
     assert body["owner_risks"][0]["id"] == f"ownerless-agent-{agent_id}"
     assert {
