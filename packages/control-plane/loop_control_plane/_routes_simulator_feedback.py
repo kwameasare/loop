@@ -119,6 +119,9 @@ async def rate_simulator_turn(
             "trace_id": body.trace_id,
             "save_as_eval": body.save_as_eval,
             "eval_case_id": eval_ref["case_id"] if eval_ref else None,
+            "behavior_note_id": (
+                record.behavior_note_ref["id"] if record.behavior_note_ref else None
+            ),
         },
     )
     return simulator_turn_rating_payload(record)

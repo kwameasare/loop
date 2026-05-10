@@ -37,6 +37,7 @@ describe("rateSimulatorTurn", () => {
               suite_id: "suite_1",
               case_id: "case_1",
             },
+            behavior_note_ref: null,
             cost_usd: 0.01,
             latency_ms: 800,
             created_by: "owner-1",
@@ -80,6 +81,7 @@ describe("rateSimulatorTurn", () => {
     });
 
     expect(result.candidate_artifact.kind).toBe("risk_rule_candidate");
+    expect(result.behavior_note_ref?.kind).toBe("risk_rule");
     expect(result.eval_case_ref).toBeNull();
   });
 });

@@ -40,6 +40,7 @@ class SimulatorTurnRatingRecord(BaseModel):
     issue_annotation: str
     candidate_artifact: dict[str, Any]
     eval_case_ref: dict[str, Any] | None
+    behavior_note_ref: dict[str, Any] | None
     cost_usd: float
     latency_ms: int
     created_by: str
@@ -85,6 +86,26 @@ def candidate_artifact_for(body: SimulatorTurnRatingCreate) -> dict[str, Any]:
     }
 
 
+def behavior_note_for(
+    *,
+    body: SimulatorTurnRatingCreate,
+    candidate: dict[str, Any],
+    rating_id: str,
+) -> dict[str, Any] | None:
+    if body.rating not in {"risky", "unclear"}:
+        return None
+    note_kind = "risk_rule" if body.rating == "risky" else "clarification_prompt"
+    return {
+        "id": f"bnote_{rating_id.removeprefix('simrate_')}",
+        "kind": note_kind,
+        "status": "candidate",
+        "title": candidate["title"],
+        "body": candidate["expected_outcome"],
+        "rating": body.rating,
+        "evidence_ref": body.trace_id or f"simulator-turn/{rating_id}",
+    }
+
+
 def simulator_turn_rating_payload(record: SimulatorTurnRatingRecord) -> dict[str, Any]:
     return record.model_dump(mode="json")
 
@@ -104,8 +125,9 @@ class SimulatorFeedbackRegistry:
         actor_sub: str,
     ) -> SimulatorTurnRatingRecord:
         async with self._lock:
+            rating_id = f"simrate_{uuid4().hex[:12]}"
             record = SimulatorTurnRatingRecord(
-                id=f"simrate_{uuid4().hex[:12]}",
+                id=rating_id,
                 workspace_id=agent.workspace_id,
                 agent_id=agent.id,
                 rating=body.rating,
@@ -116,6 +138,11 @@ class SimulatorFeedbackRegistry:
                 issue_annotation=body.issue_annotation,
                 candidate_artifact=candidate_artifact,
                 eval_case_ref=eval_case_ref,
+                behavior_note_ref=behavior_note_for(
+                    body=body,
+                    candidate=candidate_artifact,
+                    rating_id=rating_id,
+                ),
                 cost_usd=body.cost_usd,
                 latency_ms=body.latency_ms,
                 created_by=actor_sub,
