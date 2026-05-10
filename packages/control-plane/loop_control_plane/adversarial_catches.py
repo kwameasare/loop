@@ -20,7 +20,15 @@ class AdversarialProbeRunCreate(BaseModel):
     rule_id: str = Field(min_length=1, max_length=256)
     rule_text: str = Field(min_length=1, max_length=4096)
     risk_class: RiskClass = "medium"
-    budget_tokens: int = Field(default=2000, ge=100, le=20_000)
+    budget_tokens: int | None = Field(default=None, ge=100, le=20_000)
+
+
+class ProbeBudgetUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    low: int | None = Field(default=None, ge=100, le=20_000)
+    medium: int | None = Field(default=None, ge=100, le=20_000)
+    high: int | None = Field(default=None, ge=100, le=20_000)
 
 
 class CatchResolutionCreate(BaseModel):
@@ -45,6 +53,15 @@ class AdversarialProbeRunRecord(BaseModel):
     status: Literal["completed", "budget_exhausted"]
     created_by: str
     created_at: datetime
+
+
+class ProbeBudgetRecord(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    workspace_id: UUID
+    budgets: dict[RiskClass, int]
+    updated_by: str
+    updated_at: datetime
 
 
 class CatchRecord(BaseModel):
@@ -107,7 +124,55 @@ class AdversarialCatchRegistry:
     def __init__(self) -> None:
         self._runs: dict[UUID, list[AdversarialProbeRunRecord]] = {}
         self._catches: dict[UUID, list[CatchRecord]] = {}
+        self._budgets: dict[UUID, ProbeBudgetRecord] = {}
         self._lock = asyncio.Lock()
+
+    def _default_budgets(self) -> dict[RiskClass, int]:
+        return {"low": 1000, "medium": 2000, "high": 4000}
+
+    def _budget_for(self, *, workspace_id: UUID, risk_class: RiskClass) -> int:
+        existing = self._budgets.get(workspace_id)
+        if existing:
+            return existing.budgets[risk_class]
+        return self._default_budgets()[risk_class]
+
+    async def get_budgets(
+        self,
+        *,
+        workspace_id: UUID,
+        actor_sub: str,
+    ) -> ProbeBudgetRecord:
+        async with self._lock:
+            existing = self._budgets.get(workspace_id)
+            if existing:
+                return existing
+            return ProbeBudgetRecord(
+                workspace_id=workspace_id,
+                budgets=self._default_budgets(),
+                updated_by=actor_sub,
+                updated_at=datetime.now(UTC),
+            )
+
+    async def update_budgets(
+        self,
+        *,
+        workspace_id: UUID,
+        body: ProbeBudgetUpdate,
+        actor_sub: str,
+    ) -> ProbeBudgetRecord:
+        async with self._lock:
+            current = self._budgets.get(workspace_id)
+            budgets = dict(current.budgets if current else self._default_budgets())
+            updates = body.model_dump(exclude_none=True)
+            budgets.update(updates)
+            record = ProbeBudgetRecord(
+                workspace_id=workspace_id,
+                budgets=budgets,
+                updated_by=actor_sub,
+                updated_at=datetime.now(UTC),
+            )
+            self._budgets[workspace_id] = record
+            return record
 
     async def run_probe(
         self,
@@ -117,15 +182,19 @@ class AdversarialCatchRegistry:
         actor_sub: str,
     ) -> tuple[AdversarialProbeRunRecord, list[CatchRecord]]:
         now = datetime.now(UTC)
+        budget_tokens = body.budget_tokens or self._budget_for(
+            workspace_id=agent.workspace_id,
+            risk_class=body.risk_class,
+        )
         run = AdversarialProbeRunRecord(
             id=f"probe_{uuid4().hex[:12]}",
             workspace_id=agent.workspace_id,
             agent_id=agent.id,
             rule_id=body.rule_id,
             risk_class=body.risk_class,
-            budget_tokens=body.budget_tokens,
-            budget_tokens_used=min(body.budget_tokens, 640),
-            status="completed" if body.budget_tokens >= 640 else "budget_exhausted",
+            budget_tokens=budget_tokens,
+            budget_tokens_used=min(budget_tokens, 640),
+            status="completed" if budget_tokens >= 640 else "budget_exhausted",
             created_by=actor_sub,
             created_at=now,
         )

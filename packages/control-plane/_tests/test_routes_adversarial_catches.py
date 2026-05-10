@@ -131,3 +131,39 @@ def test_adversarial_catch_can_be_dismissed_without_eval_cases(
     assert dismissed.status_code == 200, dismissed.text
     assert dismissed.json()["status"] == "dismissed"
     assert dismissed.json()["eval_case_refs"] == []
+
+
+def test_adversarial_probe_budgets_are_workspace_configurable_by_risk_class(
+    client: TestClient,
+    workspace_id: UUID,
+    agent_id: UUID,
+) -> None:
+    default_budget = client.get(
+        f"/v1/workspaces/{workspace_id}/adversarial-probe-budgets",
+        headers=_auth(),
+    )
+    assert default_budget.status_code == 200, default_budget.text
+    assert default_budget.json()["budgets"]["high"] == 4000
+
+    updated = client.patch(
+        f"/v1/workspaces/{workspace_id}/adversarial-probe-budgets",
+        headers=_auth(),
+        json={"high": 900, "medium": 1500},
+    )
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["budgets"]["high"] == 900
+
+    run = client.post(
+        f"/v1/agents/{agent_id}/adversarial-probes/run",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "rule_id": "refund_cap",
+            "rule_text": "Never approve refunds over $500.",
+            "risk_class": "high",
+        },
+    )
+    assert run.status_code == 201, run.text
+    assert run.json()["run"]["budget_tokens"] == 900
+
+    audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=_auth())
+    assert "adversarial_probe:budget_update" in {item["action"] for item in audit.json()["items"]}

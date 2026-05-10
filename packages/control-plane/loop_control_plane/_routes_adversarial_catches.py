@@ -9,6 +9,7 @@ from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
 from loop_control_plane.adversarial_catches import (
     AdversarialProbeRunCreate,
     CatchResolutionCreate,
+    ProbeBudgetUpdate,
     catch_payload,
     probe_run_payload,
 )
@@ -17,6 +18,7 @@ from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.eval_suites import EvalCaseCreate
 
 router = APIRouter(prefix="/v1/agents", tags=["AdversarialCatches"])
+workspace_router = APIRouter(prefix="/v1/workspaces", tags=["AdversarialCatches"])
 
 
 async def _agent(
@@ -57,6 +59,57 @@ def _audit(
         request_id=request_id(request),
         payload=payload,
     )
+
+
+@workspace_router.get("/{workspace_id}/adversarial-probe-budgets")
+async def get_adversarial_probe_budgets(
+    request: Request,
+    workspace_id: UUID,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    record = await cp.adversarial_catches.get_budgets(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+    )
+    return record.model_dump(mode="json")
+
+
+@workspace_router.patch("/{workspace_id}/adversarial-probe-budgets")
+async def update_adversarial_probe_budgets(
+    request: Request,
+    workspace_id: UUID,
+    body: ProbeBudgetUpdate,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    record = await cp.adversarial_catches.update_budgets(
+        workspace_id=workspace_id,
+        body=body,
+        actor_sub=caller_sub,
+    )
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="adversarial_probe:budget_update",
+        resource_type="adversarial_probe_budget",
+        resource_id=str(workspace_id),
+        store=cp.audit_events,
+        request_id=request_id(request),
+        payload={"budgets": record.budgets},
+    )
+    return record.model_dump(mode="json")
 
 
 @router.post("/{agent_id}/adversarial-probes/run", status_code=201)

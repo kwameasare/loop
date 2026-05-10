@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -40,6 +40,10 @@ function riskForSentence(sentence: BehaviorSentence): AdversarialRiskClass {
   return "low";
 }
 
+function defaultBudgetForRisk(risk: AdversarialRiskClass): number {
+  return risk === "high" ? 4000 : risk === "medium" ? 2000 : 1000;
+}
+
 function defaultIntended(catchItem: AdversarialCatch | null): string {
   if (!catchItem) return "";
   if (catchItem.question.toLowerCase().includes("cumulatively")) {
@@ -70,17 +74,24 @@ export function AdversarialCatchPanel({
   const [rejected, setRejected] = useState("");
   const [dismissReason, setDismissReason] = useState("");
   const [createEvalCases, setCreateEvalCases] = useState(true);
+  const [budgetTokens, setBudgetTokens] = useState(2000);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!sentence) return;
+    setBudgetTokens(defaultBudgetForRisk(riskForSentence(sentence)));
+  }, [sentence?.id]);
 
   const probeInput = useMemo<AdversarialProbeRunInput | null>(() => {
     if (!sentence) return null;
+    const riskClass = riskForSentence(sentence);
     return {
       rule_id: sentence.id,
       rule_text: sentence.text,
-      risk_class: riskForSentence(sentence),
-      budget_tokens: 2000,
+      risk_class: riskClass,
+      budget_tokens: budgetTokens,
     };
-  }, [sentence]);
+  }, [budgetTokens, sentence]);
 
   async function handleRunProbe() {
     if (!probeInput) return;
@@ -176,6 +187,22 @@ export function AdversarialCatchPanel({
         <span className="font-medium text-foreground">Selected rule:</span>{" "}
         {sentence.text}
       </div>
+
+      <label className="mt-4 block text-xs font-medium text-muted-foreground">
+        Probe budget tokens
+        <input
+          className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm text-foreground"
+          type="number"
+          min={100}
+          max={20000}
+          step={100}
+          value={budgetTokens}
+          onChange={(event) =>
+            setBudgetTokens(Number(event.currentTarget.value))
+          }
+          data-testid="adversarial-probe-budget"
+        />
+      </label>
 
       <button
         type="button"

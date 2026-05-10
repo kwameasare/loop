@@ -10,6 +10,17 @@ export interface AdversarialProbeRunInput {
   budget_tokens?: number;
 }
 
+export interface AdversarialProbeBudgets {
+  workspace_id: string;
+  budgets: Record<AdversarialRiskClass, number>;
+  updated_by: string;
+  updated_at: string;
+}
+
+export type AdversarialProbeBudgetUpdate = Partial<
+  Record<AdversarialRiskClass, number>
+>;
+
 export interface AdversarialProbeRunRecord {
   id: string;
   workspace_id: string;
@@ -210,6 +221,49 @@ export async function runAdversarialProbe(
       method: "POST",
       body: input,
       fallback: localProbeRun(agentId, input),
+      ...opts,
+    },
+  );
+}
+
+export async function getAdversarialProbeBudgets(
+  workspaceId: string,
+  opts: UxWireupClientOptions = {},
+): Promise<AdversarialProbeBudgets> {
+  return cpJson<AdversarialProbeBudgets>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/adversarial-probe-budgets`,
+    {
+      fallback: {
+        workspace_id: workspaceId,
+        budgets: { low: 1000, medium: 2000, high: 4000 },
+        updated_by: "local-studio",
+        updated_at: new Date(0).toISOString(),
+      },
+      ...opts,
+    },
+  );
+}
+
+export async function updateAdversarialProbeBudgets(
+  workspaceId: string,
+  input: AdversarialProbeBudgetUpdate,
+  opts: UxWireupClientOptions = {},
+): Promise<AdversarialProbeBudgets> {
+  return cpJson<AdversarialProbeBudgets>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/adversarial-probe-budgets`,
+    {
+      method: "PATCH",
+      body: input,
+      fallback: {
+        workspace_id: workspaceId,
+        budgets: {
+          low: input.low ?? 1000,
+          medium: input.medium ?? 2000,
+          high: input.high ?? 4000,
+        },
+        updated_by: "local-studio",
+        updated_at: new Date(0).toISOString(),
+      },
       ...opts,
     },
   );
