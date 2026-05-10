@@ -12,6 +12,7 @@ from loop_control_plane.agent_intake import (
     agent_intake_payload,
     apply_enterprise_template,
     build_intake_analysis,
+    candidate_knowledge_sources,
     candidate_tool_specs,
     template_payloads,
 )
@@ -21,6 +22,7 @@ from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.channel_bindings import SUPPORTED_CHANNELS, ChannelBindingUpsert
 from loop_control_plane.eval_suites import EvalCaseCreate
+from loop_control_plane.kb_documents import KbDocumentCreate
 from loop_control_plane.memory_policies import MemoryPolicyUpsert
 from loop_control_plane.tool_contracts import ToolContractUpsert
 
@@ -60,6 +62,7 @@ def _initial_behavior_spec(
     commitment_id: str,
     channel_refs: list[dict[str, str]],
     tool_refs: list[dict[str, str]],
+    knowledge_refs: list[dict[str, str]],
     memory_policy_id: str,
     eval_suite_id: str,
 ) -> dict[str, Any]:
@@ -91,6 +94,7 @@ def _initial_behavior_spec(
         },
         "channels": channel_types,
         "tool_contracts": tool_ids,
+        "knowledge_documents": [item["id"] for item in knowledge_refs],
         "memory_policy_id": memory_policy_id,
         "eval_suite_id": eval_suite_id,
         "artifact_refs": [artifact.source_ref or artifact.name for artifact in body.artifacts],
@@ -197,6 +201,35 @@ async def create_agent_intake(
         )
         tool_refs.append({"id": contract.id, "tool_id": contract.tool_id})
 
+    knowledge_refs: list[dict[str, str]] = []
+    for source in candidate_knowledge_sources(body):
+        if source["status"] != "ready_for_ingestion":
+            continue
+        source_ref = str(source["source_ref"])
+        if source_ref.startswith(("http://", "https://")):
+            document = await cp.kb_documents.create(
+                workspace_id=workspace_id,
+                body=KbDocumentCreate(
+                    source_url=source_ref,
+                    title=str(source["name"]),
+                ),
+            )
+        else:
+            document = await cp.kb_documents.create_upload(
+                workspace_id=workspace_id,
+                filename=str(source["name"]),
+                content_type=str(source["content_type"]),
+                byte_size=int(source["byte_size"]),
+            )
+        knowledge_refs.append(
+            {
+                "id": str(document.id),
+                "title": document.title,
+                "source_ref": source_ref,
+                "artifact": str(source["name"]),
+            }
+        )
+
     memory_policy = await cp.memory_policies.upsert(
         agent=agent,
         body=MemoryPolicyUpsert(
@@ -254,6 +287,7 @@ async def create_agent_intake(
                 commitment_id=commitment.id,
                 channel_refs=channel_refs,
                 tool_refs=tool_refs,
+                knowledge_refs=knowledge_refs,
                 memory_policy_id=memory_policy.id,
                 eval_suite_id=str(suite.id),
             ),
@@ -276,6 +310,7 @@ async def create_agent_intake(
         "branch": branch_payload(branch),
         "channel_bindings": channel_refs,
         "tool_contracts": tool_refs,
+        "knowledge_documents": knowledge_refs,
         "memory_policy_id": memory_policy.id,
         "eval_suite_id": str(suite.id),
         "eval_cases": eval_refs,

@@ -92,6 +92,7 @@ describe("AgentOverviewPage", () => {
           contradictions: [],
           sensitive_data_findings: [],
           candidate_tools: [{ name: "lookup_order" }],
+          candidate_knowledge_sources: [{ name: "refund-policy.pdf" }],
           candidate_channels: [{ channel: "whatsapp", status: "draft" }],
           candidate_memory_policy: { scope: "conversation" },
           candidate_eval_cases: [

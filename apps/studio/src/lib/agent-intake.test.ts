@@ -60,6 +60,7 @@ describe("createAgentIntake", () => {
             contradictions: [],
             sensitive_data_findings: [],
             candidate_tools: [],
+            candidate_knowledge_sources: [],
             candidate_channels: [],
             candidate_memory_policy: {},
             candidate_eval_cases: [],
@@ -144,6 +145,7 @@ describe("createAgentIntake", () => {
 
     expect(result.state).toBe("draft_ready");
     expect(result.agent.slug).toBe("billing-support");
+    expect(result.candidate_knowledge_sources).toHaveLength(1);
     expect(result.candidate_eval_cases).toHaveLength(3);
   });
 });
@@ -171,6 +173,7 @@ describe("getAgentIntake", () => {
           contradictions: [],
           sensitive_data_findings: [],
           candidate_tools: [],
+          candidate_knowledge_sources: [],
           candidate_channels: [],
           candidate_memory_policy: {},
           candidate_eval_cases: [],

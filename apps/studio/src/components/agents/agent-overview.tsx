@@ -1856,8 +1856,8 @@ function buildIntakeReadinessChecklist({
     intakeRecord.sensitive_data_findings.length;
   const candidateChannelCount = intakeRecord.candidate_channels.length;
   const candidateToolCount = intakeRecord.candidate_tools.length;
+  const candidateKnowledgeCount = intakeRecord.candidate_knowledge_sources.length;
   const candidateEvalCount = intakeRecord.candidate_eval_cases.length;
-  const parsedArtifactCount = intakeRecord.artifact_reports.length;
   const memoryPolicyCount = objectCount(intakeRecord.candidate_memory_policy);
 
   return [
@@ -1932,18 +1932,18 @@ function buildIntakeReadinessChecklist({
       status:
         knowledge?.status === "healthy"
           ? "healthy"
-          : parsedArtifactCount > 0
+          : candidateKnowledgeCount > 0
             ? "watching"
             : "blocked",
       detail:
         knowledge?.status === "healthy"
           ? knowledge.validation
-          : parsedArtifactCount > 0
-            ? `${parsedArtifactCount} artifact${
-                parsedArtifactCount === 1 ? "" : "s"
-              } parsed; review ingestion before relying on retrieval.`
+          : candidateKnowledgeCount > 0
+            ? `${candidateKnowledgeCount} knowledge source candidate${
+                candidateKnowledgeCount === 1 ? "" : "s"
+              } captured; review ingestion before relying on retrieval.`
             : "Add at least one policy, FAQ, transcript, or runbook source.",
-      evidence: knowledge?.evidence ?? "agent_intake.artifact_reports",
+      evidence: knowledge?.evidence ?? "agent_intake.candidate_knowledge_sources",
       href: agentSectionHref(agentId, "knowledge"),
     },
     {
@@ -2102,6 +2102,11 @@ function IntakeLandingPanel({
             <li>
               {intakeRecord.candidate_tools.length} tool candidate
               {intakeRecord.candidate_tools.length === 1 ? "" : "s"}
+            </li>
+            <li>
+              {intakeRecord.candidate_knowledge_sources.length} knowledge source
+              candidate
+              {intakeRecord.candidate_knowledge_sources.length === 1 ? "" : "s"}
             </li>
             <li>
               {intakeRecord.candidate_eval_cases.length} eval case candidate
