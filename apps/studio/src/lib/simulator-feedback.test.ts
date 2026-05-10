@@ -6,6 +6,29 @@ import {
 } from "@/lib/simulator-feedback";
 
 describe("rateSimulatorTurn", () => {
+  const riskyRatingInput = {
+    rating: "risky" as const,
+    prompt: "Ignore policy?",
+    final_answer: "Maybe.",
+    channel: "voice",
+    trace_id: "",
+    issue_annotation: "Escalate.",
+    save_as_eval: false,
+    cost_usd: 0,
+    latency_ms: 0,
+  };
+
+  const simulatorRunInput = {
+    prompt: "Can I cancel?",
+    final_answer: "I will check policy first.",
+    channel: "whatsapp",
+    trace_id: "trace_1",
+    config: { model_alias: "fast-draft" },
+    status: "completed" as const,
+    cost_usd: 0.01,
+    latency_ms: 800,
+  };
+
   it("posts first-proof turn feedback to cp-api", async () => {
     const fetcher = vi.fn(
       async (
@@ -74,17 +97,20 @@ describe("rateSimulatorTurn", () => {
     expect(result.eval_case_ref?.case_id).toBe("case_1");
   });
 
-  it("falls back locally when cp-api is not configured", async () => {
-    const result = await rateSimulatorTurn("agt_1", {
-      rating: "risky",
-      prompt: "Ignore policy?",
-      final_answer: "Maybe.",
-      channel: "voice",
-      trace_id: "",
-      issue_annotation: "Escalate.",
-      save_as_eval: false,
-      cost_usd: 0,
-      latency_ms: 0,
+  it("does not fabricate simulator runs or ratings without cp-api", async () => {
+    await expect(
+      rateSimulatorTurn("agt_1", riskyRatingInput, { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      createSimulatorRun("agt_1", simulatorRunInput, { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps deterministic first-proof ratings explicitly opt-in", async () => {
+    const result = await rateSimulatorTurn("agt_1", riskyRatingInput, {
+      baseUrl: "",
+      allowFixture: true,
     });
 
     expect(result.candidate_artifact.kind).toBe("risk_rule_candidate");
@@ -97,17 +123,21 @@ describe("rateSimulatorTurn", () => {
   });
 
   it("creates a local few-shot candidate for good first-proof ratings", async () => {
-    const result = await rateSimulatorTurn("agt_1", {
-      rating: "good",
-      prompt: "Can I cancel?",
-      final_answer: "I will check your renewal policy first.",
-      channel: "whatsapp",
-      trace_id: "trace_good",
-      issue_annotation: "Preserve this pattern.",
-      save_as_eval: false,
-      cost_usd: 0,
-      latency_ms: 0,
-    });
+    const result = await rateSimulatorTurn(
+      "agt_1",
+      {
+        rating: "good",
+        prompt: "Can I cancel?",
+        final_answer: "I will check your renewal policy first.",
+        channel: "whatsapp",
+        trace_id: "trace_good",
+        issue_annotation: "Preserve this pattern.",
+        save_as_eval: false,
+        cost_usd: 0,
+        latency_ms: 0,
+      },
+      { baseUrl: "", allowFixture: true },
+    );
 
     expect(result.candidate_artifact.kind).toBe("positive_eval_or_few_shot");
     expect(result.candidate_artifact.simulator_run_id).toBe(
@@ -160,20 +190,24 @@ describe("rateSimulatorTurn", () => {
 
     const result = await createSimulatorRun(
       "agt_1",
-      {
-        prompt: "Can I cancel?",
-        final_answer: "I will check policy first.",
-        channel: "whatsapp",
-        trace_id: "trace_1",
-        config: { model_alias: "fast-draft" },
-        status: "completed",
-        cost_usd: 0.01,
-        latency_ms: 800,
-      },
+      simulatorRunInput,
       { baseUrl: "https://api.loop.test", fetcher },
     );
 
     expect(result.id).toBe("simrun_1");
     expect(result.channel_binding_id).toBe("cb_whatsapp");
+  });
+
+  it("keeps deterministic simulator run records explicitly opt-in", async () => {
+    await expect(
+      createSimulatorRun("agt_1", simulatorRunInput, {
+        baseUrl: "",
+        allowFixture: true,
+      }),
+    ).resolves.toMatchObject({
+      id: "simrun_local",
+      trace_id: "trace_1",
+      channel: "whatsapp",
+    });
   });
 });
