@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import { StatePanel } from "@/components/target";
 import { AgentXrayPanel } from "@/components/trace/xray/agent-xray-panel";
 import { fetchAgentXrayTraces } from "@/lib/agent-xray";
@@ -60,9 +63,11 @@ function XrayPageBody(): JSX.Element {
   if (error) {
     return (
       <main className="mx-auto w-full max-w-7xl p-6">
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
+        <SectionDegraded
+          title="Agent X-Ray"
+          description="X-Ray evidence is unavailable. Studio will not convert missing trace access into a false empty sample."
+          evidence={error}
+        />
       </main>
     );
   }

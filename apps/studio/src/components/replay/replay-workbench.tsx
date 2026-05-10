@@ -486,10 +486,19 @@ export function ReplayWorkbench({ model }: { model: ReplayWorkbenchModel }) {
   );
 
   if (!selected) {
+    const degraded = Boolean(model.degradedReason);
     return (
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-6">
-        <StatePanel state="empty" title="No production conversations">
-          Connect production traces before replay can generate future tests.
+        <StatePanel
+          state={degraded ? "degraded" : "empty"}
+          title={
+            degraded
+              ? "Replay evidence is unavailable"
+              : "No production conversations"
+          }
+        >
+          {model.degradedReason ??
+            "Connect production traces before replay can generate future tests."}
         </StatePanel>
       </main>
     );
