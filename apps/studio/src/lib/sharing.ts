@@ -85,6 +85,10 @@ export interface ServerShareLink extends ShareLink {
   redactionBanner: string;
 }
 
+type ShareLinkClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 const ARTIFACT_ROUTES: Record<ShareArtifact, string> = {
   trace: "/share/trace",
   conversation: "/share/conversation",
@@ -135,7 +139,7 @@ export function buildShareLink(
 export async function createServerShareLink(
   workspaceId: string,
   request: ShareLinkRequest,
-  opts: UxWireupClientOptions = {},
+  opts: ShareLinkClientOptions = {},
   now: () => Date = () => new Date(),
 ): Promise<ServerShareLink> {
   const local = buildShareLink(request, now);
@@ -158,6 +162,7 @@ export async function createServerShareLink(
       expires_in_minutes: expiresInMinutes,
       redactions: request.redactions.categories,
     },
+    allowFallback: opts.allowFixture === true,
     fallback: {
       id: local.id,
       url: local.url,

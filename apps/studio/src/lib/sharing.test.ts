@@ -67,6 +67,43 @@ describe("buildShareLink", () => {
     expect(link.id).toBe("share_live_1");
     expect(link.redactionBanner).toContain("2 redaction");
   });
+
+  it("does not fabricate server-backed share links without cp-api", async () => {
+    await expect(
+      createServerShareLink(
+        "ws-1",
+        {
+          artifact: "trace",
+          artifactId: "trace_refund_742",
+          scope: "link-anyone",
+          expiresAt: "2026-05-13T12:00:00.000Z",
+          redactions: { categories: ["pii"] },
+        },
+        { baseUrl: "" },
+        now,
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps deterministic server share links explicitly opt-in", async () => {
+    await expect(
+      createServerShareLink(
+        "ws-1",
+        {
+          artifact: "trace",
+          artifactId: "trace_refund_742",
+          scope: "link-anyone",
+          expiresAt: "2026-05-13T12:00:00.000Z",
+          redactions: { categories: ["pii"] },
+        },
+        { baseUrl: "", allowFixture: true },
+        now,
+      ),
+    ).resolves.toMatchObject({
+      url: expect.stringContaining("/share/trace/"),
+      redactionBanner: "1 redaction categories enforced server-side.",
+    });
+  });
 });
 
 describe("revokeShareLink", () => {

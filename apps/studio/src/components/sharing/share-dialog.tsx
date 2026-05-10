@@ -75,6 +75,7 @@ export function ShareDialog({
   const [link, setLink] = useState<ShareLink | null>(null);
   const [accessLog, setAccessLog] = useState<AccessLog>({ events: [] });
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const preview = useMemo(
     () => previewRedaction(samplePayload, { categories: redactions }),
@@ -100,12 +101,17 @@ export function ShareDialog({
       redactions: { categories: redactions },
     };
     try {
+      setError(null);
       const next = workspaceId
         ? await createServerShareLink(workspaceId, request, {}, now)
         : buildShareLink(request, now);
       setLink(next);
       setAccessLog(
         recordAccess(next, "you", "viewed", { events: [] }, now),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not create share link.",
       );
     } finally {
       setBusy(false);
@@ -275,6 +281,15 @@ export function ShareDialog({
               </ul>
             </details>
           </section>
+        ) : null}
+
+        {error ? (
+          <p
+            className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+            role="alert"
+          >
+            {error}
+          </p>
         ) : null}
 
         <footer className="flex items-center justify-between gap-2">
