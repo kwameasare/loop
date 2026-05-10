@@ -124,6 +124,7 @@ export interface DeployTimelineProps {
   initialDeployments: Deployment[];
   initialEvidencePacks?: EvidencePack[];
   approvedChangePackage?: ChangePackage | null;
+  focusedDeploymentId?: string | undefined;
   degradedReason?: string | undefined;
   startCanary?: StartFn;
   exportPack?: ExportEvidencePackFn;
@@ -167,6 +168,7 @@ export function DeployTimeline({
   initialDeployments,
   initialEvidencePacks = [],
   approvedChangePackage = null,
+  focusedDeploymentId,
   degradedReason,
   startCanary = defaultStartCanary,
   exportPack = defaultExportEvidencePack,
@@ -579,10 +581,23 @@ export function DeployTimeline({
             return (
               <li
                 key={dep.id}
-                className={`rounded border p-3 ${colors}`}
+                className={`rounded border p-3 ${colors} ${
+                  dep.id === focusedDeploymentId
+                    ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+                    : ""
+                }`}
                 data-testid={`deploy-row-${dep.id}`}
+                data-focused={dep.id === focusedDeploymentId ? "true" : "false"}
                 data-status={dep.status}
               >
+                {dep.id === focusedDeploymentId ? (
+                  <p
+                    className="mb-2 rounded-md border border-info/40 bg-info/5 px-3 py-2 text-xs text-info"
+                    data-testid={`deploy-focused-${dep.id}`}
+                  >
+                    Opened from evidence link: deployment {dep.id} is focused.
+                  </p>
+                ) : null}
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium">

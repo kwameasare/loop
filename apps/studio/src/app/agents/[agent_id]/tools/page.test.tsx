@@ -40,4 +40,68 @@ describe("AgentToolsPage", () => {
     expect(screen.getByText(/tool-binding route/i)).toBeInTheDocument();
     expect(screen.queryByText("lookup_order")).not.toBeInTheDocument();
   });
+
+  it("resolves tool contract evidence links to the owning tool", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test/v1";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (input) => {
+        const url = String(input);
+        if (url.endsWith("/tools")) {
+          return Response.json({
+            items: [
+              {
+                id: "tool_issue_refund",
+                name: "issue_refund",
+                kind: "mcp",
+                description: "Issue a refund.",
+                source: "payments",
+              },
+            ],
+          });
+        }
+        if (url.endsWith("/tool-contracts")) {
+          return Response.json({
+            items: [
+              {
+                id: "tc_refund",
+                workspace_id: "ws",
+                agent_id: "agent_support",
+                tool_id: "tool_issue_refund",
+                name: "issue_refund",
+                description: "Issue a refund.",
+                side_effect_level: "money_movement",
+                pii_access: false,
+                money_movement: true,
+                rate_limits: {},
+                budget_limits: {},
+                sandbox_status: "sandbox",
+                live_status: "review_required",
+                owner_user_id: "owner@example.test",
+                approval_policy_id: "policy-money",
+                failure_behavior: "Escalate.",
+                compensation_behavior: "Void pending refund.",
+                content_hash: "hash_refund",
+                approval_invalidated_at: null,
+                created_at: "2026-05-09T00:00:00Z",
+                updated_at: "2026-05-09T00:00:00Z",
+              },
+            ],
+          });
+        }
+        return new Response("missing", { status: 404 });
+      }),
+    );
+
+    render(
+      await AgentToolsPage({
+        params: { agent_id: "agent_support" },
+        searchParams: { tool_contract_id: "tc_refund" },
+      }),
+    );
+
+    expect(screen.getByTestId("tools-room-focused-tool")).toHaveTextContent(
+      "issue_refund",
+    );
+  });
 });

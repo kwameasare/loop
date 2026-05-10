@@ -67,4 +67,25 @@ describe("AgentChannelsPage", () => {
       "Backend required",
     );
   });
+
+  it("resolves channel binding evidence links to the peer channel card", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+    process.env.NEXT_PUBLIC_LOOP_API_URL = "";
+
+    render(
+      await AgentChannelsPage({
+        params: { agent_id: "agt_1" },
+        searchParams: { binding_id: "cb_local_telegram" },
+      }),
+    );
+
+    expect(screen.getByTestId("channel-binding-telegram")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+    expect(screen.getByTestId("channel-binding-voice")).toHaveAttribute(
+      "data-focused",
+      "false",
+    );
+  });
 });

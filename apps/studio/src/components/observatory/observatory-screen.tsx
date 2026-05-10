@@ -334,8 +334,10 @@ function TailRow({ event }: { event: ProductionTailEvent }) {
 
 function IncidentResponsePanel({
   incidents,
+  focusedIncidentId,
 }: {
   incidents: readonly IncidentRecord[];
+  focusedIncidentId?: string | undefined;
 }) {
   const [seeded, setSeeded] = useState<Record<string, string>>({});
   const [fixPackages, setFixPackages] = useState<Record<string, string>>({});
@@ -462,9 +464,24 @@ function IncidentResponsePanel({
             return (
               <article
                 key={incident.id}
-                className="rounded-md border bg-card p-4"
+                className={cn(
+                  "rounded-md border bg-card p-4",
+                  incident.id === focusedIncidentId
+                    ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+                    : "",
+                )}
                 data-testid={`incident-card-${incident.id}`}
+                data-focused={incident.id === focusedIncidentId ? "true" : "false"}
               >
+                {incident.id === focusedIncidentId ? (
+                  <p
+                    className="mb-3 rounded-md border border-info/40 bg-info/5 px-3 py-2 text-xs text-info"
+                    data-testid={`incident-focused-${incident.id}`}
+                  >
+                    Opened from evidence link: incident {incident.id} is
+                    focused.
+                  </p>
+                ) : null}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase text-muted-foreground">
@@ -624,9 +641,11 @@ function IncidentResponsePanel({
 export function ObservatoryScreen({
   model,
   workspaceId,
+  focusedIncidentId,
 }: {
   model: ObservatoryModel;
   workspaceId?: string;
+  focusedIncidentId?: string | undefined;
 }) {
   const [paused, setPaused] = useState(false);
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
@@ -794,7 +813,10 @@ export function ObservatoryScreen({
         </div>
       </section>
 
-      <IncidentResponsePanel incidents={model.incidents} />
+      <IncidentResponsePanel
+        incidents={model.incidents}
+        focusedIncidentId={focusedIncidentId}
+      />
 
       <section className="space-y-3" data-testid="ambient-health-arcs">
         <div className="flex flex-wrap items-center justify-between gap-3">

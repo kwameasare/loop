@@ -11,9 +11,22 @@ export const dynamic = "force-dynamic";
 
 interface AgentToolsPageProps {
   params: { agent_id: string };
+  searchParams?:
+    | {
+        tool_contract_id?: string | string[] | undefined;
+        tool_id?: string | string[] | undefined;
+      }
+    | undefined;
 }
 
-export default async function AgentToolsPage({ params }: AgentToolsPageProps) {
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function AgentToolsPage({
+  params,
+  searchParams,
+}: AgentToolsPageProps) {
   const [toolsResult, contractsResult] = await Promise.allSettled([
     listAgentTools(params.agent_id),
     listToolContracts(params.agent_id).then((result) => result.items),
@@ -44,5 +57,15 @@ export default async function AgentToolsPage({ params }: AgentToolsPageProps) {
           degradedReason ||
             "No tools are bound yet. Paste a curl command, OpenAPI fragment, or Postman sample to draft one.",
         );
-  return <ToolsRoom data={data} />;
+  const requestedContractId = firstParam(searchParams?.tool_contract_id);
+  const requestedToolId = firstParam(searchParams?.tool_id);
+  const linkedContract = requestedContractId
+    ? toolContracts.find((contract) => contract.id === requestedContractId)
+    : undefined;
+  return (
+    <ToolsRoom
+      data={data}
+      initialToolId={linkedContract?.tool_id ?? requestedToolId}
+    />
+  );
 }

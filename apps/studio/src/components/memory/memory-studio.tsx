@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 
 export interface MemoryStudioProps {
   data: MemoryStudioData;
+  initialPolicyId?: string | undefined;
   onDeleteEntry?: (entry: MemoryStudioEntry) => Promise<void>;
   onSavePolicy?: (policy: MemoryPolicyInput) => Promise<MemoryPolicy>;
   onApprovePolicy?: (scope: MemoryPolicyScope) => Promise<MemoryPolicy>;
@@ -414,6 +415,7 @@ function ReplayControls({ data }: { data: MemoryStudioData }) {
 
 function MemoryPolicyPanel({
   policies,
+  focusedPolicyId,
   savingScope,
   approvingScope,
   notice,
@@ -421,6 +423,7 @@ function MemoryPolicyPanel({
   onApprove,
 }: {
   policies: MemoryPolicy[];
+  focusedPolicyId?: string | undefined;
   savingScope: MemoryPolicyScope | null;
   approvingScope: MemoryPolicyScope | null;
   notice: string | null;
@@ -455,6 +458,7 @@ function MemoryPolicyPanel({
             <MemoryPolicyCard
               key={policy.id}
               policy={policy}
+              focused={policy.id === focusedPolicyId}
               saving={savingScope === policy.scope}
               approving={approvingScope === policy.scope}
               onSave={onSave}
@@ -489,12 +493,14 @@ function textToList(value: string): string[] {
 
 function MemoryPolicyCard({
   policy,
+  focused,
   saving,
   approving,
   onSave,
   onApprove,
 }: {
   policy: MemoryPolicy;
+  focused: boolean;
   saving: boolean;
   approving: boolean;
   onSave: (policy: MemoryPolicyInput) => void;
@@ -532,8 +538,12 @@ function MemoryPolicyCard({
 
   return (
     <article
-      className="rounded-md border bg-background p-3"
+      className={cn(
+        "rounded-md border bg-background p-3",
+        focused ? "ring-2 ring-focus ring-offset-2 ring-offset-background" : "",
+      )}
       data-testid={`memory-policy-${policy.scope}`}
+      data-focused={focused ? "true" : "false"}
     >
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-sm font-semibold">
@@ -666,6 +676,7 @@ function MemoryPolicyCard({
 
 export function MemoryStudio({
   data,
+  initialPolicyId,
   onDeleteEntry,
   onSavePolicy,
   onApprovePolicy,
@@ -697,6 +708,9 @@ export function MemoryStudio({
   const policyReviewCount = policies.filter(
     (policy) => policy.approval_status !== "approved",
   ).length;
+  const focusedPolicy = initialPolicyId
+    ? policies.find((policy) => policy.id === initialPolicyId)
+    : undefined;
 
   async function handleDelete(entry: MemoryStudioEntry): Promise<void> {
     if (!onDeleteEntry) {
@@ -827,6 +841,16 @@ export function MemoryStudio({
         </StatePanel>
       ) : null}
 
+      {focusedPolicy ? (
+        <p
+          className="rounded-md border border-info/40 bg-info/5 px-3 py-2 text-sm text-info"
+          data-testid="memory-focused-policy"
+        >
+          Opened from evidence link: {POLICY_SCOPE_LABEL[focusedPolicy.scope]}{" "}
+          policy is focused.
+        </p>
+      ) : null}
+
       <section className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))]">
         <div className="rounded-md border bg-card p-3">
           <p className="text-xs text-muted-foreground">Memory entries</p>
@@ -851,6 +875,7 @@ export function MemoryStudio({
       <section className="grid min-w-0 gap-4">
         <MemoryPolicyPanel
           policies={policies}
+          focusedPolicyId={focusedPolicy?.id}
           savingScope={savingScope}
           approvingScope={approvingScope}
           notice={policyNotice}

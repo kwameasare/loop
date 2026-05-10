@@ -11,10 +11,28 @@ import { getAgentDetailData } from "../agent-detail-data";
 
 interface PageProps {
   params: { agent_id: string };
+  searchParams?:
+    | {
+        incident_id?: string | string[] | undefined;
+        incident?: string | string[] | undefined;
+      }
+    | undefined;
 }
 
 function messageFromError(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function focusedIncidentId(
+  searchParams: PageProps["searchParams"],
+): string | undefined {
+  return (
+    firstParam(searchParams?.incident_id) ?? firstParam(searchParams?.incident)
+  );
 }
 
 function emptyModel(args: {
@@ -32,7 +50,10 @@ function emptyModel(args: {
   });
 }
 
-export default async function AgentObservabilityPage({ params }: PageProps) {
+export default async function AgentObservabilityPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { agent, degradedReason: agentDegradedReason } =
     await getAgentDetailData(params.agent_id);
   const workspaceId = agent.workspace_id;
@@ -47,6 +68,7 @@ export default async function AgentObservabilityPage({ params }: PageProps) {
               agentDegradedReason ??
               "Workspace context is unavailable, so Studio cannot request agent-scoped observability evidence.",
           })}
+          focusedIncidentId={focusedIncidentId(searchParams)}
         />
       </section>
     );
@@ -116,6 +138,7 @@ export default async function AgentObservabilityPage({ params }: PageProps) {
           nowMs,
           degradedReason: degradedReasons.join(" ") || undefined,
         })}
+        focusedIncidentId={focusedIncidentId(searchParams)}
         workspaceId={workspaceId}
       />
     </section>

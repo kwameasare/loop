@@ -40,6 +40,23 @@ describe("AgentVersionsList", () => {
     ).toBe(true);
   });
 
+  it("opens on the page that contains a focused version evidence link", () => {
+    render(
+      <AgentVersionsList
+        focusedVersionId="ver_2"
+        versions={makeVersions(12)}
+        pageSize={5}
+      />,
+    );
+
+    expect(screen.getByTestId("agent-versions-pager")).toHaveTextContent(
+      /Page 3 of 3/,
+    );
+    expect(
+      screen.getByTestId("agent-version-row-2").closest("li"),
+    ).toHaveAttribute("data-focused", "true");
+  });
+
   it("opens the diff modal with config_json vs prior version", () => {
     render(<AgentVersionsList versions={makeVersions(3)} pageSize={5} />);
     fireEvent.click(screen.getByTestId("agent-version-row-2"));

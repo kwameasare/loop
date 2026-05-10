@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 interface AgentContractPanelProps {
   agentId: string;
   initialDocument: CommitmentDocument;
+  focusedCommitmentId?: string | undefined;
   degradedReason?: string | undefined;
   saveDraft?: (
     agentId: string,
@@ -69,6 +70,7 @@ function summaryLine(
 export function AgentContractPanel({
   agentId,
   initialDocument,
+  focusedCommitmentId,
   degradedReason,
   saveDraft = defaultSaveCommitmentDraft,
   acceptCommitment = defaultAcceptCommitment,
@@ -80,6 +82,8 @@ export function AgentContractPanel({
   const completeness = Math.round(((8 - missing.length) / 8) * 100);
   const busy = state.kind === "saving" || state.kind === "accepting";
   const backendUnavailable = Boolean(degradedReason);
+  const isFocused =
+    Boolean(focusedCommitmentId) && focusedCommitmentId === document.id;
 
   async function handleSave(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
@@ -149,7 +153,14 @@ export function AgentContractPanel({
   }
 
   return (
-    <section className="space-y-5" data-testid="agent-contract-panel">
+    <section
+      className={cn(
+        "space-y-5",
+        isFocused ? "rounded-md ring-2 ring-focus ring-offset-2 ring-offset-background" : "",
+      )}
+      data-testid="agent-contract-panel"
+      data-focused={isFocused ? "true" : "false"}
+    >
       {degradedReason ? (
         <div data-testid="contract-degraded">
           <SectionDegraded
@@ -158,6 +169,15 @@ export function AgentContractPanel({
             evidence={degradedReason}
           />
         </div>
+      ) : null}
+      {isFocused ? (
+        <p
+          className="rounded-md border border-info/40 bg-info/5 px-3 py-2 text-sm text-info"
+          data-testid="contract-focused"
+        >
+          Opened from evidence link: Commitment Document {document.id} is
+          focused.
+        </p>
       ) : null}
       <div className="rounded-md border bg-card p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">

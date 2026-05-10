@@ -6,9 +6,17 @@ import {
 
 interface PageProps {
   params: { agent_id: string };
+  searchParams?: { commitment_id?: string | string[] | undefined } | undefined;
 }
 
-export default async function AgentContractPage({ params }: PageProps) {
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function AgentContractPage({
+  params,
+  searchParams,
+}: PageProps) {
   let commitment = buildLocalCommitmentDocument(params.agent_id);
   let degradedReason: string | undefined;
   try {
@@ -25,6 +33,7 @@ export default async function AgentContractPage({ params }: PageProps) {
     <AgentContractPanel
       agentId={params.agent_id}
       initialDocument={commitment}
+      focusedCommitmentId={firstParam(searchParams?.commitment_id)}
       degradedReason={degradedReason}
     />
   );

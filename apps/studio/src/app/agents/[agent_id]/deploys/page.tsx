@@ -10,10 +10,22 @@ export const dynamic = "force-dynamic";
 
 interface AgentDeploysPageProps {
   params: { agent_id: string };
+  searchParams?:
+    | {
+        change_package_id?: string | string[] | undefined;
+        deployment_id?: string | string[] | undefined;
+        change_set?: string | string[] | undefined;
+      }
+    | undefined;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 export default async function AgentDeploysPage({
   params,
+  searchParams,
 }: AgentDeploysPageProps) {
   let deployments: Awaited<ReturnType<typeof listDeployments>>["items"] = [];
   let deploymentsDegradedReason: string | undefined;
@@ -59,13 +71,29 @@ export default async function AgentDeploysPage({
 
   return (
     <div className="space-y-6" data-testid="agent-deploys">
+      {firstParam(searchParams?.change_set) ? (
+        <section
+          className="rounded-md border border-info/40 bg-info/5 p-4 text-sm text-info"
+          data-testid="deploys-focused-change-set"
+        >
+          <p className="font-medium">Opened from co-builder change set.</p>
+          <p className="mt-1 font-mono text-xs">
+            {firstParam(searchParams?.change_set)}
+          </p>
+          <p className="mt-2 text-xs">
+            Generate or refresh the Change Package below before promotion.
+          </p>
+        </section>
+      ) : null}
       <ChangePackagePanel
         agentId={params.agent_id}
         initialPackage={changePackage}
+        focusedChangePackageId={firstParam(searchParams?.change_package_id)}
         degradedReason={changePackageDegradedReason}
       />
       <DeployTimeline
         agentId={params.agent_id}
+        focusedDeploymentId={firstParam(searchParams?.deployment_id)}
         approvedChangePackage={
           changePackage.status === "approved" ||
           changePackage.status === "deployable"

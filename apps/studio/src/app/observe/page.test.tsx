@@ -12,6 +12,10 @@ vi.mock("@/components/auth/require-auth", () => ({
   RequireAuth: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 vi.mock("@/lib/use-active-workspace", () => ({
   useActiveWorkspace: () => ({
     active: { id: "ws_observe", name: "Observe Workspace" },

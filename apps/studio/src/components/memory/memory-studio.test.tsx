@@ -134,6 +134,23 @@ describe("MemoryStudio", () => {
     );
   });
 
+  it("focuses a policy opened from an evidence link", () => {
+    render(
+      <MemoryStudio
+        data={createMemoryStudioData("agent_support")}
+        initialPolicyId="mp_local_user"
+      />,
+    );
+
+    expect(screen.getByTestId("memory-focused-policy")).toHaveTextContent(
+      "User policy is focused",
+    );
+    expect(screen.getByTestId("memory-policy-user")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+  });
+
   it("saves edited memory policy content before approval", async () => {
     const data = createMemoryStudioData("agent_support");
     const userPolicy = data.policies.find((policy) => policy.scope === "user")!;

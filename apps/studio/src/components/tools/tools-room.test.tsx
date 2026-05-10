@@ -97,6 +97,22 @@ describe("ToolsRoom", () => {
     expect(screen.getByTestId("tool-contract-promote")).toBeEnabled();
   });
 
+  it("opens directly on a tool selected from an evidence link", () => {
+    render(
+      <ToolsRoom
+        data={createToolsRoomData("agent_support")}
+        initialToolId="tool_issue_refund"
+      />,
+    );
+
+    expect(screen.getByTestId("tools-room-focused-tool")).toHaveTextContent(
+      "issue_refund",
+    );
+    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent(
+      "issue_refund",
+    );
+  });
+
   it("promotes the selected durable tool contract live", async () => {
     process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
     const data = createToolsRoomData("agent_support");

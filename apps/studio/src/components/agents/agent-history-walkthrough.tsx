@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 interface AgentHistoryWalkthroughProps {
   agentId: string;
   initialModel: AgentHandoffModel;
+  focusedEvidenceRef?: string | undefined;
   transferAgentOwner?: typeof defaultTransferAgentOwner;
 }
 
@@ -30,9 +31,11 @@ function riskIds(risks: HandoffRisk[]): string[] {
 function EvidenceRefLinks({
   agentId,
   evidenceRef,
+  focusedEvidenceRef,
 }: {
   agentId: string;
   evidenceRef: string;
+  focusedEvidenceRef?: string | undefined;
 }) {
   const links = evidenceLinksForAgent(agentId, evidenceRef);
   return (
@@ -43,7 +46,12 @@ function EvidenceRefLinks({
             <span className="mx-1 text-muted-foreground">{"->"}</span>
           ) : null}
           <a
-            className="rounded-sm underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            className={cn(
+              "rounded-sm underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+              link.ref === focusedEvidenceRef
+                ? "bg-info/10 px-1 text-info ring-2 ring-focus"
+                : "",
+            )}
             href={link.href}
             data-testid={`handoff-evidence-link-${link.ref.replace(/[^a-zA-Z0-9_-]/g, "_")}`}
           >
@@ -58,6 +66,7 @@ function EvidenceRefLinks({
 export function AgentHistoryWalkthrough({
   agentId,
   initialModel,
+  focusedEvidenceRef,
   transferAgentOwner = defaultTransferAgentOwner,
 }: AgentHistoryWalkthroughProps) {
   const [model, setModel] = useState(initialModel);
@@ -133,6 +142,16 @@ export function AgentHistoryWalkthrough({
         </div>
       </header>
 
+      {focusedEvidenceRef ? (
+        <section
+          className="rounded-md border border-info/40 bg-info/5 p-4 text-sm text-info"
+          data-testid="handoff-focused-evidence"
+        >
+          <p className="font-medium">Opened from evidence link.</p>
+          <p className="mt-1 font-mono text-xs">{focusedEvidenceRef}</p>
+        </section>
+      ) : null}
+
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <section className="rounded-md border bg-card p-4">
           <div className="flex items-center gap-2">
@@ -159,6 +178,7 @@ export function AgentHistoryWalkthrough({
                         <EvidenceRefLinks
                           agentId={agentId}
                           evidenceRef={risk.evidence_ref}
+                          focusedEvidenceRef={focusedEvidenceRef}
                         />
                       </p>
                     </div>
@@ -247,6 +267,12 @@ export function AgentHistoryWalkthrough({
               key={section.id}
               className="rounded-md border bg-background p-3"
               data-testid={`walkthrough-section-${section.id}`}
+              data-focused={
+                focusedEvidenceRef &&
+                section.evidence_refs.includes(focusedEvidenceRef)
+                  ? "true"
+                  : "false"
+              }
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -266,7 +292,11 @@ export function AgentHistoryWalkthrough({
                       key={ref}
                       className="truncate font-mono text-xs text-muted-foreground"
                     >
-                      <EvidenceRefLinks agentId={agentId} evidenceRef={ref} />
+                      <EvidenceRefLinks
+                        agentId={agentId}
+                        evidenceRef={ref}
+                        focusedEvidenceRef={focusedEvidenceRef}
+                      />
                     </li>
                   ))}
                 </ul>

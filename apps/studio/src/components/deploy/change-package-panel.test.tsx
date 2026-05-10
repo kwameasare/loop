@@ -82,6 +82,24 @@ describe("ChangePackagePanel", () => {
     );
   });
 
+  it("focuses a Change Package opened from an evidence link", () => {
+    render(
+      <ChangePackagePanel
+        agentId="agt_1"
+        focusedChangePackageId="cp_1"
+        initialPackage={makePackage()}
+      />,
+    );
+
+    expect(screen.getByTestId("change-package-panel")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+    expect(screen.getByTestId("change-package-focused")).toHaveTextContent(
+      "Change Package cp_1 is focused",
+    );
+  });
+
   it("warns when a package is stale and approvals must be re-requested", () => {
     render(
       <ChangePackagePanel

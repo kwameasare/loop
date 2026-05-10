@@ -14,6 +14,7 @@ import { DiffViewerModal } from "./diff-viewer-modal";
 export interface AgentVersionsListProps {
   /** All versions for this agent (used so the diff can find the prior one). */
   versions: AgentVersionDetail[];
+  focusedVersionId?: string | undefined;
   degradedReason?: string | undefined;
   pageSize?: number;
   /** Override for tests. */
@@ -42,12 +43,18 @@ type Toast = { kind: "success" | "error"; message: string } | null;
  */
 export function AgentVersionsList({
   versions,
+  focusedVersionId,
   degradedReason,
   pageSize = 5,
   promote = defaultPromote,
   confirmFn,
 }: AgentVersionsListProps) {
-  const [page, setPage] = useState(0);
+  const initialFocusedIndex = focusedVersionId
+    ? versions.findIndex((version) => version.id === focusedVersionId)
+    : -1;
+  const [page, setPage] = useState(
+    initialFocusedIndex >= 0 ? Math.floor(initialFocusedIndex / pageSize) : 0,
+  );
   const [selected, setSelected] = useState<AgentVersionDetail | null>(null);
   const [rows, setRows] = useState(versions);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -127,7 +134,12 @@ export function AgentVersionsList({
           {slice.map((v) => (
             <li
               key={v.id}
-              className="flex items-center justify-between gap-4 p-4"
+              className={`flex items-center justify-between gap-4 p-4 ${
+                v.id === focusedVersionId
+                  ? "ring-2 ring-focus ring-inset"
+                  : ""
+              }`}
+              data-focused={v.id === focusedVersionId ? "true" : "false"}
             >
               <button
                 type="button"
