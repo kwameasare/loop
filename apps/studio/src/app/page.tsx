@@ -47,13 +47,40 @@ export function resolveHomeWorkspaceId(
   return agents[0]?.workspace_id || workspaces[0]?.id || fallback || null;
 }
 
+export function homeContextWarnings(
+  agentsDegradedReason?: string | undefined,
+  workspacesDegradedReason?: string | undefined,
+): string[] {
+  return [
+    agentsDegradedReason
+      ? `Agent registry unavailable: ${agentsDegradedReason}`
+      : null,
+    workspacesDegradedReason
+      ? `Workspace context unavailable: ${workspacesDegradedReason}`
+      : null,
+  ].filter((item): item is string => Boolean(item));
+}
+
 export default async function HomePage() {
-  const { agents } = await listAgents().catch(() => ({ agents: [] }));
-  const { workspaces } = await listWorkspaces().catch(() => ({
-    workspaces: [],
-  }));
+  const agentsResult = await listAgents()
+    .then((result) => ({ ...result, degradedReason: undefined }))
+    .catch((error: unknown) => ({
+      agents: [],
+      degradedReason:
+        error instanceof Error ? error.message : "Could not load agents.",
+    }));
+  const { agents, degradedReason: agentsDegradedReason } = agentsResult;
+  const { workspaces, degraded_reason: workspacesDegradedReason } =
+    await listWorkspaces().catch(() => ({
+      workspaces: [],
+      degraded_reason: "Could not load workspace context.",
+    }));
   const existingSlugs = agents.map((agent) => agent.slug).filter(Boolean);
   const workspaceId = resolveHomeWorkspaceId(agents, workspaces);
+  const contextWarnings = homeContextWarnings(
+    agentsDegradedReason,
+    workspacesDegradedReason,
+  );
   const estateHealth = await fetchEstateHealth(workspaceId, {
     fallbackAgents: agents,
   });
@@ -70,6 +97,17 @@ export default async function HomePage() {
           <p className="mt-1 text-sm text-muted-foreground">
             Start from a governed contract, not a blank demo.
           </p>
+          {contextWarnings.length > 0 ? (
+            <div
+              className="mt-3 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+              data-testid="home-context-degraded"
+              role="status"
+            >
+              {contextWarnings.map((warning) => (
+                <p key={warning}>{warning}</p>
+              ))}
+            </div>
+          ) : null}
           <div className="mt-4 flex flex-col gap-2">
             <NewAgentModal
               existingSlugs={existingSlugs}

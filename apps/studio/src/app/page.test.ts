@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveHomeWorkspaceId } from "./page";
+import { homeContextWarnings, resolveHomeWorkspaceId } from "./page";
 
 describe("resolveHomeWorkspaceId", () => {
   it("uses an existing agent workspace when agents are present", () => {
@@ -38,5 +38,23 @@ describe("resolveHomeWorkspaceId", () => {
 
   it("does not invent a local workspace id", () => {
     expect(resolveHomeWorkspaceId([], [], undefined)).toBeNull();
+  });
+});
+
+describe("homeContextWarnings", () => {
+  it("keeps backend failures visible instead of making home look empty", () => {
+    expect(
+      homeContextWarnings(
+        "cp-api GET agents -> 503",
+        "Workspace context requires cp-api.",
+      ),
+    ).toEqual([
+      "Agent registry unavailable: cp-api GET agents -> 503",
+      "Workspace context unavailable: Workspace context requires cp-api.",
+    ]);
+  });
+
+  it("omits warnings when context loaded cleanly", () => {
+    expect(homeContextWarnings()).toEqual([]);
   });
 });
