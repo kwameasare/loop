@@ -9,6 +9,16 @@ export interface EmptyStateSuggestion {
   evidence_ref: string;
 }
 
+export interface EmptyStateSuggestionActionResult {
+  ok: true;
+  suggestion_id: string;
+  surface: EmptyStateSurface;
+  title: string;
+  created_refs: string[];
+  next_url: string;
+  evidence_ref: string;
+}
+
 type EmptyStateSuggestionOptions = UxWireupClientOptions & {
   allowFixture?: boolean;
 };
@@ -48,4 +58,32 @@ export async function fetchEmptyStateSuggestions(
     },
   );
   return result.items;
+}
+
+export async function acceptEmptyStateSuggestion(
+  agentId: string,
+  surface: EmptyStateSurface,
+  suggestionId: string,
+  opts: UxWireupClientOptions = {},
+): Promise<EmptyStateSuggestionActionResult> {
+  return cpJson<EmptyStateSuggestionActionResult>(
+    `/agents/${encodeURIComponent(
+      agentId,
+    )}/empty-state-suggestions/${encodeURIComponent(suggestionId)}/accept`,
+    {
+      ...opts,
+      method: "POST",
+      body: { surface },
+      allowFallback: false,
+      fallback: {
+        ok: true,
+        suggestion_id: suggestionId,
+        surface,
+        title: "",
+        created_refs: [],
+        next_url: "",
+        evidence_ref: "",
+      },
+    },
+  );
 }

@@ -402,6 +402,78 @@ def test_replay_frame_fork_and_eval_case_preserve_trace_provenance(
     }
 
 
+def test_empty_state_suggestion_acceptance_creates_real_artifacts(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    empty_before = client.get(
+        f"/v1/agents/{agent_id}/empty-state-suggestions?surface=evals",
+        headers=_auth(),
+    )
+    assert empty_before.status_code == 200, empty_before.text
+    assert empty_before.json()["items"][0]["id"] == "collect_first_proof_traces"
+
+    blocked = client.post(
+        f"/v1/agents/{agent_id}/empty-state-suggestions/starter_eval_from_traces/accept",
+        headers=_auth(),
+        json={"surface": "evals"},
+    )
+    assert blocked.status_code == 409, blocked.text
+    assert "no traces available" in blocked.text
+
+    _add_trace(client, workspace_id, agent_id, "a" * 32)
+    _add_trace(client, workspace_id, agent_id, "b" * 32)
+    empty_after = client.get(
+        f"/v1/agents/{agent_id}/empty-state-suggestions?surface=evals",
+        headers=_auth(),
+    )
+    assert empty_after.status_code == 200, empty_after.text
+    assert empty_after.json()["items"][0]["id"] == "starter_eval_from_traces"
+
+    accepted = client.post(
+        f"/v1/agents/{agent_id}/empty-state-suggestions/starter_eval_from_traces/accept",
+        headers=_auth(),
+        json={"surface": "evals"},
+    )
+    assert accepted.status_code == 200, accepted.text
+    body = accepted.json()
+    assert body["ok"] is True
+    assert body["title"] == "Created starter eval suite with 2 case(s)."
+    assert body["created_refs"][0].startswith("eval-suite/")
+    assert len([ref for ref in body["created_refs"] if ref.startswith("eval/")]) == 2
+    assert body["next_url"].startswith(f"/agents/{agent_id}/evals?suite_id=")
+
+    suite_id = body["created_refs"][0].split("/", 1)[1]
+    cases = client.get(f"/v1/eval-suites/{suite_id}/cases", headers=_auth())
+    assert cases.status_code == 200, cases.text
+    rows = cases.json()["items"]
+    assert len(rows) == 2
+    assert {row["source"] for row in rows} == {"empty-state-suggestion"}
+    assert {row["input"]["trace_id"] for row in rows} == {"a" * 32, "b" * 32}
+
+    kb_task = client.post(
+        f"/v1/agents/{agent_id}/empty-state-suggestions/kb_gap_review/accept",
+        headers=_auth(),
+        json={"surface": "kb"},
+    )
+    assert kb_task.status_code == 200, kb_task.text
+    assert kb_task.json()["created_refs"][0].startswith("task/")
+    assert kb_task.json()["next_url"] == f"/agents/{agent_id}/kb"
+
+    inbox_task = client.post(
+        f"/v1/agents/{agent_id}/empty-state-suggestions/seed_inbox_runbook/accept",
+        headers=_auth(),
+        json={"surface": "inbox"},
+    )
+    assert inbox_task.status_code == 200, inbox_task.text
+    assert inbox_task.json()["next_url"] == f"/inbox?agent_id={agent_id}"
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert "empty_state:suggestion_accept" in {event["action"] for event in audit}
+
+
 def test_dashboard_pins_persist_and_homepage_pins_are_user_scoped(
     client: TestClient, workspace_id: UUID
 ) -> None:
