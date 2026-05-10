@@ -36,6 +36,18 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, ConfigDict, Field
 
 InboxStatus = Literal["pending", "claimed", "resolved"]
+InboxChannel = Literal[
+    "web",
+    "web_chat",
+    "whatsapp",
+    "telegram",
+    "slack",
+    "teams",
+    "sms",
+    "email",
+    "voice",
+    "webhook_api",
+]
 
 
 class InboxError(RuntimeError):
@@ -52,6 +64,7 @@ class InboxItem(BaseModel):
     agent_id: UUID
     conversation_id: UUID
     user_id: str = Field(min_length=1)
+    channel: InboxChannel = "web"
     status: InboxStatus
     reason: str = Field(min_length=1)
     operator_id: str | None = None
@@ -101,6 +114,7 @@ class InboxQueue:
         user_id: str,
         reason: str,
         now_ms: int,
+        channel: InboxChannel = "web",
         last_message_excerpt: str = "",
     ) -> InboxItem:
         if conversation_id in self._open_by_conversation:
@@ -113,6 +127,7 @@ class InboxQueue:
             agent_id=agent_id,
             conversation_id=conversation_id,
             user_id=user_id,
+            channel=channel,
             status="pending",
             reason=reason,
             created_at_ms=now_ms,
@@ -215,6 +230,7 @@ class InboxQueue:
 
 
 __all__ = [
+    "InboxChannel",
     "InboxError",
     "InboxItem",
     "InboxQueue",

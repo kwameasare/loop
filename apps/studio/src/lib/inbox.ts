@@ -9,7 +9,29 @@
 
 export type InboxStatus = "pending" | "claimed" | "resolved";
 
-export type InboxChannel = "web" | "voice" | "sms" | "whatsapp" | "slack";
+export type InboxChannel =
+  | "web"
+  | "web_chat"
+  | "whatsapp"
+  | "telegram"
+  | "slack"
+  | "teams"
+  | "sms"
+  | "email"
+  | "voice"
+  | "webhook_api";
+
+export const INBOX_CHANNELS: readonly InboxChannel[] = [
+  "web_chat",
+  "whatsapp",
+  "telegram",
+  "slack",
+  "teams",
+  "sms",
+  "email",
+  "voice",
+  "webhook_api",
+];
 
 export type InboxItem = {
   id: string;
@@ -299,7 +321,7 @@ export const FIXTURE_INBOX: InboxItem[] = [
     workspace_id: FIXTURE_WORKSPACE_ID,
     team_id: "team-care",
     agent_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-    channel: "web",
+    channel: "web_chat",
     conversation_id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
     user_id: "user-7281",
     status: "pending",
@@ -345,6 +367,22 @@ export const FIXTURE_INBOX: InboxItem[] = [
     last_message_excerpt:
       "My account is 4111-1111-1111-1111 and I need to update it.",
   },
+  {
+    id: "44444444-4444-4444-4444-444444444444",
+    workspace_id: FIXTURE_WORKSPACE_ID,
+    team_id: "team-care",
+    agent_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    channel: "telegram",
+    conversation_id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+    user_id: "user-telegram",
+    status: "pending",
+    reason: "command policy needs operator",
+    operator_id: null,
+    created_at_ms: FIXTURE_NOW_MS - 18 * 60 * 1000,
+    claimed_at_ms: null,
+    resolved_at_ms: null,
+    last_message_excerpt: "/refund says the template is unavailable.",
+  },
 ];
 
 export const FIXTURE_TEAMS: { id: string; name: string }[] = [
@@ -366,7 +404,7 @@ export const FIXTURE_QUEUE: InboxItem[] = (() => {
     "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     "cccccccc-cccc-cccc-cccc-cccccccccccc",
   ];
-  const channels: InboxChannel[] = ["web", "voice", "sms", "whatsapp", "slack"];
+  const channels: readonly InboxChannel[] = INBOX_CHANNELS;
   const statuses: InboxStatus[] = ["pending", "claimed", "resolved"];
   const items: InboxItem[] = [...FIXTURE_INBOX];
   for (let i = 0; i < 60; i += 1) {

@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import authorize_workspace_access
-from loop_control_plane.inbox import InboxError
+from loop_control_plane.inbox import InboxChannel, InboxError
 
 router_workspaces = APIRouter(prefix="/v1/workspaces", tags=["Inbox"])
 router_inbox = APIRouter(prefix="/v1/inbox", tags=["Inbox"])
@@ -28,6 +28,7 @@ class EscalateBody(BaseModel):
     agent_id: UUID
     conversation_id: UUID
     user_id: str = Field(min_length=1)
+    channel: InboxChannel = "web"
     reason: str = Field(min_length=1)
     last_message_excerpt: str = ""
     now_ms: int | None = Field(default=None, ge=0)
@@ -96,6 +97,7 @@ async def escalate_to_inbox(
                 "agent_id": str(body.agent_id),
                 "conversation_id": str(body.conversation_id),
                 "user_id": body.user_id,
+                "channel": body.channel,
                 "reason": body.reason,
                 "now_ms": body.now_ms if body.now_ms is not None else _now_ms(),
                 "last_message_excerpt": body.last_message_excerpt,
@@ -114,6 +116,7 @@ async def escalate_to_inbox(
         payload={
             "agent_id": str(body.agent_id),
             "conversation_id": str(body.conversation_id),
+            "channel": body.channel,
             "reason": body.reason,
         },
     )
