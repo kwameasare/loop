@@ -23,6 +23,10 @@ type TelemetryConsentOptions = UxWireupClientOptions & {
   allowFixture?: boolean;
 };
 
+type HelpClipOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 export async function fetchTelemetryConsent(
   workspaceId: string,
   opts: UxWireupClientOptions = {},
@@ -73,11 +77,12 @@ export async function saveTelemetryConsent(
 
 export async function fetchHelpClips(
   surface: string,
-  opts: UxWireupClientOptions = {},
+  opts: HelpClipOptions = {},
 ): Promise<HelpClip[]> {
   const suffix = surface ? `?surface=${encodeURIComponent(surface)}` : "";
   const body = await cpJson<{ items: HelpClip[] }>(`/help-clips${suffix}`, {
     ...opts,
+    allowFallback: opts.allowFixture === true,
     fallback: {
       items: [
         {
