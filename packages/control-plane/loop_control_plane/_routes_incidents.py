@@ -3,10 +3,10 @@ from __future__ import annotations
 from typing import Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
+from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.change_packages import (
@@ -89,17 +89,23 @@ async def _agent(
     request: Request,
     *,
     agent_id: UUID,
-    workspace_id: UUID,
     caller_sub: str,
+    workspace_id: UUID | None = None,
     required_role: Role | None = None,
 ) -> Any:
+    cp = request.app.state.cp
+    if workspace_id is None:
+        agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
+        if agent is None:
+            raise HTTPException(status_code=404, detail="unknown agent")
+        workspace_id = agent.workspace_id
     await authorize_workspace_access(
-        workspaces=request.app.state.cp.workspaces,
+        workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
         required_role=required_role,
     )
-    return await request.app.state.cp.agents.get(
+    return await cp.agents.get(
         workspace_id=workspace_id,
         agent_id=agent_id,
     )
@@ -165,7 +171,7 @@ async def list_agent_incidents(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -174,7 +180,7 @@ async def list_agent_incidents(
         caller_sub=caller_sub,
     )
     incidents = await request.app.state.cp.incidents.list_for_workspace(
-        workspace_id=workspace_id,
+        workspace_id=agent.workspace_id,
         agent_id=agent.id,
     )
     return {"items": [incident_payload(incident) for incident in incidents]}
@@ -186,7 +192,7 @@ async def create_incident_from_anomaly(
     agent_id: UUID,
     body: IncidentCreate,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -195,6 +201,7 @@ async def create_incident_from_anomaly(
         caller_sub=caller_sub,
         required_role=Role.ADMIN,
     )
+    workspace_id = agent.workspace_id
     if not body.notification_targets:
         body = body.model_copy(
             update={
@@ -235,7 +242,7 @@ async def _transition(
     status: IncidentStatus,
     body: IncidentTransition,
     caller_sub: str,
-    workspace_id: UUID,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -244,6 +251,7 @@ async def _transition(
         caller_sub=caller_sub,
         required_role=Role.ADMIN,
     )
+    workspace_id = agent.workspace_id
     incident = await request.app.state.cp.incidents.transition(
         agent=agent,
         incident_id=incident_id,
@@ -268,7 +276,7 @@ async def contain_incident(
     incident_id: str,
     body: IncidentTransition,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     return await _transition(
         request,
@@ -288,7 +296,7 @@ async def resolve_incident(
     incident_id: str,
     body: IncidentTransition,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     return await _transition(
         request,
@@ -308,7 +316,7 @@ async def investigate_incident(
     incident_id: str,
     body: IncidentTransition,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     return await _transition(
         request,
@@ -328,7 +336,7 @@ async def archive_incident(
     incident_id: str,
     body: IncidentTransition,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     return await _transition(
         request,
@@ -347,7 +355,7 @@ async def seed_incident_eval_cases(
     agent_id: UUID,
     incident_id: str,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -356,6 +364,7 @@ async def seed_incident_eval_cases(
         caller_sub=caller_sub,
         required_role=Role.ADMIN,
     )
+    workspace_id = agent.workspace_id
     incident = await request.app.state.cp.incidents.get(
         agent=agent,
         incident_id=incident_id,
@@ -435,7 +444,7 @@ async def create_incident_fix_change_package(
     incident_id: str,
     body: IncidentFixPackageCreate | None = None,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -444,6 +453,7 @@ async def create_incident_fix_change_package(
         caller_sub=caller_sub,
         required_role=Role.ADMIN,
     )
+    workspace_id = agent.workspace_id
     incident = await request.app.state.cp.incidents.get(
         agent=agent,
         incident_id=incident_id,

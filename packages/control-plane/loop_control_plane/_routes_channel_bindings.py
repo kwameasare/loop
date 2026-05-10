@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 
-from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
+from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.channel_bindings import (
@@ -27,17 +27,23 @@ async def _agent(
     request: Request,
     *,
     agent_id: UUID,
-    workspace_id: UUID,
     caller_sub: str,
+    workspace_id: UUID | None = None,
     required_role: Role | None = None,
 ) -> Any:
+    cp = request.app.state.cp
+    if workspace_id is None:
+        agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
+        if agent is None:
+            raise HTTPException(status_code=404, detail="unknown agent")
+        workspace_id = agent.workspace_id
     await authorize_workspace_access(
-        workspaces=request.app.state.cp.workspaces,
+        workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
         required_role=required_role,
     )
-    return await request.app.state.cp.agents.get(
+    return await cp.agents.get(
         workspace_id=workspace_id,
         agent_id=agent_id,
     )
@@ -228,7 +234,7 @@ async def list_channel_bindings(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -246,7 +252,7 @@ async def upsert_channel_binding(
     agent_id: UUID,
     body: ChannelBindingUpsert,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -254,6 +260,7 @@ async def upsert_channel_binding(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    workspace_id = agent.workspace_id
     binding = await request.app.state.cp.channel_bindings.upsert(
         agent=agent,
         body=body,
@@ -279,7 +286,7 @@ async def preview_channel_matrix(
     agent_id: UUID,
     body: ChannelPreviewMatrixRequest,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -320,15 +327,16 @@ async def create_channel_preview_eval_case(
     agent_id: UUID,
     body: ChannelPreviewEvalCaseCreate,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
-    await _agent(
+    agent = await _agent(
         request,
         agent_id=agent_id,
         workspace_id=workspace_id,
         caller_sub=caller_sub,
         required_role=Role.ADMIN,
     )
+    workspace_id = agent.workspace_id
     suite = await request.app.state.cp.eval_suites.get_or_create_suite(
         workspace_id=workspace_id,
         name="Channel formatting failures",
@@ -398,7 +406,7 @@ async def update_channel_readiness(
     check_id: str,
     body: ChannelReadinessUpdate,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -406,6 +414,7 @@ async def update_channel_readiness(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    workspace_id = agent.workspace_id
     binding = await request.app.state.cp.channel_bindings.set_readiness(
         agent=agent,
         binding_id=binding_id,

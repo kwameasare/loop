@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 
-from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
+from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.preapproved_classes import (
@@ -20,17 +20,23 @@ async def _agent(
     request: Request,
     *,
     agent_id: UUID,
-    workspace_id: UUID,
     caller_sub: str,
+    workspace_id: UUID | None = None,
     admin: bool = False,
 ) -> Any:
+    cp = request.app.state.cp
+    if workspace_id is None:
+        agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
+        if agent is None:
+            raise HTTPException(status_code=404, detail="unknown agent")
+        workspace_id = agent.workspace_id
     await authorize_workspace_access(
-        workspaces=request.app.state.cp.workspaces,
+        workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
         required_role=Role.ADMIN if admin else None,
     )
-    return await request.app.state.cp.agents.get(
+    return await cp.agents.get(
         workspace_id=workspace_id,
         agent_id=agent_id,
     )
@@ -62,7 +68,7 @@ async def list_preapproved_classes(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -80,7 +86,7 @@ async def create_preapproved_class(
     agent_id: UUID,
     body: PreApprovedClassCreate,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -89,6 +95,7 @@ async def create_preapproved_class(
         caller_sub=caller_sub,
         admin=True,
     )
+    workspace_id = agent.workspace_id
     record = await request.app.state.cp.preapproved_classes.create(
         agent=agent,
         body=body,
@@ -119,7 +126,7 @@ async def revoke_preapproved_class(
     agent_id: UUID,
     class_id: str,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -128,6 +135,7 @@ async def revoke_preapproved_class(
         caller_sub=caller_sub,
         admin=True,
     )
+    workspace_id = agent.workspace_id
     record = await request.app.state.cp.preapproved_classes.revoke(
         agent=agent,
         class_id=class_id,

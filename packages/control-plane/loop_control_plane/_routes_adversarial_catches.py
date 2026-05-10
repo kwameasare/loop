@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 
-from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
+from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.adversarial_catches import (
     AdversarialProbeRunCreate,
     CatchResolutionCreate,
@@ -25,16 +25,22 @@ async def _agent(
     request: Request,
     *,
     agent_id: UUID,
-    workspace_id: UUID,
     caller_sub: str,
+    workspace_id: UUID | None = None,
 ) -> Any:
+    cp = request.app.state.cp
+    if workspace_id is None:
+        agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
+        if agent is None:
+            raise HTTPException(status_code=404, detail="unknown agent")
+        workspace_id = agent.workspace_id
     await authorize_workspace_access(
-        workspaces=request.app.state.cp.workspaces,
+        workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
         required_role=Role.ADMIN,
     )
-    return await request.app.state.cp.agents.get(
+    return await cp.agents.get(
         workspace_id=workspace_id,
         agent_id=agent_id,
     )
@@ -118,7 +124,7 @@ async def run_adversarial_probe(
     agent_id: UUID,
     body: AdversarialProbeRunCreate,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     cp = request.app.state.cp
     agent = await _agent(
@@ -127,6 +133,7 @@ async def run_adversarial_probe(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    workspace_id = agent.workspace_id
     run, catches = await cp.adversarial_catches.run_probe(
         agent=agent,
         body=body,
@@ -156,7 +163,7 @@ async def list_catches(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     cp = request.app.state.cp
     agent = await _agent(
@@ -176,7 +183,7 @@ async def resolve_catch(
     catch_id: str,
     body: CatchResolutionCreate,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     cp = request.app.state.cp
     agent = await _agent(
@@ -185,6 +192,7 @@ async def resolve_catch(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    workspace_id = agent.workspace_id
     catches = await cp.adversarial_catches.list_for_agent(agent=agent)
     current = next((item for item in catches if item.id == catch_id), None)
     if current is None:

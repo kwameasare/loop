@@ -6,7 +6,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request
 
-from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
+from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.agent_commitments import (
     CommitmentBody,
     commitment_payload,
@@ -28,17 +28,23 @@ async def _agent(
     request: Request,
     *,
     agent_id: UUID,
-    workspace_id: UUID,
     caller_sub: str,
+    workspace_id: UUID | None = None,
     admin: bool = False,
 ) -> Any:
+    cp = request.app.state.cp
+    if workspace_id is None:
+        agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
+        if agent is None:
+            raise HTTPException(status_code=404, detail="unknown agent")
+        workspace_id = agent.workspace_id
     await authorize_workspace_access(
-        workspaces=request.app.state.cp.workspaces,
+        workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
         required_role=Role.ADMIN if admin else None,
     )
-    return await request.app.state.cp.agents.get(
+    return await cp.agents.get(
         workspace_id=workspace_id,
         agent_id=agent_id,
     )
@@ -378,7 +384,7 @@ async def get_agent_handoff(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -395,7 +401,7 @@ async def transfer_agent_owner(
     agent_id: UUID,
     body: OwnershipTransferCreate,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -404,6 +410,7 @@ async def transfer_agent_owner(
         caller_sub=caller_sub,
         admin=True,
     )
+    workspace_id = agent.workspace_id
     cp = request.app.state.cp
     commitment = await cp.agent_commitments.current(agent=agent)
     handoff_before_transfer = await _handoff_model(request, agent=agent)

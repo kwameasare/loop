@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 
 from loop_control_plane._app_agents import AgentCreate, agent_payload
 from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
@@ -29,6 +29,19 @@ async def _authorise(request: Request, *, workspace_id: UUID, caller_sub: str) -
         workspace_id=workspace_id,
         user_sub=caller_sub,
     )
+
+
+async def _agent_by_id(request: Request, *, agent_id: UUID, caller_sub: str) -> Any:
+    cp = request.app.state.cp
+    agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
+    if agent is None:
+        raise HTTPException(status_code=404, detail="unknown agent")
+    await _authorise(
+        request,
+        workspace_id=agent.workspace_id,
+        caller_sub=caller_sub,
+    )
+    return agent
 
 
 async def _agent_payload_with_state(request: Request, agent: Any) -> dict[str, Any]:
@@ -144,10 +157,8 @@ async def get_agent(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
 ) -> dict[str, Any]:
-    await _authorise(request, workspace_id=workspace_id, caller_sub=caller_sub)
-    agent = await request.app.state.cp.agents.get(workspace_id=workspace_id, agent_id=agent_id)
+    agent = await _agent_by_id(request, agent_id=agent_id, caller_sub=caller_sub)
     return await _agent_payload_with_state(request, agent)
 
 
@@ -156,12 +167,14 @@ async def archive_agent(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
 ) -> Response:
-    await _authorise(request, workspace_id=workspace_id, caller_sub=caller_sub)
-    await request.app.state.cp.agents.archive(workspace_id=workspace_id, agent_id=agent_id)
+    agent = await _agent_by_id(request, agent_id=agent_id, caller_sub=caller_sub)
+    await request.app.state.cp.agents.archive(
+        workspace_id=agent.workspace_id,
+        agent_id=agent_id,
+    )
     record_audit_event(
-        workspace_id=workspace_id,
+        workspace_id=agent.workspace_id,
         actor_sub=caller_sub,
         action="agent:delete",
         resource_type="agent",
