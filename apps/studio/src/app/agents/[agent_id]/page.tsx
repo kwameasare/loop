@@ -15,6 +15,7 @@ import {
   type ChannelBinding,
 } from "@/lib/channel-bindings";
 import { listDeployments, type Deployment } from "@/lib/deploys";
+import { listMemoryPolicies, type MemoryPolicy } from "@/lib/memory-policies";
 import { listToolContracts, type ToolContract } from "@/lib/tool-contracts";
 import { getAgentDetailData } from "./agent-detail-data";
 
@@ -115,12 +116,24 @@ export default async function AgentOverviewPage({
       "Could not load tool contracts.",
     );
   }
+  let memoryPolicies: MemoryPolicy[] = [];
+  let memoryDegradedReason: string | undefined;
+  try {
+    const result = await listMemoryPolicies(params.agent_id);
+    memoryPolicies = result.items;
+  } catch (error) {
+    memoryDegradedReason = errorMessage(
+      error,
+      "Could not load memory policies.",
+    );
+  }
   const combinedDegradedReason = [
     degradedReason,
     commitmentDegradedReason,
     deploymentsDegradedReason,
     channelsDegradedReason,
     toolsDegradedReason,
+    memoryDegradedReason,
   ]
     .filter(Boolean)
     .join(" ");
@@ -148,6 +161,8 @@ export default async function AgentOverviewPage({
       channelsDegradedReason={channelsDegradedReason}
       toolContracts={toolContracts}
       toolsDegradedReason={toolsDegradedReason}
+      memoryPolicies={memoryPolicies}
+      memoryDegradedReason={memoryDegradedReason}
       commitment={commitment}
     />
   );

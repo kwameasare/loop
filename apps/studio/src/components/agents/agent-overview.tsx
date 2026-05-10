@@ -26,6 +26,7 @@ import {
 } from "@/lib/design-tokens";
 import type { CommitmentDocument } from "@/lib/agent-commitment";
 import type { ChannelBinding } from "@/lib/channel-bindings";
+import type { MemoryPolicy } from "@/lib/memory-policies";
 import type { ToolContract } from "@/lib/tool-contracts";
 import type { TargetDeploy, TargetEvalSuite } from "@/lib/target-ux";
 import { cn } from "@/lib/utils";
@@ -129,6 +130,8 @@ export interface AgentOverviewProps {
   channelsDegradedReason?: string | undefined;
   toolContracts?: ToolContract[] | undefined;
   toolsDegradedReason?: string | undefined;
+  memoryPolicies?: MemoryPolicy[] | undefined;
+  memoryDegradedReason?: string | undefined;
   workbench?: Partial<AgentWorkbenchData>;
   commitment?: CommitmentDocument | undefined;
   /** Called when the user saves a new description. Allows integration with server actions. */
@@ -160,6 +163,16 @@ interface ChannelWorkbenchSummary {
 }
 
 interface ToolWorkbenchSummary {
+  count: number;
+  current: string;
+  lastChangedBy: string;
+  diffFromProduction: string;
+  validation: string;
+  evidence: string;
+  status: WorkbenchSectionStatus;
+}
+
+interface MemoryWorkbenchSummary {
   count: number;
   current: string;
   lastChangedBy: string;
@@ -390,6 +403,105 @@ function summarizeToolContracts(
   };
 }
 
+function policyIsDurable(policy: MemoryPolicy): boolean {
+  return policy.scope === "user" || policy.scope === "workspace";
+}
+
+function summarizeMemoryPolicies(
+  policies: readonly MemoryPolicy[] | undefined,
+  degradedReason?: string | undefined,
+): MemoryWorkbenchSummary {
+  const all = policies ?? [];
+  const durable = all.filter(policyIsDurable);
+  const reviewRequired = all.filter(
+    (policy) => policy.approval_status === "review_required",
+  );
+  const blocked = all.filter((policy) => policy.approval_status === "blocked");
+  const missingSourceTrace = all.filter(
+    (policy) => !policy.source_trace_required,
+  );
+
+  if (degradedReason) {
+    return {
+      count: all.length,
+      current:
+        "Memory policy evidence is degraded; Studio is not claiming durable memory readiness.",
+      lastChangedBy: "Live memory policy registry unavailable",
+      diffFromProduction: "No memory policy diff loaded.",
+      validation: degradedReason,
+      evidence: "memory_policy.degraded",
+      status: "watching",
+    };
+  }
+
+  if (all.length === 0) {
+    return {
+      count: 0,
+      current: "No durable memory policy loaded.",
+      lastChangedBy: "No memory policy loaded",
+      diffFromProduction: "No memory policy diff loaded.",
+      validation: "Durable memory requires privacy and retention review.",
+      evidence: "memory_policy.empty",
+      status: "watching",
+    };
+  }
+
+  if (blocked.length > 0 || missingSourceTrace.length > 0) {
+    return {
+      count: all.length,
+      current: `${all.length} memory polic${
+        all.length === 1 ? "y" : "ies"
+      } loaded; ${blocked.length} blocked; ${missingSourceTrace.length} without source-trace enforcement.`,
+      lastChangedBy: "Loaded from memory policies",
+      diffFromProduction:
+        "Memory changes must preserve source trace and privacy evidence.",
+      validation:
+        missingSourceTrace.length > 0
+          ? `Require source traces for ${missingSourceTrace
+              .map((policy) => policy.scope)
+              .join(", ")} memory.`
+          : `Resolve blocked memory policy for ${blocked
+              .map((policy) => policy.scope)
+              .join(", ")} scope.`,
+      evidence: [...blocked, ...missingSourceTrace]
+        .map((policy) => policy.id)
+        .join(", "),
+      status: "blocked",
+    };
+  }
+
+  if (reviewRequired.length > 0) {
+    return {
+      count: all.length,
+      current: `${all.length} memory polic${
+        all.length === 1 ? "y" : "ies"
+      } loaded; ${durable.length} durable; ${reviewRequired.length} review-required.`,
+      lastChangedBy: "Loaded from memory policies",
+      diffFromProduction:
+        "Durable memory changes must appear in preflight before activation.",
+      validation: `Review ${reviewRequired
+        .map((policy) => policy.scope)
+        .join(", ")} memory policy before promotion.`,
+      evidence: reviewRequired.map((policy) => policy.id).join(", "),
+      status: "blocked",
+    };
+  }
+
+  return {
+    count: all.length,
+    current: `${all.length} memory polic${
+      all.length === 1 ? "y" : "ies"
+    } loaded; ${durable.length} durable.`,
+    lastChangedBy: "Loaded from memory policies",
+    diffFromProduction:
+      "Memory rules include retention, consent, privacy, and deletion behavior.",
+    validation:
+      "Memory policies require source traces and are ready for gated use.",
+    evidence: all.map((policy) => policy.id).join(", "),
+    status: "healthy",
+  };
+}
+
 function EditDescriptionModal({
   open,
   initial,
@@ -490,6 +602,7 @@ function buildSections(input: {
   hasProduction: boolean;
   channelSummary: ChannelWorkbenchSummary;
   toolSummary: ToolWorkbenchSummary;
+  memorySummary: MemoryWorkbenchSummary;
   commitment?: CommitmentDocument | undefined;
 }): AgentWorkbenchSection[] {
   const commitmentMissing =
@@ -585,12 +698,12 @@ function buildSections(input: {
     {
       id: "memory",
       label: "Memory",
-      current: input.memoryPolicy,
-      lastChangedBy: "No memory policy loaded",
-      diffFromProduction: "No memory policy diff loaded.",
-      validation: "Durable memory requires privacy and retention review.",
-      evidence: "memory_policy.unconfigured",
-      status: "watching",
+      current: input.memorySummary.current,
+      lastChangedBy: input.memorySummary.lastChangedBy,
+      diffFromProduction: input.memorySummary.diffFromProduction,
+      validation: input.memorySummary.validation,
+      evidence: input.memorySummary.evidence,
+      status: input.memorySummary.status,
     },
     {
       id: "evals",
@@ -668,6 +781,8 @@ function createDefaultWorkbenchData(
     | "channelsDegradedReason"
     | "toolContracts"
     | "toolsDegradedReason"
+    | "memoryPolicies"
+    | "memoryDegradedReason"
   > & { commitment?: CommitmentDocument | undefined },
 ): AgentWorkbenchData {
   const purpose =
@@ -719,6 +834,10 @@ function createDefaultWorkbenchData(
   const toolSummary = summarizeToolContracts(
     props.toolContracts,
     props.toolsDegradedReason,
+  );
+  const memorySummary = summarizeMemoryPolicies(
+    props.memoryPolicies,
+    props.memoryDegradedReason,
   );
   const channelSummary = summarizeChannels(
     props.channelBindings,
@@ -781,7 +900,7 @@ function createDefaultWorkbenchData(
     deploySummary,
     toolsCount: toolSummary.count,
     knowledgeSources: 0,
-    memoryFacts: 0,
+    memoryFacts: memorySummary.count,
     evalSuite,
     deploy,
     sections: buildSections({
@@ -796,6 +915,7 @@ function createDefaultWorkbenchData(
       hasProduction,
       channelSummary,
       toolSummary,
+      memorySummary,
       commitment: props.commitment,
     }),
     diff: {
@@ -951,6 +1071,8 @@ export function AgentOverview({
   channelsDegradedReason,
   toolContracts,
   toolsDegradedReason,
+  memoryPolicies,
+  memoryDegradedReason,
   workbench,
   commitment,
   onDescriptionSave,
@@ -975,6 +1097,8 @@ export function AgentOverview({
           channelsDegradedReason,
           toolContracts,
           toolsDegradedReason,
+          memoryPolicies,
+          memoryDegradedReason,
           commitment,
         }),
         workbench,
@@ -994,6 +1118,8 @@ export function AgentOverview({
       channelsDegradedReason,
       toolContracts,
       toolsDegradedReason,
+      memoryPolicies,
+      memoryDegradedReason,
       workbench,
     ],
   );
@@ -1335,7 +1461,7 @@ export function AgentOverview({
               {data.knowledgeSources} sources
             </span>
             <span data-testid="agent-outline-memory-count">
-              {data.memoryFacts} memory facts
+              {data.memoryFacts} memory rules
             </span>
           </div>
         </div>

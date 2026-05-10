@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildLocalCommitmentDocument } from "@/lib/agent-commitment";
 import { buildLocalChannelBindings } from "@/lib/channel-bindings";
+import { localMemoryPolicies } from "@/lib/memory-policies";
 import { localToolContracts } from "@/lib/tool-contracts";
 
 import AgentOverviewPage from "./page";
@@ -102,6 +103,15 @@ describe("AgentOverviewPage", () => {
           ]),
         });
       }
+      if (url.endsWith("/agents/agent_live/memory-policies")) {
+        return Response.json({
+          items: localMemoryPolicies("agent_live").map((policy) =>
+            policy.scope === "workspace"
+              ? { ...policy, approval_status: "approved" }
+              : policy,
+          ),
+        });
+      }
       if (url.endsWith("/agents/agent_live")) {
         return Response.json({
           id: "agent_live",
@@ -130,6 +140,9 @@ describe("AgentOverviewPage", () => {
     );
     expect(screen.getByTestId("agent-outline-tools")).toHaveTextContent(
       "2 tool contracts loaded",
+    );
+    expect(screen.getByTestId("agent-outline-memory")).toHaveTextContent(
+      "3 memory policies loaded",
     );
     expect(screen.queryByTestId("overview-deploy-unavailable")).toBeNull();
   });
