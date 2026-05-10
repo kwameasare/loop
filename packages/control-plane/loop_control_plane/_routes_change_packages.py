@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
-from loop_control_plane.authorize import authorize_workspace_access
+from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.change_packages import (
     ChangePackageApprovalAction,
     ChangePackageGenerate,
@@ -27,6 +27,7 @@ async def _agent(
     agent_id: UUID,
     caller_sub: str,
     workspace_id: UUID | None = None,
+    required_role: Role | None = None,
 ) -> Any:
     cp = request.app.state.cp
     if workspace_id is None:
@@ -38,6 +39,7 @@ async def _agent(
         workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=required_role,
     )
     return await cp.agents.get(
         workspace_id=workspace_id,
@@ -137,6 +139,7 @@ async def generate_change_package(
         agent_id=agent_id,
         caller_sub=caller_sub,
         workspace_id=workspace_id,
+        required_role=Role.ADMIN,
     )
     commitment = await request.app.state.cp.agent_commitments.current(agent=agent)
     release_candidate = await _release_candidate_for_preflight(
@@ -216,6 +219,7 @@ async def submit_change_package(
         agent_id=agent_id,
         caller_sub=caller_sub,
         workspace_id=workspace_id,
+        required_role=Role.ADMIN,
     )
     package = await request.app.state.cp.change_packages.submit(
         agent=agent,
@@ -250,6 +254,7 @@ async def record_change_package_approval(
         agent_id=agent_id,
         caller_sub=caller_sub,
         workspace_id=workspace_id,
+        required_role=Role.ADMIN,
     )
     package = await request.app.state.cp.change_packages.record_approval(
         agent=agent,
