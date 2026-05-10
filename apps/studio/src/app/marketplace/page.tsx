@@ -8,8 +8,8 @@
  * builders open the detail view and lets private-workspace publishers
  * stage a new skill version for review.
  *
- * The catalog loads from `GET /v1/marketplace` when cp-api is configured and
- * falls back to the canonical fixture for local no-backend runs.
+ * The catalog loads from `GET /v1/marketplace`. Without cp-api, the page shows
+ * an empty catalog instead of a local fixture.
  */
 
 import { useEffect, useState } from "react";

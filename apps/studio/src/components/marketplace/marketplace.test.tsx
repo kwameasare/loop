@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { MarketplaceDetail } from "@/components/marketplace/marketplace-detail";
@@ -7,33 +8,50 @@ import { PrivateSkillPublisher } from "@/components/marketplace/private-skill-pu
 import { DEFAULT_MARKETPLACE_CATALOG } from "@/lib/marketplace";
 
 describe("MarketplaceGrid", () => {
-  it("filters by free-text query", () => {
+  function renderCatalog(
+    props: Omit<ComponentProps<typeof MarketplaceGrid>, "items"> = {},
+  ) {
+    return render(
+      <MarketplaceGrid items={DEFAULT_MARKETPLACE_CATALOG} {...props} />,
+    );
+  }
+
+  it("renders an empty catalog without implicit fixture rows", () => {
     render(<MarketplaceGrid />);
+    expect(screen.getByTestId("marketplace-empty")).toHaveTextContent(
+      /no marketplace items/i,
+    );
+  });
+
+  it("filters by free-text query", () => {
+    renderCatalog();
     fireEvent.change(screen.getByTestId("marketplace-search"), {
       target: { value: "stripe" },
     });
     const list = screen.getByTestId("marketplace-list");
-    expect(within(list).getByTestId("marketplace-card-mk_tool_stripe_refund")).toBeInTheDocument();
+    expect(
+      within(list).getByTestId("marketplace-card-mk_tool_stripe_refund"),
+    ).toBeInTheDocument();
     expect(
       within(list).queryByTestId("marketplace-card-mk_kb_zendesk"),
     ).not.toBeInTheDocument();
   });
 
   it("shows empty state when nothing matches", () => {
-    render(<MarketplaceGrid />);
+    renderCatalog();
     fireEvent.change(screen.getByTestId("marketplace-search"), {
       target: { value: "nonexistent-xyz" },
     });
-    expect(screen.getByTestId("marketplace-empty")).toHaveTextContent(/no marketplace items/i);
+    expect(screen.getByTestId("marketplace-empty")).toHaveTextContent(
+      /no marketplace items/i,
+    );
   });
 
   it("respects enterprise curated allowlist", () => {
-    render(
-      <MarketplaceGrid
-        enterpriseCurated
-        curatedIds={new Set(["mk_template_support_triage"])}
-      />,
-    );
+    renderCatalog({
+      enterpriseCurated: true,
+      curatedIds: new Set(["mk_template_support_triage"]),
+    });
     expect(screen.getByTestId("marketplace-curated-badge")).toBeInTheDocument();
     expect(
       screen.getByTestId("marketplace-card-mk_template_support_triage"),
@@ -45,18 +63,24 @@ describe("MarketplaceGrid", () => {
 
   it("invokes onSelect with the picked item", () => {
     const onSelect = vi.fn();
-    render(<MarketplaceGrid onSelect={onSelect} />);
-    fireEvent.click(screen.getByTestId("marketplace-card-mk_tool_stripe_refund"));
+    renderCatalog({ onSelect });
+    fireEvent.click(
+      screen.getByTestId("marketplace-card-mk_tool_stripe_refund"),
+    );
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect.mock.calls[0]?.[0].id).toBe("mk_tool_stripe_refund");
   });
 
   it("hides deprecated items by default and shows them when opted in", () => {
-    const { rerender } = render(<MarketplaceGrid />);
+    const { rerender } = render(
+      <MarketplaceGrid items={DEFAULT_MARKETPLACE_CATALOG} />,
+    );
     expect(
       screen.queryByTestId("marketplace-card-mk_skill_legacy_translator"),
     ).not.toBeInTheDocument();
-    rerender(<MarketplaceGrid includeDeprecated />);
+    rerender(
+      <MarketplaceGrid includeDeprecated items={DEFAULT_MARKETPLACE_CATALOG} />,
+    );
     expect(
       screen.getByTestId("marketplace-card-mk_skill_legacy_translator"),
     ).toBeInTheDocument();

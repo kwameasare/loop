@@ -233,6 +233,7 @@ export interface MarketplaceClientOptions {
   fetcher?: typeof fetch;
   token?: string;
   baseUrl?: string;
+  allowFixture?: boolean;
 }
 
 interface CpMarketplaceItem {
@@ -328,7 +329,7 @@ export async function fetchMarketplaceCatalog(
   opts: MarketplaceClientOptions = {},
 ): Promise<MarketplaceItem[]> {
   const base = cpApiBaseUrl(opts.baseUrl);
-  if (!base) return [...DEFAULT_MARKETPLACE_CATALOG];
+  if (!base) return opts.allowFixture ? [...DEFAULT_MARKETPLACE_CATALOG] : [];
   const fetcher = opts.fetcher ?? fetch;
   const response = await fetcher(`${base}/marketplace`, {
     method: "GET",
@@ -355,9 +356,9 @@ export async function publishPrivateMarketplaceItem(
   const base = cpApiBaseUrl(opts.baseUrl);
   if (!base) {
     return {
-      ...validation,
-      itemId: `mk_private_${payload.itemId}`,
-      auditRef: "local/marketplace/item_publish",
+      ok: false,
+      errors: ["LOOP_CP_API_BASE_URL is required to publish marketplace items"],
+      lifecycle: "draft",
     };
   }
   const fetcher = opts.fetcher ?? fetch;
@@ -402,11 +403,9 @@ export async function installMarketplaceItem(
 ): Promise<{ install_id: string; item_id: string; workspace_id: string }> {
   const base = cpApiBaseUrl(opts.baseUrl);
   if (!base) {
-    return {
-      install_id: `inst_local_${itemId}`,
-      item_id: itemId,
-      workspace_id: workspaceId,
-    };
+    throw new Error(
+      "LOOP_CP_API_BASE_URL is required to install marketplace items",
+    );
   }
   return (await (opts.fetcher ?? fetch)(
     `${base}/marketplace/items/${encodeURIComponent(itemId)}/install`,
