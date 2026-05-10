@@ -52,6 +52,11 @@ export interface ListAgentVersionsOptions {
   allowFixture?: boolean;
 }
 
+interface LiveAgentVersionsResult {
+  items: AgentVersionDetail[];
+  degradedReason?: string | undefined;
+}
+
 /**
  * Returns a page of persisted agent versions sorted newest-first. Without a
  * configured cp-api, the function returns an explicit degraded response instead
@@ -63,11 +68,12 @@ export async function listAgentVersions(
 ): Promise<ListAgentVersionsResponse> {
   const live = await fetchLiveAgentVersions(agentId, opts);
   const degradedReason =
-    live === null && opts.allowFixture !== true
+    live?.degradedReason ??
+    (live === null && opts.allowFixture !== true
       ? "Agent version history requires the control-plane versions endpoint. No local version claims are shown."
-      : undefined;
+      : undefined);
   const all =
-    live ??
+    live?.items ??
     (opts.allowFixture === true ? fixtureVersions(agentId) : []);
   const pageSize = opts.pageSize ?? 5;
   const cursorIdx = opts.cursor ? Number.parseInt(opts.cursor, 10) || 0 : 0;
@@ -146,7 +152,7 @@ function mapCpVersion(version: CpAgentVersion): AgentVersionDetail {
 async function fetchLiveAgentVersions(
   agentId: string,
   opts: ListAgentVersionsOptions,
-): Promise<AgentVersionDetail[] | null> {
+): Promise<LiveAgentVersionsResult | null> {
   const base = cpApiBaseUrl(opts.baseUrl);
   if (!base) return null;
   const fetcher = opts.fetcher ?? fetch;
@@ -158,14 +164,22 @@ async function fetchLiveAgentVersions(
       cache: "no-store",
     },
   );
-  if (response.status === 404) return [];
+  if (response.status === 404) {
+    return {
+      items: [],
+      degradedReason:
+        "cp-api versions route returned 404. Studio will not treat unavailable version history as an agent with no saved versions.",
+    };
+  }
   if (!response.ok) {
     throw new Error(`cp-api GET agent versions -> ${response.status}`);
   }
   const body = (await response.json()) as { items?: CpAgentVersion[] };
-  return (body.items ?? [])
-    .map(mapCpVersion)
-    .sort((a, b) => b.version - a.version);
+  return {
+    items: (body.items ?? [])
+      .map(mapCpVersion)
+      .sort((a, b) => b.version - a.version),
+  };
 }
 
 /**
