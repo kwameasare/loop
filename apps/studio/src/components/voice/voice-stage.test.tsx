@@ -9,6 +9,12 @@ describe("VoiceStage", () => {
     render(<VoiceStage model={VOICE_STAGE_FIXTURE} />);
 
     expect(screen.getByTestId("voice-stage")).toHaveTextContent("Voice Receptionist");
+    expect(screen.getByTestId("voice-stage")).toHaveTextContent(
+      "Build / Channels / Voice",
+    );
+    expect(screen.getByTestId("voice-stage")).toHaveTextContent(
+      "Voice is one peer channel binding",
+    );
     expect(screen.getByTestId("voice-latency-budget")).toHaveTextContent(
       "Latency budget",
     );

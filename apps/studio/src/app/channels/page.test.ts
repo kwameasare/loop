@@ -94,5 +94,13 @@ describe("resolveChannelsWorkspaceId", () => {
     expect(screen.getByTestId("channel-type-whatsapp")).toBeInTheDocument();
     expect(screen.getByTestId("channel-type-telegram")).toBeInTheDocument();
     expect(screen.getByTestId("channel-type-voice")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /open voice channel stage/i }),
+    ).toHaveAttribute("href", "/voice");
+    expect(
+      screen.getByText(
+        /Text, chat, email, webhooks, and telephony remain peers/i,
+      ),
+    ).toBeInTheDocument();
   });
 });

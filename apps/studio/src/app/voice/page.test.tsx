@@ -36,7 +36,10 @@ describe("VoicePage", () => {
     const view = render(<VoicePage />);
 
     await waitFor(() => {
-      expect(view.container).toHaveTextContent("Voice channel evidence is unavailable");
+      expect(view.container).toHaveTextContent(
+        "Voice channel evidence is unavailable",
+      );
+      expect(view.container).toHaveTextContent("barge-in");
       expect(view.container).toHaveTextContent("LOOP_CP_API_BASE_URL");
     });
   });

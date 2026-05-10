@@ -138,6 +138,22 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§5",
   },
   {
+    route: "/voice",
+    verb: "build",
+    label: "Voice channel stage",
+    purpose:
+      "Specialized staging and debug view for the voice channel binding; voice remains one peer channel.",
+    anchor: "§16",
+  },
+  {
+    route: "/voice/config",
+    verb: "build",
+    label: "Voice channel config",
+    purpose:
+      "Phone number routing, ASR/TTS providers, eval suites, and compliance checks for voice channel bindings.",
+    anchor: "§16",
+  },
+  {
     route: "/agents/[agent_id]/deploys",
     verb: "ship",
     label: "Agent deploys",
@@ -385,21 +401,6 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     label: "Screen quality bar",
     purpose: "Per-screen quality reports against the §37 north-star.",
     anchor: "§37",
-  },
-  {
-    route: "/voice",
-    verb: "observe",
-    label: "Voice stage",
-    purpose:
-      "Specialized phone-channel preview, ASR/TTS spans, barge-in, and latency budget (§16).",
-    anchor: "§16",
-  },
-  {
-    route: "/voice/config",
-    verb: "build",
-    label: "Voice config",
-    purpose: "Voice number routing, ASR / TTS providers, eval suites (§16).",
-    anchor: "§16",
   },
   // Migrate
   {
