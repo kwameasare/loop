@@ -1772,6 +1772,18 @@ class PersonaTestBody(BaseModel):
     persona_set: str = Field(default="first-user", max_length=64)
 
 
+class PersonaEvalCaseBody(BaseModel):
+    persona_set: str = Field(default="first-user", max_length=64)
+    persona: str = Field(min_length=1, max_length=160)
+    candidate_eval_id: str = Field(min_length=1, max_length=256)
+    evidence_ref: str = Field(min_length=1, max_length=512)
+    scenarios: int = Field(ge=1, le=500)
+    failed_scenarios: int = Field(ge=0, le=500)
+    pass_rate: float = Field(ge=0, le=1)
+    expected_behavior: str = Field(min_length=1, max_length=4096)
+    risk_tags: list[str] = Field(default_factory=list, max_length=25)
+
+
 @router_agents.post("/{agent_id}/persona-test")
 async def run_persona_test(
     request: Request,
@@ -1808,6 +1820,92 @@ async def run_persona_test(
         payload=body.model_dump(mode="json"),
     )
     return {"persona_set": body.persona_set, "items": items}
+
+
+@router_agents.post("/{agent_id}/persona-test/eval-cases", status_code=201)
+async def create_persona_eval_case(
+    request: Request,
+    agent_id: UUID,
+    body: PersonaEvalCaseBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    agent = await _authorize_agent_record(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    cp = request.app.state.cp
+    suite = await cp.eval_suites.get_or_create_suite(
+        workspace_id=agent.workspace_id,
+        name="Persona-derived regressions",
+        dataset_ref="persona-derived-regressions",
+        metrics=["persona_success", "behavior_match", "channel_format"],
+        actor_sub=caller_sub,
+    )
+    case = await cp.eval_suites.add_case(
+        workspace_id=agent.workspace_id,
+        suite_id=suite.id,
+        body=EvalCaseCreate(
+            name=f"{body.persona} persona failure",
+            input={
+                "agent_id": str(agent_id),
+                "persona_set": body.persona_set,
+                "persona": body.persona,
+                "candidate_eval_id": body.candidate_eval_id,
+                "evidence_ref": body.evidence_ref,
+                "scenarios": body.scenarios,
+                "failed_scenarios": body.failed_scenarios,
+                "pass_rate": body.pass_rate,
+                "risk_tags": body.risk_tags,
+            },
+            expected={"behavior": body.expected_behavior},
+            scorers=[
+                {
+                    "kind": "llm_judge",
+                    "config": {
+                        "rubric": "persona expected behavior under realistic variation"
+                    },
+                },
+                {
+                    "kind": "persona_cluster",
+                    "config": {
+                        "persona": body.persona,
+                        "persona_set": body.persona_set,
+                        "evidence_ref": body.evidence_ref,
+                    },
+                },
+            ],
+            source="persona-test",
+            source_ref=body.evidence_ref,
+            attachments=[body.evidence_ref, body.candidate_eval_id],
+        ),
+        actor_sub=caller_sub,
+    )
+    _audit(
+        request,
+        workspace_id=agent.workspace_id,
+        caller_sub=caller_sub,
+        action="persona_test:eval_case_create",
+        resource_type="eval_case",
+        resource_id=str(case.id),
+        payload={
+            "agent_id": str(agent_id),
+            "suite_id": str(suite.id),
+            "persona_set": body.persona_set,
+            "persona": body.persona,
+            "evidence_ref": body.evidence_ref,
+            "failed_scenarios": body.failed_scenarios,
+            "risk_tags": body.risk_tags,
+        },
+    )
+    return {
+        "ok": True,
+        "suite_id": str(suite.id),
+        "case_id": str(case.id),
+        "case": serialise_case(case),
+        "next_url": f"/agents/{agent_id}/evals?case_id={case.id}",
+    }
 
 
 class LatencyBudgetBody(BaseModel):
