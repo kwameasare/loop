@@ -13,7 +13,7 @@ from loop_control_plane.agent_commitments import (
     missing_required_fields,
 )
 from loop_control_plane.audit_events import record_audit_event
-from loop_control_plane.authorize import authorize_workspace_access
+from loop_control_plane.authorize import Role, authorize_workspace_access
 
 router = APIRouter(prefix="/v1/agents", tags=["AgentCommitments"])
 
@@ -29,6 +29,7 @@ async def _agent(
     agent_id: UUID,
     caller_sub: str,
     workspace_id: UUID | None = None,
+    required_role: Role | None = None,
 ) -> Any:
     cp = request.app.state.cp
     if workspace_id is None:
@@ -40,6 +41,7 @@ async def _agent(
         workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=required_role,
     )
     return await cp.agents.get(
         workspace_id=workspace_id,
@@ -115,6 +117,7 @@ async def save_commitment_draft(
         agent_id=agent_id,
         caller_sub=caller_sub,
         workspace_id=workspace_id,
+        required_role=Role.ADMIN,
     )
     record = await request.app.state.cp.agent_commitments.save_draft(
         agent=agent,
@@ -150,6 +153,7 @@ async def accept_commitment(
         agent_id=agent_id,
         caller_sub=caller_sub,
         workspace_id=workspace_id,
+        required_role=Role.ADMIN,
     )
     record = await request.app.state.cp.agent_commitments.accept_current(agent=agent)
     _audit(
