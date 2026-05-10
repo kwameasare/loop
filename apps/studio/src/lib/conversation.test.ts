@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   appendMessage,
+  createPollingSubscriber,
   fetchConversationDetail,
   FIXTURE_TRANSCRIPT,
   handbackConversation,
@@ -52,6 +53,29 @@ describe("appendMessage", () => {
 });
 
 describe("conversation cp-api adapter", () => {
+  it("does not fall back to fixture transcript when cp-api is unconfigured", async () => {
+    await expect(
+      fetchConversationDetail("conv-1", { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required to load conversations");
+  });
+
+  it("does not stream fixture messages when cp-api is unconfigured", () => {
+    const messages: ConversationMessage[] = [];
+    const errors: string[] = [];
+    const sub = createPollingSubscriber({ baseUrl: "" })({
+      conversation_id: "conv-1",
+      onMessage: (message) => messages.push(message),
+      onError: (err) => errors.push(err.message),
+    });
+
+    sub.unsubscribe();
+
+    expect(messages).toEqual([]);
+    expect(errors).toEqual([
+      "LOOP_CP_API_BASE_URL is required to stream conversations",
+    ]);
+  });
+
   it("maps conversation detail messages and ownership from cp-api", async () => {
     const fetcher = async () =>
       response({
