@@ -249,6 +249,37 @@ interface CpMarketplaceItem {
   installs: number;
   calls: number;
   install_button_enabled: boolean;
+  lifecycle?: string;
+  deprecation_notice?: string | null;
+  permissions?: string[];
+  versions?: {
+    version: string;
+    released_at?: string;
+    releasedAt?: string;
+    changelog?: string;
+    signed?: boolean;
+    yanked?: boolean;
+  }[];
+}
+
+interface CpMarketplaceInstall {
+  install_id: string;
+  item_id: string;
+  workspace_id: string;
+  version: string;
+  installed_by: string;
+  installed_at: string;
+  audit_ref: string;
+}
+
+export interface MarketplaceInstall {
+  installId: string;
+  itemId: string;
+  workspaceId: string;
+  version: string;
+  installedBy: string;
+  installedAt: string;
+  auditRef: string;
 }
 
 function cpApiBaseUrl(override?: string): string | null {
@@ -280,33 +311,90 @@ function permissionFromCategory(category: string): MarketplacePermission | null 
   return null;
 }
 
+function isMarketplacePermission(value: string): value is MarketplacePermission {
+  return (MARKETPLACE_PERMISSIONS as readonly string[]).includes(value);
+}
+
+function cpItemKind(item: CpMarketplaceItem): MarketplaceItemKind {
+  const categories = new Set(item.categories.map((category) => category.toLowerCase()));
+  if (categories.has("template") || categories.has("templates")) return "template";
+  if (categories.has("skill") || categories.has("skills")) return "skill";
+  if (categories.has("eval") || categories.has("eval-pack") || categories.has("evals")) {
+    return "eval-pack";
+  }
+  if (categories.has("kb") || categories.has("knowledge") || categories.has("kb-connector")) {
+    return "kb-connector";
+  }
+  if (categories.has("channel") || categories.has("channel-pack")) return "channel-pack";
+  return "tool";
+}
+
+function cpLifecycle(item: CpMarketplaceItem): MarketplaceLifecycle {
+  if (
+    item.lifecycle &&
+    (MARKETPLACE_LIFECYCLE as readonly string[]).includes(item.lifecycle)
+  ) {
+    return item.lifecycle as MarketplaceLifecycle;
+  }
+  return item.install_button_enabled ? "published" : "in-review";
+}
+
+function cpVersions(item: CpMarketplaceItem): MarketplaceVersion[] {
+  const versions =
+    item.versions?.map((version) => ({
+      version: version.version,
+      releasedAt:
+        version.releasedAt ??
+        version.released_at?.slice(0, 10) ??
+        "unknown",
+      changelog: version.changelog ?? "Marketplace version.",
+      signed: version.signed ?? item.quality_score >= 70,
+      ...(version.yanked ? { yanked: true } : {}),
+    })) ?? [];
+  if (versions.length > 0) return versions;
+  return [
+    {
+      version: item.latest_version,
+      releasedAt: "2026-05-07",
+      changelog: "Live MCP marketplace version.",
+      signed: item.quality_score >= 70,
+    },
+  ];
+}
+
 export function marketplaceItemFromCp(item: CpMarketplaceItem): MarketplaceItem {
   const permissions = new Set<MarketplacePermission>();
   for (const category of item.categories) {
     const permission = permissionFromCategory(category);
     if (permission) permissions.add(permission);
   }
+  for (const permission of item.permissions ?? []) {
+    if (isMarketplacePermission(permission)) permissions.add(permission);
+  }
+  const privatePublisher = item.publisher.startsWith("workspace:");
+  const lifecycle = cpLifecycle(item);
   return {
     id: item.server_id,
-    kind: "tool",
+    kind: cpItemKind(item),
     name: item.name,
     tagline: item.description,
     description: item.description,
-    author: item.publisher === "loop" ? "Loop Official" : item.publisher,
-    publisher: item.publisher === "loop" ? "official" : "community",
+    author: privatePublisher
+      ? "Workspace private library"
+      : item.publisher === "loop"
+        ? "Loop Official"
+        : item.publisher,
+    publisher: privatePublisher
+      ? "private-workspace"
+      : item.publisher === "loop"
+        ? "official"
+        : "community",
     license: "Apache-2.0",
-    versions: [
-      {
-        version: item.latest_version,
-        releasedAt: "2026-05-07",
-        changelog: "Live MCP marketplace version.",
-        signed: item.quality_score >= 70,
-      },
-    ],
+    versions: cpVersions(item),
     installCount: item.installs,
     rating: item.average_rating,
     ratingCount: item.installs,
-    trust: item.quality_score >= 85 ? "verified" : "community",
+    trust: privatePublisher ? "internal" : item.quality_score >= 85 ? "verified" : "community",
     securityPosture: `${item.quality_score}/100 marketplace quality score; ${
       item.install_button_enabled ? "verified install enabled" : "install gated"
     }`,
@@ -320,7 +408,8 @@ export function marketplaceItemFromCp(item: CpMarketplaceItem): MarketplaceItem 
       },
     ],
     screenshots: [`${item.name} tools`, `${item.name} install contract`],
-    lifecycle: item.install_button_enabled ? "published" : "in-review",
+    lifecycle,
+    ...(item.deprecation_notice ? { deprecationNotice: item.deprecation_notice } : {}),
     workspaceUsage7d: item.calls,
   };
 }
@@ -403,7 +492,7 @@ export async function installMarketplaceItem(
   workspaceId: string,
   itemId: string,
   opts: MarketplaceClientOptions = {},
-): Promise<{ install_id: string; item_id: string; workspace_id: string }> {
+): Promise<MarketplaceInstall> {
   const base = cpApiBaseUrl(opts.baseUrl);
   if (!base) {
     throw new Error(
@@ -422,8 +511,105 @@ export async function installMarketplaceItem(
     if (!response.ok) {
       throw new Error(`cp-api marketplace install -> ${response.status}`);
     }
-    return response.json();
-  })) as { install_id: string; item_id: string; workspace_id: string };
+    return marketplaceInstallFromCp((await response.json()) as CpMarketplaceInstall);
+  })) as MarketplaceInstall;
+}
+
+function marketplaceInstallFromCp(install: CpMarketplaceInstall): MarketplaceInstall {
+  return {
+    installId: install.install_id,
+    itemId: install.item_id,
+    workspaceId: install.workspace_id,
+    version: install.version,
+    installedBy: install.installed_by,
+    installedAt: install.installed_at,
+    auditRef: install.audit_ref,
+  };
+}
+
+export async function listMarketplaceInstalls(
+  workspaceId: string,
+  itemId: string,
+  opts: MarketplaceClientOptions = {},
+): Promise<MarketplaceInstall[]> {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    throw new Error(
+      "LOOP_CP_API_BASE_URL is required to load marketplace install history",
+    );
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const response = await fetcher(
+    `${base}/marketplace/items/${encodeURIComponent(
+      itemId,
+    )}/installs?workspace_id=${encodeURIComponent(workspaceId)}`,
+    {
+      method: "GET",
+      headers: marketplaceHeaders(opts),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`cp-api marketplace installs -> ${response.status}`);
+  }
+  const body = (await response.json()) as { items?: CpMarketplaceInstall[] };
+  return (body.items ?? []).map(marketplaceInstallFromCp);
+}
+
+export async function publishMarketplaceItemVersion(
+  workspaceId: string,
+  itemId: string,
+  payload: { version: string; changelog: string },
+  opts: MarketplaceClientOptions = {},
+): Promise<MarketplaceItem> {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    throw new Error(
+      "LOOP_CP_API_BASE_URL is required to publish marketplace versions",
+    );
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const response = await fetcher(
+    `${base}/marketplace/items/${encodeURIComponent(itemId)}/versions`,
+    {
+      method: "POST",
+      headers: marketplaceHeaders(opts),
+      body: JSON.stringify({ workspace_id: workspaceId, ...payload }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`cp-api marketplace version -> ${response.status}`);
+  }
+  return marketplaceItemFromCp((await response.json()) as CpMarketplaceItem);
+}
+
+export async function deprecateMarketplaceItem(
+  workspaceId: string,
+  itemId: string,
+  reason: string,
+  opts: MarketplaceClientOptions = {},
+): Promise<MarketplaceItem> {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    throw new Error(
+      "LOOP_CP_API_BASE_URL is required to deprecate marketplace items",
+    );
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const response = await fetcher(
+    `${base}/marketplace/items/${encodeURIComponent(itemId)}/deprecate`,
+    {
+      method: "POST",
+      headers: marketplaceHeaders(opts),
+      body: JSON.stringify({ workspace_id: workspaceId, reason }),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`cp-api marketplace deprecate -> ${response.status}`);
+  }
+  return marketplaceItemFromCp((await response.json()) as CpMarketplaceItem);
 }
 
 /** Default catalog used by the marketplace surface in fixture mode. */
