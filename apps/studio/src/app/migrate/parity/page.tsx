@@ -14,7 +14,9 @@ import {
   fetchMigrationParityWorkspace,
   type MigrationParityWorkspace,
 } from "@/lib/botpress-import";
+import type { RepairSuggestion } from "@/lib/migration-parity";
 import {
+  acceptMigrationRepair,
   advanceMigrationCutover,
   rollbackMigrationCutover,
 } from "@/lib/migration-runs";
@@ -32,18 +34,19 @@ function MigrationParityPageBody(): JSX.Element {
   const params = useSearchParams();
   const migrationId = params.get("migration_id") ?? undefined;
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [workspace, setWorkspace] = useState<MigrationParityWorkspace | null>(
     null,
   );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
     setWorkspace(null);
     setError(null);
     const parityOptions = migrationId ? { migrationId } : {};
-    void fetchMigrationParityWorkspace(active.id, parityOptions)
+    void fetchMigrationParityWorkspace(activeWorkspaceId, parityOptions)
       .then((next) => {
         if (cancelled) return;
         setWorkspace(next);
@@ -59,21 +62,21 @@ function MigrationParityPageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active, migrationId]);
+  }, [activeWorkspaceId, migrationId]);
 
   async function refresh(nextMigrationId?: string) {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     const resolvedMigrationId = nextMigrationId ?? migrationId;
-    const next = await fetchMigrationParityWorkspace(active.id, {
+    const next = await fetchMigrationParityWorkspace(activeWorkspaceId, {
       ...(resolvedMigrationId ? { migrationId: resolvedMigrationId } : {}),
     });
     setWorkspace(next);
   }
 
   async function handleAdvance(stageId: string) {
-    if (!active || !workspace?.migrationRun) return;
+    if (!activeWorkspaceId || !workspace?.migrationRun) return;
     const run = await advanceMigrationCutover(
-      active.id,
+      activeWorkspaceId,
       workspace.migrationRun.id,
       {
         stage_id: stageId,
@@ -85,13 +88,28 @@ function MigrationParityPageBody(): JSX.Element {
   }
 
   async function handleRollback(triggerId: string | "manual") {
-    if (!active || !workspace?.migrationRun) return;
+    if (!activeWorkspaceId || !workspace?.migrationRun) return;
     const run = await rollbackMigrationCutover(
-      active.id,
+      activeWorkspaceId,
       workspace.migrationRun.id,
       {
         trigger_id: triggerId,
         reason: "Manual rollback from migration parity workspace.",
+      },
+      { fallbackRun: workspace.migrationRun },
+    );
+    await refresh(run.id);
+  }
+
+  async function handleAcceptRepair(repair: RepairSuggestion) {
+    if (!activeWorkspaceId || !workspace?.migrationRun) return;
+    const run = await acceptMigrationRepair(
+      activeWorkspaceId,
+      workspace.migrationRun.id,
+      {
+        repair_id: repair.id,
+        evidence_ref: repair.groundingRef,
+        patch_summary: repair.patchSummary,
       },
       { fallbackRun: workspace.migrationRun },
     );
@@ -148,6 +166,7 @@ function MigrationParityPageBody(): JSX.Element {
             diffs={workspace.diffs}
             replay={workspace.replay}
             repairs={workspace.repairs}
+            onAcceptRepair={handleAcceptRepair}
           />
           <CutoverPanel
             plan={workspace.cutover}

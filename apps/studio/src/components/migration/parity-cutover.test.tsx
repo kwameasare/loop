@@ -60,14 +60,23 @@ describe("ParityHarness", () => {
     expect(screen.getByTestId("replay-row-rp_003").textContent).toContain("regress");
   });
 
-  it("accepting a repair fires the callback and shows accepted state", () => {
+  it("accepting a repair fires the callback and shows accepted state", async () => {
     const { onAcceptRepair } = setup();
     fireEvent.click(screen.getByTestId("repair-accept-rep_2"));
     expect(onAcceptRepair).toHaveBeenCalledTimes(1);
     expect(onAcceptRepair).toHaveBeenCalledWith(
       expect.objectContaining({ id: "rep_2" }),
     );
-    expect(screen.getByTestId("repair-accepted-rep_2")).toBeInTheDocument();
+    expect(await screen.findByTestId("repair-accepted-rep_2")).toBeInTheDocument();
+  });
+
+  it("does not mark a repair accepted when the persistence callback fails", async () => {
+    setup(vi.fn().mockRejectedValue(new Error("backend rejected repair")));
+    fireEvent.click(screen.getByTestId("repair-accept-rep_2"));
+    expect(await screen.findByTestId("repair-accept-error")).toHaveTextContent(
+      "backend rejected repair",
+    );
+    expect(screen.queryByTestId("repair-accepted-rep_2")).not.toBeInTheDocument();
   });
 });
 

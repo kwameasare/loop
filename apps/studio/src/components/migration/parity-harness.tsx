@@ -42,12 +42,11 @@ export interface ParityHarnessProps {
   replay: readonly ParityReplayCase[];
   repairs: readonly RepairSuggestion[];
   /**
-   * Called when the operator accepts a grounded repair suggestion. The
-   * caller owns the actual patch application; this surface only emits
-   * the user intent. Defaults to a no-op so the harness renders without
-   * a wire-up.
+   * Called when the operator accepts a grounded repair suggestion. The caller
+   * must apply the patch or persist the acceptance before this surface shows the
+   * repair as accepted.
    */
-  onAcceptRepair?: (repair: RepairSuggestion) => void;
+  onAcceptRepair?: (repair: RepairSuggestion) => Promise<void> | void;
 }
 
 export function ParityHarness({
@@ -62,10 +61,27 @@ export function ParityHarness({
   const [acceptedRepairs, setAcceptedRepairs] = useState<Record<string, boolean>>(
     {},
   );
+  const [pendingRepair, setPendingRepair] = useState<string | null>(null);
+  const [repairError, setRepairError] = useState<string | null>(null);
 
   const filteredDiffs = useMemo(() => diffsBy(diffs, mode), [diffs, mode]);
   const replaySummary = useMemo(() => summarizeReplay(replay), [replay]);
   const blockingCount = countBlocking(diffs);
+
+  async function acceptRepair(repair: RepairSuggestion) {
+    setRepairError(null);
+    setPendingRepair(repair.id);
+    try {
+      await onAcceptRepair?.(repair);
+      setAcceptedRepairs((prev) => ({ ...prev, [repair.id]: true }));
+    } catch (err) {
+      setRepairError(
+        err instanceof Error ? err.message : "Could not accept this repair.",
+      );
+    } finally {
+      setPendingRepair(null);
+    }
+  }
 
   return (
     <div data-testid="parity-harness" className="space-y-6">
@@ -216,6 +232,15 @@ export function ParityHarness({
         className="border rounded p-3 space-y-2"
       >
         <h3 className="text-sm font-medium">Grounded repair suggestions</h3>
+        {repairError ? (
+          <p
+            className="rounded border border-destructive/30 bg-destructive/10 p-2 text-sm text-destructive"
+            role="alert"
+            data-testid="repair-accept-error"
+          >
+            {repairError}
+          </p>
+        ) : null}
         {repairs.length === 0 && (
           <p className="text-sm text-muted-foreground">No repairs proposed.</p>
         )}
@@ -247,13 +272,11 @@ export function ParityHarness({
                     <button
                       type="button"
                       data-testid={`repair-accept-${r.id}`}
-                      onClick={() => {
-                        setAcceptedRepairs((prev) => ({ ...prev, [r.id]: true }));
-                        onAcceptRepair?.(r);
-                      }}
+                      disabled={pendingRepair === r.id}
+                      onClick={() => void acceptRepair(r)}
                       className="px-2 py-1 text-xs border rounded hover:bg-muted"
                     >
-                      Accept
+                      {pendingRepair === r.id ? "Accepting..." : "Accept"}
                     </button>
                   )}
                 </div>

@@ -59,6 +59,14 @@ class CutoverRollback(BaseModel):
     reason: str = Field(default="Manual rollback requested.", max_length=1000)
 
 
+class MigrationRepairAccept(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    repair_id: str = Field(default="", max_length=160)
+    evidence_ref: str = Field(default="", max_length=240)
+    patch_summary: str = Field(default="", max_length=1000)
+
+
 class MigrationInventoryItem(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -70,6 +78,8 @@ class MigrationInventoryItem(BaseModel):
     confidence: int
     severity: MigrationInventorySeverity
     evidence_ref: str
+    resolved_by_repair_id: str = ""
+    resolved_at: datetime | None = None
 
 
 class MigrationLineageStep(BaseModel):
@@ -266,6 +276,79 @@ class MigrationRunRegistry:
                     "cutover_stages": stages,
                     "cutover_events": [event, *record.cutover_events],
                     "updated_at": event.created_at,
+                }
+            )
+            self._replace_unlocked(workspace_id=workspace_id, record=updated)
+            return updated
+
+    async def accept_repair(
+        self,
+        *,
+        workspace_id: UUID,
+        migration_id: str,
+        body: MigrationRepairAccept,
+        actor_sub: str,
+    ) -> MigrationRunRecord:
+        async with self._lock:
+            record = self._find_unlocked(workspace_id=workspace_id, migration_id=migration_id)
+            item_id = body.repair_id.removeprefix("rep_")
+            now = datetime.now(UTC)
+            changed = False
+            inventory: list[MigrationInventoryItem] = []
+            for item in record.inventory:
+                if item.id != item_id:
+                    inventory.append(item)
+                    continue
+                if item.severity == "ok":
+                    raise WorkspaceError(f"repair already accepted for item: {item_id}")
+                inventory.append(
+                    item.model_copy(
+                        update={
+                            "confidence": max(item.confidence, 88),
+                            "severity": "ok",
+                            "evidence_ref": body.evidence_ref
+                            or f"audit/migration/{workspace_id}/{record.source}/repair/{body.repair_id}",
+                            "resolved_by_repair_id": body.repair_id,
+                            "resolved_at": now,
+                        }
+                    )
+                )
+                changed = True
+            if not changed:
+                raise WorkspaceError(f"unknown migration repair: {body.repair_id}")
+
+            blocking_count = sum(1 for item in inventory if item.severity == "blocking")
+            advisory_count = sum(1 for item in inventory if item.severity == "advisory")
+            score = max(0, min(100, 100 - blocking_count * 18 - advisory_count * 5))
+            readiness = record.readiness.model_copy(
+                update={
+                    "overall_score": max(record.readiness.overall_score, score),
+                    "parity_passing": max(
+                        0,
+                        record.readiness.parity_total - blocking_count * 3 - advisory_count,
+                    ),
+                    "blocking_count": blocking_count,
+                    "advisory_count": advisory_count,
+                }
+            )
+            stages = list(record.cutover_stages)
+            if (
+                readiness.blocking_count == 0
+                and readiness.parity_total > 0
+                and not any(stage.status == "in_progress" for stage in stages)
+                and stages
+            ):
+                stages[0] = stages[0].model_copy(update={"status": "in_progress"})
+            status = record.status
+            if status in {"imported", "mapped"} and readiness.blocking_count == 0:
+                status = "parity_ready"
+            updated = record.model_copy(
+                update={
+                    "status": status,
+                    "inventory": inventory,
+                    "readiness": readiness,
+                    "cutover_stages": stages,
+                    "updated_at": now,
                 }
             )
             self._replace_unlocked(workspace_id=workspace_id, record=updated)

@@ -204,6 +204,64 @@ def test_botpress_import_creates_durable_lineage_and_cutover_state(
     assert "migration:cutover_rollback" in actions
 
 
+def test_accepting_migration_repair_resolves_blocker_and_arms_cutover(
+    client: TestClient,
+) -> None:
+    workspace_id = _workspace(client)
+    headers = {"authorization": _bearer_for("owner-1")}
+
+    created = client.post(
+        f"/v1/workspaces/{workspace_id}/migrations/imports",
+        headers=headers,
+        json={
+            "source": "botpress",
+            "archive_name": "acme-refunds.bpz",
+            "target_agent_name": "Acme Imported Concierge",
+            "business_responsibility": "Preserve refund support behavior.",
+            "channels": ["web_chat", "whatsapp"],
+            "transcript_count": 20,
+        },
+    )
+    assert created.status_code == 201, created.text
+    run = created.json()
+    assert run["status"] == "mapped"
+    assert run["readiness"]["blocking_count"] >= 1
+    assert run["cutover_stages"][0]["status"] == "pending"
+
+    accepted = client.post(
+        f"/v1/workspaces/{workspace_id}/migrations/imports/{run['id']}/repairs/rep_inv_integrations/accept",
+        headers=headers,
+        json={
+            "evidence_ref": "audit/migration/accept/integrations",
+            "patch_summary": "Attach sandbox tool contracts for imported integrations.",
+        },
+    )
+
+    assert accepted.status_code == 200, accepted.text
+    body = accepted.json()
+    assert body["status"] == "parity_ready"
+    assert body["readiness"]["blocking_count"] == 0
+    assert body["cutover_stages"][0]["status"] == "in_progress"
+    inventory = {item["id"]: item for item in body["inventory"]}
+    assert inventory["inv_integrations"]["severity"] == "ok"
+    assert inventory["inv_integrations"]["resolved_by_repair_id"] == "rep_inv_integrations"
+
+    parity = client.get(
+        f"/v1/workspaces/{workspace_id}/migration/parity",
+        headers=headers,
+        params={"migration_id": run["id"]},
+    )
+    assert parity.status_code == 200, parity.text
+    assert not any(
+        repair["id"] == "rep_inv_integrations" for repair in parity.json()["repairs"]
+    )
+    actions = [
+        event.action
+        for event in client.app.state.cp.audit_events.list_for_workspace(workspace_id)  # type: ignore[attr-defined]
+    ]
+    assert "migration:repair_accept" in actions
+
+
 def test_migration_import_supports_dialogflow_cx_source_profile(
     client: TestClient,
 ) -> None:
