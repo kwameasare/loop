@@ -80,6 +80,7 @@ export interface AgentWorkflow {
   branches: AgentBranch[];
   change_sets: AgentChangeSet[];
   release_candidates: AgentReleaseCandidate[];
+  degraded_reason?: string | undefined;
 }
 
 type AgentWorkflowClientOptions = UxWireupClientOptions & {
@@ -185,6 +186,7 @@ export async function listAgentWorkflow(
     `/agents/${encodeURIComponent(agentId)}/workflow`,
     {
       ...opts,
+      allowFallback: opts.allowFixture === true,
       fallback:
         opts.allowFixture === true
           ? localAgentWorkflow(agentId)

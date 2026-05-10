@@ -50,6 +50,27 @@ describe("ux wireup cp helpers", () => {
     ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
   });
 
+  it("fails closed by default when cp-api is unconfigured", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+
+    await expect(
+      cpJson("/agents/agt/replay/against-draft", {
+        fallback: { ok: false },
+      }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("uses local fallback only when explicitly allowed", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+
+    await expect(
+      cpJson("/agents/agt/replay/against-draft", {
+        fallback: { ok: false },
+        allowFallback: true,
+      }),
+    ).resolves.toEqual({ ok: false });
+  });
+
   it("preserves /v1 when building WebSocket URLs", () => {
     expect(
       cpWebSocketUrl("/workspaces/ws1/presence", {

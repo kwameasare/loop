@@ -77,6 +77,12 @@ describe("help and telemetry cp clients", () => {
     ).rejects.toThrow(/LOOP_CP_API_BASE_URL is required/i);
   });
 
+  it("requires cp-api before loading telemetry consent", async () => {
+    await expect(
+      fetchTelemetryConsent("ws-1", { baseUrl: "" }),
+    ).rejects.toThrow(/LOOP_CP_API_BASE_URL is required/i);
+  });
+
   it("loads contextual show-me clips for the current surface", async () => {
     const fetcher = vi.fn<typeof fetch>(async (input) => {
       expect(String(input)).toBe("https://cp.test/v1/help-clips?surface=pipeline");

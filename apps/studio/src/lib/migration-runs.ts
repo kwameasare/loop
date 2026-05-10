@@ -314,12 +314,13 @@ export function localMigrationRun(workspaceId: string): MigrationRun {
 
 export async function listMigrationImports(
   workspaceId: string,
-  opts: UxWireupClientOptions = {},
+  opts: MigrationRunClientOptions = {},
 ): Promise<MigrationRunsResponse> {
   return cpJson<MigrationRunsResponse>(
     `/workspaces/${encodeURIComponent(workspaceId)}/migrations/imports`,
     {
       ...opts,
+      allowFallback: opts.allowFixture === true,
       fallback: { items: [] },
     },
   );

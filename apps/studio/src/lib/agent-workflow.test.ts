@@ -29,13 +29,9 @@ describe("agent workflow client", () => {
     });
   });
 
-  it("returns an empty workflow by default when cp-api is unconfigured", async () => {
-    await expect(listAgentWorkflow("agent-1", { baseUrl: "" })).resolves.toEqual(
-      {
-        branches: [],
-        change_sets: [],
-        release_candidates: [],
-      },
+  it("does not fabricate an empty workflow when cp-api is unconfigured", async () => {
+    await expect(listAgentWorkflow("agent-1", { baseUrl: "" })).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required",
     );
   });
 

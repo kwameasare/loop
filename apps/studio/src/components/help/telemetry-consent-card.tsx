@@ -36,16 +36,37 @@ export function TelemetryConsentCard(): JSX.Element | null {
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
-    void fetchTelemetryConsent(active.id).then((next) => {
-      if (cancelled) return;
-      setModel(next);
-      setDraft({
-        product_analytics: next.product_analytics ?? DEFAULT_DRAFT.product_analytics,
-        diagnostics: next.diagnostics ?? DEFAULT_DRAFT.diagnostics,
-        ai_improvement: next.ai_improvement ?? DEFAULT_DRAFT.ai_improvement,
-        crash_reports: next.crash_reports ?? DEFAULT_DRAFT.crash_reports,
+    setError(null);
+    void fetchTelemetryConsent(active.id)
+      .then((next) => {
+        if (cancelled) return;
+        setModel(next);
+        setDraft({
+          product_analytics:
+            next.product_analytics ?? DEFAULT_DRAFT.product_analytics,
+          diagnostics: next.diagnostics ?? DEFAULT_DRAFT.diagnostics,
+          ai_improvement:
+            next.ai_improvement ?? DEFAULT_DRAFT.ai_improvement,
+          crash_reports: next.crash_reports ?? DEFAULT_DRAFT.crash_reports,
+        });
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setModel({
+          workspace_id: active.id,
+          user_sub: "unavailable",
+          product_analytics: null,
+          diagnostics: null,
+          ai_improvement: null,
+          crash_reports: null,
+          annual_review_due: true,
+        });
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Could not load telemetry consent.",
+        );
       });
-    });
     return () => {
       cancelled = true;
     };

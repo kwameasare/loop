@@ -202,8 +202,16 @@ describe("listAgentIntakeTemplates", () => {
     });
   });
 
-  it("falls back to local approved templates without a cp-api base URL", async () => {
-    const catalog = await listAgentIntakeTemplates("local-workspace");
+  it("does not fabricate a template catalog when cp-api is unconfigured", async () => {
+    await expect(listAgentIntakeTemplates("local-workspace")).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required",
+    );
+  });
+
+  it("keeps local approved templates explicitly opt-in", async () => {
+    const catalog = await listAgentIntakeTemplates("local-workspace", {
+      allowFixture: true,
+    });
 
     expect(catalog.items.map((template) => template.id)).toContain(
       "tmpl_support_agent",
