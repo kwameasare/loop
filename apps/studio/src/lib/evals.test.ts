@@ -77,17 +77,18 @@ describe("getEvalSuite / getEvalRun", () => {
     expect(detail!.runs[0].baselineRunId).toBe(detail!.runs[1].id);
   });
 
-  it("returns null when cp-api responds 404", async () => {
+  it("marks live suite-detail 404 as degraded evidence instead of not found", async () => {
     const fetcher = vi.fn(async () => ({
       ok: false,
       status: 404,
       json: async () => ({}),
     })) as unknown as typeof fetch;
-    const detail = await getEvalSuite("missing", {
-      fetcher,
-      baseUrl: "https://api.loop.dev",
-    });
-    expect(detail).toBeNull();
+    await expect(
+      getEvalSuite("missing", {
+        fetcher,
+        baseUrl: "https://api.loop.dev",
+      }),
+    ).rejects.toThrow(/eval suite detail route returned 404/i);
   });
 
   it("getEvalRun fixture exposes per-case statuses", async () => {
@@ -102,6 +103,21 @@ describe("getEvalSuite / getEvalRun", () => {
     await expect(getEvalRun("evr_evs_support_smoke_002")).rejects.toThrow(
       EVAL_RUN_DETAIL_CP_API_REQUIRED,
     );
+  });
+
+  it("marks live run-detail 404 as degraded evidence instead of not found", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: false,
+      status: 404,
+      json: async () => ({}),
+    })) as unknown as typeof fetch;
+
+    await expect(
+      getEvalRun("missing", {
+        fetcher,
+        baseUrl: "https://api.loop.dev",
+      }),
+    ).rejects.toThrow(/eval run detail route returned 404/i);
   });
 });
 
