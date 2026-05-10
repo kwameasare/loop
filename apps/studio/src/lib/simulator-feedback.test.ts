@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { rateSimulatorTurn } from "@/lib/simulator-feedback";
+import {
+  createSimulatorRun,
+  rateSimulatorTurn,
+} from "@/lib/simulator-feedback";
 
 describe("rateSimulatorTurn", () => {
   it("posts first-proof turn feedback to cp-api", async () => {
@@ -25,6 +28,7 @@ describe("rateSimulatorTurn", () => {
             final_answer: "Yes.",
             channel: "web",
             trace_id: "trace_1",
+            simulator_run_id: "simrun_1",
             issue_annotation: "Should escalate.",
             candidate_artifact: {
               kind: "regression_eval_candidate",
@@ -32,6 +36,7 @@ describe("rateSimulatorTurn", () => {
               expected_outcome: "Should escalate.",
               source: "first_proof",
               trace_id: "trace_1",
+              simulator_run_id: "simrun_1",
             },
             eval_case_ref: {
               suite_id: "suite_1",
@@ -57,6 +62,7 @@ describe("rateSimulatorTurn", () => {
         final_answer: "Yes.",
         channel: "web",
         trace_id: "trace_1",
+        simulator_run_id: "simrun_1",
         issue_annotation: "Should escalate.",
         save_as_eval: true,
         cost_usd: 0.01,
@@ -82,6 +88,9 @@ describe("rateSimulatorTurn", () => {
     });
 
     expect(result.candidate_artifact.kind).toBe("risk_rule_candidate");
+    expect(result.candidate_artifact.simulator_run_id).toBe(
+      "simulator-run/not-captured",
+    );
     expect(result.behavior_note_ref?.kind).toBe("risk_rule");
     expect(result.few_shot_ref).toBeNull();
     expect(result.eval_case_ref).toBeNull();
@@ -101,6 +110,9 @@ describe("rateSimulatorTurn", () => {
     });
 
     expect(result.candidate_artifact.kind).toBe("positive_eval_or_few_shot");
+    expect(result.candidate_artifact.simulator_run_id).toBe(
+      "simulator-run/not-captured",
+    );
     expect(result.few_shot_ref).toMatchObject({
       id: "fshot_good",
       status: "candidate",
@@ -110,5 +122,56 @@ describe("rateSimulatorTurn", () => {
       evidence_ref: "trace_good",
     });
     expect(result.behavior_note_ref).toBeNull();
+  });
+
+  it("posts first-proof simulator runs to cp-api", async () => {
+    const fetcher = vi.fn(
+      async (
+        _url: Parameters<typeof fetch>[0],
+        init?: Parameters<typeof fetch>[1],
+      ) => {
+        expect(init?.method).toBe("POST");
+        expect(JSON.parse(String(init?.body))).toMatchObject({
+          prompt: "Can I cancel?",
+          channel: "whatsapp",
+          status: "completed",
+        });
+        return new Response(
+          JSON.stringify({
+            id: "simrun_1",
+            workspace_id: "ws_1",
+            agent_id: "agt_1",
+            prompt: "Can I cancel?",
+            final_answer: "I will check policy first.",
+            channel: "whatsapp",
+            trace_id: "trace_1",
+            config: { model_alias: "fast-draft" },
+            status: "completed",
+            cost_usd: 0.01,
+            latency_ms: 800,
+            created_by: "owner-1",
+            created_at: "2026-05-01T00:00:00Z",
+          }),
+          { status: 201 },
+        );
+      },
+    ) as unknown as typeof fetch;
+
+    const result = await createSimulatorRun(
+      "agt_1",
+      {
+        prompt: "Can I cancel?",
+        final_answer: "I will check policy first.",
+        channel: "whatsapp",
+        trace_id: "trace_1",
+        config: { model_alias: "fast-draft" },
+        status: "completed",
+        cost_usd: 0.01,
+        latency_ms: 800,
+      },
+      { baseUrl: "https://api.loop.test", fetcher },
+    );
+
+    expect(result.id).toBe("simrun_1");
   });
 });

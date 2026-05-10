@@ -7,6 +7,8 @@ import {
 } from "@/components/simulator/simulator-lab";
 import { DEFAULT_SIMULATOR_CONFIG } from "@/lib/emulator-lab";
 import type {
+  SimulatorRunInput,
+  SimulatorRunRecord,
   SimulatorTurnRatingInput,
   SimulatorTurnRatingRecord,
 } from "@/lib/simulator-feedback";
@@ -100,6 +102,7 @@ describe("SimulatorLab", () => {
         final_answer: input.final_answer,
         channel: input.channel,
         trace_id: input.trace_id,
+        simulator_run_id: input.simulator_run_id ?? "",
         issue_annotation: input.issue_annotation,
         candidate_artifact: {
           kind: "regression_eval_candidate",
@@ -107,6 +110,7 @@ describe("SimulatorLab", () => {
           expected_outcome: input.issue_annotation,
           source: "first_proof",
           trace_id: input.trace_id,
+          simulator_run_id: input.simulator_run_id ?? "",
         },
         eval_case_ref: { suite_id: "suite_1", case_id: "case_1" },
         behavior_note_ref: null,
@@ -184,6 +188,7 @@ describe("SimulatorLab", () => {
         final_answer: input.final_answer,
         channel: input.channel,
         trace_id: input.trace_id,
+        simulator_run_id: input.simulator_run_id ?? "",
         issue_annotation: input.issue_annotation,
         candidate_artifact: {
           kind: "risk_rule_candidate",
@@ -191,6 +196,7 @@ describe("SimulatorLab", () => {
           expected_outcome: input.issue_annotation,
           source: "first_proof",
           trace_id: input.trace_id,
+          simulator_run_id: input.simulator_run_id ?? "",
         },
         eval_case_ref: null,
         behavior_note_ref: {
@@ -270,6 +276,7 @@ describe("SimulatorLab", () => {
         final_answer: input.final_answer,
         channel: input.channel,
         trace_id: input.trace_id,
+        simulator_run_id: input.simulator_run_id ?? "",
         issue_annotation: input.issue_annotation,
         candidate_artifact: {
           kind: "positive_eval_or_few_shot",
@@ -277,6 +284,7 @@ describe("SimulatorLab", () => {
           expected_outcome: input.final_answer,
           source: "first_proof",
           trace_id: input.trace_id,
+          simulator_run_id: input.simulator_run_id ?? "",
         },
         eval_case_ref: null,
         behavior_note_ref: null,
@@ -316,5 +324,99 @@ describe("SimulatorLab", () => {
     expect(await screen.findByTestId("first-proof-result")).toHaveTextContent(
       "Few-shot candidate: fshot_good",
     );
+  });
+
+  it("persists simulator runs and passes the run id into ratings", async () => {
+    const invoke = vi.fn(
+      async (
+        _agentId: string,
+        _prompt: string,
+        onFrame: Parameters<SimulatorInvoke>[2],
+      ) => {
+        onFrame({
+          type: "complete",
+          payload: {
+            response: {
+              content: [{ type: "text", text: "I will check policy first." }],
+            },
+          },
+          ts: "2026-05-01T00:00:00Z",
+        });
+      },
+    );
+    const createRun = vi.fn(
+      async (
+        agentId: string,
+        input: SimulatorRunInput,
+      ): Promise<SimulatorRunRecord> => ({
+        id: "simrun_123",
+        workspace_id: "ws_1",
+        agent_id: agentId,
+        ...input,
+        created_by: "owner-1",
+        created_at: "2026-05-01T00:00:00Z",
+      }),
+    );
+    const rateTurn = vi.fn(
+      async (
+        _agentId: string,
+        input: SimulatorTurnRatingInput,
+      ): Promise<SimulatorTurnRatingRecord> => ({
+        id: "simrate_123",
+        workspace_id: "ws_1",
+        agent_id: "agent_support",
+        rating: input.rating,
+        prompt: input.prompt,
+        final_answer: input.final_answer,
+        channel: input.channel,
+        trace_id: input.trace_id,
+        simulator_run_id: input.simulator_run_id ?? "",
+        issue_annotation: input.issue_annotation,
+        candidate_artifact: {
+          kind: "regression_eval_candidate",
+          title: "Prevent this failure from recurring",
+          expected_outcome: input.issue_annotation,
+          source: "first_proof",
+          trace_id: input.trace_id,
+          simulator_run_id: input.simulator_run_id ?? "",
+        },
+        eval_case_ref: { suite_id: "suite_1", case_id: "case_1" },
+        behavior_note_ref: null,
+        few_shot_ref: null,
+        cost_usd: input.cost_usd,
+        latency_ms: input.latency_ms,
+        created_by: "owner-1",
+        created_at: "2026-05-01T00:00:00Z",
+      }),
+    );
+    render(
+      <SimulatorLab
+        agentId="agent_support"
+        invoke={invoke}
+        createRun={createRun}
+        rateTurn={rateTurn}
+        initialConfig={DEFAULT_SIMULATOR_CONFIG}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("emulator-input"), {
+      target: { value: "Can I cancel?" },
+    });
+    fireEvent.click(screen.getByTestId("emulator-send"));
+
+    expect(await screen.findByTestId("simulator-run-record")).toHaveTextContent(
+      "simrun_123",
+    );
+    fireEvent.change(screen.getByTestId("first-proof-annotation"), {
+      target: { value: "Should cite policy." },
+    });
+    fireEvent.click(screen.getByTestId("first-proof-rate-bad"));
+
+    await waitFor(() => {
+      expect(rateTurn).toHaveBeenCalledWith(
+        "agent_support",
+        expect.objectContaining({ simulator_run_id: "simrun_123" }),
+      );
+    });
   });
 });

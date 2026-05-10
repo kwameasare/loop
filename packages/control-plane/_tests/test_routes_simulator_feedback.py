@@ -100,6 +100,47 @@ def test_simulator_turn_rating_creates_eval_case_and_audit_event(
     assert "simulator_turn:rate" in {item["action"] for item in audit.json()["items"]}
 
 
+def test_simulator_run_is_durable_and_audited(
+    client: TestClient,
+    workspace_id: UUID,
+    agent_id: UUID,
+) -> None:
+    response = client.post(
+        f"/v1/agents/{agent_id}/simulator/runs",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "prompt": "Can I cancel my annual plan?",
+            "final_answer": "I will check the renewal policy first.",
+            "channel": "whatsapp",
+            "trace_id": "trace_first_proof_run",
+            "config": {
+                "model_alias": "fast-draft",
+                "memory_mode": "snapshot",
+                "tool_mode": "mock",
+            },
+            "status": "completed",
+            "cost_usd": 0.043,
+            "latency_ms": 1030,
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["id"].startswith("simrun_")
+    assert body["channel"] == "whatsapp"
+    assert body["config"]["model_alias"] == "fast-draft"
+
+    listed = client.get(
+        f"/v1/agents/{agent_id}/simulator/runs",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert listed.status_code == 200, listed.text
+    assert listed.json()["items"][0]["id"] == body["id"]
+
+    audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=_auth())
+    assert "simulator_run:create" in {item["action"] for item in audit.json()["items"]}
+
+
 def test_good_simulator_turn_rating_creates_few_shot_candidate(
     client: TestClient,
     workspace_id: UUID,
@@ -114,6 +155,7 @@ def test_good_simulator_turn_rating_creates_few_shot_candidate(
             "final_answer": "I can help. I will check the renewal policy first.",
             "channel": "telegram",
             "trace_id": "trace_first_proof_good",
+            "simulator_run_id": "simrun_good",
             "issue_annotation": "Preserve the calm policy-check pattern.",
             "save_as_eval": False,
         },
@@ -122,6 +164,8 @@ def test_good_simulator_turn_rating_creates_few_shot_candidate(
     assert response.status_code == 201, response.text
     body = response.json()
     assert body["candidate_artifact"]["kind"] == "positive_eval_or_few_shot"
+    assert body["simulator_run_id"] == "simrun_good"
+    assert body["candidate_artifact"]["simulator_run_id"] == "simrun_good"
     assert body["few_shot_ref"]["status"] == "candidate"
     assert body["few_shot_ref"]["prompt"] == "Can I cancel my annual plan?"
     assert body["few_shot_ref"]["answer"].startswith("I can help.")

@@ -10,6 +10,38 @@ from pydantic import BaseModel, ConfigDict, Field
 from loop_control_plane._app_agents import AgentRecord
 
 TurnRating = Literal["good", "bad", "risky", "unclear"]
+SimulatorRunStatus = Literal["completed", "failed"]
+
+
+class SimulatorRunCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    prompt: str = Field(min_length=1, max_length=4096)
+    final_answer: str = Field(default="", max_length=8192)
+    channel: str = Field(default="web", max_length=80)
+    trace_id: str = Field(default="", max_length=256)
+    config: dict[str, Any] = Field(default_factory=dict)
+    status: SimulatorRunStatus = "completed"
+    cost_usd: float = Field(default=0, ge=0)
+    latency_ms: int = Field(default=0, ge=0)
+
+
+class SimulatorRunRecord(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    id: str
+    workspace_id: UUID
+    agent_id: UUID
+    prompt: str
+    final_answer: str
+    channel: str
+    trace_id: str
+    config: dict[str, Any]
+    status: SimulatorRunStatus
+    cost_usd: float
+    latency_ms: int
+    created_by: str
+    created_at: datetime
 
 
 class SimulatorTurnRatingCreate(BaseModel):
@@ -20,6 +52,7 @@ class SimulatorTurnRatingCreate(BaseModel):
     final_answer: str = Field(default="", max_length=8192)
     channel: str = Field(default="web", max_length=80)
     trace_id: str = Field(default="", max_length=256)
+    simulator_run_id: str = Field(default="", max_length=256)
     issue_annotation: str = Field(default="", max_length=2048)
     save_as_eval: bool = False
     cost_usd: float = Field(default=0, ge=0)
@@ -37,6 +70,7 @@ class SimulatorTurnRatingRecord(BaseModel):
     final_answer: str
     channel: str
     trace_id: str
+    simulator_run_id: str
     issue_annotation: str
     candidate_artifact: dict[str, Any]
     eval_case_ref: dict[str, Any] | None
@@ -53,6 +87,7 @@ def candidate_artifact_for(body: SimulatorTurnRatingCreate) -> dict[str, Any]:
         "source": "first_proof",
         "rating": body.rating,
         "trace_id": body.trace_id or "trace/not-captured",
+        "simulator_run_id": body.simulator_run_id or "simulator-run/not-captured",
         "prompt": body.prompt,
         "annotation": body.issue_annotation,
     }
@@ -133,10 +168,45 @@ def simulator_turn_rating_payload(record: SimulatorTurnRatingRecord) -> dict[str
     return record.model_dump(mode="json")
 
 
+def simulator_run_payload(record: SimulatorRunRecord) -> dict[str, Any]:
+    return record.model_dump(mode="json")
+
+
 class SimulatorFeedbackRegistry:
     def __init__(self) -> None:
         self._items: dict[UUID, list[SimulatorTurnRatingRecord]] = {}
+        self._runs: dict[UUID, list[SimulatorRunRecord]] = {}
         self._lock = asyncio.Lock()
+
+    async def add_run(
+        self,
+        *,
+        agent: AgentRecord,
+        body: SimulatorRunCreate,
+        actor_sub: str,
+    ) -> SimulatorRunRecord:
+        async with self._lock:
+            run = SimulatorRunRecord(
+                id=f"simrun_{uuid4().hex[:12]}",
+                workspace_id=agent.workspace_id,
+                agent_id=agent.id,
+                prompt=body.prompt,
+                final_answer=body.final_answer,
+                channel=body.channel,
+                trace_id=body.trace_id,
+                config=body.config,
+                status=body.status,
+                cost_usd=body.cost_usd,
+                latency_ms=body.latency_ms,
+                created_by=actor_sub,
+                created_at=datetime.now(UTC),
+            )
+            self._runs.setdefault(agent.id, []).insert(0, run)
+            return run
+
+    async def list_runs_for_agent(self, *, agent: AgentRecord) -> list[SimulatorRunRecord]:
+        async with self._lock:
+            return list(self._runs.get(agent.id, []))
 
     async def add(
         self,
@@ -158,6 +228,7 @@ class SimulatorFeedbackRegistry:
                 final_answer=body.final_answer,
                 channel=body.channel,
                 trace_id=body.trace_id,
+                simulator_run_id=body.simulator_run_id,
                 issue_annotation=body.issue_annotation,
                 candidate_artifact=candidate_artifact,
                 eval_case_ref=eval_case_ref,

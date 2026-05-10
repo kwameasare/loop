@@ -25,8 +25,11 @@ import {
 } from "@/lib/emulator-lab";
 import type { TurnEvent } from "@/lib/sdk-types";
 import {
+  createSimulatorRun as defaultCreateSimulatorRun,
   rateSimulatorTurn as defaultRateSimulatorTurn,
   type FirstProofRating,
+  type SimulatorRunInput,
+  type SimulatorRunRecord,
   type SimulatorTurnRatingRecord,
   type SimulatorTurnRatingInput,
 } from "@/lib/simulator-feedback";
@@ -72,6 +75,10 @@ export interface SimulatorLabProps {
     agentId: string,
     input: SimulatorTurnRatingInput,
   ) => Promise<SimulatorTurnRatingRecord>;
+  createRun?: (
+    agentId: string,
+    input: SimulatorRunInput,
+  ) => Promise<SimulatorRunRecord>;
 }
 
 const INITIAL_STATE: PanelState = {
@@ -196,6 +203,7 @@ export function SimulatorLab({
   initialConfig = DEFAULT_SIMULATOR_CONFIG,
   evidenceMode = "fixture",
   rateTurn = defaultRateSimulatorTurn,
+  createRun = defaultCreateSimulatorRun,
 }: SimulatorLabProps) {
   const [config, setConfig] = useState<SimulatorConfig>(initialConfig);
   const [prompt, setPrompt] = useState("");
@@ -209,6 +217,12 @@ export function SimulatorLab({
   const [ratingResult, setRatingResult] =
     useState<SimulatorTurnRatingRecord | null>(null);
   const [ratingError, setRatingError] = useState<string | null>(null);
+  const [simulatorRun, setSimulatorRun] = useState<SimulatorRunRecord | null>(
+    null,
+  );
+  const [simulatorRunError, setSimulatorRunError] = useState<string | null>(
+    null,
+  );
   const inputId = useId();
 
   const selectedChannel =
@@ -298,19 +312,55 @@ export function SimulatorLab({
     setIssueAnnotation("");
     setRatingResult(null);
     setRatingError(null);
+    setSimulatorRun(null);
+    setSimulatorRunError(null);
     appendTimeline(
       "Turn queued",
       `${selectedChannel.label} as ${run.personaLabel}`,
     );
     try {
+      let collectedState = INITIAL_STATE;
       await invoke(
         agentId,
         text,
         (frame) => {
+          collectedState = applyEvent(collectedState, frame);
           setState((prev) => applyEvent(prev, frame));
         },
         config,
       );
+      const finalAnswer =
+        collectedState.finalAnswer ?? collectedState.tokens ?? run.draftOutput;
+      try {
+        const persistedRun = await createRun(agentId, {
+          prompt: text,
+          final_answer: finalAnswer,
+          channel: config.channel,
+          trace_id: run.traceId,
+          config: {
+            model_alias: config.modelAlias,
+            memory_mode: config.memoryMode,
+            persona: config.personaId,
+            seeded_context_id: config.seededContextId,
+            disabled_tools: config.disabledTools,
+            injected_context: config.injectedContext,
+            replay_turn: config.replayTurn,
+            diff_against: config.diffAgainst,
+            tool_mode: config.toolMode,
+          },
+          status: "completed",
+          cost_usd: run.costUsd,
+          latency_ms: run.latencyMs,
+        });
+        setSimulatorRun(persistedRun);
+        appendTimeline("Simulator run saved", persistedRun.id);
+      } catch (err) {
+        setSimulatorRunError(
+          err instanceof Error
+            ? err.message
+            : "Simulator run could not be saved.",
+        );
+      }
       setPrompt("");
     } catch (err) {
       setState((prev) => ({
@@ -342,6 +392,8 @@ export function SimulatorLab({
     setIssueAnnotation("");
     setRatingResult(null);
     setRatingError(null);
+    setSimulatorRun(null);
+    setSimulatorRunError(null);
     setTimeline([]);
   }
 
@@ -356,6 +408,7 @@ export function SimulatorLab({
         final_answer: state.finalAnswer ?? state.tokens ?? run.draftOutput,
         channel: config.channel,
         trace_id: run.traceId,
+        simulator_run_id: simulatorRun?.id ?? "",
         issue_annotation: issueAnnotation,
         save_as_eval: saveAsEval,
         cost_usd: run.costUsd,
@@ -647,6 +700,19 @@ export function SimulatorLab({
             {run.contextLabel}. {run.contextEvidence}
           </span>
         </EvidenceCallout>
+        {simulatorRun ? (
+          <div
+            className="rounded-md border bg-background p-2 text-xs"
+            data-testid="simulator-run-record"
+          >
+            Simulator run saved: <code>{simulatorRun.id}</code>
+          </div>
+        ) : null}
+        {simulatorRunError ? (
+          <StatePanel state="degraded" title="Simulator run not persisted">
+            <span data-testid="simulator-run-error">{simulatorRunError}</span>
+          </StatePanel>
+        ) : null}
 
         {state.tokens ? (
           <div
