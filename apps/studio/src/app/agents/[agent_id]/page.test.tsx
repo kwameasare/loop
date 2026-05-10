@@ -37,9 +37,9 @@ describe("AgentOverviewPage", () => {
     expect(screen.getByTestId("overview-deploy-time")).toHaveTextContent(
       "Unavailable",
     );
-    expect(
-      screen.getByTestId("overview-deploy-unavailable"),
-    ).toHaveTextContent("LOOP_CP_API_BASE_URL");
+    expect(screen.getByTestId("overview-deploy-unavailable")).toHaveTextContent(
+      "LOOP_CP_API_BASE_URL",
+    );
     expect(screen.queryByTestId("overview-deploy-version")).toBeNull();
   });
 
@@ -151,7 +151,7 @@ describe("AgentOverviewPage", () => {
           ...localAgentWorkflow("agent_live"),
           branches: [
             {
-              ...(localAgentWorkflow("agent_live").branches[0]!),
+              ...localAgentWorkflow("agent_live").branches[0]!,
               id: "br_live",
               name: "draft/live-support-fix",
               updated_at: "2026-05-09T12:45:00Z",
@@ -159,7 +159,7 @@ describe("AgentOverviewPage", () => {
           ],
           change_sets: [
             {
-              ...(localAgentWorkflow("agent_live").change_sets[0]!),
+              ...localAgentWorkflow("agent_live").change_sets[0]!,
               id: "cs_live",
               branch_id: "br_live",
               summary: "Tighten live support refund answer.",
@@ -168,7 +168,7 @@ describe("AgentOverviewPage", () => {
           ],
           release_candidates: [
             {
-              ...(localAgentWorkflow("agent_live").release_candidates[0]!),
+              ...localAgentWorkflow("agent_live").release_candidates[0]!,
               id: "rc_live",
               branch_id: "br_live",
               change_set_id: "cs_live",
@@ -212,16 +212,16 @@ describe("AgentOverviewPage", () => {
           ),
         });
       }
-      if (url.endsWith("/evals/suites")) {
+      if (url === "https://cp.test/v1/workspaces/ws_1/eval-suites") {
         return Response.json({
           items: [
             {
               id: "suite_live",
               name: "Live support suite",
-              agentId: "agent_live",
+              agent_id: "agent_live",
               cases: 18,
-              lastRunAt: "2026-05-09T12:00:00Z",
-              passRate: 0.97,
+              last_run_at: "2026-05-09T12:00:00Z",
+              pass_rate: 0.97,
             },
           ],
         });
@@ -313,9 +313,7 @@ describe("AgentOverviewPage", () => {
     expect(screen.getByTestId("overview-branch")).toHaveTextContent(
       "draft/live-support-fix",
     );
-    expect(screen.getAllByTestId("diff-ribbon")[0]).toHaveTextContent(
-      "ver_12",
-    );
+    expect(screen.getAllByTestId("diff-ribbon")[0]).toHaveTextContent("ver_12");
     expect(screen.getByTestId("safe-action-approval")).toHaveTextContent(
       "Generate Change Package",
     );

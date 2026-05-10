@@ -54,24 +54,24 @@ describe("AgentEvalsPage", () => {
           workspace_id: "ws_eval",
         });
       }
-      if (url === "https://cp.test/v1/evals/suites") {
+      if (url === "https://cp.test/v1/workspaces/ws_eval/eval-suites") {
         return Response.json({
           items: [
             {
               id: "suite_agent",
               name: "Refund regression",
-              agentId: "agent_eval",
+              agent_id: "agent_eval",
               cases: 12,
-              lastRunAt: "2026-05-09T10:05:00Z",
-              passRate: 0.92,
+              last_run_at: "2026-05-09T10:05:00Z",
+              pass_rate: 0.92,
             },
             {
               id: "suite_other",
               name: "Other agent suite",
-              agentId: "agent_other",
+              agent_id: "agent_other",
               cases: 4,
-              lastRunAt: null,
-              passRate: null,
+              last_run_at: null,
+              pass_rate: null,
             },
           ],
         });

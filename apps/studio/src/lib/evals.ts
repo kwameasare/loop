@@ -2,9 +2,10 @@
  * S253: Eval suites/runs helpers for the studio app.
  *
  * The cp-api eval endpoints expose:
- *   GET  /v1/evals/suites             → { items: EvalSuite[] }
- *   GET  /v1/evals/suites/{suite_id}  → EvalSuiteDetail (latest runs)
- *   GET  /v1/evals/runs/{run_id}      → EvalRunDetail (per-case results)
+ *   GET  /v1/workspaces/{workspace_id}/eval-suites → { items: EvalSuite[] }
+ *   POST /v1/workspaces/{workspace_id}/eval-suites → EvalSuite
+ *   GET  /v1/eval-suites/{suite_id}                → EvalSuiteDetail
+ *   GET  /v1/eval-runs/{run_id}                    → EvalRunDetail
  *
  * Fixture data is available only for explicit demo/test callers. Route-facing
  * code must surface a degraded state when the cp-api is not configured.
@@ -115,6 +116,7 @@ export interface EvalsHelperOptions {
   baseUrl?: string;
   token?: string;
   allowFixture?: boolean;
+  workspaceId?: string | null | undefined;
 }
 
 export interface EvalSuiteListResponse {
@@ -229,6 +231,117 @@ function authHeaders(opts: EvalsHelperOptions): Record<string, string> {
   return headers;
 }
 
+type CpEvalSuite = Partial<{
+  id: string;
+  workspace_id: string;
+  name: string;
+  dataset_ref: string;
+  metrics: string[];
+  agent_id: string | null;
+  agentId: string;
+  cases: number;
+  case_count: number;
+  last_run_at: string | null;
+  lastRunAt: string | null;
+  pass_rate: number | null;
+  passRate: number | null;
+  runs: CpEvalRun[];
+}>;
+
+type CpEvalRun = Partial<{
+  id: string;
+  suite_id: string;
+  suiteId: string;
+  state: string;
+  status: string;
+  started_at: string;
+  startedAt: string;
+  completed_at: string | null;
+  finishedAt: string | null;
+  passed: number;
+  failed: number;
+  errored: number;
+  total: number;
+  baseline_run_id: string | null;
+  baselineRunId: string | null;
+  cases: CpEvalCaseResult[];
+}>;
+
+type CpEvalCaseResult = Partial<{
+  case_id: string;
+  caseId: string;
+  name: string;
+  status: EvalCaseStatus;
+  source: EvalCaseSource;
+  source_ref: string;
+  sourceRef: string;
+  expected: unknown;
+  actual: unknown;
+  baseline_status: EvalCaseStatus | null;
+  baselineStatus: EvalCaseStatus | null;
+  duration_ms: number;
+  durationMs: number;
+}>;
+
+function agentIdFromDatasetRef(ref: string | undefined): string {
+  if (!ref?.startsWith("agent:")) return "";
+  const [, agentId] = ref.split(":");
+  return agentId ?? "";
+}
+
+function stringifyEvidence(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return "";
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function mapEvalSuite(raw: CpEvalSuite): EvalSuite {
+  const datasetRef = raw.dataset_ref;
+  return {
+    id: raw.id ?? "",
+    name: raw.name ?? "Untitled eval suite",
+    agentId: raw.agent_id ?? raw.agentId ?? agentIdFromDatasetRef(datasetRef),
+    cases: raw.cases ?? raw.case_count ?? 0,
+    lastRunAt: raw.last_run_at ?? raw.lastRunAt ?? null,
+    passRate: raw.pass_rate ?? raw.passRate ?? null,
+  };
+}
+
+function mapEvalRun(raw: CpEvalRun, fallbackSuiteId = ""): EvalRunSummary {
+  const status = raw.status ?? raw.state ?? "queued";
+  return {
+    id: raw.id ?? "",
+    suiteId: raw.suite_id ?? raw.suiteId ?? fallbackSuiteId,
+    status: status === "pending" ? "queued" : (status as EvalRunStatus),
+    startedAt: raw.started_at ?? raw.startedAt ?? "",
+    finishedAt: raw.completed_at ?? raw.finishedAt ?? null,
+    passed: raw.passed ?? 0,
+    failed: raw.failed ?? 0,
+    errored: raw.errored ?? 0,
+    total: raw.total ?? 0,
+    baselineRunId: raw.baseline_run_id ?? raw.baselineRunId ?? null,
+  };
+}
+
+function mapEvalCaseResult(raw: CpEvalCaseResult): EvalCaseResult {
+  const sourceRef = raw.source_ref ?? raw.sourceRef;
+  return {
+    caseId: raw.case_id ?? raw.caseId ?? "",
+    name: raw.name ?? "Untitled eval case",
+    status: raw.status ?? "pass",
+    ...(raw.source ? { source: raw.source } : {}),
+    ...(sourceRef ? { sourceRef } : {}),
+    expected: stringifyEvidence(raw.expected),
+    actual: stringifyEvidence(raw.actual),
+    baselineStatus: raw.baseline_status ?? raw.baselineStatus ?? null,
+    durationMs: raw.duration_ms ?? raw.durationMs ?? 0,
+  };
+}
+
 const FIXTURE_SUITES: EvalSuite[] = [
   {
     id: "evs_support_smoke",
@@ -338,8 +451,7 @@ const CREATION_SOURCES: EvalCreationSource[] = [
     count: 5,
     evidence:
       "Synthetic cancellation paraphrases seeded from production traces",
-    provenance:
-      `Synthetic fixture provenance: ${FIXTURE_TRACE_ID} + refund_policy_2026.pdf`,
+    provenance: `Synthetic fixture provenance: ${FIXTURE_TRACE_ID} + refund_policy_2026.pdf`,
     actionLabel: "Review generated cases",
     confidence: "low",
   },
@@ -493,11 +605,7 @@ const SUITE_BUILDERS: Record<string, EvalSuiteBuilderView> = {
       },
     ],
     datasets: ["production_refunds_may_06", "botpress_parity_refunds"],
-    fixtures: [
-      FIXTURE_TRACE_ID,
-      FIXTURE_SCENE_ID,
-      "refund_policy_2026.pdf#p4",
-    ],
+    fixtures: [FIXTURE_TRACE_ID, FIXTURE_SCENE_ID, "refund_policy_2026.pdf#p4"],
     cassettes: ["cassette_refund_lookup_order_v23"],
     thresholds: ["Pass rate >= 95%", "No PII leak", "p95 latency <= 1.2s"],
     historicalTrend: "96% pass rate, one Spanish paraphrase regression",
@@ -525,10 +633,7 @@ const SUITE_BUILDERS: Record<string, EvalSuiteBuilderView> = {
       },
     ],
     datasets: ["operator_resolution_refunds", "migration_legal_threats"],
-    fixtures: [
-      FIXTURE_INBOX_TRACE_ID,
-      FIXTURE_SCENE_ID,
-    ],
+    fixtures: [FIXTURE_INBOX_TRACE_ID, FIXTURE_SCENE_ID],
     cassettes: ["cassette_operator_handoff_v7"],
     thresholds: ["No critical route regressions", "p95 latency <= 1.5s"],
     historicalTrend: "87.5% pass rate, routing drift under review",
@@ -663,14 +768,33 @@ export async function listEvalSuites(
       evidence_mode: "degraded",
     };
   }
+  if (!opts.workspaceId?.trim()) {
+    return {
+      items: [],
+      degraded_reason:
+        "Workspace context is required before loading eval suites.",
+      evidence_mode: "degraded",
+    };
+  }
   const fetcher = opts.fetcher ?? fetch;
-  const res = await fetcher(`${base}/evals/suites`, {
-    method: "GET",
-    headers: authHeaders(opts),
-  });
+  const res = await fetcher(
+    `${base}/workspaces/${encodeURIComponent(opts.workspaceId)}/eval-suites`,
+    {
+      method: "GET",
+      headers: authHeaders(opts),
+    },
+  );
   if (!res.ok) throw new Error(`listEvalSuites failed: ${res.status}`);
-  const body = (await res.json()) as EvalSuiteListResponse;
-  return { ...body, evidence_mode: body.evidence_mode ?? "live" };
+  const body = (await res.json()) as {
+    items?: CpEvalSuite[];
+    degraded_reason?: string;
+    evidence_mode?: EvalSuiteListResponse["evidence_mode"];
+  };
+  return {
+    items: (body.items ?? []).map(mapEvalSuite),
+    ...(body.degraded_reason ? { degraded_reason: body.degraded_reason } : {}),
+    evidence_mode: body.evidence_mode ?? "live",
+  };
 }
 
 export async function getEvalSuite(
@@ -683,7 +807,7 @@ export async function getEvalSuite(
     throw new Error(EVAL_SUITE_DETAIL_CP_API_REQUIRED);
   }
   const fetcher = opts.fetcher ?? fetch;
-  const res = await fetcher(`${base}/evals/suites/${suiteId}`, {
+  const res = await fetcher(`${base}/eval-suites/${suiteId}`, {
     method: "GET",
     headers: authHeaders(opts),
   });
@@ -693,7 +817,11 @@ export async function getEvalSuite(
     );
   }
   if (!res.ok) throw new Error(`getEvalSuite failed: ${res.status}`);
-  return (await res.json()) as EvalSuiteDetail;
+  const body = (await res.json()) as CpEvalSuite;
+  return {
+    ...mapEvalSuite(body),
+    runs: (body.runs ?? []).map((run) => mapEvalRun(run, body.id ?? "")),
+  };
 }
 
 export async function getEvalRun(
@@ -706,7 +834,7 @@ export async function getEvalRun(
     throw new Error(EVAL_RUN_DETAIL_CP_API_REQUIRED);
   }
   const fetcher = opts.fetcher ?? fetch;
-  const res = await fetcher(`${base}/evals/runs/${runId}`, {
+  const res = await fetcher(`${base}/eval-runs/${runId}`, {
     method: "GET",
     headers: authHeaders(opts),
   });
@@ -716,7 +844,11 @@ export async function getEvalRun(
     );
   }
   if (!res.ok) throw new Error(`getEvalRun failed: ${res.status}`);
-  return (await res.json()) as EvalRunDetail;
+  const body = (await res.json()) as CpEvalRun;
+  return {
+    ...mapEvalRun(body),
+    cases: (body.cases ?? []).map(mapEvalCaseResult),
+  };
 }
 
 export function diffAgainstBaseline(
@@ -812,9 +944,10 @@ export function getEvalFoundryModel(
     (suite) => suite.id === "evs_support_smoke",
   );
   const useFixtureEvidence = options.evidenceMode === "fixture";
-  const featuredRun = useFixtureEvidence && hasFixtureSuite
-    ? fixtureRunDetail("evr_evs_support_smoke_002")
-    : null;
+  const featuredRun =
+    useFixtureEvidence && hasFixtureSuite
+      ? fixtureRunDetail("evr_evs_support_smoke_002")
+      : null;
   const creationSources = suites.flatMap(
     (suite) => suite.creationSources ?? [],
   );
@@ -872,7 +1005,7 @@ export interface CreateEvalSuiteInput {
 }
 
 /**
- * POST a new eval suite to ``/v1/eval-suites``. Returns the created
+ * POST a new eval suite to ``/v1/workspaces/{workspace_id}/eval-suites``. Returns the created
  * suite summary so the page can refresh in place. Throws on non-2xx
  * so the form can surface the cp-side validation message.
  */
@@ -894,36 +1027,34 @@ export async function createEvalSuite(
       passRate: null,
     };
   }
+  if (!opts.workspaceId?.trim()) {
+    throw new Error(
+      "Workspace context is required before creating eval suites.",
+    );
+  }
   const fetcher = opts.fetcher ?? fetch;
   const headers = {
     ...authHeaders(opts),
     "content-type": "application/json",
   };
-  const res = await fetcher(`${base}/eval-suites`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      name: input.name,
-      dataset_ref: input.dataset_ref,
-      metrics: input.metrics,
-    }),
-    cache: "no-store",
-  });
+  const res = await fetcher(
+    `${base}/workspaces/${encodeURIComponent(opts.workspaceId)}/eval-suites`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        name: input.name,
+        dataset_ref: input.dataset_ref,
+        metrics: input.metrics,
+      }),
+      cache: "no-store",
+    },
+  );
   if (!res.ok) {
     throw new Error(`createEvalSuite failed: ${res.status}`);
   }
-  const body = (await res.json()) as Partial<EvalSuite> & {
-    id?: string;
-    name?: string;
-  };
-  return {
-    id: body.id ?? "",
-    name: body.name ?? input.name,
-    agentId: body.agentId ?? "",
-    cases: body.cases ?? 0,
-    lastRunAt: body.lastRunAt ?? null,
-    passRate: body.passRate ?? null,
-  };
+  const body = (await res.json()) as CpEvalSuite;
+  return mapEvalSuite(body);
 }
 
 export interface TriggerEvalSuiteRunResult {

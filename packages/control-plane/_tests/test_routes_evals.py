@@ -58,26 +58,21 @@ def test_create_suite(client: TestClient, workspace_id: UUID) -> None:
     assert body["name"] == "smoke"
     assert body["metrics"] == ["faithfulness", "groundedness"]
     assert body["created_by"] == "owner-1"
+    assert body["cases"] == 0
+    assert body["last_run_at"] is None
+    assert body["pass_rate"] is None
 
 
-def test_create_suite_rejects_duplicate_name(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_create_suite_rejects_duplicate_name(client: TestClient, workspace_id: UUID) -> None:
     headers = {"authorization": _bearer_for("owner-1")}
     body = {"name": "smoke", "dataset_ref": "x"}
-    first = client.post(
-        f"/v1/workspaces/{workspace_id}/eval-suites", headers=headers, json=body
-    )
-    second = client.post(
-        f"/v1/workspaces/{workspace_id}/eval-suites", headers=headers, json=body
-    )
+    first = client.post(f"/v1/workspaces/{workspace_id}/eval-suites", headers=headers, json=body)
+    second = client.post(f"/v1/workspaces/{workspace_id}/eval-suites", headers=headers, json=body)
     assert first.status_code == 201
     assert second.status_code == 400
 
 
-def test_list_suites_returns_recent_first(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_list_suites_returns_recent_first(client: TestClient, workspace_id: UUID) -> None:
     headers = {"authorization": _bearer_for("owner-1")}
     client.post(
         f"/v1/workspaces/{workspace_id}/eval-suites",
@@ -89,16 +84,48 @@ def test_list_suites_returns_recent_first(
         headers=headers,
         json={"name": "second", "dataset_ref": "s"},
     )
-    items = client.get(
-        f"/v1/workspaces/{workspace_id}/eval-suites", headers=headers
-    ).json()["items"]
+    items = client.get(f"/v1/workspaces/{workspace_id}/eval-suites", headers=headers).json()[
+        "items"
+    ]
     assert items[0]["name"] == "second"
     assert items[1]["name"] == "first"
 
 
-def test_create_suite_requires_admin(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_get_suite_returns_runs_and_case_count(client: TestClient, workspace_id: UUID) -> None:
+    headers = {"authorization": _bearer_for("owner-1")}
+    suite = client.post(
+        f"/v1/workspaces/{workspace_id}/eval-suites",
+        headers=headers,
+        json={
+            "name": "agent smoke",
+            "dataset_ref": "agent:agent_123:datasets/smoke",
+        },
+    ).json()
+    client.post(
+        f"/v1/eval-suites/{suite['id']}/cases",
+        headers=headers,
+        json={
+            "name": "refund resolution",
+            "input": {"conversation_id": "conv-1"},
+            "expected": {"outcome": "refund issued"},
+        },
+    )
+    client.post(f"/v1/eval-suites/{suite['id']}/runs", headers=headers, json={})
+    client.post(f"/v1/eval-suites/{suite['id']}/runs", headers=headers, json={})
+
+    response = client.get(f"/v1/eval-suites/{suite['id']}", headers=headers)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["agent_id"] == "agent_123"
+    assert body["cases"] == 1
+    assert body["case_count"] == 1
+    assert body["last_run_at"] is not None
+    assert len(body["runs"]) == 2
+    assert body["runs"][0]["baseline_run_id"] == body["runs"][1]["id"]
+
+
+def test_create_suite_requires_admin(client: TestClient, workspace_id: UUID) -> None:
     client.post(
         f"/v1/workspaces/{workspace_id}/members",
         headers={"authorization": _bearer_for("owner-1")},
@@ -112,9 +139,7 @@ def test_create_suite_requires_admin(
     assert response.status_code in (401, 403)
 
 
-def test_start_run_returns_202_and_pending(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_start_run_returns_202_and_pending(client: TestClient, workspace_id: UUID) -> None:
     headers = {"authorization": _bearer_for("owner-1")}
     suite = client.post(
         f"/v1/workspaces/{workspace_id}/eval-suites",
@@ -132,9 +157,7 @@ def test_start_run_returns_202_and_pending(
     assert body["triggered_by"] == "owner-1"
 
 
-def test_list_runs_returns_recent_first(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_list_runs_returns_recent_first(client: TestClient, workspace_id: UUID) -> None:
     headers = {"authorization": _bearer_for("owner-1")}
     suite = client.post(
         f"/v1/workspaces/{workspace_id}/eval-suites",
@@ -142,18 +165,36 @@ def test_list_runs_returns_recent_first(
         json={"name": "smoke", "dataset_ref": "f"},
     ).json()
     for _ in range(3):
-        client.post(
-            f"/v1/eval-suites/{suite['id']}/runs", headers=headers, json={}
-        )
-    runs = client.get(
-        f"/v1/eval-suites/{suite['id']}/runs", headers=headers
-    ).json()["items"]
+        client.post(f"/v1/eval-suites/{suite['id']}/runs", headers=headers, json={})
+    runs = client.get(f"/v1/eval-suites/{suite['id']}/runs", headers=headers).json()["items"]
     assert len(runs) == 3
+    assert runs[0]["baseline_run_id"] == runs[1]["id"]
 
 
-def test_eval_routes_emit_audit_events(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_get_run_returns_control_plane_run_detail(client: TestClient, workspace_id: UUID) -> None:
+    headers = {"authorization": _bearer_for("owner-1")}
+    suite = client.post(
+        f"/v1/workspaces/{workspace_id}/eval-suites",
+        headers=headers,
+        json={"name": "smoke", "dataset_ref": "f"},
+    ).json()
+    run = client.post(
+        f"/v1/eval-suites/{suite['id']}/runs",
+        headers=headers,
+        json={},
+    ).json()
+
+    response = client.get(f"/v1/eval-runs/{run['id']}", headers=headers)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["id"] == run["id"]
+    assert body["suite_id"] == suite["id"]
+    assert body["state"] == "pending"
+    assert body["cases"] == []
+
+
+def test_eval_routes_emit_audit_events(client: TestClient, workspace_id: UUID) -> None:
     headers = {"authorization": _bearer_for("owner-1")}
     suite = client.post(
         f"/v1/workspaces/{workspace_id}/eval-suites",
@@ -167,9 +208,7 @@ def test_eval_routes_emit_audit_events(
     assert "eval:run:start" in actions
 
 
-def test_create_case_and_list_cases(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_create_case_and_list_cases(client: TestClient, workspace_id: UUID) -> None:
     headers = {"authorization": _bearer_for("owner-1")}
     suite = client.post(
         f"/v1/workspaces/{workspace_id}/eval-suites",
@@ -192,9 +231,7 @@ def test_create_case_and_list_cases(
     assert response.status_code == 201, response.text
     assert response.json()["source"] == "operator-resolution"
 
-    cases = client.get(
-        f"/v1/eval-suites/{suite['id']}/cases", headers=headers
-    ).json()["items"]
+    cases = client.get(f"/v1/eval-suites/{suite['id']}/cases", headers=headers).json()["items"]
     assert cases[0]["name"] == "refund resolution"
 
 
@@ -220,9 +257,9 @@ def test_create_case_from_resolution_creates_operator_suite_and_audit(
     assert body["ok"] is True
     assert body["case"]["expected"]["outcome"] == "Refund issued and email confirmed."
 
-    suites = client.get(
-        f"/v1/workspaces/{workspace_id}/eval-suites", headers=headers
-    ).json()["items"]
+    suites = client.get(f"/v1/workspaces/{workspace_id}/eval-suites", headers=headers).json()[
+        "items"
+    ]
     assert suites[0]["name"] == "Operator resolutions"
     state = client.app.state.cp  # type: ignore[attr-defined]
     actions = [e.action for e in state.audit_events.list_for_workspace(workspace_id)]
@@ -231,6 +268,7 @@ def test_create_case_from_resolution_creates_operator_suite_and_audit(
 
 def test_run_unknown_suite_returns_404(client: TestClient) -> None:
     from uuid import uuid4
+
     response = client.post(
         f"/v1/eval-suites/{uuid4()}/runs",
         headers={"authorization": _bearer_for("owner-1")},

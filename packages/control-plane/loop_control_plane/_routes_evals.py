@@ -2,8 +2,10 @@
 
 * ``GET   /v1/workspaces/{id}/eval-suites`` (any member)
 * ``POST  /v1/workspaces/{id}/eval-suites`` (ADMIN)
+* ``GET   /v1/eval-suites/{id}``            (any member)
 * ``GET   /v1/eval-suites/{id}/runs``       (any member)
 * ``POST  /v1/eval-suites/{id}/runs``       (ADMIN)
+* ``GET   /v1/eval-runs/{id}``              (any member)
 """
 
 from __future__ import annotations
@@ -30,6 +32,7 @@ from loop_control_plane.eval_suites import (
 router_workspaces = APIRouter(prefix="/v1/workspaces", tags=["Evals"])
 router_agents = APIRouter(prefix="/v1/agents", tags=["Evals"])
 router_suites = APIRouter(prefix="/v1/eval-suites", tags=["Evals"])
+router_runs = APIRouter(prefix="/v1/eval-runs", tags=["Evals"])
 
 
 class ResolutionEvalCaseBody(BaseModel):
@@ -89,6 +92,47 @@ async def _agent(
     return await cp.agents.get(workspace_id=workspace_id, agent_id=agent_id)
 
 
+def _agent_id_from_dataset_ref(dataset_ref: str) -> str | None:
+    if not dataset_ref.startswith("agent:"):
+        return None
+    parts = dataset_ref.split(":")
+    return parts[1] if len(parts) >= 2 and parts[1] else None
+
+
+async def _suite_summary(request: Request, workspace_id: UUID, suite: Any) -> dict[str, Any]:
+    cp = request.app.state.cp
+    cases = await cp.eval_suites.list_cases(workspace_id=workspace_id, suite_id=suite.id)
+    runs = await cp.eval_suites.list_runs(workspace_id=workspace_id, suite_id=suite.id)
+    latest = runs[0] if runs else None
+    payload = serialise_suite(suite)
+    payload["agent_id"] = _agent_id_from_dataset_ref(suite.dataset_ref)
+    payload["cases"] = len(cases)
+    payload["case_count"] = len(cases)
+    payload["last_run_at"] = (
+        (latest.completed_at or latest.started_at).isoformat() if latest else None
+    )
+    payload["pass_rate"] = (
+        latest.metrics.get("pass_rate") if latest and "pass_rate" in latest.metrics else None
+    )
+    return payload
+
+
+def _run_counts(run: Any) -> dict[str, int]:
+    return {
+        "passed": int(run.metrics.get("passed", 0)),
+        "failed": int(run.metrics.get("failed", 0)),
+        "errored": int(run.metrics.get("errored", 0)),
+        "total": int(run.metrics.get("total", 0)),
+    }
+
+
+def _run_summary(run: Any) -> dict[str, Any]:
+    payload = serialise_run(run)
+    payload.update(_run_counts(run))
+    payload["baseline_run_id"] = None
+    return payload
+
+
 @router_workspaces.get("/{workspace_id}/eval-suites")
 async def list_suites(
     request: Request,
@@ -102,7 +146,7 @@ async def list_suites(
         user_sub=caller_sub,
     )
     rows = await cp.eval_suites.list_suites(workspace_id)
-    return {"items": [serialise_suite(s) for s in rows]}
+    return {"items": [await _suite_summary(request, workspace_id, s) for s in rows]}
 
 
 @router_workspaces.post("/{workspace_id}/eval-suites", status_code=201)
@@ -139,7 +183,7 @@ async def create_suite(
             "dataset_ref": suite.dataset_ref,
         },
     )
-    return serialise_suite(suite)
+    return await _suite_summary(request, workspace_id, suite)
 
 
 @router_workspaces.post("/{workspace_id}/eval-cases/from-resolution", status_code=201)
@@ -381,6 +425,33 @@ async def _suite_workspace(request: Request, suite_id: UUID) -> UUID:
     return suite.workspace_id
 
 
+@router_suites.get("/{suite_id}")
+async def get_suite(
+    request: Request,
+    suite_id: UUID,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    workspace_id = await _suite_workspace(request, suite_id)
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    try:
+        suite = await cp.eval_suites.get_suite(workspace_id=workspace_id, suite_id=suite_id)
+        runs = await cp.eval_suites.list_runs(workspace_id=workspace_id, suite_id=suite_id)
+    except EvalError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    payload = await _suite_summary(request, workspace_id, suite)
+    run_items = [_run_summary(run) for run in runs]
+    for index, run in enumerate(run_items):
+        if index + 1 < len(run_items):
+            run["baseline_run_id"] = run_items[index + 1]["id"]
+    payload["runs"] = run_items
+    return payload
+
+
 @router_suites.get("/{suite_id}/runs")
 async def list_runs(
     request: Request,
@@ -398,7 +469,11 @@ async def list_runs(
         rows = await cp.eval_suites.list_runs(workspace_id=workspace_id, suite_id=suite_id)
     except EvalError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return {"items": [serialise_run(r) for r in rows]}
+    items = [_run_summary(r) for r in rows]
+    for index, run in enumerate(items):
+        if index + 1 < len(items):
+            run["baseline_run_id"] = items[index + 1]["id"]
+    return {"items": items}
 
 
 @router_suites.get("/{suite_id}/cases")
@@ -495,4 +570,25 @@ async def start_run(
     return serialise_run(run)
 
 
-__all__ = ["router_agents", "router_suites", "router_workspaces"]
+@router_runs.get("/{run_id}")
+async def get_run(
+    request: Request,
+    run_id: UUID,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    try:
+        run = await cp.eval_suites.get_run(run_id=run_id)
+    except EvalError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=run.workspace_id,
+        user_sub=caller_sub,
+    )
+    payload = _run_summary(run)
+    payload["cases"] = []
+    return payload
+
+
+__all__ = ["router_agents", "router_runs", "router_suites", "router_workspaces"]

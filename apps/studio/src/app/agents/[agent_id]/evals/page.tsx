@@ -19,15 +19,22 @@ export default async function AgentEvalsPage({ params }: PageProps) {
   let suites: EvalSuite[] = [];
   let evalsDegradedReason: string | undefined;
 
-  try {
-    const result = await listEvalSuites();
-    suites = result.items.filter((suite) => suite.agentId === params.agent_id);
-    evalsDegradedReason = result.degraded_reason;
-  } catch (error) {
-    evalsDegradedReason = messageFromError(
-      error,
-      "Could not load eval suites.",
-    );
+  if (!agent.workspace_id || agent.workspace_id === "unavailable") {
+    evalsDegradedReason =
+      "Workspace context is required before loading agent eval suites.";
+  } else {
+    try {
+      const result = await listEvalSuites({ workspaceId: agent.workspace_id });
+      suites = result.items.filter(
+        (suite) => suite.agentId === params.agent_id,
+      );
+      evalsDegradedReason = result.degraded_reason;
+    } catch (error) {
+      evalsDegradedReason = messageFromError(
+        error,
+        "Could not load eval suites.",
+      );
+    }
   }
 
   const degradedEvidence = [agentDegradedReason, evalsDegradedReason]

@@ -118,9 +118,7 @@ class EvalSuiteService:
             rows.sort(key=lambda s: s.created_at, reverse=True)
             return rows
 
-    async def get_suite(
-        self, *, workspace_id: UUID, suite_id: UUID
-    ) -> EvalSuite:
+    async def get_suite(self, *, workspace_id: UUID, suite_id: UUID) -> EvalSuite:
         async with self._lock:
             suite = self._suites.get(suite_id)
             if suite is None or suite.workspace_id != workspace_id:
@@ -144,9 +142,7 @@ class EvalSuiteService:
                 None,
             )
             if existing is not None:
-                raise EvalError(
-                    f"suite name already taken in this workspace: {body.name}"
-                )
+                raise EvalError(f"suite name already taken in this workspace: {body.name}")
             suite = EvalSuite(
                 id=uuid4(),
                 workspace_id=workspace_id,
@@ -220,9 +216,7 @@ class EvalSuiteService:
             self._cases[case.id] = case
             return case
 
-    async def list_cases(
-        self, *, workspace_id: UUID, suite_id: UUID
-    ) -> list[EvalCase]:
+    async def list_cases(self, *, workspace_id: UUID, suite_id: UUID) -> list[EvalCase]:
         async with self._lock:
             suite = self._suites.get(suite_id)
             if suite is None or suite.workspace_id != workspace_id:
@@ -253,9 +247,7 @@ class EvalSuiteService:
             self._runs[run.id] = run
             return run
 
-    async def list_runs(
-        self, *, workspace_id: UUID, suite_id: UUID
-    ) -> list[EvalRun]:
+    async def list_runs(self, *, workspace_id: UUID, suite_id: UUID) -> list[EvalRun]:
         async with self._lock:
             suite = self._suites.get(suite_id)
             if suite is None or suite.workspace_id != workspace_id:
@@ -263,6 +255,13 @@ class EvalSuiteService:
             rows = [r for r in self._runs.values() if r.suite_id == suite_id]
             rows.sort(key=lambda r: r.started_at, reverse=True)
             return rows
+
+    async def get_run(self, *, run_id: UUID) -> EvalRun:
+        async with self._lock:
+            run = self._runs.get(run_id)
+            if run is None:
+                raise EvalError(f"unknown run: {run_id}")
+            return run
 
 
 def serialise_suite(s: EvalSuite) -> dict[str, Any]:
