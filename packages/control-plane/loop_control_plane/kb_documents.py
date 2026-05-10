@@ -35,6 +35,9 @@ class KbDocument(BaseModel):
     workspace_id: UUID
     source_url: str = Field(min_length=1, max_length=2048)
     title: str = Field(default="", max_length=512)
+    source_kind: str = Field(default="url", max_length=64)
+    content_type: str = Field(default="text/uri-list", max_length=255)
+    byte_size: int = Field(default=0, ge=0)
     state: KbDocumentState
     chunk_count: int = Field(default=0, ge=0)
     created_at: datetime
@@ -75,6 +78,13 @@ class KbDocumentService:
                 raise KbError(f"unknown document: {document_id}")
             return doc
 
+    async def find(self, *, document_id: UUID) -> KbDocument:
+        async with self._lock:
+            doc = self._docs.get(document_id)
+            if doc is None:
+                raise KbError(f"unknown document: {document_id}")
+            return doc
+
     async def create(
         self, *, workspace_id: UUID, body: KbDocumentCreate
     ) -> KbDocument:
@@ -97,6 +107,35 @@ class KbDocumentService:
                 workspace_id=workspace_id,
                 source_url=url,
                 title=body.title,
+                source_kind="url",
+                content_type="text/uri-list",
+                byte_size=len(url.encode("utf-8")),
+                state=KbDocumentState.PENDING,
+                created_at=datetime.now(UTC),
+            )
+            self._docs[doc.id] = doc
+            return doc
+
+    async def create_upload(
+        self,
+        *,
+        workspace_id: UUID,
+        filename: str,
+        content_type: str,
+        byte_size: int,
+    ) -> KbDocument:
+        async with self._lock:
+            safe_name = filename.strip()[:512] or "uploaded document"
+            doc_id = uuid4()
+            doc = KbDocument(
+                id=doc_id,
+                workspace_id=workspace_id,
+                source_url=f"loop-upload://{workspace_id}/{doc_id}/{safe_name}",
+                title=safe_name,
+                source_kind="file",
+                content_type=content_type.strip()[:255]
+                or "application/octet-stream",
+                byte_size=max(0, byte_size),
                 state=KbDocumentState.PENDING,
                 created_at=datetime.now(UTC),
             )
@@ -154,6 +193,9 @@ def serialise_doc(d: KbDocument) -> dict[str, Any]:
         "workspace_id": str(d.workspace_id),
         "source_url": d.source_url,
         "title": d.title,
+        "source_kind": d.source_kind,
+        "content_type": d.content_type,
+        "byte_size": d.byte_size,
         "state": d.state.value,
         "chunk_count": d.chunk_count,
         "created_at": d.created_at.isoformat(),
