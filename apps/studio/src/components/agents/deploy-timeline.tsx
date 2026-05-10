@@ -17,6 +17,7 @@ type StartFn = (
   input: {
     change_package_id: string;
     version_id?: string;
+    stage?: "shadow" | "canary";
     traffic_percent?: number;
     channel_scope?: string[];
     notes?: string | null;
@@ -37,6 +38,8 @@ type Toast = { kind: "success" | "error"; message: string } | null;
 
 function statusColor(status: Deployment["status"]): string {
   switch (status) {
+    case "shadow":
+      return "border-sky-300 bg-sky-50 text-sky-900";
     case "canary":
       return "border-amber-300 bg-amber-50 text-amber-900";
     case "live":
@@ -112,22 +115,23 @@ export function DeployTimeline({
     }
   }
 
-  async function handleStartCanary() {
+  async function handleStartRollout(stage: "shadow" | "canary") {
     if (!approvedChangePackage) return;
-    setBusy("start-canary");
+    setBusy(`start-${stage}`);
     setToast(null);
     try {
       const result = await startCanary(agentId, {
         change_package_id: approvedChangePackage.id,
         version_id: approvedChangePackage.to_version_id,
-        traffic_percent: 5,
+        stage,
+        traffic_percent: stage === "shadow" ? 0 : 5,
         channel_scope: ["web_chat"],
-        notes: `Started from ${approvedChangePackage.evidence_pack_id}`,
+        notes: `Started ${stage} from ${approvedChangePackage.evidence_pack_id}`,
       });
       setItems((prev) => [result.deployment, ...prev]);
       setToast({
         kind: "success",
-        message: `Started canary ${result.deployment.id}; evidence pack ${result.deployment.evidencePackId ?? "created"}.`,
+        message: `Started ${stage} ${result.deployment.id}; evidence pack ${result.deployment.evidencePackId ?? "created"}.`,
       });
     } catch (err) {
       setToast({
@@ -153,15 +157,26 @@ export function DeployTimeline({
               Evidence Pack.
             </p>
           </div>
-          <button
-            className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            data-testid="deploy-start-canary"
-            disabled={!approvedChangePackage || busy !== null}
-            onClick={handleStartCanary}
-            type="button"
-          >
-            {busy === "start-canary" ? "Starting..." : "Start canary"}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="rounded-md border bg-background px-3 py-2 text-xs font-medium hover:bg-muted/50 disabled:opacity-50"
+              data-testid="deploy-start-shadow"
+              disabled={!approvedChangePackage || busy !== null}
+              onClick={() => void handleStartRollout("shadow")}
+              type="button"
+            >
+              {busy === "start-shadow" ? "Starting..." : "Start shadow"}
+            </button>
+            <button
+              className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              data-testid="deploy-start-canary"
+              disabled={!approvedChangePackage || busy !== null}
+              onClick={() => void handleStartRollout("canary")}
+              type="button"
+            >
+              {busy === "start-canary" ? "Starting..." : "Start canary"}
+            </button>
+          </div>
         </div>
         <p
           className="text-xs text-muted-foreground"
@@ -204,8 +219,8 @@ export function DeployTimeline({
                       {dep.id} · {dep.versionId}
                     </p>
                     <p className="text-xs">
-                      {dep.status} · {dep.trafficPercent}% · created{" "}
-                      {dep.createdAt}
+                      {dep.stage ?? dep.status} · {dep.trafficPercent}% ·
+                      created {dep.createdAt}
                     </p>
                     {dep.notes ? (
                       <p className="text-xs italic">{dep.notes}</p>

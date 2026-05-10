@@ -10,6 +10,7 @@ function mkDep(overrides: Partial<Deployment>): Deployment {
     id: "dep_1",
     agentId: "a",
     versionId: "v1",
+    stage: "canary",
     status: "canary",
     trafficPercent: 25,
     createdAt: "2025-02-21T12:00:00Z",
@@ -159,6 +160,7 @@ describe("DeployTimeline", () => {
     const startCanary = vi.fn(async () => ({
       deployment: mkDep({
         id: "dep_new",
+        stage: "canary",
         status: "canary",
         versionId: "v2",
         trafficPercent: 5,
@@ -183,6 +185,7 @@ describe("DeployTimeline", () => {
       expect.objectContaining({
         change_package_id: "cp_1",
         version_id: "v2",
+        stage: "canary",
       }),
     );
     expect(screen.getByTestId("deploy-row-dep_new")).toHaveTextContent(
@@ -190,6 +193,58 @@ describe("DeployTimeline", () => {
     );
     expect(screen.getByTestId("deploy-toast-success")).toHaveTextContent(
       "Started canary",
+    );
+  });
+
+  it("starts shadow from an approved Change Package without routing traffic", async () => {
+    const changePackage = {
+      ...buildLocalChangePackage("a"),
+      id: "cp_1",
+      status: "approved" as const,
+      to_version_id: "v2",
+      evidence_pack_id: "ep_cp_1",
+    };
+    const startCanary = vi.fn(async () => ({
+      deployment: mkDep({
+        id: "dep_shadow",
+        stage: "shadow",
+        status: "shadow",
+        versionId: "v2",
+        trafficPercent: 0,
+        evidencePackId: "ep_1",
+      }),
+    }));
+    render(
+      <DeployTimeline
+        agentId="a"
+        approvedChangePackage={changePackage}
+        initialDeployments={[]}
+        startCanary={startCanary}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("deploy-start-shadow"));
+    });
+
+    expect(startCanary).toHaveBeenCalledWith(
+      "a",
+      expect.objectContaining({
+        change_package_id: "cp_1",
+        version_id: "v2",
+        stage: "shadow",
+        traffic_percent: 0,
+      }),
+    );
+    expect(screen.getByTestId("deploy-row-dep_shadow")).toHaveAttribute(
+      "data-status",
+      "shadow",
+    );
+    expect(screen.getByTestId("deploy-row-dep_shadow")).toHaveTextContent(
+      "shadow · 0%",
+    );
+    expect(screen.getByTestId("deploy-toast-success")).toHaveTextContent(
+      "Started shadow",
     );
   });
 });

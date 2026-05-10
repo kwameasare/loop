@@ -14,11 +14,15 @@ from loop_control_plane.workspaces import WorkspaceError
 
 DeploymentStatus = Literal[
     "pending",
+    "shadow",
     "canary",
     "live",
     "paused",
     "rolled_back",
     "superseded",
+]
+DeploymentStage = Literal[
+    "shadow", "canary", "ramp", "production", "rolled_back", "paused", "failed"
 ]
 
 
@@ -27,6 +31,7 @@ class DeploymentStart(BaseModel):
 
     change_package_id: str = Field(max_length=160)
     version_id: str = Field(default="", max_length=160)
+    stage: Literal["shadow", "canary"] = "canary"
     traffic_percent: int = Field(default=5, ge=0, le=100)
     channel_scope: list[ChannelType] = Field(default_factory=list, max_length=20)
     region_scope: list[str] = Field(default_factory=list, max_length=20)
@@ -45,6 +50,7 @@ class DeploymentRecord(BaseModel):
     version_id: str
     change_package_id: str
     evidence_pack_id: str
+    stage: DeploymentStage
     status: DeploymentStatus
     traffic_percent: int
     channel_scope: list[ChannelType]
@@ -90,6 +96,7 @@ def _deployment_payload(record: DeploymentRecord) -> dict[str, Any]:
         "versionId": record.version_id,
         "changePackageId": record.change_package_id,
         "evidencePackId": record.evidence_pack_id,
+        "stage": record.stage,
         "status": record.status,
         "trafficPercent": record.traffic_percent,
         "channelScope": record.channel_scope,
@@ -137,6 +144,7 @@ class DeploymentRegistry:
             deployment_id = f"dep_{uuid4().hex[:12]}"
             evidence_pack_id = f"ep_{uuid4().hex[:12]}"
             version_id = body.version_id or change_package.to_version_id
+            traffic_percent = 0 if body.stage == "shadow" else body.traffic_percent
             deployment = DeploymentRecord(
                 id=deployment_id,
                 workspace_id=agent.workspace_id,
@@ -144,8 +152,9 @@ class DeploymentRegistry:
                 version_id=version_id,
                 change_package_id=change_package.id,
                 evidence_pack_id=evidence_pack_id,
-                status="canary",
-                traffic_percent=body.traffic_percent,
+                stage=body.stage,
+                status=body.stage,
+                traffic_percent=traffic_percent,
                 channel_scope=body.channel_scope,
                 region_scope=body.region_scope,
                 segment_scope=body.segment_scope,
@@ -175,7 +184,7 @@ class DeploymentRegistry:
                 channel_deployment_plan_ref="deployment.channel_scope",
                 eval_results_ref=change_package.eval_results_ref,
                 approval_records_ref="change_package.required_approvals",
-                canary_results_ref=f"deployment/{deployment_id}/canary",
+                canary_results_ref=f"deployment/{deployment_id}/{body.stage}",
                 rollback_plan_ref=change_package.rollback_target_version_id,
                 audit_log_ref=f"audit/change_package/{change_package.id}",
                 created_at=now,
@@ -202,6 +211,7 @@ class DeploymentRegistry:
                 if action == "promote":
                     updated = deployment.model_copy(
                         update={
+                            "stage": "production",
                             "status": "live",
                             "traffic_percent": 100,
                             "promoted_at": now,
@@ -211,13 +221,19 @@ class DeploymentRegistry:
                     for other_index, other in enumerate(deployments):
                         if other.id != deployment_id and other.status == "live":
                             deployments[other_index] = other.model_copy(
-                                update={"status": "superseded", "traffic_percent": 0}
+                                update={
+                                    "status": "superseded",
+                                    "traffic_percent": 0,
+                                }
                             )
                 elif action == "pause":
-                    updated = deployment.model_copy(update={"status": "paused", "paused_at": now})
+                    updated = deployment.model_copy(
+                        update={"stage": "paused", "status": "paused", "paused_at": now}
+                    )
                 else:
                     updated = deployment.model_copy(
                         update={
+                            "stage": "rolled_back",
                             "status": "rolled_back",
                             "traffic_percent": 0,
                             "rolled_back_at": now,

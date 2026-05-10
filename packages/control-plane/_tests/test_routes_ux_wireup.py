@@ -986,6 +986,7 @@ def test_deployment_start_creates_evidence_pack_from_approved_change_package(
     assert start.status_code == 201, start.text
     deployment = start.json()["deployment"]
     evidence_pack = start.json()["evidence_pack"]
+    assert deployment["stage"] == "canary"
     assert deployment["status"] == "canary"
     assert deployment["trafficPercent"] == 10
     assert deployment["evidencePackId"] == evidence_pack["id"]
@@ -1015,6 +1016,56 @@ def test_deployment_start_creates_evidence_pack_from_approved_change_package(
         "deployment:start",
         "deployment:promote",
     }
+
+
+def test_approved_change_package_can_start_shadow_rollout(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    _mark_channel_ready(client, workspace_id, agent_id, "web_chat")
+    package = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "from_version_id": "v1",
+            "to_version_id": "v2",
+            "summary": "Shadow the approved draft before canary traffic.",
+            "eval_results_ref": "eval/run/v2",
+            "replay_results_ref": "replay/run/v2",
+            "rollback_target_version_id": "v1",
+        },
+    ).json()
+    submitted = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{package['id']}/submit",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert submitted.status_code == 200, submitted.text
+    for approval_id in ("owner", "compliance"):
+        approved = client.post(
+            f"/v1/agents/{agent_id}/change-packages/{package['id']}/approvals",
+            headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+            json={"approval_id": approval_id, "decision": "approve"},
+        )
+        assert approved.status_code == 200, approved.text
+
+    started = client.post(
+        f"/v1/agents/{agent_id}/deployments/start",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "change_package_id": package["id"],
+            "version_id": "v2",
+            "stage": "shadow",
+            "traffic_percent": 50,
+            "channel_scope": ["web_chat"],
+            "region_scope": ["us-east-1"],
+        },
+    )
+    assert started.status_code == 201, started.text
+    deployment = started.json()["deployment"]
+    evidence_pack = started.json()["evidence_pack"]
+    assert deployment["stage"] == "shadow"
+    assert deployment["status"] == "shadow"
+    assert deployment["trafficPercent"] == 0
+    assert evidence_pack["canary_results_ref"].endswith("/shadow")
 
 
 def test_deployment_start_blocks_only_channels_with_incomplete_readiness(

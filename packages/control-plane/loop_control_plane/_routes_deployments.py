@@ -220,6 +220,7 @@ async def start_deployment(
             payload={
                 "agent_id": str(agent_id),
                 "change_package_id": change_package.id,
+                "stage": body.stage,
                 "requested_channel_scope": body.channel_scope,
                 "channel_blockers": channel_blockers,
             },
@@ -241,6 +242,7 @@ async def start_deployment(
             "agent_id": str(agent_id),
             "change_package_id": change_package.id,
             "evidence_pack_id": evidence_pack.id,
+            "stage": deployment.stage,
             "traffic_percent": deployment.traffic_percent,
             "channel_scope": deployment.channel_scope,
         },

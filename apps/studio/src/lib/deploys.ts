@@ -13,11 +13,20 @@
 
 export type DeploymentStatus =
   | "pending"
+  | "shadow"
   | "canary"
   | "live"
   | "paused"
   | "rolled_back"
   | "superseded";
+export type DeploymentStage =
+  | "shadow"
+  | "canary"
+  | "ramp"
+  | "production"
+  | "rolled_back"
+  | "paused"
+  | "failed";
 
 export interface Deployment {
   id: string;
@@ -25,6 +34,7 @@ export interface Deployment {
   versionId: string;
   changePackageId?: string;
   evidencePackId?: string;
+  stage?: DeploymentStage;
   status: DeploymentStatus;
   /** Percentage of traffic routed to this deployment (0–100). */
   trafficPercent: number;
@@ -43,6 +53,7 @@ export interface Deployment {
 export interface DeploymentStartInput {
   change_package_id: string;
   version_id?: string;
+  stage?: "shadow" | "canary";
   traffic_percent?: number;
   channel_scope?: string[];
   region_scope?: string[];
@@ -110,6 +121,7 @@ function seedFixtures(agentId: string): Deployment[] {
         id: "dep_002",
         agentId,
         versionId: "ver_v3",
+        stage: "canary",
         status: "canary",
         trafficPercent: 25,
         createdAt: "2025-02-21T12:00:00Z",
@@ -122,6 +134,7 @@ function seedFixtures(agentId: string): Deployment[] {
         id: "dep_001",
         agentId,
         versionId: "ver_v2",
+        stage: "production",
         status: "live",
         trafficPercent: 75,
         createdAt: "2025-02-19T09:14:00Z",
@@ -149,6 +162,7 @@ function applyAction(
   if (action === "promote") {
     next = {
       ...target,
+      stage: "production",
       status: "live",
       trafficPercent: 100,
       promotedAt: now,
@@ -167,11 +181,12 @@ function applyAction(
       }
     }
   } else if (action === "pause") {
-    next = { ...target, status: "paused", pausedAt: now };
+    next = { ...target, stage: "paused", status: "paused", pausedAt: now };
     deployments[idx] = next;
   } else {
     next = {
       ...target,
+      stage: "rolled_back",
       status: "rolled_back",
       trafficPercent: 0,
       rolledBackAt: now,
@@ -230,14 +245,16 @@ export async function startCanaryDeployment(
   const base = resolveBase(opts);
   if (!base) {
     const now = new Date().toISOString();
+    const stage = input.stage ?? "canary";
     const deployment: Deployment = {
       id: `dep_${Math.random().toString(36).slice(2, 10)}`,
       agentId,
       versionId: input.version_id ?? "draft-candidate",
       changePackageId: input.change_package_id,
       evidencePackId: `ep_${Math.random().toString(36).slice(2, 10)}`,
-      status: "canary",
-      trafficPercent: input.traffic_percent ?? 5,
+      stage,
+      status: stage,
+      trafficPercent: stage === "shadow" ? 0 : (input.traffic_percent ?? 5),
       channelScope: input.channel_scope ?? [],
       regionScope: input.region_scope ?? [],
       segmentScope: input.segment_scope ?? [],
@@ -266,7 +283,7 @@ export async function startCanaryDeployment(
         channel_deployment_plan_ref: "deployment.channelScope",
         eval_results_ref: "evals/not-run",
         approval_records_ref: "change_package.required_approvals",
-        canary_results_ref: `deployment/${deployment.id}/canary`,
+        canary_results_ref: `deployment/${deployment.id}/${stage}`,
         rollback_plan_ref: "last-known-safe",
         audit_log_ref: `deployment/${deployment.id}/audit`,
         created_at: now,
