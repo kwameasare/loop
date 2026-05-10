@@ -46,6 +46,72 @@ describe("FailureRepairLoopPanel", () => {
     );
   });
 
+  it("generates a focused fix and replay summary before saving eval", async () => {
+    const sentence =
+      createBehaviorEditorData("agent_support").sections[0]!.sentences[1]!;
+    const requestRepair = vi.fn(async () => ({
+      id: "repair_1",
+      workspace_id: "ws_1",
+      agent_id: "agent_support",
+      target_object: {
+        kind: "behavior_sentence",
+        id: sentence.id,
+        label: "Responsible behavior sentence",
+      },
+      proposal: {
+        title: "Tighten behavior for cancellation policy",
+        diff: "Require current May policy citation before refund windows.",
+        rationale: "Archived policy was cited.",
+        evidence_ref: "trace_refund_742",
+      },
+      replay: {
+        draft_ref: "replay/sentence_purpose_cancel/nearby-turns",
+        improved: 3,
+        unchanged: 1,
+        regressed: 0,
+        needs_review: 1,
+        examples: [],
+      },
+      next_actions: ["accept_or_edit_fix", "save_regression_eval"],
+      evidence_refs: ["trace_refund_742", sentence.id],
+    }));
+    const saveEval = vi.fn(async () => ({
+      ok: true,
+      suite_id: "suite_observed",
+      case_id: "case_observed",
+    }));
+
+    render(
+      <FailureRepairLoopPanel
+        agentId="agent_support"
+        sentence={sentence}
+        requestRepair={requestRepair}
+        saveEval={saveEval}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("failure-repair-generate"));
+
+    expect(
+      await screen.findByTestId("failure-repair-proposal"),
+    ).toHaveTextContent("Regressed");
+    expect(screen.getByTestId("failure-repair-proposal")).toHaveTextContent(
+      "0",
+    );
+
+    fireEvent.click(screen.getByTestId("failure-repair-save-eval"));
+
+    await screen.findByTestId("failure-repair-saved");
+    expect(saveEval).toHaveBeenCalledWith(
+      "agent_support",
+      expect.objectContaining({
+        proposed_fix:
+          "Require current May policy citation before refund windows.",
+        replay_ref: "replay/sentence_purpose_cancel/nearby-turns",
+      }),
+    );
+  });
+
   it("renders an empty repair state when no sentence is selected", () => {
     render(<FailureRepairLoopPanel agentId="agent_support" sentence={null} />);
 

@@ -11,6 +11,45 @@ export interface ObservedFailureEvalInput {
   source?: string;
 }
 
+export interface ObservedFailureRepairInput {
+  sentence_id: string;
+  sentence_text: string;
+  trace_id: string;
+  failure_reason: string;
+  replay_ref?: string;
+}
+
+export interface ObservedFailureRepairResponse {
+  id: string;
+  workspace_id: string;
+  agent_id: string;
+  target_object: {
+    kind: string;
+    id: string;
+    label: string;
+  };
+  proposal: {
+    title: string;
+    diff: string;
+    rationale: string;
+    evidence_ref: string;
+  };
+  replay: {
+    draft_ref: string;
+    improved: number;
+    unchanged: number;
+    regressed: number;
+    needs_review: number;
+    examples: Array<{
+      trace_id: string;
+      status: "improved" | "unchanged" | "regressed" | "needs_review";
+      summary: string;
+    }>;
+  };
+  next_actions: string[];
+  evidence_refs: string[];
+}
+
 export interface ObservedFailureEvalCase {
   id: string;
   suite_id: string;
@@ -78,6 +117,62 @@ function localObservedFailureEval(
       created_by: "local-studio",
     },
   };
+}
+
+function localObservedFailureRepair(
+  agentId: string,
+  input: ObservedFailureRepairInput,
+): ObservedFailureRepairResponse {
+  const replayRef =
+    input.replay_ref ?? `replay/${input.sentence_id}/nearby-turns`;
+  return {
+    id: `repair_${input.sentence_id}`,
+    workspace_id: "local",
+    agent_id: agentId,
+    target_object: {
+      kind: "behavior_sentence",
+      id: input.sentence_id,
+      label: "Responsible behavior sentence",
+    },
+    proposal: {
+      title: `Tighten behavior for ${input.sentence_id}`,
+      diff: `Require this rule to be satisfied before answering: ${input.sentence_text}`,
+      rationale: input.failure_reason,
+      evidence_ref: input.trace_id,
+    },
+    replay: {
+      draft_ref: replayRef,
+      improved: 3,
+      unchanged: 1,
+      regressed: 0,
+      needs_review: 1,
+      examples: [
+        {
+          trace_id: input.trace_id,
+          status: "improved",
+          summary: "Current trace now satisfies the selected behavior.",
+        },
+      ],
+    },
+    next_actions: ["accept_or_edit_fix", "save_regression_eval"],
+    evidence_refs: [input.trace_id, replayRef, input.sentence_id],
+  };
+}
+
+export async function requestObservedFailureRepair(
+  agentId: string,
+  input: ObservedFailureRepairInput,
+  opts: UxWireupClientOptions = {},
+): Promise<ObservedFailureRepairResponse> {
+  return cpJson<ObservedFailureRepairResponse>(
+    `/agents/${encodeURIComponent(agentId)}/behavior/repair-proposals`,
+    {
+      method: "POST",
+      body: input,
+      fallback: localObservedFailureRepair(agentId, input),
+      ...opts,
+    },
+  );
 }
 
 export async function saveObservedFailureEval(

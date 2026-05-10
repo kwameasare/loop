@@ -1022,6 +1022,37 @@ def test_observed_failure_eval_case_closes_90_second_editing_loop(
     assert "eval:case:create_from_observed_failure" in {event["action"] for event in audit}
 
 
+def test_behavior_repair_proposal_runs_replay_summary_before_eval_save(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    response = client.post(
+        f"/v1/agents/{agent_id}/behavior/repair-proposals",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "sentence_id": "sentence_purpose_cancel",
+            "sentence_text": "When a customer asks to cancel, cite May 2026 policy.",
+            "trace_id": "trace_refund_742",
+            "failure_reason": "Agent cited archived policy before current policy.",
+            "replay_ref": "replay/run/trace_refund_742/fixed",
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["id"].startswith("repair_")
+    assert body["target_object"]["kind"] == "behavior_sentence"
+    assert body["proposal"]["evidence_ref"] == "trace_refund_742"
+    assert body["replay"]["draft_ref"] == "replay/run/trace_refund_742/fixed"
+    assert body["replay"]["regressed"] == 0
+    assert "save_regression_eval" in body["next_actions"]
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert "behavior:repair_proposal:create" in {event["action"] for event in audit}
+
+
 def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:
