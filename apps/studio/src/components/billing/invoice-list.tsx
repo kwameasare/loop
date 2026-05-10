@@ -10,9 +10,9 @@ export interface InvoiceListProps {
 }
 
 const STATUS_PILL: Record<Invoice["status"], string> = {
-  paid: "bg-emerald-100 text-emerald-700",
-  open: "bg-amber-100 text-amber-700",
-  void: "bg-zinc-100 text-zinc-500",
+  paid: "border border-success/30 bg-success/10 text-success",
+  open: "border border-warning/30 bg-warning/10 text-warning",
+  void: "border border-border bg-muted text-muted-foreground",
 };
 
 function formatDate(ms: number): string {
@@ -90,7 +90,7 @@ export function InvoiceList({ invoices, page_size = 10 }: InvoiceListProps) {
                       target="_blank"
                       rel="noreferrer"
                       data-testid={`invoice-download-${inv.id}`}
-                      className="text-blue-600 hover:underline text-xs font-medium"
+                      className="text-xs font-medium text-info hover:underline"
                       aria-label={`Download PDF for ${inv.number}`}
                     >
                       Download PDF
@@ -114,7 +114,7 @@ export function InvoiceList({ invoices, page_size = 10 }: InvoiceListProps) {
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
             data-testid="invoice-prev"
-            className="rounded border px-3 py-1 text-sm disabled:opacity-40"
+            className="rounded border bg-background px-3 py-1 text-sm hover:bg-muted disabled:opacity-40"
           >
             Previous
           </button>
@@ -129,7 +129,7 @@ export function InvoiceList({ invoices, page_size = 10 }: InvoiceListProps) {
             disabled={page >= pages}
             onClick={() => setPage((p) => p + 1)}
             data-testid="invoice-next"
-            className="rounded border px-3 py-1 text-sm disabled:opacity-40"
+            className="rounded border bg-background px-3 py-1 text-sm hover:bg-muted disabled:opacity-40"
           >
             Next
           </button>

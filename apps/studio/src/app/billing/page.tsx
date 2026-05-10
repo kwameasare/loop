@@ -78,7 +78,7 @@ function BillingPageBody(): JSX.Element {
   if (error) {
     return (
       <main className="container mx-auto p-6">
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
       </main>

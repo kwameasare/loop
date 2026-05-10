@@ -58,26 +58,26 @@ function formatPrice(cents: number | null): string {
 function MatrixCell({ value }: { value: string | undefined }) {
   if (value === undefined || value === "no") {
     return (
-      <span aria-label="not included" className="text-zinc-400">
+      <span aria-label="not included" className="text-muted-foreground">
         —
       </span>
     );
   }
   if (value === "yes") {
     return (
-      <span aria-label="included" className="text-emerald-600">
+      <span aria-label="included" className="text-success">
         ✓
       </span>
     );
   }
   if (value === "limited") {
     return (
-      <span aria-label="limited" className="text-amber-600">
+      <span aria-label="limited" className="text-warning">
         Limited
       </span>
     );
   }
-  return <span className="text-zinc-700">{value}</span>;
+  return <span className="text-foreground">{value}</span>;
 }
 
 export function PricingPage({
@@ -98,7 +98,7 @@ export function PricingPage({
     >
       <header className="mb-10 text-center">
         <h1 className="text-3xl font-semibold tracking-tight">{heading}</h1>
-        <p className="mt-2 text-zinc-600">
+        <p className="mt-2 text-muted-foreground">
           Start free. Pay only for what you use. Cancel anytime.
         </p>
       </header>
@@ -114,29 +114,31 @@ export function PricingPage({
             className={
               "rounded-2xl border p-6 " +
               (plan.recommended
-                ? "border-blue-500 ring-2 ring-blue-200"
-                : "border-zinc-200")
+                ? "border-info ring-2 ring-info/20"
+                : "border-border")
             }
           >
             {plan.recommended ? (
               <p
                 aria-label="Most popular plan"
-                className="mb-2 text-xs font-medium uppercase tracking-wide text-blue-600"
+                className="mb-2 text-xs font-medium uppercase tracking-wide text-info"
               >
                 Most popular
               </p>
             ) : null}
             <h2 className="text-xl font-semibold">{plan.name}</h2>
-            <p className="mt-1 text-sm text-zinc-600">{plan.tagline}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {plan.tagline}
+            </p>
             <p className="mt-4 text-3xl font-semibold">
               {formatPrice(plan.price_cents)}
               {plan.price_cents !== null && plan.price_cents > 0 ? (
-                <span className="text-base font-normal text-zinc-500">
+                <span className="text-base font-normal text-muted-foreground">
                   /mo
                 </span>
               ) : null}
             </p>
-            <ul className="mt-4 space-y-1 text-sm text-zinc-700">
+            <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
               {plan.highlights.map((line) => (
                 <li key={line}>• {line}</li>
               ))}
@@ -144,7 +146,7 @@ export function PricingPage({
             <button
               type="button"
               onClick={() => onCtaClick?.(plan.id, variant)}
-              className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-2 text-white"
+              className="mt-6 w-full rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
             >
               {plan.cta_label ?? "Get started"}
             </button>
@@ -154,7 +156,7 @@ export function PricingPage({
 
       <section aria-label="Plan comparison" className="mt-16">
         <h2 className="text-2xl font-semibold">Compare plans</h2>
-        <p className="mt-1 text-sm text-zinc-600">
+        <p className="mt-1 text-sm text-muted-foreground">
           Every feature, every tier. Detailed limits in the docs.
         </p>
         <div className="mt-6 overflow-x-auto">
@@ -186,15 +188,15 @@ export function PricingPage({
                 <tr
                   key={feature.id}
                   data-testid={`matrix-row-${feature.id}`}
-                  className="border-b border-zinc-100"
+                  className="border-b border-border"
                 >
                   <th
                     scope="row"
-                    className="py-2 pr-4 text-left font-normal text-zinc-700"
+                    className="py-2 pr-4 text-left font-normal text-foreground"
                   >
                     <span>{feature.label}</span>
                     {feature.description ? (
-                      <span className="block text-xs text-zinc-500">
+                      <span className="block text-xs text-muted-foreground">
                         {feature.description}
                       </span>
                     ) : null}
