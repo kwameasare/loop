@@ -503,6 +503,68 @@ def _candidate_channels(body: CommitmentBody) -> list[dict[str, Any]]:
     ]
 
 
+_CHANNEL_ARTIFACT_ALIASES: dict[str, tuple[str, ...]] = {
+    "web_chat": ("web_chat", "web chat", "webchat", "embed snippet"),
+    "whatsapp": ("whatsapp", "whats app", "wa_business"),
+    "telegram": ("telegram", "telegram bot"),
+    "slack": ("slack", "slack app", "slash command"),
+    "teams": ("teams", "microsoft teams", "ms teams"),
+    "sms": ("sms channel", "text message channel", "twilio sms"),
+    "email": ("email channel", "inbox routing", "zendesk email"),
+    "voice": ("voice channel", "phone channel", "call channel", "sip", "twilio voice"),
+    "webhook_api": ("webhook", "api channel", "signed request"),
+}
+
+
+def _channel_key(value: str) -> str:
+    normalised = value.strip().lower().replace("-", "_").replace(" ", "_")
+    if normalised in {"web", "chat", "webchat"}:
+        return "web_chat"
+    if normalised in {"api", "webhook"}:
+        return "webhook_api"
+    return normalised
+
+
+def _artifact_channel_candidates(
+    artifacts: list[AgentIntakeArtifactInput],
+    *,
+    seen: set[str],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for artifact in artifacts:
+        haystack = " ".join(
+            [artifact.name, artifact.kind, artifact.source_ref, artifact.text]
+        ).lower()
+        for channel, aliases in _CHANNEL_ARTIFACT_ALIASES.items():
+            if channel in seen:
+                continue
+            if not any(alias in haystack for alias in aliases):
+                continue
+            rows.append(
+                {
+                    "channel": channel,
+                    "status": "draft",
+                    "readiness": (
+                        "Channel inferred from intake artifact; production "
+                        "identity, transcript capture, and handoff checks are pending."
+                    ),
+                    "source": f"artifact:{artifact.kind}",
+                    "source_artifact": artifact.source_ref or artifact.name,
+                }
+            )
+            seen.add(channel)
+    return rows
+
+
+def candidate_channel_specs(body: AgentIntakeCreate) -> list[dict[str, Any]]:
+    contract_channels = _candidate_channels(body.contract)
+    seen = {_channel_key(str(item["channel"])) for item in contract_channels}
+    return [
+        *contract_channels,
+        *_artifact_channel_candidates(body.artifacts, seen=seen),
+    ]
+
+
 def _candidate_eval_cases(body: CommitmentBody) -> list[dict[str, Any]]:
     responsibility = body.business_responsibility.strip() or "agent responsibility"
     risk = body.worst_case_failure.strip() or "critical failure"
@@ -577,7 +639,7 @@ def build_intake_analysis(
     missing = _missing_information(body.contract, body.artifacts)
     candidate_tools = candidate_tool_specs(body)
     knowledge_sources = candidate_knowledge_sources(body)
-    candidate_channels = _candidate_channels(body.contract)
+    candidate_channels = candidate_channel_specs(body)
     candidate_eval_cases = _candidate_eval_cases(body.contract)
     ready = [
         "Mission defined",

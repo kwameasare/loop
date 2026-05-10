@@ -12,6 +12,7 @@ from loop_control_plane.agent_intake import (
     agent_intake_payload,
     apply_enterprise_template,
     build_intake_analysis,
+    candidate_channel_specs,
     candidate_knowledge_sources,
     candidate_tool_specs,
     template_payloads,
@@ -163,7 +164,8 @@ async def create_agent_intake(
     )
 
     channel_refs: list[dict[str, str]] = []
-    for requested in body.contract.channels:
+    for channel in candidate_channel_specs(body):
+        requested = str(channel["channel"])
         channel_type = _channel_type(requested)
         if channel_type is None:
             continue
@@ -173,7 +175,11 @@ async def create_agent_intake(
                 channel_type=channel_type,  # type: ignore[arg-type]
                 display_name=requested.strip() or channel_type,
                 status="draft",
-                identity_config={"created_from": "agent_intake"},
+                identity_config={
+                    "created_from": "agent_intake",
+                    "source": channel.get("source", "contract:channels"),
+                    "source_artifact": channel.get("source_artifact", ""),
+                },
             ),
         )
         channel_refs.append({"id": binding.id, "channel_type": binding.channel_type})

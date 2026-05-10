@@ -299,6 +299,60 @@ def test_agent_intake_infers_tool_contracts_from_api_artifacts(
     assert any("Import mode: curl" in item["failure_behavior"] for item in tool_rows)
 
 
+def test_agent_intake_infers_channel_bindings_from_legacy_artifacts(
+    client: TestClient,
+    workspace_id: UUID,
+) -> None:
+    contract = {**_contract(), "channels": []}
+    response = client.post(
+        f"/v1/workspaces/{workspace_id}/agent-intakes",
+        headers=_auth(),
+        json={
+            "agent_name": "Legacy Channel Agent",
+            "slug": "legacy-channel-agent",
+            "creation_path": "legacy_import",
+            "contract": contract,
+            "artifacts": [
+                {
+                    "name": "botpress-export.json",
+                    "kind": "botpress_export",
+                    "text": '{"channels": ["whatsapp", "telegram"], "handoff": "slack app"}',
+                    "source_ref": "upload/botpress-export.json",
+                },
+            ],
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    agent_id = body["agent"]["id"]
+    channel_candidates = body["candidate_channels"]
+    assert {item["channel"] for item in channel_candidates} == {
+        "whatsapp",
+        "telegram",
+        "slack",
+    }
+    assert {item["source"] for item in channel_candidates} == {
+        "artifact:botpress_export"
+    }
+    assert len(body["created_object_refs"]["channel_bindings"]) == 3
+
+    channels = client.get(
+        f"/v1/agents/{agent_id}/channel-bindings",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert channels.status_code == 200, channels.text
+    configured = {
+        item["channel_type"]: item
+        for item in channels.json()["items"]
+        if item["channel_type"] in {"whatsapp", "telegram", "slack"}
+    }
+    assert set(configured) == {"whatsapp", "telegram", "slack"}
+    assert {
+        item["identity_config"]["source_artifact"] for item in configured.values()
+    } == {"upload/botpress-export.json"}
+
+
 def test_enterprise_template_intake_clones_approved_defaults(
     client: TestClient,
     workspace_id: UUID,
