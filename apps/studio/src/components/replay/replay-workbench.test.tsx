@@ -2,10 +2,103 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ReplayWorkbench } from "@/components/replay/replay-workbench";
-import {
-  getReplayWorkbenchModel,
-  type ReplayWorkbenchModel,
-} from "@/lib/replay-workbench";
+import type { ReplayWorkbenchModel } from "@/lib/replay-workbench";
+
+function getReplayWorkbenchModel(): ReplayWorkbenchModel {
+  return {
+    conversations: [
+      {
+        id: "prod_refund_legal",
+        title: "Cancellation with legal threat",
+        agentName: "Acme Support Concierge",
+        agentId: "11111111-1111-4111-8111-111111111111",
+        channelBindingId: "web_chat",
+        sourceVersion: "v23.1.4",
+        draftVersion: "draft/refund-clarity",
+        snapshotId: "snap_refund_may",
+        traceId: "trace_refund_742",
+        turns: 9,
+        risk: "high",
+        issue: "Policy citation and escalation changed under the draft.",
+      },
+    ],
+    selectedReplay: {
+      conversationId: "prod_refund_legal",
+      behavioralDistance: 34,
+      changedFrames: 2,
+      latencyDeltaMs: -180,
+      costDeltaPct: -7,
+      mostLikelyBreak:
+        "The draft can answer before the legal-escalation rule fires.",
+      diffRows: [
+        {
+          id: "frame_1",
+          frame: "turn 2 / retrieval",
+          baseline: "Refund policy ranked first with legal escalation note.",
+          draft: "Refund policy remains first with a region metadata filter.",
+          status: "improved",
+          evidenceRef: "trace_refund_742/retrieval/frame-2",
+        },
+        {
+          id: "frame_2",
+          frame: "turn 4 / policy",
+          baseline: "Legal threat triggers handoff before refund promise.",
+          draft: "Attorney paraphrase misses the handoff rule.",
+          status: "regressed",
+          evidenceRef: "trace_refund_742/policy/frame-4",
+        },
+      ],
+    },
+    personas: [
+      {
+        id: "persona_esl",
+        persona: "English-as-second-language user",
+        lens: "Short sentences, paraphrases, language switches.",
+        scenarios: 10,
+        passRate: 84,
+        failedScenarios: 2,
+        candidateEvalId: "eval.persona.esl.refund_paraphrase",
+        insight: "Spanish paraphrase drops legal escalation coverage.",
+      },
+    ],
+    properties: [
+      {
+        id: "prop_language",
+        axis: "Language switch mid-turn",
+        samples: 100,
+        robustness: 82,
+        failures: 14,
+        representativeFailure: "I want cancelar, mi abogado asked for policy.",
+        nextAction:
+          "Generate bilingual handoff cases from the failing cluster.",
+      },
+    ],
+    clusters: [
+      {
+        id: "cluster_legal_synonyms",
+        label: "Legal synonym misses",
+        count: 17,
+        severity: "high",
+        nextAction:
+          "Promote attorney, counsel, chargeback, and regulator phrases into the escalation rule.",
+        evidenceRef: "cluster/legal-synonyms/17-traces",
+      },
+    ],
+    scenes: [
+      {
+        id: "scene_legal_threat",
+        name: "Legal threat cancellation",
+        source: "production",
+        turns: 9,
+        evalLinked: true,
+        summary: "Customer threatens legal escalation during cancellation.",
+        provenance:
+          "Saved from production trace trace_refund_742 and signed snapshot snap_refund_may.",
+        linkedTraceId: "trace_refund_742",
+      },
+    ],
+  };
+}
 
 describe("ReplayWorkbench", () => {
   const previousBaseUrl = process.env.LOOP_CP_API_BASE_URL;
@@ -34,9 +127,9 @@ describe("ReplayWorkbench", () => {
     expect(screen.getByTestId("persona-simulator")).toHaveTextContent(
       "First User Persona Simulator",
     );
-    expect(screen.getByTestId("conversation-property-tester")).toHaveTextContent(
-      "Simulate 100 like this",
-    );
+    expect(
+      screen.getByTestId("conversation-property-tester"),
+    ).toHaveTextContent("Simulate 100 like this");
     expect(screen.getByTestId("scene-library")).toHaveTextContent(
       "Canonical production conversations",
     );
@@ -49,10 +142,13 @@ describe("ReplayWorkbench", () => {
     const fetcher = vi.fn<typeof fetch>(async (input) => {
       const url = String(input);
       if (url.endsWith("/context-ablation")) {
-        return new Response(JSON.stringify({ turn_id: "trace_refund_742", items: [] }), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ turn_id: "trace_refund_742", items: [] }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          },
+        );
       }
       if (url.endsWith("/replay/forks")) {
         return new Response(
@@ -112,14 +208,20 @@ describe("ReplayWorkbench", () => {
       return new Response("not found", { status: 404 });
     });
     vi.stubGlobal("fetch", fetcher);
-    render(<ReplayWorkbench model={getReplayWorkbenchModel()} workspaceId="ws_1" />);
+    render(
+      <ReplayWorkbench model={getReplayWorkbenchModel()} workspaceId="ws_1" />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /fork from frame/i }));
     fireEvent.click(screen.getByRole("button", { name: /save as eval/i }));
-    fireEvent.click(screen.getByRole("button", { name: /canonicalize selected/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /canonicalize selected/i }),
+    );
 
     expect(await screen.findByText(/Branch br_replay/i)).toBeInTheDocument();
-    expect(await screen.findByText(/Eval case case_replay/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Eval case case_replay/i),
+    ).toBeInTheDocument();
     expect(await screen.findByText(/Scene scene_replay/i)).toBeInTheDocument();
     const bodies = fetcher.mock.calls.map(([, init]) =>
       init?.body ? JSON.parse(String(init.body)) : null,
@@ -135,7 +237,11 @@ describe("ReplayWorkbench", () => {
       expect.objectContaining({
         trace_id: "trace_refund_742",
         draft_branch_ref: "draft/refund-clarity",
-        risk_tags: expect.arrayContaining(["production-replay", "high", "web_chat"]),
+        risk_tags: expect.arrayContaining([
+          "production-replay",
+          "high",
+          "web_chat",
+        ]),
       }),
     );
     expect(bodies).toContainEqual(
@@ -185,7 +291,9 @@ describe("ReplayWorkbench", () => {
 
     render(<ReplayWorkbench model={model} />);
 
-    expect(screen.getByText("Replay evidence is unavailable")).toBeInTheDocument();
+    expect(
+      screen.getByText("Replay evidence is unavailable"),
+    ).toBeInTheDocument();
     expect(screen.getByText(/LOOP_CP_API_BASE_URL/i)).toBeInTheDocument();
   });
 });
