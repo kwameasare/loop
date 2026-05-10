@@ -104,6 +104,12 @@ describe("blockingBullets", () => {
 });
 
 describe("fetchCoBuilderWorkspace", () => {
+  it("requires cp-api configuration instead of returning fixture workspace data", async () => {
+    await expect(fetchCoBuilderWorkspace("ws-1")).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required for Co-Builder calls",
+    );
+  });
+
   it("loads the workspace-scoped Co-Builder contract from cp-api", async () => {
     const fetcher = async (input: RequestInfo | URL) => {
       expect(String(input)).toBe(
