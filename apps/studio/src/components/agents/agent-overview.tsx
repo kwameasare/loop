@@ -26,6 +26,7 @@ import {
 } from "@/lib/design-tokens";
 import type { CommitmentDocument } from "@/lib/agent-commitment";
 import type { ChannelBinding } from "@/lib/channel-bindings";
+import type { EvalSuite } from "@/lib/evals";
 import type { MemoryPolicy } from "@/lib/memory-policies";
 import type { ToolContract } from "@/lib/tool-contracts";
 import type { TargetDeploy, TargetEvalSuite } from "@/lib/target-ux";
@@ -132,6 +133,8 @@ export interface AgentOverviewProps {
   toolsDegradedReason?: string | undefined;
   memoryPolicies?: MemoryPolicy[] | undefined;
   memoryDegradedReason?: string | undefined;
+  evalSuites?: EvalSuite[] | undefined;
+  evalsDegradedReason?: string | undefined;
   workbench?: Partial<AgentWorkbenchData>;
   commitment?: CommitmentDocument | undefined;
   /** Called when the user saves a new description. Allows integration with server actions. */
@@ -502,6 +505,72 @@ function summarizeMemoryPolicies(
   };
 }
 
+function passRatePercent(passRate: number | null): number {
+  if (passRate === null || Number.isNaN(passRate)) return 0;
+  return Math.round(passRate <= 1 ? passRate * 100 : passRate);
+}
+
+function confidenceForPassRate(
+  passRate: number,
+): TargetEvalSuite["confidence"] {
+  if (passRate >= 95) return "high";
+  if (passRate >= 85) return "medium";
+  if (passRate > 0) return "low";
+  return "unsupported";
+}
+
+function summarizeEvalSuites(
+  suites: readonly EvalSuite[] | undefined,
+  degradedReason?: string | undefined,
+): TargetEvalSuite {
+  const all = suites ?? [];
+  if (degradedReason) {
+    return {
+      id: "evals.degraded",
+      name: "Eval coverage degraded",
+      coverage: degradedReason,
+      passRate: 0,
+      regressionCount: 1,
+      lastRun: "Unavailable",
+      confidence: "unsupported",
+    };
+  }
+  if (all.length === 0) {
+    return {
+      id: "evals.unconfigured",
+      name: "No eval suite loaded",
+      coverage: "No eval coverage loaded for this agent.",
+      passRate: 0,
+      regressionCount: 1,
+      lastRun: "Never",
+      confidence: "unsupported",
+    };
+  }
+
+  const suitesWithRates = all
+    .map((suite) => ({ suite, passRate: passRatePercent(suite.passRate) }))
+    .sort((left, right) => left.passRate - right.passRate);
+  const weakest = suitesWithRates[0]!;
+  const latestRun = all
+    .map((suite) => suite.lastRunAt)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => Date.parse(right) - Date.parse(left))[0];
+  const totalCases = all.reduce((sum, suite) => sum + suite.cases, 0);
+  const belowGate = suitesWithRates.filter((item) => item.passRate < 95);
+
+  return {
+    id: weakest.suite.id,
+    name: `${all.length} eval suite${all.length === 1 ? "" : "s"}`,
+    coverage: `${totalCases} case${
+      totalCases === 1 ? "" : "s"
+    }; weakest gate ${weakest.suite.name} at ${weakest.passRate}%.`,
+    passRate: weakest.passRate,
+    regressionCount: belowGate.length,
+    lastRun: latestRun ?? "Never",
+    confidence: confidenceForPassRate(weakest.passRate),
+  };
+}
+
 function EditDescriptionModal({
   open,
   initial,
@@ -783,6 +852,8 @@ function createDefaultWorkbenchData(
     | "toolsDegradedReason"
     | "memoryPolicies"
     | "memoryDegradedReason"
+    | "evalSuites"
+    | "evalsDegradedReason"
   > & { commitment?: CommitmentDocument | undefined },
 ): AgentWorkbenchData {
   const purpose =
@@ -802,15 +873,10 @@ function createDefaultWorkbenchData(
           ? "blocked"
           : "watching";
   const modelAliases = props.model ? [props.model] : ["No model configured"];
-  const evalSuite: TargetEvalSuite = {
-    id: "evals.unconfigured",
-    name: "No eval suite loaded",
-    coverage: "No eval coverage loaded for this agent.",
-    passRate: 0,
-    regressionCount: hasProduction ? 0 : 1,
-    lastRun: "Never",
-    confidence: "unsupported",
-  };
+  const evalSuite = summarizeEvalSuites(
+    props.evalSuites,
+    props.evalsDegradedReason,
+  );
   const deploy: TargetDeploy = {
     id: hasProduction
       ? `agent.${props.id}.active_version`
@@ -1073,6 +1139,8 @@ export function AgentOverview({
   toolsDegradedReason,
   memoryPolicies,
   memoryDegradedReason,
+  evalSuites,
+  evalsDegradedReason,
   workbench,
   commitment,
   onDescriptionSave,
@@ -1099,6 +1167,8 @@ export function AgentOverview({
           toolsDegradedReason,
           memoryPolicies,
           memoryDegradedReason,
+          evalSuites,
+          evalsDegradedReason,
           commitment,
         }),
         workbench,
@@ -1120,6 +1190,8 @@ export function AgentOverview({
       toolsDegradedReason,
       memoryPolicies,
       memoryDegradedReason,
+      evalSuites,
+      evalsDegradedReason,
       workbench,
     ],
   );
