@@ -49,6 +49,74 @@ describe("change package client", () => {
     );
   });
 
+  it("does not fabricate preflight or approval mutations without cp-api", async () => {
+    const local = buildLocalChangePackage("agt_1");
+
+    await expect(
+      generateChangePackage(
+        "agt_1",
+        { summary: "Promote draft.", to_version_id: "v2" },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      submitChangePackage("agt_1", "cp_1", { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      recordChangePackageApproval(
+        "agt_1",
+        "cp_1",
+        { approval_id: "owner", decision: "approve" },
+        { baseUrl: "", fallbackPackage: local },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps deterministic preflight and approval mutations explicitly opt-in", async () => {
+    const local = {
+      ...buildLocalChangePackage("agt_1"),
+      required_approvals: [
+        {
+          id: "owner",
+          role: "Agent owner",
+          required: true,
+          satisfied: false,
+          reason: "Owner approval required.",
+        },
+      ],
+    };
+
+    await expect(
+      generateChangePackage(
+        "agt_1",
+        { summary: "Promote draft.", to_version_id: "v2" },
+        { baseUrl: "", allowFixture: true },
+      ),
+    ).resolves.toMatchObject({ status: "generated", summary: "Promote draft." });
+
+    await expect(
+      submitChangePackage("agt_1", "cp_1", {
+        baseUrl: "",
+        allowFixture: true,
+      }),
+    ).resolves.toMatchObject({ id: "cp_1", status: "submitted" });
+
+    await expect(
+      recordChangePackageApproval(
+        "agt_1",
+        "cp_1",
+        { approval_id: "owner", decision: "approve", comment: "Looks safe." },
+        { baseUrl: "", allowFixture: true, fallbackPackage: local },
+      ),
+    ).resolves.toMatchObject({
+      id: "cp_1",
+      status: "approved",
+      approval_status: "approved",
+    });
+  });
+
   it("generates and submits preflight packages", async () => {
     const fetcher = vi.fn<typeof fetch>(async (input) => {
       const url = String(input);
