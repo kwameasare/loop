@@ -428,7 +428,7 @@ export async function fetchReplayWorkbenchModel(
       err instanceof Error &&
       /LOOP_CP_API_BASE_URL is required/.test(err.message)
     ) {
-      return getReplayWorkbenchModel();
+      return modelFromTraces([]);
     }
     throw err;
   }

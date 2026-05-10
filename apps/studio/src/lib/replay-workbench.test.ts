@@ -3,6 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import { fetchReplayWorkbenchModel, replayAgainstDraft } from "./replay-workbench";
 
 describe("fetchReplayWorkbenchModel", () => {
+  it("does not serve fixture production conversations when cp-api is unconfigured", async () => {
+    const model = await fetchReplayWorkbenchModel("ws-1");
+
+    expect(model.conversations).toEqual([]);
+  });
+
   it("builds risky replay candidates from live traces", async () => {
     const fetcher = vi.fn<typeof fetch>(async () =>
       new Response(
