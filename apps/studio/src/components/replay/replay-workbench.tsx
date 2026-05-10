@@ -25,9 +25,13 @@ import {
   type FutureReplayDiff,
   type PersonaSimulationResult,
   type ProductionConversationCandidate,
+  type ReplayEvalCaseResult,
+  type ReplayForkResult,
   type ReplayFailureCluster,
   type ReplayWorkbenchModel,
+  forkReplayFrame,
   replayAgainstDraft,
+  saveReplayAsEvalCase,
 } from "@/lib/replay-workbench";
 import { cn } from "@/lib/utils";
 
@@ -92,12 +96,23 @@ function FutureReplayPanel({
   selected: ProductionConversationCandidate;
 }) {
   const [playing, setPlaying] = useState(false);
-  const [forked, setForked] = useState(false);
-  const [savedEval, setSavedEval] = useState(false);
+  const [forkResult, setForkResult] = useState<ReplayForkResult | null>(null);
+  const [savedEval, setSavedEval] = useState<ReplayEvalCaseResult | null>(null);
+  const [forking, setForking] = useState(false);
+  const [savingEval, setSavingEval] = useState(false);
   const [runningFutureReplay, setRunningFutureReplay] = useState(false);
   const [futureReplayError, setFutureReplayError] = useState<string | null>(null);
+  const [promotionError, setPromotionError] = useState<string | null>(null);
   const [liveReplay, setLiveReplay] = useState(model.selectedReplay);
   const replay = liveReplay;
+  const selectedFrame = useMemo(
+    () =>
+      replay.diffRows.find((row) => row.status === "regressed") ??
+      replay.diffRows.find((row) => row.status === "changed") ??
+      replay.diffRows[0],
+    [replay.diffRows],
+  );
+
   async function handleReplayAgainstDraft() {
     setRunningFutureReplay(true);
     setFutureReplayError(null);
@@ -125,6 +140,75 @@ function FutureReplayPanel({
       setRunningFutureReplay(false);
     }
   }
+
+  async function handleForkFromFrame() {
+    if (!selectedFrame) {
+      setPromotionError("Replay has no frame to fork from.");
+      return;
+    }
+    setForking(true);
+    setPromotionError(null);
+    try {
+      const result = await forkReplayFrame(selected.agentId, {
+        traceId: selected.traceId,
+        frameId: selectedFrame.id,
+        sourceVersionRef: selected.sourceVersion,
+        snapshotId: selected.snapshotId,
+        evidenceRef: selectedFrame.evidenceRef,
+        purpose: `Investigate ${selected.title}: ${selected.issue}`,
+      });
+      setForkResult(result);
+    } catch (err) {
+      setPromotionError(
+        err instanceof Error
+          ? err.message
+          : "Could not fork this replay frame.",
+      );
+    } finally {
+      setForking(false);
+    }
+  }
+
+  async function handleSaveAsEval() {
+    if (!selectedFrame) {
+      setPromotionError("Replay has no frame to save as an eval case.");
+      return;
+    }
+    setSavingEval(true);
+    setPromotionError(null);
+    try {
+      const result = await saveReplayAsEvalCase(selected.agentId, {
+        title: `${selected.title} replay regression`,
+        traceId: selected.traceId,
+        frameId: selectedFrame.id,
+        sourceVersionRef: selected.sourceVersion,
+        draftBranchRef: selected.draftVersion,
+        channel: selected.channelBindingId ?? "unknown",
+        snapshotId: selected.snapshotId,
+        expectedBehavior:
+          selectedFrame.status === "regressed"
+            ? selectedFrame.baseline
+            : `Preserve intended behavior for ${selected.title}.`,
+        failureReason: `${selected.issue} ${replay.mostLikelyBreak}`,
+        replayRef: `${selected.traceId}/against-draft/${selectedFrame.id}`,
+        riskTags: [
+          "production-replay",
+          selected.risk,
+          selected.channelBindingId ?? "channel-unknown",
+        ],
+      });
+      setSavedEval(result);
+    } catch (err) {
+      setPromotionError(
+        err instanceof Error
+          ? err.message
+          : "Could not save this replay as an eval case.",
+      );
+    } finally {
+      setSavingEval(false);
+    }
+  }
+
   return (
     <section className="space-y-4" data-testid="production-replay">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -162,14 +246,20 @@ function FutureReplayPanel({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setForked(true)}
+            onClick={handleForkFromFrame}
+            disabled={forking || !selectedFrame}
           >
             <GitFork className="mr-2 h-4 w-4" />
-            Fork from frame
+            {forking ? "Forking..." : "Fork from frame"}
           </Button>
-          <Button type="button" size="sm" onClick={() => setSavedEval(true)}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleSaveAsEval}
+            disabled={savingEval || !selectedFrame}
+          >
             <TestTube2 className="mr-2 h-4 w-4" />
-            Save as eval
+            {savingEval ? "Saving..." : "Save as eval"}
           </Button>
         </div>
       </div>
@@ -210,11 +300,21 @@ function FutureReplayPanel({
         {replay.mostLikelyBreak}
       </EvidenceCallout>
 
-      {(forked || savedEval) ? (
+      {(forkResult || savedEval) ? (
         <StatePanel state="success" title="Replay evidence promoted">
-          {forked ? "A branch can now start from the selected frame. " : ""}
-          {savedEval ? "This conversation is queued as a regression eval. " : ""}
-          The action is local to the draft until promotion gates pass.
+          {forkResult
+            ? `Branch ${forkResult.branch.id} and change set ${forkResult.change_set.id} were created from ${selectedFrame?.evidenceRef}. `
+            : ""}
+          {savedEval
+            ? `Eval case ${savedEval.case_id} was saved to suite ${savedEval.suite_id}. `
+            : ""}
+          Promotion gates still control any production change.
+        </StatePanel>
+      ) : null}
+
+      {promotionError ? (
+        <StatePanel state="degraded" title="Could not promote replay evidence">
+          {promotionError}
         </StatePanel>
       ) : null}
 
@@ -543,7 +643,7 @@ export function ReplayWorkbench({ model }: { model: ReplayWorkbenchModel }) {
             />
           ))}
         </div>
-        <FutureReplayPanel model={model} selected={selected} />
+        <FutureReplayPanel key={selected.id} model={model} selected={selected} />
       </section>
 
       <PersonaSimulator personas={model.personas} />

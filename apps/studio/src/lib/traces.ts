@@ -760,6 +760,7 @@ export type TraceSummary = {
   duration_ns: number;
   started_at_ms: number;
   span_count: number;
+  channel_binding_id?: string | undefined;
 };
 
 export interface ListTracesOptions {
@@ -814,6 +815,7 @@ interface CpTraceItem {
   duration_ms: number;
   span_count: number;
   error: boolean;
+  channel_binding_id?: string | undefined;
 }
 
 interface CpTraceSpan {
@@ -1026,6 +1028,7 @@ function toTraceSummary(item: CpTraceItem): TraceSummary {
     duration_ns: item.duration_ms * 1_000_000,
     started_at_ms: Date.parse(item.started_at),
     span_count: item.span_count,
+    channel_binding_id: item.channel_binding_id || undefined,
   };
 }
 

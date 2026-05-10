@@ -345,6 +345,63 @@ def test_replay_against_draft_and_version_diff_are_audited(
     }
 
 
+def test_replay_frame_fork_and_eval_case_preserve_trace_provenance(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    forked = client.post(
+        f"/v1/agents/{agent_id}/replay/forks",
+        headers=_auth(),
+        json={
+            "trace_id": "trace-prod-1",
+            "frame_id": "answer-frame",
+            "source_version_ref": "v23.1.4",
+            "snapshot_id": "snap-prod",
+            "evidence_ref": "trace-prod-1/answer-frame",
+            "purpose": "Investigate legal escalation replay frame.",
+        },
+    )
+    assert forked.status_code == 201, forked.text
+    fork_body = forked.json()
+    assert fork_body["branch"]["base_version_id"] == "v23.1.4"
+    assert fork_body["change_set"]["source_type"] == "trace_replay_frame"
+    assert "trace-prod-1" in fork_body["change_set"]["source_refs"]
+    assert fork_body["next_url"].endswith(f"branch_id={fork_body['branch']['id']}")
+
+    eval_case = client.post(
+        f"/v1/agents/{agent_id}/replay/eval-cases",
+        headers=_auth(),
+        json={
+            "title": "Legal threat replay regression",
+            "trace_id": "trace-prod-1",
+            "frame_id": "answer-frame",
+            "source_version_ref": "v23.1.4",
+            "draft_branch_ref": "draft/refund-clarity",
+            "channel": "whatsapp",
+            "snapshot_id": "snap-prod",
+            "expected_behavior": "Escalate legal threats before answering refund policy.",
+            "failure_reason": "Draft missed attorney synonym under replay.",
+            "replay_ref": "trace-prod-1/against-draft/answer-frame",
+            "risk_tags": ["production-replay", "high", "whatsapp"],
+        },
+    )
+    assert eval_case.status_code == 201, eval_case.text
+    eval_body = eval_case.json()
+    assert eval_body["suite_id"]
+    assert eval_body["case_id"]
+    assert eval_body["case"]["source"] == "production-replay"
+    assert eval_body["case"]["source_ref"] == "trace-prod-1"
+    assert "snap-prod" in eval_body["evidence_refs"]
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "replay:fork_from_frame",
+        "replay:eval_case_create",
+    }
+
+
 def test_dashboard_pins_persist_and_homepage_pins_are_user_scoped(
     client: TestClient, workspace_id: UUID
 ) -> None:
