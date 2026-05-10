@@ -15,6 +15,7 @@ const HEALTH: EstateHealth = {
     agents_draft: 3,
     pending_handoffs: 2,
     pending_approvals: 1,
+    active_rollouts: 1,
     trace_errors: 4,
     trace_count: 88,
     eval_suites: 6,
@@ -53,6 +54,24 @@ const HEALTH: EstateHealth = {
           evidence_ref: "tool-contract/tc_refund",
         },
       ],
+    },
+  ],
+  rollout_health: [
+    {
+      id: "dep_canary",
+      agent_id: "agt_1",
+      agent_name: "Refund Agent",
+      version_id: "v24",
+      stage: "canary",
+      status: "canary",
+      traffic_percent: 10,
+      channel_scope: ["web_chat", "whatsapp"],
+      region_scope: ["eu-west-2"],
+      segment_scope: ["enterprise"],
+      hold_time_minutes: 45,
+      auto_rollback_thresholds: { error_rate_percent: 2 },
+      evidence_pack_id: "ep_1",
+      evidence_ref: "deployment/dep_canary",
     },
   ],
   channel_health: [
@@ -127,6 +146,12 @@ describe("EstateOverview", () => {
     );
     expect(screen.getByTestId("estate-shared-dependencies")).toHaveTextContent(
       "refund_payment",
+    );
+    expect(screen.getByTestId("estate-rollouts")).toHaveTextContent(
+      "Refund Agent",
+    );
+    expect(screen.getByTestId("estate-rollouts")).toHaveTextContent(
+      "web_chat, whatsapp",
     );
     expect(screen.getByTestId("estate-failure-clusters")).toHaveTextContent(
       "Refund quote regressed",

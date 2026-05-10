@@ -7,6 +7,7 @@ import {
   GitPullRequestArrow,
   Inbox,
   RadioTower,
+  Rocket,
   ShieldCheck,
   TestTube2,
 } from "lucide-react";
@@ -130,6 +131,12 @@ export function EstateOverview({ health }: { health: EstateHealth }) {
           icon={GitPullRequestArrow}
         />
         <Metric
+          label="Rollouts"
+          value={summary.active_rollouts}
+          detail="Shadow, canary, ramp, pause, or rollback states"
+          icon={Rocket}
+        />
+        <Metric
           label="Human handoffs"
           value={summary.pending_handoffs}
           detail="Open HITL queue items"
@@ -144,6 +151,79 @@ export function EstateOverview({ health }: { health: EstateHealth }) {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
+        <div
+          className="rounded-md border bg-card"
+          data-testid="estate-rollouts"
+        >
+          <div className="border-b px-4 py-3">
+            <h2 className="text-base font-semibold">Rollout posture</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Active shadow, canary, ramp, pause, and rollback state across
+              agents.
+            </p>
+          </div>
+          {health.rollout_health.length ? (
+            <ol className="divide-y">
+              {health.rollout_health.map((item) => (
+                <li key={item.id} className="p-4">
+                  <Link
+                    href={`/agents/${item.agent_id}/deploys?deployment_id=${item.id}`}
+                    className="group block"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold">
+                          {item.agent_name} · {item.version_id}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {item.stage} · {item.traffic_percent}% traffic · hold{" "}
+                          {item.hold_time_minutes} min
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "rounded-md px-2 py-0.5 text-xs font-medium",
+                          severityClass(
+                            item.status === "paused" ||
+                              item.status === "rolled_back" ||
+                              item.status === "failed"
+                              ? "critical"
+                              : "watch",
+                          ),
+                        )}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Channels:{" "}
+                      {item.channel_scope.length
+                        ? item.channel_scope.join(", ")
+                        : "not scoped"}{" "}
+                      · Regions:{" "}
+                      {item.region_scope.length
+                        ? item.region_scope.join(", ")
+                        : "not scoped"}{" "}
+                      · Segments:{" "}
+                      {item.segment_scope.length
+                        ? item.segment_scope.join(", ")
+                        : "not scoped"}
+                    </p>
+                    <p className="mt-1 font-mono text-xs text-muted-foreground">
+                      evidence: {item.evidence_ref} · pack{" "}
+                      {item.evidence_pack_id}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="p-4 text-sm text-muted-foreground">
+              No active rollout state detected.
+            </div>
+          )}
+        </div>
+
         <div
           className="rounded-md border bg-card"
           data-testid="estate-shared-dependencies"
