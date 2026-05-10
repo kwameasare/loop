@@ -685,6 +685,75 @@ def test_estate_health_derives_claims_from_workspace_objects(
     } <= {job["id"] for job in body["background_jobs"]}
 
 
+def test_observatory_anomaly_can_create_task_and_eval_case(
+    client: TestClient, workspace_id: UUID
+) -> None:
+    task = client.post(
+        f"/v1/workspaces/{workspace_id}/observatory/anomalies/anom_tool_wait/tasks",
+        headers=_auth(),
+        json={
+            "title": "Tool wait exceeds voice budget",
+            "evidence": "lookup_order adds 180 ms where the voice budget is 160 ms.",
+            "affected_object": "tool/lookup_order",
+            "next_action": "Use preview batching before enabling phone canary.",
+            "owner": "Platform Integrations",
+            "trace_query": "tool:lookup_order duration_ms:>160 channel:voice",
+        },
+    )
+    assert task.status_code == 201, task.text
+    task_body = task.json()
+    assert task_body["id"].startswith("task_anom-tool-wait_")
+    assert task_body["href"].endswith(task_body["id"])
+    assert "lookup_order adds 180 ms" in task_body["evidence"]
+
+    eval_case = client.post(
+        f"/v1/workspaces/{workspace_id}/observatory/anomalies/anom_tool_wait/eval-cases",
+        headers=_auth(),
+        json={
+            "source_type": "incident_cluster",
+            "source_ref": "anom_tool_wait",
+            "affected_object": "tool/lookup_order",
+            "expected_behavior": "Batch or avoid lookup_order in voice calls.",
+            "evidence": "lookup_order adds 180 ms where the voice budget is 160 ms.",
+            "trace_query": "tool:lookup_order duration_ms:>160 channel:voice",
+        },
+    )
+    assert eval_case.status_code == 201, eval_case.text
+    eval_body = eval_case.json()
+    assert eval_body["id"]
+    assert eval_body["suite_id"]
+    assert f"case_id={eval_body['id']}" in eval_body["href"]
+
+    suites = client.get(
+        f"/v1/workspaces/{workspace_id}/eval-suites",
+        headers=_auth(),
+    )
+    assert suites.status_code == 200, suites.text
+    suite = next(
+        item
+        for item in suites.json()["items"]
+        if item["name"] == "Observatory failure regressions"
+    )
+    cases = client.get(
+        f"/v1/eval-suites/{suite['id']}/cases",
+        headers=_auth(),
+    )
+    assert cases.status_code == 200, cases.text
+    case = cases.json()["items"][0]
+    assert case["source"] == "incident_cluster"
+    assert case["source_ref"] == "anom_tool_wait"
+    assert case["input"]["trace_query"] == "tool:lookup_order duration_ms:>160 channel:voice"
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "observatory:anomaly_task_create",
+        "observatory:anomaly_eval_case_create",
+    }
+
+
 def test_agent_commitment_contract_can_be_drafted_accepted_and_versioned(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:
