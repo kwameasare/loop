@@ -29,6 +29,9 @@ export interface ListAuditEventsResult {
   total: number;
 }
 
+export const AUDIT_EVENTS_CP_API_REQUIRED =
+  "LOOP_CP_API_BASE_URL is required to load audit events.";
+
 function cpApiBaseUrl(override?: string): string | null {
   const raw =
     override ??
@@ -83,7 +86,7 @@ export async function listAuditEvents(
   opts: ListAuditEventsOptions = {},
 ): Promise<ListAuditEventsResult> {
   const base = cpApiBaseUrl(opts.baseUrl);
-  if (!base) return { events: [], total: 0 };
+  if (!base) throw new Error(AUDIT_EVENTS_CP_API_REQUIRED);
   const inner = opts.fetcher ?? fetch;
   const fetcher = createAuthedCpApiFetch({
     fetcher: inner,
