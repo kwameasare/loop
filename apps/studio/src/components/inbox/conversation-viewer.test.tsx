@@ -11,8 +11,10 @@ import {
 
 function makeSubscriber() {
   let push: ((m: ConversationMessage) => void) | null = null;
+  let subscriptions = 0;
   let unsub = 0;
   const subscriber: ConversationSubscriber = ({ onMessage }) => {
+    subscriptions += 1;
     push = onMessage;
     return {
       unsubscribe: () => {
@@ -28,6 +30,9 @@ function makeSubscriber() {
     },
     get unsubscribeCount() {
       return unsub;
+    },
+    get subscriptionCount() {
+      return subscriptions;
     },
   };
 }
@@ -112,6 +117,33 @@ describe("ConversationViewer", () => {
     );
     expect(screen.getByTestId("conversation-empty")).toBeInTheDocument();
   });
+
+  it("renders degraded conversation state without live controls or subscription", () => {
+    const stub = makeSubscriber();
+    render(
+      <ConversationViewer
+        conversation_id={FIXTURE_CONVERSATION_ID}
+        degradedReason="cp-api conversation route returned 404"
+        initialTranscript={[]}
+        subscribe={stub.subscriber}
+      />,
+    );
+
+    expect(screen.getByTestId("conversation-status")).toHaveTextContent(
+      "degraded",
+    );
+    expect(screen.getByTestId("conversation-degraded")).toHaveTextContent(
+      "conversation route returned 404",
+    );
+    expect(screen.getByTestId("conversation-empty")).toHaveTextContent(
+      "Conversation transcript unavailable.",
+    );
+    expect(
+      screen.queryByTestId("conversation-takeover"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("conversation-composer-input")).toBeDisabled();
+    expect(stub.subscriptionCount).toBe(0);
+  });
 });
 
 import { fireEvent, waitFor } from "@testing-library/react";
@@ -139,7 +171,9 @@ describe("ConversationViewer takeover + composer", () => {
       fireEvent.click(btn);
     });
     await waitFor(() => {
-      expect(screen.getByTestId("conversation-owned-badge")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("conversation-owned-badge"),
+      ).toBeInTheDocument();
     });
     expect(takeoverCalls).toBe(1);
     expect(screen.queryByTestId("conversation-takeover")).toBeNull();

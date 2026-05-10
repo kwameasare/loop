@@ -108,6 +108,19 @@ describe("conversation cp-api adapter", () => {
     });
   });
 
+  it("marks a missing conversation route as degraded instead of an empty live transcript", async () => {
+    const fetcher = async () => response({}, 404);
+
+    const detail = await fetchConversationDetail("conv-1", {
+      baseUrl: "https://cp.test/v1",
+      fetcher: fetcher as unknown as typeof fetch,
+    });
+
+    expect(detail.messages).toEqual([]);
+    expect(detail.ownership).toBe("agent");
+    expect(detail.degraded_reason).toMatch(/conversation route returned 404/i);
+  });
+
   it("posts takeover, handback, and operator messages to cp-api", async () => {
     const urls: string[] = [];
     const fetcher = async (input: RequestInfo | URL) => {
