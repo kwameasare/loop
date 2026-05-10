@@ -228,6 +228,29 @@ describe("FlightDeckScreen", () => {
     expect(screen.getByTestId("deploy-timeline")).toBeInTheDocument();
     expect(screen.getByTestId("flight-readiness-rollback")).toBeInTheDocument();
   });
+
+  it("does not render fixture-only deployment sections for an empty backend model", () => {
+    render(
+      <FlightDeckScreen
+        model={{
+          readiness: [],
+          diffs: [],
+          gates: [],
+          approvals: [],
+          rollbackTarget: null,
+          environments: [],
+          canaryMetrics: [],
+          autoRollbackTriggers: [],
+          timeline: [],
+        }}
+      />,
+    );
+
+    expect(screen.queryByTestId("environment-strip")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("canary-slider")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("rollback-panel")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("deploy-timeline")).not.toBeInTheDocument();
+  });
 });
 
 describe("fetchDeployFlightModel", () => {
@@ -285,6 +308,39 @@ describe("fetchDeployFlightModel", () => {
       id: "live-trace-health",
       status: "failed",
     });
-    expect(model.rollbackTarget.versionId).toBe("d".repeat(12));
+    expect(model.rollbackTarget?.versionId).toBe("d".repeat(12));
+  });
+
+  it("returns a degraded model instead of local deploy fixtures without cp-api", async () => {
+    const model = await fetchDeployFlightModel("ws-1", { baseUrl: "" });
+
+    expect(model.degraded_reason).toMatch(/control-plane trace and audit/i);
+    expect(model.diffs).toEqual([]);
+    expect(model.rollbackTarget).toBeNull();
+  });
+
+  it("returns an empty model instead of local deploy fixtures with no production traces", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.includes("/workspaces/ws-1/traces")) {
+        return new Response(
+          JSON.stringify({ items: [], next_cursor: null }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response(JSON.stringify({ items: [], total: 0 }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+
+    const model = await fetchDeployFlightModel("ws-1", {
+      baseUrl: "https://cp.example.test/v1",
+      fetcher,
+    });
+
+    expect(model.empty_reason).toMatch(/no production traces/i);
+    expect(model.gates).toEqual([]);
+    expect(model.environments).toEqual([]);
   });
 });

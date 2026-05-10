@@ -16,6 +16,13 @@ export function FlightDeckScreen({
   model?: DeployFlightModel;
 }) {
   const readiness = model?.readiness ?? FLIGHT_READINESS;
+  const showEnvironments = !model || model.environments.length > 0;
+  const showCanary =
+    !model ||
+    (model.canaryMetrics.length > 0 &&
+      model.autoRollbackTriggers.length > 0);
+  const showRollback = !model || model.rollbackTarget;
+  const showTimeline = !model || model.timeline.length > 0;
   return (
     <main
       className="space-y-8 p-6"
@@ -55,7 +62,11 @@ export function FlightDeckScreen({
         ))}
       </section>
 
-      <EnvironmentStrip />
+      {showEnvironments ? (
+        <EnvironmentStrip
+          {...(model ? { environments: model.environments } : {})}
+        />
+      ) : null}
 
       <PreflightGrid {...(model ? { diffs: model.diffs } : {})} />
 
@@ -69,11 +80,28 @@ export function FlightDeckScreen({
           : {})}
       />
 
-      <CanarySlider />
+      {showCanary ? (
+        <CanarySlider
+          {...(model
+            ? {
+                metrics: model.canaryMetrics,
+                triggers: model.autoRollbackTriggers,
+              }
+            : {})}
+        />
+      ) : null}
 
-      <RollbackPanel {...(model ? { target: model.rollbackTarget } : {})} />
+      {showRollback ? (
+        <RollbackPanel
+          {...(model && model.rollbackTarget
+            ? { target: model.rollbackTarget }
+            : {})}
+        />
+      ) : null}
 
-      <DeployTimeline />
+      {showTimeline ? (
+        <DeployTimeline {...(model ? { rows: model.timeline } : {})} />
+      ) : null}
     </main>
   );
 }

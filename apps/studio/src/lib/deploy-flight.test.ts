@@ -53,6 +53,7 @@ describe("deploy-flight model", () => {
   });
 
   it("blocks promotion until blocking gates pass and required approvals are satisfied", () => {
+    expect(canPromote([], [])).toBe(false);
     expect(canPromote(EVAL_GATES, APPROVALS)).toBe(false);
     const allGreen = EVAL_GATES.map((g) => ({ ...g, status: "passed" as const }));
     const allApproved = APPROVALS.map((a) =>

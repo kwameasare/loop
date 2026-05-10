@@ -83,7 +83,41 @@ describe("fetchDeploySafetyModel", () => {
     expect(model.snapshots[0].signature).toBe(
       `sig:${model.snapshots[0].sha256}`,
     );
-    expect(model.bisect.culpritCommit).toBe("agentve");
+    expect(model.bisect?.culpritCommit).toBe("agentve");
+  });
+
+  it("returns a degraded model instead of local safety fixtures without cp-api", async () => {
+    const model = await fetchDeploySafetyModel("ws-1", { baseUrl: "" });
+
+    expect(model.degraded_reason).toMatch(/control-plane trace and audit/i);
+    expect(model.changes).toEqual([]);
+    expect(model.bisect).toBeNull();
+    expect(model.snapshots).toEqual([]);
+  });
+
+  it("returns an empty model instead of local safety fixtures with no production traces", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.includes("/workspaces/ws-1/traces")) {
+        return new Response(
+          JSON.stringify({ items: [], next_cursor: null }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response(JSON.stringify({ items: [], total: 0 }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+
+    const model = await fetchDeploySafetyModel("ws-1", {
+      baseUrl: "https://cp.example.test/v1",
+      fetcher,
+    });
+
+    expect(model.empty_reason).toMatch(/no production traces/i);
+    expect(model.changes).toEqual([]);
+    expect(model.bisect).toBeNull();
   });
 });
 

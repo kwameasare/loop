@@ -59,8 +59,10 @@ export function topLikelyChanges(
 
 export interface DeploySafetyModel {
   changes: readonly BehaviorChange[];
-  bisect: BisectResult;
+  bisect: BisectResult | null;
   snapshots: readonly Snapshot[];
+  degraded_reason?: string | undefined;
+  empty_reason?: string | undefined;
 }
 
 function likelihoodForTrace(trace: TraceSummary): LikelihoodTier {
@@ -408,6 +410,24 @@ export function getDeploySafetyModel(): DeploySafetyModel {
   };
 }
 
+function unavailableDeploySafetyModel(reason: string): DeploySafetyModel {
+  return {
+    changes: [],
+    bisect: null,
+    snapshots: [],
+    degraded_reason: reason,
+  };
+}
+
+function emptyDeploySafetyModel(reason: string): DeploySafetyModel {
+  return {
+    changes: [],
+    bisect: null,
+    snapshots: [],
+    empty_reason: reason,
+  };
+}
+
 export async function fetchDeploySafetyModel(
   workspaceId: string,
   opts: TracesClientOptions & ListAuditEventsOptions = {},
@@ -417,7 +437,11 @@ export async function fetchDeploySafetyModel(
       searchTraces(workspaceId, { page_size: 8 }, opts),
       listAuditEvents(workspaceId, { ...opts, limit: 20 }),
     ]);
-    if (traceResult.traces.length === 0) return getDeploySafetyModel();
+    if (traceResult.traces.length === 0) {
+      return emptyDeploySafetyModel(
+        "No production traces are available for pre-promote safety yet.",
+      );
+    }
     return {
       changes: changesFromTraces(traceResult.traces),
       bisect: bisectFromAudit(
@@ -431,7 +455,9 @@ export async function fetchDeploySafetyModel(
       err instanceof Error &&
       /LOOP_CP_API_BASE_URL is required/.test(err.message)
     ) {
-      return getDeploySafetyModel();
+      return unavailableDeploySafetyModel(
+        "Pre-promote safety requires the control-plane trace and audit endpoints.",
+      );
     }
     throw err;
   }
