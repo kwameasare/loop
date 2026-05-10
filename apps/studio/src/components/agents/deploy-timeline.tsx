@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import {
+  evaluateDeploymentThreshold as defaultEvaluateThreshold,
   pauseDeployment as defaultPause,
   promoteDeployment as defaultPromote,
   rampDeployment as defaultRamp,
@@ -13,6 +14,8 @@ import {
   type EvidencePackExport,
   type EvidencePackExportFormat,
   type EvidencePackExportInput,
+  type DeploymentThresholdEvaluationInput,
+  type DeploymentThresholdEvaluationResult,
   type DeploymentStartInput,
   type EvidencePack,
 } from "@/lib/deploys";
@@ -33,10 +36,28 @@ type ExportEvidencePackFn = (
   evidencePackId: string,
   input: EvidencePackExportInput,
 ) => Promise<EvidencePackExport>;
+type EvaluateThresholdFn = (
+  agentId: string,
+  deploymentId: string,
+  input: DeploymentThresholdEvaluationInput,
+) => Promise<DeploymentThresholdEvaluationResult>;
+
+type ThresholdPolicy = "pause" | "rollback";
+type ThresholdInputState = {
+  metric: string;
+  observed: number;
+  policy: ThresholdPolicy;
+};
 
 const DEFAULT_CHANNEL_SCOPE = "web_chat";
 const DEFAULT_REGION_SCOPE = "global";
 const DEFAULT_SEGMENT_SCOPE = "all-customers";
+const DEFAULT_THRESHOLD_METRICS = [
+  "error_rate_percent",
+  "p95_latency_ms",
+  "cost_delta_percent",
+  "tool_failure_rate_percent",
+];
 
 function parseScopeList(value: string): string[] {
   return value
@@ -82,6 +103,22 @@ function thresholdSummary(
     : "Auto-rollback thresholds not configured.";
 }
 
+function thresholdMetricOptions(dep: Deployment): string[] {
+  const keys = Object.keys(dep.autoRollbackThresholds ?? {});
+  return keys.length > 0 ? keys : DEFAULT_THRESHOLD_METRICS;
+}
+
+function thresholdDefaultObserved(dep: Deployment, metric: string): number {
+  const raw = dep.autoRollbackThresholds?.[metric];
+  const value =
+    typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : 0;
+  return Number.isFinite(value) ? value : 0;
+}
+
+function thresholdLabel(metric: string): string {
+  return metric.replaceAll("_", " ");
+}
+
 export interface DeployTimelineProps {
   agentId: string;
   initialDeployments: Deployment[];
@@ -90,6 +127,7 @@ export interface DeployTimelineProps {
   degradedReason?: string | undefined;
   startCanary?: StartFn;
   exportPack?: ExportEvidencePackFn;
+  evaluateThreshold?: EvaluateThresholdFn;
   promote?: ActionFn;
   ramp?: RampFn;
   pause?: ActionFn;
@@ -132,6 +170,7 @@ export function DeployTimeline({
   degradedReason,
   startCanary = defaultStartCanary,
   exportPack = defaultExportEvidencePack,
+  evaluateThreshold = defaultEvaluateThreshold,
   promote = defaultPromote,
   ramp = defaultRamp,
   pause = defaultPause,
@@ -143,6 +182,9 @@ export function DeployTimeline({
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast>(null);
   const [rampTargets, setRampTargets] = useState<Record<string, number>>({});
+  const [thresholdInputs, setThresholdInputs] = useState<
+    Record<string, ThresholdInputState>
+  >({});
   const [trafficPercent, setTrafficPercent] = useState(5);
   const [channelScope, setChannelScope] = useState(DEFAULT_CHANNEL_SCOPE);
   const [regionScope, setRegionScope] = useState(DEFAULT_REGION_SCOPE);
@@ -257,6 +299,64 @@ export function DeployTimeline({
       setToast({
         kind: "error",
         message: (err as Error).message ?? "ramp failed.",
+      });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function thresholdInputFor(dep: Deployment): ThresholdInputState {
+    const existing = thresholdInputs[dep.id];
+    if (existing) return existing;
+    const metric = thresholdMetricOptions(dep)[0] ?? "error_rate_percent";
+    return {
+      metric,
+      observed: thresholdDefaultObserved(dep, metric),
+      policy: "rollback",
+    };
+  }
+
+  function updateThresholdInput(
+    dep: Deployment,
+    patch: Partial<ThresholdInputState>,
+  ) {
+    setThresholdInputs((prev) => ({
+      ...prev,
+      [dep.id]: {
+        ...thresholdInputFor(dep),
+        ...patch,
+      },
+    }));
+  }
+
+  async function handleEvaluateThreshold(dep: Deployment) {
+    const thresholdInput = thresholdInputFor(dep);
+    setBusy(`${dep.id}:threshold`);
+    setToast(null);
+    try {
+      const result = await evaluateThreshold(agentId, dep.id, {
+        metric: thresholdInput.metric,
+        observed: thresholdInput.observed,
+        policy: thresholdInput.policy,
+        window: "5m",
+        reason: "Manual Workbench rollout threshold check.",
+      });
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === result.deployment.id ? result.deployment : item,
+        ),
+      );
+      setToast({
+        kind: "success",
+        message:
+          result.decision === "no_action"
+            ? `${thresholdLabel(result.metric)} is within threshold.`
+            : `${thresholdLabel(result.metric)} breached; deployment ${result.decision}.`,
+      });
+    } catch (err) {
+      setToast({
+        kind: "error",
+        message: (err as Error).message ?? "threshold evaluation failed.",
       });
     } finally {
       setBusy(null);
@@ -472,6 +572,7 @@ export function DeployTimeline({
             const isActiveRollout =
               dep.status === "canary" || dep.status === "ramp";
             const isLive = dep.status === "live";
+            const thresholdInput = thresholdInputFor(dep);
             const target =
               rampTargets[dep.id] ??
               Math.min(99, Math.max(dep.trafficPercent + 25, 25));
@@ -510,6 +611,77 @@ export function DeployTimeline({
                     >
                       {thresholdSummary(dep.autoRollbackThresholds)}
                     </p>
+                    {isActiveRollout ? (
+                      <div
+                        className="mt-2 grid gap-2 rounded border bg-background/70 p-2 text-xs md:grid-cols-4"
+                        data-testid={`deploy-threshold-evaluator-${dep.id}`}
+                      >
+                        <label className="flex flex-col gap-1">
+                          Metric
+                          <select
+                            className="rounded border bg-background px-2 py-1"
+                            data-testid={`deploy-threshold-metric-${dep.id}`}
+                            onChange={(event) =>
+                              updateThresholdInput(dep, {
+                                metric: event.target.value,
+                                observed: thresholdDefaultObserved(
+                                  dep,
+                                  event.target.value,
+                                ),
+                              })
+                            }
+                            value={thresholdInput.metric}
+                          >
+                            {thresholdMetricOptions(dep).map((metric) => (
+                              <option key={metric} value={metric}>
+                                {thresholdLabel(metric)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="flex flex-col gap-1">
+                          Observed
+                          <input
+                            className="rounded border bg-background px-2 py-1"
+                            data-testid={`deploy-threshold-observed-${dep.id}`}
+                            onChange={(event) =>
+                              updateThresholdInput(dep, {
+                                observed: Number(event.target.value),
+                              })
+                            }
+                            type="number"
+                            value={thresholdInput.observed}
+                          />
+                        </label>
+                        <label className="flex flex-col gap-1">
+                          Policy
+                          <select
+                            className="rounded border bg-background px-2 py-1"
+                            data-testid={`deploy-threshold-policy-${dep.id}`}
+                            onChange={(event) =>
+                              updateThresholdInput(dep, {
+                                policy: event.target.value as ThresholdPolicy,
+                              })
+                            }
+                            value={thresholdInput.policy}
+                          >
+                            <option value="rollback">Rollback</option>
+                            <option value="pause">Pause</option>
+                          </select>
+                        </label>
+                        <button
+                          className="self-end rounded-md border bg-background px-2 py-1 font-medium hover:bg-muted/60 disabled:opacity-50"
+                          data-testid={`deploy-threshold-evaluate-${dep.id}`}
+                          disabled={busy !== null}
+                          onClick={() => void handleEvaluateThreshold(dep)}
+                          type="button"
+                        >
+                          {busy === `${dep.id}:threshold`
+                            ? "Evaluating..."
+                            : "Evaluate"}
+                        </button>
+                      </div>
+                    ) : null}
                     {dep.evidencePackId ? (
                       <p className="text-xs">
                         Evidence pack:{" "}

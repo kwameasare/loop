@@ -233,6 +233,61 @@ describe("DeployTimeline", () => {
     expect(screen.getByTestId("deploy-toast-error")).toHaveTextContent("boom");
   });
 
+  it("evaluates active rollout thresholds and updates deployment state", async () => {
+    const evaluateThreshold = vi.fn(async () => ({
+      decision: "paused" as const,
+      breached: true,
+      metric: "error_rate_percent",
+      observed: 3,
+      threshold: 2,
+      policy: "pause" as const,
+      deployment: mkDep({
+        id: "d1",
+        status: "paused",
+        stage: "paused",
+        trafficPercent: 25,
+      }),
+    }));
+    render(
+      <DeployTimeline
+        agentId="a"
+        evaluateThreshold={evaluateThreshold}
+        initialDeployments={[
+          mkDep({
+            id: "d1",
+            status: "canary",
+            autoRollbackThresholds: { error_rate_percent: 2 },
+          }),
+        ]}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("deploy-threshold-observed-d1"), {
+      target: { value: "3" },
+    });
+    fireEvent.change(screen.getByTestId("deploy-threshold-policy-d1"), {
+      target: { value: "pause" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("deploy-threshold-evaluate-d1"));
+    });
+
+    expect(evaluateThreshold).toHaveBeenCalledWith("a", "d1", {
+      metric: "error_rate_percent",
+      observed: 3,
+      policy: "pause",
+      window: "5m",
+      reason: "Manual Workbench rollout threshold check.",
+    });
+    expect(screen.getByTestId("deploy-row-d1")).toHaveAttribute(
+      "data-status",
+      "paused",
+    );
+    expect(screen.getByTestId("deploy-toast-success")).toHaveTextContent(
+      "deployment paused",
+    );
+  });
+
   it("starts canary from an approved Change Package and shows the evidence pack", async () => {
     const changePackage = {
       ...buildLocalChangePackage("a"),

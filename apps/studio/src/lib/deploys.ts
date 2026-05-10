@@ -64,6 +64,25 @@ export interface DeploymentStartInput {
   notes?: string | null;
 }
 
+export interface DeploymentThresholdEvaluationInput {
+  metric: string;
+  observed: number;
+  threshold?: number;
+  policy?: "pause" | "rollback";
+  window?: string;
+  reason?: string;
+}
+
+export interface DeploymentThresholdEvaluationResult {
+  decision: "no_action" | "paused" | "rolled_back";
+  breached: boolean;
+  metric: string;
+  observed: number;
+  threshold: number;
+  policy: "pause" | "rollback";
+  deployment: Deployment;
+}
+
 export interface EvidencePack {
   id: string;
   workspace_id: string;
@@ -500,6 +519,60 @@ export async function rampDeployment(
   );
   if (!res.ok) throw new Error(`ramp failed: ${res.status}`);
   return (await res.json()) as Deployment;
+}
+
+export async function evaluateDeploymentThreshold(
+  agentId: string,
+  depId: string,
+  input: DeploymentThresholdEvaluationInput,
+  opts: DeployHelperOptions = {},
+): Promise<DeploymentThresholdEvaluationResult> {
+  const base = resolveBase(opts);
+  if (!base) {
+    if (!opts.allowFixture) {
+      throw new Error(
+        "LOOP_CP_API_BASE_URL is required to evaluate deployment thresholds",
+      );
+    }
+    const deployment = seedFixtures(agentId).find((item) => item.id === depId);
+    if (!deployment) throw new Error(`unknown deployment: ${depId}`);
+    const threshold =
+      input.threshold ??
+      Number(deployment.autoRollbackThresholds?.[input.metric] ?? 0);
+    const breached = input.observed > threshold;
+    const policy = input.policy ?? "rollback";
+    const updated =
+      breached && policy === "pause"
+        ? { ...deployment, status: "paused" as const, stage: "paused" as const }
+        : breached
+          ? {
+              ...deployment,
+              status: "rolled_back" as const,
+              stage: "rolled_back" as const,
+              trafficPercent: 0,
+            }
+          : deployment;
+    return {
+      decision: breached ? (policy === "pause" ? "paused" : "rolled_back") : "no_action",
+      breached,
+      metric: input.metric,
+      observed: input.observed,
+      threshold,
+      policy,
+      deployment: updated,
+    };
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const res = await fetcher(
+    `${base}/agents/${agentId}/deployments/${depId}/thresholds/evaluate`,
+    {
+      method: "POST",
+      headers: authHeaders(opts),
+      body: JSON.stringify(input),
+    },
+  );
+  if (!res.ok) throw new Error(`evaluate threshold failed: ${res.status}`);
+  return (await res.json()) as DeploymentThresholdEvaluationResult;
 }
 
 export async function pauseDeployment(

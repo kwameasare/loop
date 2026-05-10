@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   findCurrentCanary,
   findLiveDeployment,
+  evaluateDeploymentThreshold,
   exportEvidencePack,
   listDeployments,
   listEvidencePacks,
@@ -362,6 +363,67 @@ describe("listDeployments cp-api mode", () => {
     ).toMatchObject({
       change_package_id: "cp_1",
       channel_scope: ["web_chat", "whatsapp"],
+    });
+  });
+
+  it("evaluates rollout thresholds through the deployment endpoint", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            decision: "paused",
+            breached: true,
+            metric: "error_rate_percent",
+            observed: 3,
+            threshold: 2,
+            policy: "pause",
+            deployment: {
+              id: "dep_1",
+              agentId: "agt_x",
+              versionId: "v2",
+              stage: "paused",
+              status: "paused",
+              trafficPercent: 10,
+              createdAt: "2026-05-09T00:00:00Z",
+              promotedAt: null,
+              pausedAt: "2026-05-09T00:05:00Z",
+              rolledBackAt: null,
+              notes: null,
+            },
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+    );
+
+    const result = await evaluateDeploymentThreshold(
+      "agt_x",
+      "dep_1",
+      {
+        metric: "error_rate_percent",
+        observed: 3,
+        policy: "pause",
+        window: "5m",
+        reason: "manual threshold verification",
+      },
+      {
+        fetcher: fetcher as unknown as typeof fetch,
+        baseUrl: "https://api.loop.dev",
+      },
+    );
+
+    expect(result.decision).toBe("paused");
+    expect(result.deployment.status).toBe("paused");
+    const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0]!;
+    expect(call[0]).toBe(
+      "https://api.loop.dev/v1/agents/agt_x/deployments/dep_1/thresholds/evaluate",
+    );
+    expect(JSON.parse(String((call[1] as RequestInit).body))).toEqual({
+      metric: "error_rate_percent",
+      observed: 3,
+      policy: "pause",
+      window: "5m",
+      reason: "manual threshold verification",
     });
   });
 
