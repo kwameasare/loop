@@ -216,7 +216,7 @@ export function GroupRuleEditor({
         <p
           data-testid="group-rule-success"
           role="status"
-          className="text-sm text-green-600"
+          className="text-sm text-success"
         >
           Group rules saved.
         </p>
