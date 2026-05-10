@@ -100,8 +100,8 @@ describe("formatUsd", () => {
 });
 
 describe("getTrace", () => {
-  it("builds the canonical trace fixture from target UX fixtures", async () => {
-    const trace = await getTrace("trace_refund_742");
+  it("builds the canonical trace fixture only when fixture mode is explicit", async () => {
+    const trace = await getTrace("trace_refund_742", { allowFixture: true });
     expect(trace?.summary).toMatchObject({
       outcome: "Answered with grounded cancellation steps; no refund issued.",
       model: "gpt-4.1-mini",
@@ -123,7 +123,7 @@ describe("getTrace", () => {
   });
 
   it("includes an unsupported explanation instead of invented reasoning", async () => {
-    const trace = await getTrace("trace_refund_742");
+    const trace = await getTrace("trace_refund_742", { allowFixture: true });
     expect(
       trace?.explanations?.some(
         (explanation) =>
@@ -131,6 +131,10 @@ describe("getTrace", () => {
           explanation.statement.includes("Unsupported"),
       ),
     ).toBe(true);
+  });
+
+  it("does not implicitly serve the fixture trace on production routes", async () => {
+    await expect(getTrace("trace_refund_742")).resolves.toBeNull();
   });
 });
 
