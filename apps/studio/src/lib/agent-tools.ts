@@ -59,7 +59,11 @@ export async function listAgentTools(
     headers,
     cache: "no-store",
   });
-  if (res.status === 404) return [];
+  if (res.status === 404) {
+    throw new Error(
+      "cp-api GET agent tools -> 404. Studio will not treat an unavailable tool-binding route as an agent with no tools.",
+    );
+  }
   if (!res.ok) throw new Error(`cp-api GET agent tools -> ${res.status}`);
   const body = (await res.json()) as { items?: AgentTool[] };
   return body.items ?? [];

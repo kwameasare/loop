@@ -33,12 +33,13 @@ describe("listAgentTools", () => {
     expect(url).toBe("https://cp.test/v1/agents/agt1/tools");
   });
 
-  it("returns an empty array on 404 (route blocked)", async () => {
+  it("marks 404 as degraded instead of treating the agent as tool-free", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
-    const res = await listAgentTools("agt1", { fetcher });
-    expect(res).toEqual([]);
+    await expect(listAgentTools("agt1", { fetcher })).rejects.toThrow(
+      /tool-binding route/i,
+    );
   });
 
   it("propagates non-404 errors", async () => {
