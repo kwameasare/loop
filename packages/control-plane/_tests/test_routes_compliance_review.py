@@ -252,15 +252,29 @@ def test_compliance_evidence_export_is_audited(
         json={
             "agent_id": str(agent_id),
             "format": "json",
-            "include_sections": ["change_packages", "approvals", "audit_events"],
         },
     )
 
     assert response.status_code == 201, response.text
     export = response.json()
     assert export["status"] == "ready"
-    assert export["sections"] == ["change_packages", "approvals", "audit_events"]
+    assert "commitment" in export["sections"]
+    assert "change_packages" in export["sections"]
+    assert "eval_results" in export["sections"]
+    assert "replay_results" in export["sections"]
+    assert "approvals" in export["sections"]
+    assert "incidents" in export["sections"]
+    assert "audit_events" in export["sections"]
     assert any(ref.startswith("change-package/") for ref in export["artifact_refs"])
+    assert any(ref.startswith("commitment/") for ref in export["artifact_refs"])
+    assert any(ref.startswith("eval-results/evals/refund-safety/run-1") for ref in export["artifact_refs"])
+    assert any(ref.startswith("replay-results/replay/refund-safety/run-1") for ref in export["artifact_refs"])
+    assert any(ref.startswith("approval/") for ref in export["artifact_refs"])
+    assert any(ref.startswith("incident/") for ref in export["artifact_refs"])
+    assert any(ref.startswith("audit/") for ref in export["artifact_refs"])
+    assert any(ref.startswith("tool-contract/") for ref in export["artifact_refs"])
+    assert any(ref.startswith("memory-policy/") for ref in export["artifact_refs"])
+    assert any(ref.startswith("channel-binding/") for ref in export["artifact_refs"])
     assert export["download_url"].endswith(export["id"])
     assert export["expires_at"]
     assert "plaintext credentials" in export["secret_policy"]

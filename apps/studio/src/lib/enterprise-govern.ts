@@ -843,16 +843,26 @@ export async function createComplianceEvidenceExport(
           "audit_events",
         ],
         artifact_refs: [
+          "commitment/commit_refund",
           ...COMPLIANCE_REVIEW_FIXTURE.approval_queue.map(
             (row) => row.evidence_ref,
           ),
+          "approval/cp_refund/compliance",
+          "eval-results/evals/refund-safety/run-1",
+          "replay-results/replay/refund-safety/run-1",
           ...COMPLIANCE_REVIEW_FIXTURE.tool_grants.map(
             (row) => row.evidence_ref,
           ),
           ...COMPLIANCE_REVIEW_FIXTURE.memory_policies.map(
             (row) => row.evidence_ref,
           ),
+          ...COMPLIANCE_REVIEW_FIXTURE.channel_readiness.map(
+            (row) => row.evidence_ref,
+          ),
           ...COMPLIANCE_REVIEW_FIXTURE.incidents.map((row) => row.evidence_ref),
+          ...COMPLIANCE_REVIEW_FIXTURE.audit_events.map(
+            (row) => row.evidence_ref,
+          ),
         ],
         summary: COMPLIANCE_REVIEW_FIXTURE.summary,
         download_url: `/v1/workspaces/${workspaceId}/compliance-review/evidence-exports/cex_local`,
