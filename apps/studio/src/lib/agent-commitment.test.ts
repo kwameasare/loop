@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   EMPTY_COMMITMENT_BODY,
+  acceptCommitment,
   buildLocalCommitmentDocument,
   fetchCurrentCommitment,
   missingCommitmentFields,
@@ -91,5 +92,49 @@ describe("agent commitment client", () => {
       created_from: "studio:test",
       body: { business_responsibility: "Handle plan changes" },
     });
+  });
+
+  it("does not fabricate Commitment Document mutations without cp-api", async () => {
+    const body = {
+      ...EMPTY_COMMITMENT_BODY,
+      business_responsibility: "Handle plan changes",
+    };
+
+    await expect(
+      saveCommitmentDraft(
+        "agt_1",
+        { body, created_from: "studio:test" },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      acceptCommitment("agt_1", { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps deterministic Commitment Document mutations explicitly opt-in", async () => {
+    const body = {
+      ...EMPTY_COMMITMENT_BODY,
+      business_responsibility: "Handle plan changes",
+    };
+
+    await expect(
+      saveCommitmentDraft(
+        "agt_1",
+        { body, created_from: "studio:test" },
+        { baseUrl: "", allowFixture: true },
+      ),
+    ).resolves.toMatchObject({
+      body: { business_responsibility: "Handle plan changes" },
+      status: "draft",
+    });
+
+    await expect(
+      acceptCommitment("agt_1", {
+        baseUrl: "",
+        allowFixture: true,
+      }),
+    ).resolves.toMatchObject({ status: "draft", version: 0 });
   });
 });
