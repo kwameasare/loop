@@ -648,6 +648,174 @@ def test_agent_detail_exposes_durable_object_state_transitions(
     assert rollback_state.json()["object_state"] == "rolled_back"
 
 
+def test_support_agent_mvp_journey_links_trace_eval_deploy_rollback_and_incident(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    drafted = client.post(
+        f"/v1/agents/{agent_id}/commitment",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={"body": _complete_commitment_body(), "created_from": "mvp_journey"},
+    )
+    assert drafted.status_code == 201, drafted.text
+    accepted = client.post(
+        f"/v1/agents/{agent_id}/commitment/accept",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert accepted.status_code == 200, accepted.text
+    channel = _mark_channel_ready(client, workspace_id, agent_id, "web_chat")
+
+    simulator_run = client.post(
+        f"/v1/agents/{agent_id}/simulator/runs",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "prompt": "Can I cancel my annual renewal?",
+            "final_answer": "I will check the current refund policy first.",
+            "channel": "web",
+            "trace_id": "support_journey_trace",
+            "config": {
+                "model_alias": "fast-draft",
+                "memory_mode": "snapshot",
+                "tool_mode": "mock",
+            },
+            "status": "completed",
+            "cost_usd": 0.041,
+            "latency_ms": 940,
+        },
+    )
+    assert simulator_run.status_code == 201, simulator_run.text
+    trace_id = simulator_run.json()["trace_id"]
+    assert simulator_run.json()["channel_binding_id"] == channel["id"]
+
+    eval_case = client.post(
+        f"/v1/agents/{agent_id}/eval-cases/from-observed-failure",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "sentence_id": "sentence_cancel_policy",
+            "sentence_text": "I can cancel your renewal.",
+            "trace_id": trace_id,
+            "failure_reason": "Agent answered before checking current policy.",
+            "expected_outcome": "Check current policy before quoting cancellation terms.",
+            "proposed_fix": "Require current-policy lookup before renewal answers.",
+            "replay_ref": f"replay/{trace_id}/draft-fix",
+        },
+    )
+    assert eval_case.status_code == 201, eval_case.text
+    assert eval_case.json()["case"]["source_ref"] == trace_id
+
+    release_candidate = _create_deployable_release_candidate(
+        client,
+        agent_id,
+        name="Support journey release candidate",
+    )
+    package = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "release_candidate_id": release_candidate["id"],
+            "from_version_id": "v1",
+            "to_version_id": "v2",
+            "target_environment": "production",
+            "summary": "Promote cancellation support policy fix.",
+            "semantic_diff": [
+                {
+                    "dimension": "behavior",
+                    "summary": "Requires current-policy lookup before cancellation answer.",
+                    "evidence_ref": f"trace/{trace_id}",
+                }
+            ],
+            "eval_results_ref": f"eval/{eval_case.json()['case_id']}",
+            "replay_results_ref": f"replay/{trace_id}/draft-fix",
+            "rollback_target_version_id": "v1",
+        },
+    )
+    assert package.status_code == 201, package.text
+    package_body = package.json()
+    assert package_body["release_candidate_id"] == release_candidate["id"]
+    assert package_body["evidence"]["release_candidate"] == release_candidate["id"]
+
+    submitted = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{package_body['id']}/submit",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert submitted.status_code == 200, submitted.text
+    for approval_id in ("owner", "compliance"):
+        approved = client.post(
+            f"/v1/agents/{agent_id}/change-packages/{package_body['id']}/approvals",
+            headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+            json={"approval_id": approval_id, "decision": "approve"},
+        )
+        assert approved.status_code == 200, approved.text
+
+    started = client.post(
+        f"/v1/agents/{agent_id}/deployments/start",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "change_package_id": package_body["id"],
+            "version_id": "v2",
+            "traffic_percent": 10,
+            "channel_scope": ["web_chat"],
+            "auto_rollback_thresholds": {"error_rate": 0.02},
+        },
+    )
+    assert started.status_code == 201, started.text
+    deployment = started.json()["deployment"]
+    evidence_pack = started.json()["evidence_pack"]
+    assert evidence_pack["change_package_id"] == package_body["id"]
+    assert evidence_pack["version_manifest"]["release_candidate_id"] == release_candidate["id"]
+
+    evaluated = client.post(
+        f"/v1/agents/{agent_id}/deployments/{deployment['id']}/thresholds/evaluate",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "metric": "error_rate",
+            "observed": 0.04,
+            "policy": "rollback",
+            "window": "5m",
+            "reason": "Support journey canary exceeded error budget.",
+        },
+    )
+    assert evaluated.status_code == 200, evaluated.text
+    assert evaluated.json()["decision"] == "rolled_back"
+
+    incidents = client.get(
+        f"/v1/agents/{agent_id}/incidents",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert incidents.status_code == 200, incidents.text
+    incident = incidents.json()["items"][0]
+    assert incident["deployment_id"] == deployment["id"]
+    assert incident["affected_trace_ids"] == [trace_id]
+    seeded = client.post(
+        f"/v1/agents/{agent_id}/incidents/{incident['id']}/eval-cases",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert seeded.status_code == 201, seeded.text
+    assert seeded.json()["incident"]["candidate_eval_suite_id"]
+
+    agent = client.get(
+        f"/v1/agents/{agent_id}",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert agent.status_code == 200, agent.text
+    assert agent.json()["object_state"] == "rolled_back"
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "commitment:accept",
+        "simulator_run:create",
+        "eval:case:create_from_observed_failure",
+        "change_package:generate",
+        "change_package:approval",
+        "deployment:start",
+        "deployment:threshold_breach",
+        "deployment:rollback",
+        "incident:create_auto_rollback",
+        "incident:eval_cases_seeded",
+    }
+
+
 def test_branch_change_set_and_release_candidate_state_machine(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:
