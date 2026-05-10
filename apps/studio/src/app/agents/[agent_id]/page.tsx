@@ -20,10 +20,7 @@ import {
 } from "@/lib/channel-bindings";
 import { listDeployments, type Deployment } from "@/lib/deploys";
 import { listEvalSuites, type EvalSuite } from "@/lib/evals";
-import {
-  fetchAgentHandoff,
-  type AgentHandoffModel,
-} from "@/lib/agent-handoff";
+import { fetchAgentHandoff, type AgentHandoffModel } from "@/lib/agent-handoff";
 import { listAgentWorkflow, type AgentWorkflow } from "@/lib/agent-workflow";
 import { listKbDocuments, type KbDocument } from "@/lib/kb";
 import { listMemoryPolicies, type MemoryPolicy } from "@/lib/memory-policies";
@@ -123,10 +120,7 @@ export default async function AgentOverviewPage({
     const result = await listToolContracts(params.agent_id);
     toolContracts = result.items;
   } catch (error) {
-    toolsDegradedReason = errorMessage(
-      error,
-      "Could not load tool contracts.",
-    );
+    toolsDegradedReason = errorMessage(error, "Could not load tool contracts.");
   }
   let memoryPolicies: MemoryPolicy[] = [];
   let memoryDegradedReason: string | undefined;
@@ -141,14 +135,19 @@ export default async function AgentOverviewPage({
   }
   let evalSuites: EvalSuite[] = [];
   let evalsDegradedReason: string | undefined;
-  try {
-    const result = await listEvalSuites();
-    evalSuites = result.items.filter(
-      (suite) => suite.agentId === params.agent_id,
-    );
-    evalsDegradedReason = result.degraded_reason;
-  } catch (error) {
-    evalsDegradedReason = errorMessage(error, "Could not load eval suites.");
+  if (!agent.workspace_id || agent.workspace_id === "unavailable") {
+    evalsDegradedReason =
+      "Workspace context is required before loading eval suites.";
+  } else {
+    try {
+      const result = await listEvalSuites({ workspaceId: agent.workspace_id });
+      evalSuites = result.items.filter(
+        (suite) => suite.agentId === params.agent_id,
+      );
+      evalsDegradedReason = result.degraded_reason;
+    } catch (error) {
+      evalsDegradedReason = errorMessage(error, "Could not load eval suites.");
+    }
   }
   let knowledgeDocuments: KbDocument[] = [];
   let knowledgeDegradedReason: string | undefined;

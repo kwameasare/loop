@@ -93,7 +93,11 @@ describe("NewSuiteModal", () => {
   it("submits and navigates to suite detail", async () => {
     const createSuite = vi.fn().mockResolvedValue({ id: "evs_42" });
     render(
-      <NewSuiteModal existingNames={[]} createSuite={createSuite} />,
+      <NewSuiteModal
+        existingNames={[]}
+        createSuite={createSuite}
+        workspaceId="ws_1"
+      />,
     );
 
     fireEvent.click(screen.getByTestId("new-suite-open"));
@@ -108,12 +112,34 @@ describe("NewSuiteModal", () => {
     fireEvent.submit(screen.getByTestId("new-suite-form"));
 
     await waitFor(() => {
-      expect(createSuite).toHaveBeenCalledWith({
-        name: "smoke",
-        dataset_ref: "datasets/support-smoke-v1",
-        metrics: ["accuracy", "latency_p95"],
-      });
+      expect(createSuite).toHaveBeenCalledWith(
+        {
+          name: "smoke",
+          dataset_ref: "datasets/support-smoke-v1",
+          metrics: ["accuracy", "latency_p95"],
+        },
+        { workspaceId: "ws_1" },
+      );
     });
     expect(push).toHaveBeenCalledWith("/evals/suites/evs_42");
+  });
+
+  it("does not submit when workspace context is missing", async () => {
+    const createSuite = vi.fn().mockResolvedValue({ id: "evs_42" });
+    render(<NewSuiteModal existingNames={[]} createSuite={createSuite} />);
+
+    fireEvent.click(screen.getByTestId("new-suite-open"));
+    fireEvent.change(screen.getByLabelText(/name/i), {
+      target: { value: "smoke" },
+    });
+    fireEvent.change(screen.getByTestId("new-suite-dataset-ref"), {
+      target: { value: "datasets/support-smoke-v1" },
+    });
+    fireEvent.submit(screen.getByTestId("new-suite-form"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /Workspace context is required/,
+    );
+    expect(createSuite).not.toHaveBeenCalled();
   });
 });

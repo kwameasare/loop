@@ -50,14 +50,26 @@ describe("listEvalSuites", () => {
       fetcher,
       baseUrl: "https://api.loop.dev",
       token: "tok",
+      workspaceId: "ws_1",
     });
     expect(items).toHaveLength(1);
     const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock
       .calls[0];
-    expect(call[0]).toBe("https://api.loop.dev/v1/evals/suites");
+    expect(call[0]).toBe("https://api.loop.dev/v1/workspaces/ws_1/eval-suites");
     expect(
       (call[1] as { headers: Record<string, string> }).headers.authorization,
     ).toBe("Bearer tok");
+  });
+
+  it("does not call cp-api without workspace context", async () => {
+    const fetcher = vi.fn() as unknown as typeof fetch;
+    const { items, degraded_reason } = await listEvalSuites({
+      fetcher,
+      baseUrl: "https://api.loop.dev",
+    });
+    expect(items).toEqual([]);
+    expect(degraded_reason).toMatch(/Workspace context is required/);
+    expect(fetcher).not.toHaveBeenCalled();
   });
 });
 
@@ -91,6 +103,56 @@ describe("getEvalSuite / getEvalRun", () => {
     ).rejects.toThrow(/eval suite detail route returned 404/i);
   });
 
+  it("maps live suite details from the control-plane suite detail route", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        id: "evs_live",
+        name: "Live suite",
+        dataset_ref: "agent:agent_live:evals/live",
+        cases: 3,
+        last_run_at: "2026-05-09T12:00:00Z",
+        pass_rate: 0.91,
+        runs: [
+          {
+            id: "run_2",
+            suite_id: "evs_live",
+            state: "completed",
+            started_at: "2026-05-09T12:00:00Z",
+            completed_at: "2026-05-09T12:02:00Z",
+            passed: 2,
+            failed: 1,
+            errored: 0,
+            total: 3,
+            baseline_run_id: "run_1",
+          },
+        ],
+      }),
+    })) as unknown as typeof fetch;
+
+    const detail = await getEvalSuite("evs_live", {
+      fetcher,
+      baseUrl: "https://api.loop.dev",
+    });
+
+    expect(detail).toMatchObject({
+      id: "evs_live",
+      agentId: "agent_live",
+      cases: 3,
+      passRate: 0.91,
+    });
+    expect(detail?.runs[0]).toMatchObject({
+      id: "run_2",
+      status: "completed",
+      baselineRunId: "run_1",
+    });
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://api.loop.dev/v1/eval-suites/evs_live",
+      expect.any(Object),
+    );
+  });
+
   it("getEvalRun fixture exposes per-case statuses", async () => {
     const run = await getEvalRun("evr_evs_support_smoke_002", {
       allowFixture: true,
@@ -118,6 +180,41 @@ describe("getEvalSuite / getEvalRun", () => {
         baseUrl: "https://api.loop.dev",
       }),
     ).rejects.toThrow(/eval run detail route returned 404/i);
+  });
+
+  it("maps live run details from the control-plane run route", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        id: "run_live",
+        suite_id: "evs_live",
+        state: "pending",
+        started_at: "2026-05-09T12:00:00Z",
+        completed_at: null,
+        passed: 0,
+        failed: 0,
+        errored: 0,
+        total: 0,
+        cases: [],
+      }),
+    })) as unknown as typeof fetch;
+
+    const run = await getEvalRun("run_live", {
+      fetcher,
+      baseUrl: "https://api.loop.dev",
+    });
+
+    expect(run).toMatchObject({
+      id: "run_live",
+      suiteId: "evs_live",
+      status: "queued",
+      cases: [],
+    });
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://api.loop.dev/v1/eval-runs/run_live",
+      expect.any(Object),
+    );
   });
 });
 
@@ -249,9 +346,7 @@ describe("eval foundry model", () => {
         "incident_cluster",
       ]),
     );
-    expect(
-      model.provenanceCases.map((item) => item.sourceType),
-    ).toEqual(
+    expect(model.provenanceCases.map((item) => item.sourceType)).toEqual(
       expect.arrayContaining([
         "production_conversation",
         "reviewer_comment",
@@ -374,7 +469,7 @@ describe("createEvalSuite", () => {
     expect(created.id).toMatch(/^evs_/);
   });
 
-  it("POSTs to /v1/eval-suites when baseUrl is set", async () => {
+  it("POSTs to the workspace-scoped eval suite route when baseUrl is set", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
       status: 201,
@@ -389,17 +484,32 @@ describe("createEvalSuite", () => {
         dataset_ref: "datasets/support-smoke-v1",
         metrics: ["accuracy", "latency_p95"],
       },
-      { fetcher, baseUrl: "https://cp.test" },
+      { fetcher, baseUrl: "https://cp.test", workspaceId: "ws_1" },
     );
     expect(created.id).toBe("evs_42");
     const [url, init] = fetcher.mock.calls[0];
-    expect(url).toBe("https://cp.test/v1/eval-suites");
+    expect(url).toBe("https://cp.test/v1/workspaces/ws_1/eval-suites");
     expect(init.method).toBe("POST");
     expect(JSON.parse(init.body)).toEqual({
       name: "smoke",
       dataset_ref: "datasets/support-smoke-v1",
       metrics: ["accuracy", "latency_p95"],
     });
+  });
+
+  it("requires workspace context before posting to cp-api", async () => {
+    const fetcher = vi.fn();
+    await expect(
+      createEvalSuite(
+        {
+          name: "smoke",
+          dataset_ref: "datasets/support-smoke-v1",
+          metrics: ["accuracy"],
+        },
+        { fetcher, baseUrl: "https://cp.test" },
+      ),
+    ).rejects.toThrow(/Workspace context is required/);
+    expect(fetcher).not.toHaveBeenCalled();
   });
 
   it("propagates non-2xx as an error", async () => {
@@ -413,7 +523,7 @@ describe("createEvalSuite", () => {
           dataset_ref: "datasets/support-smoke-v1",
           metrics: ["accuracy"],
         },
-        { fetcher, baseUrl: "https://cp.test" },
+        { fetcher, baseUrl: "https://cp.test", workspaceId: "ws_1" },
       ),
     ).rejects.toThrow(/409/);
   });

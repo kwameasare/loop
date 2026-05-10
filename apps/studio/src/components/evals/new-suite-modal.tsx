@@ -13,7 +13,11 @@ import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { createEvalSuite, type CreateEvalSuiteInput } from "@/lib/evals";
+import {
+  createEvalSuite,
+  type CreateEvalSuiteInput,
+  type EvalsHelperOptions,
+} from "@/lib/evals";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +32,11 @@ const SLUG_RE = /^[a-z][a-z0-9_\-]{1,63}$/;
 export interface NewSuiteModalProps {
   /** Existing suite names (to surface duplicate-name errors before POST). */
   existingNames: string[];
-  createSuite?: (input: CreateEvalSuiteInput) => Promise<{ id: string }>;
+  workspaceId?: string | null | undefined;
+  createSuite?: (
+    input: CreateEvalSuiteInput,
+    opts?: EvalsHelperOptions,
+  ) => Promise<{ id: string }>;
 }
 
 const METRIC_OPTIONS = [
@@ -40,6 +48,7 @@ const METRIC_OPTIONS = [
 
 export function NewSuiteModal({
   existingNames,
+  workspaceId,
   createSuite = createEvalSuite,
 }: NewSuiteModalProps) {
   const router = useRouter();
@@ -89,13 +98,20 @@ export function NewSuiteModal({
       setError("Select at least one metric.");
       return;
     }
+    if (!workspaceId?.trim()) {
+      setError("Workspace context is required before creating eval suites.");
+      return;
+    }
     setSubmitting(true);
     try {
-      const created = await createSuite({
-        name: trimmed,
-        dataset_ref: datasetRef.trim(),
-        metrics,
-      });
+      const created = await createSuite(
+        {
+          name: trimmed,
+          dataset_ref: datasetRef.trim(),
+          metrics,
+        },
+        { workspaceId },
+      );
       setOpen(false);
       reset();
       router.push(`/evals/suites/${created.id}`);
@@ -125,10 +141,7 @@ export function NewSuiteModal({
           New suite
         </Button>
       </DialogTrigger>
-      <DialogContent
-        className="max-w-md"
-        data-testid="new-suite-modal"
-      >
+      <DialogContent className="max-w-md" data-testid="new-suite-modal">
         <form
           onSubmit={handleSubmit}
           className="flex flex-col gap-3"

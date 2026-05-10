@@ -45,6 +45,9 @@ from loop_control_plane._routes_evals import (
     router_agents as agent_evals_router,
 )
 from loop_control_plane._routes_evals import (
+    router_runs as eval_runs_router,
+)
+from loop_control_plane._routes_evals import (
     router_suites as eval_suites_router,
 )
 from loop_control_plane._routes_evals import (
@@ -177,6 +180,7 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         agent_evals_router,
         workspace_evals_router,
         eval_suites_router,
+        eval_runs_router,
         # UX wire-up: Marketplace browse reads the first-party MCP registry.
         marketplace_router,
         # UX wire-up: AI Co-Builder suggestions derive from live workspace state.
