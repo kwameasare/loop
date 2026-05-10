@@ -2631,6 +2631,8 @@ def test_telemetry_help_branding_voice_demo_and_activity(
 
     clips = client.get("/v1/help-clips?surface=pipeline", headers=_auth()).json()["items"]
     assert clips[0]["clip_id"] == "clip_canary_slider"
+    assert clips[0]["url"] == "/help/clips/canary-slider"
+    assert clips[0]["frames"]
 
     branding = client.post(
         f"/v1/workspaces/{workspace_id}/branding/compile",

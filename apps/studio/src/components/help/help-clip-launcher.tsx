@@ -24,6 +24,7 @@ export function HelpClipLauncher(): JSX.Element {
   const surface = useMemo(() => surfaceFromPath(pathname), [pathname]);
   const [open, setOpen] = useState(false);
   const [clips, setClips] = useState<HelpClip[]>([]);
+  const [activeClipId, setActiveClipId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,6 +46,7 @@ export function HelpClipLauncher(): JSX.Element {
     let cancelled = false;
     setError(null);
     setClips([]);
+    setActiveClipId(null);
     void fetchHelpClips(surface)
       .then((next) => {
         if (!cancelled) setClips(next);
@@ -108,7 +110,9 @@ export function HelpClipLauncher(): JSX.Element {
             {clips.map((clip) => (
               <li key={clip.clip_id} className="rounded-md border bg-card p-2">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium">{clip.surface}</p>
+                  <p className="text-sm font-medium">
+                    {clip.title ?? clip.surface}
+                  </p>
                   <span className="text-xs text-muted-foreground">
                     {clip.duration}s
                   </span>
@@ -116,14 +120,60 @@ export function HelpClipLauncher(): JSX.Element {
                 <p className="mt-1 text-xs text-muted-foreground">
                   {clip.transcript}
                 </p>
-                <a
+                <button
                   className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary"
-                  href={clip.url}
-                  aria-label={`Play ${clip.clip_id}`}
+                  type="button"
+                  aria-label={`Play ${clip.clip_id} muted`}
+                  onClick={() =>
+                    setActiveClipId((current) =>
+                      current === clip.clip_id ? null : clip.clip_id,
+                    )
+                  }
                 >
                   <Play className="h-3.5 w-3.5" aria-hidden={true} />
-                  Play muted clip
-                </a>
+                  {activeClipId === clip.clip_id
+                    ? "Hide muted clip"
+                    : "Play muted clip"}
+                </button>
+                {activeClipId === clip.clip_id ? (
+                  <div
+                    className="mt-3 rounded-md border bg-background p-2"
+                    data-testid="inline-help-clip"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold">
+                        Muted clip playing
+                      </span>
+                      <span className="font-mono text-[0.65rem] text-muted-foreground">
+                        {clip.url}
+                      </span>
+                    </div>
+                    <div className="mt-2 grid gap-1">
+                      {(clip.frames?.length ? clip.frames : [clip.transcript]).map(
+                        (frame, index, frames) => (
+                          <div key={`${clip.clip_id}-${index}`} className="space-y-1">
+                            <div
+                              className="h-1 rounded-full bg-muted"
+                              aria-hidden={true}
+                            >
+                              <div
+                                className="h-full rounded-full bg-primary transition-all duration-gentle"
+                                style={{
+                                  width: `${Math.round(
+                                    ((index + 1) / frames.length) * 100,
+                                  )}%`,
+                                }}
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {frame}
+                            </p>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

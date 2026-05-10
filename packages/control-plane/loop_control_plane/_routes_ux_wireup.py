@@ -1929,16 +1929,28 @@ async def list_help_clips(surface: str = Query(default="")) -> dict[str, Any]:
         {
             "clip_id": "clip_canary_slider",
             "surface": "pipeline",
-            "url": "/help/clips/canary-slider.mp4",
+            "title": "Canary promotion",
+            "url": "/help/clips/canary-slider",
             "duration": 30,
             "transcript": "Show me canary: move the slider, read gates, confirm rollback.",
+            "frames": [
+                "Open the release candidate and confirm the rollback target.",
+                "Move the canary slider only after eval gates remain green.",
+                "Confirm the rollout scope and leave the audit event open.",
+            ],
         },
         {
             "clip_id": "clip_trace_scrubber",
             "surface": "trace-theater",
-            "url": "/help/clips/trace-scrubber.mp4",
+            "title": "Trace scrubber",
+            "url": "/help/clips/trace-scrubber",
             "duration": 28,
             "transcript": "Show me replay: scrub frames and fork from evidence.",
+            "frames": [
+                "Drag the playhead to the frame where behavior changed.",
+                "Inspect context, queued tool call, retrieval, and memory state.",
+                "Fork from that frame only when the evidence explains the fix.",
+            ],
         },
     ]
     if surface:

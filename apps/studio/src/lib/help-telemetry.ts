@@ -14,9 +14,11 @@ export interface TelemetryConsentModel {
 export interface HelpClip {
   clip_id: string;
   surface: string;
+  title?: string;
   url: string;
   duration: number;
   transcript: string;
+  frames?: readonly string[];
 }
 
 type TelemetryConsentOptions = UxWireupClientOptions & {
@@ -89,9 +91,11 @@ export async function fetchHelpClips(
         {
           clip_id: "clip_local_show_me",
           surface: surface || "current",
-          url: "/help/clips/local-show-me.mp4",
+          title: "Local show me",
+          url: "/help/clips/local-show-me",
           duration: 30,
           transcript: "Show me the safest next step on this surface.",
+          frames: ["Connect Studio to cp-api to load contextual help clips."],
         },
       ],
     },
