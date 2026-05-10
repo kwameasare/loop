@@ -250,64 +250,66 @@ export function buildObservatoryModel(args: {
     });
   }
   if (anomalies.length === 0) {
-    anomalies.push({
-      id: "live_no_anomalies",
-      title: "No active production anomalies in the live window",
-      severity: "low",
-      evidence: `${totalTraces} traces, ${openInbox.length} open escalations, ${formatUSD(
-        costSummary.total_cents,
-      )} month-to-date usage.`,
-      nextAction:
-        "Keep the production tail pinned while the next canary bakes.",
-      owner: "Workspace owner",
-    });
+    if (totalTraces === 0 && args.usage.length === 0 && openInbox.length === 0) {
+      anomalies.push({
+        id: "telemetry_not_loaded",
+        title: "No production telemetry loaded",
+        severity: "low",
+        evidence:
+          "No traces, usage records, inbox items, or incidents were returned for this workspace.",
+        nextAction:
+          "Connect cp-api telemetry before treating this observatory as live.",
+        owner: "Workspace owner",
+      });
+    } else {
+      anomalies.push({
+        id: "live_no_anomalies",
+        title: "No active production anomalies in the live window",
+        severity: "low",
+        evidence: `${totalTraces} traces, ${openInbox.length} open escalations, ${formatUSD(
+          costSummary.total_cents,
+        )} month-to-date usage.`,
+        nextAction:
+          "Keep the production tail pinned while the next canary bakes.",
+        owner: "Workspace owner",
+      });
+    }
   }
 
   const groupedTraces = tracesForAgent(traces);
   const costByAgent = usageCentsByAgent(args.usage);
-  const agents: AmbientAgentHealth[] =
-    groupedTraces.size > 0
-      ? [...groupedTraces.entries()].map(([agentId, agentTraces]) => {
-          const agentErrors = agentTraces.filter(
-            (trace) => trace.status === "error",
-          ).length;
-          const evalPassRate =
-            agentTraces.length === 0
-              ? 100
-              : Math.round(
-                  ((agentTraces.length - agentErrors) / agentTraces.length) *
-                    100,
-                );
-          const agentLatency = percentile(
-            agentTraces.map((trace) => trace.duration_ns / 1_000_000),
-            95,
-          );
-          const agentEscalations = args.inbox.filter(
-            (item) => item.agent_id === agentId && item.status !== "resolved",
-          ).length;
-          return {
-            id: agentId,
-            name: agentTraces[0]?.agent_name || agentId,
-            evalPassRate,
-            p95LatencyMs: Math.round(agentLatency),
-            costDeltaPct: Math.round((costByAgent.get(agentId) ?? 0) / 100),
-            escalationRate:
-              agentTraces.length === 0
-                ? 0
-                : Math.round((agentEscalations / agentTraces.length) * 1000) /
-                  10,
-            tone: toneFromScore(evalPassRate),
-          };
-        })
-      : targetUxFixtures.agents.slice(0, 2).map((agent) => ({
-          id: agent.id,
-          name: agent.name,
-          evalPassRate: 100,
-          p95LatencyMs: 0,
-          costDeltaPct: 0,
-          escalationRate: 0,
-          tone: "watching" as const,
-        }));
+  const agents: AmbientAgentHealth[] = [...groupedTraces.entries()].map(
+    ([agentId, agentTraces]) => {
+      const agentErrors = agentTraces.filter(
+        (trace) => trace.status === "error",
+      ).length;
+      const evalPassRate =
+        agentTraces.length === 0
+          ? 100
+          : Math.round(
+              ((agentTraces.length - agentErrors) / agentTraces.length) * 100,
+            );
+      const agentLatency = percentile(
+        agentTraces.map((trace) => trace.duration_ns / 1_000_000),
+        95,
+      );
+      const agentEscalations = args.inbox.filter(
+        (item) => item.agent_id === agentId && item.status !== "resolved",
+      ).length;
+      return {
+        id: agentId,
+        name: agentTraces[0]?.agent_name || agentId,
+        evalPassRate,
+        p95LatencyMs: Math.round(agentLatency),
+        costDeltaPct: Math.round((costByAgent.get(agentId) ?? 0) / 100),
+        escalationRate:
+          agentTraces.length === 0
+            ? 0
+            : Math.round((agentEscalations / agentTraces.length) * 1000) / 10,
+        tone: toneFromScore(evalPassRate),
+      };
+    },
+  );
 
   return {
     metrics: [
@@ -399,7 +401,16 @@ export async function fetchObservatoryModel(
   workspaceId: string,
   opts: ObservatoryClientOptions = {},
 ): Promise<ObservatoryModel> {
-  if (!hasCpApiBase(opts.baseUrl)) return OBSERVATORY_MODEL;
+  if (!hasCpApiBase(opts.baseUrl)) {
+    return buildObservatoryModel({
+      workspaceId,
+      traces: [],
+      usage: [],
+      inbox: [],
+      incidents: [],
+      nowMs: Date.now(),
+    });
+  }
   const nowMs = Date.now();
   const month = monthBoundsUTC(nowMs);
   const [traces, usage, inbox, incidents] = await Promise.all([

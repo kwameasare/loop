@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildObservatoryModel,
   fetchObservatoryModel,
-  OBSERVATORY_MODEL,
   pinObservatoryMetric,
 } from "@/lib/observatory";
 import type { InboxItem } from "@/lib/inbox";
@@ -152,9 +151,14 @@ describe("buildObservatoryModel", () => {
 });
 
 describe("fetchObservatoryModel", () => {
-  it("falls back to the canonical fixture when cp-api is not configured", async () => {
+  it("returns an empty telemetry model when cp-api is not configured", async () => {
     const model = await fetchObservatoryModel("ws1", { baseUrl: "" });
-    expect(model).toBe(OBSERVATORY_MODEL);
+    expect(model.agents).toEqual([]);
+    expect(model.tail).toEqual([]);
+    expect(model.anomalies[0]).toMatchObject({
+      id: "telemetry_not_loaded",
+      title: "No production telemetry loaded",
+    });
   });
 
   it("loads traces, usage, inbox, and incidents from live cp-api routes", async () => {
