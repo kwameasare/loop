@@ -30,6 +30,7 @@ export interface ConversationViewerProps {
   postMessage?: PostMessageFn;
   handback?: HandbackFn;
   initialOwnership?: "agent" | "operator";
+  degradedReason?: string | undefined;
 }
 
 const ROLE_LABEL: Record<ConversationMessage["role"], string> = {
@@ -64,9 +65,9 @@ export function ConversationViewer(props: ConversationViewerProps) {
   const [transcript, setTranscript] = useState<ConversationMessage[]>(
     props.initialTranscript,
   );
-  const [status, setStatus] = useState<"connecting" | "live" | "error">(
-    "connecting",
-  );
+  const [status, setStatus] = useState<
+    "connecting" | "live" | "error" | "degraded"
+  >(props.degradedReason ? "degraded" : "connecting");
   const [tail, setTail] = useState(true);
   const [ownership, setOwnership] = useState<"agent" | "operator">(
     props.initialOwnership ?? "agent",
@@ -77,8 +78,13 @@ export function ConversationViewer(props: ConversationViewerProps) {
   const [confirmHandback, setConfirmHandback] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const isDegraded = Boolean(props.degradedReason);
 
   useEffect(() => {
+    if (props.degradedReason) {
+      setStatus("degraded");
+      return;
+    }
     const sub = props.subscribe({
       conversation_id: props.conversation_id,
       onMessage: (m) => {
@@ -98,7 +104,8 @@ export function ConversationViewer(props: ConversationViewerProps) {
   }, [transcript, tail]);
 
   async function handleTakeover() {
-    if (!props.takeover || ownership === "operator" || busy) return;
+    if (isDegraded || !props.takeover || ownership === "operator" || busy)
+      return;
     setBusy(true);
     setErrorMsg(null);
     try {
@@ -116,7 +123,9 @@ export function ConversationViewer(props: ConversationViewerProps) {
   }
 
   async function handleSend() {
-    if (!props.postMessage || ownership !== "operator" || busy) return;
+    if (isDegraded || !props.postMessage || ownership !== "operator" || busy) {
+      return;
+    }
     const body = draft.trim();
     if (body.length === 0) return;
     setBusy(true);
@@ -140,7 +149,9 @@ export function ConversationViewer(props: ConversationViewerProps) {
   }
 
   async function handleHandback() {
-    if (!props.handback || ownership !== "operator" || busy) return;
+    if (isDegraded || !props.handback || ownership !== "operator" || busy) {
+      return;
+    }
     setBusy(true);
     setErrorMsg(null);
     try {
@@ -166,10 +177,7 @@ export function ConversationViewer(props: ConversationViewerProps) {
   }, [toast]);
 
   return (
-    <section
-      className="flex flex-col gap-3"
-      data-testid="conversation-viewer"
-    >
+    <section className="flex flex-col gap-3" data-testid="conversation-viewer">
       <header className="flex items-center justify-between text-xs">
         <span data-testid="conversation-status">
           <span
@@ -177,9 +185,11 @@ export function ConversationViewer(props: ConversationViewerProps) {
             className={
               status === "live"
                 ? "mr-1 inline-block size-2 rounded-full bg-success"
-                : status === "error"
-                  ? "mr-1 inline-block size-2 rounded-full bg-destructive"
-                  : "mr-1 inline-block size-2 rounded-full bg-muted-foreground"
+                : status === "degraded"
+                  ? "mr-1 inline-block size-2 rounded-full bg-warning"
+                  : status === "error"
+                    ? "mr-1 inline-block size-2 rounded-full bg-destructive"
+                    : "mr-1 inline-block size-2 rounded-full bg-muted-foreground"
             }
           />
           {status}
@@ -200,11 +210,13 @@ export function ConversationViewer(props: ConversationViewerProps) {
         data-testid="conversation-ownership-bar"
       >
         <span data-testid="conversation-ownership">
-          {ownership === "operator"
-            ? "You have taken over this conversation. The agent is paused."
-            : "Agent is handling this conversation."}
+          {props.degradedReason
+            ? "Conversation state unavailable. Studio has paused takeover controls until backend evidence is available."
+            : ownership === "operator"
+              ? "You have taken over this conversation. The agent is paused."
+              : "Agent is handling this conversation."}
         </span>
-        {ownership === "agent" ? (
+        {isDegraded ? null : ownership === "agent" ? (
           <button
             className="rounded bg-primary px-3 py-1 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             data-testid="conversation-takeover"
@@ -247,6 +259,16 @@ export function ConversationViewer(props: ConversationViewerProps) {
         </p>
       ) : null}
 
+      {props.degradedReason ? (
+        <p
+          className="rounded border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning"
+          data-testid="conversation-degraded"
+          role="status"
+        >
+          {props.degradedReason}
+        </p>
+      ) : null}
+
       <div
         className="flex h-[480px] flex-col gap-2 overflow-y-auto rounded-lg border bg-card p-3"
         data-testid="conversation-scroll"
@@ -257,7 +279,9 @@ export function ConversationViewer(props: ConversationViewerProps) {
             className="text-center text-sm text-muted-foreground"
             data-testid="conversation-empty"
           >
-            No messages yet.
+            {props.degradedReason
+              ? "Conversation transcript unavailable."
+              : "No messages yet."}
           </p>
         ) : (
           transcript.map((m) => (
@@ -295,12 +319,14 @@ export function ConversationViewer(props: ConversationViewerProps) {
           aria-label="Compose a reply"
           className="rounded border bg-background px-3 py-2 text-sm disabled:bg-muted"
           data-testid="conversation-composer-input"
-          disabled={ownership !== "operator" || busy}
+          disabled={isDegraded || ownership !== "operator" || busy}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={
-            ownership === "operator"
-              ? "Type a reply… (Shift+Enter for newline)"
-              : "Take over this conversation to reply."
+            props.degradedReason
+              ? "Conversation evidence is unavailable."
+              : ownership === "operator"
+                ? "Type a reply… (Shift+Enter for newline)"
+                : "Take over this conversation to reply."
           }
           rows={3}
           value={draft}
@@ -311,6 +337,7 @@ export function ConversationViewer(props: ConversationViewerProps) {
             data-testid="conversation-composer-send"
             disabled={
               ownership !== "operator" ||
+              isDegraded ||
               busy ||
               draft.trim().length === 0 ||
               !props.postMessage
@@ -332,8 +359,8 @@ export function ConversationViewer(props: ConversationViewerProps) {
           <div className="w-full max-w-sm rounded-lg border bg-card p-4 shadow-lg">
             <h2 className="text-base font-semibold">Hand back to agent?</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              The agent will resume control of this conversation. Any
-              pending operator drafts will be discarded.
+              The agent will resume control of this conversation. Any pending
+              operator drafts will be discarded.
             </p>
             <div className="mt-4 flex justify-end gap-2">
               <button

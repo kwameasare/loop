@@ -8,6 +8,7 @@ import { ConversationViewer } from "@/components/inbox/conversation-viewer";
 import { ResolutionToEval } from "@/components/inbox/resolution-to-eval";
 import { SuggestedDraft } from "@/components/inbox/suggested-draft";
 import {
+  createDegradedConversationDetail,
   createPollingSubscriber,
   fetchConversationDetail,
   handbackConversation,
@@ -41,12 +42,11 @@ function ConversationPageBody({
 }): JSX.Element {
   const [insertedDraft, setInsertedDraft] = useState<string | null>(null);
   const [detail, setDetail] = useState<ConversationDetailView | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const { active } = useActiveWorkspace();
   const subscriber = useMemo(() => createPollingSubscriber(), []);
   const evidence = useMemo(
     () =>
-      detail
+      detail && !detail.degraded_reason
         ? createEvidenceContextFromConversation({
             conversation_id,
             messages: detail.messages,
@@ -56,16 +56,17 @@ function ConversationPageBody({
   );
   const suggestedDraft = useMemo(
     () =>
-      detail
+      detail && !detail.degraded_reason
         ? suggestOperatorDraftFromConversation(detail.messages)
-        : "Loading the conversation evidence before suggesting a reply.",
+        : detail?.degraded_reason
+          ? "Conversation evidence is unavailable. Studio will not suggest a reply without the transcript."
+          : "Loading the conversation evidence before suggesting a reply.",
     [detail],
   );
 
   useEffect(() => {
     let cancelled = false;
     setDetail(null);
-    setLoadError(null);
     void fetchConversationDetail(conversation_id)
       .then((next) => {
         if (cancelled) return;
@@ -73,8 +74,11 @@ function ConversationPageBody({
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setLoadError(
-          err instanceof Error ? err.message : "Could not load conversation",
+        setDetail(
+          createDegradedConversationDetail(
+            conversation_id,
+            err instanceof Error ? err.message : "Could not load conversation",
+          ),
         );
       });
     return () => {
@@ -98,12 +102,6 @@ function ConversationPageBody({
         </p>
       </header>
 
-      {loadError ? (
-        <p className="mb-4 rounded border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {loadError}
-        </p>
-      ) : null}
-
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-4">
           {detail ? (
@@ -115,6 +113,9 @@ function ConversationPageBody({
               postMessage={postOperatorMessage}
               subscribe={subscriber}
               takeover={({ conversation_id: id }) => takeoverConversation(id)}
+              {...(detail.degraded_reason
+                ? { degradedReason: detail.degraded_reason }
+                : {})}
             />
           ) : (
             <section className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">

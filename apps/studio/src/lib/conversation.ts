@@ -69,7 +69,9 @@ function mapMessage(message: CpConversationMessage): ConversationMessage {
   };
 }
 
-function messagesFromDetail(detail: CpConversationDetail): ConversationMessage[] {
+function messagesFromDetail(
+  detail: CpConversationDetail,
+): ConversationMessage[] {
   if (detail.messages && detail.messages.length > 0) {
     return detail.messages.map(mapMessage);
   }
@@ -99,6 +101,18 @@ function messagesFromDetail(detail: CpConversationDetail): ConversationMessage[]
 export interface ConversationDetailView {
   messages: ConversationMessage[];
   ownership: "agent" | "operator";
+  degraded_reason?: string | undefined;
+}
+
+export function createDegradedConversationDetail(
+  conversation_id: string,
+  degradedReason: string,
+): ConversationDetailView {
+  return {
+    messages: [],
+    ownership: "agent",
+    degraded_reason: degradedReason,
+  };
 }
 
 export async function fetchConversationDetail(
@@ -118,7 +132,12 @@ export async function fetchConversationDetail(
       cache: "no-store",
     },
   );
-  if (response.status === 404) return { messages: [], ownership: "agent" };
+  if (response.status === 404) {
+    return createDegradedConversationDetail(
+      conversation_id,
+      "cp-api conversation route returned 404. Studio will not treat an unavailable conversation route as an empty agent-handled transcript.",
+    );
+  }
   if (!response.ok) {
     throw new Error(`cp-api GET conversation -> ${response.status}`);
   }
@@ -136,7 +155,8 @@ async function postConversationAction<T>(
   opts: ConversationClientOptions,
 ): Promise<T> {
   const base = cpApiBaseUrl(opts.baseUrl);
-  if (!base) throw new Error("LOOP_CP_API_BASE_URL is required for conversation calls");
+  if (!base)
+    throw new Error("LOOP_CP_API_BASE_URL is required for conversation calls");
   const fetcher = opts.fetcher ?? fetch;
   const response = await fetcher(
     `${base}/conversations/${encodeURIComponent(conversation_id)}${path}`,
@@ -158,10 +178,18 @@ export async function takeoverConversation(
   opts: ConversationClientOptions = {},
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    await postConversationAction(conversation_id, "/takeover", { note: "" }, opts);
+    await postConversationAction(
+      conversation_id,
+      "/takeover",
+      { note: "" },
+      opts,
+    );
     return { ok: true };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Takeover failed" };
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Takeover failed",
+    };
   }
 }
 
@@ -170,10 +198,18 @@ export async function handbackConversation(
   opts: ConversationClientOptions = {},
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    await postConversationAction(conversation_id, "/handback", { note: "" }, opts);
+    await postConversationAction(
+      conversation_id,
+      "/handback",
+      { note: "" },
+      opts,
+    );
     return { ok: true };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Handback failed" };
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Handback failed",
+    };
   }
 }
 
@@ -190,7 +226,10 @@ export async function postOperatorMessage(
     );
     return { ok: true, message: mapMessage(message) };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Post failed" };
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Post failed",
+    };
   }
 }
 
@@ -244,7 +283,9 @@ export function createPollingSubscriber(
           onMessage(message);
         }
       } catch (err) {
-        onError?.(err instanceof Error ? err : new Error("Conversation poll failed"));
+        onError?.(
+          err instanceof Error ? err : new Error("Conversation poll failed"),
+        );
       }
     }
 
@@ -261,8 +302,7 @@ export function createPollingSubscriber(
   };
 }
 
-export const FIXTURE_CONVERSATION_ID =
-  "cccccccc-cccc-cccc-cccc-cccccccccccc";
+export const FIXTURE_CONVERSATION_ID = "cccccccc-cccc-cccc-cccc-cccccccccccc";
 
 export const FIXTURE_TRANSCRIPT: ConversationMessage[] = [
   {
