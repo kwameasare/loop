@@ -79,6 +79,32 @@ describe("InboxQueue", () => {
     }
   });
 
+  it("initializes agent filtering from an evidence link", () => {
+    render(
+      <InboxQueue
+        agents={FIXTURE_AGENTS}
+        initialAgentId="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+        initialPageSize={50}
+        items={FIXTURE_QUEUE}
+        now_ms={FIXTURE_NOW_MS}
+        teams={FIXTURE_TEAMS}
+        workspace_id={FIXTURE_WORKSPACE_ID}
+      />,
+    );
+
+    expect(screen.getByTestId("queue-focused-agent")).toHaveTextContent(
+      "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    );
+    expect(screen.getByTestId("queue-filter-agent")).toHaveValue(
+      "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    );
+    const rows = screen.getAllByTestId(/queue-row-/);
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(row.textContent).toMatch(/Voice Concierge/);
+    }
+  });
+
   it("toggles sort direction when clicking the same column twice", () => {
     renderQueue();
     fireEvent.click(screen.getByTestId("queue-sort-user_id"));

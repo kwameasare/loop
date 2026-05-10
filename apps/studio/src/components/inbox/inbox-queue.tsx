@@ -18,6 +18,7 @@ export interface InboxQueueProps {
   now_ms: number;
   teams: { id: string; name: string }[];
   agents: { id: string; name: string }[];
+  initialAgentId?: string | undefined;
   initialPageSize?: number;
 }
 
@@ -46,7 +47,7 @@ const SORTABLE: { key: InboxSortKey; label: string }[] = [
  */
 export function InboxQueue(props: InboxQueueProps) {
   const [teamId, setTeamId] = useState("");
-  const [agentId, setAgentId] = useState("");
+  const [agentId, setAgentId] = useState(props.initialAgentId ?? "");
   const [channel, setChannel] = useState<InboxChannel | "all">("all");
   const [status, setStatus] = useState<InboxStatus | "all">("all");
   const [sortBy, setSortBy] = useState<InboxSortKey>("created_at");
@@ -85,6 +86,18 @@ export function InboxQueue(props: InboxQueueProps) {
     () => new Map(props.agents.map((a) => [a.id, a.name])),
     [props.agents],
   );
+  const visibleAgents = useMemo(() => {
+    if (
+      !props.initialAgentId ||
+      props.agents.some((agent) => agent.id === props.initialAgentId)
+    ) {
+      return props.agents;
+    }
+    return [
+      ...props.agents,
+      { id: props.initialAgentId, name: props.initialAgentId },
+    ];
+  }, [props.agents, props.initialAgentId]);
   const teamName = useMemo(
     () => new Map(props.teams.map((t) => [t.id, t.name])),
     [props.teams],
@@ -102,6 +115,15 @@ export function InboxQueue(props: InboxQueueProps) {
 
   return (
     <section className="flex flex-col gap-3" data-testid="inbox-queue">
+      {props.initialAgentId ? (
+        <div
+          className="rounded-lg border border-info/30 bg-info/10 px-3 py-2 text-xs text-info"
+          data-testid="queue-focused-agent"
+        >
+          Focused from evidence link: showing queue items for agent{" "}
+          <span className="font-semibold">{props.initialAgentId}</span>.
+        </div>
+      ) : null}
       <header className="flex flex-wrap items-center gap-2 text-sm">
         <select
           aria-label="Filter by team"
@@ -131,7 +153,7 @@ export function InboxQueue(props: InboxQueueProps) {
           value={agentId}
         >
           <option value="">All agents</option>
-          {props.agents.map((a) => (
+          {visibleAgents.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}
             </option>

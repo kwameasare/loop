@@ -137,4 +137,20 @@ describe("InboxScreen", () => {
       screen.getByTestId("claimed-row-33333333-3333-3333-3333-333333333333"),
     ).toBeInTheDocument();
   });
+
+  it("scopes pending and claimed rows to a focused agent from an evidence link", () => {
+    renderScreen({
+      focused_agent_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    });
+
+    expect(screen.getByTestId("inbox-focused-agent")).toHaveTextContent(
+      "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    );
+    expect(
+      screen.getByTestId("pending-row-11111111-1111-1111-1111-111111111111"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("claimed-row-33333333-3333-3333-3333-333333333333"),
+    ).toBeNull();
+  });
 });
