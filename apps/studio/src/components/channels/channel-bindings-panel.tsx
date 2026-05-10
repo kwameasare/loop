@@ -81,6 +81,7 @@ export function ChannelBindingsPanel({
     sortedBindings(initialBindings),
   );
   const [busyType, setBusyType] = useState<ChannelBindingType | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const ordered = useMemo(() => sortedBindings(bindings), [bindings]);
 
   async function handleDraft(channelType: ChannelBindingType) {
@@ -88,6 +89,7 @@ export function ChannelBindingsPanel({
       (binding) => binding.channel_type === channelType,
     );
     setBusyType(channelType);
+    setError(null);
     try {
       const input: ChannelBindingInput = {
         channel_type: channelType,
@@ -103,6 +105,12 @@ export function ChannelBindingsPanel({
           ...previous.filter((item) => item.channel_type !== channelType),
           updated,
         ]),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Channel binding setup requires cp-api.",
       );
     } finally {
       setBusyType(null);
@@ -130,6 +138,15 @@ export function ChannelBindingsPanel({
           channel
         </p>
       </header>
+
+      {error ? (
+        <p
+          className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+        >
+          {error}
+        </p>
+      ) : null}
 
       <div className="grid gap-3 xl:grid-cols-3">
         {ordered.map((binding) => {
@@ -202,7 +219,7 @@ export function ChannelBindingsPanel({
                 type="button"
                 className="mt-3 w-full rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted disabled:opacity-50"
                 disabled={busyType === binding.channel_type}
-                onClick={() => handleDraft(binding.channel_type)}
+                onClick={() => void handleDraft(binding.channel_type)}
                 data-testid={`channel-binding-draft-${binding.channel_type}`}
               >
                 {busyType === binding.channel_type

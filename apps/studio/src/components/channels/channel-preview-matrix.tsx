@@ -63,6 +63,7 @@ export function ChannelPreviewMatrix({
   );
   const [busy, setBusy] = useState(false);
   const [savedCaseId, setSavedCaseId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const bindingsByType = useMemo(
     () => new Map(bindings.map((binding) => [binding.channel_type, binding])),
@@ -80,6 +81,7 @@ export function ChannelPreviewMatrix({
   async function renderMatrix() {
     setBusy(true);
     setSavedCaseId(null);
+    setError(null);
     try {
       const result = await previewChannelMatrix(agentId, {
         scenario_title: scenarioTitle,
@@ -88,14 +90,29 @@ export function ChannelPreviewMatrix({
         channel_types: selected,
       });
       setMatrix(result);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Channel preview requires cp-api.",
+      );
     } finally {
       setBusy(false);
     }
   }
 
   async function saveEval(seed: ChannelPreviewEvalCaseSeed) {
-    const response = await createChannelPreviewEvalCase(agentId, seed);
-    setSavedCaseId(response.case_id);
+    setError(null);
+    try {
+      const response = await createChannelPreviewEvalCase(agentId, seed);
+      setSavedCaseId(response.case_id);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Saving the eval case requires cp-api.",
+      );
+    }
   }
 
   return (
@@ -191,12 +208,21 @@ export function ChannelPreviewMatrix({
 
       <button
         type="button"
-        onClick={renderMatrix}
+        onClick={() => void renderMatrix()}
         disabled={busy || selected.length === 0}
         className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-50"
       >
         {busy ? "Rendering..." : "Render preview matrix"}
       </button>
+
+      {error ? (
+        <p
+          className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+        >
+          {error}
+        </p>
+      ) : null}
 
       {matrix ? (
         <div className="space-y-3" data-testid="channel-preview-matrix-results">
@@ -285,7 +311,7 @@ export function ChannelPreviewMatrix({
                       type="button"
                       className="mt-3 rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted"
                       onClick={() =>
-                        saveEval({
+                        void saveEval({
                           ...row.eval_case_seed,
                           failure_reason:
                             row.formatting_failures[0]?.message ??
