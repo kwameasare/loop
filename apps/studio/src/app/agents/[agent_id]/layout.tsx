@@ -6,6 +6,7 @@ import {
   agentStateSentence,
   getAgentDetailData,
 } from "./agent-detail-data";
+import { AgentTestDrawer } from "@/components/agents/agent-test-drawer";
 import { AgentTabs } from "@/components/agents/agent-tabs";
 import { EmulatorPanel } from "@/components/agents/emulator-panel";
 
@@ -74,6 +75,7 @@ export default async function AgentDetailLayout({
           </p>
         </header>
         <section data-testid="agent-tab-content">{children}</section>
+        <AgentTestDrawer agentId={params.agent_id} />
       </div>
       <aside
         className="lg:sticky lg:top-10 lg:max-h-[calc(100vh-5rem)]"
