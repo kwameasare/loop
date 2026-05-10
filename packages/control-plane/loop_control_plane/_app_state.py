@@ -59,6 +59,7 @@ from loop_control_plane.preapproved_classes import PreApprovedClassRegistry
 from loop_control_plane.saml import SamlValidator, StubSamlValidator
 from loop_control_plane.secrets import InMemorySecretsBackend, SecretsBackend
 from loop_control_plane.simulator_feedback import SimulatorFeedbackRegistry
+from loop_control_plane.tool_call_telemetry import ToolCallTelemetryStore
 from loop_control_plane.tool_contracts import ToolContractRegistry
 from loop_control_plane.trace_search import (
     InMemoryTraceStore,
@@ -189,6 +190,9 @@ class CpApiState:
     # P0.4 (traces + usage):
     trace_store: TraceStore = field(default_factory=InMemoryTraceStore)
     usage_ledger: UsageLedger = field(default_factory=UsageLedger)
+    # Agent-flow implementation: per-tool production monitoring must come
+    # from tool-call telemetry, not inferred UI fixtures.
+    tool_call_telemetry: ToolCallTelemetryStore = field(default_factory=ToolCallTelemetryStore)
     # UX wire-up: Memory Studio reads the same memory store surface used by runtime.
     user_memory_store: InMemoryUserMemoryStore = field(default_factory=InMemoryUserMemoryStore)
     session_memory_store: InMemorySessionMemoryStore = field(

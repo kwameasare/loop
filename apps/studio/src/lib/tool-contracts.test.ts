@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  listToolContractMetrics,
   listToolContracts,
   localToolContracts,
   promoteToolContract,
@@ -57,6 +58,38 @@ describe("tool contracts client", () => {
     );
   });
 
+  it("loads tool contract metrics from the agent route", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        items: [
+          {
+            tool_id: "lookup_order",
+            production_usage_7d: 2,
+            success_rate_percent: 50,
+            p95_latency_ms: 520,
+            retry_rate_percent: 50,
+            failed_calls_7d: 1,
+            pii_sent_7d: 3,
+            last_schema_change_at: "2026-05-10T00:00:00Z",
+            measurement_status: "measured",
+            evidence_ref: "tool-telemetry/lookup_order/2-calls",
+          },
+        ],
+      }),
+    );
+
+    const result = await listToolContractMetrics("agt_1", {
+      baseUrl: "https://cp.test",
+      fetcher,
+    });
+
+    expect(result.items[0]?.measurement_status).toBe("measured");
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agt_1/tool-contracts/metrics",
+      expect.any(Object),
+    );
+  });
+
   it("upserts and promotes contracts through cp-api", async () => {
     const fetcher = vi.fn<typeof fetch>(async (input) =>
       Response.json({
@@ -68,12 +101,10 @@ describe("tool contracts client", () => {
       }),
     );
 
-    await upsertToolContract(
-      "agt_1",
-      "issue_refund",
-      refundContractInput,
-      { baseUrl: "https://cp.test", fetcher },
-    );
+    await upsertToolContract("agt_1", "issue_refund", refundContractInput, {
+      baseUrl: "https://cp.test",
+      fetcher,
+    });
     const promoted = await promoteToolContract("agt_1", "issue_refund", {
       baseUrl: "https://cp.test",
       fetcher,

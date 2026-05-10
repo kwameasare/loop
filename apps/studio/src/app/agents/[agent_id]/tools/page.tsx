@@ -5,7 +5,12 @@ import {
   listAgentTools,
   type AgentTool,
 } from "@/lib/agent-tools";
-import { listToolContracts, type ToolContract } from "@/lib/tool-contracts";
+import {
+  listToolContractMetrics,
+  listToolContracts,
+  type ToolContract,
+  type ToolContractMetrics,
+} from "@/lib/tool-contracts";
 
 export const dynamic = "force-dynamic";
 
@@ -27,16 +32,22 @@ export default async function AgentToolsPage({
   params,
   searchParams,
 }: AgentToolsPageProps) {
-  const [toolsResult, contractsResult] = await Promise.allSettled([
-    listAgentTools(params.agent_id),
-    listToolContracts(params.agent_id).then((result) => result.items),
-  ]);
+  const [toolsResult, contractsResult, metricsResult] =
+    await Promise.allSettled([
+      listAgentTools(params.agent_id),
+      listToolContracts(params.agent_id).then((result) => result.items),
+      listToolContractMetrics(params.agent_id).then((result) => result.items),
+    ]);
   const liveTools: AgentTool[] =
     toolsResult.status === "fulfilled" ? toolsResult.value : [];
   const toolContracts: ToolContract[] =
     contractsResult.status === "fulfilled" ? contractsResult.value : [];
-  const degradedReason = [toolsResult, contractsResult]
-    .filter((result): result is PromiseRejectedResult => result.status === "rejected")
+  const toolMetrics: ToolContractMetrics[] =
+    metricsResult.status === "fulfilled" ? metricsResult.value : [];
+  const degradedReason = [toolsResult, contractsResult, metricsResult]
+    .filter(
+      (result): result is PromiseRejectedResult => result.status === "rejected",
+    )
     .map((result) =>
       result.reason instanceof Error
         ? result.reason.message
@@ -51,6 +62,7 @@ export default async function AgentToolsPage({
           undefined,
           toolContracts,
           degradedReason || undefined,
+          toolMetrics,
         )
       : createEmptyToolsRoomData(
           params.agent_id,

@@ -13,7 +13,12 @@ import type {
   TrustState,
 } from "@/lib/design-tokens";
 import { targetUxFixtures, type TargetUXFixture } from "@/lib/target-ux";
-import { localToolContracts, type ToolContract } from "@/lib/tool-contracts";
+import {
+  localToolContracts,
+  type ToolContract,
+  type ToolContractMetrics,
+  type ToolMetricStatus,
+} from "@/lib/tool-contracts";
 
 export type AgentToolKind = "mcp" | "http";
 
@@ -131,6 +136,8 @@ export interface ToolsRoomTool {
   failedCalls7d: number;
   piiSent7d: number;
   lastSchemaChangeAt: string;
+  monitoringStatus: ToolMetricStatus | "fixture";
+  monitoringEvidence: string;
   environment: string;
   dataClassification: string;
   idempotency: string;
@@ -285,6 +292,8 @@ function toolFromFixture(
     lastSchemaChangeAt: isMoneyMovement
       ? "2026-05-02T14:22:00Z"
       : "2026-04-28T09:10:00Z",
+    monitoringStatus: "fixture",
+    monitoringEvidence: "Explicit local fixture metrics for tests and demos.",
     environment: isMoneyMovement ? "staging" : "production",
     dataClassification: isMoneyMovement
       ? "financial action; no raw card data"
@@ -425,12 +434,124 @@ function toolFromFixture(
   };
 }
 
+function sideEffectFromContract(
+  sideEffect: ToolContract["side_effect_level"],
+): ToolSideEffect {
+  if (sideEffect === "money_movement") return "money-movement";
+  if (sideEffect === "external_message") return "external-message";
+  if (sideEffect === "write") return "write";
+  return "read";
+}
+
+function toolFromContract(
+  agentId: string,
+  contract: ToolContract,
+  metric: ToolContractMetrics | undefined,
+): ToolsRoomTool {
+  const measured = metric?.measurement_status === "measured";
+  const sideEffect = sideEffectFromContract(contract.side_effect_level);
+  const mutatesData = sideEffect !== "read";
+  return {
+    id: contract.tool_id,
+    name: contract.name,
+    kind: "http",
+    description:
+      contract.description || "Tool contract awaiting schema review.",
+    source: `tool-contract/${contract.id}`,
+    owner: contract.owner_user_id || "Unassigned",
+    objectState: contract.live_status === "approved" ? "production" : "draft",
+    trust:
+      contract.live_status === "blocked"
+        ? "blocked"
+        : contract.live_status === "approved" && measured
+          ? "healthy"
+          : "watching",
+    sideEffect,
+    authMode: "mock",
+    secretRef: "No secret reference loaded for this contract",
+    kmsKeyRef: "Review required",
+    usage7d: metric?.production_usage_7d ?? 0,
+    failureRate: metric ? 100 - metric.success_rate_percent : 0,
+    costPer1kUsd: 0,
+    evalCoveragePercent: 0,
+    evalConfidence: "unsupported",
+    successRatePercent: metric?.success_rate_percent ?? 0,
+    p95LatencyMs: metric?.p95_latency_ms ?? 0,
+    retryRatePercent: metric?.retry_rate_percent ?? 0,
+    failedCalls7d: metric?.failed_calls_7d ?? 0,
+    piiSent7d: metric?.pii_sent_7d ?? 0,
+    lastSchemaChangeAt: metric?.last_schema_change_at ?? contract.updated_at,
+    monitoringStatus: metric?.measurement_status ?? "waiting_for_calls",
+    monitoringEvidence:
+      metric?.evidence_ref ??
+      `tool-telemetry/${contract.tool_id}/waiting-for-calls`,
+    environment:
+      contract.live_status === "approved"
+        ? "production"
+        : contract.sandbox_status,
+    dataClassification: contract.pii_access
+      ? "PII permitted by contract"
+      : "No PII access",
+    idempotency:
+      contract.money_movement || mutatesData
+        ? "Review required before live writes"
+        : "Read-only by contract",
+    allowedChannels: [],
+    approvalRequirements: contract.approval_policy_id || "Review required",
+    auditRequirements:
+      "Every call must include trace_id and tool_call telemetry.",
+    compensationBehavior: contract.compensation_behavior || "Review required",
+    timeoutMs: 1_000,
+    retryPolicy:
+      contract.money_movement || mutatesData
+        ? "No automatic retry until idempotency is proven."
+        : "Review retry policy before live use.",
+    rateLimit: Object.keys(contract.rate_limits).length
+      ? Object.entries(contract.rate_limits)
+          .map(([key, value]) => `${key}: ${String(value)}`)
+          .join(", ")
+      : "Review required",
+    mockStatus: `${contract.sandbox_status} contract saved.`,
+    liveStatus: contract.live_status.replace(/_/g, " "),
+    productionGrant:
+      contract.live_status === "approved"
+        ? "approved"
+        : contract.live_status === "blocked"
+          ? "blocked"
+          : "review",
+    productionBoundary:
+      contract.live_status === "approved"
+        ? "Production grant approved by durable Tool Contract."
+        : "Production grant unavailable until the Tool Contract clears review and telemetry requirements.",
+    productionNextStep:
+      contract.live_status === "approved"
+        ? "Keep monitoring tool-call telemetry and schema drift."
+        : "Complete enablement checks, record sandbox calls, and promote the contract live.",
+    schema: [],
+    outputSchema: [],
+    sampleCall: "No sample call loaded from the contract yet.",
+    mockResponse: "{}",
+    safety: {
+      mutatesData,
+      spendsMoney: contract.money_movement,
+      exposesPersonalData: contract.pii_access,
+      agentsAllowed: [agentId],
+      sensitiveArguments: contract.pii_access ? ["contract permits PII"] : [],
+      failureMode: contract.failure_behavior || "Failure behavior missing.",
+      auditEvent: "tool.call.recorded",
+      evidence: metric?.evidence_ref ?? `tool-contract/${contract.id}`,
+    },
+    evidence: [metric?.evidence_ref ?? `tool-contract/${contract.id}`],
+  };
+}
+
 export function createToolsRoomData(
   agentId: string,
   liveTools: AgentTool[] = [],
   fixture: TargetUXFixture = targetUxFixtures,
   toolContracts: ToolContract[] = [],
   degradedReason?: string | undefined,
+  toolMetrics: ToolContractMetrics[] = [],
 ): ToolsRoomData {
   const usesLiveData = liveTools.length > 0 || toolContracts.length > 0;
   const fixtureAgent = fixture.agents.find(
@@ -441,68 +562,90 @@ export function createToolsRoomData(
     fixtureAgent?.name ?? fixtureFallback?.name ?? `Agent ${agentId}`;
   const tools = usesLiveData
     ? []
-    : fixture.tools.map((_, index) =>
-        toolFromFixture(agentId, fixture, index),
-      );
+    : fixture.tools.map((_, index) => toolFromFixture(agentId, fixture, index));
+  const metricsByTool = new Map(
+    toolMetrics.map((metric) => [metric.tool_id, metric]),
+  );
   const liveOnlyTools = liveTools
     .filter((tool) => !tools.some((candidate) => candidate.id === tool.id))
-    .map<ToolsRoomTool>((tool) => ({
-      id: tool.id,
-      name: tool.name,
-      kind: tool.kind,
-      description:
-        tool.description ?? "Live cp-api binding awaiting safety review.",
-      source: tool.source ?? "cp-api tool binding",
-      owner: "Workspace builder",
-      objectState: "draft",
-      trust: "watching",
-      sideEffect: "read",
-      authMode: "mock",
-      secretRef: "No secret attached",
-      kmsKeyRef: "workspace/ws_acme/tenant_kms_key_id",
-      usage7d: 0,
-      failureRate: 0,
-      costPer1kUsd: 0,
-      evalCoveragePercent: 0,
-      evalConfidence: "unsupported",
-      successRatePercent: 0,
-      p95LatencyMs: 0,
-      retryRatePercent: 0,
-      failedCalls7d: 0,
-      piiSent7d: 0,
-      lastSchemaChangeAt: "Not reviewed",
-      environment: "draft",
-      dataClassification: "Unclassified",
-      idempotency: "Review required",
-      allowedChannels: [],
-      approvalRequirements: "Review required",
-      auditRequirements: "Review required",
-      compensationBehavior: "Review required",
-      timeoutMs: 1_000,
-      retryPolicy: "Review required before retry policy is active.",
-      rateLimit: "Review required",
-      mockStatus: "Draft mock required before evals can run.",
-      liveStatus: "Live disabled until safety contract is complete.",
-      productionGrant: "review",
-      productionBoundary:
-        "Production grant unavailable until schema and auth are reviewed.",
-      productionNextStep: "Complete safety contract and save a mock response.",
-      schema: [],
-      outputSchema: [],
-      sampleCall: "No sample call captured yet.",
-      mockResponse: "{}",
-      safety: {
-        mutatesData: false,
-        spendsMoney: false,
-        exposesPersonalData: false,
-        agentsAllowed: [agentId],
-        sensitiveArguments: [],
-        failureMode: "Tool is draft-only.",
-        auditEvent: "tool.draft.review",
-        evidence: "cp-api live binding draft",
-      },
-      evidence: ["cp-api live binding draft"],
-    }));
+    .map<ToolsRoomTool>((tool) => {
+      const metric = metricsByTool.get(tool.id);
+      const measured = metric?.measurement_status === "measured";
+      return {
+        id: tool.id,
+        name: tool.name,
+        kind: tool.kind,
+        description:
+          tool.description ?? "Live cp-api binding awaiting safety review.",
+        source: tool.source ?? "cp-api tool binding",
+        owner: "Workspace builder",
+        objectState: "draft",
+        trust: measured ? "healthy" : "watching",
+        sideEffect: "read",
+        authMode: "mock",
+        secretRef: "No secret attached",
+        kmsKeyRef: "workspace/ws_acme/tenant_kms_key_id",
+        usage7d: metric?.production_usage_7d ?? 0,
+        failureRate: metric ? 100 - metric.success_rate_percent : 0,
+        costPer1kUsd: 0,
+        evalCoveragePercent: 0,
+        evalConfidence: "unsupported",
+        successRatePercent: metric?.success_rate_percent ?? 0,
+        p95LatencyMs: metric?.p95_latency_ms ?? 0,
+        retryRatePercent: metric?.retry_rate_percent ?? 0,
+        failedCalls7d: metric?.failed_calls_7d ?? 0,
+        piiSent7d: metric?.pii_sent_7d ?? 0,
+        lastSchemaChangeAt: metric?.last_schema_change_at ?? "Not measured",
+        monitoringStatus: metric?.measurement_status ?? "waiting_for_calls",
+        monitoringEvidence:
+          metric?.evidence_ref ?? "No production tool-call telemetry loaded.",
+        environment: "draft",
+        dataClassification: "Unclassified",
+        idempotency: "Review required",
+        allowedChannels: [],
+        approvalRequirements: "Review required",
+        auditRequirements: "Review required",
+        compensationBehavior: "Review required",
+        timeoutMs: 1_000,
+        retryPolicy: "Review required before retry policy is active.",
+        rateLimit: "Review required",
+        mockStatus: "Draft mock required before evals can run.",
+        liveStatus: measured
+          ? "Production telemetry is connected."
+          : "Live disabled or unmeasured until tool-call telemetry arrives.",
+        productionGrant: "review",
+        productionBoundary:
+          "Production grant unavailable until schema, auth, eval, and telemetry are reviewed.",
+        productionNextStep: measured
+          ? "Review contract and promote when enablement checks pass."
+          : "Record sandbox or production tool-call telemetry before claiming live health.",
+        schema: [],
+        outputSchema: [],
+        sampleCall: "No sample call captured yet.",
+        mockResponse: "{}",
+        safety: {
+          mutatesData: false,
+          spendsMoney: false,
+          exposesPersonalData: false,
+          agentsAllowed: [agentId],
+          sensitiveArguments: [],
+          failureMode: "Tool is draft-only.",
+          auditEvent: "tool.draft.review",
+          evidence: metric?.evidence_ref ?? "cp-api live binding draft",
+        },
+        evidence: [metric?.evidence_ref ?? "cp-api live binding draft"],
+      };
+    });
+  const contractOnlyTools = toolContracts
+    .filter(
+      (contract) =>
+        !tools.some((candidate) => candidate.id === contract.tool_id) &&
+        !liveOnlyTools.some((candidate) => candidate.id === contract.tool_id),
+    )
+    .map((contract) =>
+      toolFromContract(agentId, contract, metricsByTool.get(contract.tool_id)),
+    );
+  const allTools = [...tools, ...liveOnlyTools, ...contractOnlyTools];
 
   return {
     agentId,
@@ -510,26 +653,24 @@ export function createToolsRoomData(
     branch: usesLiveData ? "cp-api tool bindings" : fixture.workspace.branch,
     objectState: usesLiveData ? "draft" : fixture.workspace.objectState,
     trust: usesLiveData ? "watching" : fixture.workspace.trust,
-    tools: [...tools, ...liveOnlyTools],
+    tools: allTools,
     toolContracts:
       toolContracts.length > 0
         ? toolContracts
         : localToolContracts(
             agentId,
-            [...tools, ...liveOnlyTools].map((tool) => tool.id),
+            allTools.map((tool) => tool.id),
           ),
-    catalogEvidence:
-      usesLiveData
-        ? "Loaded from live cp-api tool bindings."
-        : "Explicit local fixture tool catalog for tests and demos.",
+    catalogEvidence: usesLiveData
+      ? "Loaded from live cp-api tool bindings."
+      : "Explicit local fixture tool catalog for tests and demos.",
     degradedReason,
   };
 }
 
 export function createEmptyToolsRoomData(
   agentId = "agent_empty",
-  degradedReason =
-    "No tools are bound yet. Paste a curl command, OpenAPI fragment, or Postman sample to draft one.",
+  degradedReason = "No tools are bound yet. Paste a curl command, OpenAPI fragment, or Postman sample to draft one.",
 ): ToolsRoomData {
   return {
     agentId,

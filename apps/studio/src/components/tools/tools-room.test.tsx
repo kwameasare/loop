@@ -249,4 +249,86 @@ describe("ToolsRoom", () => {
     expect(screen.getByText("No tools bound yet")).toBeInTheDocument();
     expect(screen.getByTestId("tools-room-import")).toBeInTheDocument();
   });
+
+  it("shows live tool telemetry when cp-api metrics are present", () => {
+    const data = createToolsRoomData(
+      "agent_support",
+      [
+        {
+          id: "lookup_order",
+          name: "lookup_order",
+          kind: "http",
+          description: "Look up order state.",
+          source: "https://orders.example.test",
+        },
+      ],
+      undefined,
+      [],
+      undefined,
+      [
+        {
+          tool_id: "lookup_order",
+          production_usage_7d: 2,
+          success_rate_percent: 50,
+          p95_latency_ms: 520,
+          retry_rate_percent: 50,
+          failed_calls_7d: 1,
+          pii_sent_7d: 3,
+          last_schema_change_at: "2026-05-10T00:00:00Z",
+          measurement_status: "measured",
+          evidence_ref: "tool-telemetry/lookup_order/2-calls",
+        },
+      ],
+    );
+
+    render(<ToolsRoom data={data} />);
+
+    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent(
+      "Production tool telemetry connected",
+    );
+    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent("2");
+    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent(
+      "tool-telemetry/lookup_order/2-calls",
+    );
+  });
+
+  it("renders imported contract-only tools after refresh", () => {
+    const data = createToolsRoomData("agent_support", [], undefined, [
+      {
+        id: "tc_import",
+        workspace_id: "ws",
+        agent_id: "agent_support",
+        tool_id: "tool_imported",
+        name: "stripe_request",
+        description: "Drafted from cURL.",
+        side_effect_level: "write",
+        pii_access: true,
+        money_movement: false,
+        rate_limits: { per_minute: 60 },
+        budget_limits: {},
+        sandbox_status: "sandbox",
+        live_status: "review_required",
+        owner_user_id: "owner@example.test",
+        approval_policy_id: "policy-tool-live-review",
+        failure_behavior: "Return unavailable.",
+        compensation_behavior: "No compensation.",
+        content_hash: "hash_import",
+        approval_invalidated_at: null,
+        created_at: "2026-05-10T00:00:00Z",
+        updated_at: "2026-05-10T00:00:00Z",
+      },
+    ]);
+
+    render(<ToolsRoom data={data} />);
+
+    expect(screen.getByTestId("tools-room-catalog")).toHaveTextContent(
+      "stripe_request",
+    );
+    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent(
+      "Production tool telemetry pending",
+    );
+    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent(
+      "Not measured",
+    );
+  });
 });
