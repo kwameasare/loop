@@ -86,7 +86,7 @@ describe("resolveChannelsWorkspaceId", () => {
     render(await ChannelsPage());
 
     expect(screen.getByTestId("channels-agents-degraded")).toHaveTextContent(
-      "LOOP_CP_API_BASE_URL is required to list agents",
+      "Workspace context is required before listing agents.",
     );
     expect(screen.getByTestId("channels-workspace-degraded")).toHaveTextContent(
       "control-plane workspace endpoint",
