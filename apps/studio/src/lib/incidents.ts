@@ -24,6 +24,13 @@ export interface IncidentRecord {
   proposed_fix: string;
   candidate_eval_suite_id: string | null;
   channel_scope: string[];
+  notifications: Array<{
+    recipient: string;
+    channel: string;
+    status: string;
+    sent_at: string;
+    summary: string;
+  }>;
   timeline: Array<{ kind: string; at: string; summary: string }>;
   report: Record<string, unknown>;
   created_at: string;
@@ -59,6 +66,22 @@ const LOCAL_INCIDENTS: IncidentRecord[] = [
       "Replay affected traces, pin the tool schema, and create a Change Package with regression coverage.",
     candidate_eval_suite_id: null,
     channel_scope: ["web_chat"],
+    notifications: [
+      {
+        recipient: "maya@acme.test",
+        channel: "in_app",
+        status: "queued",
+        sent_at: "2026-05-09T03:12:00.000Z",
+        summary: "high incident: error_rate breached 4% for web_chat canary",
+      },
+      {
+        recipient: "diego@acme.test",
+        channel: "in_app",
+        status: "queued",
+        sent_at: "2026-05-09T03:12:00.000Z",
+        summary: "high incident: error_rate breached 4% for web_chat canary",
+      },
+    ],
     timeline: [
       {
         kind: "incident_created",

@@ -308,6 +308,19 @@ function IncidentResponsePanel({
                   {incident.root_cause_hypothesis}
                 </p>
                 <p className="mt-2 text-sm">{incident.proposed_fix}</p>
+                {incident.notifications.length > 0 ? (
+                  <div
+                    className="mt-3 rounded-md border border-info/30 bg-info/5 p-3 text-xs"
+                    data-testid={`incident-notifications-${incident.id}`}
+                  >
+                    <p className="font-semibold text-info">On-call notified</p>
+                    <p className="mt-1 text-muted-foreground">
+                      {incident.notifications
+                        .map((notification) => notification.recipient)
+                        .join(", ")}
+                    </p>
+                  </div>
+                ) : null}
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <Button
                     type="button"

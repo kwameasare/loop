@@ -1055,6 +1055,8 @@ def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
     assert incident["report"]["suspected_cause"].startswith("Tool schema")
     assert incident["report"]["candidate_regression_tests"] == [trace_id]
     assert incident["report"]["rollback_status"] == "executed"
+    assert [item["recipient"] for item in incident["notifications"]] == ["owner-1"]
+    assert incident["report"]["notifications"][0]["summary"].startswith("high incident")
     assert "affected_traces_collected" in {event["kind"] for event in incident["timeline"]}
 
     seeded = client.post(
@@ -1091,6 +1093,7 @@ def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
         rollback_incident_audit["payload_hash"]
     )
     assert payload["affected_trace_count"] == 1
+    assert payload["notification_targets"] == ["owner-1"]
 
 
 def test_comment_resolution_can_create_eval_case(

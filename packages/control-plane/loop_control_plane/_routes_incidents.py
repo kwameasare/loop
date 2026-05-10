@@ -40,6 +40,21 @@ async def _agent(
     )
 
 
+async def _notification_targets(request: Request, *, agent: Any, fallback: str) -> list[str]:
+    commitment = await request.app.state.cp.agent_commitments.current(agent=agent)
+    return list(
+        dict.fromkeys(
+            target
+            for target in (
+                commitment.body.owner_user_id.strip(),
+                commitment.body.backup_owner_user_id.strip(),
+                fallback,
+            )
+            if target
+        )
+    )
+
+
 def _audit(
     request: Request,
     *,
@@ -115,6 +130,16 @@ async def create_incident_from_anomaly(
         caller_sub=caller_sub,
         required_role=Role.ADMIN,
     )
+    if not body.notification_targets:
+        body = body.model_copy(
+            update={
+                "notification_targets": await _notification_targets(
+                    request,
+                    agent=agent,
+                    fallback=caller_sub,
+                )
+            }
+        )
     incident = await request.app.state.cp.incidents.create(
         agent=agent,
         body=body,
@@ -131,6 +156,7 @@ async def create_incident_from_anomaly(
             "deployment_id": incident.deployment_id,
             "severity": incident.severity,
             "trigger": incident.trigger,
+            "notification_targets": [item["recipient"] for item in incident.notifications],
         },
     )
     return incident_payload(incident)

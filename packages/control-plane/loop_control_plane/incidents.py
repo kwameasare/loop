@@ -34,6 +34,7 @@ class IncidentCreate(BaseModel):
     proposed_fix: str = Field(default="", max_length=2000)
     status: IncidentStatus = "open"
     channel_scope: list[str] = Field(default_factory=list, max_length=20)
+    notification_targets: list[str] = Field(default_factory=list, max_length=10)
     created_from: str = Field(default="manual", max_length=120)
 
 
@@ -60,6 +61,7 @@ class IncidentRecord(BaseModel):
     proposed_fix: str
     candidate_eval_suite_id: str | None
     channel_scope: list[str]
+    notifications: list[dict[str, Any]]
     timeline: list[dict[str, Any]]
     report: dict[str, Any]
     created_at: datetime
@@ -71,7 +73,23 @@ def _timeline_event(kind: str, at: datetime, summary: str) -> dict[str, str]:
     return {"kind": kind, "at": at.isoformat(), "summary": summary}
 
 
-def _report_for(body: IncidentCreate) -> dict[str, Any]:
+def _notifications_for(body: IncidentCreate, now: datetime) -> list[dict[str, str]]:
+    recipients = list(
+        dict.fromkeys(target.strip() for target in body.notification_targets if target.strip())
+    )
+    return [
+        {
+            "recipient": recipient,
+            "channel": "in_app",
+            "status": "queued",
+            "sent_at": now.isoformat(),
+            "summary": f"{body.severity} incident: {body.trigger}",
+        }
+        for recipient in recipients
+    ]
+
+
+def _report_for(body: IncidentCreate, notifications: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "trigger": body.trigger,
         "affected_conversations": body.affected_conversation_count,
@@ -87,6 +105,7 @@ def _report_for(body: IncidentCreate) -> dict[str, Any]:
         "proposed_fix": body.proposed_fix or "Generate candidate evals before fix.",
         "candidate_regression_tests": body.affected_trace_ids,
         "rollback_status": "executed" if body.rollback_action_ref else "not_started",
+        "notifications": notifications,
     }
 
 
@@ -120,6 +139,7 @@ class IncidentRegistry:
     ) -> IncidentRecord:
         async with self._lock:
             now = datetime.now(UTC)
+            notifications = _notifications_for(body, now)
             record = IncidentRecord(
                 id=f"inc_{uuid4().hex[:12]}",
                 workspace_id=agent.workspace_id,
@@ -135,6 +155,7 @@ class IncidentRegistry:
                 proposed_fix=body.proposed_fix,
                 candidate_eval_suite_id=None,
                 channel_scope=body.channel_scope,
+                notifications=notifications,
                 timeline=[
                     _timeline_event(
                         "incident_created",
@@ -142,7 +163,7 @@ class IncidentRegistry:
                         f"Incident created from {body.created_from}.",
                     )
                 ],
-                report=_report_for(body),
+                report=_report_for(body, notifications),
                 created_at=now,
                 created_by=actor_sub,
             )
@@ -160,6 +181,7 @@ class IncidentRegistry:
         trigger: str = "",
         reason: str = "",
         affected_trace_ids: list[str] | None = None,
+        notification_targets: list[str] | None = None,
     ) -> IncidentRecord:
         label = "auto-rollback" if mode == "auto" else "manual rollback"
         trace_ids = affected_trace_ids or []
@@ -176,6 +198,7 @@ class IncidentRegistry:
                 f"evals, then create a Change Package against {version_id}."
             ),
             status="contained",
+            notification_targets=notification_targets or [],
             created_from=label.replace(" ", "_"),
         )
         record = await self.create(agent=agent, body=body, actor_sub=actor_sub)
