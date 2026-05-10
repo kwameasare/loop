@@ -17,8 +17,13 @@ interface AgentChannelsPageProps {
     | {
         channel?: string | string[] | undefined;
         binding_id?: string | string[] | undefined;
+        view?: string | string[] | undefined;
       }
     | undefined;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 export default async function AgentChannelsPage({
@@ -41,6 +46,7 @@ export default async function AgentChannelsPage({
   const focusedChannelType =
     parseFocusedChannel(searchParams?.channel) ??
     channelTypeForBindingId(bindings, searchParams?.binding_id);
+  const focusReadiness = firstParam(searchParams?.view) === "readiness";
 
   let binding: WebChannelBinding = {
     agentId: params.agent_id,
@@ -54,7 +60,9 @@ export default async function AgentChannelsPage({
     binding = await getWebChannel(params.agent_id);
   } catch (err) {
     webChannelDegradedReason =
-      err instanceof Error ? err.message : "Web channel status requires cp-api.";
+      err instanceof Error
+        ? err.message
+        : "Web channel status requires cp-api.";
     binding = {
       agentId: params.agent_id,
       status: "disabled",
@@ -80,6 +88,7 @@ export default async function AgentChannelsPage({
         initialBindings={bindings}
         degradedReason={bindingsDegradedReason}
         focusedChannelType={focusedChannelType}
+        focusReadiness={focusReadiness}
       />
       <ChannelPreviewMatrix agentId={params.agent_id} bindings={bindings} />
       <section className="rounded-md border bg-card p-4">

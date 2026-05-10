@@ -47,6 +47,27 @@ describe("AgentMemoryPage", () => {
     expect(screen.getAllByText(/LOOP_CP_API_BASE_URL/i).length).toBeGreaterThan(
       0,
     );
-    expect(screen.queryByText("Acme Support Concierge")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Acme Support Concierge"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("passes memory evidence query state into Memory Studio", async () => {
+    delete process.env.LOOP_CP_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+
+    render(
+      <AgentMemoryPage
+        params={{ agent_id: "agent_memory" }}
+        searchParams={{ view: "retention" }}
+      />,
+    );
+
+    expect(await screen.findByTestId("memory-focused-query")).toHaveTextContent(
+      "Retention evidence",
+    );
+    expect(screen.getByTestId("memory-retention-summary")).toHaveClass(
+      "ring-focus",
+    );
   });
 });

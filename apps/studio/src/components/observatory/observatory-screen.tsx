@@ -335,9 +335,11 @@ function TailRow({ event }: { event: ProductionTailEvent }) {
 function IncidentResponsePanel({
   incidents,
   focusedIncidentId,
+  focusIncidents,
 }: {
   incidents: readonly IncidentRecord[];
   focusedIncidentId?: string | undefined;
+  focusIncidents?: boolean | undefined;
 }) {
   const [seeded, setSeeded] = useState<Record<string, string>>({});
   const [fixPackages, setFixPackages] = useState<Record<string, string>>({});
@@ -416,9 +418,7 @@ function IncidentResponsePanel({
       }));
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Could not update incident state.",
+        err instanceof Error ? err.message : "Could not update incident state.",
       );
     } finally {
       setBusy(null);
@@ -426,7 +426,15 @@ function IncidentResponsePanel({
   }
 
   return (
-    <section className="space-y-3" data-testid="observatory-incidents">
+    <section
+      className={cn(
+        "space-y-3 rounded-md",
+        focusIncidents
+          ? "ring-2 ring-focus ring-offset-4 ring-offset-background"
+          : "",
+      )}
+      data-testid="observatory-incidents"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-warning" aria-hidden={true} />
@@ -436,6 +444,16 @@ function IncidentResponsePanel({
           {incidents.length > 0 ? `${incidents.length} active` : "clear"}
         </LiveBadge>
       </div>
+
+      {focusIncidents ? (
+        <p
+          className="rounded-md border border-info/40 bg-info/5 px-3 py-2 text-sm text-info"
+          data-testid="observatory-focused-incidents"
+        >
+          Opened from Workbench evidence. Review active incidents, containment,
+          rollback refs, seeded evals, and fix Change Packages for this agent.
+        </p>
+      ) : null}
 
       {error ? (
         <p
@@ -471,7 +489,9 @@ function IncidentResponsePanel({
                     : "",
                 )}
                 data-testid={`incident-card-${incident.id}`}
-                data-focused={incident.id === focusedIncidentId ? "true" : "false"}
+                data-focused={
+                  incident.id === focusedIncidentId ? "true" : "false"
+                }
               >
                 {incident.id === focusedIncidentId ? (
                   <p
@@ -642,10 +662,12 @@ export function ObservatoryScreen({
   model,
   workspaceId,
   focusedIncidentId,
+  focusIncidents = false,
 }: {
   model: ObservatoryModel;
   workspaceId?: string;
   focusedIncidentId?: string | undefined;
+  focusIncidents?: boolean | undefined;
 }) {
   const [paused, setPaused] = useState(false);
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
@@ -711,7 +733,9 @@ export function ObservatoryScreen({
           data-testid="observatory-degraded"
           role="status"
         >
-          <p className="font-semibold">Live Observatory telemetry is unavailable.</p>
+          <p className="font-semibold">
+            Live Observatory telemetry is unavailable.
+          </p>
           <p className="mt-1">{model.degradedReason}</p>
         </section>
       ) : null}
@@ -783,7 +807,9 @@ export function ObservatoryScreen({
             )}
           >
             {model.tail.length > 0 ? (
-              model.tail.map((event) => <TailRow key={event.id} event={event} />)
+              model.tail.map((event) => (
+                <TailRow key={event.id} event={event} />
+              ))
             ) : (
               <p className="p-4 text-sm text-muted-foreground">
                 No production tail events loaded. Studio is not streaming
@@ -816,6 +842,7 @@ export function ObservatoryScreen({
       <IncidentResponsePanel
         incidents={model.incidents}
         focusedIncidentId={focusedIncidentId}
+        focusIncidents={focusIncidents}
       />
 
       <section className="space-y-3" data-testid="ambient-health-arcs">

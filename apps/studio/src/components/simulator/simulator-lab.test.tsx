@@ -125,6 +125,22 @@ describe("SimulatorLab", () => {
     );
   });
 
+  it("shows focused channel evidence state without changing the simulator transport", () => {
+    render(
+      <SimulatorLab
+        agentId="agent_support"
+        invoke={vi.fn().mockResolvedValue(undefined)}
+        initialConfig={{ ...DEFAULT_SIMULATOR_CONFIG, channel: "web" }}
+        focusChannels={true}
+      />,
+    );
+
+    expect(screen.getByTestId("simulator-focused-channels")).toHaveTextContent(
+      "keys 1-4",
+    );
+    expect(screen.getByTestId("sim-channel-tabs")).toHaveClass("ring-focus");
+  });
+
   it("turns a first-proof bad rating into an eval-backed artifact", async () => {
     const invoke = vi.fn(
       async (

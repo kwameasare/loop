@@ -8,14 +8,26 @@ describe("AgentSimulatorPage", () => {
     render(<AgentSimulatorPage params={{ agent_id: "agent_sim" }} />);
 
     expect(screen.getByTestId("agent-simulator")).toBeInTheDocument();
-    expect(screen.getByTestId("emulator-panel")).toHaveTextContent(
-      "Blank run",
-    );
+    expect(screen.getByTestId("emulator-panel")).toHaveTextContent("Blank run");
     expect(screen.getByTestId("emulator-panel")).toHaveTextContent(
       "Send a turn to generate draft output and trace evidence.",
     );
     expect(screen.queryByText(/trace_refund_742/i)).toBeNull();
     expect(screen.queryByText(/lookup_order/i)).toBeNull();
     expect(screen.queryByText(/refund_policy_2026/i)).toBeNull();
+  });
+
+  it("focuses channel comparison when opened from Workbench evidence", () => {
+    render(
+      <AgentSimulatorPage
+        params={{ agent_id: "agent_sim" }}
+        searchParams={{ view: "channels" }}
+      />,
+    );
+
+    expect(screen.getByTestId("simulator-focused-channels")).toHaveTextContent(
+      "Opened from Workbench evidence",
+    );
+    expect(screen.getByTestId("sim-channel-tabs")).toHaveClass("ring-focus");
   });
 });

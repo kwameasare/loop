@@ -15,6 +15,7 @@ interface PageProps {
     | {
         incident_id?: string | string[] | undefined;
         incident?: string | string[] | undefined;
+        view?: string | string[] | undefined;
       }
     | undefined;
 }
@@ -69,6 +70,7 @@ export default async function AgentObservabilityPage({
               "Workspace context is unavailable, so Studio cannot request agent-scoped observability evidence.",
           })}
           focusedIncidentId={focusedIncidentId(searchParams)}
+          focusIncidents={firstParam(searchParams?.view) === "incidents"}
         />
       </section>
     );
@@ -139,6 +141,7 @@ export default async function AgentObservabilityPage({
           degradedReason: degradedReasons.join(" ") || undefined,
         })}
         focusedIncidentId={focusedIncidentId(searchParams)}
+        focusIncidents={firstParam(searchParams?.view) === "incidents"}
         workspaceId={workspaceId}
       />
     </section>

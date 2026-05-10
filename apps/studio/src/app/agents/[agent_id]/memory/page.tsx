@@ -11,15 +11,18 @@ import {
   type MemoryStudioData,
   type MemoryStudioEntry,
 } from "@/lib/memory-studio";
-import {
-  approveMemoryPolicy,
-  upsertMemoryPolicy,
-} from "@/lib/memory-policies";
+import { approveMemoryPolicy, upsertMemoryPolicy } from "@/lib/memory-policies";
 import { useUser } from "@/lib/use-user";
 
 interface AgentMemoryPageProps {
   params: { agent_id: string };
-  searchParams?: { policy_id?: string | string[] | undefined } | undefined;
+  searchParams?:
+    | {
+        policy_id?: string | string[] | undefined;
+        view?: string | string[] | undefined;
+        filter?: string | string[] | undefined;
+      }
+    | undefined;
 }
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -35,6 +38,8 @@ export default function AgentMemoryPage({
       <AgentMemoryPageBody
         agentId={params.agent_id}
         initialPolicyId={firstParam(searchParams?.policy_id)}
+        focusedView={firstParam(searchParams?.view)}
+        focusedFilter={firstParam(searchParams?.filter)}
       />
     </RequireAuth>
   );
@@ -43,9 +48,13 @@ export default function AgentMemoryPage({
 function AgentMemoryPageBody({
   agentId,
   initialPolicyId,
+  focusedView,
+  focusedFilter,
 }: {
   agentId: string;
   initialPolicyId?: string | undefined;
+  focusedView?: string | undefined;
+  focusedFilter?: string | undefined;
 }): JSX.Element {
   const { user } = useUser();
   const [data, setData] = useState<MemoryStudioData | null>(null);
@@ -98,6 +107,8 @@ function AgentMemoryPageBody({
       }
       onSavePolicy={(policy) => upsertMemoryPolicy(agentId, policy)}
       onApprovePolicy={(scope) => approveMemoryPolicy(agentId, scope)}
+      focusedView={focusedView}
+      focusedFilter={focusedFilter}
     />
   );
 }

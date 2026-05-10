@@ -28,6 +28,7 @@ interface ChannelBindingsPanelProps {
   initialBindings: ChannelBinding[];
   degradedReason?: string | undefined;
   focusedChannelType?: ChannelBindingType | undefined;
+  focusReadiness?: boolean | undefined;
   upsertChannelBinding?: (
     agentId: string,
     input: ChannelBindingInput,
@@ -319,13 +320,7 @@ function draftButtonLabel(
   return binding.status === "not_configured" ? "Start setup" : "Update draft";
 }
 
-function ContractField({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function ContractField({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <dt className="font-medium uppercase tracking-wide text-muted-foreground">
@@ -341,6 +336,7 @@ export function ChannelBindingsPanel({
   initialBindings,
   degradedReason,
   focusedChannelType,
+  focusReadiness = false,
   upsertChannelBinding = defaultUpsertChannelBinding,
 }: ChannelBindingsPanelProps) {
   const [bindings, setBindings] = useState(() =>
@@ -385,7 +381,12 @@ export function ChannelBindingsPanel({
 
   return (
     <section
-      className="space-y-4 rounded-md border bg-card p-4"
+      className={cn(
+        "space-y-4 rounded-md border bg-card p-4",
+        focusReadiness
+          ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+          : "",
+      )}
       data-testid="channel-bindings-panel"
       aria-labelledby="channel-bindings-heading"
     >
@@ -425,6 +426,21 @@ export function ChannelBindingsPanel({
         </div>
       ) : null}
 
+      {focusReadiness ? (
+        <div
+          className="rounded-md border border-info/40 bg-info/5 p-3 text-sm text-info"
+          data-testid="channel-readiness-focused-workbench-panel"
+          role="status"
+        >
+          <p className="font-medium">Channel readiness</p>
+          <p className="mt-1 text-xs">
+            Opened from Workbench evidence. Confirm each peer channel has
+            identity, auth, consent, rate-limit, fallback, eval coverage, and
+            deployment readiness before promotion.
+          </p>
+        </div>
+      ) : null}
+
       <div className="grid gap-3 xl:grid-cols-3">
         {ordered.map((binding) => {
           const Icon = ICONS[binding.channel_type];
@@ -436,7 +452,9 @@ export function ChannelBindingsPanel({
               key={binding.channel_type}
               className={cn(
                 "rounded-md border bg-background p-3",
-                isFocused ? "ring-2 ring-focus ring-offset-2 ring-offset-background" : "",
+                isFocused
+                  ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+                  : "",
               )}
               data-testid={`channel-binding-${binding.channel_type}`}
               data-focused={isFocused ? "true" : "false"}
@@ -506,7 +524,10 @@ export function ChannelBindingsPanel({
                 className="mt-3 grid gap-2 rounded-md border bg-card/70 p-2 text-xs md:grid-cols-2"
                 data-testid={`channel-binding-contract-${binding.channel_type}`}
               >
-                <ContractField label="Identity" value={identityLabel(binding)} />
+                <ContractField
+                  label="Identity"
+                  value={identityLabel(binding)}
+                />
                 <ContractField
                   label="Message format"
                   value={profile.messageFormat}
@@ -535,7 +556,10 @@ export function ChannelBindingsPanel({
                 />
                 <ContractField label="Consent" value={profile.consent} />
                 <ContractField label="Rate limit" value={profile.rateLimit} />
-                <ContractField label="Attachments" value={profile.attachments} />
+                <ContractField
+                  label="Attachments"
+                  value={profile.attachments}
+                />
                 <ContractField label="Fallback" value={profile.fallback} />
                 <ContractField label="Policy" value={profile.policy} />
                 <ContractField

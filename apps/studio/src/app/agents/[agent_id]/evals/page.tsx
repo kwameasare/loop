@@ -11,6 +11,9 @@ interface PageProps {
     | {
         suite_id?: string | string[] | undefined;
         case_id?: string | string[] | undefined;
+        filter?: string | string[] | undefined;
+        source?: string | string[] | undefined;
+        view?: string | string[] | undefined;
       }
     | undefined;
 }
@@ -21,6 +24,42 @@ function messageFromError(error: unknown, fallback: string): string {
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function focusedEvalQuery(
+  searchParams: PageProps["searchParams"],
+): { label: string; detail: string; testId: string } | null {
+  const filter = firstParam(searchParams?.filter);
+  if (filter === "affected") {
+    return {
+      label: "Affected evals",
+      detail:
+        "Opened from Workbench evidence. Review suites and cases likely to move under the current behavior, knowledge, memory, or deploy change before promotion.",
+      testId: "agent-evals-focused-affected",
+    };
+  }
+
+  const source = firstParam(searchParams?.source);
+  if (source === "knowledge") {
+    return {
+      label: "Knowledge-sourced evals",
+      detail:
+        "Opened from knowledge evidence. Cases should preserve source chunk, retrieval query, expected citation behavior, and risk tags before they gate deploys.",
+      testId: "agent-evals-focused-knowledge",
+    };
+  }
+
+  const view = firstParam(searchParams?.view);
+  if (view === "gates") {
+    return {
+      label: "Deploy gates",
+      detail:
+        "Opened from release evidence. Confirm every blocking gate points to a real eval result ref before approving a Change Package.",
+      testId: "agent-evals-focused-gates",
+    };
+  }
+
+  return null;
 }
 
 export default async function AgentEvalsPage({
@@ -55,6 +94,7 @@ export default async function AgentEvalsPage({
     .join(" ");
   const focusedSuiteId = firstParam(searchParams?.suite_id);
   const focusedCaseId = firstParam(searchParams?.case_id);
+  const focusedQuery = focusedEvalQuery(searchParams);
 
   return (
     <section className="space-y-5" data-testid="agent-evals-page">
@@ -104,6 +144,22 @@ export default async function AgentEvalsPage({
             className="mt-3 inline-flex rounded-md border border-info/40 bg-background px-3 py-2 text-xs font-medium hover:bg-muted"
           >
             Open case in Eval Foundry
+          </Link>
+        </section>
+      ) : null}
+
+      {focusedQuery ? (
+        <section
+          className="rounded-md border border-info/40 bg-info/5 p-4 text-sm text-info"
+          data-testid={focusedQuery.testId}
+        >
+          <p className="font-medium">{focusedQuery.label}</p>
+          <p className="mt-1">{focusedQuery.detail}</p>
+          <Link
+            href={`/evals?agent_id=${encodeURIComponent(params.agent_id)}`}
+            className="mt-3 inline-flex rounded-md border border-info/40 bg-background px-3 py-2 text-xs font-medium hover:bg-muted"
+          >
+            Open in Eval Foundry
           </Link>
         </section>
       ) : null}
