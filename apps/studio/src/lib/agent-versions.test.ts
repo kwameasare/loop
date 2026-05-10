@@ -7,14 +7,26 @@ import {
 } from "./agent-versions";
 
 describe("listAgentVersions", () => {
-  it("paginates the fixture with the requested page size", async () => {
-    const first = await listAgentVersions("agt_1", { pageSize: 5 });
+  it("returns an explicit degraded response instead of fixture versions without cp-api", async () => {
+    const result = await listAgentVersions("agt_1", { pageSize: 5 });
+    expect(result.items).toEqual([]);
+    expect(result.next_cursor).toBeNull();
+    expect(result.degraded_reason).toMatch(/control-plane versions endpoint/i);
+  });
+
+  it("paginates the fixture only when explicitly requested", async () => {
+    const first = await listAgentVersions("agt_1", {
+      pageSize: 5,
+      allowFixture: true,
+    });
     expect(first.items).toHaveLength(5);
     expect(first.next_cursor).toBe("5");
+    expect(first.degraded_reason).toBeUndefined();
 
     const second = await listAgentVersions("agt_1", {
       pageSize: 5,
       cursor: first.next_cursor!,
+      allowFixture: true,
     });
     expect(second.items).toHaveLength(5);
     expect(second.next_cursor).toBe("10");
@@ -22,13 +34,17 @@ describe("listAgentVersions", () => {
     const tail = await listAgentVersions("agt_1", {
       pageSize: 5,
       cursor: second.next_cursor!,
+      allowFixture: true,
     });
     expect(tail.items).toHaveLength(2);
     expect(tail.next_cursor).toBeNull();
   });
 
   it("orders versions newest-first", async () => {
-    const { items } = await listAgentVersions("agt_1", { pageSize: 100 });
+    const { items } = await listAgentVersions("agt_1", {
+      pageSize: 100,
+      allowFixture: true,
+    });
     const numbers = items.map((v) => v.version);
     expect(numbers).toEqual([...numbers].sort((a, b) => b - a));
   });
@@ -76,14 +92,20 @@ describe("listAgentVersions", () => {
 
 describe("priorVersion", () => {
   it("returns the version with version-1 against the target", async () => {
-    const { items } = await listAgentVersions("agt_1", { pageSize: 100 });
+    const { items } = await listAgentVersions("agt_1", {
+      pageSize: 100,
+      allowFixture: true,
+    });
     const v5 = items.find((v) => v.version === 5)!;
     const prior = priorVersion(items, v5);
     expect(prior?.version).toBe(4);
   });
 
   it("returns null for the first-ever version", async () => {
-    const { items } = await listAgentVersions("agt_1", { pageSize: 100 });
+    const { items } = await listAgentVersions("agt_1", {
+      pageSize: 100,
+      allowFixture: true,
+    });
     const v1 = items.find((v) => v.version === 1)!;
     expect(priorVersion(items, v1)).toBeNull();
   });

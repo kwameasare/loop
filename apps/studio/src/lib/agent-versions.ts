@@ -4,7 +4,8 @@
  * The cp-api exposes ``GET /v1/agents/{id}/versions`` and promotion
  * via ``POST /v1/agents/{id}/versions/{version_id}/promote``. Studio
  * maps the stored free-form ``spec`` into pretty JSON for the diff
- * viewer and falls back to fixtures only in no-backend local mode.
+ * viewer. Fixture versions are available only when a caller explicitly opts
+ * into demo data.
  */
 
 export type DeployState =
@@ -39,6 +40,7 @@ export interface AgentVersionDetail {
 export interface ListAgentVersionsResponse {
   items: AgentVersionDetail[];
   next_cursor: string | null;
+  degraded_reason?: string | undefined;
 }
 
 export interface ListAgentVersionsOptions {
@@ -47,28 +49,33 @@ export interface ListAgentVersionsOptions {
   baseUrl?: string;
   cursor?: string;
   pageSize?: number;
+  allowFixture?: boolean;
 }
 
 /**
- * Returns a fixture page of versions for the given agent. The fixture
- * is sorted newest-first (matches the eventual cp-api ordering). When
- * ``LOOP_CP_API_BASE_URL`` is set we still return the fixture today —
- * the GET endpoint isn't implemented yet — but the call site is the
- * single place to rewire when it lands.
+ * Returns a page of persisted agent versions sorted newest-first. Without a
+ * configured cp-api, the function returns an explicit degraded response instead
+ * of fabricating deploy/version history.
  */
 export async function listAgentVersions(
   agentId: string,
   opts: ListAgentVersionsOptions = {},
 ): Promise<ListAgentVersionsResponse> {
   const live = await fetchLiveAgentVersions(agentId, opts);
-  const all = live ?? fixtureVersions(agentId);
+  const degradedReason =
+    live === null && opts.allowFixture !== true
+      ? "Agent version history requires the control-plane versions endpoint. No local version claims are shown."
+      : undefined;
+  const all =
+    live ??
+    (opts.allowFixture === true ? fixtureVersions(agentId) : []);
   const pageSize = opts.pageSize ?? 5;
   const cursorIdx = opts.cursor ? Number.parseInt(opts.cursor, 10) || 0 : 0;
   const slice = all.slice(cursorIdx, cursorIdx + pageSize);
   const next = cursorIdx + pageSize < all.length
     ? String(cursorIdx + pageSize)
     : null;
-  return { items: slice, next_cursor: next };
+  return { items: slice, next_cursor: next, degraded_reason: degradedReason };
 }
 
 interface CpAgentVersion {

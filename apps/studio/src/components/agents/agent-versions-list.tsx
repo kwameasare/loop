@@ -14,6 +14,7 @@ import { DiffViewerModal } from "./diff-viewer-modal";
 export interface AgentVersionsListProps {
   /** All versions for this agent (used so the diff can find the prior one). */
   versions: AgentVersionDetail[];
+  degradedReason?: string | undefined;
   pageSize?: number;
   /** Override for tests. */
   promote?: (
@@ -41,6 +42,7 @@ type Toast = { kind: "success" | "error"; message: string } | null;
  */
 export function AgentVersionsList({
   versions,
+  degradedReason,
   pageSize = 5,
   promote = defaultPromote,
   confirmFn,
@@ -98,7 +100,15 @@ export function AgentVersionsList({
 
   return (
     <div className="flex flex-col gap-3" data-testid="agent-versions">
-      {rows.length === 0 ? (
+      {degradedReason ? (
+        <div
+          className="rounded-md border border-warning/40 bg-warning/10 p-4 text-sm text-warning"
+          data-testid="agent-versions-degraded"
+        >
+          <p className="font-medium">Version history unavailable.</p>
+          <p className="mt-1 text-warning/85">{degradedReason}</p>
+        </div>
+      ) : rows.length === 0 ? (
         <div
           className="rounded-md border border-dashed bg-muted/35 p-4 text-sm text-muted-foreground"
           data-testid="agent-versions-empty"

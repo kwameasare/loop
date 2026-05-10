@@ -74,6 +74,19 @@ describe("AgentVersionsList", () => {
     expect(screen.queryByTestId("agent-versions-list")).not.toBeInTheDocument();
   });
 
+  it("renders a degraded state when the version service is unavailable", () => {
+    render(
+      <AgentVersionsList
+        versions={[]}
+        degradedReason="Agent version history requires cp-api."
+      />,
+    );
+    expect(screen.getByTestId("agent-versions-degraded")).toHaveTextContent(
+      /version history unavailable/i,
+    );
+    expect(screen.queryByTestId("agent-versions-empty")).not.toBeInTheDocument();
+  });
+
   it("promotes a version on confirm and updates the row + toast", async () => {
     const promote = vi.fn().mockResolvedValue({
       versionId: "ver_2",
