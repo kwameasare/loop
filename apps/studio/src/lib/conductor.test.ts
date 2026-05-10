@@ -44,4 +44,19 @@ describe("conductor cp-api client", () => {
     const [url] = fetcher.mock.calls[0];
     expect(url).toBe("https://cp.test/v1/agents/agent-1/conductor");
   });
+
+  it("maps missing conductor topology to an empty degraded model", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: async () => ({}),
+    });
+
+    const data = await fetchConductorData("agent-1", { fetcher });
+
+    expect(data.subAgents).toEqual([]);
+    expect(data.contracts).toEqual([]);
+    expect(data.degradedReason).toMatch(/No conductor topology exists/i);
+    expect(data.orchestrationEvidence).toMatch(/No conductor topology loaded/i);
+  });
 });
