@@ -5,11 +5,15 @@ import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 
 import { CommandPaletteLauncher } from "@/components/command";
+import { PairDebugAudioControl } from "@/components/collaboration/pair-debug-audio-control";
 import { HelpClipLauncher } from "@/components/help";
 import { ActivityRibbon } from "@/components/shell/activity-ribbon";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { UserMenu } from "@/components/shell/user-menu";
 import { WorkspaceSwitcher } from "@/components/shell/workspace-switcher";
+import { useActiveWorkspace } from "@/lib/use-active-workspace";
+import { usePresenceSocket } from "@/lib/use-presence-socket";
+import { useUser } from "@/lib/use-user";
 
 function routeContext(pathname: string | null): {
   agentId: string | null;
@@ -33,6 +37,7 @@ function routeContext(pathname: string | null): {
     inbox: "HITL Inbox",
     channels: "Channels",
     voice: "Voice stage",
+    scenes: "Scenes",
     marketplace: "Marketplace",
     migrate: "Migration Atelier",
     enterprise: "Governance",
@@ -78,6 +83,43 @@ function ContextChip({
   );
 }
 
+function TopbarPairDebugAudio({ agentId }: { agentId: string | null }) {
+  const { active } = useActiveWorkspace();
+  const { user, isAuthenticated, isLoading } = useUser();
+  const callerSub = user?.sub ?? "";
+  const display = user?.name ?? user?.email ?? user?.sub ?? "Builder";
+  const focus = agentId ? `agent/${agentId}` : undefined;
+  const shouldConnect = Boolean(
+    agentId && active?.id && callerSub && isAuthenticated && !isLoading,
+  );
+  const presence = usePresenceSocket({
+    workspaceId: shouldConnect ? active?.id : undefined,
+    callerSub: callerSub || "anonymous",
+    display,
+    focus,
+    enabled: shouldConnect,
+  });
+  const teammateCount = presence.users.filter(
+    (presenceUser) =>
+      presenceUser.id !== callerSub && presenceUser.focus === focus,
+  ).length;
+
+  if (!agentId || !active?.id || !callerSub || teammateCount === 0) {
+    return null;
+  }
+
+  return (
+    <div data-testid="topbar-pair-debug-audio">
+      <PairDebugAudioControl
+        workspaceId={active.id}
+        agentId={agentId}
+        teammateCount={teammateCount}
+        participantId={callerSub}
+      />
+    </div>
+  );
+}
+
 export function Topbar() {
   const pathname = usePathname();
   const context = routeContext(pathname);
@@ -114,6 +156,9 @@ export function Topbar() {
         ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        <Suspense fallback={null}>
+          <TopbarPairDebugAudio agentId={context.agentId} />
+        </Suspense>
         <ThemeToggle />
         <HelpClipLauncher />
         <CommandPaletteLauncher />
