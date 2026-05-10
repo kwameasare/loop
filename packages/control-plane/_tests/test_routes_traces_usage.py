@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from loop_control_plane.app import create_app
 from loop_control_plane.paseto import encode_local
-from loop_control_plane.trace_search import TraceSummary
+from loop_control_plane.trace_search import TraceMemoryEvent, TraceSummary
 from loop_control_plane.usage import UsageEvent
 
 _TEST_KEY = b"x" * 32
@@ -60,9 +60,7 @@ def test_search_traces_returns_empty_for_new_workspace(
     assert response.json() == {"items": [], "next_cursor": None}
 
 
-def test_search_traces_filters_by_workspace(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_search_traces_filters_by_workspace(client: TestClient, workspace_id: UUID) -> None:
     """Trace from another workspace must NOT leak."""
     cp = client.app.state.cp  # type: ignore[attr-defined]
     other_ws = uuid4()
@@ -100,9 +98,7 @@ def test_search_traces_filters_by_workspace(
     assert items[0]["workspace_id"] == str(workspace_id)
 
 
-def test_search_traces_supports_only_errors_filter(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_search_traces_supports_only_errors_filter(client: TestClient, workspace_id: UUID) -> None:
     cp = client.app.state.cp  # type: ignore[attr-defined]
     for i, has_error in enumerate([True, False, True]):
         cp.trace_store.add(
@@ -137,9 +133,7 @@ def test_search_traces_requires_workspace_membership(
     assert response.status_code in (401, 403)
 
 
-def test_get_trace_detail_by_turn_or_trace_id(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_get_trace_detail_by_turn_or_trace_id(client: TestClient, workspace_id: UUID) -> None:
     cp = client.app.state.cp  # type: ignore[attr-defined]
     turn_id = uuid4()
     cp.trace_store.add(
@@ -172,9 +166,67 @@ def test_get_trace_detail_by_turn_or_trace_id(
     assert by_trace.json()["trace_id"] == "c" * 32
 
 
-def test_get_trace_detail_requires_membership(
+def test_get_trace_detail_includes_memory_evidence_spans(
     client: TestClient, workspace_id: UUID
 ) -> None:
+    cp = client.app.state.cp  # type: ignore[attr-defined]
+    turn_id = uuid4()
+    trace_id = "e" * 32
+    cp.trace_store.add(
+        TraceSummary(
+            workspace_id=workspace_id,
+            trace_id=trace_id,
+            turn_id=turn_id,
+            conversation_id=uuid4(),
+            agent_id=uuid4(),
+            started_at=datetime(2026, 5, 4, 12, 0, tzinfo=UTC),
+            duration_ms=240,
+            span_count=4,
+            memory_events=(
+                TraceMemoryEvent(
+                    kind="write",
+                    scope="user",
+                    key="preferred_language",
+                    value_preview="English",
+                    policy_ref="memory_policy/user:v1",
+                    reason='User said "English is fine".',
+                    source_trace=trace_id,
+                    source_span_id="span_memory_write",
+                ),
+                TraceMemoryEvent(
+                    kind="blocked",
+                    scope="user",
+                    key="credit_card",
+                    value_preview="[redacted secret-like value]",
+                    policy_ref="memory_policy/user:v1",
+                    blocked_reason="PII policy blocked payment data storage.",
+                ),
+            ),
+        )
+    )
+
+    response = client.get(
+        f"/v1/traces/{trace_id}",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["span_count"] == 3
+    memory_spans = [span for span in body["spans"] if span["kind"] == "memory"]
+    assert [span["name"] for span in memory_spans] == [
+        "memory.write.user.preferred_language",
+        "memory.blocked.user.credit_card",
+    ]
+    assert memory_spans[0]["span_id"] == "span_memory_write"
+    assert memory_spans[0]["status"] == "ok"
+    assert memory_spans[0]["attrs"]["policy_ref"] == "memory_policy/user:v1"
+    assert memory_spans[0]["attrs"]["reason"] == 'User said "English is fine".'
+    assert memory_spans[1]["status"] == "error"
+    assert memory_spans[1]["attrs"]["reason"] == "PII policy blocked payment data storage."
+    assert memory_spans[1]["attrs"]["source_trace"] == trace_id
+
+
+def test_get_trace_detail_requires_membership(client: TestClient, workspace_id: UUID) -> None:
     cp = client.app.state.cp  # type: ignore[attr-defined]
     turn_id = uuid4()
     cp.trace_store.add(
@@ -198,9 +250,7 @@ def test_get_trace_detail_requires_membership(
     assert response.status_code == 404
 
 
-def test_search_traces_rejects_invalid_window(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_search_traces_rejects_invalid_window(client: TestClient, workspace_id: UUID) -> None:
     """started_at_from must be <= started_at_to per the model
     validator; the route maps the resulting ValueError to 400."""
     response = client.get(
@@ -217,9 +267,7 @@ def test_search_traces_rejects_invalid_window(
 # --------------------------------------------------------------------------- #
 
 
-def test_list_usage_returns_window_events(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_list_usage_returns_window_events(client: TestClient, workspace_id: UUID) -> None:
     cp = client.app.state.cp  # type: ignore[attr-defined]
     cp.usage_ledger.append(
         UsageEvent(
@@ -238,8 +286,7 @@ def test_list_usage_returns_window_events(
         )
     )
     response = client.get(
-        f"/v1/workspaces/{workspace_id}/usage"
-        f"?start_ms=1700000000000&end_ms=1700000099999",
+        f"/v1/workspaces/{workspace_id}/usage?start_ms=1700000000000&end_ms=1700000099999",
         headers={"authorization": _bearer_for("owner-1")},
     )
     assert response.status_code == 200, response.text
@@ -249,9 +296,7 @@ def test_list_usage_returns_window_events(
     assert metrics == {"input_tokens", "output_tokens"}
 
 
-def test_list_usage_filters_by_workspace(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_list_usage_filters_by_workspace(client: TestClient, workspace_id: UUID) -> None:
     cp = client.app.state.cp  # type: ignore[attr-defined]
     cp.usage_ledger.append(
         UsageEvent(
@@ -271,8 +316,7 @@ def test_list_usage_filters_by_workspace(
         )
     )
     response = client.get(
-        f"/v1/workspaces/{workspace_id}/usage"
-        f"?start_ms=1700000000000&end_ms=1700001000000",
+        f"/v1/workspaces/{workspace_id}/usage?start_ms=1700000000000&end_ms=1700001000000",
         headers={"authorization": _bearer_for("owner-1")},
     )
     items = response.json()["items"]
@@ -280,9 +324,7 @@ def test_list_usage_filters_by_workspace(
     assert items[0]["workspace_id"] == str(workspace_id)
 
 
-def test_list_usage_requires_membership(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_list_usage_requires_membership(client: TestClient, workspace_id: UUID) -> None:
     response = client.get(
         f"/v1/workspaces/{workspace_id}/usage?start_ms=0&end_ms=1",
         headers={"authorization": _bearer_for("stranger")},
@@ -290,9 +332,7 @@ def test_list_usage_requires_membership(
     assert response.status_code in (401, 403)
 
 
-def test_list_usage_rejects_inverted_window(
-    client: TestClient, workspace_id: UUID
-) -> None:
+def test_list_usage_rejects_inverted_window(client: TestClient, workspace_id: UUID) -> None:
     response = client.get(
         f"/v1/workspaces/{workspace_id}/usage?start_ms=100&end_ms=50",
         headers={"authorization": _bearer_for("owner-1")},

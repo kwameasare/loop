@@ -18,7 +18,7 @@ needs to see traces + usage).
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -84,6 +84,32 @@ def _maybe_uuid(value: str) -> UUID | None:
         return None
 
 
+def _memory_span(item: Any, index: int) -> dict[str, Any]:
+    event = item.memory_events[index]
+    status = "error" if event.kind == "blocked" else "ok"
+    name = f"memory.{event.kind}.{event.scope}.{event.key}"
+    reason = event.blocked_reason if event.kind == "blocked" else event.reason
+    return {
+        "span_id": event.source_span_id or f"{item.trace_id}:memory:{index}",
+        "parent_span_id": item.trace_id,
+        "kind": "memory",
+        "name": name,
+        "started_at": (item.started_at + timedelta(milliseconds=index + 1)).isoformat(),
+        "latency_ms": 0,
+        "cost_usd": 0,
+        "status": status,
+        "attrs": {
+            "memory_event": event.kind,
+            "memory_scope": event.scope,
+            "memory_key": event.key,
+            "value_preview": event.value_preview,
+            "policy_ref": event.policy_ref,
+            "reason": reason,
+            "source_trace": event.source_trace or item.trace_id,
+        },
+    }
+
+
 @router_traces.get("/{trace_ref}")
 async def get_trace_detail(
     request: Request,
@@ -114,6 +140,26 @@ async def get_trace_detail(
             continue
         item = matches[0]
         status = "error" if item.error else "ok"
+        spans = [
+            {
+                "span_id": item.trace_id,
+                "parent_span_id": None,
+                "kind": "channel",
+                "name": "runtime turn",
+                "started_at": item.started_at.isoformat(),
+                "latency_ms": item.duration_ms,
+                "cost_usd": 0,
+                "status": status,
+                "attrs": {
+                    "turn_id": str(item.turn_id),
+                    "conversation_id": str(item.conversation_id),
+                    "agent_id": str(item.agent_id),
+                    "summary_span_count": item.span_count,
+                    "channel_binding_id": item.channel_binding_id,
+                },
+            },
+            *[_memory_span(item, index) for index in range(len(item.memory_events))],
+        ]
         return {
             "trace_id": item.trace_id,
             "turn_id": str(item.turn_id),
@@ -121,28 +167,10 @@ async def get_trace_detail(
             "agent_id": str(item.agent_id),
             "started_at": item.started_at.isoformat(),
             "duration_ms": item.duration_ms,
-            "span_count": item.span_count,
+            "span_count": len(spans),
             "error": item.error,
             "channel_binding_id": item.channel_binding_id,
-            "spans": [
-                {
-                    "span_id": item.trace_id,
-                    "parent_span_id": None,
-                    "kind": "channel",
-                    "name": "runtime turn",
-                    "started_at": item.started_at.isoformat(),
-                    "latency_ms": item.duration_ms,
-                    "cost_usd": 0,
-                    "status": status,
-                    "attrs": {
-                        "turn_id": str(item.turn_id),
-                        "conversation_id": str(item.conversation_id),
-                        "agent_id": str(item.agent_id),
-                        "summary_span_count": item.span_count,
-                        "channel_binding_id": item.channel_binding_id,
-                    },
-                }
-            ],
+            "spans": spans,
         }
     raise HTTPException(status_code=404, detail="trace not found")
 
