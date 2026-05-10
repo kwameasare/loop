@@ -110,6 +110,7 @@ describe("SimulatorLab", () => {
         },
         eval_case_ref: { suite_id: "suite_1", case_id: "case_1" },
         behavior_note_ref: null,
+        few_shot_ref: null,
         cost_usd: input.cost_usd,
         latency_ms: input.latency_ms,
         created_by: "owner-1",
@@ -201,6 +202,7 @@ describe("SimulatorLab", () => {
           rating: input.rating,
           evidence_ref: input.trace_id,
         },
+        few_shot_ref: null,
         cost_usd: input.cost_usd,
         latency_ms: input.latency_ms,
         created_by: "owner-1",
@@ -229,6 +231,90 @@ describe("SimulatorLab", () => {
 
     expect(await screen.findByTestId("first-proof-result")).toHaveTextContent(
       "Behavior note candidate: bnote_risky",
+    );
+  });
+
+  it("surfaces first-proof good ratings as few-shot candidates", async () => {
+    const invoke = vi.fn(
+      async (
+        _agentId: string,
+        _prompt: string,
+        onFrame: Parameters<SimulatorInvoke>[2],
+      ) => {
+        onFrame({
+          type: "complete",
+          payload: {
+            response: {
+              content: [
+                {
+                  type: "text",
+                  text: "I will check your renewal policy before answering.",
+                },
+              ],
+            },
+          },
+          ts: "2026-05-01T00:00:00Z",
+        });
+      },
+    );
+    const rateTurn = vi.fn(
+      async (
+        _agentId: string,
+        input: SimulatorTurnRatingInput,
+      ): Promise<SimulatorTurnRatingRecord> => ({
+        id: "simrate_good",
+        workspace_id: "ws_1",
+        agent_id: "agent_support",
+        rating: input.rating,
+        prompt: input.prompt,
+        final_answer: input.final_answer,
+        channel: input.channel,
+        trace_id: input.trace_id,
+        issue_annotation: input.issue_annotation,
+        candidate_artifact: {
+          kind: "positive_eval_or_few_shot",
+          title: "Preserve this behavior",
+          expected_outcome: input.final_answer,
+          source: "first_proof",
+          trace_id: input.trace_id,
+        },
+        eval_case_ref: null,
+        behavior_note_ref: null,
+        few_shot_ref: {
+          id: "fshot_good",
+          status: "candidate",
+          title: "Preserve this behavior",
+          prompt: input.prompt,
+          answer: input.final_answer,
+          channel: input.channel,
+          rating: input.rating,
+          evidence_ref: input.trace_id,
+        },
+        cost_usd: input.cost_usd,
+        latency_ms: input.latency_ms,
+        created_by: "owner-1",
+        created_at: "2026-05-01T00:00:00Z",
+      }),
+    );
+    render(
+      <SimulatorLab
+        agentId="agent_support"
+        invoke={invoke}
+        rateTurn={rateTurn}
+        initialConfig={DEFAULT_SIMULATOR_CONFIG}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("emulator-input"), {
+      target: { value: "Can I cancel my annual plan?" },
+    });
+    fireEvent.click(screen.getByTestId("emulator-send"));
+    expect(await screen.findByTestId("first-proof-rating")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("first-proof-save-eval"));
+    fireEvent.click(screen.getByTestId("first-proof-rate-good"));
+
+    expect(await screen.findByTestId("first-proof-result")).toHaveTextContent(
+      "Few-shot candidate: fshot_good",
     );
   });
 });

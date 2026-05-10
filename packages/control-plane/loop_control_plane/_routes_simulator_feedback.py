@@ -122,6 +122,7 @@ async def rate_simulator_turn(
             "behavior_note_id": (
                 record.behavior_note_ref["id"] if record.behavior_note_ref else None
             ),
+            "few_shot_id": record.few_shot_ref["id"] if record.few_shot_ref else None,
         },
     )
     return simulator_turn_rating_payload(record)

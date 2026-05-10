@@ -41,6 +41,7 @@ class SimulatorTurnRatingRecord(BaseModel):
     candidate_artifact: dict[str, Any]
     eval_case_ref: dict[str, Any] | None
     behavior_note_ref: dict[str, Any] | None
+    few_shot_ref: dict[str, Any] | None
     cost_usd: float
     latency_ms: int
     created_by: str
@@ -106,6 +107,28 @@ def behavior_note_for(
     }
 
 
+def few_shot_for(
+    *,
+    body: SimulatorTurnRatingCreate,
+    candidate: dict[str, Any],
+    rating_id: str,
+) -> dict[str, Any] | None:
+    if body.rating != "good":
+        return None
+    return {
+        "id": f"fshot_{rating_id.removeprefix('simrate_')}",
+        "status": "candidate",
+        "title": candidate["title"],
+        "prompt": body.prompt,
+        "answer": body.final_answer
+        or candidate["expected_outcome"]
+        or "Accepted response pattern.",
+        "channel": body.channel,
+        "rating": body.rating,
+        "evidence_ref": body.trace_id or f"simulator-turn/{rating_id}",
+    }
+
+
 def simulator_turn_rating_payload(record: SimulatorTurnRatingRecord) -> dict[str, Any]:
     return record.model_dump(mode="json")
 
@@ -139,6 +162,11 @@ class SimulatorFeedbackRegistry:
                 candidate_artifact=candidate_artifact,
                 eval_case_ref=eval_case_ref,
                 behavior_note_ref=behavior_note_for(
+                    body=body,
+                    candidate=candidate_artifact,
+                    rating_id=rating_id,
+                ),
+                few_shot_ref=few_shot_for(
                     body=body,
                     candidate=candidate_artifact,
                     rating_id=rating_id,

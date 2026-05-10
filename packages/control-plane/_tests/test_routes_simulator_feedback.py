@@ -82,6 +82,7 @@ def test_simulator_turn_rating_creates_eval_case_and_audit_event(
     assert body["rating"] == "bad"
     assert body["candidate_artifact"]["kind"] == "regression_eval_candidate"
     assert body["behavior_note_ref"] is None
+    assert body["few_shot_ref"] is None
     assert body["eval_case_ref"]["case"]["source"] == "first-proof:bad"
     assert (
         body["eval_case_ref"]["case"]["expected"]["outcome"]
@@ -97,6 +98,37 @@ def test_simulator_turn_rating_creates_eval_case_and_audit_event(
 
     audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=_auth())
     assert "simulator_turn:rate" in {item["action"] for item in audit.json()["items"]}
+
+
+def test_good_simulator_turn_rating_creates_few_shot_candidate(
+    client: TestClient,
+    workspace_id: UUID,
+    agent_id: UUID,
+) -> None:
+    response = client.post(
+        f"/v1/agents/{agent_id}/simulator/turn-ratings",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "rating": "good",
+            "prompt": "Can I cancel my annual plan?",
+            "final_answer": "I can help. I will check the renewal policy first.",
+            "channel": "telegram",
+            "trace_id": "trace_first_proof_good",
+            "issue_annotation": "Preserve the calm policy-check pattern.",
+            "save_as_eval": False,
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["candidate_artifact"]["kind"] == "positive_eval_or_few_shot"
+    assert body["few_shot_ref"]["status"] == "candidate"
+    assert body["few_shot_ref"]["prompt"] == "Can I cancel my annual plan?"
+    assert body["few_shot_ref"]["answer"].startswith("I can help.")
+    assert body["few_shot_ref"]["channel"] == "telegram"
+    assert body["few_shot_ref"]["evidence_ref"] == "trace_first_proof_good"
+    assert body["behavior_note_ref"] is None
+    assert body["eval_case_ref"] is None
 
 
 def test_simulator_turn_rating_can_capture_unclear_turn_without_eval(
@@ -124,4 +156,5 @@ def test_simulator_turn_rating_can_capture_unclear_turn_without_eval(
     assert body["behavior_note_ref"]["kind"] == "clarification_prompt"
     assert body["behavior_note_ref"]["status"] == "candidate"
     assert body["behavior_note_ref"]["evidence_ref"].startswith("simulator-turn/")
+    assert body["few_shot_ref"] is None
     assert body["eval_case_ref"] is None
