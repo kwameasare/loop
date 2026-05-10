@@ -28,7 +28,14 @@ import {
   type ToolsRoomData,
   type ToolsRoomTool,
 } from "@/lib/agent-tools";
-import { promoteToolContract, type ToolContract } from "@/lib/tool-contracts";
+import {
+  promoteToolContract,
+  upsertToolContract,
+  type ToolContract,
+  type ToolContractInput,
+  type ToolSandboxStatus,
+  type ToolSideEffectLevel,
+} from "@/lib/tool-contracts";
 import { cn } from "@/lib/utils";
 
 export interface ToolsRoomProps {
@@ -476,46 +483,153 @@ function formatRecord(record: Record<string, unknown>): string {
   return entries.map(([key, value]) => `${key}: ${String(value)}`).join(", ");
 }
 
+function sideEffectLevel(effect: ToolsRoomTool["sideEffect"]): ToolSideEffectLevel {
+  if (effect === "money-movement") return "money_movement";
+  if (effect === "external-message") return "external_message";
+  return effect;
+}
+
+function recordToQuestionnaireText(record: Record<string, unknown>): string {
+  const entries = Object.entries(record);
+  if (!entries.length) return "";
+  return entries.map(([key, value]) => `${key}: ${String(value)}`).join(", ");
+}
+
+function questionnaireTextToRecord(value: string): Record<string, unknown> {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.toLowerCase() === "none") return {};
+  return { policy: trimmed };
+}
+
+function contractInputFor(
+  tool: ToolsRoomTool,
+  contract: ToolContract | null,
+): ToolContractInput {
+  return {
+    name: contract?.name ?? tool.name,
+    description: contract?.description ?? tool.description,
+    side_effect_level: contract?.side_effect_level ?? sideEffectLevel(tool.sideEffect),
+    pii_access: contract?.pii_access ?? tool.safety.exposesPersonalData,
+    money_movement: contract?.money_movement ?? tool.safety.spendsMoney,
+    rate_limits:
+      contract?.rate_limits && Object.keys(contract.rate_limits).length
+        ? contract.rate_limits
+        : questionnaireTextToRecord(tool.rateLimit),
+    budget_limits: contract?.budget_limits ?? {},
+    sandbox_status: contract?.sandbox_status ?? "sandbox",
+    owner_user_id: contract?.owner_user_id ?? tool.owner,
+    approval_policy_id: contract?.approval_policy_id ?? "",
+    failure_behavior:
+      contract?.failure_behavior ??
+      (tool.sideEffect === "read"
+        ? "Answer with uncertainty if the tool fails."
+        : "Escalate instead of silently retrying a mutating action."),
+    compensation_behavior:
+      contract?.compensation_behavior ?? tool.compensationBehavior,
+  };
+}
+
 function ToolContractQuestionnaire({
   agentId,
   tool,
   contract,
-  onPromoted,
+  onContractChanged,
 }: {
   agentId: string;
   tool: ToolsRoomTool | null;
   contract: ToolContract | null;
-  onPromoted: (contract: ToolContract) => void;
+  onContractChanged: (contract: ToolContract) => void;
 }) {
+  const initial = tool ? contractInputFor(tool, contract) : null;
+  const [name, setName] = useState(initial?.name ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [sideEffect, setSideEffect] = useState<ToolSideEffectLevel>(
+    initial?.side_effect_level ?? "unknown",
+  );
+  const [piiAccess, setPiiAccess] = useState(initial?.pii_access ?? false);
+  const [moneyMovement, setMoneyMovement] = useState(
+    initial?.money_movement ?? false,
+  );
+  const [rateLimits, setRateLimits] = useState(
+    recordToQuestionnaireText(initial?.rate_limits ?? {}),
+  );
+  const [budgetLimits, setBudgetLimits] = useState(
+    recordToQuestionnaireText(initial?.budget_limits ?? {}),
+  );
+  const [sandboxStatus, setSandboxStatus] = useState<ToolSandboxStatus>(
+    initial?.sandbox_status ?? "sandbox",
+  );
+  const [ownerUserId, setOwnerUserId] = useState(
+    initial?.owner_user_id ?? "",
+  );
+  const [approvalPolicyId, setApprovalPolicyId] = useState(
+    initial?.approval_policy_id ?? "",
+  );
+  const [failureBehavior, setFailureBehavior] = useState(
+    initial?.failure_behavior ?? "",
+  );
+  const [compensationBehavior, setCompensationBehavior] = useState(
+    initial?.compensation_behavior ?? "",
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
   if (!tool) return null;
-  if (!contract) {
-    return (
-      <section
-        className="min-w-0 rounded-md border bg-card p-4"
-        data-testid="tool-contract-panel"
-      >
-        <p className="text-sm font-semibold">Tool contract</p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          No durable contract exists yet. Save the safety questionnaire before
-          this tool can leave sandbox.
-        </p>
-      </section>
-    );
+  const activeTool = tool;
+
+  function currentInput(): ToolContractInput {
+    return {
+      name: name.trim() || activeTool.name,
+      description: description.trim(),
+      side_effect_level: sideEffect,
+      pii_access: piiAccess,
+      money_movement: moneyMovement,
+      rate_limits: questionnaireTextToRecord(rateLimits),
+      budget_limits: questionnaireTextToRecord(budgetLimits),
+      sandbox_status: sandboxStatus,
+      owner_user_id: ownerUserId.trim(),
+      approval_policy_id: approvalPolicyId.trim(),
+      failure_behavior: failureBehavior.trim(),
+      compensation_behavior: compensationBehavior.trim(),
+    };
   }
-  const activeContract = contract;
+
+  async function saveQuestionnaire() {
+    setBusy(true);
+    setError(null);
+    setSavedMessage(null);
+    try {
+      const saved = await upsertToolContract(
+        agentId,
+        activeTool.id,
+        currentInput(),
+      );
+      onContractChanged(saved);
+      setSavedMessage(
+        `Saved safety questionnaire. Contract ${saved.id} is ${saved.live_status.replace(
+          /_/g,
+          " ",
+        )}.`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save contract.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function promoteContract() {
     setBusy(true);
     setError(null);
+    setSavedMessage(null);
     try {
       const promoted = await promoteToolContract(
         agentId,
-        activeContract.tool_id,
+        activeTool.id,
       );
-      onPromoted(promoted);
+      onContractChanged(promoted);
+      setSavedMessage("Tool contract approved for live use.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Promotion failed.");
     } finally {
@@ -524,9 +638,10 @@ function ToolContractQuestionnaire({
   }
 
   const canPromote =
-    contract.live_status !== "approved" &&
-    contract.live_status !== "blocked" &&
-    !contract.approval_invalidated_at;
+    Boolean(contract) &&
+    contract?.live_status !== "approved" &&
+    contract?.live_status !== "blocked" &&
+    !contract?.approval_invalidated_at;
 
   return (
     <section
@@ -540,51 +655,203 @@ function ToolContractQuestionnaire({
             Tool contract
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Durable permission contract for sandbox, live promotion, money caps,
-            owner, and approval invalidation.
+            Answer the safety questions, save the durable contract, then promote
+            it live only when the contract has no blockers.
           </p>
         </div>
-        <LiveBadge
-          tone={
-            contract.live_status === "approved"
-              ? "live"
-              : contract.live_status === "blocked"
-                ? "paused"
-                : "draft"
-          }
-        >
-          {contract.live_status.replace(/_/g, " ")}
-        </LiveBadge>
+        {contract ? (
+          <LiveBadge
+            tone={
+              contract.live_status === "approved"
+                ? "live"
+                : contract.live_status === "blocked"
+                  ? "paused"
+                  : "draft"
+            }
+          >
+            {contract.live_status.replace(/_/g, " ")}
+          </LiveBadge>
+        ) : (
+          <LiveBadge tone="draft">questionnaire required</LiveBadge>
+        )}
       </div>
 
-      <dl className="mt-3 grid gap-3 text-sm [grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr))]">
-        <div>
-          <dt className="text-muted-foreground">Sandbox</dt>
-          <dd>{contract.sandbox_status}</dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Side effect</dt>
-          <dd>{contract.side_effect_level.replace(/_/g, " ")}</dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Owner</dt>
-          <dd>{contract.owner_user_id || "Unassigned"}</dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Money caps</dt>
-          <dd>{formatRecord(contract.budget_limits)}</dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Rate limits</dt>
-          <dd>{formatRecord(contract.rate_limits)}</dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Approval policy</dt>
-          <dd>{contract.approval_policy_id || "Not set"}</dd>
-        </div>
-      </dl>
+      <div
+        className="mt-3 grid gap-3 text-sm [grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr))]"
+        data-testid="tool-contract-questionnaire"
+      >
+        <label className="block">
+          <span className="text-xs font-medium text-muted-foreground">
+            Contract name
+          </span>
+          <input
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            data-testid="tool-contract-name"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium text-muted-foreground">
+            Side effect
+          </span>
+          <select
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+            value={sideEffect}
+            onChange={(event) =>
+              setSideEffect(event.target.value as ToolSideEffectLevel)
+            }
+            data-testid="tool-contract-side-effect"
+          >
+            <option value="unknown">Unknown</option>
+            <option value="read">Read</option>
+            <option value="write">Write</option>
+            <option value="money_movement">Money movement</option>
+            <option value="external_message">External message</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium text-muted-foreground">
+            Sandbox mode
+          </span>
+          <select
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+            value={sandboxStatus}
+            onChange={(event) =>
+              setSandboxStatus(event.target.value as ToolSandboxStatus)
+            }
+            data-testid="tool-contract-sandbox"
+          >
+            <option value="mock">Mock</option>
+            <option value="sandbox">Sandbox</option>
+            <option value="disabled">Disabled</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium text-muted-foreground">
+            Owner
+          </span>
+          <input
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+            value={ownerUserId}
+            onChange={(event) => setOwnerUserId(event.target.value)}
+            data-testid="tool-contract-owner"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium text-muted-foreground">
+            Rate limits
+          </span>
+          <input
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+            value={rateLimits}
+            onChange={(event) => setRateLimits(event.target.value)}
+            data-testid="tool-contract-rate-limits"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium text-muted-foreground">
+            Money caps
+          </span>
+          <input
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+            value={budgetLimits}
+            onChange={(event) => setBudgetLimits(event.target.value)}
+            data-testid="tool-contract-budget-limits"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium text-muted-foreground">
+            Approval policy
+          </span>
+          <input
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+            value={approvalPolicyId}
+            onChange={(event) => setApprovalPolicyId(event.target.value)}
+            data-testid="tool-contract-approval-policy"
+          />
+        </label>
+        <label className="flex items-center gap-2 rounded-md border bg-background px-3 py-2">
+          <input
+            type="checkbox"
+            checked={piiAccess}
+            onChange={(event) => setPiiAccess(event.target.checked)}
+            data-testid="tool-contract-pii"
+          />
+          <span>Tool can access PII</span>
+        </label>
+        <label className="flex items-center gap-2 rounded-md border bg-background px-3 py-2">
+          <input
+            type="checkbox"
+            checked={moneyMovement}
+            onChange={(event) => setMoneyMovement(event.target.checked)}
+            data-testid="tool-contract-money"
+          />
+          <span>Tool can move money</span>
+        </label>
+      </div>
 
-      {contract.approval_invalidated_at ? (
+      <label className="mt-3 block text-sm">
+        <span className="text-xs font-medium text-muted-foreground">
+          Failure behavior
+        </span>
+        <textarea
+          className="mt-1 min-h-20 w-full rounded-md border bg-background px-3 py-2"
+          value={failureBehavior}
+          onChange={(event) => setFailureBehavior(event.target.value)}
+          data-testid="tool-contract-failure"
+        />
+      </label>
+      <label className="mt-3 block text-sm">
+        <span className="text-xs font-medium text-muted-foreground">
+          Compensation / rollback behavior
+        </span>
+        <textarea
+          className="mt-1 min-h-20 w-full rounded-md border bg-background px-3 py-2"
+          value={compensationBehavior}
+          onChange={(event) => setCompensationBehavior(event.target.value)}
+          data-testid="tool-contract-compensation"
+        />
+      </label>
+      <label className="mt-3 block text-sm">
+        <span className="text-xs font-medium text-muted-foreground">
+          Plain-English description
+        </span>
+        <textarea
+          className="mt-1 min-h-20 w-full rounded-md border bg-background px-3 py-2"
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          data-testid="tool-contract-description"
+        />
+      </label>
+
+      {contract ? (
+        <dl className="mt-3 grid gap-3 text-sm [grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr))]">
+          <div>
+            <dt className="text-muted-foreground">Saved sandbox</dt>
+            <dd>{contract.sandbox_status}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Saved money caps</dt>
+            <dd>{formatRecord(contract.budget_limits)}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Saved rate limits</dt>
+            <dd>{formatRecord(contract.rate_limits)}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Approval policy</dt>
+            <dd>{contract.approval_policy_id || "Not set"}</dd>
+          </div>
+        </dl>
+      ) : (
+        <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-muted-foreground">
+          No durable contract exists yet. Save this questionnaire before the
+          tool can leave sandbox.
+        </p>
+      )}
+
+      {contract?.approval_invalidated_at ? (
         <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-muted-foreground">
           Approval invalidated at {contract.approval_invalidated_at}. Re-review
           this contract before live use.
@@ -594,6 +861,15 @@ function ToolContractQuestionnaire({
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <button
           type="button"
+          className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={busy}
+          onClick={() => void saveQuestionnaire()}
+          data-testid="tool-contract-save"
+        >
+          {busy ? "Saving" : "Save questionnaire"}
+        </button>
+        <button
+          type="button"
           className="rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
           disabled={!canPromote || busy}
           onClick={() => void promoteContract()}
@@ -601,14 +877,21 @@ function ToolContractQuestionnaire({
         >
           {busy
             ? "Promoting"
-            : contract.live_status === "approved"
+            : contract?.live_status === "approved"
               ? "Live approved"
               : "Promote contract live"}
         </button>
-        <span className="text-xs text-muted-foreground">
-          Hash {contract.content_hash.slice(0, 10)}
-        </span>
+        {contract ? (
+          <span className="text-xs text-muted-foreground">
+            Hash {contract.content_hash.slice(0, 10)}
+          </span>
+        ) : null}
       </div>
+      {savedMessage ? (
+        <p className="mt-2 text-xs text-success" data-testid="tool-contract-saved">
+          {savedMessage}
+        </p>
+      ) : null}
       {error ? (
         <p className="mt-2 text-xs text-destructive" role="alert">
           {error}
@@ -732,10 +1015,11 @@ export function ToolsRoom({ data }: ToolsRoomProps) {
         <DetailPanel tool={selectedTool} />
         <SafetyContract tool={selectedTool} />
         <ToolContractQuestionnaire
+          key={selectedTool?.id ?? "no-tool"}
           agentId={data.agentId}
           tool={selectedTool}
           contract={selectedContract}
-          onPromoted={(contract) =>
+          onContractChanged={(contract) =>
             setContracts((current) => {
               const exists = current.some((item) => item.id === contract.id);
               if (exists) {
