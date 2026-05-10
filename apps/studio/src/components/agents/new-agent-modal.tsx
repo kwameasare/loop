@@ -110,18 +110,22 @@ export function NewAgentModal({
       ? "An agent with this slug already exists in the workspace."
       : null;
   const missingContract = missingCommitmentFields(contract);
-  const effectiveWorkspaceId = workspaceId?.trim() || "local-workspace";
+  const effectiveWorkspaceId = workspaceId?.trim() ?? "";
+  const workspaceMissing = effectiveWorkspaceId.length === 0;
   const canSubmit =
+    !workspaceMissing &&
     trimmedName.length > 0 &&
     trimmedSlug.length > 0 &&
     missingContract.length === 0 &&
     !slugError &&
     status.kind !== "submitting";
   const shouldLoadTemplateCatalog =
-    listAgentIntakeTemplates !== defaultListAgentIntakeTemplates ||
-    Boolean(
-      process.env.NEXT_PUBLIC_LOOP_API_URL || process.env.LOOP_CP_API_BASE_URL,
-    );
+    !workspaceMissing &&
+    (listAgentIntakeTemplates !== defaultListAgentIntakeTemplates ||
+      Boolean(
+        process.env.NEXT_PUBLIC_LOOP_API_URL ||
+          process.env.LOOP_CP_API_BASE_URL,
+      ));
   const activeTemplate =
     templates.find((template) => template.id === templateId) ?? templates[0];
 
@@ -310,6 +314,18 @@ export function NewAgentModal({
               tool contracts, memory policy, and starter evals together.
             </DialogDescription>
           </DialogHeader>
+
+          {workspaceMissing ? (
+            <p
+              className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+              data-testid="new-agent-workspace-required"
+              role="status"
+            >
+              Select or create a real workspace before starting governed agent
+              intake. Studio will not create agents inside a local placeholder
+              workspace.
+            </p>
+          ) : null}
 
           <ol
             className="grid gap-2 text-xs md:grid-cols-4"
@@ -745,6 +761,15 @@ export function NewAgentModal({
               className="text-sm text-destructive"
             >
               {status.message}
+            </p>
+          ) : null}
+          {workspaceMissing ? (
+            <p
+              className="text-xs text-muted-foreground"
+              data-testid="new-agent-submit-blocked"
+            >
+              Creation is blocked until workspace context is loaded from the
+              control plane.
             </p>
           ) : null}
           <div className="grid gap-2 rounded-md border bg-card p-3 text-xs text-muted-foreground md:grid-cols-3">
