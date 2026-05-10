@@ -1697,7 +1697,17 @@ components:
 
     InboxChannel:
       type: string
-      enum: [web, voice, sms, whatsapp, slack]
+      enum:
+        - web
+        - web_chat
+        - whatsapp
+        - telegram
+        - slack
+        - teams
+        - sms
+        - email
+        - voice
+        - webhook_api
 
     InboxItem:
       type: object
@@ -1748,6 +1758,7 @@ components:
         agent_id: { type: string, format: uuid }
         conversation_id: { type: string, format: uuid }
         user_id: { type: string, minLength: 1 }
+        channel: { $ref: "#/components/schemas/InboxChannel" }
         reason: { type: string, minLength: 1 }
         last_message_excerpt: { type: string }
         now_ms: { type: integer, minimum: 0 }

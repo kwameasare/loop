@@ -202,6 +202,27 @@ CONFIG = SchemathesisConfig.from_dict(
 SCHEMA = schemathesis.openapi.from_asgi("/openapi.yaml", contract_app, config=CONFIG)
 
 
+def test_openapi_documents_full_inbox_channel_set() -> None:
+    expected = {
+        "web",
+        "web_chat",
+        "whatsapp",
+        "telegram",
+        "slack",
+        "teams",
+        "sms",
+        "email",
+        "voice",
+        "webhook_api",
+    }
+    schema = OPENAPI["components"]["schemas"]["InboxChannel"]
+    assert set(schema["enum"]) == expected
+    escalate = OPENAPI["components"]["schemas"]["InboxEscalateRequest"]
+    assert escalate["properties"]["channel"] == {
+        "$ref": "#/components/schemas/InboxChannel"
+    }
+
+
 @SCHEMA.parametrize()
 @settings(
     deadline=5000,
