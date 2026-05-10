@@ -3,11 +3,9 @@
 /**
  * P0.3: ``/workspaces/enterprise`` — workspace-scoped SAML config.
  *
- * Replaces the previous ``console.info("[sso] would POST", ...)``
- * stub with a real cp-api round-trip via ``postSamlConfig``. Until
- * the cp shim ships the call 404s and the form surfaces the
- * "blocked on cp-api PR" error so customers don't think it's
- * silently working.
+ * Uses the workspace-scoped enterprise SAML control-plane route. If an older
+ * cp-api returns 404, the form shows backend-unavailable evidence instead of
+ * presenting a false no-SSO state.
  */
 
 import { useEffect, useState } from "react";
@@ -94,7 +92,7 @@ function EnterpriseSsoBody() {
         err instanceof Error ? err.message : "Failed to connect IdP.";
       setErrorMessage(message);
       setBackendUnavailable(
-        /404|route not yet shipped|LOOP_CP_API_BASE_URL/i.test(message),
+        /404|LOOP_CP_API_BASE_URL/i.test(message),
       );
       setStatus("error");
     }

@@ -41,6 +41,7 @@ from loop_control_plane._routes_conversations import (
 )
 from loop_control_plane._routes_deployments import router as deployments_router
 from loop_control_plane._routes_dsr import router as dsr_router
+from loop_control_plane._routes_enterprise_saml import router as enterprise_saml_router
 from loop_control_plane._routes_evals import (
     router_agents as agent_evals_router,
 )
@@ -157,6 +158,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         workspace_incidents_router,
         # Agent-flow implementation: compliance reviewers get evidence, not raw config.
         compliance_review_router,
+        # Agent-flow implementation: enterprise SSO is a workspace-scoped contract.
+        enterprise_saml_router,
         # UX wire-up: Studio Tools Room reads active version tool bindings.
         agent_tools_router,
         # UX wire-up: Studio Memory Studio reads runtime memory stores.
