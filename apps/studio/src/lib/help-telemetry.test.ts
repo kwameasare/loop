@@ -92,9 +92,11 @@ describe("help and telemetry cp clients", () => {
             {
               clip_id: "clip_canary",
               surface: "pipeline",
-              url: "/help/canary.mp4",
+              title: "Canary promotion",
+              url: "/help/clips/canary",
               duration: 30,
               transcript: "Show me canary.",
+              frames: ["Open the release candidate."],
             },
           ],
         }),
@@ -107,6 +109,7 @@ describe("help and telemetry cp clients", () => {
       fetcher,
     });
     expect(clips[0]?.clip_id).toBe("clip_canary");
+    expect(clips[0]?.frames?.[0]).toBe("Open the release candidate.");
   });
 
   it("requires cp-api before loading contextual show-me clips", async () => {
