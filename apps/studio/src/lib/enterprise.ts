@@ -181,11 +181,8 @@ export interface PutGroupRulesOptions {
 // ---------------------------------------------------------------------------
 //
 // The audit doc identifies ``/v1/workspaces/{id}/enterprise/saml`` as
-// the canonical workspace-scoped SSO route. cp-api has the underlying
-// ``saml*.py`` service modules but no FastAPI shim is mounted yet, so
-// these helpers degrade on 404: GET returns an explicit degraded evidence
-// object, POST surfaces a clear error telling the user the route hasn't
-// shipped.
+// the canonical workspace-scoped SSO route. GET still degrades explicitly on
+// 404 so older control planes never look like a real no-SSO workspace.
 
 export interface SamlConfigResponse {
   status: IdpConnectionStatus;
@@ -235,8 +232,8 @@ export function createDegradedSamlConfig(
 /**
  * Read the SAML config for a workspace.
  *
- * Blocked on cp-api PR. Returns an explicit degraded SAML config on 404 so
- * Studio never confuses missing backend evidence with a real no-SSO state.
+ * Returns an explicit degraded SAML config on 404 so Studio never confuses
+ * missing backend evidence with a real no-SSO state.
  */
 export async function fetchSamlConfig(
   workspace_id: string,
@@ -280,12 +277,7 @@ export async function postSamlConfig(
     cache: "no-store",
   });
   if (!res.ok) {
-    throw new Error(
-      `cp-api POST enterprise/saml -> ${res.status}` +
-        (res.status === 404
-          ? " (route not yet shipped; blocked on cp-api PR)"
-          : ""),
-    );
+    throw new Error(`cp-api POST enterprise/saml -> ${res.status}`);
   }
   return (await res.json()) as SamlConfigResponse;
 }

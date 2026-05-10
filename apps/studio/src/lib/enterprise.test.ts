@@ -280,7 +280,7 @@ describe("fetchSamlConfig / postSamlConfig", () => {
     expect(url).toBe("https://cp.test/v1/workspaces/ws1/enterprise/saml");
   });
 
-  it("fetchSamlConfig returns degraded evidence on 404 (route blocked)", async () => {
+  it("fetchSamlConfig returns degraded evidence on 404", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
@@ -324,6 +324,6 @@ describe("fetchSamlConfig / postSamlConfig", () => {
         { metadata_url: "https://idp/metadata" },
         { fetcher },
       ),
-    ).rejects.toThrow(/blocked on cp-api PR/);
+    ).rejects.toThrow(/cp-api POST enterprise\/saml -> 404/);
   });
 });
