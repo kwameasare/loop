@@ -8,16 +8,33 @@ workflow owned by the target surface.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request
+from pydantic import BaseModel, Field
 
-from loop_control_plane._app_common import CALLER
+from loop_control_plane._app_common import CALLER, request_id
+from loop_control_plane.agent_workflow import (
+    BranchCreate,
+    ChangeSetCreate,
+    branch_payload,
+    change_set_payload,
+)
+from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import authorize_workspace_access
-from loop_control_plane.workspaces import Role
+from loop_control_plane.workspaces import Role, WorkspaceError
 
 router = APIRouter(prefix="/v1/workspaces", tags=["CoBuilder"])
+
+MODE_RANK = {"suggest": 1, "edit": 2, "drive": 3}
+
+
+class CoBuilderApplyBody(BaseModel):
+    agent_id: UUID | None = None
+    base_version_id: str | None = Field(default=None, max_length=160)
+    selection_context: str | None = Field(default=None, max_length=512)
 
 
 def _mode_for_role(role: Role) -> str:
@@ -40,6 +57,71 @@ def _scopes_for_role(role: Role) -> list[str]:
     if role is Role.MEMBER:
         return ["agent:edit", "flow:write", "eval:write"]
     return ["agent:read"]
+
+
+def _evaluate_action(action: dict[str, Any], *, role: Role) -> list[dict[str, str]]:
+    reasons: list[dict[str, str]] = []
+    mode = str(action.get("mode") or "suggest")
+    max_mode = _mode_for_role(role)
+    if MODE_RANK.get(mode, 99) > MODE_RANK[max_mode]:
+        reasons.append(
+            {
+                "code": "mode",
+                "message": f"Action requires {mode}, operator only consented to {max_mode}.",
+            }
+        )
+    scopes = _scopes_for_role(role)
+    required_scopes = [
+        str(scope) for scope in action.get("requiredScopes", []) if isinstance(scope, str)
+    ]
+    missing_scopes = [scope for scope in required_scopes if scope not in scopes]
+    if missing_scopes:
+        reasons.append(
+            {
+                "code": "scope",
+                "message": f"Missing scopes: {', '.join(missing_scopes)}",
+            }
+        )
+    cost = action.get("cost") if isinstance(action.get("cost"), dict) else {}
+    usd = float(cost.get("usd") or 0)
+    budget = 5.0 if role in (Role.OWNER, Role.ADMIN) else 1.0
+    if usd > budget:
+        reasons.append(
+            {
+                "code": "budget",
+                "message": f"Cost ${usd:.2f} exceeds remaining budget ${budget:.2f}.",
+            }
+        )
+    return reasons
+
+
+def _audit(
+    request: Request,
+    *,
+    workspace_id: UUID,
+    caller_sub: str,
+    action: str,
+    resource_type: str,
+    resource_id: str | None = None,
+    payload: object | None = None,
+) -> None:
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action=action,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        store=request.app.state.cp.audit_events,
+        request_id=request_id(request),
+        payload=payload,
+    )
+
+
+def _safe_slug(value: str, *, max_length: int = 48) -> str:
+    safe = "".join(ch.lower() if ch.isalnum() else "-" for ch in value.strip())
+    while "--" in safe:
+        safe = safe.replace("--", "-")
+    return safe.strip("-")[:max_length] or "action"
 
 
 def _first_string(spec: dict[str, Any], keys: tuple[str, ...]) -> str:
@@ -415,6 +497,166 @@ async def get_cobuilder_workspace(
         agent=agent,
         latest_version=latest_version,
     )
+
+
+@router.post(
+    "/{workspace_id}/cobuilder/actions/{action_id}/apply",
+    status_code=201,
+)
+async def apply_cobuilder_action(
+    request: Request,
+    workspace_id: UUID,
+    action_id: str,
+    body: CoBuilderApplyBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    """Turn a grounded Co-Builder action into a workflow artifact.
+
+    Applying an AI suggestion must not silently mutate production agent state.
+    The durable unit is a branch + draft change set carrying the exact diff,
+    provenance, cost, and consent evidence that the operator approved.
+    """
+
+    cp = request.app.state.cp
+    _, membership = await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    agents = await cp.agents.list_for_workspace(workspace_id)
+    agent = None
+    if body.agent_id is not None:
+        agent = next((candidate for candidate in agents if candidate.id == body.agent_id), None)
+        if agent is None:
+            raise HTTPException(status_code=404, detail="unknown agent")
+    elif agents:
+        agent = agents[0]
+
+    if agent is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Co-Builder apply requires a selected agent.",
+        )
+
+    versions = await cp.agent_versions.list_for_agent(
+        workspace_id=workspace_id,
+        agent_id=agent.id,
+    )
+    latest_version = max(versions, key=lambda version: version.version, default=None)
+    payload = _build_payload(
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        role=membership.role,
+        agent=agent,
+        latest_version=latest_version,
+    )
+    action = next((item for item in payload["actions"] if item.get("id") == action_id), None)
+    if action is None:
+        raise HTTPException(status_code=404, detail="unknown Co-Builder action")
+
+    blocked_reasons = _evaluate_action(action, role=membership.role)
+    if blocked_reasons:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Action is blocked by the Co-Builder consent policy.",
+                "reasons": blocked_reasons,
+            },
+        )
+
+    base_version_id = body.base_version_id
+    if not base_version_id:
+        base_version_id = f"v{latest_version.version}" if latest_version is not None else "draft"
+
+    try:
+        branch = await cp.agent_workflows.create_branch(
+            agent=agent,
+            body=BranchCreate(
+                name=f"cobuilder/{_safe_slug(action_id)}",
+                base_version_id=base_version_id,
+            ),
+            actor_sub=caller_sub,
+        )
+        evidence_ref = f"{action['evidenceRef']}/applied"
+        change_set = await cp.agent_workflows.create_change_set(
+            agent=agent,
+            body=ChangeSetCreate(
+                branch_id=branch.id,
+                name=str(action.get("title") or action_id),
+                summary=str(action.get("rationale") or ""),
+                source_type="ai_cobuilder",
+                source_refs=[
+                    str(action.get("evidenceRef") or ""),
+                    *[
+                        str(item.get("evidenceRef"))
+                        for item in action.get("provenance", [])
+                        if isinstance(item, dict) and item.get("evidenceRef")
+                    ],
+                ],
+                changed_objects=[
+                    {
+                        "type": "cobuilder_action",
+                        "action_id": action_id,
+                        "mode": action.get("mode"),
+                        "path": action.get("diff", {}).get("path")
+                        if isinstance(action.get("diff"), dict)
+                        else None,
+                        "diff": action.get("diff", {}).get("body")
+                        if isinstance(action.get("diff"), dict)
+                        else None,
+                        "provenance": action.get("provenance", []),
+                        "cost": action.get("cost"),
+                        "selection_context": body.selection_context
+                        or (
+                            action.get("diff", {}).get("path")
+                            if isinstance(action.get("diff"), dict)
+                            else None
+                        ),
+                        "evidence_ref": evidence_ref,
+                    }
+                ],
+            ),
+            actor_sub=caller_sub,
+        )
+    except WorkspaceError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    applied_at = datetime.now(UTC).isoformat()
+    result = {
+        "appliedAt": applied_at,
+        "evidenceRef": evidence_ref,
+        "branch": branch_payload(branch),
+        "changeSet": change_set_payload(change_set),
+        "nextUrl": f"/agents/{agent.id}/deploys?change_set={change_set.id}",
+    }
+    cp.ux_wireup.setdefault("cobuilder_applied_actions", {}).setdefault(
+        str(workspace_id), []
+    ).append(
+        {
+            "workspace_id": str(workspace_id),
+            "agent_id": str(agent.id),
+            "action_id": action_id,
+            **result,
+        }
+    )
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="cobuilder:action_apply",
+        resource_type="change_set",
+        resource_id=change_set.id,
+        payload={
+            "agent_id": str(agent.id),
+            "action_id": action_id,
+            "mode": action.get("mode"),
+            "branch_id": branch.id,
+            "change_set_id": change_set.id,
+            "evidence_ref": evidence_ref,
+            "base_version_id": base_version_id,
+        },
+    )
+    return result
 
 
 __all__ = ["router"]

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { CoBuilderPanel } from "@/components/ai-cobuilder/co-builder-panel";
@@ -11,7 +11,10 @@ import {
   WorkspaceRequiredState,
 } from "@/components/section-states";
 import {
+  applyCoBuilderAction,
   fetchCoBuilderWorkspace,
+  type CoBuilderAction,
+  type ApplyResult,
   type CoBuilderWorkspace,
 } from "@/lib/ai-cobuilder";
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
@@ -29,6 +32,17 @@ function CoBuilderPageBody(): JSX.Element {
   const activeWorkspaceId = active?.id;
   const [workspace, setWorkspace] = useState<CoBuilderWorkspace | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const handleApplyAction = useCallback(
+    async (action: CoBuilderAction): Promise<ApplyResult> => {
+      if (!workspace) throw new Error("Co-Builder workspace is not loaded.");
+      return applyCoBuilderAction(workspace.workspaceId, action.id, {
+        ...(workspace.agentId ? { agentId: workspace.agentId } : {}),
+        selectionContext: action.diff.path,
+      });
+    },
+    [workspace],
+  );
 
   useEffect(() => {
     if (!activeWorkspaceId) return;
@@ -113,6 +127,7 @@ function CoBuilderPageBody(): JSX.Element {
             action={action}
             operator={workspace!.operator}
             selectionContext={action.diff.path}
+            onApplyAction={handleApplyAction}
           />
         ))}
       </section>

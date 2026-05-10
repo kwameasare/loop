@@ -74,6 +74,41 @@ describe("CoBuilderPanel", () => {
       screen.getByTestId("cobuilder-applied-act_offer_callback"),
     ).toBeInTheDocument();
   });
+
+  it("shows backend workflow evidence when apply creates a change set", async () => {
+    render(
+      <CoBuilderPanel
+        action={FIXTURE_ACTION_SUGGEST}
+        operator={FIXTURE_OPERATOR}
+        selectionContext="agents/refunds-bot/flow/escalate.ts:14"
+        onApplyAction={async () => ({
+          appliedAt: "2026-01-01T00:00:00Z",
+          evidenceRef: "audit/cobuilder/act_offer_callback/applied",
+          changeSet: {
+            id: "cs_live",
+            branch_id: "br_live",
+            name: "Offer callback",
+            status: "draft",
+            source_type: "ai_cobuilder",
+          },
+          nextUrl: "/agents/agent-1/deploys?change_set=cs_live",
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("cobuilder-apply-act_offer_callback"));
+
+    expect(
+      await screen.findByTestId("cobuilder-changeset-act_offer_callback"),
+    ).toHaveTextContent("cs_live");
+    expect(
+      screen.getByTestId("cobuilder-evidence-act_offer_callback"),
+    ).toHaveTextContent("act_offer_callback/applied");
+    expect(screen.getByRole("link", { name: /open workflow/i })).toHaveAttribute(
+      "href",
+      "/agents/agent-1/deploys?change_set=cs_live",
+    );
+  });
 });
 
 describe("RubberDuck", () => {
