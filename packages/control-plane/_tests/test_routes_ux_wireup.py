@@ -1070,6 +1070,23 @@ def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
     assert seeded.json()["incident"]["candidate_eval_suite_id"] == seeded.json()["suite_id"]
     assert len(seeded.json()["case_ids"]) == 1
 
+    fix_package = client.post(
+        f"/v1/agents/{agent_id}/incidents/{incident['id']}/change-package",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert fix_package.status_code == 201, fix_package.text
+    fix_body = fix_package.json()
+    assert fix_body["ok"] is True
+    assert fix_body["change_package"]["summary"].startswith("Fix incident")
+    assert fix_body["change_package"]["eval_results_ref"] == seeded.json()["suite_id"]
+    assert fix_body["change_package"]["semantic_diff"][0]["dimension"] == "incident"
+    assert fix_body["incident"]["status"] == "fix_staged"
+    assert fix_body["incident"]["fix_change_package_id"] == fix_body["change_package"]["id"]
+    assert fix_body["incident"]["report"]["fix_change_package_id"]
+    assert "fix_change_package_created" in {
+        event["kind"] for event in fix_body["incident"]["timeline"]
+    }
+
     workspace_incidents = client.get(
         f"/v1/workspaces/{workspace_id}/incidents",
         headers=_auth(),
@@ -1085,6 +1102,8 @@ def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
         "deployment:rollback",
         "incident:create_auto_rollback",
         "incident:eval_cases_seeded",
+        "incident:fix_change_package_created",
+        "change_package:generate_from_incident",
     }
     rollback_incident_audit = next(
         event for event in audit if event["action"] == "incident:create_auto_rollback"

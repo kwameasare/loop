@@ -1,4 +1,5 @@
 import { cpJson, type UxWireupClientOptions } from "@/lib/ux-wireup";
+import type { ChangePackage } from "@/lib/change-package";
 
 export type IncidentSeverity = "low" | "medium" | "high" | "critical";
 export type IncidentStatus =
@@ -23,6 +24,7 @@ export interface IncidentRecord {
   rollback_action_ref: string;
   proposed_fix: string;
   candidate_eval_suite_id: string | null;
+  fix_change_package_id: string | null;
   channel_scope: string[];
   notifications: Array<{
     recipient: string;
@@ -49,6 +51,12 @@ export interface IncidentEvalSeedResponse {
   incident: IncidentRecord;
 }
 
+export interface IncidentFixPackageResponse {
+  ok: boolean;
+  change_package: ChangePackage;
+  incident: IncidentRecord;
+}
+
 const LOCAL_INCIDENTS: IncidentRecord[] = [
   {
     id: "inc_local_rollback",
@@ -65,6 +73,7 @@ const LOCAL_INCIDENTS: IncidentRecord[] = [
     proposed_fix:
       "Replay affected traces, pin the tool schema, and create a Change Package with regression coverage.",
     candidate_eval_suite_id: null,
+    fix_change_package_id: null,
     channel_scope: ["web_chat"],
     notifications: [
       {
@@ -158,6 +167,86 @@ export async function seedIncidentEvalCases(
         incident: {
           ...localIncident,
           candidate_eval_suite_id: "suite_incident_regressions_local",
+        },
+      },
+    },
+  );
+}
+
+export async function createIncidentFixChangePackage(
+  agentId: string,
+  incidentId: string,
+  opts: UxWireupClientOptions = {},
+): Promise<IncidentFixPackageResponse> {
+  const localIncident =
+    LOCAL_INCIDENTS.find((incident) => incident.id === incidentId) ??
+    LOCAL_INCIDENTS[0]!;
+  const now = new Date().toISOString();
+  return cpJson<IncidentFixPackageResponse>(
+    `/agents/${encodeURIComponent(agentId)}/incidents/${encodeURIComponent(
+      incidentId,
+    )}/change-package`,
+    {
+      ...opts,
+      method: "POST",
+      body: {},
+      fallback: {
+        ok: true,
+        change_package: {
+          id: `cp_${incidentId}`,
+          workspace_id: localIncident.workspace_id,
+          agent_id: agentId,
+          branch_id: "incident/fix",
+          from_version_id: "production",
+          to_version_id: "draft-incident-fix",
+          commitment_document_id: "commitment_local",
+          commitment_document_version: 1,
+          summary: `Fix incident ${localIncident.id}: ${localIncident.trigger}`,
+          semantic_diff: [
+            {
+              dimension: "incident",
+              summary: localIncident.proposed_fix,
+              evidence_ref: `incident/${localIncident.id}`,
+            },
+          ],
+          eval_results_ref:
+            localIncident.candidate_eval_suite_id ??
+            `incident/${localIncident.id}/candidate-evals`,
+          replay_results_ref: `incident/${localIncident.id}/affected-traces`,
+          risk_summary: `${localIncident.severity} incident fix.`,
+          cost_summary: "Replay required before cost claims.",
+          latency_summary: "Replay required before latency claims.",
+          channel_readiness_summary: `Incident channel scope: ${localIncident.channel_scope.join(
+            ", ",
+          )}`,
+          tool_changes: [],
+          memory_changes: [],
+          knowledge_changes: [],
+          required_approvals: [],
+          pre_approved_classes: [],
+          approval_status: "blocked",
+          rollback_target_version_id:
+            localIncident.rollback_action_ref || "last-known-safe",
+          evidence_pack_id: `ep_${incidentId}`,
+          evidence: {
+            incident: localIncident.id,
+            replay_results: `incident/${localIncident.id}/affected-traces`,
+          },
+          content_hash: `local-${incidentId}`,
+          status: "generated",
+          created_at: now,
+          updated_at: now,
+          submitted_at: null,
+          stale_at: null,
+        },
+        incident: {
+          ...localIncident,
+          status: "fix_staged",
+          fix_change_package_id: `cp_${incidentId}`,
+          report: {
+            ...localIncident.report,
+            fix_change_package_id: `cp_${incidentId}`,
+          },
         },
       },
     },

@@ -18,7 +18,10 @@ import {
   EvidenceCallout,
   LiveBadge,
 } from "@/components/target";
-import { seedIncidentEvalCases } from "@/lib/incidents";
+import {
+  createIncidentFixChangePackage,
+  seedIncidentEvalCases,
+} from "@/lib/incidents";
 import { pinObservatoryMetric } from "@/lib/observatory";
 import type { IncidentRecord } from "@/lib/incidents";
 import type {
@@ -221,6 +224,7 @@ function IncidentResponsePanel({
   incidents: readonly IncidentRecord[];
 }) {
   const [seeded, setSeeded] = useState<Record<string, string>>({});
+  const [fixPackages, setFixPackages] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
 
   async function seedIncident(incident: IncidentRecord) {
@@ -233,6 +237,22 @@ function IncidentResponsePanel({
       setSeeded((current) => ({
         ...current,
         [incident.id]: response.suite_id,
+      }));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function createFixPackage(incident: IncidentRecord) {
+    setBusy(`fix:${incident.id}`);
+    try {
+      const response = await createIncidentFixChangePackage(
+        incident.agent_id,
+        incident.id,
+      );
+      setFixPackages((current) => ({
+        ...current,
+        [incident.id]: response.change_package.id,
       }));
     } finally {
       setBusy(null);
@@ -261,6 +281,8 @@ function IncidentResponsePanel({
           {incidents.map((incident) => {
             const seededSuite =
               seeded[incident.id] ?? incident.candidate_eval_suite_id;
+            const fixPackage =
+              fixPackages[incident.id] ?? incident.fix_change_package_id;
             return (
               <article
                 key={incident.id}
@@ -342,6 +364,28 @@ function IncidentResponsePanel({
                       data-testid={`incident-suite-${incident.id}`}
                     >
                       {seededSuite}
+                    </span>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant={fixPackage ? "subtle" : "outline"}
+                    size="sm"
+                    disabled={busy === `fix:${incident.id}`}
+                    onClick={() => void createFixPackage(incident)}
+                    data-testid={`incident-fix-package-${incident.id}`}
+                  >
+                    {busy === `fix:${incident.id}`
+                      ? "Creating package"
+                      : fixPackage
+                        ? "Fix package staged"
+                        : "Create fix package"}
+                  </Button>
+                  {fixPackage ? (
+                    <span
+                      className="text-xs text-muted-foreground"
+                      data-testid={`incident-fix-package-id-${incident.id}`}
+                    >
+                      {fixPackage}
                     </span>
                   ) : null}
                 </div>

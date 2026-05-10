@@ -1,13 +1,20 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Request
+from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
+from loop_control_plane.change_packages import (
+    ChangePackageGenerate,
+    change_package_payload,
+    infer_change_risk,
+    infer_change_types,
+)
 from loop_control_plane.eval_suites import EvalCaseCreate
 from loop_control_plane.incidents import (
     IncidentCreate,
@@ -15,9 +22,67 @@ from loop_control_plane.incidents import (
     IncidentTransition,
     incident_payload,
 )
+from loop_control_plane.preapproved_classes import RiskCeiling, preapproved_class_payload
 
 router_agents = APIRouter(prefix="/v1/agents", tags=["Incidents"])
 router_workspaces = APIRouter(prefix="/v1/workspaces", tags=["Incidents"])
+
+
+class IncidentFixPackageCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    branch_id: str = Field(default="incident/fix", max_length=160)
+    change_set_id: str = Field(default="", max_length=160)
+    release_candidate_id: str = Field(default="", max_length=160)
+    from_version_id: str = Field(default="production", max_length=160)
+    to_version_id: str = Field(default="draft-incident-fix", max_length=160)
+    target_environment: str = Field(default="production", max_length=64)
+    summary: str = Field(default="", max_length=2000)
+
+
+def _fix_package_body(incident: Any, body: IncidentFixPackageCreate) -> ChangePackageGenerate:
+    trace_refs = incident.affected_trace_ids or [f"incident/{incident.id}"]
+    first_trace = trace_refs[0]
+    summary = body.summary or f"Fix incident {incident.id}: {incident.trigger}"
+    proposed_fix = incident.proposed_fix or "Review affected traces and stage a minimal fix."
+    root_cause = (
+        incident.root_cause_hypothesis or "Root cause is pending trace and deployment-event review."
+    )
+    return ChangePackageGenerate(
+        branch_id=body.branch_id,
+        change_set_id=body.change_set_id or f"incident-{incident.id}",
+        release_candidate_id=body.release_candidate_id or f"rc-{incident.id}",
+        from_version_id=body.from_version_id,
+        to_version_id=body.to_version_id,
+        target_environment=body.target_environment,
+        summary=summary,
+        semantic_diff=[
+            {
+                "dimension": "incident",
+                "summary": proposed_fix,
+                "evidence_ref": f"incident/{incident.id}",
+            },
+            {
+                "dimension": "behavior",
+                "summary": root_cause,
+                "evidence_ref": f"trace/{first_trace}",
+            },
+        ],
+        eval_results_ref=incident.candidate_eval_suite_id
+        or f"incident/{incident.id}/candidate-evals",
+        replay_results_ref=f"incident/{incident.id}/affected-traces",
+        risk_summary=(
+            f"{incident.severity} incident fix for {incident.affected_conversation_count} "
+            "affected conversation(s)."
+        ),
+        cost_summary="No cost claim accepted until incident replay runs on the fix draft.",
+        latency_summary="No latency claim accepted until affected traces replay on the fix draft.",
+        channel_readiness_summary=(
+            "Incident channel scope: "
+            + (", ".join(incident.channel_scope) if incident.channel_scope else "all channels")
+        ),
+        rollback_target_version_id=incident.rollback_action_ref or "last-known-safe",
+    )
 
 
 async def _agent(
@@ -319,5 +384,94 @@ async def seed_incident_eval_cases(
         "ok": True,
         "suite_id": str(suite.id),
         "case_ids": case_ids,
+        "incident": incident_payload(updated),
+    }
+
+
+@router_agents.post("/{agent_id}/incidents/{incident_id}/change-package", status_code=201)
+async def create_incident_fix_change_package(
+    request: Request,
+    agent_id: UUID,
+    incident_id: str,
+    body: IncidentFixPackageCreate | None = None,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    incident = await request.app.state.cp.incidents.get(
+        agent=agent,
+        incident_id=incident_id,
+    )
+    commitment = await request.app.state.cp.agent_commitments.current(agent=agent)
+    generate_body = _fix_package_body(incident, body or IncidentFixPackageCreate())
+    change_types = infer_change_types(generate_body)
+    risk = infer_change_risk(generate_body)
+    preapproved = await request.app.state.cp.preapproved_classes.applicable(
+        agent=agent,
+        change_types=change_types,
+        risk=cast(RiskCeiling, risk),
+        actor_sub=caller_sub,
+    )
+    package = await request.app.state.cp.change_packages.generate(
+        agent=agent,
+        commitment=commitment,
+        body=generate_body,
+        pre_approved_classes=[
+            {
+                **preapproved_class_payload(record),
+                "matched_change_types": change_types,
+                "matched_risk": risk,
+            }
+            for record in preapproved
+        ],
+    )
+    await request.app.state.cp.preapproved_classes.mark_used(
+        agent=agent,
+        class_ids=[record.id for record in preapproved],
+        package_id=package.id,
+    )
+    updated = await request.app.state.cp.incidents.link_fix_change_package(
+        agent=agent,
+        incident_id=incident.id,
+        package_id=package.id,
+    )
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="change_package:generate_from_incident",
+        resource_type="change_package",
+        resource_id=package.id,
+        store=request.app.state.cp.audit_events,
+        request_id=request_id(request),
+        payload={
+            "agent_id": str(agent_id),
+            "incident_id": incident.id,
+            "content_hash": package.content_hash,
+            "change_types": change_types,
+            "risk": risk,
+            "pre_approved_classes": [record.id for record in preapproved],
+        },
+    )
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="incident:fix_change_package_created",
+        resource_id=incident.id,
+        payload={
+            "agent_id": str(agent_id),
+            "change_package_id": package.id,
+            "content_hash": package.content_hash,
+        },
+    )
+    return {
+        "ok": True,
+        "change_package": change_package_payload(package),
         "incident": incident_payload(updated),
     }
