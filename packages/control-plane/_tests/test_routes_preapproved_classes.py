@@ -6,6 +6,7 @@ from uuid import UUID
 import pytest
 from fastapi.testclient import TestClient
 from loop_control_plane.app import create_app
+from loop_control_plane.audit_events import fetch_payload
 from loop_control_plane.paseto import encode_local
 
 _TEST_KEY = b"x" * 32
@@ -226,3 +227,67 @@ def test_preapproved_class_creation_requires_narrow_explicit_boundaries(
     )
     assert long_lived.status_code == 400, long_lived.text
     assert "30 days" in long_lived.text
+
+
+def test_preapproved_class_is_invalidated_when_policy_changes_affect_scope(
+    client: TestClient,
+    workspace_id: UUID,
+    agent_id: UUID,
+) -> None:
+    created = client.post(
+        f"/v1/agents/{agent_id}/pre-approved-classes",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "granted_to_user_id": "owner-1",
+            "allowed_change_types": ["instruction"],
+            "excluded_change_types": ["memory", "tool", "channel"],
+            "risk_ceiling": "low",
+            "expires_at": (datetime.now(UTC) + timedelta(days=7)).isoformat(),
+            "reason": "Instruction-only edits while memory policy remains stable.",
+        },
+    )
+    assert created.status_code == 201, created.text
+    class_id = created.json()["id"]
+
+    changed_policy = client.put(
+        f"/v1/agents/{agent_id}/memory-policies/user",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "scope": "user",
+            "allowed_memory_types": ["preference"],
+            "retention": "Keep confirmed preferences for 90 days.",
+            "consent_requirement": "Explicit consent required.",
+            "pii_policy": "Do not store payment data.",
+            "delete_behavior": "Delete on request with audit trail.",
+            "privacy_implications": [
+                "Durable preference affects future conversations for this user.",
+            ],
+            "source_trace_required": True,
+        },
+    )
+    assert changed_policy.status_code == 200, changed_policy.text
+
+    listed = client.get(
+        f"/v1/agents/{agent_id}/pre-approved-classes",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert listed.status_code == 200, listed.text
+    item = listed.json()["items"][0]
+    assert item["id"] == class_id
+    assert item["status"] == "invalidated"
+    assert item["invalidated_at"] is not None
+    assert "Memory policy" in item["reason"]
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    policy_event = next(
+        event for event in audit if event["action"] == "memory_policy:upsert"
+    )
+    payload = fetch_payload(
+        client.app.state.cp.audit_events,  # type: ignore[attr-defined]
+        policy_event["payload_hash"],
+    )
+    assert payload is not None
+    assert class_id in payload["invalidated_pre_approved_classes"]
