@@ -1,8 +1,8 @@
 import { DeployTimeline } from "@/components/agents/deploy-timeline";
 import { ChangePackagePanel } from "@/components/deploy";
 import {
-  buildLocalChangePackage,
   fetchCurrentChangePackage,
+  type ChangePackage,
 } from "@/lib/change-package";
 import { listDeployments, listEvidencePacks } from "@/lib/deploys";
 
@@ -57,13 +57,11 @@ export default async function AgentDeploysPage({
         : "Could not load evidence packs.";
   }
 
-  let changePackage = buildLocalChangePackage(params.agent_id);
+  let changePackage: ChangePackage | null = null;
   let changePackageDegradedReason: string | undefined;
   try {
-    changePackage =
-      (await fetchCurrentChangePackage(params.agent_id)).item ?? changePackage;
+    changePackage = (await fetchCurrentChangePackage(params.agent_id)).item;
   } catch (error) {
-    changePackage = buildLocalChangePackage(params.agent_id);
     changePackageDegradedReason =
       error instanceof Error
         ? error.message
@@ -98,8 +96,9 @@ export default async function AgentDeploysPage({
         focusedPanel={firstParam(searchParams?.panel)}
         focusedDeploymentId={firstParam(searchParams?.deployment_id)}
         approvedChangePackage={
-          changePackage.status === "approved" ||
-          changePackage.status === "deployable"
+          changePackage &&
+          (changePackage.status === "approved" ||
+            changePackage.status === "deployable")
             ? changePackage
             : null
         }

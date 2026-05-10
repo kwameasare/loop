@@ -101,6 +101,14 @@ function versionManifestRows(
   ];
 }
 
+function isLoadedChangePackage(changePackage: ChangePackage): boolean {
+  return (
+    changePackage.id !== "change_package_unconfigured" &&
+    changePackage.content_hash !== "unconfigured" &&
+    changePackage.evidence_pack_id !== "evidence_pack_unconfigured"
+  );
+}
+
 export function ChangePackagePanel({
   agentId,
   initialPackage,
@@ -128,19 +136,47 @@ export function ChangePackagePanel({
     state.kind === "submitting" ||
     state.kind === "reviewing";
   const backendUnavailable = Boolean(degradedReason);
-  const hasGenerated = changePackage.status !== "draft";
+  const loadedChangePackage = isLoadedChangePackage(changePackage);
+  const hasGenerated = loadedChangePackage && changePackage.status !== "draft";
   const canSubmit =
-    changePackage.status === "generated" && !busy && !backendUnavailable;
+    loadedChangePackage &&
+    changePackage.status === "generated" &&
+    !busy &&
+    !backendUnavailable;
   const isReviewableStatus =
-    changePackage.status === "submitted" || changePackage.status === "approved";
+    loadedChangePackage &&
+    (changePackage.status === "submitted" ||
+      changePackage.status === "approved");
   const canReview = isReviewableStatus && !busy && !backendUnavailable;
   const isFocused =
+    loadedChangePackage &&
     Boolean(focusedChangePackageId) &&
     focusedChangePackageId === changePackage.id;
   const changePackagePanelFocused =
     focusedPanel === "change-package" || focusedPanel === "promotion";
   const releaseCandidateFocused = focusedPanel === "release-candidate";
   const rollbackFocused = focusedPanel === "rollback";
+  const statusLabel = loadedChangePackage
+    ? changePackage.status
+    : backendUnavailable
+      ? "unavailable"
+      : "not generated";
+  const versionRows: Array<[string, string]> = loadedChangePackage
+    ? versionManifestRows(changePackage)
+    : [
+        ["From version", "Not loaded"],
+        ["To version", "Not loaded"],
+        ["Release Candidate", "Not generated"],
+        ["Behavior policy changes", "Not loaded"],
+        ["Tool changes", "Not loaded"],
+        ["Knowledge changes", "Not loaded"],
+        ["Memory rule changes", "Not loaded"],
+        ["Channel changes", "Not loaded"],
+        ["Eval results", "Not loaded"],
+        ["Replay results", "Not loaded"],
+        ["Risk", "Not loaded"],
+        ["Rollback target", "Not loaded"],
+      ];
 
   async function handleGenerate() {
     setState({ kind: "generating" });
@@ -280,7 +316,8 @@ export function ChangePackagePanel({
           Change Package backend unavailable. {degradedReason}
         </div>
       ) : null}
-      {changePackage.status === "stale" || changePackage.stale_at ? (
+      {loadedChangePackage &&
+      (changePackage.status === "stale" || changePackage.stale_at) ? (
         <div
           className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
           data-testid="change-package-stale-warning"
@@ -344,11 +381,13 @@ export function ChangePackagePanel({
           <span
             className={cn(
               "mt-2 inline-flex rounded-md border px-2 py-0.5 text-xs font-medium",
-              STATUS_CLASS[changePackage.status] ?? STATUS_CLASS.draft,
+              loadedChangePackage
+                ? (STATUS_CLASS[changePackage.status] ?? STATUS_CLASS.draft)
+                : "border-border bg-muted text-muted-foreground",
             )}
             data-testid="change-package-status"
           >
-            {changePackage.status}
+            {statusLabel}
           </span>
         </div>
         <div className="rounded-md border bg-background p-3">
@@ -359,8 +398,9 @@ export function ChangePackagePanel({
             className="mt-2 font-mono text-xs"
             data-testid="change-package-commitment"
           >
-            {changePackage.commitment_document_id} v
-            {changePackage.commitment_document_version}
+            {loadedChangePackage
+              ? `${changePackage.commitment_document_id} v${changePackage.commitment_document_version}`
+              : "Not loaded"}
           </p>
         </div>
         <div className="rounded-md border bg-background p-3">
@@ -371,7 +411,9 @@ export function ChangePackagePanel({
             className="mt-2 font-mono text-xs"
             data-testid="change-package-hash"
           >
-            {changePackage.content_hash.slice(0, 12)}
+            {loadedChangePackage
+              ? changePackage.content_hash.slice(0, 12)
+              : "not loaded"}
           </p>
         </div>
         <div
@@ -391,7 +433,9 @@ export function ChangePackagePanel({
             className="mt-2 font-mono text-xs"
             data-testid="change-package-release-candidate"
           >
-            {changePackage.release_candidate_id}
+            {loadedChangePackage
+              ? changePackage.release_candidate_id
+              : "Not generated"}
           </p>
         </div>
         <div
@@ -408,7 +452,9 @@ export function ChangePackagePanel({
             Rollback
           </p>
           <p className="mt-2 text-sm" data-testid="change-package-rollback">
-            {changePackage.rollback_target_version_id}
+            {loadedChangePackage
+              ? changePackage.rollback_target_version_id
+              : "Not loaded"}
           </p>
         </div>
       </div>
@@ -423,7 +469,7 @@ export function ChangePackagePanel({
           to what the candidate includes before any production traffic moves.
         </p>
         <dl className="mt-3 grid gap-2 text-sm md:grid-cols-3">
-          {versionManifestRows(changePackage).map(([label, value]) => (
+          {versionRows.map(([label, value]) => (
             <div key={label} className="rounded-md border bg-card p-2">
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {label}
@@ -441,7 +487,11 @@ export function ChangePackagePanel({
             <div>
               <h3 className="text-sm font-semibold">30-second summary</h3>
               <p className="mt-2 text-sm" data-testid="change-package-summary">
-                {changePackage.summary}
+                {loadedChangePackage
+                  ? changePackage.summary
+                  : backendUnavailable
+                    ? "Change Package evidence is unavailable. Studio will not render local preflight placeholders as deployable evidence."
+                    : "No Change Package has been generated for this agent yet."}
               </p>
             </div>
           </div>
@@ -451,7 +501,9 @@ export function ChangePackagePanel({
                 Eval impact
               </dt>
               <dd className="mt-1 font-mono text-xs">
-                {changePackage.eval_results_ref}
+                {loadedChangePackage
+                  ? changePackage.eval_results_ref
+                  : "Not loaded"}
               </dd>
             </div>
             <div>
@@ -459,20 +511,30 @@ export function ChangePackagePanel({
                 Replay impact
               </dt>
               <dd className="mt-1 font-mono text-xs">
-                {changePackage.replay_results_ref}
+                {loadedChangePackage
+                  ? changePackage.replay_results_ref
+                  : "Not loaded"}
               </dd>
             </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Cost
               </dt>
-              <dd className="mt-1">{changePackage.cost_summary}</dd>
+              <dd className="mt-1">
+                {loadedChangePackage
+                  ? changePackage.cost_summary
+                  : "Not loaded"}
+              </dd>
             </div>
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Latency
               </dt>
-              <dd className="mt-1">{changePackage.latency_summary}</dd>
+              <dd className="mt-1">
+                {loadedChangePackage
+                  ? changePackage.latency_summary
+                  : "Not loaded"}
+              </dd>
             </div>
           </dl>
         </article>
@@ -485,12 +547,16 @@ export function ChangePackagePanel({
               <p className="mt-1 text-xs text-muted-foreground">
                 Approvers review this package, not raw implementation details.
                 Each approval binds to hash{" "}
-                <code>{changePackage.content_hash.slice(0, 12)}</code>.
+                <code>
+                  {loadedChangePackage
+                    ? changePackage.content_hash.slice(0, 12)
+                    : "not loaded"}
+                </code>
               </p>
             </div>
           </div>
           <ul className="mt-3 space-y-2">
-            {changePackage.required_approvals.length ? (
+            {loadedChangePackage && changePackage.required_approvals.length ? (
               changePackage.required_approvals.map((approval) => (
                 <li
                   key={approval.id}
@@ -587,7 +653,7 @@ export function ChangePackagePanel({
           tool, memory, channel, budget, or PII changes must still request
           review.
         </p>
-        {changePackage.pre_approved_classes.length ? (
+        {loadedChangePackage && changePackage.pre_approved_classes.length ? (
           <ul className="mt-3 grid gap-2 text-sm md:grid-cols-2">
             {changePackage.pre_approved_classes.map((item) => (
               <li key={item.id} className="rounded-md border bg-card p-3">
@@ -627,7 +693,7 @@ export function ChangePackagePanel({
             className="mt-3 space-y-2 text-sm"
             data-testid="change-package-diff"
           >
-            {changePackage.semantic_diff.length ? (
+            {loadedChangePackage && changePackage.semantic_diff.length ? (
               changePackage.semantic_diff.map((item, index) => (
                 <li key={index} className="rounded-md border bg-card p-2">
                   {semanticSummary(item, index)}
@@ -668,8 +734,12 @@ export function ChangePackagePanel({
       </div>
 
       <p className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-        Package ID: <code>{changePackage.id}</code> · Evidence pack:{" "}
-        <code>{changePackage.evidence_pack_id}</code>
+        Package ID:{" "}
+        <code>{loadedChangePackage ? changePackage.id : "not generated"}</code>{" "}
+        · Evidence pack:{" "}
+        <code>
+          {loadedChangePackage ? changePackage.evidence_pack_id : "not loaded"}
+        </code>
       </p>
 
       {state.kind === "error" ? (
