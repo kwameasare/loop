@@ -221,6 +221,34 @@ describe("AdversarialCatchPanel", () => {
     );
   });
 
+  it("prefers a deep-linked catch id over the first catch for the sentence", async () => {
+    const linkedCatch: AdversarialCatch = {
+      ...CATCH,
+      id: "catch_linked_refund_cap",
+      question: "Should the refund cap include all refunds in one conversation?",
+      evidence_ref: "adversarial_probe/probe_refund_cap/linked",
+    };
+    const listCatches = vi.fn(async () => ({
+      items: [CATCH, linkedCatch],
+    }));
+
+    render(
+      <AdversarialCatchPanel
+        agentId="agent_support"
+        sentence={SENTENCE}
+        initialCatchId="catch_linked_refund_cap"
+        listCatches={listCatches}
+      />,
+    );
+
+    expect(
+      await screen.findByTestId("adversarial-catch-question"),
+    ).toHaveTextContent("include all refunds");
+    expect(screen.getByText(/Persisted catch loaded/i)).toHaveTextContent(
+      "adversarial_probe/probe_refund_cap/linked",
+    );
+  });
+
   it("renders an empty state until a behavior sentence is selected", () => {
     render(<AdversarialCatchPanel agentId="agent_support" sentence={null} />);
 

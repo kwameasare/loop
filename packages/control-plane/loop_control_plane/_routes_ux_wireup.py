@@ -639,7 +639,10 @@ async def get_estate_health(
                 else "watch",
                 "title": f"{len(open_catches)} adversarial catch(es) need interpretation",
                 "detail": "Resolve the platform's edge-case questions so the answer becomes eval coverage.",
-                "href": f"/agents/{first_agent.id}/behavior?catch_id={first_catch.id}",
+                "href": (
+                    f"/agents/{first_agent.id}/behavior"
+                    f"?sentence_id={first_catch.rule_id}&catch_id={first_catch.id}"
+                ),
                 "source": "adversarial_catches.list_for_agent",
             }
         )
@@ -842,7 +845,10 @@ async def get_estate_health(
             "severity": "high" if catch.risk_class == "high" else "medium",
             "title": catch.question,
             "affected": 1,
-            "href": f"/agents/{agent.id}/behavior?catch_id={catch.id}",
+            "href": (
+                f"/agents/{agent.id}/behavior"
+                f"?sentence_id={catch.rule_id}&catch_id={catch.id}"
+            ),
             "evidence_ref": catch.evidence_ref,
         }
         for agent, catch in open_catches[:4]

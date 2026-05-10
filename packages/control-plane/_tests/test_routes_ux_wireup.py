@@ -647,6 +647,12 @@ def test_estate_health_derives_claims_from_workspace_objects(
         "open-adversarial-catches",
     }
     assert all(item["source"] for item in body["attention"])
+    catch_attention = next(
+        item for item in body["attention"] if item["id"] == "open-adversarial-catches"
+    )
+    assert f"/agents/{agent_id}/behavior" in catch_attention["href"]
+    assert "sentence_id=refund_cap" in catch_attention["href"]
+    assert "catch_id=catch_" in catch_attention["href"]
     assert body["shared_dependencies"][0]["id"] == "tool:refund_payment"
     assert body["rollout_health"][0]["status"] == "canary"
     assert body["rollout_health"][0]["traffic_percent"] == 10
@@ -662,6 +668,13 @@ def test_estate_health_derives_claims_from_workspace_objects(
         "incident",
         "adversarial_catch",
     }
+    catch_cluster = next(
+        cluster
+        for cluster in body["failure_clusters"]
+        if cluster["kind"] == "adversarial_catch"
+    )
+    assert "sentence_id=refund_cap" in catch_cluster["href"]
+    assert "catch_id=catch_" in catch_cluster["href"]
     assert body["owner_risks"][0]["id"] == f"ownerless-agent-{agent_id}"
     assert {
         "cluster_failures",
