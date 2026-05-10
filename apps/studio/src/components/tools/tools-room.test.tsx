@@ -63,7 +63,7 @@ describe("ToolsRoom", () => {
     expect(await screen.findByText("Live approved")).toBeInTheDocument();
   });
 
-  it("drafts a typed tool from a curl request and redacts auth", () => {
+  it("drafts a typed tool from a curl request and redacts auth", async () => {
     render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
 
     expect(
@@ -75,6 +75,9 @@ describe("ToolsRoom", () => {
     expect(draft).toHaveTextContent("Authorization header detected");
     expect(draft).toHaveTextContent("redacted");
     expect(draft).toHaveTextContent("Draft only");
+    const contract = await screen.findByTestId("tools-room-import-contract");
+    expect(contract).toHaveTextContent("Sandbox contract: sandbox");
+    expect(contract).toHaveTextContent("money caps required");
     expect(draft).not.toHaveTextContent("Bearer <redacted>");
 
     fireEvent.click(screen.getByTestId("tools-room-add-library"));

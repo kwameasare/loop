@@ -35,25 +35,67 @@ const SOURCES: { id: ToolDraftSource; label: string; helper: string }[] = [
   },
 ];
 
+interface ImportedToolContractPreview {
+  id: string;
+  sandbox_status: string;
+  live_status: string;
+  side_effect_level: string;
+  money_movement: boolean;
+}
+
+interface ImportedToolResponse {
+  tool_id: string;
+  tool_contract?: ImportedToolContractPreview;
+}
+
+function contractSideEffect(draft: ToolDraft): string {
+  if (draft.sideEffect === "money-movement") return "money_movement";
+  if (draft.sideEffect === "external-message") return "external_message";
+  return draft.sideEffect;
+}
+
+function fallbackContract(draft: ToolDraft): ImportedToolContractPreview {
+  const moneyMovement = draft.sideEffect === "money-movement";
+  const mutating = draft.sideEffect !== "read";
+  return {
+    id: "tc_local_import",
+    sandbox_status: "sandbox",
+    live_status: moneyMovement
+      ? "blocked"
+      : mutating
+        ? "review_required"
+        : "disabled",
+    side_effect_level: contractSideEffect(draft),
+    money_movement: moneyMovement,
+  };
+}
+
 export function InstantToolImport({ agentId }: { agentId: string }) {
   const [source, setSource] = useState<ToolDraftSource>("curl");
   const [input, setInput] = useState(DEFAULT_TOOL_IMPORT);
   const [draft, setDraft] = useState<ToolDraft | null>(null);
   const [liveImportId, setLiveImportId] = useState<string | null>(null);
+  const [liveContract, setLiveContract] =
+    useState<ImportedToolContractPreview | null>(null);
   const [added, setAdded] = useState(false);
 
   async function draftLiveTool() {
     setAdded(false);
-    setDraft(draftToolFromRequest(input, source));
-    const result = await cpJson<{ tool_id: string }>(
+    const nextDraft = draftToolFromRequest(input, source);
+    setDraft(nextDraft);
+    const result = await cpJson<ImportedToolResponse>(
       `/agents/${encodeURIComponent(agentId)}/tools/import`,
       {
         method: "POST",
         body: { source: input, source_kind: source },
-        fallback: { tool_id: "tool_local_import" },
+        fallback: {
+          tool_id: "tool_local_import",
+          tool_contract: fallbackContract(nextDraft),
+        },
       },
     );
     setLiveImportId(result.tool_id);
+    setLiveContract(result.tool_contract ?? null);
   }
 
   return (
@@ -71,8 +113,9 @@ export function InstantToolImport({ agentId }: { agentId: string }) {
             Draft from cURL, OpenAPI, Postman, or DevTools.
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Studio generates a typed MCP tool draft, auth needs, safety contract,
-            mock response, and eval stub before any production grant exists.
+            Studio generates a typed MCP tool draft, auth needs, safety
+            contract, mock response, and eval stub before any production grant
+            exists.
           </p>
         </div>
         <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,7rem),1fr))]">
@@ -123,7 +166,12 @@ export function InstantToolImport({ agentId }: { agentId: string }) {
           </button>
         </div>
         {draft ? (
-          <DraftSummary draft={draft} liveImportId={liveImportId} added={added} />
+          <DraftSummary
+            draft={draft}
+            liveImportId={liveImportId}
+            liveContract={liveContract}
+            added={added}
+          />
         ) : null}
       </div>
     </section>
@@ -133,10 +181,12 @@ export function InstantToolImport({ agentId }: { agentId: string }) {
 function DraftSummary({
   draft,
   liveImportId,
+  liveContract,
   added,
 }: {
   draft: ToolDraft;
   liveImportId: string | null;
+  liveContract: ImportedToolContractPreview | null;
   added: boolean;
 }) {
   return (
@@ -184,6 +234,18 @@ function DraftSummary({
       {liveImportId ? (
         <p className="mt-1 font-mono text-xs text-muted-foreground">
           Live draft target: {liveImportId}
+        </p>
+      ) : null}
+      {liveContract ? (
+        <p
+          className="mt-1 text-xs text-muted-foreground"
+          data-testid="tools-room-import-contract"
+        >
+          Sandbox contract: {liveContract.sandbox_status}; live{" "}
+          {liveContract.live_status.replace(/_/g, " ")};{" "}
+          {liveContract.money_movement
+            ? "money caps required"
+            : liveContract.side_effect_level}
         </p>
       ) : null}
       {added ? (

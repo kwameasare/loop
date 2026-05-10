@@ -21,6 +21,7 @@ from starlette.websockets import WebSocketDisconnect
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
+from loop_control_plane.tool_contracts import ToolContractUpsert, tool_contract_payload
 from loop_control_plane.trace_search import TraceQuery
 
 router_workspaces = APIRouter(prefix="/v1/workspaces", tags=["UXWireup"])
@@ -1842,6 +1843,33 @@ class ToolImportBody(BaseModel):
     source_kind: str = Field(default="curl", max_length=64)
 
 
+def _tool_import_method(source: str) -> str:
+    lowered = source.lower()
+    if " -x post" in lowered or "--request post" in lowered or "method: 'post'" in lowered:
+        return "POST"
+    if " -x put" in lowered or "--request put" in lowered or "method: 'put'" in lowered:
+        return "PUT"
+    if " -x patch" in lowered or "--request patch" in lowered or "method: 'patch'" in lowered:
+        return "PATCH"
+    if " -x delete" in lowered or "--request delete" in lowered or "method: 'delete'" in lowered:
+        return "DELETE"
+    return "GET"
+
+
+def _tool_import_side_effect(source: str, method: str) -> tuple[str, bool]:
+    lowered = source.lower()
+    money_movement = any(
+        marker in lowered for marker in ("refund", "payment", "charge", "payout", "invoice")
+    )
+    if money_movement:
+        return "money_movement", True
+    if any(marker in lowered for marker in ("send", "message", "email", "sms", "slack")):
+        return "external_message", False
+    if method in {"GET", "HEAD"}:
+        return "read", False
+    return "write", False
+
+
 @router_agents.post("/{agent_id}/tools/import")
 async def import_tool_from_text(
     request: Request,
@@ -1849,23 +1877,61 @@ async def import_tool_from_text(
     body: ToolImportBody,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
+    workspace_id = await _authorize_agent(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    agent = await request.app.state.cp.agents.get(
+        workspace_id=workspace_id,
+        agent_id=agent_id,
+    )
     lowered = body.source.lower()
     name = "imported_tool"
     if "stripe" in lowered:
         name = "stripe_request"
     elif "zendesk" in lowered:
         name = "zendesk_request"
-    method = "POST" if " -x post" in lowered or "method: 'post'" in lowered else "GET"
+    method = _tool_import_method(body.source)
+    side_effect_level, money_movement = _tool_import_side_effect(body.source, method)
+    tool_id = f"tool_{uuid4().hex[:10]}"
+    contract = await request.app.state.cp.tool_contracts.upsert(
+        agent=agent,
+        tool_id=tool_id,
+        body=ToolContractUpsert(
+            name=name,
+            description=(
+                f"Drafted from {body.source_kind}. Review schema, auth, mock, "
+                "failure behavior, eval coverage, and approval policy before live use."
+            ),
+            side_effect_level=side_effect_level,
+            pii_access=any(marker in lowered for marker in ("email", "phone", "customer")),
+            money_movement=money_movement,
+            rate_limits={"per_minute": 60},
+            budget_limits={},
+            sandbox_status="sandbox",
+            owner_user_id=caller_sub,
+            approval_policy_id="policy-tool-live-review",
+            failure_behavior="" if side_effect_level != "read" else "Return unavailable.",
+            compensation_behavior="",
+        ),
+    )
     item = {
-        "tool_id": f"tool_{uuid4().hex[:10]}",
+        "tool_id": tool_id,
         "name": name,
         "method": method,
         "schema": {"type": "object", "additionalProperties": True},
         "safety_contract": {
             "preview_required": True,
             "approval_required": method != "GET",
+            "side_effect_level": side_effect_level,
+            "money_movement": money_movement,
+            "caps_required": money_movement,
+            "sandbox_status": contract.sandbox_status,
+            "live_status": contract.live_status,
         },
+        "tool_contract": tool_contract_payload(contract),
     }
     _audit(
         request,
@@ -1874,7 +1940,29 @@ async def import_tool_from_text(
         action="tool:import",
         resource_type="tool",
         resource_id=item["tool_id"],
-        payload={"source_kind": body.source_kind, "method": method},
+        payload={
+            "source_kind": body.source_kind,
+            "method": method,
+            "tool_contract_id": contract.id,
+            "side_effect_level": side_effect_level,
+            "money_movement": money_movement,
+            "sandbox_status": contract.sandbox_status,
+            "live_status": contract.live_status,
+        },
+    )
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="tool_contract:upsert",
+        resource_type="tool_contract",
+        resource_id=contract.id,
+        payload={
+            "agent_id": str(agent_id),
+            "tool_id": tool_id,
+            "source": "tool_import",
+            "live_status": contract.live_status,
+        },
     )
     return item
 

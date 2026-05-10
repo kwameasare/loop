@@ -1396,6 +1396,28 @@ def test_tool_import_persona_semantic_diff_style_bisect_and_shares(
     assert tool.status_code == 200, tool.text
     assert tool.json()["name"] == "stripe_request"
     assert tool.json()["safety_contract"]["approval_required"] is True
+    assert tool.json()["tool_contract"]["sandbox_status"] == "sandbox"
+    assert tool.json()["tool_contract"]["side_effect_level"] == "write"
+    assert tool.json()["tool_contract"]["live_status"] == "review_required"
+
+    refund_tool = client.post(
+        f"/v1/agents/{agent_id}/tools/import",
+        headers=_auth(),
+        json={
+            "source": "curl -X POST https://api.example.test/refunds",
+            "source_kind": "curl",
+        },
+    )
+    assert refund_tool.status_code == 200, refund_tool.text
+    assert refund_tool.json()["tool_contract"]["money_movement"] is True
+    assert refund_tool.json()["tool_contract"]["budget_limits"] == {}
+    assert refund_tool.json()["tool_contract"]["live_status"] == "blocked"
+
+    contracts = client.get(f"/v1/agents/{agent_id}/tool-contracts", headers=_auth())
+    assert contracts.status_code == 200, contracts.text
+    imported_tool_ids = {item["tool_id"] for item in contracts.json()["items"]}
+    assert tool.json()["tool_id"] in imported_tool_ids
+    assert refund_tool.json()["tool_id"] in imported_tool_ids
 
     persona = client.post(
         f"/v1/agents/{agent_id}/persona-test",
