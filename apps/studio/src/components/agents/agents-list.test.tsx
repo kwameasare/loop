@@ -11,6 +11,9 @@ const fixture: AgentSummary[] = [
     slug: "support",
     description: "Customer-support agent with KB grounding.",
     active_version: 3,
+    object_state: "production",
+    state_reason: "Agent has an active production version.",
+    state_evidence_ref: "deployment/dep_support",
     updated_at: "2026-04-29T12:00:00Z",
     workspace_id: "ws_1",
   },
@@ -20,6 +23,9 @@ const fixture: AgentSummary[] = [
     slug: "qa-bot",
     description: "Internal Q&A over the engineering handbook.",
     active_version: null,
+    object_state: "draft",
+    state_reason: "Agent has no active production version.",
+    state_evidence_ref: "agent.draft",
     updated_at: "2026-04-28T09:30:00Z",
     workspace_id: "ws_1",
   },
@@ -30,10 +36,17 @@ describe("AgentsList", () => {
     render(<AgentsList agents={fixture} />);
     const rows = screen.getAllByTestId("agents-item");
     expect(rows).toHaveLength(2);
-    expect(screen.getByRole("heading", { name: "Support" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Support" }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/slug: support/)).toBeInTheDocument();
     expect(screen.getByText("v3")).toBeInTheDocument();
-    expect(screen.getByText("vdraft")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-state-agt_support")).toHaveTextContent(
+      "production",
+    );
+    expect(screen.getByTestId("agent-state-agt_qa")).toHaveTextContent("draft");
+    expect(screen.getByText("deployment/dep_support")).toBeInTheDocument();
+    expect(screen.getByText("agent.draft")).toBeInTheDocument();
   });
 
   it("renders an empty-state when no agents exist", () => {

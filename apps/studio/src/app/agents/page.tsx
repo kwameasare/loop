@@ -24,7 +24,7 @@ export default async function AgentsPage() {
     workspaces[0]?.id ||
     process.env.LOOP_DEFAULT_WORKSPACE_ID;
   return (
-    <main className="container mx-auto flex max-w-3xl flex-col gap-6 py-10">
+    <main className="container mx-auto flex max-w-5xl flex-col gap-6 py-10">
       <header className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-4">
           <h1 className="text-3xl font-semibold tracking-tight">Agents</h1>
