@@ -1,4 +1,4 @@
-import { targetUxFixtures } from "@/lib/target-ux";
+import type { TargetUXFixture } from "@/lib/target-ux/types";
 
 export type SimulatorChannel =
   | "web"
@@ -33,6 +33,8 @@ export type SimulatorSeededContextId =
 
 export type SimulatorToolMode = "mock" | "live";
 export type SimulatorEvidenceMode = "fixture" | "empty";
+
+const DEFAULT_SIMULATOR_TOOL_NAMES = ["lookup_order", "issue_refund"] as const;
 
 export interface SimulatorConfig {
   channel: SimulatorChannel;
@@ -193,7 +195,7 @@ export const SIMULATOR_PERSONAS: SimulatorPersona[] = [
   {
     id: "angry-customer",
     label: "Angry customer",
-    evidence: targetUxFixtures.inbox[0]?.traceId ?? "trace_refund_742",
+    evidence: "Persona cohort from selected agent traces when evidence is loaded",
     prompt: "You charged me again after I cancelled. Fix it now.",
   },
   {
@@ -249,7 +251,7 @@ export const SIMULATOR_MEMORY_MODES: SimulatorMemoryOption[] = [
   {
     id: "snapshot",
     label: "Snapshot memory",
-    evidence: targetUxFixtures.snapshots[0]?.id ?? "snap_refund_may",
+    evidence: "Snapshot evidence is shown after a trace or branch is selected.",
   },
   {
     id: "read-only",
@@ -293,7 +295,7 @@ function byId<T extends { id: string }>(items: T[], id: string): T {
 }
 
 function toolNames(): string[] {
-  return targetUxFixtures.tools.map((tool) => tool.name);
+  return [...DEFAULT_SIMULATOR_TOOL_NAMES];
 }
 
 function isModelAlias(value: string): value is SimulatorModelAlias {
@@ -461,30 +463,39 @@ export function parseSimulatorCommand(
 export function buildSimulatorRun(
   config: SimulatorConfig,
   agentId: string,
-  evidenceMode: SimulatorEvidenceMode = "fixture",
+  evidenceMode: SimulatorEvidenceMode = "empty",
+  fixture?: TargetUXFixture,
 ): SimulatorRunDetail {
-  const emptyMode = evidenceMode === "empty";
+  const trace = fixture?.traces[0] ?? null;
+  const scene = fixture?.scenes[0] ?? null;
+  const snapshot = fixture?.snapshots[0] ?? null;
+  const evalSuite = fixture?.evals[0] ?? null;
+  const memoryFact = fixture?.memory[0] ?? null;
+  const fixtureReady = Boolean(
+    evidenceMode === "fixture" &&
+      trace &&
+      scene &&
+      snapshot &&
+      evalSuite &&
+      memoryFact,
+  );
+  const emptyMode = !fixtureReady;
   const channel = byId(SIMULATOR_CHANNELS, config.channel);
   const persona = byId(SIMULATOR_PERSONAS, config.personaId);
   const model = byId(SIMULATOR_MODELS, config.modelAlias);
   const memory = byId(SIMULATOR_MEMORY_MODES, config.memoryMode);
-  const trace = targetUxFixtures.traces[0]!;
-  const scene = targetUxFixtures.scenes[0]!;
-  const snapshot = targetUxFixtures.snapshots[0]!;
-  const evalSuite = targetUxFixtures.evals[0]!;
-  const memoryFact = targetUxFixtures.memory[0]!;
   const contextLabel =
     emptyMode || config.seededContextId === "blank"
       ? "No seeded context"
       : config.seededContextId === "scene_escalation_legal_threat"
-        ? scene.name
-        : trace.title;
+        ? scene!.name
+        : trace!.title;
   const contextEvidence =
     emptyMode || config.seededContextId === "blank"
       ? "No trace or scene context attached to this run."
       : config.seededContextId === "scene_escalation_legal_threat"
-        ? `${scene.id}: ${scene.summary}`
-        : `${trace.id}: ${trace.spans[0]?.evidence ?? trace.title}`;
+        ? `${scene!.id}: ${scene!.summary}`
+        : `${trace!.id}: ${trace!.spans[0]?.evidence ?? trace!.title}`;
 
   const lookupDisabled = config.disabledTools.includes("lookup_order");
   const refundDisabled = config.disabledTools.includes("issue_refund");
@@ -493,7 +504,7 @@ export function buildSimulatorRun(
       ? "No replay turn queued"
       : emptyMode
         ? `Replaying turn ${config.replayTurn} from the current draft context.`
-        : `Replaying turn ${config.replayTurn} from ${trace.id}`;
+        : `Replaying turn ${config.replayTurn} from ${trace!.id}`;
   const injected = config.injectedContext
     ? `\nInjected context: ${config.injectedContext}`
     : "";
@@ -567,7 +578,7 @@ export function buildSimulatorRun(
     modelOutput: draftOutput,
     productionOutput,
     draftOutput,
-    traceId: emptyMode ? "trace.pending" : trace.id,
+    traceId: emptyMode ? "trace.pending" : trace!.id,
     replayLabel,
     costUsd,
     latencyMs,
@@ -584,7 +595,7 @@ export function buildSimulatorRun(
     unsupported,
     toolCalls: emptyMode
       ? []
-      : targetUxFixtures.tools.map((tool) => {
+      : fixture!.tools.map((tool) => {
           const disabled = config.disabledTools.includes(tool.name);
           return {
             name: tool.name,
@@ -607,12 +618,12 @@ export function buildSimulatorRun(
             source: "refund_policy_2026.pdf",
             excerpt:
               "Annual renewals can be reviewed during the current refund window.",
-            evidence: trace.spans[0]?.evidence ?? trace.id,
+            evidence: trace!.spans[0]?.evidence ?? trace!.id,
           },
           {
-            source: scene.id,
-            excerpt: scene.summary,
-            evidence: `Scene source: ${scene.source}; eval linked: ${scene.evalLinked ? "yes" : "no"}.`,
+            source: scene!.id,
+            excerpt: scene!.summary,
+            evidence: `Scene source: ${scene!.source}; eval linked: ${scene!.evalLinked ? "yes" : "no"}.`,
           },
         ],
     memoryEvents:
@@ -630,8 +641,8 @@ export function buildSimulatorRun(
           ? [
               {
                 kind: "read",
-                label: `${memoryFact.key}: ${memoryFact.after}`,
-                evidence: memoryFact.source,
+                label: `${memoryFact!.key}: ${memoryFact!.after}`,
+                evidence: memoryFact!.source,
               },
               {
                 kind: "blocked",
@@ -642,16 +653,16 @@ export function buildSimulatorRun(
           : [
               {
                 kind: "read",
-                label: `${memoryFact.key}: ${memoryFact.after}`,
-                evidence: memoryFact.source,
+                label: `${memoryFact!.key}: ${memoryFact!.after}`,
+                evidence: memoryFact!.source,
               },
               {
                 kind: "write",
                 label: "Preference confirmation queued",
                 evidence:
                   config.memoryMode === "snapshot"
-                    ? snapshot.id
-                    : memoryFact.policy,
+                    ? snapshot!.id
+                    : memoryFact!.policy,
               },
             ],
     evalScores: emptyMode
@@ -664,9 +675,9 @@ export function buildSimulatorRun(
         ]
       : [
           {
-            scorer: evalSuite.name,
-            score: `${evalSuite.passRate}% pass`,
-            evidence: `${evalSuite.id}; ${evalSuite.coverage}`,
+            scorer: evalSuite!.name,
+            score: `${evalSuite!.passRate}% pass`,
+            evidence: `${evalSuite!.id}; ${evalSuite!.coverage}`,
           },
           {
             scorer: "Channel constraint check",
@@ -684,7 +695,7 @@ export function buildSimulatorRun(
         ]
       : [
           { label: "Channel ingress", durationMs: 82, evidence: channel.delivery },
-          ...trace.spans.map((span) => ({
+          ...trace!.spans.map((span) => ({
             label: span.label,
             durationMs: span.durationMs,
             evidence: span.evidence ?? span.status,
@@ -728,7 +739,7 @@ export function buildSimulatorRun(
           },
           {
             label: "Replay",
-            production: trace.version,
+            production: trace!.version,
             draft: replayLabel,
             evidence: `Diff against ${config.diffAgainst}.`,
           },

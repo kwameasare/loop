@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 
 import { EmulatorPanel } from "./emulator-panel";
 import type { TurnEvent } from "@/lib/sdk-types";
+import { targetUxFixtures } from "@/lib/target-ux";
 
 describe("EmulatorPanel", () => {
   it("posts the prompt and renders streamed tokens, tool calls, and final answer", async () => {
@@ -124,6 +125,7 @@ describe("EmulatorPanel", () => {
       <EmulatorPanel
         agentId="agt_1"
         evidenceMode="fixture"
+        fixture={targetUxFixtures}
         invoke={vi.fn()}
       />,
     );
@@ -159,6 +161,7 @@ describe("EmulatorPanel", () => {
       <EmulatorPanel
         agentId="agt_1"
         evidenceMode="fixture"
+        fixture={targetUxFixtures}
         invoke={vi.fn()}
       />,
     );

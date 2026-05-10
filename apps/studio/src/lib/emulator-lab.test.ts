@@ -6,6 +6,7 @@ import {
   buildSimulatorRun,
   parseSimulatorCommand,
 } from "./emulator-lab";
+import { targetUxFixtures } from "@/lib/target-ux";
 
 describe("emulator-lab", () => {
   it("builds a multi-channel simulator run with trace-backed evidence", () => {
@@ -17,6 +18,8 @@ describe("emulator-lab", () => {
         memoryMode: "snapshot",
       },
       "agent_support",
+      "fixture",
+      targetUxFixtures,
     );
 
     expect(SIMULATOR_CHANNELS.map((channel) => channel.id)).toEqual([

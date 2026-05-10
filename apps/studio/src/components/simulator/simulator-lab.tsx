@@ -23,6 +23,7 @@ import {
   type SimulatorSeededContextId,
   type SimulatorToolMode,
 } from "@/lib/emulator-lab";
+import type { TargetUXFixture } from "@/lib/target-ux/types";
 import type { TurnEvent } from "@/lib/sdk-types";
 import {
   createSimulatorRun as defaultCreateSimulatorRun,
@@ -71,6 +72,7 @@ export interface SimulatorLabProps {
   invoke: SimulatorInvoke;
   initialConfig?: SimulatorConfig;
   evidenceMode?: SimulatorEvidenceMode;
+  fixture?: TargetUXFixture | undefined;
   rateTurn?: (
     agentId: string,
     input: SimulatorTurnRatingInput,
@@ -202,7 +204,8 @@ export function SimulatorLab({
   agentId,
   invoke,
   initialConfig = DEFAULT_SIMULATOR_CONFIG,
-  evidenceMode = "fixture",
+  evidenceMode = "empty",
+  fixture,
   rateTurn = defaultRateSimulatorTurn,
   createRun = defaultCreateSimulatorRun,
   focusChannels = false,
@@ -231,8 +234,8 @@ export function SimulatorLab({
     SIMULATOR_CHANNELS.find((channel) => channel.id === config.channel) ??
     SIMULATOR_CHANNELS[0]!;
   const run = useMemo(
-    () => buildSimulatorRun(config, agentId, evidenceMode),
-    [agentId, config, evidenceMode],
+    () => buildSimulatorRun(config, agentId, evidenceMode, fixture),
+    [agentId, config, evidenceMode, fixture],
   );
   const seededContextOptions =
     evidenceMode === "empty"

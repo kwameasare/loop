@@ -6,6 +6,7 @@ import {
 } from "@/components/simulator/simulator-lab";
 import { EMPTY_SIMULATOR_CONFIG } from "@/lib/emulator-lab";
 import { LoopClient } from "@/lib/loop-client";
+import type { TargetUXFixture } from "@/lib/target-ux/types";
 
 export interface EmulatorPanelProps {
   agentId: string;
@@ -14,6 +15,7 @@ export interface EmulatorPanelProps {
   /** Override the default LoopClient (used in production). */
   client?: LoopClient;
   evidenceMode?: "fixture" | "empty";
+  fixture?: TargetUXFixture | undefined;
   focusChannels?: boolean | undefined;
 }
 
@@ -68,6 +70,7 @@ export function EmulatorPanel({
   invoke,
   client,
   evidenceMode = "empty",
+  fixture,
   focusChannels = false,
 }: EmulatorPanelProps) {
   const submit =
@@ -85,6 +88,7 @@ export function EmulatorPanel({
       agentId={agentId}
       invoke={submit}
       evidenceMode={evidenceMode}
+      fixture={fixture}
       focusChannels={focusChannels}
       {...(evidenceMode === "empty"
         ? { initialConfig: EMPTY_SIMULATOR_CONFIG }
