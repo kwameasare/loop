@@ -75,6 +75,7 @@ class TraceQueryResult(BaseModel):
 
 
 class TraceStore(Protocol):
+    def add(self, trace: TraceSummary) -> None: ...
     async def search(self, query: TraceQuery) -> Sequence[TraceSummary]: ...
 
 
@@ -108,9 +109,7 @@ class InMemoryTraceStore:
         rows.sort(key=lambda t: (t.started_at, t.trace_id), reverse=True)
         if query.cursor is not None:
             cursor = _parse_cursor(query.cursor)
-            rows = [
-                t for t in rows if (t.started_at, t.trace_id) < cursor
-            ]
+            rows = [t for t in rows if (t.started_at, t.trace_id) < cursor]
         # Page.
         return rows[: query.page_size + 1]  # +1 sentinel for next_cursor
 

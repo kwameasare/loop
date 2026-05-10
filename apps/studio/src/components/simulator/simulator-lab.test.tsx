@@ -353,6 +353,7 @@ describe("SimulatorLab", () => {
         workspace_id: "ws_1",
         agent_id: agentId,
         ...input,
+        trace_id: "abc12345abc12345abc12345abc12345",
         created_by: "owner-1",
         created_at: "2026-05-01T00:00:00Z",
       }),
@@ -415,7 +416,10 @@ describe("SimulatorLab", () => {
     await waitFor(() => {
       expect(rateTurn).toHaveBeenCalledWith(
         "agent_support",
-        expect.objectContaining({ simulator_run_id: "simrun_123" }),
+        expect.objectContaining({
+          simulator_run_id: "simrun_123",
+          trace_id: "abc12345abc12345abc12345abc12345",
+        }),
       );
     });
   });

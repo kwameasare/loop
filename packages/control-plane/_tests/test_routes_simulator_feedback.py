@@ -128,6 +128,7 @@ def test_simulator_run_is_durable_and_audited(
     body = response.json()
     assert body["id"].startswith("simrun_")
     assert body["channel"] == "whatsapp"
+    assert len(body["trace_id"]) == 32
     assert body["config"]["model_alias"] == "fast-draft"
 
     listed = client.get(
@@ -136,6 +137,11 @@ def test_simulator_run_is_durable_and_audited(
     )
     assert listed.status_code == 200, listed.text
     assert listed.json()["items"][0]["id"] == body["id"]
+
+    trace = client.get(f"/v1/traces/{body['trace_id']}", headers=_auth())
+    assert trace.status_code == 200, trace.text
+    assert trace.json()["agent_id"] == str(agent_id)
+    assert trace.json()["duration_ms"] == 1030
 
     audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=_auth())
     assert "simulator_run:create" in {item["action"] for item in audit.json()["items"]}
