@@ -21,6 +21,7 @@ import {
 import {
   createIncidentFixChangePackage,
   seedIncidentEvalCases,
+  transitionIncident,
 } from "@/lib/incidents";
 import { pinObservatoryMetric } from "@/lib/observatory";
 import type { IncidentRecord } from "@/lib/incidents";
@@ -225,6 +226,9 @@ function IncidentResponsePanel({
 }) {
   const [seeded, setSeeded] = useState<Record<string, string>>({});
   const [fixPackages, setFixPackages] = useState<Record<string, string>>({});
+  const [incidentStates, setIncidentStates] = useState<
+    Record<string, IncidentRecord>
+  >({});
   const [busy, setBusy] = useState<string | null>(null);
 
   async function seedIncident(incident: IncidentRecord) {
@@ -259,6 +263,31 @@ function IncidentResponsePanel({
     }
   }
 
+  async function moveIncident(
+    incident: IncidentRecord,
+    action: "investigate" | "resolve" | "archive",
+  ) {
+    setBusy(`${action}:${incident.id}`);
+    try {
+      const response = await transitionIncident(
+        incident.agent_id,
+        incident.id,
+        action,
+        action === "investigate"
+          ? "Operator is investigating root cause."
+          : action === "resolve"
+            ? "Fix package and regression evidence reviewed."
+            : "Postmortem evidence archived.",
+      );
+      setIncidentStates((current) => ({
+        ...current,
+        [incident.id]: response,
+      }));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <section className="space-y-3" data-testid="observatory-incidents">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -278,11 +307,14 @@ function IncidentResponsePanel({
         </article>
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
-          {incidents.map((incident) => {
+          {incidents.map((rawIncident) => {
+            const incident = incidentStates[rawIncident.id] ?? rawIncident;
             const seededSuite =
               seeded[incident.id] ?? incident.candidate_eval_suite_id;
             const fixPackage =
               fixPackages[incident.id] ?? incident.fix_change_package_id;
+            const isClosed =
+              incident.status === "resolved" || incident.status === "archived";
             return (
               <article
                 key={incident.id}
@@ -388,6 +420,53 @@ function IncidentResponsePanel({
                       {fixPackage}
                     </span>
                   ) : null}
+                  <Button
+                    type="button"
+                    variant={
+                      incident.status === "investigating" ? "subtle" : "outline"
+                    }
+                    size="sm"
+                    disabled={isClosed || busy === `investigate:${incident.id}`}
+                    onClick={() => void moveIncident(incident, "investigate")}
+                    data-testid={`incident-investigate-${incident.id}`}
+                  >
+                    {busy === `investigate:${incident.id}`
+                      ? "Moving"
+                      : incident.status === "investigating"
+                        ? "Investigating"
+                        : "Investigate"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={
+                      incident.status === "resolved" ? "subtle" : "outline"
+                    }
+                    size="sm"
+                    disabled={isClosed || busy === `resolve:${incident.id}`}
+                    onClick={() => void moveIncident(incident, "resolve")}
+                    data-testid={`incident-resolve-${incident.id}`}
+                  >
+                    {busy === `resolve:${incident.id}`
+                      ? "Resolving"
+                      : "Resolve"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={
+                      incident.status === "archived" ? "subtle" : "outline"
+                    }
+                    size="sm"
+                    disabled={
+                      incident.status !== "resolved" ||
+                      busy === `archive:${incident.id}`
+                    }
+                    onClick={() => void moveIncident(incident, "archive")}
+                    data-testid={`incident-archive-${incident.id}`}
+                  >
+                    {busy === `archive:${incident.id}`
+                      ? "Archiving"
+                      : "Archive"}
+                  </Button>
                 </div>
               </article>
             );
