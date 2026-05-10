@@ -951,18 +951,42 @@ class DashboardBody(BaseModel):
     shared_with: list[str] = Field(default_factory=list)
 
 
+def _dashboard_is_visible(
+    item: dict[str, Any], *, caller_sub: str, role: Role
+) -> bool:
+    return (
+        item.get("owner_sub") == caller_sub
+        or caller_sub in item.get("shared_with", [])
+        or role in {Role.OWNER, Role.ADMIN}
+    )
+
+
+def _dashboard_is_mutable(
+    item: dict[str, Any], *, caller_sub: str, role: Role
+) -> bool:
+    return item.get("owner_sub") == caller_sub or role in {Role.OWNER, Role.ADMIN}
+
+
 @router_workspaces.get("/{workspace_id}/dashboards")
 async def list_dashboards(
     request: Request,
     workspace_id: UUID,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    await authorize_workspace_access(
+    _, membership = await authorize_workspace_access(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
     )
-    items = list(_bucket(request, "dashboards").get(str(workspace_id), []))
+    items = [
+        item
+        for item in _bucket(request, "dashboards").get(str(workspace_id), [])
+        if _dashboard_is_visible(
+            item,
+            caller_sub=caller_sub,
+            role=membership.role,
+        )
+    ]
     return {"items": items}
 
 
@@ -1010,7 +1034,7 @@ async def update_dashboard(
     body: DashboardBody,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    await authorize_workspace_access(
+    _, membership = await authorize_workspace_access(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
@@ -1018,6 +1042,12 @@ async def update_dashboard(
     items = _bucket(request, "dashboards").setdefault(str(workspace_id), [])
     for index, item in enumerate(items):
         if item["id"] == dashboard_id:
+            if not _dashboard_is_mutable(
+                item,
+                caller_sub=caller_sub,
+                role=membership.role,
+            ):
+                raise HTTPException(status_code=403, detail="dashboard not writable")
             updated = {
                 **item,
                 "name": body.name,
@@ -1046,12 +1076,21 @@ async def delete_dashboard(
     dashboard_id: str,
     caller_sub: str = CALLER,
 ) -> None:
-    await authorize_workspace_access(
+    _, membership = await authorize_workspace_access(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
     )
     items = _bucket(request, "dashboards").setdefault(str(workspace_id), [])
+    target = next((item for item in items if item["id"] == dashboard_id), None)
+    if target is None:
+        raise HTTPException(status_code=404, detail="dashboard not found")
+    if not _dashboard_is_mutable(
+        target,
+        caller_sub=caller_sub,
+        role=membership.role,
+    ):
+        raise HTTPException(status_code=403, detail="dashboard not writable")
     _bucket(request, "dashboards")[str(workspace_id)] = [
         item for item in items if item["id"] != dashboard_id
     ]
