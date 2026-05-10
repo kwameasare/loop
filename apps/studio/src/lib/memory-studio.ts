@@ -173,7 +173,9 @@ export async function fetchMemoryStudioData(
     memoryRequest,
     policyRequest,
   ]);
-  if (response.status === 404) return createEmptyMemoryStudioData(agentId);
+  if (response.status === 404) {
+    return createEmptyMemoryStudioData(agentId, policies.items);
+  }
   if (!response.ok) {
     throw new Error(`cp-api GET agent memory -> ${response.status}`);
   }
@@ -355,6 +357,7 @@ export function createMemoryStudioData(
 
 export function createEmptyMemoryStudioData(
   agentId = "agent_empty",
+  policies: MemoryPolicy[] = [],
 ): MemoryStudioData {
   return {
     agentId,
@@ -363,9 +366,12 @@ export function createEmptyMemoryStudioData(
     objectState: "draft",
     trust: "degraded",
     entries: [],
-    policies: localMemoryPolicies(agentId),
+    policies,
     replayResults: [],
-    retentionEvidence: "No memory store records loaded from cp-api.",
+    retentionEvidence:
+      policies.length > 0
+        ? "Loaded memory policy records from cp-api; no memory writes found."
+        : "No memory store or policy records loaded from cp-api.",
     degradedReason:
       "No memory writes have been captured yet. Replay a turn or run a simulator scenario to inspect memory.",
   };
