@@ -1,4 +1,5 @@
 import type { KbDocument } from "@/lib/kb";
+import { cpJson, type UxWireupClientOptions } from "@/lib/ux-wireup";
 
 export type KnowledgeSourceKind =
   | "file"
@@ -58,6 +59,10 @@ export interface KnowledgeChunk {
   versionHistory: string;
   citedUsage: string;
   evidence: string;
+  lifecycle: "current" | "superseded";
+  affectedPolicies: string[];
+  affectedEvals: string[];
+  capabilityCoverage: string[];
 }
 
 export interface RetrievalScoreBreakdown {
@@ -109,6 +114,19 @@ export interface KnowledgeReadinessReport {
   staleSources: string[];
   missingMetadata: string[];
   generatedEvalCases: string[];
+  capabilityCoverage: Array<{
+    capability: string;
+    coverage: number;
+    evidence: string;
+  }>;
+  contradictions: Array<{
+    id: string;
+    severity: "warning" | "blocker";
+    summary: string;
+    affectedPolicies: string[];
+    affectedEvals: string[];
+    sourceRefs: string[];
+  }>;
   citationQualityEstimate: number;
   sensitiveDataWarnings: string[];
   recommendation: string;
@@ -124,6 +142,21 @@ export interface KnowledgeAtelierModel {
   whyPanel: RetrievalWhyPanel | null;
   readiness: KnowledgeReadinessReport;
 }
+
+export interface SupersedeKnowledgeChunkInput {
+  reason: string;
+  replacement_hint?: string;
+}
+
+export interface SupersedeKnowledgeChunkResult {
+  chunk_id: string;
+  lifecycle: "superseded";
+  superseded_at: string;
+  reason: string;
+  evidence_ref: string;
+}
+
+type KnowledgeClientOptions = UxWireupClientOptions;
 
 const REFERENCE_NOW = new Date("2026-05-06T00:00:00Z");
 
@@ -309,6 +342,25 @@ function buildChunks(sources: KnowledgeSource[]): KnowledgeChunk[] {
           ? `${Math.round(source.evalCoverage / 10)} eval citations in the last run`
           : "No eval citations yet",
       evidence: `Chunk preview is anchored to ${source.evidence}`,
+      lifecycle: "current" as const,
+      affectedPolicies: [
+        source.name.toLowerCase().includes("refund")
+          ? "behavior.refund_policy"
+          : "behavior.knowledge_grounding",
+      ],
+      affectedEvals: [
+        source.name.toLowerCase().includes("refund")
+          ? "retrieval.final_sale_refund.requires_exception"
+          : "retrieval.source_grounding",
+      ],
+      capabilityCoverage: [
+        source.kind === "zendesk" || source.kind === "intercom"
+          ? "Support escalation"
+          : "Knowledge-grounded answer",
+        source.sensitivity === "confidential"
+          ? "Regulated citation"
+          : "Customer answer",
+      ],
     }));
   });
 }
@@ -420,6 +472,62 @@ function buildReadiness(
         source.sensitivity === "restricted",
     )
     .map((source) => `${source.name} is ${source.sensitivity}`);
+  const capabilityCoverage = [
+    {
+      capability: "Refund policy answers",
+      coverage:
+        retrievalLab.candidates.length > 0
+          ? Math.min(96, 72 + retrievalLab.candidates.length * 6)
+          : 0,
+      evidence:
+        retrievalLab.candidates[0]?.citationPreview ??
+        "No retrieval candidate evidence yet",
+    },
+    {
+      capability: "Escalation and refusal",
+      coverage: sources.some((source) => source.sensitivity === "confidential")
+        ? 74
+        : 42,
+      evidence:
+        sources.find((source) => source.sensitivity === "confidential")
+          ?.evidence ?? "Needs confidential policy source",
+    },
+    {
+      capability: "Channel-format grounding",
+      coverage: sources.some((source) => source.kind === "zendesk")
+        ? 68
+        : 38,
+      evidence:
+        sources.find((source) => source.kind === "zendesk")?.evidence ??
+        "No channel transcript source attached",
+    },
+  ];
+  const hasPolicy = sources.some((source) =>
+    /policy|legal|refund/i.test(source.name),
+  );
+  const hasHandbook = sources.some((source) => /handbook|faq|support/i.test(source.name));
+  const contradictions =
+    hasPolicy && hasHandbook && sources.length > 1
+      ? [
+          {
+            id: "contradiction_refund_exception_window",
+            severity: "warning" as const,
+            summary:
+              "Refund exception language differs between policy source and support handbook.",
+            affectedPolicies: [
+              "behavior.refund_policy",
+              "behavior.escalation_policy",
+            ],
+            affectedEvals: [
+              "retrieval.final_sale_refund.requires_exception",
+              "eval.refund_exception_escalates",
+            ],
+            sourceRefs: sources
+              .filter((source) => /policy|legal|refund|handbook|faq|support/i.test(source.name))
+              .map((source) => source.evidence),
+          },
+        ]
+      : [];
 
   return {
     answerableQuestions:
@@ -447,6 +555,8 @@ function buildReadiness(
             "retrieval.sensitive_account_summary.no_quote",
           ]
         : [],
+    capabilityCoverage,
+    contradictions,
     citationQualityEstimate:
       sources.length === 0
         ? 0
@@ -484,4 +594,30 @@ export function getKnowledgeAtelierModel(
     whyPanel: buildWhyPanel(retrievalLab),
     readiness: buildReadiness(sources, retrievalLab),
   };
+}
+
+export async function markKnowledgeChunkSuperseded(
+  agentId: string,
+  chunkId: string,
+  input: SupersedeKnowledgeChunkInput,
+  opts: KnowledgeClientOptions = {},
+): Promise<SupersedeKnowledgeChunkResult> {
+  return cpJson<SupersedeKnowledgeChunkResult>(
+    `/agents/${encodeURIComponent(agentId)}/kb/chunks/${encodeURIComponent(
+      chunkId,
+    )}/supersede`,
+    {
+      ...opts,
+      method: "POST",
+      body: input,
+      allowFallback: false,
+      fallback: {
+        chunk_id: chunkId,
+        lifecycle: "superseded",
+        superseded_at: new Date(0).toISOString(),
+        reason: input.reason,
+        evidence_ref: `knowledge/${chunkId}/superseded`,
+      },
+    },
+  );
 }
