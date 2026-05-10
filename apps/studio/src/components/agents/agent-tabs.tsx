@@ -21,6 +21,7 @@ export const AGENT_TABS: AgentTabSpec[] = [
   { segment: "simulator", label: "Simulator", summary: "Manual and scripted tests" },
   { segment: "evals", label: "Evals", summary: "Coverage and gates" },
   { segment: "traces", label: "Traces", summary: "Evidence and replay" },
+  { segment: "workflow", label: "Workflow", summary: "Branches and release path" },
   { segment: "deploys", label: "Deployments", summary: "Preflight and rollout" },
   { segment: "observe", label: "Observability", summary: "Health and incidents" },
   { segment: "governance", label: "Governance", summary: "Approvals and audit" },

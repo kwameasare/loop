@@ -227,6 +227,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§5",
   },
   {
+    route: "/agents/[agent_id]/workflow",
+    verb: "ship",
+    label: "Agent workflow",
+    purpose:
+      "Branches, Change Sets, replay forks, tests, approvals, and release candidates.",
+    anchor: "§23",
+  },
+  {
     route: "/marketplace",
     verb: "build",
     label: "Templates & marketplace",
