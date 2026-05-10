@@ -17,6 +17,7 @@ import {
   MessagesSquare,
   PackageOpen,
   Radar,
+  Radio,
   Rocket,
   Route,
   ShieldCheck,
@@ -80,8 +81,17 @@ export function buildNavSections(
           id: "channels",
           href: "/channels",
           label: "Channels",
-          summary: "Web, WhatsApp, Telegram, Slack, SMS, email, voice",
+          summary: "Web, WhatsApp, Telegram, Slack, Teams, SMS, email, voice",
           icon: MessagesSquare,
+          children: [
+            {
+              id: "voice-channel-stage",
+              href: "/voice",
+              label: "Voice channel stage",
+              summary: "Specialized staging and debug for one channel",
+              icon: Radio,
+            },
+          ],
         },
         {
           id: "marketplace",

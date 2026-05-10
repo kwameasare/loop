@@ -146,15 +146,15 @@ export function VoiceStage({
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase text-muted-foreground">
-            Observe / Voice Stage
+            Build / Channels / Voice
           </p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight">
             {model.agentName}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Voice is a first-class channel: waveform, ASR, TTS, barge-in,
-            latency, evals, queued speech, and expiring demo links are all
-            visible before production.
+            Voice is one peer channel binding. This stage only specializes the
+            parts calls require: phone routing, ASR, TTS, barge-in, latency,
+            voice evals, queued speech, and expiring demo links.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

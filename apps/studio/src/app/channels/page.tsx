@@ -74,7 +74,7 @@ export default async function ChannelsPage() {
               className={buttonVariants({ variant: "outline" })}
             >
               <Radio className="h-4 w-4" />
-              Voice stage
+              Open voice channel stage
             </Link>
           </div>
         </div>
@@ -84,8 +84,9 @@ export default async function ChannelsPage() {
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Channel types</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Voice is one channel type. The same agent contract should survive
-            every text, chat, and telephony surface.
+            Voice is one channel type, with a specialized stage only because
+            phone calls need ASR, TTS, barge-in, number routing, and latency
+            checks. Text, chat, email, webhooks, and telephony remain peers.
           </p>
         </div>
         <ChannelTypeGrid agentId={activeAgentId} />

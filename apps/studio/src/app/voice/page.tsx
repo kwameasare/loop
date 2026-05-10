@@ -50,15 +50,17 @@ function VoicePageBody(): JSX.Element {
   if (wsLoading) {
     return (
       <p className="p-6 text-sm text-muted-foreground" data-testid="voice-loading">
-        Loading voice stage…
+        Loading voice channel stage…
       </p>
     );
   }
-  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Voice Stage" />;
+  if (!activeWorkspaceId) {
+    return <WorkspaceRequiredState title="Voice channel stage" />;
+  }
   if (!model && !error) {
     return (
       <p className="p-6 text-sm text-muted-foreground" data-testid="voice-loading">
-        Loading voice stage…
+        Loading voice channel stage…
       </p>
     );
   }
@@ -66,8 +68,8 @@ function VoicePageBody(): JSX.Element {
     return (
       <main className="mx-auto w-full max-w-7xl p-6">
         <SectionDegraded
-          title="Voice Stage"
-          description="Voice channel evidence is unavailable. Studio will not replace missing phone, ASR, TTS, or latency data with a local voice fixture."
+          title="Voice channel stage"
+          description="Voice channel evidence is unavailable. Studio will not replace missing phone, ASR, TTS, barge-in, or latency data with a local voice fixture."
           evidence={error}
         />
       </main>

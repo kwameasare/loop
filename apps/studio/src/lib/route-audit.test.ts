@@ -93,6 +93,15 @@ describe("STUDIO_ROUTES", () => {
     }
   });
 
+  it("keeps voice under Build because it is one channel binding type", () => {
+    const voiceRoute = STUDIO_ROUTES.find((entry) => entry.route === "/voice");
+    expect(voiceRoute).toMatchObject({
+      verb: "build",
+      label: "Voice channel stage",
+    });
+    expect(voiceRoute?.purpose).toMatch(/one peer channel/i);
+  });
+
   it("groups routes by verb without dropping any", () => {
     const grouped = groupByVerb();
     const total = Object.values(grouped).reduce(

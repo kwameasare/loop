@@ -37,12 +37,20 @@ describe("SidebarNav", () => {
       "/channels",
     );
     expect(screen.getByTestId("nav-channels")).toHaveTextContent("Channels");
+    expect(screen.getByTestId("nav-channels")).toHaveTextContent(
+      "Web, WhatsApp, Telegram, Slack, Teams, SMS, email, voice",
+    );
+    expect(screen.getByTestId("nav-voice-channel-stage")).toHaveAttribute(
+      "href",
+      "/voice",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /observe/i }));
     expect(screen.getByTestId("nav-observatory")).toHaveAttribute(
       "href",
       "/observe",
     );
+    expect(screen.queryByTestId("nav-voice")).not.toBeInTheDocument();
   });
 
   it("renders the canonical six-verb IA", () => {

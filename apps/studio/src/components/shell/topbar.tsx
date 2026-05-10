@@ -36,7 +36,7 @@ function routeContext(pathname: string | null): {
     observe: "Observatory",
     inbox: "HITL Inbox",
     channels: "Channels",
-    voice: "Voice stage",
+    voice: "Voice channel stage",
     scenes: "Scenes",
     marketplace: "Marketplace",
     migrate: "Migration Atelier",
