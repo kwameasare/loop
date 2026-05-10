@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   ConciergeConsentError,
@@ -7,8 +7,11 @@ import {
   ONBOARDING_DOORS,
   ONBOARDING_TEMPLATES,
   SPOTLIGHT_HINTS,
+  emptyWeeklyRecap,
+  fetchWeeklyRecap,
   formatWeeklyRecap,
   runConcierge,
+  runConciergeFromWorkspace,
 } from "./onboarding";
 
 describe("onboarding constants", () => {
@@ -70,6 +73,69 @@ describe("formatWeeklyRecap", () => {
     });
     expect(line).toContain("Cost -3%");
     expect(line).toContain("latency -2%");
+  });
+});
+
+describe("onboarding cp-api client", () => {
+  it("fetches the weekly recap from the control plane", async () => {
+    const recap = emptyWeeklyRecap("2026-05-04");
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(JSON.stringify(recap), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+
+    const result = await fetchWeeklyRecap("ws-1", {
+      baseUrl: "https://cp.test",
+      fetcher,
+      token: "tok",
+    });
+
+    expect(result).toEqual(recap);
+    const [url, init] = fetcher.mock.calls[0]!;
+    expect(url).toBe(
+      "https://cp.test/v1/workspaces/ws-1/onboarding/weekly-recap",
+    );
+    expect(init?.headers).toMatchObject({ authorization: "Bearer tok" });
+  });
+
+  it("runs concierge analysis through the workspace endpoint", async () => {
+    const req = {
+      scopes: ["transcripts"] as const,
+      conversationsRequested: 20,
+      reviewer: "builder@acme.test",
+      consentAcceptedAt: "2026-05-10T12:00:00Z",
+    };
+    const expected = runConcierge(req);
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(JSON.stringify(expected), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+
+    const result = await runConciergeFromWorkspace("ws-1", req, {
+      baseUrl: "https://cp.test",
+      fetcher,
+    });
+
+    expect(result).toEqual(expected);
+    const [url, init] = fetcher.mock.calls[0]!;
+    expect(url).toBe("https://cp.test/v1/workspaces/ws-1/onboarding/concierge");
+    expect(init?.method).toBe("POST");
+    expect(JSON.parse(String(init?.body))).toEqual(req);
+  });
+
+  it("does not fall back unless fixtures are explicitly allowed", async () => {
+    await expect(fetchWeeklyRecap("ws-1", { baseUrl: "" })).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required",
+    );
+    await expect(
+      fetchWeeklyRecap("ws-1", { baseUrl: "", allowFixture: true }),
+    ).resolves.toMatchObject({ promotions: 0, evalsSaved: 0 });
   });
 });
 

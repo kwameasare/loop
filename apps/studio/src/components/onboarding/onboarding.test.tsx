@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ConciergeConsentPanel } from "@/components/onboarding/concierge-consent";
@@ -48,11 +54,17 @@ describe("GuidedSpotlight", () => {
   it("walks through three hints and finishes", () => {
     const onDismiss = vi.fn();
     render(<GuidedSpotlight onDismiss={onDismiss} />);
-    expect(screen.getByTestId("spotlight-step")).toHaveTextContent("Step 1 of 3");
+    expect(screen.getByTestId("spotlight-step")).toHaveTextContent(
+      "Step 1 of 3",
+    );
     fireEvent.click(screen.getByTestId("spotlight-next"));
-    expect(screen.getByTestId("spotlight-step")).toHaveTextContent("Step 2 of 3");
+    expect(screen.getByTestId("spotlight-step")).toHaveTextContent(
+      "Step 2 of 3",
+    );
     fireEvent.click(screen.getByTestId("spotlight-next"));
-    expect(screen.getByTestId("spotlight-step")).toHaveTextContent("Step 3 of 3");
+    expect(screen.getByTestId("spotlight-step")).toHaveTextContent(
+      "Step 3 of 3",
+    );
     fireEvent.click(screen.getByTestId("spotlight-finish"));
     expect(onDismiss).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId("guided-spotlight")).toBeNull();
@@ -67,7 +79,7 @@ describe("GuidedSpotlight", () => {
 });
 
 describe("ConciergeConsentPanel", () => {
-  it("blocks acceptance when no scope is selected", () => {
+  it("blocks acceptance when no scope is selected", async () => {
     const onAccept = vi.fn();
     render(
       <ConciergeConsentPanel
@@ -79,11 +91,13 @@ describe("ConciergeConsentPanel", () => {
     // Untick the only default scope.
     fireEvent.click(screen.getByTestId("concierge-scope-transcripts"));
     fireEvent.click(screen.getByTestId("concierge-accept"));
-    expect(screen.getByTestId("concierge-error")).toHaveTextContent(/scope/i);
+    expect(await screen.findByTestId("concierge-error")).toHaveTextContent(
+      /scope/i,
+    );
     expect(onAccept).not.toHaveBeenCalled();
   });
 
-  it("renders findings with consent echo and supports revoke", () => {
+  it("renders findings with consent echo and supports revoke", async () => {
     const onAccept = vi.fn();
     const onRevoke = vi.fn();
     render(
@@ -96,8 +110,8 @@ describe("ConciergeConsentPanel", () => {
     );
     fireEvent.click(screen.getByTestId("concierge-scope-tool-calls"));
     fireEvent.click(screen.getByTestId("concierge-accept"));
-    expect(onAccept).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId("concierge-result")).toHaveTextContent(
+    await waitFor(() => expect(onAccept).toHaveBeenCalledTimes(1));
+    expect(await screen.findByTestId("concierge-result")).toHaveTextContent(
       /transcripts, tool-calls/,
     );
     expect(screen.getByTestId("concierge-result")).toHaveTextContent("ux-thor");

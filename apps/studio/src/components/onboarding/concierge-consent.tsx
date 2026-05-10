@@ -31,6 +31,7 @@ export interface ConciergeConsentPanelProps {
   reviewer: string;
   onAccept?: (result: ConciergeResult) => void;
   onRevoke?: () => void;
+  runRequest?: (req: ConciergeRequest) => Promise<ConciergeResult>;
   /** Inject a clock for tests/storybook. */
   now?: () => string;
 }
@@ -40,14 +41,14 @@ export function ConciergeConsentPanel({
   reviewer,
   onAccept,
   onRevoke,
+  runRequest,
   now = () => new Date().toISOString(),
 }: ConciergeConsentPanelProps) {
-  const [scopes, setScopes] = useState<ConciergeScope[]>([
-    "transcripts",
-  ]);
+  const [scopes, setScopes] = useState<ConciergeScope[]>(["transcripts"]);
   const [count, setCount] = useState(20);
   const [result, setResult] = useState<ConciergeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   const toggleScope = (scope: ConciergeScope) => {
     setScopes((cur) =>
@@ -55,7 +56,7 @@ export function ConciergeConsentPanel({
     );
   };
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     setError(null);
     const req: ConciergeRequest = {
       scopes,
@@ -64,12 +65,16 @@ export function ConciergeConsentPanel({
       consentAcceptedAt: now(),
     };
     try {
-      const res = runConcierge(req);
+      setPending(true);
+      const res = runRequest ? await runRequest(req) : runConcierge(req);
       setResult(res);
       onAccept?.(res);
     } catch (e) {
       if (e instanceof ConciergeConsentError) setError(e.message);
-      else throw e;
+      else if (e instanceof Error) setError(e.message);
+      else setError("Concierge analysis failed.");
+    } finally {
+      setPending(false);
     }
   };
 
@@ -101,15 +106,31 @@ export function ConciergeConsentPanel({
           </button>
         </header>
         <p className="text-xs text-muted-foreground">
-          Read {result.consent.conversationsRequested} conversations with scopes:{" "}
-          {result.consent.scopes.join(", ")}. Accepted at{" "}
+          Read {result.consent.conversationsRequested} conversations with
+          scopes: {result.consent.scopes.join(", ")}. Accepted at{" "}
           {result.consent.acceptedAt} by {result.consent.reviewer}.
         </p>
         <dl className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
-          <Group title="Starter evals" items={result.recommendations.starterEvalIds} testid="concierge-evals" />
-          <Group title="Likely KB holes" items={result.recommendations.kbHoles} testid="concierge-kb" />
-          <Group title="Drafted scenes" items={result.recommendations.scenes} testid="concierge-scenes" />
-          <Group title="Risky tools" items={result.recommendations.riskyTools} testid="concierge-tools" />
+          <Group
+            title="Starter evals"
+            items={result.recommendations.starterEvalIds}
+            testid="concierge-evals"
+          />
+          <Group
+            title="Likely KB holes"
+            items={result.recommendations.kbHoles}
+            testid="concierge-kb"
+          />
+          <Group
+            title="Drafted scenes"
+            items={result.recommendations.scenes}
+            testid="concierge-scenes"
+          />
+          <Group
+            title="Risky tools"
+            items={result.recommendations.riskyTools}
+            testid="concierge-tools"
+          />
         </dl>
         <p
           className="rounded-md border border-focus/40 bg-focus/5 p-3 text-xs"
@@ -140,15 +161,12 @@ export function ConciergeConsentPanel({
           <p className="mt-1 text-xs text-muted-foreground">
             Studio reads only the data you check below, then suggests starter
             evals, flags KB holes, drafts scenes, identifies risky tools, and
-            recommends one safe first improvement. You can revoke and forget
-            at any time.
+            recommends one safe first improvement. You can revoke and forget at
+            any time.
           </p>
         </div>
       </header>
-      <fieldset
-        className="flex flex-col gap-2"
-        data-testid="concierge-scopes"
-      >
+      <fieldset className="flex flex-col gap-2" data-testid="concierge-scopes">
         <legend className="text-xs font-medium">Data scopes</legend>
         {ALL_SCOPES.map((scope) => (
           <label key={scope} className="flex items-center gap-2 text-xs">
@@ -186,11 +204,14 @@ export function ConciergeConsentPanel({
       <div className="flex items-center justify-end gap-2">
         <button
           type="button"
-          onClick={handleAccept}
+          onClick={() => void handleAccept()}
+          disabled={pending}
           className="rounded-md border border-focus bg-focus/10 px-3 py-1 text-xs font-medium text-focus hover:bg-focus/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           data-testid="concierge-accept"
         >
-          Yes, learn with these scopes
+          {pending
+            ? "Reading selected data..."
+            : "Yes, learn with these scopes"}
         </button>
       </div>
     </section>

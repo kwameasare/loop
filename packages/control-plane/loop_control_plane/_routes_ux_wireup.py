@@ -2065,6 +2065,174 @@ class QualityReportBody(BaseModel):
     notes: str | None = Field(default=None, max_length=2000)
 
 
+class OnboardingConciergeBody(BaseModel):
+    scopes: list[str] = Field(min_length=1, max_length=4)
+    conversations_requested: int = Field(
+        ge=5, le=50, alias="conversationsRequested"
+    )
+    reviewer: str = Field(min_length=1, max_length=160)
+    consent_accepted_at: str = Field(
+        min_length=1, max_length=80, alias="consentAcceptedAt"
+    )
+
+
+_CONCIERGE_SCOPES = {
+    "transcripts",
+    "tool-calls",
+    "kb-citations",
+    "user-feedback",
+}
+
+
+def _week_start(now: datetime) -> datetime:
+    today = now.date()
+    return datetime.combine(
+        today - timedelta(days=today.weekday()), datetime.min.time(), tzinfo=UTC
+    )
+
+
+@router_workspaces.get("/{workspace_id}/onboarding/weekly-recap")
+async def get_onboarding_weekly_recap(
+    request: Request,
+    workspace_id: UUID,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    start = _week_start(datetime.now(UTC))
+    events = [
+        event
+        for event in cp.audit_events.list_for_workspace(workspace_id)
+        if event.occurred_at >= start
+    ]
+    actions = [event.action for event in events]
+    return {
+        "weekOf": start.date().isoformat(),
+        "promotions": sum(
+            1
+            for action in actions
+            if action in {"deployment:promote", "deployment:ramp"}
+        ),
+        "rollbacks": sum(1 for action in actions if "rollback" in action),
+        "evalsSaved": sum(
+            1
+            for action in actions
+            if "eval" in action
+            and ("case" in action or "save" in action or "create" in action)
+        ),
+        "kbSourcesUpdated": sum(
+            1 for action in actions if "kb" in action or "knowledge" in action
+        ),
+        "costDeltaPercent": 0,
+        "latencyDeltaPercent": 0,
+    }
+
+
+@router_workspaces.post("/{workspace_id}/onboarding/concierge")
+async def run_onboarding_concierge(
+    request: Request,
+    workspace_id: UUID,
+    body: OnboardingConciergeBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    invalid_scopes = sorted(set(body.scopes) - _CONCIERGE_SCOPES)
+    if invalid_scopes:
+        raise HTTPException(
+            status_code=422,
+            detail=f"unsupported concierge scope(s): {', '.join(invalid_scopes)}",
+        )
+    traces = await cp.trace_search.run(
+        TraceQuery(workspace_id=workspace_id, page_size=body.conversations_requested)
+    )
+    agents = await cp.agents.list_for_workspace(workspace_id)
+    tool_contracts = {
+        agent.id: await cp.tool_contracts.list_for_agent(agent=agent)
+        for agent in agents
+    }
+    risky_tools = [
+        contract.tool_id
+        for contracts in tool_contracts.values()
+        for contract in contracts
+        if contract.money_movement
+        or contract.pii_access
+        or contract.side_effect_level == "high"
+    ][:5]
+    starter_eval_ids = [
+        f"eval_from_trace_{trace.trace_id[:10]}" for trace in traces.items[:5]
+    ]
+    kb_holes = [
+        f"Trace {trace.trace_id[:10]} ended with error; review retrieval and policy coverage."
+        for trace in traces.items
+        if trace.error
+    ][:5]
+    if "kb-citations" in body.scopes and traces.items and not kb_holes:
+        kb_holes = [
+            "Review recent traces without cited KB chunks before trusting generated answers."
+        ]
+    scenes = [
+        f"scene_{str(trace.conversation_id).replace('-', '')[:10]}"
+        for trace in traces.items[:5]
+    ]
+    if not traces.items:
+        safe_first_improvement = (
+            "Connect recent conversations before concierge can recommend evals, "
+            "KB holes, scenes, or tool changes."
+        )
+    elif risky_tools:
+        safe_first_improvement = (
+            f"Keep `{risky_tools[0]}` sandboxed until a trace-backed eval covers "
+            "its side effects."
+        )
+    elif kb_holes:
+        safe_first_improvement = kb_holes[0]
+    else:
+        safe_first_improvement = (
+            "Save the highest-risk recent conversation as an eval before changing behavior."
+        )
+    result = {
+        "consent": {
+            "acceptedAt": body.consent_accepted_at,
+            "conversationsRequested": body.conversations_requested,
+            "scopes": body.scopes,
+            "reviewer": body.reviewer,
+        },
+        "recommendations": {
+            "starterEvalIds": starter_eval_ids,
+            "kbHoles": kb_holes,
+            "scenes": scenes,
+            "riskyTools": risky_tools,
+            "safeFirstImprovement": safe_first_improvement,
+        },
+    }
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="onboarding:concierge_run",
+        resource_type="onboarding_concierge",
+        resource_id=body.reviewer,
+        payload={
+            "scopes": body.scopes,
+            "conversations_requested": body.conversations_requested,
+            "starter_eval_count": len(starter_eval_ids),
+            "kb_hole_count": len(kb_holes),
+            "scene_count": len(scenes),
+            "risky_tool_count": len(risky_tools),
+        },
+    )
+    return result
+
+
 @router_workspaces.get("/{workspace_id}/quality/reports")
 async def list_quality_reports(
     request: Request,

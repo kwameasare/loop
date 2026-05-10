@@ -14,6 +14,8 @@
  * data is permissioned, reversible, and explicit about what is read (§33.7).
  */
 
+import { cpJson, type UxWireupClientOptions } from "@/lib/ux-wireup";
+
 export const ONBOARDING_DOORS = ["import", "template", "blank"] as const;
 export type OnboardingDoor = (typeof ONBOARDING_DOORS)[number];
 
@@ -25,32 +27,33 @@ export interface OnboardingDoorMeta {
   estimatedSeconds: number;
 }
 
-export const ONBOARDING_DOOR_META: Record<OnboardingDoor, OnboardingDoorMeta> = {
-  import: {
-    id: "import",
-    title: "Import from another platform",
-    summary:
-      "Bring an existing Botpress, Voiceflow, or Dialogflow project across with parity audit.",
-    cta: "Open Migration Atelier",
-    estimatedSeconds: 240,
-  },
-  template: {
-    id: "template",
-    title: "Start from a template",
-    summary:
-      "Working agents with sample KB, mock tools, eval suite, seeded conversations, traces, and cost estimate.",
-    cta: "Browse templates",
-    estimatedSeconds: 60,
-  },
-  blank: {
-    id: "blank",
-    title: "Start blank with the AI co-builder",
-    summary:
-      "An empty agent and the co-builder — first turn streams in under 60 seconds.",
-    cta: "Open Workbench",
-    estimatedSeconds: 60,
-  },
-};
+export const ONBOARDING_DOOR_META: Record<OnboardingDoor, OnboardingDoorMeta> =
+  {
+    import: {
+      id: "import",
+      title: "Import from another platform",
+      summary:
+        "Bring an existing Botpress, Voiceflow, or Dialogflow project across with parity audit.",
+      cta: "Open Migration Atelier",
+      estimatedSeconds: 240,
+    },
+    template: {
+      id: "template",
+      title: "Start from a template",
+      summary:
+        "Working agents with sample KB, mock tools, eval suite, seeded conversations, traces, and cost estimate.",
+      cta: "Browse templates",
+      estimatedSeconds: 60,
+    },
+    blank: {
+      id: "blank",
+      title: "Start blank with the AI co-builder",
+      summary:
+        "An empty agent and the co-builder — first turn streams in under 60 seconds.",
+      cta: "Open Workbench",
+      estimatedSeconds: 60,
+    },
+  };
 
 export interface OnboardingTemplate {
   id: string;
@@ -134,7 +137,8 @@ export const ONBOARDING_TEMPLATES: readonly OnboardingTemplate[] = [
   {
     id: "tmpl_procurement_qa",
     name: "Procurement Q&A",
-    blurb: "Answer vendor, security review, and SOC 2 questionnaires with citations.",
+    blurb:
+      "Answer vendor, security review, and SOC 2 questionnaires with citations.",
     kbSources: 14,
     mockTools: 2,
     evalCases: 20,
@@ -191,6 +195,38 @@ export interface WeeklyRecap {
   kbSourcesUpdated: number;
   costDeltaPercent: number; // positive => up, negative => down
   latencyDeltaPercent: number;
+}
+
+export interface OnboardingClientOptions extends UxWireupClientOptions {
+  allowFixture?: boolean;
+}
+
+export function emptyWeeklyRecap(
+  weekOf = new Date().toISOString().slice(0, 10),
+): WeeklyRecap {
+  return {
+    weekOf,
+    promotions: 0,
+    rollbacks: 0,
+    evalsSaved: 0,
+    kbSourcesUpdated: 0,
+    costDeltaPercent: 0,
+    latencyDeltaPercent: 0,
+  };
+}
+
+export async function fetchWeeklyRecap(
+  workspaceId: string,
+  opts: OnboardingClientOptions = {},
+): Promise<WeeklyRecap> {
+  return cpJson<WeeklyRecap>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/onboarding/weekly-recap`,
+    {
+      ...opts,
+      allowFallback: opts.allowFixture === true,
+      fallback: emptyWeeklyRecap(),
+    },
+  );
 }
 
 /** Returns the canonical recap line per §33.5. */
@@ -257,6 +293,23 @@ export interface ConciergeRequest {
 export interface ConciergeResult {
   consent: ConciergeConsent;
   recommendations: ConciergeRecommendations;
+}
+
+export async function runConciergeFromWorkspace(
+  workspaceId: string,
+  req: ConciergeRequest,
+  opts: OnboardingClientOptions = {},
+): Promise<ConciergeResult> {
+  return cpJson<ConciergeResult>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/onboarding/concierge`,
+    {
+      ...opts,
+      method: "POST",
+      body: req,
+      allowFallback: opts.allowFixture === true,
+      fallback: runConcierge(req),
+    },
+  );
 }
 
 export class ConciergeConsentError extends Error {}
