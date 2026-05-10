@@ -6,9 +6,8 @@
  *   GET  /v1/evals/suites/{suite_id}  → EvalSuiteDetail (latest runs)
  *   GET  /v1/evals/runs/{run_id}      → EvalRunDetail (per-case results)
  *
- * If no cp-api base URL is configured we serve fixture data so the UX
- * can be reviewed end-to-end. Tests pin ``baseUrl`` to drive the live
- * fetch path.
+ * Fixture data is available only for explicit demo/test callers. Route-facing
+ * code must surface a degraded state when the cp-api is not configured.
  */
 
 export type EvalCaseStatus = "pass" | "fail" | "error";
@@ -32,6 +31,12 @@ const FIXTURE_MIGRATION_ID = "fixture_migration_botpress_may";
 const FIXTURE_INBOX_TRACE_ID = "fixture_trace_handoff_legal_threat";
 const FIXTURE_PROVENANCE =
   "Fixture mode: deterministic local-dev eval evidence, not live production data.";
+export const EVAL_SUITES_CP_API_REQUIRED =
+  "LOOP_CP_API_BASE_URL is required to load eval suites.";
+export const EVAL_SUITE_DETAIL_CP_API_REQUIRED =
+  "LOOP_CP_API_BASE_URL is required to load eval suite details.";
+export const EVAL_RUN_DETAIL_CP_API_REQUIRED =
+  "LOOP_CP_API_BASE_URL is required to load eval run details.";
 
 export interface EvalSuite {
   id: string;
@@ -488,7 +493,7 @@ export async function listEvalSuites(
     if (opts.allowFixture) return { items: FIXTURE_SUITES };
     return {
       items: [],
-      degraded_reason: "LOOP_CP_API_BASE_URL is required to load eval suites.",
+      degraded_reason: EVAL_SUITES_CP_API_REQUIRED,
     };
   }
   const fetcher = opts.fetcher ?? fetch;
@@ -505,7 +510,10 @@ export async function getEvalSuite(
   opts: EvalsHelperOptions = {},
 ): Promise<EvalSuiteDetail | null> {
   const base = resolveBase(opts);
-  if (!base) return opts.allowFixture ? fixtureSuiteDetail(suiteId) : null;
+  if (!base) {
+    if (opts.allowFixture) return fixtureSuiteDetail(suiteId);
+    throw new Error(EVAL_SUITE_DETAIL_CP_API_REQUIRED);
+  }
   const fetcher = opts.fetcher ?? fetch;
   const res = await fetcher(`${base}/evals/suites/${suiteId}`, {
     method: "GET",
@@ -521,7 +529,10 @@ export async function getEvalRun(
   opts: EvalsHelperOptions = {},
 ): Promise<EvalRunDetail | null> {
   const base = resolveBase(opts);
-  if (!base) return opts.allowFixture ? fixtureRunDetail(runId) : null;
+  if (!base) {
+    if (opts.allowFixture) return fixtureRunDetail(runId);
+    throw new Error(EVAL_RUN_DETAIL_CP_API_REQUIRED);
+  }
   const fetcher = opts.fetcher ?? fetch;
   const res = await fetcher(`${base}/evals/runs/${runId}`, {
     method: "GET",
