@@ -118,6 +118,10 @@ async def _evidence_pack(
     raise WorkspaceError(f"unknown evidence pack: {evidence_pack_id}")
 
 
+def _evidence_export_bucket(request: Request) -> dict[str, dict[str, Any]]:
+    return request.app.state.cp.ux_wireup.setdefault("evidence_pack_exports", {})
+
+
 async def _notification_targets(request: Request, *, agent: Any, fallback: str) -> list[str]:
     commitment = await request.app.state.cp.agent_commitments.current(agent=agent)
     return list(
@@ -705,6 +709,7 @@ async def export_evidence_pack(
         "created_at": now.isoformat(),
         "expires_at": (now + timedelta(days=7)).isoformat(),
     }
+    _evidence_export_bucket(request)[export_id] = payload
     record_audit_event(
         workspace_id=workspace_id,
         actor_sub=caller_sub,
@@ -741,12 +746,12 @@ async def download_evidence_pack_export(
     )
     workspace_id = agent.workspace_id
     pack = await _evidence_pack(request, agent=agent, evidence_pack_id=evidence_pack_id)
-    redactions = [
-        "secrets",
-        "credentials",
-        "raw_secret_values",
-        "raw_tool_credentials",
-    ]
+    export = _evidence_export_bucket(request).get(export_id)
+    if export is None or export.get("evidence_pack_id") != pack.id:
+        raise HTTPException(status_code=404, detail="evidence pack export not found")
+    if datetime.fromisoformat(str(export["expires_at"])) <= datetime.now(UTC):
+        raise HTTPException(status_code=410, detail="evidence pack export expired")
+    redactions = list(export["redactions"])
     record_audit_event(
         workspace_id=workspace_id,
         actor_sub=caller_sub,
@@ -765,8 +770,16 @@ async def download_evidence_pack_export(
     return {
         "id": export_id,
         "status": "ready",
+        "format": export["format"],
+        "purpose": export["purpose"],
         "evidence_pack_id": pack.id,
+        "deployment_id": pack.deployment_id,
+        "change_package_id": pack.change_package_id,
+        "sections": export["sections"],
+        "artifact_refs": export["artifact_refs"],
         "redactions": redactions,
         "secret_policy": "Raw secrets and tool credentials are never included in evidence exports.",
         "evidence_pack": evidence_pack_payload(pack),
+        "created_at": export["created_at"],
+        "expires_at": export["expires_at"],
     }

@@ -1700,7 +1700,18 @@ def test_deployment_start_creates_evidence_pack_from_approved_change_package(
     downloaded = download.json()
     assert downloaded["id"] == exported["id"]
     assert downloaded["evidence_pack"]["id"] == evidence_pack["id"]
+    assert downloaded["format"] == "json"
+    assert downloaded["purpose"] == "security review"
+    assert downloaded["change_package_id"] == package["id"]
+    assert "pricing" in downloaded["redactions"]
+    assert "audit_log" in downloaded["sections"]
     assert "raw secrets" in downloaded["secret_policy"].lower()
+
+    fabricated = client.get(
+        f"/v1/agents/{agent_id}/evidence-packs/{evidence_pack['id']}/exports/epex_fabricated",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert fabricated.status_code == 404, fabricated.text
 
     audit = client.get(
         f"/v1/audit-events?workspace_id={workspace_id}",
