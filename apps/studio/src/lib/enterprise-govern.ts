@@ -984,6 +984,94 @@ export const BYOK_KEYS: readonly ByokKey[] = [
   },
 ] as const;
 
+interface CpResidencyZone {
+  region: string;
+  label: string;
+  active: boolean;
+  jurisdictions: string[];
+  evidence_ref: string;
+}
+
+interface CpByokKey {
+  id: string;
+  alias: string;
+  scope: "model" | "storage" | "logs";
+  status: ByokStatus;
+  rotated_at_days: number;
+  evidence_ref: string;
+}
+
+interface CpEnterpriseSecurity {
+  workspace_id: string;
+  residency_zones: CpResidencyZone[];
+  byok_keys: CpByokKey[];
+  evidence_ref: string;
+  degraded_reason?: string | null;
+}
+
+export interface EnterpriseSecurityModel {
+  workspaceId: string;
+  residencyZones: ResidencyZone[];
+  byokKeys: ByokKey[];
+  evidenceRef: string;
+  degradedReason?: string | undefined;
+}
+
+function normalizeResidencyRegion(region: string): ResidencyRegion {
+  if (
+    region === "us-east" ||
+    region === "us-west" ||
+    region === "eu-west" ||
+    region === "ap-south"
+  ) {
+    return region;
+  }
+  return "us-east";
+}
+
+function enterpriseSecurityFromCp(body: CpEnterpriseSecurity): EnterpriseSecurityModel {
+  return {
+    workspaceId: body.workspace_id,
+    residencyZones: body.residency_zones.map((zone) => ({
+      region: normalizeResidencyRegion(zone.region),
+      label: zone.label,
+      active: zone.active,
+      jurisdictions: zone.jurisdictions,
+      evidenceRef: zone.evidence_ref,
+    })),
+    byokKeys: body.byok_keys.map((key) => ({
+      id: key.id,
+      alias: key.alias,
+      scope: key.scope,
+      status: key.status,
+      rotatedAtDays: key.rotated_at_days,
+      evidenceRef: key.evidence_ref,
+    })),
+    evidenceRef: body.evidence_ref,
+    degradedReason: body.degraded_reason ?? undefined,
+  };
+}
+
+export async function fetchEnterpriseSecurity(
+  workspaceId: string,
+  opts: UxWireupClientOptions = {},
+): Promise<EnterpriseSecurityModel> {
+  const body = await cpJson<CpEnterpriseSecurity>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/enterprise/security`,
+    {
+      ...opts,
+      fallback: {
+        workspace_id: workspaceId,
+        residency_zones: [],
+        byok_keys: [],
+        evidence_ref: "",
+        degraded_reason: "enterprise security route unavailable",
+      },
+    },
+  );
+  return enterpriseSecurityFromCp(body);
+}
+
 // ---------------------------------------------------------------------------
 // Whitelabel + procurement
 // ---------------------------------------------------------------------------

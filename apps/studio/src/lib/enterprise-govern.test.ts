@@ -16,6 +16,7 @@ import {
   buildRbacMatrix,
   createComplianceEvidenceExport,
   fetchComplianceReview,
+  fetchEnterpriseSecurity,
   filterAudit,
   pendingApprovals,
   rbacAllowed,
@@ -177,5 +178,45 @@ describe("compliance review client", () => {
         { baseUrl: "" },
       ),
     ).rejects.toThrow(/LOOP_CP_API_BASE_URL is required/i);
+  });
+
+  it("loads source-backed residency and BYOK posture", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        workspace_id: "workspace_1",
+        residency_zones: [
+          {
+            region: "eu-west",
+            label: "EU West",
+            active: true,
+            jurisdictions: ["EU", "UK"],
+            evidence_ref: "workspace/residency/eu-west",
+          },
+        ],
+        byok_keys: [
+          {
+            id: "workspace_key_v2",
+            alias: "arn:aws:kms:eu-west-2:111:key/abc",
+            scope: "storage",
+            status: "rotated",
+            rotated_at_days: 0,
+            evidence_ref: "audit/byok/workspace_1/v2",
+          },
+        ],
+        evidence_ref: "enterprise/security/workspace_1",
+      }),
+    );
+
+    const model = await fetchEnterpriseSecurity("workspace_1", {
+      baseUrl: "https://cp.test",
+      fetcher,
+    });
+
+    expect(model.residencyZones[0]?.region).toBe("eu-west");
+    expect(model.byokKeys[0]?.status).toBe("rotated");
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/workspaces/workspace_1/enterprise/security",
+      expect.objectContaining({ method: "GET" }),
+    );
   });
 });

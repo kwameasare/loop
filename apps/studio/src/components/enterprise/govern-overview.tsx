@@ -24,6 +24,8 @@ import {
   type ComplianceProbeSuiteAttachResult,
   type ComplianceReviewModel,
   type AuditCategory,
+  type ByokKey,
+  type ResidencyZone,
 } from "@/lib/enterprise-govern";
 
 const SECTIONS = [
@@ -82,12 +84,20 @@ export interface GovernOverviewProps {
     libraryId: string,
     input?: ComplianceProbeSuiteAttachInput,
   ) => Promise<ComplianceProbeSuiteAttachResult>;
+  residencyZones?: readonly ResidencyZone[];
+  byokKeys?: readonly ByokKey[];
+  securityEvidenceRef?: string;
+  securityDegradedReason?: string;
 }
 
 export function GovernOverview({
   compliance = COMPLIANCE_REVIEW_FIXTURE,
   createExport = createComplianceEvidenceExport,
   attachProbeSuite = attachComplianceProbeSuite,
+  residencyZones = RESIDENCY_ZONES,
+  byokKeys = BYOK_KEYS,
+  securityEvidenceRef,
+  securityDegradedReason,
 }: GovernOverviewProps): JSX.Element {
   const [section, setSection] = useState<SectionId>("compliance");
   const [auditCategory, setAuditCategory] = useState<AuditCategory | "all">(
@@ -775,10 +785,27 @@ export function GovernOverview({
 
         {section === "residency" && (
           <div className="grid gap-3 md:grid-cols-2">
+            {securityDegradedReason ? (
+              <div
+                className="rounded border border-warning/30 bg-warning/10 p-3 text-sm text-warning md:col-span-2"
+                data-testid="enterprise-security-degraded"
+                role="status"
+              >
+                Enterprise security evidence is degraded:{" "}
+                {securityDegradedReason}
+              </div>
+            ) : securityEvidenceRef ? (
+              <div
+                className="rounded border bg-card p-3 text-xs text-muted-foreground md:col-span-2"
+                data-testid="enterprise-security-evidence"
+              >
+                source: {securityEvidenceRef}
+              </div>
+            ) : null}
             <div>
               <h2 className="text-sm font-medium mb-2">Active regions</h2>
               <ul className="space-y-2">
-                {RESIDENCY_ZONES.map((z) => (
+                {residencyZones.map((z) => (
                   <li
                     key={z.region}
                     data-testid={`residency-row-${z.region}`}
@@ -800,12 +827,20 @@ export function GovernOverview({
                     </span>
                   </li>
                 ))}
+                {residencyZones.length === 0 ? (
+                  <li
+                    className="rounded border border-dashed p-3 text-sm text-muted-foreground"
+                    data-testid="residency-empty"
+                  >
+                    No residency evidence loaded from cp-api.
+                  </li>
+                ) : null}
               </ul>
             </div>
             <div>
               <h2 className="text-sm font-medium mb-2">BYOK keys</h2>
               <ul className="space-y-2">
-                {BYOK_KEYS.map((k) => (
+                {byokKeys.map((k) => (
                   <li
                     key={k.id}
                     data-testid={`byok-row-${k.id}`}
@@ -823,6 +858,14 @@ export function GovernOverview({
                     <span className={pill(k.status)}>{k.status}</span>
                   </li>
                 ))}
+                {byokKeys.length === 0 ? (
+                  <li
+                    className="rounded border border-dashed p-3 text-sm text-muted-foreground"
+                    data-testid="byok-empty"
+                  >
+                    No BYOK evidence loaded from cp-api.
+                  </li>
+                ) : null}
               </ul>
             </div>
           </div>
