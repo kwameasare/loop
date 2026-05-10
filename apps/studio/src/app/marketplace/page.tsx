@@ -52,11 +52,17 @@ function MarketplacePageBody(): JSX.Element {
 
   useEffect(() => {
     let cancelled = false;
-    void fetchMarketplaceCatalog()
+    void fetchMarketplaceCatalog(
+      activeWorkspaceId ? { workspaceId: activeWorkspaceId } : {},
+    )
       .then((catalog) => {
         if (cancelled) return;
         setItems(catalog);
-        setSelected((current) => current ?? catalog[0] ?? null);
+        setSelected((current) =>
+          current && catalog.some((item) => item.id === current.id)
+            ? current
+            : catalog[0] ?? null,
+        );
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -67,7 +73,7 @@ function MarketplacePageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [activeWorkspaceId]);
 
   function replaceItem(next: MarketplaceItem): void {
     setItems((current) =>

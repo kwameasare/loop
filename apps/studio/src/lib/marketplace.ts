@@ -234,6 +234,7 @@ export interface MarketplaceClientOptions {
   token?: string;
   baseUrl?: string;
   allowFixture?: boolean;
+  workspaceId?: string;
 }
 
 interface CpMarketplaceItem {
@@ -423,7 +424,10 @@ export async function fetchMarketplaceCatalog(
     throw new Error("LOOP_CP_API_BASE_URL is required to load marketplace.");
   }
   const fetcher = opts.fetcher ?? fetch;
-  const response = await fetcher(`${base}/marketplace`, {
+  const params = new URLSearchParams();
+  if (opts.workspaceId) params.set("workspace_id", opts.workspaceId);
+  const url = `${base}/marketplace${params.size ? `?${params.toString()}` : ""}`;
+  const response = await fetcher(url, {
     method: "GET",
     headers: marketplaceHeaders(opts),
     cache: "no-store",
