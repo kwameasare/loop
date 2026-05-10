@@ -15,6 +15,7 @@ interface AgentDeploysPageProps {
         change_package_id?: string | string[] | undefined;
         deployment_id?: string | string[] | undefined;
         change_set?: string | string[] | undefined;
+        panel?: string | string[] | undefined;
       }
     | undefined;
 }
@@ -87,12 +88,14 @@ export default async function AgentDeploysPage({
       ) : null}
       <ChangePackagePanel
         agentId={params.agent_id}
+        focusedPanel={firstParam(searchParams?.panel)}
         initialPackage={changePackage}
         focusedChangePackageId={firstParam(searchParams?.change_package_id)}
         degradedReason={changePackageDegradedReason}
       />
       <DeployTimeline
         agentId={params.agent_id}
+        focusedPanel={firstParam(searchParams?.panel)}
         focusedDeploymentId={firstParam(searchParams?.deployment_id)}
         approvedChangePackage={
           changePackage.status === "approved" ||

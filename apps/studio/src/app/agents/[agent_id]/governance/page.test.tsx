@@ -37,6 +37,49 @@ describe("AgentGovernancePage", () => {
     expect(screen.getByText("unconfigured")).toBeInTheDocument();
   });
 
+  it("keeps audit evidence-link view focused instead of opening generic governance", async () => {
+    delete process.env.LOOP_CP_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+
+    render(
+      await AgentGovernancePage({
+        params: { agent_id: "agent_govern" },
+        searchParams: { view: "audit" },
+      }),
+    );
+
+    expect(screen.getByTestId("governance-focused-view")).toHaveTextContent(
+      "Agent-scoped audit events are highlighted",
+    );
+    expect(screen.getByTestId("agent-governance-audit-section")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+  });
+
+  it("surfaces channel governance readiness from evidence links", async () => {
+    delete process.env.LOOP_CP_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+
+    render(
+      await AgentGovernancePage({
+        params: { agent_id: "agent_govern" },
+        searchParams: { view: "channels" },
+      }),
+    );
+
+    expect(screen.getByTestId("governance-focused-view")).toHaveTextContent(
+      "Channel compliance readiness",
+    );
+    expect(screen.getByTestId("governance-channel-readiness")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+    expect(screen.getByTestId("governance-channel-readiness")).toHaveTextContent(
+      "Channel changes must prove",
+    );
+  });
+
   it("renders commitment, secret references, and audit events from live agent evidence", async () => {
     process.env.LOOP_CP_API_BASE_URL = "https://cp.test/v1";
     delete process.env.NEXT_PUBLIC_LOOP_API_URL;

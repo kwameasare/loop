@@ -100,6 +100,48 @@ describe("ChangePackagePanel", () => {
     );
   });
 
+  it("focuses release candidate and rollback panels from evidence links", () => {
+    const view = render(
+      <ChangePackagePanel
+        agentId="agt_1"
+        focusedPanel="release-candidate"
+        initialPackage={makePackage()}
+      />,
+    );
+
+    expect(screen.getByTestId("change-package-focused-panel")).toHaveTextContent(
+      "release candidate evidence is highlighted",
+    );
+    expect(
+      screen.getByTestId("change-package-release-candidate-card"),
+    ).toHaveAttribute("data-focused", "true");
+    expect(
+      screen.getByTestId("change-package-release-candidate-card"),
+    ).toHaveTextContent("rc_refund_v2");
+
+    view.unmount();
+    render(
+      <ChangePackagePanel
+        agentId="agt_1"
+        focusedPanel="rollback"
+        initialPackage={makePackage({
+          rollback_target_version_id: "last-known-safe",
+        })}
+      />,
+    );
+
+    expect(screen.getByTestId("change-package-focused-panel")).toHaveTextContent(
+      "rollback target evidence is highlighted",
+    );
+    expect(screen.getByTestId("change-package-rollback-card")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+    expect(screen.getByTestId("change-package-rollback-card")).toHaveTextContent(
+      "last-known-safe",
+    );
+  });
+
   it("warns when a package is stale and approvals must be re-requested", () => {
     render(
       <ChangePackagePanel

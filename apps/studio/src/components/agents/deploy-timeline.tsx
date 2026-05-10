@@ -125,6 +125,7 @@ export interface DeployTimelineProps {
   initialEvidencePacks?: EvidencePack[];
   approvedChangePackage?: ChangePackage | null;
   focusedDeploymentId?: string | undefined;
+  focusedPanel?: string | undefined;
   degradedReason?: string | undefined;
   startCanary?: StartFn;
   exportPack?: ExportEvidencePackFn;
@@ -169,6 +170,7 @@ export function DeployTimeline({
   initialEvidencePacks = [],
   approvedChangePackage = null,
   focusedDeploymentId,
+  focusedPanel,
   degradedReason,
   startCanary = defaultStartCanary,
   exportPack = defaultExportEvidencePack,
@@ -369,6 +371,8 @@ export function DeployTimeline({
     (d) => d.status === "canary" || d.status === "ramp",
   );
   const live = items.find((d) => d.status === "live");
+  const rolloutFocused = focusedPanel === "rollout";
+  const rollbackFocused = focusedPanel === "rollback";
   const evidenceById = new Map(evidencePacks.map((pack) => [pack.id, pack]));
   const deploymentEvidenceIds = new Set(
     items.map((item) => item.evidencePackId).filter(Boolean),
@@ -378,6 +382,17 @@ export function DeployTimeline({
 
   return (
     <section className="flex flex-col gap-4" data-testid="deploy-timeline">
+      {rolloutFocused || rollbackFocused ? (
+        <p
+          className="rounded-md border border-info/40 bg-info/5 px-3 py-2 text-sm text-info"
+          data-testid="deploy-focused-panel"
+        >
+          Opened from evidence link:{" "}
+          {rolloutFocused
+            ? "rollout controls are highlighted."
+            : "rollback candidates are highlighted."}
+        </p>
+      ) : null}
       <header className="flex flex-col gap-1">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -427,8 +442,11 @@ export function DeployTimeline({
       </header>
 
       <section
-        className="rounded-lg border bg-card/70 p-3"
+        className={`rounded-lg border bg-card/70 p-3 ${
+          rolloutFocused ? "ring-2 ring-focus ring-offset-2 ring-offset-background" : ""
+        }`}
         data-testid="rollout-plan-controls"
+        data-focused={rolloutFocused ? "true" : "false"}
       >
         <div className="flex flex-col gap-1">
           <h3 className="text-sm font-semibold">Rollout plan controls</h3>
@@ -582,12 +600,18 @@ export function DeployTimeline({
               <li
                 key={dep.id}
                 className={`rounded border p-3 ${colors} ${
-                  dep.id === focusedDeploymentId
+                  dep.id === focusedDeploymentId ||
+                  (rollbackFocused && dep.status === "live")
                     ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
                     : ""
                 }`}
                 data-testid={`deploy-row-${dep.id}`}
-                data-focused={dep.id === focusedDeploymentId ? "true" : "false"}
+                data-focused={
+                  dep.id === focusedDeploymentId ||
+                  (rollbackFocused && dep.status === "live")
+                    ? "true"
+                    : "false"
+                }
                 data-status={dep.status}
               >
                 {dep.id === focusedDeploymentId ? (

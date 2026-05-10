@@ -95,6 +95,48 @@ describe("DeployTimeline", () => {
     );
   });
 
+  it("focuses rollout and rollback panels opened from evidence links", () => {
+    const view = render(
+      <DeployTimeline
+        agentId="a"
+        focusedPanel="rollout"
+        initialDeployments={[mkDep({ id: "d1", status: "canary" })]}
+      />,
+    );
+
+    expect(screen.getByTestId("deploy-focused-panel")).toHaveTextContent(
+      "rollout controls are highlighted",
+    );
+    expect(screen.getByTestId("rollout-plan-controls")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+
+    view.unmount();
+    render(
+      <DeployTimeline
+        agentId="a"
+        focusedPanel="rollback"
+        initialDeployments={[
+          mkDep({
+            id: "d_live",
+            status: "live",
+            trafficPercent: 100,
+            versionId: "v0",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId("deploy-focused-panel")).toHaveTextContent(
+      "rollback candidates are highlighted",
+    );
+    expect(screen.getByTestId("deploy-row-d_live")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+  });
+
   it("disables promote/pause for non-canary rows and rollback for non-live rows", () => {
     render(
       <DeployTimeline
