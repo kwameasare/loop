@@ -73,6 +73,58 @@ def test_voice_config_requires_workspace_membership(
     assert response.status_code in (401, 403)
 
 
+def test_mint_voice_token_resolves_agent_workspace_and_audits(
+    client: TestClient, workspace_id: UUID
+) -> None:
+    headers = {"authorization": _bearer_for("owner-1")}
+    agent_id = UUID(
+        client.post(
+            "/v1/agents",
+            headers={**headers, "x-loop-workspace-id": str(workspace_id)},
+            json={"name": "Voice Concierge", "slug": "voice-concierge-token"},
+        ).json()["id"]
+    )
+
+    response = client.post(
+        "/v1/voice/mint_token",
+        headers=headers,
+        json={"agent_id": str(agent_id), "identity": "maya@example.test"},
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["token"].count(".") == 2
+    assert body["url"].startswith("wss://")
+    assert body["room"] == f"agent-{agent_id.hex[:12]}"
+    assert body["identity"].startswith("maya@example.test-")
+
+    state = client.app.state.cp  # type: ignore[attr-defined]
+    assert body["identity"] in state.voice_sessions
+    actions = [event.action for event in state.audit_events.list_for_workspace(workspace_id)]
+    assert "voice_token:mint" in actions
+
+
+def test_mint_voice_token_hides_agents_outside_caller_workspaces(
+    client: TestClient, workspace_id: UUID
+) -> None:
+    headers = {"authorization": _bearer_for("owner-1")}
+    agent_id = UUID(
+        client.post(
+            "/v1/agents",
+            headers={**headers, "x-loop-workspace-id": str(workspace_id)},
+            json={"name": "Voice Concierge", "slug": "voice-concierge-hidden"},
+        ).json()["id"]
+    )
+
+    response = client.post(
+        "/v1/voice/mint_token",
+        headers={"authorization": _bearer_for("stranger")},
+        json={"agent_id": str(agent_id)},
+    )
+
+    assert response.status_code == 404
+
+
 def test_voice_stage_composes_config_agent_and_trace(
     client: TestClient, workspace_id: UUID
 ) -> None:

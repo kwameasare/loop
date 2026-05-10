@@ -87,6 +87,7 @@ from loop_control_plane._routes_ux_wireup import (
     router_workspaces as ux_workspaces_router,
 )
 from loop_control_plane._routes_voice import router as voice_router
+from loop_control_plane._routes_voice import router_tokens as voice_tokens_router
 from loop_control_plane._routes_webhooks_incoming import (
     router as webhooks_incoming_router,
 )
@@ -171,6 +172,7 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         agent_conductor_router,
         # UX wire-up: Studio Voice config has a real control-plane contract.
         voice_router,
+        voice_tokens_router,
         # P0.4: conversation list + read + takeover.
         agent_conversations_router,
         conversations_router,

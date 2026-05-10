@@ -193,6 +193,7 @@ class CpApiState:
         default_factory=InMemorySessionMemoryStore
     )
     voice_configs: dict[UUID, dict[str, Any]] = field(default_factory=dict)
+    voice_sessions: dict[str, dict[str, Any]] = field(default_factory=dict)
     saml_configs: dict[UUID, dict[str, Any]] = field(default_factory=dict)
     billing_payment_methods: dict[UUID, dict[str, Any]] = field(default_factory=dict)
     billing_invoices: dict[UUID, list[dict[str, Any]]] = field(default_factory=dict)

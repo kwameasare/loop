@@ -4,9 +4,9 @@
  * P0.3: ``/voice/config`` — voice channel configuration.
  *
  * Wires the panel to ``GET/PATCH /v1/workspaces/{id}/voice/config``.
- * The cp shim hasn't shipped yet; until then GET 404s and we render
- * a default config (no numbers, sensible provider defaults), and
- * PATCH surfaces the "blocked on cp-api PR" error to the user.
+ * If an older cp-api deployment returns 404, the panel marks the
+ * evidence as degraded instead of pretending a real voice setup is
+ * empty.
  */
 
 import { useEffect, useState } from "react";
