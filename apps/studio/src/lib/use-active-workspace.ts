@@ -23,6 +23,7 @@ export interface UseActiveWorkspaceResult {
   workspaces: Workspace[];
   active: Workspace | null;
   isLoading: boolean;
+  degradedReason?: string | undefined;
   setActive: (workspace: Workspace) => void;
 }
 
@@ -33,14 +34,22 @@ export function useActiveWorkspace(): UseActiveWorkspaceResult {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [storedSlug, setStoredSlug] = useState<string | null>(null);
+  const [degradedReason, setDegradedReason] = useState<string | undefined>();
 
   useEffect(() => {
     let cancelled = false;
     void listWorkspaces()
-      .catch(() => ({ workspaces: [] }))
+      .catch((error: unknown) => ({
+        workspaces: [],
+        degraded_reason:
+          error instanceof Error
+            ? error.message
+            : "Could not load workspace context.",
+      }))
       .then((res) => {
         if (cancelled) return;
         setWorkspaces(res.workspaces);
+        setDegradedReason(res.degraded_reason);
         setIsLoading(false);
       });
     return () => {
@@ -81,5 +90,5 @@ export function useActiveWorkspace(): UseActiveWorkspaceResult {
     [params, pathname, router],
   );
 
-  return { workspaces, active, isLoading, setActive };
+  return { workspaces, active, isLoading, degradedReason, setActive };
 }

@@ -16,7 +16,8 @@
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
 
 export function WorkspaceSwitcher() {
-  const { workspaces, active, isLoading, setActive } = useActiveWorkspace();
+  const { workspaces, active, isLoading, degradedReason, setActive } =
+    useActiveWorkspace();
   if (isLoading) {
     return (
       <span
@@ -28,6 +29,18 @@ export function WorkspaceSwitcher() {
     );
   }
   if (workspaces.length === 0 || !active) {
+    if (degradedReason) {
+      return (
+        <span
+          className="interactive-lift inline-flex h-8 items-center rounded-md border border-warning/40 bg-warning/10 px-2 text-sm font-medium text-warning shadow-sm backdrop-blur"
+          data-testid="workspace-switcher-degraded"
+          role="status"
+          title={degradedReason}
+        >
+          Workspace unavailable
+        </span>
+      );
+    }
     return null;
   }
   return (
