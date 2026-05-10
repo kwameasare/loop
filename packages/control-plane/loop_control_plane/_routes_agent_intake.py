@@ -12,6 +12,7 @@ from loop_control_plane.agent_intake import (
     agent_intake_payload,
     apply_enterprise_template,
     build_intake_analysis,
+    candidate_tool_specs,
     template_payloads,
 )
 from loop_control_plane.agent_versions import AgentVersionCreate
@@ -51,11 +52,6 @@ def _channel_type(value: str) -> str | None:
     normalised = "".join(ch for ch in value.lower() if ch.isalnum() or ch == "_")
     channel = _CHANNEL_ALIASES.get(normalised)
     return channel if channel in SUPPORTED_CHANNELS else None
-
-
-def _tool_id(value: str) -> str:
-    slug = "".join(ch if ch.isalnum() else "_" for ch in value.lower()).strip("_")
-    return f"mock_{slug or 'system'}"
 
 
 def _initial_behavior_spec(
@@ -179,23 +175,24 @@ async def create_agent_intake(
         channel_refs.append({"id": binding.id, "channel_type": binding.channel_type})
 
     tool_refs: list[dict[str, str]] = []
-    for system in body.contract.systems_touched:
-        if not system.strip():
-            continue
-        tool_id = _tool_id(system)
+    for tool in candidate_tool_specs(body):
+        tool_id = str(tool["tool_id"])
         contract = await cp.tool_contracts.upsert(
             agent=agent,
             tool_id=tool_id,
             body=ToolContractUpsert(
-                name=f"{system.strip()} mock tool",
+                name=str(tool["name"]),
                 description=(
-                    f"Mock contract inferred from intake for {system.strip()}. "
-                    "Live mode requires owner review."
+                    f"{tool['description']} Source: "
+                    f"{tool.get('source_artifact') or tool.get('source')}."
                 ),
                 side_effect_level="read",
                 sandbox_status="mock",
                 owner_user_id=body.contract.owner_user_id,
-                failure_behavior="Return unavailable in sandbox and preserve a trace span.",
+                failure_behavior=(
+                    "Return unavailable in sandbox and preserve a trace span. "
+                    f"Import mode: {tool.get('import_mode', 'manual_system')}."
+                ),
             ),
         )
         tool_refs.append({"id": contract.id, "tool_id": contract.tool_id})

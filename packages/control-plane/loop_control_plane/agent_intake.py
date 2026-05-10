@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import re
 from datetime import UTC, datetime
 from typing import Any, Literal
+from urllib.parse import urlparse
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -305,7 +307,70 @@ def _intent_map(body: CommitmentBody, capabilities: list[str]) -> list[dict[str,
     return rows[:8]
 
 
-def _candidate_tools(body: CommitmentBody) -> list[dict[str, Any]]:
+_TOOL_ARTIFACT_KINDS: set[ArtifactKind] = {
+    "openapi",
+    "postman",
+    "curl",
+    "devtools_fetch",
+}
+
+
+def _label_from_url(value: str) -> str:
+    parsed = urlparse(value)
+    host = (parsed.hostname or "").split(".")[0]
+    path = next(
+        (
+            part
+            for part in parsed.path.split("/")
+            if part and not re.fullmatch(r"v\d+", part.lower())
+        ),
+        "",
+    )
+    parts = [part for part in [host, path if path != host else "", "api"] if part]
+    return " ".join(parts) or value
+
+
+def _first_url(value: str) -> str:
+    match = re.search(r"https?://[^\s'\"),]+", value)
+    return match.group(0) if match else ""
+
+
+def _artifact_tool_label(artifact: AgentIntakeArtifactInput) -> str:
+    text = artifact.text.strip()
+    source = artifact.source_ref.strip()
+    raw = text or source or artifact.name
+
+    if artifact.kind in {"curl", "devtools_fetch"}:
+        url = _first_url(raw)
+        if url:
+            return _label_from_url(url)
+
+    if artifact.kind == "postman" and text:
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            parsed = None
+        if isinstance(parsed, dict) and str(parsed.get("name", "")).strip():
+            return str(parsed["name"]).strip()
+        info = parsed.get("info") if isinstance(parsed, dict) else None
+        if isinstance(info, dict) and str(info.get("name", "")).strip():
+            return str(info["name"]).strip()
+
+    if artifact.kind == "openapi" and text:
+        title = re.search(r'(?im)^\s*title\s*:\s*["\']?([^"\'\n]+)', text)
+        if title:
+            return title.group(1).strip()
+        quoted = re.search(r'"title"\s*:\s*"([^"]+)"', text)
+        if quoted:
+            return quoted.group(1).strip()
+
+    url = _first_url(raw)
+    if url:
+        return _label_from_url(url)
+    return re.sub(r"\.[A-Za-z0-9]{2,8}$", "", artifact.name).replace("_", " ")
+
+
+def _system_tool_candidates(body: CommitmentBody) -> list[dict[str, Any]]:
     tools: list[dict[str, Any]] = []
     for system in body.systems_touched:
         if not system.strip():
@@ -319,10 +384,55 @@ def _candidate_tools(body: CommitmentBody) -> list[dict[str, Any]]:
                 "side_effect_level": "read",
                 "sandbox_status": "mock",
                 "owner_user_id": body.owner_user_id,
+                "source": "contract:systems_touched",
+                "source_artifact": "",
+                "import_mode": "manual_system",
                 "promotion_blocker": "Live mode requires owner review and failure behavior.",
             }
         )
     return tools
+
+
+def _artifact_tool_candidates(
+    body: CommitmentBody,
+    artifacts: list[AgentIntakeArtifactInput],
+) -> list[dict[str, Any]]:
+    tools: list[dict[str, Any]] = []
+    for artifact in artifacts:
+        if artifact.kind not in _TOOL_ARTIFACT_KINDS:
+            continue
+        label = _artifact_tool_label(artifact)
+        tool_id = f"mock_{_normalise_token(label)}"
+        tools.append(
+            {
+                "tool_id": tool_id,
+                "name": f"{_display(label)} draft tool",
+                "description": (
+                    f"Sandbox contract inferred from {artifact.kind} artifact "
+                    f"{artifact.name}; live credentials are not required for first proof."
+                ),
+                "side_effect_level": "read",
+                "sandbox_status": "mock",
+                "owner_user_id": body.owner_user_id,
+                "source": f"artifact:{artifact.kind}",
+                "source_artifact": artifact.source_ref or artifact.name,
+                "import_mode": artifact.kind,
+                "promotion_blocker": (
+                    "Review side effects, auth, schemas, and failure behavior before live use."
+                ),
+            }
+        )
+    return tools
+
+
+def candidate_tool_specs(body: AgentIntakeCreate) -> list[dict[str, Any]]:
+    deduped: dict[str, dict[str, Any]] = {}
+    for tool in [
+        *_system_tool_candidates(body.contract),
+        *_artifact_tool_candidates(body.contract, body.artifacts),
+    ]:
+        deduped.setdefault(str(tool["tool_id"]), tool)
+    return list(deduped.values())
 
 
 def _candidate_channels(body: CommitmentBody) -> list[dict[str, Any]]:
@@ -409,7 +519,7 @@ def build_intake_analysis(
     ]
     contradictions = _contradictions(body.artifacts)
     missing = _missing_information(body.contract, body.artifacts)
-    candidate_tools = _candidate_tools(body.contract)
+    candidate_tools = candidate_tool_specs(body)
     candidate_channels = _candidate_channels(body.contract)
     candidate_eval_cases = _candidate_eval_cases(body.contract)
     ready = [
