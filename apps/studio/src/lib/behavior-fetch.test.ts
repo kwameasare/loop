@@ -62,6 +62,8 @@ describe("fetchBehaviorEditorData", () => {
       confidence: "unsupported",
       citedOutputs7d: 0,
     });
+    expect(data.riskFlags).toEqual([]);
+    expect(data.evalEvidence).toBe("cp-api version ver_1; eval status passed");
   });
 
   it("hydrates behavior sentence telemetry from live cp-api evidence", async () => {
@@ -96,5 +98,49 @@ describe("fetchBehaviorEditorData", () => {
       evidence: "trace_1, trace_2",
       confidence: "high",
     });
+  });
+
+  it("derives live risk flags from the version instead of fixture-era claims", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.endsWith("/versions")) {
+        return Response.json({
+          items: [
+            {
+              id: "ver_risky",
+              agent_id: "agent_support",
+              version: 2,
+              created_at: "2026-05-09T11:00:00Z",
+              spec: {
+                deploy_state: "inactive",
+                eval_status: "failed",
+                system_prompt:
+                  "Remember support preferences. Never store payment data or secrets.",
+                tools: ["issue_refund"],
+              },
+            },
+          ],
+        });
+      }
+      return new Response("missing", { status: 404 });
+    });
+
+    const data = await fetchBehaviorEditorData("agent_support", {
+      baseUrl: "https://cp.test/v1",
+      fetcher,
+    });
+
+    expect(data.riskFlags.map((flag) => flag.id)).toEqual([
+      "risk_eval_gap",
+      "risk_tool_grant",
+      "risk_memory_boundary",
+    ]);
+    expect(data.riskFlags.map((flag) => flag.evidence).join(" ")).toContain(
+      "cp-api version ver_risky",
+    );
+    expect(data.riskFlags.map((flag) => flag.evidence).join(" ")).not.toContain(
+      "eval_refunds case refund_window_es_may",
+    );
+    expect(data.preview.canApply).toBe(false);
   });
 });

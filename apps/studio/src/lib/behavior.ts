@@ -153,6 +153,52 @@ function parseConfig(version: AgentVersionDetail): Record<string, unknown> {
   }
 }
 
+function toolHasProductionRisk(tool: string): boolean {
+  return /refund|delete|send|write|charge|issue|create|update|payment/i.test(
+    tool,
+  );
+}
+
+function liveRiskFlags(args: {
+  version: AgentVersionDetail;
+  prompt: string;
+  toolNames: readonly string[];
+}): BehaviorRiskFlag[] {
+  const flags: BehaviorRiskFlag[] = [];
+  if (args.version.eval_status !== "passed") {
+    flags.push({
+      id: "risk_eval_gap",
+      label: "Missing eval coverage",
+      level: "high",
+      description:
+        "This version has not passed evals, so behavior cannot be treated as production-safe.",
+      evidence: `cp-api version ${args.version.id}; eval status ${args.version.eval_status}`,
+    });
+  }
+  const riskyTools = args.toolNames.filter(toolHasProductionRisk);
+  if (riskyTools.length > 0) {
+    flags.push({
+      id: "risk_tool_grant",
+      label: "Tool grant risk",
+      level: "blocked",
+      description:
+        "This behavior declares a tool that can mutate state, send external messages, or move money. Production use requires review.",
+      evidence: `cp-api version ${args.version.id}; tools ${riskyTools.join(", ")}`,
+    });
+  }
+  if (/remember|memory|retain|store|payment|secret|pii/i.test(args.prompt)) {
+    flags.push({
+      id: "risk_memory_boundary",
+      label: "Memory boundary",
+      level: "medium",
+      description:
+        "This behavior mentions memory, retention, payment data, secrets, or PII. Confirm the memory policy before promotion.",
+      evidence: `cp-api version ${args.version.id}; prompt memory boundary scan`,
+    });
+  }
+  return flags;
+}
+
 const BEHAVIOR_RISKS: BehaviorRiskFlag[] = [
   {
     id: "risk_eval_gap",
@@ -399,10 +445,8 @@ export function createBehaviorEditorData(
 export function createBehaviorEditorDataFromVersion(
   agentId: string,
   version: AgentVersionDetail | null,
-  fixture: TargetUXFixture = targetUxFixtures,
 ): BehaviorEditorData {
   if (!version) return createEmptyBehaviorEditorData(agentId);
-  const base = createBehaviorEditorData(agentId, fixture);
   const spec = parseConfig(version);
   const prompt =
     typeof spec.system_prompt === "string"
@@ -413,6 +457,7 @@ export function createBehaviorEditorDataFromVersion(
   const toolNames = Array.isArray(spec.tools)
     ? spec.tools.map((tool) => String(tool))
     : [];
+  const riskFlags = liveRiskFlags({ version, prompt, toolNames });
   const promptSentences =
     prompt.trim().length > 0
       ? sentencesFromPrompt(prompt, version)
@@ -477,18 +522,20 @@ export function createBehaviorEditorDataFromVersion(
           evidence: `agent version ${version.version} tool declaration`,
           confidence: version.eval_status === "passed" ? "medium" : "low",
         },
-        riskIds: /refund|delete|send|write|charge/i.test(tool)
+        riskIds: toolHasProductionRisk(tool)
           ? ["risk_tool_grant"]
           : [],
       })),
     },
   ];
   return {
-    ...base,
+    agentId,
+    agentName: `Agent ${agentId}`,
     branch: `v${version.version}`,
     objectState: version.deploy_state === "active" ? "production" : "saved",
     trust: version.eval_status === "passed" ? "healthy" : "watching",
     sections: liveSections,
+    riskFlags,
     semanticDiffs: [
       {
         id: "live_version_spec",
