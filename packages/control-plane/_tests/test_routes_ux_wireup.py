@@ -231,6 +231,68 @@ def _start_canary_deployment(
     return started.json()["deployment"]
 
 
+def _create_deployable_release_candidate(
+    client: TestClient,
+    agent_id: UUID,
+    *,
+    name: str = "Release candidate change set",
+) -> dict[str, object]:
+    branch = client.post(
+        f"/v1/agents/{agent_id}/branches",
+        headers=_auth(),
+        json={"name": f"{name.lower().replace(' ', '-')}", "base_version_id": "v1"},
+    )
+    assert branch.status_code == 201, branch.text
+    change_set = client.post(
+        f"/v1/agents/{agent_id}/change-sets",
+        headers=_auth(),
+        json={
+            "branch_id": branch.json()["id"],
+            "name": name,
+            "summary": "Prepare governed release candidate for preflight.",
+            "source_type": "manual_edit",
+            "source_refs": ["trace/replay/refund-account-check"],
+            "changed_objects": [
+                {
+                    "type": "behavior",
+                    "id": "behavior.refund_policy",
+                    "summary": "Require account verification before refund answer.",
+                }
+            ],
+        },
+    )
+    assert change_set.status_code == 201, change_set.text
+    ready_for_tests = client.post(
+        f"/v1/agents/{agent_id}/change-sets/{change_set.json()['id']}/ready-for-tests",
+        headers=_auth(),
+    )
+    assert ready_for_tests.status_code == 200, ready_for_tests.text
+    ready_for_review = client.post(
+        f"/v1/agents/{agent_id}/change-sets/{change_set.json()['id']}/ready-for-review",
+        headers=_auth(),
+        json={
+            "eval_results_ref": "eval/run/refund-core/green",
+            "required_eval_suites": ["refund-core"],
+            "passed": True,
+        },
+    )
+    assert ready_for_review.status_code == 200, ready_for_review.text
+    rc = client.post(
+        f"/v1/agents/{agent_id}/change-sets/{change_set.json()['id']}/release-candidates",
+        headers=_auth(),
+        json={"required_eval_suites": ["refund-core"], "required_approvals": ["owner"]},
+    )
+    assert rc.status_code == 201, rc.text
+    approved = client.post(
+        f"/v1/agents/{agent_id}/release-candidates/{rc.json()['id']}/approve",
+        headers=_auth(),
+        json={"approval_id": "owner", "comment": "Preflight-ready."},
+    )
+    assert approved.status_code == 200, approved.text
+    assert approved.json()["status"] == "deployable"
+    return approved.json()
+
+
 def test_presence_websocket_broadcasts_selection_updates(
     client: TestClient, workspace_id: UUID
 ) -> None:
@@ -742,13 +804,16 @@ def test_branch_change_set_and_release_candidate_state_machine(
 def test_change_package_preflight_links_commitment_evidence_and_stales_on_change(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:
+    release_candidate = _create_deployable_release_candidate(
+        client,
+        agent_id,
+        name="Refund policy preflight",
+    )
     package = client.post(
         f"/v1/agents/{agent_id}/change-packages/preflight",
         headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
         json={
-            "branch_id": "main/draft",
-            "change_set_id": "cs_refund",
-            "release_candidate_id": "rc_refund_v2",
+            "release_candidate_id": release_candidate["id"],
             "from_version_id": "v1",
             "to_version_id": "v2",
             "target_environment": "production",
@@ -771,12 +836,12 @@ def test_change_package_preflight_links_commitment_evidence_and_stales_on_change
     assert package.status_code == 201, package.text
     body = package.json()
     assert body["status"] == "generated"
-    assert body["change_set_id"] == "cs_refund"
-    assert body["release_candidate_id"] == "rc_refund_v2"
+    assert body["change_set_id"] == release_candidate["change_set_id"]
+    assert body["release_candidate_id"] == release_candidate["id"]
     assert body["commitment_document_id"].startswith("commit_")
     assert body["evidence"]["commitment"] == body["commitment_document_id"]
-    assert body["evidence"]["change_set"] == "cs_refund"
-    assert body["evidence"]["release_candidate"] == "rc_refund_v2"
+    assert body["evidence"]["change_set"] == release_candidate["change_set_id"]
+    assert body["evidence"]["release_candidate"] == release_candidate["id"]
     assert body["required_approvals"][0]["role"] == "Agent owner"
 
     submitted = client.post(
@@ -823,7 +888,6 @@ def test_change_package_preflight_links_commitment_evidence_and_stales_on_change
         json={
             "branch_id": "main/draft",
             "change_set_id": "cs_refund",
-            "release_candidate_id": "rc_refund_v3",
             "from_version_id": "v1",
             "to_version_id": "v3",
             "summary": "Promote safer refund handling plus Spanish copy.",
@@ -850,6 +914,72 @@ def test_change_package_preflight_links_commitment_evidence_and_stales_on_change
         "change_package:submit",
         "change_package:approval",
     }
+
+
+def test_change_package_preflight_requires_approved_release_candidate_when_named(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    missing = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "release_candidate_id": "rc_missing",
+            "summary": "Attempt preflight for an unknown release candidate.",
+        },
+    )
+    assert missing.status_code == 404, missing.text
+    assert "unknown release candidate" in missing.json()["message"]
+
+    branch = client.post(
+        f"/v1/agents/{agent_id}/branches",
+        headers=_auth(),
+        json={"name": "blocked-rc", "base_version_id": "v1"},
+    )
+    assert branch.status_code == 201, branch.text
+    change_set = client.post(
+        f"/v1/agents/{agent_id}/change-sets",
+        headers=_auth(),
+        json={
+            "branch_id": branch.json()["id"],
+            "name": "Blocked release candidate",
+            "summary": "Create a release candidate that has not been approved.",
+            "changed_objects": [{"type": "behavior", "id": "behavior.refund"}],
+        },
+    )
+    assert change_set.status_code == 201, change_set.text
+    ready_for_tests = client.post(
+        f"/v1/agents/{agent_id}/change-sets/{change_set.json()['id']}/ready-for-tests",
+        headers=_auth(),
+    )
+    assert ready_for_tests.status_code == 200, ready_for_tests.text
+    ready_for_review = client.post(
+        f"/v1/agents/{agent_id}/change-sets/{change_set.json()['id']}/ready-for-review",
+        headers=_auth(),
+        json={
+            "eval_results_ref": "eval/run/refund-core/green",
+            "required_eval_suites": ["refund-core"],
+            "passed": True,
+        },
+    )
+    assert ready_for_review.status_code == 200, ready_for_review.text
+    rc = client.post(
+        f"/v1/agents/{agent_id}/change-sets/{change_set.json()['id']}/release-candidates",
+        headers=_auth(),
+        json={"required_eval_suites": ["refund-core"], "required_approvals": ["owner"]},
+    )
+    assert rc.status_code == 201, rc.text
+    assert rc.json()["status"] == "ready_for_approval"
+
+    blocked = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "release_candidate_id": rc.json()["id"],
+            "summary": "Attempt preflight before release candidate approval.",
+        },
+    )
+    assert blocked.status_code == 400, blocked.text
+    assert "must be approved or deployable" in blocked.json()["message"]
 
 
 def test_channel_bindings_are_peer_agent_objects_with_readiness(

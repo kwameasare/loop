@@ -16,6 +16,7 @@ from loop_control_plane.change_packages import (
     infer_change_types,
 )
 from loop_control_plane.preapproved_classes import RiskCeiling, preapproved_class_payload
+from loop_control_plane.workspaces import WorkspaceError
 
 router = APIRouter(prefix="/v1/agents", tags=["ChangePackages"])
 
@@ -57,6 +58,30 @@ def _audit(
         request_id=request_id(request),
         payload=payload,
     )
+
+
+async def _release_candidate_for_preflight(
+    request: Request,
+    *,
+    agent: Any,
+    release_candidate_id: str,
+) -> Any | None:
+    if release_candidate_id in {"", "rc-current"}:
+        return None
+    _, _, release_candidates = await request.app.state.cp.agent_workflows.list_for_agent(
+        agent=agent
+    )
+    release_candidate = next(
+        (item for item in release_candidates if item.id == release_candidate_id),
+        None,
+    )
+    if release_candidate is None:
+        raise WorkspaceError(f"unknown release candidate: {release_candidate_id}")
+    if release_candidate.status not in {"approved", "deployable"}:
+        raise WorkspaceError(
+            f"release candidate {release_candidate_id} must be approved or deployable before preflight"
+        )
+    return release_candidate
 
 
 @router.get("/{agent_id}/change-packages")
@@ -108,6 +133,21 @@ async def generate_change_package(
         caller_sub=caller_sub,
     )
     commitment = await request.app.state.cp.agent_commitments.current(agent=agent)
+    release_candidate = await _release_candidate_for_preflight(
+        request,
+        agent=agent,
+        release_candidate_id=body.release_candidate_id,
+    )
+    if release_candidate is not None:
+        body = body.model_copy(
+            update={
+                "branch_id": release_candidate.branch_id,
+                "change_set_id": release_candidate.change_set_id,
+                "to_version_id": release_candidate.candidate_version_id
+                if body.to_version_id == "draft"
+                else body.to_version_id,
+            }
+        )
     change_types = infer_change_types(body)
     risk = infer_change_risk(body)
     preapproved = await request.app.state.cp.preapproved_classes.applicable(
@@ -147,6 +187,10 @@ async def generate_change_package(
             "status": package.status,
             "change_types": change_types,
             "risk": risk,
+            "release_candidate_id": body.release_candidate_id,
+            "release_candidate_status": release_candidate.status
+            if release_candidate is not None
+            else None,
             "pre_approved_classes": [record.id for record in preapproved],
         },
     )
