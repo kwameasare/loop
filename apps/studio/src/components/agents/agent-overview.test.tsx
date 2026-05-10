@@ -13,6 +13,7 @@ import {
 import { buildLocalChangePackage } from "@/lib/change-package";
 import { buildLocalChannelBindings } from "@/lib/channel-bindings";
 import type { EvalSuite } from "@/lib/evals";
+import { localAgentHandoff } from "@/lib/agent-handoff";
 import type { KbDocument } from "@/lib/kb";
 import { localMemoryPolicies } from "@/lib/memory-policies";
 import { localToolContracts } from "@/lib/tool-contracts";
@@ -403,6 +404,76 @@ describe("AgentOverview", () => {
     expect(screen.getByTestId("safe-action-approval")).toBeDisabled();
     expect(screen.getByTestId("safe-action-approval")).toHaveTextContent(
       "1 required approval pending",
+    );
+  });
+
+  it("surfaces handoff walkthrough ownership and open-risk evidence", () => {
+    const handoffModel = {
+      ...localAgentHandoff("ag_1"),
+      owner_user_id: "maya@acme.test",
+      backup_owner_user_id: "sam@acme.test",
+      generated_at: "2026-05-09T15:00:00Z",
+      open_risks: [
+        {
+          id: "risk_open_escalation",
+          severity: "blocking" as const,
+          title: "Escalation owner missing",
+          detail: "Assign a fallback owner before PTO handoff.",
+          evidence_ref: "commitment/commit_1",
+        },
+      ],
+      walkthrough_sections: [
+        {
+          id: "change-packages",
+          title: "Change Packages",
+          summary: "Two recent packages need review.",
+          count: 2,
+          evidence_refs: ["change-package/cp_1", "change-package/cp_2"],
+        },
+        {
+          id: "incidents",
+          title: "Incidents",
+          summary: "One incident produced eval coverage.",
+          count: 1,
+          evidence_refs: ["incident/inc_1"],
+        },
+      ],
+      transfers: [
+        {
+          id: "transfer_1",
+          workspace_id: "ws_1",
+          agent_id: "ag_1",
+          previous_owner_user_id: "old@acme.test",
+          new_owner_user_id: "maya@acme.test",
+          backup_owner_user_id: "sam@acme.test",
+          reason: "Planned support rotation.",
+          acknowledged_risk_ids: [],
+          open_risk_ids: ["risk_open_escalation"],
+          walkthrough_section_ids: ["change-packages", "incidents"],
+          notification: {
+            recipient: "maya@acme.test",
+            channel: "in_app",
+            status: "sent",
+            sent_at: "2026-05-09T15:05:00Z",
+            summary: "Review the walkthrough.",
+          },
+          history_walkthrough_id: "walk_1",
+          created_by_user_id: "lead@acme.test",
+          created_at: "2026-05-09T15:00:00Z",
+        },
+      ],
+    };
+
+    render(<AgentOverview {...BASE_PROPS} handoffModel={handoffModel} />);
+
+    expect(screen.getByTestId("agent-outline-history")).toHaveTextContent(
+      "2 walkthrough sections; 1 open risk; owner maya@acme.test",
+    );
+    expect(screen.getByTestId("agent-outline-history")).toHaveTextContent(
+      "Resolve 1 blocking handoff risk before ownership transfer",
+    );
+    expect(screen.getByTestId("safe-action-rollback")).toHaveTextContent(
+      "walk_1",
     );
   });
 

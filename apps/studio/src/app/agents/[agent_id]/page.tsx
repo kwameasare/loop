@@ -20,6 +20,10 @@ import {
 } from "@/lib/channel-bindings";
 import { listDeployments, type Deployment } from "@/lib/deploys";
 import { listEvalSuites, type EvalSuite } from "@/lib/evals";
+import {
+  fetchAgentHandoff,
+  type AgentHandoffModel,
+} from "@/lib/agent-handoff";
 import { listKbDocuments, type KbDocument } from "@/lib/kb";
 import { listMemoryPolicies, type MemoryPolicy } from "@/lib/memory-policies";
 import { listToolContracts, type ToolContract } from "@/lib/tool-contracts";
@@ -187,6 +191,16 @@ export default async function AgentOverviewPage({
       );
     }
   }
+  let handoffModel: AgentHandoffModel | undefined;
+  let handoffDegradedReason: string | undefined;
+  try {
+    handoffModel = await fetchAgentHandoff(params.agent_id);
+  } catch (error) {
+    handoffDegradedReason = errorMessage(
+      error,
+      "Could not load agent handoff history.",
+    );
+  }
   const combinedDegradedReason = [
     degradedReason,
     commitmentDegradedReason,
@@ -198,6 +212,7 @@ export default async function AgentOverviewPage({
     knowledgeDegradedReason,
     changePackageDegradedReason,
     tracesDegradedReason,
+    handoffDegradedReason,
   ]
     .filter(Boolean)
     .join(" ");
@@ -235,6 +250,8 @@ export default async function AgentOverviewPage({
       changePackageDegradedReason={changePackageDegradedReason}
       traceSummaries={traceSummaries}
       tracesDegradedReason={tracesDegradedReason}
+      handoffModel={handoffModel}
+      handoffDegradedReason={handoffDegradedReason}
       commitment={commitment}
     />
   );
