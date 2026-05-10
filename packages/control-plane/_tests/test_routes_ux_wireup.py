@@ -607,6 +607,16 @@ def test_estate_health_derives_claims_from_workspace_objects(
         },
     )
     assert deployment.status_code == 201, deployment.text
+    catch_run = client.post(
+        f"/v1/agents/{agent_id}/adversarial-probes/run",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "rule_id": "refund_cap",
+            "rule_text": "Never approve refunds over $500.",
+            "risk_class": "high",
+        },
+    )
+    assert catch_run.status_code == 201, catch_run.text
 
     response = client.get(
         f"/v1/workspaces/{workspace_id}/estate-health",
@@ -624,7 +634,9 @@ def test_estate_health_derives_claims_from_workspace_objects(
     assert body["summary"]["open_incidents"] == 1
     assert body["summary"]["owner_risks"] == 1
     assert body["summary"]["active_rollouts"] == 1
+    assert body["summary"]["open_catches"] == 1
     assert "deployments.list_for_agent" in body["provenance"]
+    assert "adversarial_catches.list_for_agent" in body["provenance"]
     assert {item["id"] for item in body["attention"]} >= {
         "pending-approvals",
         "trace-errors",
@@ -632,6 +644,7 @@ def test_estate_health_derives_claims_from_workspace_objects(
         "continuity-owner-risks",
         f"draft-agent-{agent_id}",
         "active-rollouts",
+        "open-adversarial-catches",
     }
     assert all(item["source"] for item in body["attention"])
     assert body["shared_dependencies"][0]["id"] == "tool:refund_payment"
@@ -645,12 +658,16 @@ def test_estate_health_derives_claims_from_workspace_objects(
         "web_chat",
         "whatsapp",
     }
-    assert body["failure_clusters"][0]["kind"] == "incident"
+    assert {cluster["kind"] for cluster in body["failure_clusters"]} >= {
+        "incident",
+        "adversarial_catch",
+    }
     assert body["owner_risks"][0]["id"] == f"ownerless-agent-{agent_id}"
     assert {
         "cluster_failures",
         "detect_drift",
         "detect_dead_behavior_sections",
+        "adversarial_probe_catches",
         "summarize_operator_takeovers",
     } <= {job["id"] for job in body["background_jobs"]}
 

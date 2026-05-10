@@ -529,6 +529,9 @@ async def get_estate_health(
     tool_contracts_by_agent = {
         agent.id: await cp.tool_contracts.list_for_agent(agent=agent) for agent in agents
     }
+    adversarial_catches_by_agent = {
+        agent.id: await cp.adversarial_catches.list_for_agent(agent=agent) for agent in agents
+    }
     channel_bindings_by_agent = {
         agent.id: await cp.channel_bindings.list_for_agent(agent=agent) for agent in agents
     }
@@ -551,6 +554,12 @@ async def get_estate_health(
     ]
     open_incidents = [
         incident for incident in incidents if incident.status not in {"resolved", "archived"}
+    ]
+    open_catches = [
+        (agent, catch)
+        for agent in agents
+        for catch in adversarial_catches_by_agent.get(agent.id, [])
+        if catch.status == "open"
     ]
     blocked_deploys = [
         package
@@ -618,6 +627,20 @@ async def get_estate_health(
                 "detail": "Approval, channel readiness, or stale evidence is preventing promotion.",
                 "href": "/deploys",
                 "source": "change_packages.required_approvals",
+            }
+        )
+    if open_catches:
+        first_agent, first_catch = open_catches[0]
+        attention.append(
+            {
+                "id": "open-adversarial-catches",
+                "severity": "critical"
+                if any(catch.risk_class == "high" for _, catch in open_catches)
+                else "watch",
+                "title": f"{len(open_catches)} adversarial catch(es) need interpretation",
+                "detail": "Resolve the platform's edge-case questions so the answer becomes eval coverage.",
+                "href": f"/agents/{first_agent.id}/behavior?catch_id={first_catch.id}",
+                "source": "adversarial_catches.list_for_agent",
             }
         )
     owner_risks: list[dict[str, Any]] = []
@@ -812,6 +835,18 @@ async def get_estate_health(
                 "evidence_ref": "trace_search.only_errors",
             }
         )
+    failure_clusters.extend(
+        {
+            "id": f"catch:{catch.id}",
+            "kind": "adversarial_catch",
+            "severity": "high" if catch.risk_class == "high" else "medium",
+            "title": catch.question,
+            "affected": 1,
+            "href": f"/agents/{agent.id}/behavior?catch_id={catch.id}",
+            "evidence_ref": catch.evidence_ref,
+        }
+        for agent, catch in open_catches[:4]
+    )
 
     background_jobs = [
         {
@@ -851,6 +886,12 @@ async def get_estate_health(
             "evidence_ref": "estate/jobs/detect_dead_behavior_sections",
         },
         {
+            "id": "adversarial_probe_catches",
+            "status": "completed" if open_catches else "waiting_for_catches",
+            "output_count": len(open_catches),
+            "evidence_ref": "estate/jobs/adversarial_probe_catches",
+        },
+        {
             "id": "summarize_operator_takeovers",
             "status": "completed",
             "output_count": len(pending_inbox),
@@ -867,6 +908,7 @@ async def get_estate_health(
             "change_packages.list_for_agent",
             "tool_contracts.list_for_agent",
             "channel_bindings.list_for_agent",
+            "adversarial_catches.list_for_agent",
             "deployments.list_for_agent",
             "incidents.list_for_workspace",
             "agent_commitments.current",
@@ -890,6 +932,7 @@ async def get_estate_health(
             "open_incidents": len(open_incidents),
             "blocked_deploys": len(pending_changesets) + len(blocked_deploys),
             "owner_risks": len(owner_risks),
+            "open_catches": len(open_catches),
         },
         "attention": attention[:8],
         "shared_dependencies": shared_dependencies[:8],
