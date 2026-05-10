@@ -168,7 +168,7 @@ def test_cobuilder_apply_creates_branch_changeset_and_audit(
     assert "cobuilder:action_apply" in {item["action"] for item in audit.json()["items"]}
 
 
-def test_cobuilder_apply_blocks_without_matching_consent(
+def test_cobuilder_apply_requires_admin_even_when_member_has_edit_consent(
     client: TestClient,
 ) -> None:
     workspace_id = _workspace(client)
@@ -187,16 +187,25 @@ def test_cobuilder_apply_blocks_without_matching_consent(
     client.post(
         f"/v1/workspaces/{workspace_id}/members",
         headers=owner_headers,
-        json={"user_sub": "viewer-1", "role": "viewer"},
+        json={"user_sub": "member-1", "role": "member"},
+    )
+    member_headers = {"authorization": _bearer_for("member-1")}
+
+    workspace = client.get(
+        f"/v1/workspaces/{workspace_id}/cobuilder",
+        headers=member_headers,
+    )
+    assert workspace.status_code == 200, workspace.text
+    assert workspace.json()["operator"]["maxMode"] == "edit"
+    assert any(
+        action["id"] == "act_replay_before_promote"
+        for action in workspace.json()["actions"]
     )
 
     response = client.post(
-        f"/v1/workspaces/{workspace_id}/cobuilder/actions/act_gate_side_effect_tool/apply",
-        headers={"authorization": _bearer_for("viewer-1")},
+        f"/v1/workspaces/{workspace_id}/cobuilder/actions/act_replay_before_promote/apply",
+        headers=member_headers,
         json={"agent_id": str(agent_id)},
     )
 
     assert response.status_code == 403, response.text
-    detail = response.json()["detail"]
-    assert detail["message"] == "Action is blocked by the Co-Builder consent policy."
-    assert {item["code"] for item in detail["reasons"]} == {"mode", "scope"}
