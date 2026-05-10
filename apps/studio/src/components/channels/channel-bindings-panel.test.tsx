@@ -56,6 +56,30 @@ describe("ChannelBindingsPanel", () => {
     expect(
       screen.getByTestId("channel-binding-contract-webhook_api"),
     ).toHaveTextContent("Signed JSON payload");
+    expect(
+      screen.getByTestId("channel-required-config-web_chat"),
+    ).toHaveTextContent("Embed snippet");
+    expect(
+      screen.getByTestId("channel-required-config-whatsapp"),
+    ).toHaveTextContent("Template approvals");
+    expect(
+      screen.getByTestId("channel-required-config-telegram"),
+    ).toHaveTextContent("Abuse controls");
+    expect(
+      screen.getByTestId("channel-required-config-slack"),
+    ).toHaveTextContent("Slash commands");
+    expect(
+      screen.getByTestId("channel-required-config-sms"),
+    ).toHaveTextContent("Carrier compliance");
+    expect(
+      screen.getByTestId("channel-required-config-email"),
+    ).toHaveTextContent("Signature policy");
+    expect(
+      screen.getByTestId("channel-required-config-voice"),
+    ).toHaveTextContent("Barge-in policy");
+    expect(
+      screen.getByTestId("channel-required-config-webhook_api"),
+    ).toHaveTextContent("Idempotency key");
   });
 
   it("starts setup by upserting a draft channel binding", async () => {
