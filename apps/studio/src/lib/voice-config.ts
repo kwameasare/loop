@@ -19,6 +19,7 @@ export interface VoiceConfig {
   numbers: VoiceNumber[];
   asr_provider: AsrProvider;
   tts_provider: TtsProvider;
+  degraded_reason?: string | undefined;
 }
 
 export const ASR_PROVIDERS: { id: AsrProvider; label: string }[] = [
@@ -59,6 +60,19 @@ export type SaveVoiceConfigFn = (
   next: Pick<VoiceConfig, "asr_provider" | "tts_provider">,
 ) => Promise<{ ok: boolean; error?: string }>;
 
+export function createDegradedVoiceConfig(
+  workspace_id: string,
+  degradedReason: string,
+): VoiceConfig {
+  return {
+    workspace_id,
+    numbers: [],
+    asr_provider: "deepgram",
+    tts_provider: "elevenlabs",
+    degraded_reason: degradedReason,
+  };
+}
+
 // ---------------------------------------------------------------- cp-api
 
 export interface VoiceConfigClientOptions {
@@ -97,12 +111,10 @@ export async function fetchVoiceConfig(
     cache: "no-store",
   });
   if (res.status === 404) {
-    return {
+    return createDegradedVoiceConfig(
       workspace_id,
-      numbers: [],
-      asr_provider: "deepgram",
-      tts_provider: "elevenlabs",
-    };
+      "cp-api voice config route returned 404. Studio will not treat an unavailable voice config route as a workspace with no phone numbers.",
+    );
   }
   if (!res.ok) throw new Error(`cp-api GET voice/config -> ${res.status}`);
   return (await res.json()) as VoiceConfig;

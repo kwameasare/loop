@@ -15,6 +15,7 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { WorkspaceRequiredState } from "@/components/section-states";
 import { VoiceConfigPanel } from "@/components/voice/voice-config-panel";
 import {
+  createDegradedVoiceConfig,
   fetchVoiceConfig,
   saveVoiceConfig,
   type VoiceConfig,
@@ -32,7 +33,6 @@ export default function VoiceConfigPage(): JSX.Element {
 function VoiceConfigBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
   const [config, setConfig] = useState<VoiceConfig | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!active) return;
@@ -44,7 +44,12 @@ function VoiceConfigBody(): JSX.Element {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Could not load voice config");
+        setConfig(
+          createDegradedVoiceConfig(
+            active.id,
+            err instanceof Error ? err.message : "Could not load voice config",
+          ),
+        );
       });
     return () => {
       cancelled = true;
@@ -66,19 +71,10 @@ function VoiceConfigBody(): JSX.Element {
     );
   }
   if (!active) return <WorkspaceRequiredState title="Voice Config" />;
-  if (!config && !error) {
+  if (!config) {
     return (
       <main className="container mx-auto p-6">
         <p className="text-sm text-muted-foreground">Loading voice config…</p>
-      </main>
-    );
-  }
-  if (error) {
-    return (
-      <main className="container mx-auto p-6">
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
       </main>
     );
   }

@@ -30,9 +30,10 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
   const dirty = asr !== persistedAsr || tts !== persistedTts;
+  const isDegraded = Boolean(props.config.degraded_reason);
 
   async function onSave() {
-    if (saving || !dirty) return;
+    if (isDegraded || saving || !dirty) return;
     setSaving(true);
     setError(null);
     try {
@@ -54,6 +55,18 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
       className="flex flex-col gap-6"
       data-testid="voice-config-panel"
     >
+      {props.config.degraded_reason ? (
+        <div
+          className="rounded-md border border-warning/40 bg-warning/10 p-4 text-sm text-warning"
+          data-testid="voice-config-degraded"
+        >
+          <p className="font-medium">Voice configuration unavailable.</p>
+          <p className="mt-1 text-warning/85">
+            {props.config.degraded_reason}
+          </p>
+        </div>
+      ) : null}
+
       <div className="rounded-lg border bg-card p-5">
         <h3 className="text-sm font-semibold uppercase text-muted-foreground">
           Connected numbers
@@ -63,7 +76,9 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
             className="mt-2 text-sm text-muted-foreground"
             data-testid="voice-numbers-empty"
           >
-            No numbers provisioned yet.
+            {isDegraded
+              ? "Phone-number evidence unavailable."
+              : "No numbers provisioned yet."}
           </p>
         ) : (
           <ul
@@ -101,6 +116,7 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
             <select
               className="rounded border bg-background px-2 py-1"
               data-testid="voice-asr-select"
+              disabled={isDegraded}
               onChange={(e) => setAsr(e.target.value as AsrProvider)}
               value={asr}
             >
@@ -116,6 +132,7 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
             <select
               className="rounded border bg-background px-2 py-1"
               data-testid="voice-tts-select"
+              disabled={isDegraded}
               onChange={(e) => setTts(e.target.value as TtsProvider)}
               value={tts}
             >
@@ -140,7 +157,7 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
           <button
             className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             data-testid="voice-config-save"
-            disabled={!dirty || saving}
+            disabled={isDegraded || !dirty || saving}
             onClick={() => {
               void onSave();
             }}
