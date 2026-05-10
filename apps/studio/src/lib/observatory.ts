@@ -558,6 +558,7 @@ export const OBSERVATORY_MODEL: ObservatoryModel = {
       proposed_fix:
         "Pin the tool schema, replay affected traces, and create a Change Package with regression coverage.",
       candidate_eval_suite_id: null,
+      fix_change_package_id: null,
       channel_scope: ["web_chat"],
       notifications: [
         {

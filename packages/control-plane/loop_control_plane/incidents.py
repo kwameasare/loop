@@ -60,6 +60,7 @@ class IncidentRecord(BaseModel):
     rollback_action_ref: str
     proposed_fix: str
     candidate_eval_suite_id: str | None
+    fix_change_package_id: str | None = None
     channel_scope: list[str]
     notifications: list[dict[str, Any]]
     timeline: list[dict[str, Any]]
@@ -154,6 +155,7 @@ class IncidentRegistry:
                 rollback_action_ref=body.rollback_action_ref,
                 proposed_fix=body.proposed_fix,
                 candidate_eval_suite_id=None,
+                fix_change_package_id=None,
                 channel_scope=body.channel_scope,
                 notifications=notifications,
                 timeline=[
@@ -286,6 +288,40 @@ class IncidentRegistry:
                 "report": {
                     **record.report,
                     "candidate_eval_suite_id": suite_id,
+                },
+            }
+        )
+        await self._replace(updated)
+        return updated
+
+    async def link_fix_change_package(
+        self,
+        *,
+        agent: AgentRecord,
+        incident_id: str,
+        package_id: str,
+    ) -> IncidentRecord:
+        record = await self.get(agent=agent, incident_id=incident_id)
+        now = datetime.now(UTC)
+        updated = record.model_copy(
+            update={
+                "status": "fix_staged",
+                "fix_change_package_id": package_id,
+                "timeline": [
+                    *record.timeline,
+                    _timeline_event(
+                        "fix_change_package_created",
+                        now,
+                        f"Fix Change Package {package_id} created from incident.",
+                    ),
+                ],
+                "report": {
+                    **record.report,
+                    "fix_change_package_id": package_id,
+                    "actions_taken": [
+                        *record.report.get("actions_taken", []),
+                        f"change_package/{package_id}",
+                    ],
                 },
             }
         )

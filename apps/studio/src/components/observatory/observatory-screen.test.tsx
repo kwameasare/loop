@@ -46,4 +46,16 @@ describe("ObservatoryScreen", () => {
       await screen.findByTestId("incident-suite-inc_rollback_schema"),
     ).toHaveTextContent("suite_incident_regressions_local");
   });
+
+  it("creates a fix Change Package from an incident", async () => {
+    render(<ObservatoryScreen model={OBSERVATORY_MODEL} />);
+
+    fireEvent.click(
+      screen.getByTestId("incident-fix-package-inc_rollback_schema"),
+    );
+
+    expect(
+      await screen.findByTestId("incident-fix-package-id-inc_rollback_schema"),
+    ).toHaveTextContent("cp_inc_rollback_schema");
+  });
 });
