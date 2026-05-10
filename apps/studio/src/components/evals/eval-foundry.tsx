@@ -8,12 +8,12 @@ import {
   type EvalFoundryModel,
   type EvalSuite,
 } from "@/lib/evals";
-import { targetUxFixtures } from "@/lib/target-ux";
 
 export interface EvalFoundryProps {
   suites: EvalSuite[];
   model: EvalFoundryModel;
   createAction: ReactNode;
+  suggestionsAgentId?: string | undefined;
 }
 
 function formatLatencyDelta(ms: number): string {
@@ -21,7 +21,12 @@ function formatLatencyDelta(ms: number): string {
   return `${ms > 0 ? "+" : ""}${ms} ms`;
 }
 
-export function EvalFoundry({ suites, model, createAction }: EvalFoundryProps) {
+export function EvalFoundry({
+  suites,
+  model,
+  createAction,
+  suggestionsAgentId,
+}: EvalFoundryProps) {
   return (
     <main className="flex flex-col gap-6 p-6" data-testid="eval-foundry">
       <header className="flex flex-wrap items-start justify-between gap-4">
@@ -60,10 +65,12 @@ export function EvalFoundry({ suites, model, createAction }: EvalFoundryProps) {
               transcripts, or connect a knowledge source to seed the first eval
               suite.
             </StatePanel>
-            <PersonalizedEmptyStateSuggestions
-              agentId={targetUxFixtures.workspace.activeAgentId}
-              surface="evals"
-            />
+            {suggestionsAgentId ? (
+              <PersonalizedEmptyStateSuggestions
+                agentId={suggestionsAgentId}
+                surface="evals"
+              />
+            ) : null}
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">

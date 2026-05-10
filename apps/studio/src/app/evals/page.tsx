@@ -8,10 +8,12 @@ export default async function EvalsIndexPage() {
   const { items } = await listEvalSuites().catch(() => ({ items: [] }));
   const existingNames = items.map((s) => s.name);
   const model = getEvalFoundryModel(items);
+  const suggestionsAgentId = items[0]?.agentId;
   return (
     <EvalFoundry
       createAction={<NewSuiteModal existingNames={existingNames} />}
       model={model}
+      suggestionsAgentId={suggestionsAgentId}
       suites={items}
     />
   );
