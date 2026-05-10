@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { AddMemberForm } from "@/components/workspaces/add-member-form";
 import { MembersTable } from "@/components/workspaces/members-table";
+import { SectionDegraded } from "@/components/section-states";
 import {
   addMember,
   listMembers,
@@ -72,14 +73,19 @@ export function MembersScreen({
 
   if (error && members === null) {
     return (
-      <div className="rounded-lg border p-4" role="alert">
-        <p className="text-sm">Could not load members: {error}</p>
-      </div>
+      <SectionDegraded
+        title="Members"
+        description="Workspace membership and role evidence could not load from the control plane."
+        evidence={error}
+      />
     );
   }
   if (members === null) {
     return (
-      <p className="text-sm text-muted-foreground" data-testid="members-loading">
+      <p
+        className="text-sm text-muted-foreground"
+        data-testid="members-loading"
+      >
         Loading members…
       </p>
     );
