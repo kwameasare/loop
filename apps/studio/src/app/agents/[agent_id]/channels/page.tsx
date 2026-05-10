@@ -3,8 +3,8 @@ import { ChannelBindingsPanel } from "@/components/channels/channel-bindings-pan
 import { ChannelPreviewMatrix } from "@/components/channels/channel-preview-matrix";
 import { ChannelTypeGrid } from "@/components/channels/channel-type-grid";
 import {
-  buildLocalChannelBindings,
   listChannelBindings,
+  type ChannelBinding,
   type ChannelBindingType,
 } from "@/lib/channel-bindings";
 import { type WebChannelBinding, getWebChannel } from "@/lib/web-channels";
@@ -30,14 +30,13 @@ export default async function AgentChannelsPage({
   params,
   searchParams,
 }: AgentChannelsPageProps) {
-  let bindings = buildLocalChannelBindings(params.agent_id);
+  let bindings: ChannelBinding[] = [];
   let bindingsDegradedReason: string | undefined;
   try {
     const result = await listChannelBindings(params.agent_id);
     bindings = result.items;
     bindingsDegradedReason = result.degraded_reason;
   } catch (err) {
-    bindings = buildLocalChannelBindings(params.agent_id);
     bindingsDegradedReason =
       err instanceof Error
         ? err.message

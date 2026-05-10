@@ -899,11 +899,11 @@ export async function listChannelBindings(
         ? err.message
         : "Channel binding reads require cp-api.";
     return {
-      items: buildLocalChannelBindings(agentId),
+      items: [],
       degraded_reason:
         reason.includes("LOOP_CP_API_BASE_URL") ||
         reason.includes("Failed to fetch")
-          ? "Channel binding status requires cp-api. Studio is showing setup requirements only, not live channel state."
+          ? "Channel binding status requires cp-api. Studio is not showing local channel bindings as live agent state."
           : reason,
     };
   }
