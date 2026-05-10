@@ -26,6 +26,7 @@ describe("change package client", () => {
     expect(local.summary).toMatch(/No preflight Change Package/);
     expect(local.content_hash).toBe("unconfigured");
     expect(local.pre_approved_classes).toEqual([]);
+    expect(local.release_candidate_id).toBe("rc-current");
   });
 
   it("fetches the current change package", async () => {
@@ -74,7 +75,11 @@ describe("change package client", () => {
 
     const generated = await generateChangePackage(
       "agt_1",
-      { summary: "Promote draft.", to_version_id: "v2" },
+      {
+        summary: "Promote draft.",
+        to_version_id: "v2",
+        release_candidate_id: "rc_2",
+      },
       { fetcher },
     );
     const submitted = await submitChangePackage("agt_1", generated.id, {
@@ -87,6 +92,7 @@ describe("change package client", () => {
     expect(JSON.parse(String(init?.body))).toMatchObject({
       summary: "Promote draft.",
       to_version_id: "v2",
+      release_candidate_id: "rc_2",
     });
   });
 

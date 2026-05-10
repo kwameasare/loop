@@ -233,7 +233,7 @@ export function ChangePackagePanel({
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-5">
         <div className="rounded-md border bg-background p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Status
@@ -269,6 +269,17 @@ export function ChangePackagePanel({
             data-testid="change-package-hash"
           >
             {changePackage.content_hash.slice(0, 12)}
+          </p>
+        </div>
+        <div className="rounded-md border bg-background p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Release Candidate
+          </p>
+          <p
+            className="mt-2 font-mono text-xs"
+            data-testid="change-package-release-candidate"
+          >
+            {changePackage.release_candidate_id}
           </p>
         </div>
         <div className="rounded-md border bg-background p-3">

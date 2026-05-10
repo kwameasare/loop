@@ -174,6 +174,8 @@ class DeploymentRegistry:
                 version_manifest={
                     "from_version_id": change_package.from_version_id,
                     "to_version_id": change_package.to_version_id,
+                    "change_set_id": change_package.change_set_id,
+                    "release_candidate_id": change_package.release_candidate_id,
                     "commitment_document_id": change_package.commitment_document_id,
                     "commitment_document_version": change_package.commitment_document_version,
                     "content_hash": change_package.content_hash,
