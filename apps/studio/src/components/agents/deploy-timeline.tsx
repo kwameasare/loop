@@ -9,6 +9,7 @@ import {
   rollbackDeployment as defaultRollback,
   startCanaryDeployment as defaultStartCanary,
   type Deployment,
+  type EvidencePack,
 } from "@/lib/deploys";
 import type { ChangePackage } from "@/lib/change-package";
 
@@ -28,11 +29,12 @@ type StartFn = (
     channel_scope?: string[];
     notes?: string | null;
   },
-) => Promise<{ deployment: Deployment }>;
+) => Promise<{ deployment: Deployment; evidence_pack?: EvidencePack }>;
 
 export interface DeployTimelineProps {
   agentId: string;
   initialDeployments: Deployment[];
+  initialEvidencePacks?: EvidencePack[];
   approvedChangePackage?: ChangePackage | null;
   degradedReason?: string | undefined;
   startCanary?: StartFn;
@@ -73,6 +75,7 @@ function statusColor(status: Deployment["status"]): string {
 export function DeployTimeline({
   agentId,
   initialDeployments,
+  initialEvidencePacks = [],
   approvedChangePackage = null,
   degradedReason,
   startCanary = defaultStartCanary,
@@ -82,6 +85,8 @@ export function DeployTimeline({
   rollback = defaultRollback,
 }: DeployTimelineProps) {
   const [items, setItems] = useState<Deployment[]>(initialDeployments);
+  const [evidencePacks, setEvidencePacks] =
+    useState<EvidencePack[]>(initialEvidencePacks);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast>(null);
   const [rampTargets, setRampTargets] = useState<Record<string, number>>({});
@@ -142,6 +147,9 @@ export function DeployTimeline({
         notes: `Started ${stage} from ${approvedChangePackage.evidence_pack_id}`,
       });
       setItems((prev) => [result.deployment, ...prev]);
+      if (result.evidence_pack) {
+        setEvidencePacks((prev) => [result.evidence_pack!, ...prev]);
+      }
       setToast({
         kind: "success",
         message: `Started ${stage} ${result.deployment.id}; evidence pack ${result.deployment.evidencePackId ?? "created"}.`,
@@ -188,6 +196,12 @@ export function DeployTimeline({
     (d) => d.status === "canary" || d.status === "ramp",
   );
   const live = items.find((d) => d.status === "live");
+  const evidenceById = new Map(evidencePacks.map((pack) => [pack.id, pack]));
+  const deploymentEvidenceIds = new Set(
+    items.map((item) => item.evidencePackId).filter(Boolean),
+  );
+  const latestUnmatchedEvidencePack =
+    evidencePacks.find((pack) => !deploymentEvidenceIds.has(pack.id)) ?? null;
 
   return (
     <section className="flex flex-col gap-4" data-testid="deploy-timeline">
@@ -355,11 +369,24 @@ export function DeployTimeline({
                     </div>
                   </div>
                 </div>
+                {dep.evidencePackId &&
+                evidenceById.has(dep.evidencePackId) ? (
+                  <EvidencePackManifest
+                    evidencePack={evidenceById.get(dep.evidencePackId)!}
+                  />
+                ) : null}
               </li>
             );
           })}
         </ol>
       )}
+
+      {latestUnmatchedEvidencePack ? (
+        <EvidencePackManifest
+          evidencePack={latestUnmatchedEvidencePack}
+          compact
+        />
+      ) : null}
 
       {toast ? (
         <p
@@ -375,5 +402,91 @@ export function DeployTimeline({
         </p>
       ) : null}
     </section>
+  );
+}
+
+function manifestValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "not set";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return JSON.stringify(value);
+}
+
+function EvidencePackManifest({
+  evidencePack,
+  compact = false,
+}: {
+  evidencePack: EvidencePack;
+  compact?: boolean;
+}) {
+  const manifestRows: Array<[string, unknown]> = [
+    ["Version", evidencePack.version_id],
+    ["Deployment", evidencePack.deployment_id],
+    ["Change Package", evidencePack.change_package_id],
+    ["Commitment", evidencePack.version_manifest.commitment_document_id],
+    ["Release Candidate", evidencePack.version_manifest.release_candidate_id],
+    ["Content hash", evidencePack.version_manifest.content_hash],
+    ["Rollback plan", evidencePack.rollback_plan_ref],
+  ];
+  const proofRows: Array<[string, unknown]> = [
+    ["Behavior diff", evidencePack.behavior_diff_ref],
+    ["Tool permissions", evidencePack.tool_permission_diff_ref],
+    ["Knowledge diff", evidencePack.knowledge_diff_ref],
+    ["Memory policy", evidencePack.memory_policy_ref],
+    ["Channel plan", evidencePack.channel_deployment_plan_ref],
+    ["Eval results", evidencePack.eval_results_ref],
+    ["Approvals", evidencePack.approval_records_ref],
+    ["Canary results", evidencePack.canary_results_ref],
+    ["Audit log", evidencePack.audit_log_ref],
+  ];
+
+  return (
+    <article
+      className={
+        compact
+          ? "rounded-md border bg-background p-3"
+          : "mt-3 rounded-md border bg-background/70 p-3"
+      }
+      data-testid={`evidence-pack-manifest-${evidencePack.id}`}
+    >
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-sm font-semibold">Evidence Pack manifest</h3>
+          <p className="text-xs text-muted-foreground">
+            Exportable proof bundle for reviewers, security teams, and audit.
+          </p>
+        </div>
+        <span className="font-mono text-xs">{evidencePack.id}</span>
+      </div>
+      <dl className="mt-3 grid gap-2 text-xs md:grid-cols-2 lg:grid-cols-3">
+        {manifestRows.map(([label, value]) => (
+          <div key={label} className="rounded border bg-card/70 p-2">
+            <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+              {label}
+            </dt>
+            <dd className="mt-1 break-words font-mono">
+              {manifestValue(value)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <dl className="mt-3 grid gap-2 text-xs md:grid-cols-2 lg:grid-cols-3">
+        {proofRows.map(([label, value]) => (
+          <div key={label} className="rounded border bg-card/70 p-2">
+            <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+              {label}
+            </dt>
+            <dd className="mt-1 break-words font-mono">
+              {manifestValue(value)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-3 text-xs text-muted-foreground">
+        Export formats: {evidencePack.export_formats.join(", ")}
+      </p>
+    </article>
   );
 }

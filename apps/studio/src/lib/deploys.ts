@@ -98,6 +98,11 @@ export interface DeploymentListResponse {
   degraded_reason?: string | undefined;
 }
 
+export interface EvidencePackListResponse {
+  items: EvidencePack[];
+  degraded_reason?: string | undefined;
+}
+
 function resolveBase(opts: DeployHelperOptions): string | null {
   const raw =
     opts.baseUrl ??
@@ -252,6 +257,28 @@ export async function listDeployments(
   });
   if (!res.ok) throw new Error(`listDeployments failed: ${res.status}`);
   return (await res.json()) as { items: Deployment[] };
+}
+
+export async function listEvidencePacks(
+  agentId: string,
+  opts: DeployHelperOptions = {},
+): Promise<EvidencePackListResponse> {
+  const base = resolveBase(opts);
+  if (!base) {
+    if (opts.allowFixture) return { items: [] };
+    return {
+      items: [],
+      degraded_reason:
+        "LOOP_CP_API_BASE_URL is required to load evidence packs.",
+    };
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const res = await fetcher(`${base}/agents/${agentId}/evidence-packs`, {
+    method: "GET",
+    headers: authHeaders(opts),
+  });
+  if (!res.ok) throw new Error(`listEvidencePacks failed: ${res.status}`);
+  return (await res.json()) as EvidencePackListResponse;
 }
 
 async function callAction(

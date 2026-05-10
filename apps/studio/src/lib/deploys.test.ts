@@ -4,6 +4,7 @@ import {
   findCurrentCanary,
   findLiveDeployment,
   listDeployments,
+  listEvidencePacks,
   pauseDeployment,
   promoteDeployment,
   rampDeployment,
@@ -85,6 +86,12 @@ describe("listDeployments fixture mode", () => {
       "LOOP_CP_API_BASE_URL is required to ramp deployments",
     );
   });
+
+  it("returns degraded evidence pack state when no baseUrl is configured", async () => {
+    const { items, degraded_reason } = await listEvidencePacks("agt_fix_a");
+    expect(items).toEqual([]);
+    expect(degraded_reason).toMatch(/evidence packs/);
+  });
 });
 
 describe("listDeployments cp-api mode", () => {
@@ -116,6 +123,56 @@ describe("listDeployments cp-api mode", () => {
     const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock
       .calls[0];
     expect(call[0]).toBe("https://api.loop.dev/v1/agents/agt_x/deployments");
+  });
+
+  it("calls the evidence packs endpoint and returns proof bundles", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            items: [
+              {
+                id: "ep_1",
+                workspace_id: "ws_1",
+                agent_id: "agt_x",
+                version_id: "v2",
+                deployment_id: "dep_new",
+                change_package_id: "cp_1",
+                version_manifest: {
+                  release_candidate_id: "rc_1",
+                  content_hash: "hash_1",
+                },
+                behavior_diff_ref: "change_package.semantic_diff",
+                tool_permission_diff_ref: "change_package.tool_changes",
+                knowledge_diff_ref: "change_package.knowledge_changes",
+                memory_policy_ref: "change_package.memory_changes",
+                channel_deployment_plan_ref: "deployment.channel_scope",
+                eval_results_ref: "eval/run",
+                approval_records_ref: "change_package.required_approvals",
+                canary_results_ref: "deployment/dep_new/canary",
+                rollback_plan_ref: "v1",
+                audit_log_ref: "audit/deployment/dep_new",
+                created_at: "2026-05-09T00:00:00Z",
+                export_formats: ["pdf", "json"],
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+    );
+
+    const { items } = await listEvidencePacks("agt_x", {
+      fetcher: fetcher as unknown as typeof fetch,
+      baseUrl: "https://api.loop.dev/v1",
+      token: "tok",
+    });
+
+    expect(items[0]?.change_package_id).toBe("cp_1");
+    const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0];
+    expect(call[0]).toBe(
+      "https://api.loop.dev/v1/agents/agt_x/evidence-packs",
+    );
   });
 
   it("promote POSTs to the promote endpoint", async () => {
