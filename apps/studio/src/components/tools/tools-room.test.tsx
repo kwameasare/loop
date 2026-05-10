@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -109,6 +109,53 @@ describe("ToolsRoom", () => {
     expect(fetcher).toHaveBeenCalledWith(
       "https://cp.test/v1/agents/agent_support/tool-contracts/tool_issue_refund/promote",
       expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("saves the selected tool safety questionnaire before live promotion", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const data = createToolsRoomData("agent_support");
+    const lookupContract = data.toolContracts.find(
+      (contract) => contract.tool_id === "tool_lookup_order",
+    );
+    const fetcher = vi.fn<typeof fetch>(async (_url, init) =>
+      Response.json({
+        ...lookupContract,
+        owner_user_id: "tool-owner@acme.test",
+        failure_behavior: "Escalate if lookup returns a transport error.",
+        content_hash: "savedhash123456",
+        updated_at: "2026-05-09T00:00:00Z",
+        ...JSON.parse(String(init?.body ?? "{}")),
+      }),
+    );
+    vi.stubGlobal("fetch", fetcher);
+
+    render(<ToolsRoom data={data} />);
+
+    fireEvent.change(screen.getByTestId("tool-contract-owner"), {
+      target: { value: "tool-owner@acme.test" },
+    });
+    fireEvent.change(screen.getByTestId("tool-contract-failure"), {
+      target: { value: "Escalate if lookup returns a transport error." },
+    });
+    fireEvent.click(screen.getByTestId("tool-contract-save"));
+
+    await waitFor(() =>
+      expect(fetcher).toHaveBeenCalledWith(
+        "https://cp.test/v1/agents/agent_support/tool-contracts/tool_lookup_order",
+        expect.objectContaining({ method: "PUT" }),
+      ),
+    );
+    const body = JSON.parse(
+      String((fetcher.mock.calls[0]?.[1] as RequestInit).body),
+    );
+    expect(body.owner_user_id).toBe("tool-owner@acme.test");
+    expect(body.failure_behavior).toBe(
+      "Escalate if lookup returns a transport error.",
+    );
+    expect(body.side_effect_level).toBe("read");
+    expect(await screen.findByTestId("tool-contract-saved")).toHaveTextContent(
+      "Saved safety questionnaire",
     );
   });
 
