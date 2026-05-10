@@ -88,6 +88,21 @@ describe("listAgentVersions", () => {
     });
     expect(items[0]?.config_json).toContain("You are live.");
   });
+
+  it("marks a missing versions route as degraded instead of no saved versions", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(new Response("missing", { status: 404 }));
+
+    const result = await listAgentVersions("agt_1", {
+      baseUrl: "https://cp.example.com/v1",
+      fetcher: fetcher as unknown as typeof fetch,
+    });
+
+    expect(result.items).toEqual([]);
+    expect(result.next_cursor).toBeNull();
+    expect(result.degraded_reason).toMatch(/versions route returned 404/i);
+  });
 });
 
 describe("priorVersion", () => {
