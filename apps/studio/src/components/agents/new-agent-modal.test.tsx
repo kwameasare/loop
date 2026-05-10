@@ -39,12 +39,33 @@ function fillContract() {
   fill("new-agent-escalation-policy", "Escalate policy conflicts.");
 }
 
+function inputContract() {
+  return {
+    business_responsibility: "Resolve billing cancellations safely.",
+    target_users: "Enterprise customers.",
+    owner_user_id: "maya@acme.test",
+    backup_owner_user_id: "",
+    worst_case_failure: "Promises a refund outside policy.",
+    channels: ["web", "whatsapp", "voice"],
+    systems_touched: ["billing", "crm"],
+    regions: ["us-east-1", "eu-west-2"],
+    languages: ["en", "es"],
+    success_metric: "95% eval pass rate before canary.",
+    compliance_domain: "",
+    expected_volume: "",
+    launch_date: "",
+    budget_target: "",
+    out_of_scope: "",
+    escalation_policy: "Escalate policy conflicts.",
+  };
+}
+
 function makeCreateIntake(result: Partial<AgentIntakeCreateResult> = {}) {
   return vi.fn(async (_workspaceId: string, input: AgentIntakeCreateInput) => ({
     id: result.id ?? "intake_1",
     workspace_id: "ws_1",
     agent_id: result.agent?.id ?? "agt_new",
-    state: "draft_ready" as const,
+    state: result.state ?? ("draft_ready" as const),
     creation_path: input.creation_path,
     jobs: [],
     artifact_reports: [],
@@ -58,13 +79,13 @@ function makeCreateIntake(result: Partial<AgentIntakeCreateResult> = {}) {
     candidate_eval_cases: [],
     risk_notes: [],
     missing_information: [],
-    readiness: {
+    readiness: result.readiness ?? {
       score: 74,
       ready: ["Commitment Document drafted"],
       needs_attention: [],
       landing: `/agents/${result.agent?.id ?? "agt_new"}`,
     },
-    created_object_refs: {},
+    created_object_refs: result.created_object_refs ?? {},
     created_by: "owner-1",
     created_at: "2026-05-01T00:00:00Z",
     updated_at: "2026-05-01T00:00:00Z",
@@ -453,6 +474,131 @@ describe("NewAgentModal", () => {
     );
     expect(screen.getByTestId("new-agent-modal")).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it("offers retry when the backend saved a failed draft-generation intake", async () => {
+    const createAgentIntake = makeCreateIntake({
+      id: "intake_failed",
+      state: "failed",
+      created_object_refs: {
+        draft_generation_failed: true,
+        retry_available: true,
+        manual_continue_available: true,
+      },
+      readiness: {
+        score: 40,
+        ready: ["Commitment Document drafted"],
+        needs_attention: ["Draft generation failed after the agent was saved."],
+        landing: "/agents/agt_new",
+      },
+    });
+    const retryAgentIntakeGeneration = vi.fn(async () => ({
+      ...(await makeCreateIntake({
+        id: "intake_failed",
+        agent: {
+          id: "agt_new",
+          name: "Bot",
+          slug: "bot",
+          description: "",
+          active_version: null,
+          object_state: "draft" as const,
+          state_reason: "Commitment Document is still draft.",
+          state_evidence_ref: "commitment/commit_1",
+          updated_at: "2026-05-01T00:00:00Z",
+          workspace_id: "ws_1",
+        },
+      })("ws_1", {
+        agent_name: "Bot",
+        slug: "bot",
+        creation_path: "business_intent",
+        contract: {
+          ...inputContract(),
+        },
+        artifacts: [],
+        capabilities: [],
+      })),
+      state: "draft_ready" as const,
+    }));
+    render(
+      <NewAgentModal
+        existingSlugs={[]}
+        workspaceId="ws_1"
+        createAgentIntake={createAgentIntake}
+        retryAgentIntakeGeneration={retryAgentIntakeGeneration}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("new-agent-button"));
+    fill("new-agent-name", "Bot");
+    fill("new-agent-slug", "bot");
+    fillContract();
+    fireEvent.click(screen.getByTestId("new-agent-submit"));
+
+    expect(
+      await screen.findByTestId("new-agent-recoverable-failure"),
+    ).toHaveTextContent(/retry the generator/i);
+    fireEvent.click(screen.getByTestId("new-agent-retry-generation"));
+
+    await waitFor(() => {
+      expect(retryAgentIntakeGeneration).toHaveBeenCalledWith(
+        "ws_1",
+        "intake_failed",
+      );
+    });
+    expect(push).toHaveBeenCalledWith("/agents/agt_new?intake=intake_failed");
+  });
+
+  it("can continue manually after a saved generation failure", async () => {
+    const createAgentIntake = makeCreateIntake({
+      id: "intake_failed",
+      state: "failed",
+      readiness: {
+        score: 40,
+        ready: ["Commitment Document drafted"],
+        needs_attention: ["Draft generation failed after the agent was saved."],
+        landing: "/agents/agt_new",
+      },
+    });
+    const continueAgentIntakeManually = vi.fn(async () => ({
+      ...(await createAgentIntake("ws_1", {
+        agent_name: "Bot",
+        slug: "bot",
+        creation_path: "business_intent",
+        contract: inputContract(),
+        artifacts: [],
+        capabilities: [],
+      })),
+      id: "intake_failed",
+      state: "draft_ready" as const,
+    }));
+    render(
+      <NewAgentModal
+        existingSlugs={[]}
+        workspaceId="ws_1"
+        createAgentIntake={createAgentIntake}
+        continueAgentIntakeManually={continueAgentIntakeManually}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("new-agent-button"));
+    fill("new-agent-name", "Bot");
+    fill("new-agent-slug", "bot");
+    fillContract();
+    fireEvent.click(screen.getByTestId("new-agent-submit"));
+
+    await screen.findByTestId("new-agent-recoverable-failure");
+    fireEvent.click(screen.getByTestId("new-agent-continue-manually"));
+
+    await waitFor(() => {
+      expect(continueAgentIntakeManually).toHaveBeenCalledWith(
+        "ws_1",
+        "intake_failed",
+        "Builder chose manual setup from the creation wizard.",
+      );
+    });
+    expect(push).toHaveBeenCalledWith(
+      "/agents/agt_new?intake=intake_failed&manual=1",
+    );
   });
 
   it("autofocuses the first field and restores focus to trigger on Escape", async () => {

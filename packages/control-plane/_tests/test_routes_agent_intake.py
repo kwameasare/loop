@@ -317,6 +317,99 @@ def test_agent_intake_missing_contract_requests_clarification_before_generation(
     assert "agent_intake:draft_objects_create" not in actions
 
 
+def test_agent_intake_failed_generation_can_retry_or_continue_manually(
+    client: TestClient,
+    workspace_id: UUID,
+) -> None:
+    original_create = client.app.state.cp.agent_versions.create  # type: ignore[attr-defined]
+
+    async def fail_version_create(**_: object) -> object:
+        raise RuntimeError("draft compiler unavailable")
+
+    client.app.state.cp.agent_versions.create = fail_version_create  # type: ignore[attr-defined]
+    failed = client.post(
+        f"/v1/workspaces/{workspace_id}/agent-intakes",
+        headers=_auth(),
+        json={
+            "agent_name": "Recoverable Agent",
+            "slug": "recoverable-agent",
+            "creation_path": "business_intent",
+            "contract": _contract(),
+            "capabilities": ["Answer billing questions"],
+        },
+    )
+    assert failed.status_code == 201, failed.text
+    failed_body = failed.json()
+    assert failed_body["state"] == "failed"
+    assert failed_body["created_object_refs"]["draft_generation_failed"] is True
+    assert failed_body["created_object_refs"]["retry_available"] is True
+    assert failed_body["created_object_refs"]["manual_continue_available"] is True
+    assert "draft compiler unavailable" in failed_body["created_object_refs"]["failure_message"]
+    agent_id = failed_body["agent"]["id"]
+
+    versions = client.get(
+        f"/v1/agents/{agent_id}/versions",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert versions.status_code == 200, versions.text
+    assert versions.json()["items"] == []
+
+    client.app.state.cp.agent_versions.create = original_create  # type: ignore[attr-defined]
+    retried = client.post(
+        f"/v1/workspaces/{workspace_id}/agent-intakes/{failed_body['id']}/retry",
+        headers=_auth(),
+    )
+    assert retried.status_code == 200, retried.text
+    retry_body = retried.json()
+    assert retry_body["id"] == failed_body["id"]
+    assert retry_body["state"] == "draft_ready"
+    assert retry_body["created_object_refs"]["version"] == "v1"
+    assert retry_body["created_object_refs"]["branch"]["name"] == "main/draft"
+    assert "Initial behavior generated" in retry_body["readiness"]["ready"]
+
+    retry_again = client.post(
+        f"/v1/workspaces/{workspace_id}/agent-intakes/{failed_body['id']}/retry",
+        headers=_auth(),
+    )
+    assert retry_again.status_code == 400, retry_again.text
+
+    client.app.state.cp.agent_versions.create = fail_version_create  # type: ignore[attr-defined]
+    second_failed = client.post(
+        f"/v1/workspaces/{workspace_id}/agent-intakes",
+        headers=_auth(),
+        json={
+            "agent_name": "Manual Recovery Agent",
+            "slug": "manual-recovery-agent",
+            "creation_path": "business_intent",
+            "contract": _contract(),
+            "capabilities": ["Answer billing questions"],
+        },
+    )
+    assert second_failed.status_code == 201, second_failed.text
+    second_body = second_failed.json()
+    manual = client.post(
+        f"/v1/workspaces/{workspace_id}/agent-intakes/{second_body['id']}/continue-manually",
+        headers=_auth(),
+        json={"notes": "Owner will configure tools manually."},
+    )
+    assert manual.status_code == 200, manual.text
+    manual_body = manual.json()
+    assert manual_body["state"] == "draft_ready"
+    assert manual_body["created_object_refs"]["manual_continue"] is True
+    assert "Manual Workbench setup selected" in manual_body["readiness"]["ready"]
+    assert manual_body["readiness"]["landing"].endswith(manual_body["agent_id"])
+
+    client.app.state.cp.agent_versions.create = original_create  # type: ignore[attr-defined]
+    audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=_auth())
+    actions = {item["action"] for item in audit.json()["items"]}
+    assert {
+        "agent_intake:generation_failed",
+        "agent_intake:generation_retry",
+        "agent_intake:continue_manually",
+        "agent_intake:draft_objects_create",
+    } <= actions
+
+
 def test_agent_intake_infers_tool_contracts_from_api_artifacts(
     client: TestClient,
     workspace_id: UUID,

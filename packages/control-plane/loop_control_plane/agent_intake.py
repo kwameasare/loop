@@ -759,6 +759,17 @@ class AgentIntakeRegistry:
             self._by_workspace.setdefault(record.workspace_id, []).insert(0, record.id)
             return record
 
+    async def replace(self, record: AgentIntakeRecord) -> AgentIntakeRecord:
+        async with self._lock:
+            existing = self._records.get(record.id)
+            if existing is None or existing.workspace_id != record.workspace_id:
+                raise KeyError(record.id)
+            self._records[record.id] = record
+            ids = self._by_workspace.setdefault(record.workspace_id, [])
+            if record.id not in ids:
+                ids.insert(0, record.id)
+            return record
+
     async def list_for_workspace(self, workspace_id: UUID) -> list[AgentIntakeRecord]:
         async with self._lock:
             return [

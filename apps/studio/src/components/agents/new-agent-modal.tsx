@@ -12,12 +12,15 @@ import {
 } from "@/lib/agent-commitment";
 import {
   LOCAL_AGENT_INTAKE_TEMPLATES,
+  continueAgentIntakeManually as defaultContinueAgentIntakeManually,
   createAgentIntake as defaultCreateAgentIntake,
   listAgentIntakeTemplates as defaultListAgentIntakeTemplates,
+  retryAgentIntakeGeneration as defaultRetryAgentIntakeGeneration,
   type AgentIntakeArtifactInput,
   type AgentIntakeCreateInput,
   type AgentIntakeCreateResult,
   type AgentIntakePath,
+  type AgentIntakeRecoveryResult,
   type AgentIntakeTemplate,
   type AgentIntakeTemplateList,
 } from "@/lib/agent-intake";
@@ -160,6 +163,17 @@ export interface NewAgentModalProps {
     workspaceId: string,
     input: AgentIntakeCreateInput,
   ) => Promise<AgentIntakeCreateResult>;
+  /** Retry draft generation after the backend has persisted a failed intake. */
+  retryAgentIntakeGeneration?: (
+    workspaceId: string,
+    intakeId: string,
+  ) => Promise<AgentIntakeRecoveryResult>;
+  /** Continue into the Workbench with the agent + Commitment only. */
+  continueAgentIntakeManually?: (
+    workspaceId: string,
+    intakeId: string,
+    notes?: string,
+  ) => Promise<AgentIntakeRecoveryResult>;
   /** Override for tests so template catalog loading can stay deterministic. */
   listAgentIntakeTemplates?: (
     workspaceId: string,
@@ -169,6 +183,8 @@ export interface NewAgentModalProps {
 type Status =
   | { kind: "idle" }
   | { kind: "submitting" }
+  | { kind: "recoverable_failure"; intake: AgentIntakeRecoveryResult }
+  | { kind: "recovering"; action: "retry" | "manual" }
   | { kind: "error"; message: string };
 
 function hasArtifact(artifact: AgentIntakeArtifactInput): boolean {
@@ -256,6 +272,8 @@ export function NewAgentModal({
   existingSlugs,
   workspaceId,
   createAgentIntake = defaultCreateAgentIntake,
+  retryAgentIntakeGeneration = defaultRetryAgentIntakeGeneration,
+  continueAgentIntakeManually = defaultContinueAgentIntakeManually,
   listAgentIntakeTemplates = defaultListAgentIntakeTemplates,
 }: NewAgentModalProps) {
   const router = useRouter();
@@ -311,7 +329,7 @@ export function NewAgentModal({
     trimmedSlug.length > 0 &&
     missingContract.length === 0 &&
     !slugError &&
-    status.kind !== "submitting";
+    status.kind !== "submitting" && status.kind !== "recovering";
   const shouldLoadTemplateCatalog =
     !workspaceMissing &&
     (listAgentIntakeTemplates !== defaultListAgentIntakeTemplates ||
@@ -483,6 +501,10 @@ export function NewAgentModal({
         intakeInput.template_id = templateId;
       }
       const result = await createAgentIntake(effectiveWorkspaceId, intakeInput);
+      if (result.state === "failed") {
+        setStatus({ kind: "recoverable_failure", intake: result });
+        return;
+      }
       setOpen(false);
       reset();
       router.push(`/agents/${result.agent.id}?intake=${result.id}`);
@@ -497,12 +519,83 @@ export function NewAgentModal({
     }
   }
 
+  async function handleRetryGeneration() {
+    if (status.kind !== "recoverable_failure") return;
+    const intake = status.intake;
+    setStatus({ kind: "recovering", action: "retry" });
+    try {
+      const result = await retryAgentIntakeGeneration(
+        effectiveWorkspaceId,
+        intake.id,
+      );
+      if (result.state === "failed") {
+        setStatus({ kind: "recoverable_failure", intake: result });
+        return;
+      }
+      const agentId = result.agent?.id ?? result.agent_id;
+      setOpen(false);
+      reset();
+      router.push(`/agents/${agentId}?intake=${result.id}`);
+    } catch (err) {
+      setStatus({
+        kind: "recoverable_failure",
+        intake: {
+          ...intake,
+          readiness: {
+            ...intake.readiness,
+            needs_attention: [
+              err instanceof Error ? err.message : "Retry failed.",
+              ...intake.readiness.needs_attention,
+            ],
+          },
+        },
+      });
+    }
+  }
+
+  async function handleContinueManually() {
+    if (status.kind !== "recoverable_failure") return;
+    const intake = status.intake;
+    setStatus({ kind: "recovering", action: "manual" });
+    try {
+      const result = await continueAgentIntakeManually(
+        effectiveWorkspaceId,
+        intake.id,
+        "Builder chose manual setup from the creation wizard.",
+      );
+      const agentId = result.agent?.id ?? result.agent_id;
+      setOpen(false);
+      reset();
+      router.push(`/agents/${agentId}?intake=${result.id}&manual=1`);
+    } catch (err) {
+      setStatus({
+        kind: "recoverable_failure",
+        intake: {
+          ...intake,
+          readiness: {
+            ...intake.readiness,
+            needs_attention: [
+              err instanceof Error
+                ? err.message
+                : "Manual continuation failed.",
+              ...intake.readiness.needs_attention,
+            ],
+          },
+        },
+      });
+    }
+  }
+
   return (
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (!nextOpen && status.kind !== "submitting") {
+        if (
+          !nextOpen &&
+          status.kind !== "submitting" &&
+          status.kind !== "recovering"
+        ) {
           reset();
         }
       }}
@@ -1197,6 +1290,54 @@ export function NewAgentModal({
               {missingContract.map(commitmentFieldLabel).join(", ")}
             </p>
           ) : null}
+          {status.kind === "recoverable_failure" ? (
+            <div
+              className="grid gap-3 rounded-md border border-warning/50 bg-warning/10 p-3 text-sm"
+              data-testid="new-agent-recoverable-failure"
+              role="status"
+            >
+              <div>
+                <p className="font-medium text-foreground">
+                  Draft generation needs recovery
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  The agent and Commitment Document were saved, but automatic
+                  draft generation did not complete. Retry the generator or
+                  continue into the Workbench with manual setup.
+                </p>
+              </div>
+              {status.intake.readiness.needs_attention.length > 0 ? (
+                <ul
+                  className="grid gap-1 text-xs text-muted-foreground"
+                  data-testid="new-agent-recovery-details"
+                >
+                  {status.intake.readiness.needs_attention
+                    .slice(0, 3)
+                    .map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                </ul>
+              ) : null}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+                  data-testid="new-agent-retry-generation"
+                  onClick={() => void handleRetryGeneration()}
+                >
+                  Retry generation
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium"
+                  data-testid="new-agent-continue-manually"
+                  onClick={() => void handleContinueManually()}
+                >
+                  Continue manually
+                </button>
+              </div>
+            </div>
+          ) : null}
           {status.kind === "error" ? (
             <p
               id={formErrorId}
@@ -1245,7 +1386,11 @@ export function NewAgentModal({
                 type="button"
                 className="rounded-md border px-3 py-1.5 text-sm disabled:opacity-50"
                 data-testid="new-agent-back"
-                disabled={step === 0 || status.kind === "submitting"}
+                disabled={
+                  step === 0 ||
+                  status.kind === "submitting" ||
+                  status.kind === "recovering"
+                }
                 onClick={() => setStep((current) => Math.max(current - 1, 0))}
               >
                 Back
@@ -1256,7 +1401,8 @@ export function NewAgentModal({
                 data-testid="new-agent-next"
                 disabled={
                   step === WIZARD_STEPS.length - 1 ||
-                  status.kind === "submitting"
+                  status.kind === "submitting" ||
+                  status.kind === "recovering"
                 }
                 onClick={() =>
                   setStep((current) =>
@@ -1274,7 +1420,11 @@ export function NewAgentModal({
               >
                 {status.kind === "submitting"
                   ? "Analyzing intake..."
-                  : "Create governed draft"}
+                  : status.kind === "recovering"
+                    ? status.action === "retry"
+                      ? "Retrying..."
+                      : "Opening Workbench..."
+                    : "Create governed draft"}
               </button>
             </div>
           </div>
