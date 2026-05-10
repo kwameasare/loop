@@ -61,6 +61,12 @@ function formatUsd(value: number): string {
   }).format(value);
 }
 
+function formatTimestamp(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toISOString().replace("T", " ").slice(0, 16);
+}
+
 function Metric({
   label,
   value,
@@ -155,7 +161,14 @@ function Catalog({
   );
 }
 
-function SchemaTable({ tool }: { tool: ToolsRoomTool }) {
+function SchemaTable({ fields }: { fields: ToolsRoomTool["schema"] }) {
+  if (fields.length === 0) {
+    return (
+      <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
+        No schema captured yet.
+      </p>
+    );
+  }
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[34rem] text-left text-sm">
@@ -168,7 +181,7 @@ function SchemaTable({ tool }: { tool: ToolsRoomTool }) {
           </tr>
         </thead>
         <tbody>
-          {tool.schema.map((field) => (
+          {fields.map((field) => (
             <tr key={field.name} className="border-b last:border-0">
               <td className="py-2 pr-3 font-medium">{field.name}</td>
               <td className="py-2 pr-3 text-muted-foreground">{field.type}</td>
@@ -242,9 +255,17 @@ function DetailPanel({ tool }: { tool: ToolsRoomTool | null }) {
         <section className="rounded-md border bg-background p-3">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <Braces className="h-4 w-4" aria-hidden />
-            Schema
+            Input schema
           </p>
-          <SchemaTable tool={tool} />
+          <SchemaTable fields={tool.schema} />
+        </section>
+
+        <section className="rounded-md border bg-background p-3">
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <Braces className="h-4 w-4" aria-hidden />
+            Output schema
+          </p>
+          <SchemaTable fields={tool.outputSchema} />
         </section>
 
         <section className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr))]">
@@ -262,6 +283,31 @@ function DetailPanel({ tool }: { tool: ToolsRoomTool | null }) {
             label="Cost"
             value={formatUsd(tool.costPer1kUsd)}
             detail="Per 1,000 calls"
+          />
+          <Metric
+            label="Success"
+            value={`${tool.successRatePercent}%`}
+            detail="Successful calls over 7 days"
+          />
+          <Metric
+            label="P95 latency"
+            value={`${tool.p95LatencyMs} ms`}
+            detail="Production or staging p95"
+          />
+          <Metric
+            label="Retry rate"
+            value={`${tool.retryRatePercent}%`}
+            detail={`${tool.failedCalls7d} failed calls / 7d`}
+          />
+          <Metric
+            label="PII sent"
+            value={tool.piiSent7d.toLocaleString()}
+            detail="Arguments classified as personal data"
+          />
+          <Metric
+            label="Schema change"
+            value={formatTimestamp(tool.lastSchemaChangeAt)}
+            detail="Last contract-shape update"
           />
         </section>
 
@@ -292,6 +338,64 @@ function DetailPanel({ tool }: { tool: ToolsRoomTool | null }) {
             <div>
               <dt className="text-muted-foreground">KMS key</dt>
               <dd className="break-words">{tool.kmsKeyRef}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section
+          className="rounded-md border bg-background p-3"
+          data-testid="tools-room-contract-fields"
+        >
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <ClipboardList className="h-4 w-4" aria-hidden />
+            Implementation contract
+          </p>
+          <dl className="mt-2 grid gap-2 text-sm [grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr))]">
+            <div>
+              <dt className="text-muted-foreground">Environment</dt>
+              <dd>{tool.environment}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Timeout</dt>
+              <dd>{tool.timeoutMs} ms</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Rate limit</dt>
+              <dd>{tool.rateLimit}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Retry policy</dt>
+              <dd>{tool.retryPolicy}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Idempotency</dt>
+              <dd>{tool.idempotency}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Data classification</dt>
+              <dd>{tool.dataClassification}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Allowed agents</dt>
+              <dd>{tool.safety.agentsAllowed.join(", ")}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Allowed channels</dt>
+              <dd>{tool.allowedChannels.join(", ") || "Review required"}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Approval requirements</dt>
+              <dd>{tool.approvalRequirements}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Audit requirements</dt>
+              <dd>{tool.auditRequirements}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">
+                Compensation / rollback
+              </dt>
+              <dd>{tool.compensationBehavior}</dd>
             </div>
           </dl>
         </section>

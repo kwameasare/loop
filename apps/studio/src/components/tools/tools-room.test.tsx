@@ -27,9 +27,23 @@ describe("ToolsRoom", () => {
     expect(screen.getByTestId("tools-room-catalog")).toHaveTextContent(
       "lookup_order",
     );
-    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent("Schema");
+    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent(
+      "Input schema",
+    );
+    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent(
+      "Output schema",
+    );
     expect(screen.getByTestId("tools-room-auth")).toHaveTextContent(
       "Secret reference",
+    );
+    expect(screen.getByTestId("tools-room-contract-fields")).toHaveTextContent(
+      "Implementation contract",
+    );
+    expect(screen.getByTestId("tools-room-contract-fields")).toHaveTextContent(
+      "Allowed channels",
+    );
+    expect(screen.getByTestId("tools-room-contract-fields")).toHaveTextContent(
+      "tool.order.lookup with trace span",
     );
     expect(screen.getByTestId("tools-room-safety")).toHaveTextContent(
       "Safety contract",
@@ -46,6 +60,12 @@ describe("ToolsRoom", () => {
     expect(
       screen.getByRole("meter", { name: "Eval coverage" }),
     ).toHaveAttribute("aria-valuenow", "96");
+    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent(
+      "P95 latency",
+    );
+    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent(
+      "PII sent",
+    );
   });
 
   it("shows production grant boundaries for money-moving tools", () => {
