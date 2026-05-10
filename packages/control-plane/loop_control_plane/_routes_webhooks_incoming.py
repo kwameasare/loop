@@ -29,8 +29,10 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import UTC, datetime
+from hashlib import sha256
 from typing import Any, Final
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request
 from loop_channels_core.idempotency import (
@@ -48,8 +50,15 @@ from loop_channels_core.idempotency import (
     provider_event_id_for_whatsapp,
 )
 
+from loop_control_plane._app_agents import AgentRecord
 from loop_control_plane._app_common import request_id
 from loop_control_plane.audit_events import record_audit_event
+from loop_control_plane.channel_bindings import (
+    ChannelActivityCreate,
+    ChannelBindingRecord,
+)
+from loop_control_plane.trace_search import TraceSummary
+from loop_control_plane.workspaces import WorkspaceError
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/v1/webhooks/incoming", tags=["WebhooksIncoming"])
@@ -65,6 +74,24 @@ SUPPORTED_CHANNELS: Final[frozenset[str]] = frozenset({
     "email",
     "rcs",
     "web",
+})
+
+_CHANNEL_BINDING_TYPES: Final[dict[str, str]] = {
+    "slack": "slack",
+    "whatsapp": "whatsapp",
+    "discord": "webhook_api",
+    "telegram": "telegram",
+    "twilio": "sms",
+    "teams": "teams",
+    "email": "email",
+    "rcs": "sms",
+    "web": "web_chat",
+}
+
+_ROUTABLE_BINDING_STATUSES: Final[frozenset[str]] = frozenset({
+    "ready",
+    "staged",
+    "live",
 })
 
 # Per-channel extractors for the dedup id; falls back to a content
@@ -107,6 +134,74 @@ def _payload_for_extractor(channel: str, body_bytes: bytes) -> dict[str, Any]:
         return {}
 
 
+def _trace_id_for(
+    *,
+    workspace_id: UUID,
+    channel: str,
+    provider_event_id: str,
+    body_bytes: bytes,
+) -> str:
+    body_hash = sha256(body_bytes).hexdigest()
+    seed = f"{workspace_id}:{channel}:{provider_event_id}:{body_hash}"
+    return sha256(seed.encode("utf-8")).hexdigest()[:32]
+
+
+def _dedup_key_for(*, workspace_id: UUID, channel: str, provider_event_id: str) -> str:
+    return make_dedup_key(channel, f"{workspace_id}:{provider_event_id}")
+
+
+def _binding_type_for_channel(channel: str) -> str:
+    return _CHANNEL_BINDING_TYPES.get(channel, "webhook_api")
+
+
+def _is_routable(binding: ChannelBindingRecord) -> bool:
+    return binding.status in _ROUTABLE_BINDING_STATUSES
+
+
+async def _resolve_inbound_route(
+    request: Request,
+    *,
+    workspace_id: UUID,
+    channel: str,
+    agent_id: UUID | None,
+    channel_binding_id: str | None,
+) -> tuple[AgentRecord | None, ChannelBindingRecord | None, str]:
+    cp = request.app.state.cp
+    channel_type = _binding_type_for_channel(channel)
+
+    if agent_id is not None:
+        try:
+            agents = [await cp.agents.get(workspace_id=workspace_id, agent_id=agent_id)]
+        except WorkspaceError:
+            return None, None, "agent_not_found"
+    else:
+        agents = await cp.agents.list_for_workspace(workspace_id)
+
+    saw_binding_id = False
+    saw_channel_binding = False
+    for agent in agents:
+        bindings = await cp.channel_bindings.list_for_agent(agent=agent)
+        for binding in bindings:
+            if channel_binding_id is not None:
+                if binding.id != channel_binding_id:
+                    continue
+                saw_binding_id = True
+                if binding.channel_type != channel_type:
+                    return None, None, "binding_channel_mismatch"
+            elif binding.channel_type != channel_type:
+                continue
+            saw_channel_binding = True
+            if not _is_routable(binding):
+                continue
+            return agent, binding, "routed"
+
+    if channel_binding_id is not None and not saw_binding_id:
+        return None, None, "binding_not_found"
+    if saw_channel_binding:
+        return None, None, "binding_not_routable"
+    return None, None, "no_configured_binding"
+
+
 @router.post("/{channel}")
 async def receive_inbound_webhook(
     request: Request,
@@ -122,6 +217,14 @@ async def receive_inbound_webhook(
     ),
     x_loop_request_signature: str | None = Header(
         default=None, alias="X-Loop-Request-Signature"
+    ),
+    agent_id: UUID | None = Query(
+        default=None,
+        description="Optional target agent for this inbound channel event.",
+    ),
+    channel_binding_id: str | None = Query(
+        default=None,
+        description="Optional channel binding id configured for this provider webhook.",
     ),
 ) -> dict[str, Any]:
     """Generic inbound webhook entrypoint.
@@ -151,7 +254,11 @@ async def receive_inbound_webhook(
     extractor = _EXTRACTORS.get(channel)
     assert extractor is not None  # SUPPORTED_CHANNELS guards this
     provider_event_id = extractor(payload)
-    dedup_key = make_dedup_key(channel, provider_event_id)
+    dedup_key = _dedup_key_for(
+        workspace_id=workspace_id,
+        channel=channel,
+        provider_event_id=provider_event_id,
+    )
 
     if not _IDEMPOTENCY_STORE.claim(dedup_key):
         # Retry from the provider; ack 200 with a duplicate flag so the
@@ -166,7 +273,56 @@ async def receive_inbound_webhook(
             request_id=request_id(request),
             payload={"channel": channel, "provider_event_id": provider_event_id},
         )
-        return {"received": True, "duplicate": True, "channel": channel}
+        return {
+            "received": True,
+            "duplicate": True,
+            "channel": channel,
+            "provider_event_id": provider_event_id,
+            "routing_status": "duplicate",
+            "agent_id": None,
+            "channel_binding_id": None,
+            "trace_id": None,
+            "evidence_ref": None,
+        }
+
+    routed_agent, routed_binding, routing_status = await _resolve_inbound_route(
+        request,
+        workspace_id=workspace_id,
+        channel=channel,
+        agent_id=agent_id,
+        channel_binding_id=channel_binding_id,
+    )
+
+    trace_id: str | None = None
+    if routed_agent is not None and routed_binding is not None:
+        trace_id = _trace_id_for(
+            workspace_id=workspace_id,
+            channel=channel,
+            provider_event_id=provider_event_id,
+            body_bytes=body_bytes,
+        )
+        cp.trace_store.add(
+            TraceSummary(
+                workspace_id=workspace_id,
+                trace_id=trace_id,
+                turn_id=uuid4(),
+                conversation_id=uuid4(),
+                agent_id=routed_agent.id,
+                started_at=datetime.now(UTC),
+                duration_ms=0,
+                span_count=1,
+                error=False,
+                channel_binding_id=routed_binding.id,
+            )
+        )
+        await cp.channel_bindings.record_activity(
+            agent=routed_agent,
+            binding_id=routed_binding.id,
+            body=ChannelActivityCreate(
+                status="success",
+                trace_id=trace_id,
+            ),
+        )
 
     record_audit_event(
         workspace_id=workspace_id,
@@ -182,16 +338,23 @@ async def receive_inbound_webhook(
             "channel": channel,
             "provider_event_id": provider_event_id,
             "body_bytes": len(body_bytes),
+            "routing_status": routing_status,
+            "agent_id": str(routed_agent.id) if routed_agent is not None else None,
+            "channel_binding_id": routed_binding.id if routed_binding is not None else None,
+            "trace_id": trace_id,
         },
     )
 
-    # Production wiring: this is where we'd publish to NATS for the
-    # runtime to pick up. Until that wiring lands, we just acknowledge.
     return {
         "received": True,
         "duplicate": False,
         "channel": channel,
         "provider_event_id": provider_event_id,
+        "routing_status": routing_status,
+        "agent_id": str(routed_agent.id) if routed_agent is not None else None,
+        "channel_binding_id": routed_binding.id if routed_binding is not None else None,
+        "trace_id": trace_id,
+        "evidence_ref": f"trace/{trace_id}" if trace_id is not None else None,
     }
 
 
