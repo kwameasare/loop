@@ -29,4 +29,20 @@ describe("AgentSecretsPage", () => {
     expect(screen.queryByTestId("secrets-empty")).not.toBeInTheDocument();
     expect(screen.getByTestId("add-secret-button")).toBeDisabled();
   });
+
+  it("fails closed when the secrets service errors", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test/v1";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => new Response("boom", { status: 500 })),
+    );
+
+    render(await AgentSecretsPage({ params: { agent_id: "agent_secret" } }));
+
+    expect(screen.getByTestId("secrets-degraded")).toHaveTextContent(
+      "Secrets service error: cp-api GET /agents/agent_secret/secrets -> 500",
+    );
+    expect(screen.queryByTestId("secrets-empty")).not.toBeInTheDocument();
+    expect(screen.getByTestId("add-secret-button")).toBeDisabled();
+  });
 });

@@ -10,7 +10,15 @@ interface AgentSecretsPageProps {
 export default async function AgentSecretsPage({
   params,
 }: AgentSecretsPageProps) {
-  const { items, degraded_reason } = await listAgentSecrets(params.agent_id);
+  const { items, degraded_reason } = await listAgentSecrets(
+    params.agent_id,
+  ).catch((error: unknown) => ({
+    items: [],
+    degraded_reason:
+      error instanceof Error
+        ? `Secrets service error: ${error.message}`
+        : "Secrets service error: Studio cannot verify secret references right now.",
+  }));
   return (
     <div data-testid="agent-secrets">
       <SecretsList
