@@ -28,9 +28,7 @@ describe("AgentToolsPage", () => {
     process.env.LOOP_CP_API_BASE_URL = "https://cp.test/v1";
     vi.stubGlobal(
       "fetch",
-      vi.fn<typeof fetch>(async () =>
-        new Response("missing", { status: 404 }),
-      ),
+      vi.fn<typeof fetch>(async () => new Response("missing", { status: 404 })),
     );
 
     render(await AgentToolsPage({ params: { agent_id: "agent_support" } }));
@@ -56,6 +54,24 @@ describe("AgentToolsPage", () => {
                 kind: "mcp",
                 description: "Issue a refund.",
                 source: "payments",
+              },
+            ],
+          });
+        }
+        if (url.endsWith("/tool-contracts/metrics")) {
+          return Response.json({
+            items: [
+              {
+                tool_id: "tool_issue_refund",
+                production_usage_7d: 2,
+                success_rate_percent: 50,
+                p95_latency_ms: 520,
+                retry_rate_percent: 50,
+                failed_calls_7d: 1,
+                pii_sent_7d: 3,
+                last_schema_change_at: "2026-05-10T00:00:00Z",
+                measurement_status: "measured",
+                evidence_ref: "tool-telemetry/tool_issue_refund/2-calls",
               },
             ],
           });
@@ -102,6 +118,12 @@ describe("AgentToolsPage", () => {
 
     expect(screen.getByTestId("tools-room-focused-tool")).toHaveTextContent(
       "issue_refund",
+    );
+    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent(
+      "Production tool telemetry connected",
+    );
+    expect(screen.getByTestId("tools-room-detail")).toHaveTextContent(
+      "tool-telemetry/tool_issue_refund/2-calls",
     );
   });
 });

@@ -41,6 +41,25 @@ export interface ToolContractsResponse {
   items: ToolContract[];
 }
 
+export type ToolMetricStatus = "measured" | "waiting_for_calls";
+
+export interface ToolContractMetrics {
+  tool_id: string;
+  production_usage_7d: number;
+  success_rate_percent: number;
+  p95_latency_ms: number;
+  retry_rate_percent: number;
+  failed_calls_7d: number;
+  pii_sent_7d: number;
+  last_schema_change_at: string | null;
+  measurement_status: ToolMetricStatus;
+  evidence_ref: string;
+}
+
+export interface ToolContractMetricsResponse {
+  items: ToolContractMetrics[];
+}
+
 export type ToolContractInput = Pick<
   ToolContract,
   | "name"
@@ -108,6 +127,19 @@ export async function listToolContracts(
 ): Promise<ToolContractsResponse> {
   return cpJson<ToolContractsResponse>(
     `/agents/${encodeURIComponent(agentId)}/tool-contracts`,
+    {
+      ...opts,
+      fallback: { items: [] },
+    },
+  );
+}
+
+export async function listToolContractMetrics(
+  agentId: string,
+  opts: UxWireupClientOptions = {},
+): Promise<ToolContractMetricsResponse> {
+  return cpJson<ToolContractMetricsResponse>(
+    `/agents/${encodeURIComponent(agentId)}/tool-contracts/metrics`,
     {
       ...opts,
       fallback: { items: [] },

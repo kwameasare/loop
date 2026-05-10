@@ -10,6 +10,9 @@ from fastapi import APIRouter, HTTPException, Request
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
+from loop_control_plane.tool_call_telemetry import (
+    ToolCallTelemetryInput,
+)
 from loop_control_plane.tool_contracts import (
     ToolContractUpsert,
     tool_contract_payload,
@@ -47,13 +50,14 @@ def _audit(
     caller_sub: str,
     action: str,
     resource_id: str,
+    resource_type: str = "tool_contract",
     payload: object | None = None,
 ) -> None:
     record_audit_event(
         workspace_id=workspace_id,
         actor_sub=caller_sub,
         action=action,
-        resource_type="tool_contract",
+        resource_type=resource_type,
         resource_id=resource_id,
         store=request.app.state.cp.audit_events,
         request_id=request_id(request),
@@ -142,6 +146,54 @@ async def list_tool_contracts(
     return {"items": [tool_contract_payload(contract) for contract in contracts]}
 
 
+@router.get("/{agent_id}/tool-contracts/metrics")
+async def list_tool_contract_metrics(
+    request: Request,
+    agent_id: UUID,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    agent = await _agent(request, agent_id, caller_sub)
+    contracts = await request.app.state.cp.tool_contracts.list_for_agent(agent=agent)
+    metrics = request.app.state.cp.tool_call_telemetry.metrics_for_agent(
+        agent=agent,
+        contracts=contracts,
+    )
+    return {"items": [item.model_dump(mode="json") for item in metrics]}
+
+
+@router.post("/{agent_id}/tools/{tool_id}/calls")
+async def record_tool_call_telemetry(
+    request: Request,
+    agent_id: UUID,
+    tool_id: str,
+    body: ToolCallTelemetryInput,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    agent = await _agent(request, agent_id, caller_sub)
+    record = request.app.state.cp.tool_call_telemetry.record(
+        agent=agent,
+        tool_id=tool_id,
+        body=body,
+    )
+    _audit(
+        request,
+        workspace_id=agent.workspace_id,
+        caller_sub=caller_sub,
+        action="tool_call:record",
+        resource_type="tool_call",
+        resource_id=tool_id,
+        payload={
+            "agent_id": str(agent_id),
+            "trace_id": body.trace_id,
+            "status": body.status,
+            "latency_ms": body.latency_ms,
+            "retry_count": body.retry_count,
+            "pii_sent": body.pii_sent,
+        },
+    )
+    return record.model_dump(mode="json")
+
+
 @router.put("/{agent_id}/tool-contracts/{tool_id}")
 async def upsert_tool_contract(
     request: Request,
@@ -174,9 +226,7 @@ async def upsert_tool_contract(
             "approval_invalidated_at": contract.approval_invalidated_at.isoformat()
             if contract.approval_invalidated_at
             else None,
-            "invalidated_pre_approved_classes": [
-                record.id for record in invalidated
-            ],
+            "invalidated_pre_approved_classes": [record.id for record in invalidated],
         },
     )
     return tool_contract_payload(contract)

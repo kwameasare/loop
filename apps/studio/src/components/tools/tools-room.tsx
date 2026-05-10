@@ -79,15 +79,19 @@ function Metric({
   label,
   value,
   detail,
+  measured = true,
 }: {
   label: string;
   value: string;
   detail: string;
+  measured?: boolean;
 }) {
   return (
     <div className="rounded-md border bg-card p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xl font-semibold tabular-nums">{value}</p>
+      <p className="mt-1 text-xl font-semibold tabular-nums">
+        {measured ? value : "Not measured"}
+      </p>
       <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
     </div>
   );
@@ -216,6 +220,7 @@ function DetailPanel({ tool }: { tool: ToolsRoomTool | null }) {
   const stateTreatment = OBJECT_STATE_TREATMENTS[tool.objectState];
   const trustTreatment = TRUST_STATE_TREATMENTS[tool.trust];
   const grantBlocked = tool.productionGrant !== "approved";
+  const hasProductionMetrics = tool.monitoringStatus !== "waiting_for_calls";
 
   return (
     <section
@@ -280,12 +285,22 @@ function DetailPanel({ tool }: { tool: ToolsRoomTool | null }) {
           <Metric
             label="Usage"
             value={tool.usage7d.toLocaleString()}
-            detail="Calls over 7 days"
+            detail={
+              hasProductionMetrics
+                ? "Calls over 7 days"
+                : "Waiting for tool-call telemetry"
+            }
+            measured={hasProductionMetrics}
           />
           <Metric
             label="Failure"
             value={`${tool.failureRate}%`}
-            detail={tool.safety.failureMode}
+            detail={
+              hasProductionMetrics
+                ? tool.safety.failureMode
+                : tool.monitoringEvidence
+            }
+            measured={hasProductionMetrics}
           />
           <Metric
             label="Cost"
@@ -295,29 +310,68 @@ function DetailPanel({ tool }: { tool: ToolsRoomTool | null }) {
           <Metric
             label="Success"
             value={`${tool.successRatePercent}%`}
-            detail="Successful calls over 7 days"
+            detail={
+              hasProductionMetrics
+                ? "Successful calls over 7 days"
+                : "No success rate until calls are recorded"
+            }
+            measured={hasProductionMetrics}
           />
           <Metric
             label="P95 latency"
             value={`${tool.p95LatencyMs} ms`}
-            detail="Production or staging p95"
+            detail={
+              hasProductionMetrics
+                ? "Production or staging p95"
+                : "No latency samples yet"
+            }
+            measured={hasProductionMetrics}
           />
           <Metric
             label="Retry rate"
             value={`${tool.retryRatePercent}%`}
-            detail={`${tool.failedCalls7d} failed calls / 7d`}
+            detail={
+              hasProductionMetrics
+                ? `${tool.failedCalls7d} failed calls / 7d`
+                : "No retry samples yet"
+            }
+            measured={hasProductionMetrics}
           />
           <Metric
             label="PII sent"
             value={tool.piiSent7d.toLocaleString()}
-            detail="Arguments classified as personal data"
+            detail={
+              hasProductionMetrics
+                ? "Arguments classified as personal data"
+                : "No argument telemetry yet"
+            }
+            measured={hasProductionMetrics}
           />
           <Metric
             label="Schema change"
             value={formatTimestamp(tool.lastSchemaChangeAt)}
-            detail="Last contract-shape update"
+            detail={
+              hasProductionMetrics
+                ? "Last contract-shape update"
+                : "Contract timestamp only; calls not recorded"
+            }
           />
         </section>
+
+        <EvidenceCallout
+          title={
+            hasProductionMetrics
+              ? "Production tool telemetry connected"
+              : "Production tool telemetry pending"
+          }
+          source={tool.monitoringEvidence}
+          confidence={hasProductionMetrics ? 88 : 42}
+          tone={hasProductionMetrics ? "success" : "warning"}
+        >
+          {hasProductionMetrics
+            ? "Usage, success, latency, retry, failed-call, and PII metrics are backed by recorded tool-call telemetry."
+            : "Studio is not claiming live tool health yet. Record gateway tool-call telemetry before granting or changing production access."}
+        </EvidenceCallout>
 
         <ConfidenceMeter
           value={tool.evalCoveragePercent}
@@ -400,9 +454,7 @@ function DetailPanel({ tool }: { tool: ToolsRoomTool | null }) {
               <dd>{tool.auditRequirements}</dd>
             </div>
             <div>
-              <dt className="text-muted-foreground">
-                Compensation / rollback
-              </dt>
+              <dt className="text-muted-foreground">Compensation / rollback</dt>
               <dd>{tool.compensationBehavior}</dd>
             </div>
           </dl>
@@ -564,9 +616,7 @@ function ToolEnablementChecks({
                 {check.passed ? "passed" : "blocked"}
               </span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {check.detail}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{check.detail}</p>
           </li>
         ))}
       </ul>
@@ -580,7 +630,9 @@ function formatRecord(record: Record<string, unknown>): string {
   return entries.map(([key, value]) => `${key}: ${String(value)}`).join(", ");
 }
 
-function sideEffectLevel(effect: ToolsRoomTool["sideEffect"]): ToolSideEffectLevel {
+function sideEffectLevel(
+  effect: ToolsRoomTool["sideEffect"],
+): ToolSideEffectLevel {
   if (effect === "money-movement") return "money_movement";
   if (effect === "external-message") return "external_message";
   return effect;
@@ -605,7 +657,8 @@ function contractInputFor(
   return {
     name: contract?.name ?? tool.name,
     description: contract?.description ?? tool.description,
-    side_effect_level: contract?.side_effect_level ?? sideEffectLevel(tool.sideEffect),
+    side_effect_level:
+      contract?.side_effect_level ?? sideEffectLevel(tool.sideEffect),
     pii_access: contract?.pii_access ?? tool.safety.exposesPersonalData,
     money_movement: contract?.money_movement ?? tool.safety.spendsMoney,
     rate_limits:
@@ -656,9 +709,7 @@ function ToolContractQuestionnaire({
   const [sandboxStatus, setSandboxStatus] = useState<ToolSandboxStatus>(
     initial?.sandbox_status ?? "sandbox",
   );
-  const [ownerUserId, setOwnerUserId] = useState(
-    initial?.owner_user_id ?? "",
-  );
+  const [ownerUserId, setOwnerUserId] = useState(initial?.owner_user_id ?? "");
   const [approvalPolicyId, setApprovalPolicyId] = useState(
     initial?.approval_policy_id ?? "",
   );
@@ -721,10 +772,7 @@ function ToolContractQuestionnaire({
     setError(null);
     setSavedMessage(null);
     try {
-      const promoted = await promoteToolContract(
-        agentId,
-        activeTool.id,
-      );
+      const promoted = await promoteToolContract(agentId, activeTool.id);
       onContractChanged(promoted);
       setSavedMessage("Tool contract approved for live use.");
     } catch (err) {
@@ -985,7 +1033,10 @@ function ToolContractQuestionnaire({
         ) : null}
       </div>
       {savedMessage ? (
-        <p className="mt-2 text-xs text-success" data-testid="tool-contract-saved">
+        <p
+          className="mt-2 text-xs text-success"
+          data-testid="tool-contract-saved"
+        >
           {savedMessage}
         </p>
       ) : null}
@@ -1121,10 +1172,7 @@ export function ToolsRoom({ data, initialToolId }: ToolsRoomProps) {
         />
         <DetailPanel tool={selectedTool} />
         <SafetyContract tool={selectedTool} />
-        <ToolEnablementChecks
-          tool={selectedTool}
-          contract={selectedContract}
-        />
+        <ToolEnablementChecks tool={selectedTool} contract={selectedContract} />
         <ToolContractQuestionnaire
           key={selectedTool?.id ?? "no-tool"}
           agentId={data.agentId}

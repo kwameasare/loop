@@ -108,3 +108,84 @@ def test_agent_tools_route_requires_workspace_membership(
         headers={"authorization": _bearer_for("stranger")},
     )
     assert response.status_code in (401, 403)
+
+
+def test_tool_call_telemetry_drives_contract_metrics(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    headers = {"authorization": _bearer_for("owner-1")}
+    contract = client.put(
+        f"/v1/agents/{agent_id}/tool-contracts/lookup_order",
+        headers=headers,
+        json={
+            "name": "lookup_order",
+            "description": "Look up order state.",
+            "side_effect_level": "read",
+            "pii_access": True,
+            "money_movement": False,
+            "rate_limits": {"per_minute": 300},
+            "budget_limits": {},
+            "sandbox_status": "sandbox",
+            "owner_user_id": "owner-1",
+            "approval_policy_id": "policy-read",
+            "failure_behavior": "Answer with uncertainty.",
+            "compensation_behavior": "No compensation required.",
+        },
+    )
+    assert contract.status_code == 200, contract.text
+
+    empty = client.get(
+        f"/v1/agents/{agent_id}/tool-contracts/metrics",
+        headers=headers,
+    )
+    assert empty.status_code == 200, empty.text
+    assert empty.json()["items"][0]["measurement_status"] == "waiting_for_calls"
+    assert empty.json()["items"][0]["production_usage_7d"] == 0
+
+    first = client.post(
+        f"/v1/agents/{agent_id}/tools/lookup_order/calls",
+        headers=headers,
+        json={
+            "trace_id": "trace-order-1",
+            "latency_ms": 140,
+            "status": "success",
+            "retry_count": 1,
+            "pii_sent": 2,
+            "schema_hash": "schema-v1",
+        },
+    )
+    assert first.status_code == 200, first.text
+    second = client.post(
+        f"/v1/agents/{agent_id}/tools/lookup_order/calls",
+        headers=headers,
+        json={
+            "trace_id": "trace-order-2",
+            "latency_ms": 520,
+            "status": "error",
+            "retry_count": 0,
+            "pii_sent": 1,
+            "schema_hash": "schema-v1",
+        },
+    )
+    assert second.status_code == 200, second.text
+
+    measured = client.get(
+        f"/v1/agents/{agent_id}/tool-contracts/metrics",
+        headers=headers,
+    )
+    assert measured.status_code == 200, measured.text
+    item = measured.json()["items"][0]
+    assert item["measurement_status"] == "measured"
+    assert item["production_usage_7d"] == 2
+    assert item["success_rate_percent"] == 50.0
+    assert item["p95_latency_ms"] == 520
+    assert item["retry_rate_percent"] == 50.0
+    assert item["failed_calls_7d"] == 1
+    assert item["pii_sent_7d"] == 3
+    assert item["evidence_ref"] == "tool-telemetry/lookup_order/2-calls"
+
+    actions = [
+        event.action
+        for event in client.app.state.cp.audit_events.list_for_workspace(workspace_id)  # type: ignore[attr-defined]
+    ]
+    assert "tool_call:record" in actions
