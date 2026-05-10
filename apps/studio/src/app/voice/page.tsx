@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import { VoiceStage } from "@/components/voice/voice-stage";
 import {
   fetchVoiceStageModel,
@@ -60,9 +63,13 @@ function VoicePageBody(): JSX.Element {
   }
   if (error) {
     return (
-      <p className="p-6 text-sm text-destructive" role="alert">
-        {error}
-      </p>
+      <main className="mx-auto w-full max-w-7xl p-6">
+        <SectionDegraded
+          title="Voice Stage"
+          description="Voice channel evidence is unavailable. Studio will not replace missing phone, ASR, TTS, or latency data with a local voice fixture."
+          evidence={error}
+        />
+      </main>
     );
   }
   return <VoiceStage model={model!} workspaceId={active.id} />;
