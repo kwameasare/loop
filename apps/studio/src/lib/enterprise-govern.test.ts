@@ -12,6 +12,7 @@ import {
   RBAC_ROLES,
   RESIDENCY_ZONES,
   SSO_SUMMARIES,
+  attachComplianceProbeSuite,
   buildRbacMatrix,
   createComplianceEvidenceExport,
   fetchComplianceReview,
@@ -141,5 +142,26 @@ describe("compliance review client", () => {
       agent_id: "agent_1",
       include_sections: ["approvals"],
     });
+  });
+
+  it("requires cp-api before creating compliance evidence exports", async () => {
+    await expect(
+      createComplianceEvidenceExport(
+        "workspace_1",
+        { format: "json", include_sections: ["approvals"] },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow(/LOOP_CP_API_BASE_URL is required/i);
+  });
+
+  it("requires cp-api before attaching compliance probe suites", async () => {
+    await expect(
+      attachComplianceProbeSuite(
+        "workspace_1",
+        "regulated-support",
+        {},
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow(/LOOP_CP_API_BASE_URL is required/i);
   });
 });

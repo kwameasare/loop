@@ -593,6 +593,10 @@ export interface ComplianceProbeSuiteAttachResult {
   audit_ref: string;
 }
 
+type EnterpriseGovernMutationOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 export const COMPLIANCE_REVIEW_FIXTURE: ComplianceReviewModel = {
   workspace_id: "workspace_local",
   generated_at: new Date(0).toISOString(),
@@ -805,13 +809,14 @@ export async function fetchComplianceReview(
 export async function createComplianceEvidenceExport(
   workspaceId: string,
   input: ComplianceEvidenceExportInput,
-  opts: UxWireupClientOptions = {},
+  opts: EnterpriseGovernMutationOptions = {},
 ): Promise<ComplianceEvidenceExport> {
   return cpJson<ComplianceEvidenceExport>(
     `/workspaces/${encodeURIComponent(workspaceId)}/compliance-review/evidence-export`,
     {
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         id: "cex_local",
         workspace_id: workspaceId,
@@ -849,13 +854,14 @@ export async function attachComplianceProbeSuite(
   workspaceId: string,
   libraryId: string,
   input: ComplianceProbeSuiteAttachInput = {},
-  opts: UxWireupClientOptions = {},
+  opts: EnterpriseGovernMutationOptions = {},
 ): Promise<ComplianceProbeSuiteAttachResult> {
   return cpJson<ComplianceProbeSuiteAttachResult>(
     `/workspaces/${encodeURIComponent(workspaceId)}/compliance-review/probe-libraries/${encodeURIComponent(libraryId)}/attach`,
     {
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         library_id: libraryId,
         library_name:
