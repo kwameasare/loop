@@ -42,7 +42,7 @@ describe("listAgents", () => {
       ],
     });
 
-    const result = await listAgents({ fetcher: fetchMock });
+    const result = await listAgents({ fetcher: fetchMock, workspaceId: "ws_1" });
 
     expect(result.agents[0]).toMatchObject({
       id: "agt_support",
@@ -53,17 +53,13 @@ describe("listAgents", () => {
       state_evidence_ref: "deployment/dep_1",
       workspace_id: "ws_1",
     });
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://cp.test/v1/agents",
-      expect.objectContaining({
-        cache: "no-store",
-        headers: expect.objectContaining({
-          accept: "application/json",
-          authorization: "Bearer test-token",
-        }),
-        method: "GET",
-      }),
-    );
+    const [url, init] = fetchMock.mock.calls[0];
+    const headers = new Headers(init.headers);
+    expect(url).toBe("https://cp.test/v1/agents");
+    expect(init).toMatchObject({ cache: "no-store", method: "GET" });
+    expect(headers.get("accept")).toBe("application/json");
+    expect(headers.get("authorization")).toBe("Bearer test-token");
+    expect(headers.get("x-loop-workspace-id")).toBe("ws_1");
   });
 
   it("throws when cp-api returns a non-2xx", async () => {
@@ -106,7 +102,7 @@ describe("createAgent", () => {
 
     const summary = await createAgent(
       { name: "Sales", slug: "sales", description: "Outbound sales" },
-      { fetcher: fetchMock, token: "tkn" },
+      { fetcher: fetchMock, token: "tkn", workspaceId: "ws_1" },
     );
 
     expect(summary).toMatchObject({
@@ -124,7 +120,9 @@ describe("createAgent", () => {
       slug: "sales",
       description: "Outbound sales",
     });
-    expect(init.headers.authorization).toBe("Bearer tkn");
+    const headers = new Headers(init.headers);
+    expect(headers.get("authorization")).toBe("Bearer tkn");
+    expect(headers.get("x-loop-workspace-id")).toBe("ws_1");
   });
 
   it("propagates non-2xx responses as errors", async () => {

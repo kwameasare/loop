@@ -28,6 +28,7 @@ export type ListAgentsResponse = {
 export interface ListAgentsOptions {
   fetcher?: typeof fetch;
   token?: string;
+  workspaceId?: string | null | undefined;
 }
 
 function cpApiBaseUrl(): string {
@@ -75,21 +76,22 @@ function noStoreFetch(fetcher: typeof fetch): typeof fetch {
 }
 
 /**
- * Inject a default ``X-Loop-Workspace-Id`` from
- * ``LOOP_DEFAULT_WORKSPACE_ID`` (server-side env) when the caller
- * hasn't already set one. cp-api requires the header on every
- * workspace-scoped GET; the generated client doesn't know to send
- * it because the OpenAPI spec doesn't declare it on every route
- * (tracked as drift baseline). This shim closes the gap for SSR
- * paths so the studio's pages render with seeded data.
+ * Inject the selected ``X-Loop-Workspace-Id`` when the caller has
+ * resolved workspace context. ``LOOP_DEFAULT_WORKSPACE_ID`` remains a
+ * local-dev fallback, but production pages should pass an explicit
+ * workspace id before requesting workspace-scoped agent data.
  */
-function withDefaultWorkspaceHeader(fetcher: typeof fetch): typeof fetch {
+function withWorkspaceHeader(
+  fetcher: typeof fetch,
+  workspaceId?: string | null,
+): typeof fetch {
   return (input, init) => {
-    const defaultWs = process.env.LOOP_DEFAULT_WORKSPACE_ID;
-    if (!defaultWs) return fetcher(input, init);
+    const resolvedWorkspaceId =
+      workspaceId?.trim() || process.env.LOOP_DEFAULT_WORKSPACE_ID;
+    if (!resolvedWorkspaceId) return fetcher(input, init);
     const headers = new Headers(init?.headers);
     if (!headers.has("x-loop-workspace-id")) {
-      headers.set("x-loop-workspace-id", defaultWs);
+      headers.set("x-loop-workspace-id", resolvedWorkspaceId);
     }
     return fetcher(input, { ...init, headers });
   };
@@ -98,26 +100,32 @@ function withDefaultWorkspaceHeader(fetcher: typeof fetch): typeof fetch {
 function cpApiFetch(opts: {
   fetcher?: typeof fetch;
   baseUrl: string;
+  workspaceId?: string | null | undefined;
 }): typeof fetch {
   const authed = createAuthedCpApiFetch({
     ...(opts.fetcher ? { fetcher: opts.fetcher } : {}),
     // refreshSessionToken appends /v1/auth/refresh; pass origin-ish base.
     refreshBaseUrl: opts.baseUrl.replace(/\/v1$/, ""),
   });
-  return noStoreFetch(withDefaultWorkspaceHeader(authed));
+  return noStoreFetch(withWorkspaceHeader(authed, opts.workspaceId));
 }
 
 function createApiClient(opts: {
   baseUrl: string;
   fetcher: typeof fetch | undefined;
   token: string | undefined;
+  workspaceId?: string | null | undefined;
 }) {
   return createCpApi({
     baseUrl: opts.baseUrl,
     fetch: cpApiFetch(
       opts.fetcher
-        ? { fetcher: opts.fetcher, baseUrl: opts.baseUrl }
-        : { baseUrl: opts.baseUrl },
+        ? {
+            fetcher: opts.fetcher,
+            baseUrl: opts.baseUrl,
+            workspaceId: opts.workspaceId,
+          }
+        : { baseUrl: opts.baseUrl, workspaceId: opts.workspaceId },
     ),
     ...(opts.token !== undefined ? { token: opts.token } : {}),
   });
@@ -135,7 +143,12 @@ export async function listAgents(
 ): Promise<ListAgentsResponse> {
   const baseUrl = cpApiBaseUrl();
   const token = opts.token ?? process.env.LOOP_TOKEN;
-  const api = createApiClient({ baseUrl, fetcher: opts.fetcher, token });
+  const api = createApiClient({
+    baseUrl,
+    fetcher: opts.fetcher,
+    token,
+    workspaceId: opts.workspaceId,
+  });
   const agents = await api.GetAgents({ body: undefined });
   const items: Agent[] = Array.isArray(agents)
     ? (agents as Agent[])
@@ -153,6 +166,7 @@ export interface CreateAgentOptions {
   fetcher?: typeof fetch;
   token?: string;
   baseUrl?: string;
+  workspaceId?: string | null | undefined;
 }
 
 /**
@@ -170,6 +184,7 @@ export async function createAgent(
     baseUrl,
     fetcher: opts.fetcher,
     token: opts.token,
+    workspaceId: opts.workspaceId,
   });
   const payload = {
     name: input.name,
