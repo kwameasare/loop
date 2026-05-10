@@ -16,6 +16,7 @@ import {
 } from "@/lib/channel-bindings";
 import { listDeployments, type Deployment } from "@/lib/deploys";
 import { listEvalSuites, type EvalSuite } from "@/lib/evals";
+import { listKbDocuments, type KbDocument } from "@/lib/kb";
 import { listMemoryPolicies, type MemoryPolicy } from "@/lib/memory-policies";
 import { listToolContracts, type ToolContract } from "@/lib/tool-contracts";
 import { getAgentDetailData } from "./agent-detail-data";
@@ -139,6 +140,18 @@ export default async function AgentOverviewPage({
   } catch (error) {
     evalsDegradedReason = errorMessage(error, "Could not load eval suites.");
   }
+  let knowledgeDocuments: KbDocument[] = [];
+  let knowledgeDegradedReason: string | undefined;
+  try {
+    const result = await listKbDocuments(params.agent_id);
+    knowledgeDocuments = result.items;
+    knowledgeDegradedReason = result.degraded_reason;
+  } catch (error) {
+    knowledgeDegradedReason = errorMessage(
+      error,
+      "Could not load knowledge documents.",
+    );
+  }
   const combinedDegradedReason = [
     degradedReason,
     commitmentDegradedReason,
@@ -147,6 +160,7 @@ export default async function AgentOverviewPage({
     toolsDegradedReason,
     memoryDegradedReason,
     evalsDegradedReason,
+    knowledgeDegradedReason,
   ]
     .filter(Boolean)
     .join(" ");
@@ -178,6 +192,8 @@ export default async function AgentOverviewPage({
       memoryDegradedReason={memoryDegradedReason}
       evalSuites={evalSuites}
       evalsDegradedReason={evalsDegradedReason}
+      knowledgeDocuments={knowledgeDocuments}
+      knowledgeDegradedReason={knowledgeDegradedReason}
       commitment={commitment}
     />
   );

@@ -12,6 +12,7 @@ import {
 } from "@/lib/agent-commitment";
 import { buildLocalChannelBindings } from "@/lib/channel-bindings";
 import type { EvalSuite } from "@/lib/evals";
+import type { KbDocument } from "@/lib/kb";
 import { localMemoryPolicies } from "@/lib/memory-policies";
 import { localToolContracts } from "@/lib/tool-contracts";
 
@@ -45,6 +46,19 @@ const EVAL_SUITES: EvalSuite[] = [
     cases: 12,
     lastRunAt: "2026-05-08T12:00:00Z",
     passRate: 0.9,
+  },
+];
+
+const KNOWLEDGE_DOCUMENTS: KbDocument[] = [
+  {
+    id: "doc_ready",
+    agentId: "ag_1",
+    name: "support_handbook.md",
+    contentType: "text/markdown",
+    bytes: 12_288,
+    status: "ready",
+    uploadedAt: "2026-05-01T00:00:00Z",
+    lastRefreshedAt: "2026-05-09T00:00:00Z",
   },
 ];
 
@@ -275,6 +289,25 @@ describe("AgentOverview", () => {
     );
     expect(screen.getByTestId("agent-live-preview")).toHaveTextContent(
       "last run May",
+    );
+  });
+
+  it("surfaces knowledge source readiness from KB documents", () => {
+    render(
+      <AgentOverview
+        {...BASE_PROPS}
+        knowledgeDocuments={KNOWLEDGE_DOCUMENTS}
+      />,
+    );
+
+    expect(screen.getByTestId("agent-outline-knowledge")).toHaveTextContent(
+      "1 knowledge source ready; 12.0 KB indexed.",
+    );
+    expect(screen.getByTestId("agent-outline-knowledge")).toHaveTextContent(
+      "run retrieval evals before deploy",
+    );
+    expect(screen.getByTestId("agent-outline-sources-count")).toHaveTextContent(
+      "1 sources",
     );
   });
 

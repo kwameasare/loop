@@ -126,6 +126,22 @@ describe("AgentOverviewPage", () => {
           ],
         });
       }
+      if (url.endsWith("/agents/agent_live/kb/documents")) {
+        return Response.json({
+          items: [
+            {
+              id: "doc_live",
+              agentId: "agent_live",
+              name: "support_handbook.md",
+              contentType: "text/markdown",
+              bytes: 12_288,
+              status: "ready",
+              uploadedAt: "2026-05-01T00:00:00Z",
+              lastRefreshedAt: "2026-05-09T00:00:00Z",
+            },
+          ],
+        });
+      }
       if (url.endsWith("/agents/agent_live")) {
         return Response.json({
           id: "agent_live",
@@ -160,6 +176,9 @@ describe("AgentOverviewPage", () => {
     );
     expect(screen.getByTestId("agent-outline-evals")).toHaveTextContent(
       "Live support suite at 97%",
+    );
+    expect(screen.getByTestId("agent-outline-knowledge")).toHaveTextContent(
+      "1 knowledge source ready",
     );
     expect(screen.queryByTestId("overview-deploy-unavailable")).toBeNull();
   });
