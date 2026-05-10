@@ -22,12 +22,12 @@ const STATE_LABEL: Record<VoiceCallState, string> = {
   error: "Call failed",
 };
 
-const STATE_COLOR: Record<VoiceCallState, string> = {
-  idle: "bg-zinc-200 text-zinc-700",
-  connecting: "bg-amber-100 text-amber-800",
-  connected: "bg-emerald-100 text-emerald-800",
-  ended: "bg-zinc-200 text-zinc-700",
-  error: "bg-red-100 text-red-700",
+const STATE_TONE: Record<VoiceCallState, string> = {
+  idle: "bg-muted text-muted-foreground",
+  connecting: "border border-warning/30 bg-warning/10 text-warning",
+  connected: "border border-success/30 bg-success/10 text-success",
+  ended: "bg-muted text-muted-foreground",
+  error: "border border-destructive/30 bg-destructive/10 text-destructive",
 };
 
 export function VoiceWidget(props: VoiceWidgetProps) {
@@ -97,18 +97,18 @@ export function VoiceWidget(props: VoiceWidgetProps) {
   return (
     <section
       aria-label="Voice channel widget"
-      className="flex w-full max-w-sm flex-col gap-3 rounded-2xl border bg-white p-4 shadow-sm"
+      className="flex w-full max-w-sm flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm"
       data-testid="voice-widget"
     >
       <header className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase text-zinc-500">Call agent</p>
+          <p className="text-xs uppercase text-muted-foreground">Call agent</p>
           <h3 className="text-lg font-semibold tracking-tight">
             {props.agentName ?? "Voice agent"}
           </h3>
         </div>
         <span
-          className={`rounded-full px-2 py-0.5 text-xs ${STATE_COLOR[state]}`}
+          className={`rounded-full px-2 py-0.5 text-xs ${STATE_TONE[state]}`}
           data-testid="voice-state"
         >
           {STATE_LABEL[state]}
@@ -122,7 +122,9 @@ export function VoiceWidget(props: VoiceWidgetProps) {
       >
         <legend className="sr-only">Microphone mode</legend>
         <label
-          className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded border px-2 py-1 ${mode === "ptt" ? "border-blue-500 bg-blue-50" : "border-zinc-200"}`}
+          className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded border px-2 py-1 ${
+            mode === "ptt" ? "border-info bg-info/10" : "border-border"
+          }`}
         >
           <input
             checked={mode === "ptt"}
@@ -135,7 +137,9 @@ export function VoiceWidget(props: VoiceWidgetProps) {
           Push-to-talk
         </label>
         <label
-          className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded border px-2 py-1 ${mode === "always_on" ? "border-blue-500 bg-blue-50" : "border-zinc-200"}`}
+          className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded border px-2 py-1 ${
+            mode === "always_on" ? "border-info bg-info/10" : "border-border"
+          }`}
         >
           <input
             checked={mode === "always_on"}
@@ -155,12 +159,12 @@ export function VoiceWidget(props: VoiceWidgetProps) {
           aria-valuemax={1}
           aria-valuemin={0}
           aria-valuenow={level}
-          className="h-2 w-full overflow-hidden rounded-full bg-zinc-100"
+          className="h-2 w-full overflow-hidden rounded-full bg-muted"
           data-testid="voice-level"
           role="meter"
         >
           <div
-            className={micActive ? "h-full bg-emerald-500" : "h-full bg-zinc-300"}
+            className={micActive ? "h-full bg-success" : "h-full bg-border"}
             style={{ width: `${Math.min(100, Math.round(level * 100))}%` }}
           />
         </div>
@@ -169,7 +173,11 @@ export function VoiceWidget(props: VoiceWidgetProps) {
       {state !== "connected" || mode === "always_on" ? null : (
         <button
           aria-pressed={micActive}
-          className={`rounded-lg px-3 py-2 text-sm font-medium ${micActive ? "bg-emerald-600 text-white" : "bg-zinc-200 text-zinc-800"}`}
+          className={`rounded-lg px-3 py-2 text-sm font-medium ${
+            micActive
+              ? "bg-success text-success-foreground"
+              : "bg-muted text-foreground"
+          }`}
           data-testid="voice-ptt"
           onMouseDown={() => applyMicState(true)}
           onMouseLeave={() => applyMicState(false)}
@@ -185,7 +193,7 @@ export function VoiceWidget(props: VoiceWidgetProps) {
       <div className="flex justify-between gap-2">
         {onCall ? (
           <button
-            className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            className="flex-1 rounded-lg bg-destructive px-3 py-2 text-sm font-semibold text-destructive-foreground hover:bg-destructive/90"
             data-testid="voice-end"
             onClick={() => {
               void endCall();
@@ -196,7 +204,7 @@ export function VoiceWidget(props: VoiceWidgetProps) {
           </button>
         ) : (
           <button
-            className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             data-testid="voice-call"
             onClick={() => {
               void startCall();
@@ -210,7 +218,7 @@ export function VoiceWidget(props: VoiceWidgetProps) {
 
       {error ? (
         <p
-          className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+          className="rounded border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
           data-testid="voice-error"
           role="alert"
         >
