@@ -1110,7 +1110,12 @@ async def resolve_comment_as_spec(
     body: CommentResolutionBody,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
+    workspace_id = await _authorize_agent(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
     case_id = f"eval_comment_{comment_id}"
     result = {
         "comment_id": comment_id,
@@ -1150,6 +1155,7 @@ async def create_approval_changeset(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     content_hash = _hash_payload(body.payload)
     item = {
@@ -1193,6 +1199,7 @@ async def approve_changeset(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     item = _find_changeset(request, workspace_id, changeset_id)
     approval = {
@@ -1226,6 +1233,7 @@ async def edit_changeset(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     item = _find_changeset(request, workspace_id, changeset_id)
     new_hash = _hash_payload(body.payload)
@@ -1300,6 +1308,7 @@ async def create_share_link(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     share = {
         "id": f"share_{uuid4().hex[:12]}",
@@ -1882,6 +1891,7 @@ async def provision_voice_number(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     provisioner = _voice_provisioner_mode()
     if provisioner not in {"deterministic", "twilio", "livekit", "twilio_livekit"}:
@@ -2401,6 +2411,7 @@ async def create_pair_debug_audio_session(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     session = {
         "id": f"pair_audio_{uuid4().hex[:10]}",
@@ -2458,6 +2469,7 @@ async def create_scene(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     item = {
         "id": f"scene_{uuid4().hex[:10]}",
@@ -2743,6 +2755,7 @@ async def create_voice_demo_link(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     item = {
         "id": f"voice_demo_{uuid4().hex[:10]}",
