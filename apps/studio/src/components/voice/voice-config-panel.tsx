@@ -54,20 +54,20 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
       className="flex flex-col gap-6"
       data-testid="voice-config-panel"
     >
-      <div className="rounded-lg border bg-white p-5">
-        <h3 className="text-sm font-semibold uppercase text-zinc-500">
+      <div className="rounded-lg border bg-card p-5">
+        <h3 className="text-sm font-semibold uppercase text-muted-foreground">
           Connected numbers
         </h3>
         {props.config.numbers.length === 0 ? (
           <p
-            className="mt-2 text-sm text-zinc-500"
+            className="mt-2 text-sm text-muted-foreground"
             data-testid="voice-numbers-empty"
           >
             No numbers provisioned yet.
           </p>
         ) : (
           <ul
-            className="mt-3 divide-y divide-zinc-100"
+            className="mt-3 divide-y divide-border"
             data-testid="voice-numbers"
           >
             {props.config.numbers.map((n) => (
@@ -78,11 +78,11 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
               >
                 <div>
                   <p className="font-mono">{n.e164}</p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-muted-foreground">
                     {n.label} · {n.region}
                   </p>
                 </div>
-                <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">
+                <span className="rounded border border-success/30 bg-success/10 px-2 py-0.5 text-xs text-success">
                   Active
                 </span>
               </li>
@@ -91,15 +91,15 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
         )}
       </div>
 
-      <div className="rounded-lg border bg-white p-5">
-        <h3 className="text-sm font-semibold uppercase text-zinc-500">
+      <div className="rounded-lg border bg-card p-5">
+        <h3 className="text-sm font-semibold uppercase text-muted-foreground">
           Speech providers
         </h3>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-xs uppercase text-zinc-500">ASR</span>
+            <span className="text-xs uppercase text-muted-foreground">ASR</span>
             <select
-              className="rounded border px-2 py-1"
+              className="rounded border bg-background px-2 py-1"
               data-testid="voice-asr-select"
               onChange={(e) => setAsr(e.target.value as AsrProvider)}
               value={asr}
@@ -112,9 +112,9 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-xs uppercase text-zinc-500">TTS</span>
+            <span className="text-xs uppercase text-muted-foreground">TTS</span>
             <select
-              className="rounded border px-2 py-1"
+              className="rounded border bg-background px-2 py-1"
               data-testid="voice-tts-select"
               onChange={(e) => setTts(e.target.value as TtsProvider)}
               value={tts}
@@ -130,7 +130,7 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
         <div className="mt-4 flex items-center justify-end gap-3">
           {savedAt ? (
             <span
-              className="text-xs text-emerald-600"
+              className="text-xs text-success"
               data-testid="voice-config-saved"
               role="status"
             >
@@ -138,7 +138,7 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
             </span>
           ) : null}
           <button
-            className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+            className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             data-testid="voice-config-save"
             disabled={!dirty || saving}
             onClick={() => {
@@ -151,7 +151,7 @@ export function VoiceConfigPanel(props: VoiceConfigPanelProps) {
         </div>
         {error ? (
           <p
-            className="mt-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+            className="mt-2 rounded border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
             data-testid="voice-config-error"
             role="alert"
           >
