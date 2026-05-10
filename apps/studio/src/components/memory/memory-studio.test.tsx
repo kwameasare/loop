@@ -134,6 +134,59 @@ describe("MemoryStudio", () => {
     );
   });
 
+  it("saves edited memory policy content before approval", async () => {
+    const data = createMemoryStudioData("agent_support");
+    const userPolicy = data.policies.find((policy) => policy.scope === "user")!;
+    const save = vi.fn(async (input) => ({
+      ...userPolicy,
+      ...input,
+      approval_status: "review_required" as const,
+      content_hash: "savedmemoryhash123",
+      updated_at: "2026-05-09T00:00:00Z",
+    }));
+    render(<MemoryStudio data={data} onSavePolicy={save} />);
+
+    fireEvent.change(screen.getByTestId("memory-policy-retention-user"), {
+      target: { value: "Keep confirmed preferences for 180 days." },
+    });
+    fireEvent.change(screen.getByTestId("memory-policy-privacy-user"), {
+      target: {
+        value: "Affects future conversations, Requires deletion support",
+      },
+    });
+    fireEvent.click(screen.getByTestId("memory-policy-save-user"));
+
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scope: "user",
+          retention: "Keep confirmed preferences for 180 days.",
+          privacy_implications: [
+            "Affects future conversations",
+            "Requires deletion support",
+          ],
+          source_trace_required: true,
+        }),
+      ),
+    );
+    expect(screen.getByTestId("memory-policy-notice")).toHaveTextContent(
+      "policy saved",
+    );
+    expect(screen.getByTestId("memory-policy-user")).toHaveTextContent(
+      "savedmemoryh",
+    );
+  });
+
+  it("requires backend policy editing wiring when no save action is provided", () => {
+    render(<MemoryStudio data={createMemoryStudioData("agent_support")} />);
+
+    fireEvent.click(screen.getByTestId("memory-policy-save-user"));
+
+    expect(screen.getByTestId("memory-policy-notice")).toHaveTextContent(
+      "User policy editing requires cp-api wiring",
+    );
+  });
+
   it("requires backend policy approval wiring when no action is provided", () => {
     render(<MemoryStudio data={createMemoryStudioData("agent_support")} />);
 
