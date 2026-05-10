@@ -17,7 +17,10 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { BillingPanel } from "@/components/billing/billing-panel";
 import { InvoiceList } from "@/components/billing/invoice-list";
 import { UpdatePaymentMethod } from "@/components/billing/update-payment-method";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import {
   fetchBillingSummary,
   fetchInvoices,
@@ -81,9 +84,11 @@ function BillingPageBody(): JSX.Element {
   if (error) {
     return (
       <main className="container mx-auto p-6">
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
+        <SectionDegraded
+          title="Billing evidence"
+          description="Workspace plan, usage, payment, or invoice evidence could not load from the control plane."
+          evidence={error}
+        />
       </main>
     );
   }

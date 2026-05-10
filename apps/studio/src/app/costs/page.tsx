@@ -15,7 +15,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { CostPageClient } from "@/components/cost/cost-page-client";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import {
   fetchUsageRecords,
   monthBoundsUTC,
@@ -74,9 +77,13 @@ function CostsPageBody(): JSX.Element {
   if (!active) return <WorkspaceRequiredState title="Costs" />;
   if (error) {
     return (
-      <p className="p-6 text-sm text-destructive" role="alert">
-        {error}
-      </p>
+      <main className="container mx-auto p-6">
+        <SectionDegraded
+          title="Cost evidence"
+          description="Workspace usage and cost evidence could not load from the control plane."
+          evidence={error}
+        />
+      </main>
     );
   }
   if (records === null) {
