@@ -707,10 +707,17 @@ function buildFixtureTrace(): Trace {
 
 const FIXTURE_TRACE: Trace = buildFixtureTrace();
 
-export async function getTrace(id: string): Promise<Trace | null> {
-  if (id === FIXTURE_TRACE.id) return FIXTURE_TRACE;
+export interface GetTraceOptions extends TracesClientOptions {
+  allowFixture?: boolean | undefined;
+}
+
+export async function getTrace(
+  id: string,
+  opts: GetTraceOptions = {},
+): Promise<Trace | null> {
+  if (opts.allowFixture && id === FIXTURE_TRACE.id) return FIXTURE_TRACE;
   try {
-    return await fetchTraceByTurnId(id);
+    return await fetchTraceByTurnId(id, opts);
   } catch (err) {
     if (
       err instanceof Error &&
@@ -730,11 +737,15 @@ export async function fetchTraceByTurnId(
   trace_ref: string,
   opts: TracesClientOptions = {},
 ): Promise<Trace | null> {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    throw new Error("LOOP_CP_API_BASE_URL is required to load trace detail.");
+  }
   const fetcher = opts.fetcher ?? fetch;
   const headers: Record<string, string> = { accept: "application/json" };
   const token = opts.token ?? process.env.LOOP_TOKEN;
   if (token) headers.authorization = `Bearer ${token}`;
-  const url = `${cpApiBaseUrl(opts.baseUrl)}/traces/${encodeURIComponent(trace_ref)}`;
+  const url = `${base}/traces/${encodeURIComponent(trace_ref)}`;
   const res = await fetcher(url, {
     method: "GET",
     headers,
