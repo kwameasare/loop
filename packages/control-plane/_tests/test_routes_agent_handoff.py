@@ -75,6 +75,64 @@ def test_handoff_walkthrough_and_owner_transfer_are_audited(
         },
     )
     assert comment.status_code == 200, comment.text
+    tool_contract = client.put(
+        f"/v1/agents/{agent_id}/tool-contracts/refund_api",
+        headers=headers,
+        json={
+            "name": "Refund API",
+            "description": "Issues customer refunds.",
+            "side_effect_level": "money_movement",
+            "pii_access": True,
+            "money_movement": True,
+            "rate_limits": {"rpm": 30},
+            "budget_limits": {},
+            "sandbox_status": "sandbox",
+            "owner_user_id": "",
+            "approval_policy_id": "policy-money",
+            "failure_behavior": "",
+            "compensation_behavior": "",
+        },
+    )
+    assert tool_contract.status_code == 200, tool_contract.text
+    memory_policy = client.put(
+        f"/v1/agents/{agent_id}/memory-policies/user",
+        headers=headers,
+        json={
+            "scope": "user",
+            "allowed_memory_types": ["language_preference"],
+            "retention": "Retain until the user deletes the preference.",
+            "consent_requirement": "User consent required before durable writes.",
+            "pii_policy": "No secrets or government identifiers.",
+            "delete_behavior": "Delete when the user requests deletion.",
+            "privacy_implications": ["Stores durable user preference data."],
+            "source_trace_required": True,
+        },
+    )
+    assert memory_policy.status_code == 200, memory_policy.text
+    suite = client.post(
+        f"/v1/workspaces/{workspace_id}/eval-suites",
+        headers=headers,
+        json={
+            "name": "Support Bot handoff coverage",
+            "dataset_ref": f"agent:{agent_id}:handoff",
+            "metrics": ["behavior_match"],
+        },
+    )
+    assert suite.status_code == 201, suite.text
+    case = client.post(
+        f"/v1/eval-suites/{suite.json()['id']}/cases",
+        headers=headers,
+        json={
+            "name": "Legal threat escalation",
+            "input": {"message": "I will sue if you do not refund me."},
+            "expected": {"behavior": "Escalate before quoting refund."},
+            "scorers": [{"kind": "llm_judge", "config": {"rubric": "escalation"}}],
+            "source": "handoff",
+            "source_ref": f"agent:{agent_id}:handoff",
+            "attachments": [str(agent_id)],
+        },
+    )
+    assert case.status_code == 201, case.text
 
     initial = client.get(f"/v1/agents/{agent_id}/handoff", headers=headers)
 
@@ -82,7 +140,38 @@ def test_handoff_walkthrough_and_owner_transfer_are_audited(
     initial_body = initial.json()
     assert initial_body["agent"]["id"] == str(agent_id)
     assert any(risk["id"] == "commitment_missing_fields" for risk in initial_body["open_risks"])
+    assert any(risk["id"] == "tool_contract_review_required" for risk in initial_body["open_risks"])
+    assert any(risk["id"] == "memory_policy_review_required" for risk in initial_body["open_risks"])
     assert any(section["id"] == "commitments" for section in initial_body["walkthrough_sections"])
+    tool_section = next(
+        section
+        for section in initial_body["walkthrough_sections"]
+        if section["id"] == "tool-grants"
+    )
+    assert tool_section["count"] == 1
+    assert tool_section["evidence_refs"] == [f"tool-contract/{tool_contract.json()['id']}"]
+    memory_section = next(
+        section
+        for section in initial_body["walkthrough_sections"]
+        if section["id"] == "memory-policies"
+    )
+    assert memory_section["count"] == 1
+    assert memory_section["evidence_refs"] == [f"memory-policy/{memory_policy.json()['id']}"]
+    eval_section = next(
+        section
+        for section in initial_body["walkthrough_sections"]
+        if section["id"] == "eval-coverage"
+    )
+    assert eval_section["count"] == 1
+    assert f"eval-suite/{suite.json()['id']}" in eval_section["evidence_refs"]
+    assert f"eval/{case.json()['id']}" in eval_section["evidence_refs"]
+    risk_section = next(
+        section
+        for section in initial_body["walkthrough_sections"]
+        if section["id"] == "risk-posture"
+    )
+    assert risk_section["count"] >= 3
+    assert any(ref.startswith("tool-contract/") for ref in risk_section["evidence_refs"])
     comments_section = next(
         section
         for section in initial_body["walkthrough_sections"]
@@ -111,7 +200,11 @@ def test_handoff_walkthrough_and_owner_transfer_are_audited(
     assert body["transfers"][0]["previous_owner_user_id"] == ""
     assert body["transfers"][0]["new_owner_user_id"] == "new-owner@acme.test"
     assert body["transfers"][0]["history_walkthrough_id"].startswith("walk_")
-    assert body["transfers"][0]["open_risk_ids"] == ["commitment_missing_fields"]
+    assert body["transfers"][0]["open_risk_ids"] == [
+        "commitment_missing_fields",
+        "tool_contract_review_required",
+        "memory_policy_review_required",
+    ]
     assert "important-comments" in body["transfers"][0]["walkthrough_section_ids"]
     assert body["transfers"][0]["notification"]["recipient"] == "new-owner@acme.test"
     assert body["commitment"]["created_from"] == "handoff:ownership_transfer"
@@ -129,4 +222,8 @@ def test_handoff_walkthrough_and_owner_transfer_are_audited(
         transfer_event.payload_hash
     )
     assert payload["notification_recipient"] == "new-owner@acme.test"
-    assert payload["open_risk_ids"] == ["commitment_missing_fields"]
+    assert payload["open_risk_ids"] == [
+        "commitment_missing_fields",
+        "tool_contract_review_required",
+        "memory_policy_review_required",
+    ]
