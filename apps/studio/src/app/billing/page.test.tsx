@@ -1,4 +1,4 @@
-import { render, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 
@@ -92,5 +92,20 @@ describe("BillingPage", () => {
       );
     });
     expect(view.queryByTestId("invoice-empty")).not.toBeInTheDocument();
+  });
+
+  it("shows degraded billing evidence instead of a raw route alert when cp-api is unavailable", async () => {
+    delete process.env.LOOP_CP_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+
+    render(<BillingPage />);
+
+    await waitFor(() => {
+      const state = screen.getByTestId("target-state");
+      expect(state).toHaveAttribute("data-state", "degraded");
+      expect(state).toHaveTextContent(/Billing evidence is degraded/i);
+      expect(state).toHaveTextContent(/plan, usage, payment, or invoice/i);
+      expect(state).toHaveTextContent(/LOOP_CP_API_BASE_URL is required/i);
+    });
   });
 });
