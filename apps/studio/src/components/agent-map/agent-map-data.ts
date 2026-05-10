@@ -715,7 +715,9 @@ export async function fetchAgentMapData(
     pageSize: 1,
   });
   const [latest] = versions.items;
-  if (!latest) return createEmptyAgentMapData(agentId);
+  if (!latest) {
+    return createEmptyAgentMapData(agentId, versions.degraded_reason);
+  }
   return createAgentMapDataFromVersion(agentId, latest);
 }
 
@@ -1060,7 +1062,11 @@ export function createAgentMapData(
   };
 }
 
-export function createEmptyAgentMapData(agentId = "agent_empty"): AgentMapData {
+export function createEmptyAgentMapData(
+  agentId = "agent_empty",
+  degradedReason =
+    "No map instrumentation has been captured for this agent branch.",
+): AgentMapData {
   return {
     agentId,
     agentName: `Agent ${agentId}`,
@@ -1078,7 +1084,6 @@ export function createEmptyAgentMapData(agentId = "agent_empty"): AgentMapData {
       eval: 0,
     },
     confidence: "unsupported",
-    degradedReason:
-      "No map instrumentation has been captured for this agent branch.",
+    degradedReason,
   };
 }
