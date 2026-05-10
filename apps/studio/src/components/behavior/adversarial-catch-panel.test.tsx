@@ -97,6 +97,7 @@ describe("AdversarialCatchPanel", () => {
         rule_id: SENTENCE.id,
         rule_text: SENTENCE.text,
         risk_class: "high",
+        budget_tokens: 4000,
       }),
     );
 
@@ -119,6 +120,43 @@ describe("AdversarialCatchPanel", () => {
         rejected_interpretation: "Cap applies only per tool call.",
         create_eval_cases: true,
       }),
+    );
+  });
+
+  it("lets the builder adjust the probe budget before running", async () => {
+    const runProbe = vi.fn(async () => ({
+      run: {
+        id: "probe_refund_cap",
+        workspace_id: "workspace_1",
+        agent_id: "agent_support",
+        rule_id: SENTENCE.id,
+        risk_class: "high" as const,
+        budget_tokens: 900,
+        budget_tokens_used: 640,
+        status: "completed" as const,
+        created_by: "owner",
+        created_at: "2026-05-09T00:00:00Z",
+      },
+      catches: [CATCH],
+    }));
+
+    render(
+      <AdversarialCatchPanel
+        agentId="agent_support"
+        sentence={SENTENCE}
+        runProbe={runProbe}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("adversarial-probe-budget"), {
+      target: { value: "900" },
+    });
+    fireEvent.click(screen.getByTestId("run-adversarial-probe"));
+
+    await screen.findByTestId("adversarial-catch-question");
+    expect(runProbe).toHaveBeenCalledWith(
+      "agent_support",
+      expect.objectContaining({ budget_tokens: 900 }),
     );
   });
 

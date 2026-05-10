@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  getAdversarialProbeBudgets,
   resolveAdversarialCatch,
   runAdversarialProbe,
+  updateAdversarialProbeBudgets,
 } from "./adversarial-catches";
 
 describe("adversarial catches client", () => {
@@ -98,5 +100,42 @@ describe("adversarial catches client", () => {
         headers: expect.objectContaining({ authorization: "Bearer tok" }),
       }),
     );
+  });
+
+  it("reads and updates workspace probe budgets by risk class", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+      const url = String(input);
+      if (init?.method === "PATCH") {
+        expect(JSON.parse(String(init.body))).toMatchObject({ high: 900 });
+        return Response.json({
+          workspace_id: "workspace_1",
+          budgets: { low: 1000, medium: 2000, high: 900 },
+          updated_by: "owner",
+          updated_at: "2026-05-09T00:00:00Z",
+        });
+      }
+      expect(url).toBe(
+        "https://cp.test/v1/workspaces/workspace_1/adversarial-probe-budgets",
+      );
+      return Response.json({
+        workspace_id: "workspace_1",
+        budgets: { low: 1000, medium: 2000, high: 4000 },
+        updated_by: "owner",
+        updated_at: "2026-05-09T00:00:00Z",
+      });
+    });
+
+    const current = await getAdversarialProbeBudgets("workspace_1", {
+      baseUrl: "https://cp.test",
+      fetcher,
+    });
+    const updated = await updateAdversarialProbeBudgets(
+      "workspace_1",
+      { high: 900 },
+      { baseUrl: "https://cp.test", fetcher },
+    );
+
+    expect(current.budgets.high).toBe(4000);
+    expect(updated.budgets.high).toBe(900);
   });
 });
