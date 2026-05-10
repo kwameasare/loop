@@ -111,10 +111,13 @@ async def list_agent_memory(
 ) -> dict[str, Any]:
     cp = request.app.state.cp
     workspace_id = await _agent_workspace(request, agent_id)
+    cross_user_lookup = user_id is not None and user_id != caller_sub
+    requires_admin = cross_user_lookup or conversation_id is not None
     await authorize_workspace_access(
         workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN if requires_admin else None,
     )
     target_user_id = user_id or caller_sub
     entries = [
@@ -229,10 +232,12 @@ async def delete_user_memory(
 ) -> Response:
     cp = request.app.state.cp
     workspace_id = await _agent_workspace(request, agent_id)
+    cross_user_delete = user_id is not None and user_id != caller_sub
     await authorize_workspace_access(
         workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN if cross_user_delete else None,
     )
     target_user_id = user_id or caller_sub
     deleted = await cp.user_memory_store.delete_user(
@@ -251,6 +256,11 @@ async def delete_user_memory(
         store=cp.audit_events,
         resource_id=f"user:{target_user_id}:{memory_key}",
         request_id=request_id(request),
+        payload={
+            "agent_id": str(agent_id),
+            "target_user_id": target_user_id,
+            "cross_user_delete": cross_user_delete,
+        },
     )
     return Response(status_code=204)
 

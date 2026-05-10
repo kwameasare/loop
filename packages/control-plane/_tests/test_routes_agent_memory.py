@@ -110,6 +110,82 @@ async def test_agent_memory_route_redacts_secret_like_values(
     assert response.json()["items"][0]["after"] == "[redacted secret-like value]"
 
 
+@pytest.mark.asyncio
+async def test_agent_memory_cross_user_access_requires_admin(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    added = client.post(
+        f"/v1/workspaces/{workspace_id}/members",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={"user_sub": "alice", "role": "member"},
+    )
+    assert added.status_code == 201, added.text
+
+    cp = client.app.state.cp  # type: ignore[attr-defined]
+    await cp.user_memory_store.set_user(
+        workspace_id=workspace_id,
+        agent_id=agent_id,
+        user_id="owner-1",
+        key="preferred_language",
+        value="English",
+    )
+    await cp.user_memory_store.set_user(
+        workspace_id=workspace_id,
+        agent_id=agent_id,
+        user_id="alice",
+        key="preferred_channel",
+        value="WhatsApp",
+    )
+
+    self_read = client.get(
+        f"/v1/agents/{agent_id}/memory?user_id=alice",
+        headers={"authorization": _bearer_for("alice")},
+    )
+    assert self_read.status_code == 200, self_read.text
+    assert self_read.json()["items"][0]["key"] == "preferred_channel"
+
+    cross_read = client.get(
+        f"/v1/agents/{agent_id}/memory?user_id=owner-1",
+        headers={"authorization": _bearer_for("alice")},
+    )
+    assert cross_read.status_code == 403
+
+    cross_delete = client.delete(
+        f"/v1/agents/{agent_id}/memory/user/preferred_language?user_id=owner-1",
+        headers={"authorization": _bearer_for("alice")},
+    )
+    assert cross_delete.status_code == 403
+
+    admin_delete = client.delete(
+        f"/v1/agents/{agent_id}/memory/user/preferred_channel?user_id=alice",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert admin_delete.status_code == 204, admin_delete.text
+
+
+def test_agent_session_memory_lookup_requires_admin(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    added = client.post(
+        f"/v1/workspaces/{workspace_id}/members",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={"user_sub": "alice", "role": "member"},
+    )
+    assert added.status_code == 201, added.text
+
+    denied = client.get(
+        f"/v1/agents/{agent_id}/memory?conversation_id=11111111-1111-4111-8111-111111111111",
+        headers={"authorization": _bearer_for("alice")},
+    )
+    assert denied.status_code == 403
+
+    allowed = client.get(
+        f"/v1/agents/{agent_id}/memory?conversation_id=11111111-1111-4111-8111-111111111111",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert allowed.status_code == 200, allowed.text
+
+
 def test_agent_memory_route_requires_membership(
     client: TestClient, agent_id: UUID
 ) -> None:
