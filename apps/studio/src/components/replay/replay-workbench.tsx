@@ -29,6 +29,8 @@ import {
   type ReplayForkResult,
   type ReplayFailureCluster,
   type ReplayWorkbenchModel,
+  type WorkspaceScene,
+  createReplayScene,
   forkReplayFrame,
   replayAgainstDraft,
   saveReplayAsEvalCase,
@@ -573,8 +575,45 @@ function ClusterRow({ cluster }: { cluster: ReplayFailureCluster }) {
   );
 }
 
-function SceneLibrary({ scenes }: { scenes: readonly CanonicalScene[] }) {
-  const [saved, setSaved] = useState<string[]>([]);
+function SceneLibrary({
+  workspaceId,
+  selected,
+  scenes,
+}: {
+  workspaceId: string | undefined;
+  selected: ProductionConversationCandidate;
+  scenes: readonly CanonicalScene[];
+}) {
+  const [created, setCreated] = useState<WorkspaceScene | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function canonicalizeSelected() {
+    if (!workspaceId) {
+      setError("A workspace is required before a replay can become a scene.");
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const scene = await createReplayScene(workspaceId, {
+        name: selected.title,
+        category: selected.risk === "high" ? "escalation" : "regression",
+        traceIds: [selected.traceId],
+        expectedBehavior: `Preserve expected behavior for ${selected.title}: ${selected.issue}`,
+      });
+      setCreated(scene);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not canonicalize this replay as a scene.",
+      );
+    } finally {
+      setCreating(false);
+    }
+  }
+
   return (
     <section className="space-y-3" data-testid="scene-library">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -588,13 +627,45 @@ function SceneLibrary({ scenes }: { scenes: readonly CanonicalScene[] }) {
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => setSaved((current) => [...new Set([...current, scenes[0]?.id ?? "scene"])])}
+          onClick={canonicalizeSelected}
+          disabled={creating}
         >
           <WandSparkles className="mr-2 h-4 w-4" />
-          Canonicalize selected
+          {creating ? "Canonicalizing..." : "Canonicalize selected"}
         </Button>
       </div>
+      {created ? (
+        <StatePanel state="success" title="Scene canonicalized">
+          Scene {created.id} now preserves {created.trace_ids.join(", ")} as
+          production conversation evidence.
+        </StatePanel>
+      ) : null}
+      {error ? (
+        <StatePanel state="degraded" title="Scene was not created">
+          {error}
+        </StatePanel>
+      ) : null}
       <div className="grid gap-3 lg:grid-cols-3">
+        {created ? (
+          <article className="rounded-md border bg-card p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold">{created.name}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {created.category} - {created.trace_ids.join(", ")}
+                </p>
+              </div>
+              <LiveBadge tone="live">Saved</LiveBadge>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {created.expected_behavior}
+            </p>
+            <p className="mt-3 rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
+              Created by {created.created_by || "current builder"} at{" "}
+              {created.created_at || "now"}.
+            </p>
+          </article>
+        ) : null}
         {scenes.map((scene) => (
           <article key={scene.id} className="rounded-md border bg-card p-4">
             <div className="flex items-start justify-between gap-3">
@@ -604,8 +675,8 @@ function SceneLibrary({ scenes }: { scenes: readonly CanonicalScene[] }) {
                   {scene.source} - {scene.turns} turns - {scene.linkedTraceId}
                 </p>
               </div>
-              <LiveBadge tone={scene.evalLinked || saved.includes(scene.id) ? "live" : "draft"}>
-                {scene.evalLinked || saved.includes(scene.id) ? "Eval linked" : "Draft"}
+              <LiveBadge tone={scene.evalLinked ? "live" : "draft"}>
+                {scene.evalLinked ? "Eval linked" : "Draft"}
               </LiveBadge>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">{scene.summary}</p>
@@ -619,7 +690,13 @@ function SceneLibrary({ scenes }: { scenes: readonly CanonicalScene[] }) {
   );
 }
 
-export function ReplayWorkbench({ model }: { model: ReplayWorkbenchModel }) {
+export function ReplayWorkbench({
+  model,
+  workspaceId,
+}: {
+  model: ReplayWorkbenchModel;
+  workspaceId?: string | undefined;
+}) {
   const [selectedId, setSelectedId] = useState(model.conversations[0]?.id ?? "");
   const selected = useMemo(
     () =>
@@ -695,7 +772,11 @@ export function ReplayWorkbench({ model }: { model: ReplayWorkbenchModel }) {
         agentId={selected.agentId}
         turnId={selected.traceId}
       />
-      <SceneLibrary scenes={model.scenes} />
+      <SceneLibrary
+        workspaceId={workspaceId}
+        selected={selected}
+        scenes={model.scenes}
+      />
 
       <section className="rounded-md border bg-card p-4" data-testid="comments-as-spec">
         <div className="flex items-start gap-3">

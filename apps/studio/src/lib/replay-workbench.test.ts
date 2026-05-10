@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  createReplayScene,
   fetchReplayWorkbenchModel,
   forkReplayFrame,
   replayAgainstDraft,
@@ -224,6 +225,47 @@ describe("fetchReplayWorkbenchModel", () => {
       channel: "whatsapp",
       expected_behavior: "Escalate legal threats before quoting refund policy.",
       risk_tags: ["production-replay", "high", "whatsapp"],
+    });
+  });
+
+  it("canonicalizes replay conversations as workspace scenes", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      new Response(
+        JSON.stringify({
+          id: "scene_replay",
+          name: "Legal threat replay",
+          category: "escalation",
+          trace_ids: ["trace-prod-1"],
+          expected_behavior: "Escalate before refund promises.",
+          created_by: "owner-1",
+          created_at: "2026-05-09T10:00:00Z",
+        }),
+        { status: 201, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const scene = await createReplayScene(
+      "ws-1",
+      {
+        name: "Legal threat replay",
+        category: "escalation",
+        traceIds: ["trace-prod-1"],
+        expectedBehavior: "Escalate before refund promises.",
+      },
+      {
+        baseUrl: "https://cp.example.test/v1",
+        fetcher,
+      },
+    );
+
+    expect(scene.id).toBe("scene_replay");
+    const [url, init] = fetcher.mock.calls[0]!;
+    expect(url).toBe("https://cp.example.test/v1/workspaces/ws-1/scenes");
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      name: "Legal threat replay",
+      category: "escalation",
+      trace_ids: ["trace-prod-1"],
+      expected_behavior: "Escalate before refund promises.",
     });
   });
 

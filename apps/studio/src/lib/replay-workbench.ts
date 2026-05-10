@@ -83,6 +83,16 @@ export interface CanonicalScene {
   linkedTraceId: string;
 }
 
+export interface WorkspaceScene {
+  id: string;
+  name: string;
+  category: string;
+  trace_ids: string[];
+  expected_behavior: string;
+  created_by: string;
+  created_at: string;
+}
+
 export interface ReplayWorkbenchModel {
   conversations: readonly ProductionConversationCandidate[];
   selectedReplay: FutureReplaySummary;
@@ -639,6 +649,41 @@ export async function saveReplayAsEvalCase(
         },
         evidence_refs: [],
         next_url: "",
+      },
+    },
+  );
+}
+
+export async function createReplayScene(
+  workspaceId: string,
+  args: {
+    name: string;
+    category: string;
+    traceIds: readonly string[];
+    expectedBehavior: string;
+  },
+  opts: UxWireupClientOptions = {},
+): Promise<WorkspaceScene> {
+  return cpJson<WorkspaceScene>(
+    `/workspaces/${encodeURIComponent(workspaceId)}/scenes`,
+    {
+      ...opts,
+      method: "POST",
+      body: {
+        name: args.name,
+        category: args.category,
+        trace_ids: args.traceIds,
+        expected_behavior: args.expectedBehavior,
+      },
+      allowFallback: false,
+      fallback: {
+        id: "",
+        name: args.name,
+        category: args.category,
+        trace_ids: [...args.traceIds],
+        expected_behavior: args.expectedBehavior,
+        created_by: "",
+        created_at: "",
       },
     },
   );
