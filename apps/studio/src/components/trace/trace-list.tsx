@@ -53,7 +53,7 @@ export function TraceList(props: TraceListProps) {
       <header className="flex flex-wrap items-center gap-2">
         <input
           aria-label="Search traces"
-          className="rounded border px-2 py-1 text-sm"
+          className="rounded border bg-background px-2 py-1 text-sm"
           data-testid="trace-search"
           onChange={(e) => {
             setQ(e.target.value);
@@ -64,7 +64,7 @@ export function TraceList(props: TraceListProps) {
         />
         <select
           aria-label="Filter by status"
-          className="rounded border px-2 py-1 text-sm"
+          className="rounded border bg-background px-2 py-1 text-sm"
           data-testid="trace-filter-status"
           onChange={(e) => {
             setStatus(e.target.value as "all" | "ok" | "error");
@@ -78,7 +78,7 @@ export function TraceList(props: TraceListProps) {
         </select>
         <select
           aria-label="Filter by agent"
-          className="rounded border px-2 py-1 text-sm"
+          className="rounded border bg-background px-2 py-1 text-sm"
           data-testid="trace-filter-agent"
           onChange={(e) => {
             setAgentId(e.target.value);
@@ -100,7 +100,7 @@ export function TraceList(props: TraceListProps) {
 
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm" data-testid="trace-table">
-          <thead className="bg-zinc-50 text-left text-xs uppercase text-zinc-500">
+          <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-3 py-2">Trace</th>
               <th className="px-3 py-2">Agent</th>
@@ -114,20 +114,23 @@ export function TraceList(props: TraceListProps) {
           <tbody>
             {result.traces.length === 0 ? (
               <tr data-testid="trace-empty">
-                <td className="px-3 py-6 text-center text-zinc-500" colSpan={7}>
+                <td
+                  className="px-3 py-6 text-center text-muted-foreground"
+                  colSpan={7}
+                >
                   No traces match the current filters.
                 </td>
               </tr>
             ) : (
               result.traces.map((t) => (
                 <tr
-                  className="border-t hover:bg-zinc-50"
+                  className="border-t hover:bg-muted"
                   data-testid={`trace-row-${t.id}`}
                   key={t.id}
                 >
                   <td className="px-3 py-2 font-mono">
                     <Link
-                      className="text-blue-600 hover:underline"
+                      className="text-info hover:underline"
                       data-testid={`trace-link-${t.id}`}
                       href={`/traces/${t.id}`}
                     >
@@ -143,8 +146,8 @@ export function TraceList(props: TraceListProps) {
                     <span
                       className={
                         t.status === "error"
-                          ? "rounded bg-red-100 px-2 py-0.5 text-xs text-red-700"
-                          : "rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700"
+                          ? "rounded border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs text-destructive"
+                          : "rounded border border-success/30 bg-success/10 px-2 py-0.5 text-xs text-success"
                       }
                     >
                       {t.status}
@@ -168,7 +171,7 @@ export function TraceList(props: TraceListProps) {
         </span>
         <div className="flex gap-2">
           <button
-            className="rounded border px-2 py-1 disabled:opacity-50"
+            className="rounded border bg-background px-2 py-1 hover:bg-muted disabled:opacity-50"
             data-testid="trace-prev"
             disabled={result.page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -177,7 +180,7 @@ export function TraceList(props: TraceListProps) {
             Prev
           </button>
           <button
-            className="rounded border px-2 py-1 disabled:opacity-50"
+            className="rounded border bg-background px-2 py-1 hover:bg-muted disabled:opacity-50"
             data-testid="trace-next"
             disabled={result.page >= result.page_count}
             onClick={() => setPage((p) => p + 1)}
