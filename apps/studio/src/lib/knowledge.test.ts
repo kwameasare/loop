@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   formatScore,
   getKnowledgeAtelierModel,
+  saveRetrievalEvalCase,
   sourceKindLabel,
 } from "./knowledge";
 import type { KbDocument } from "./kb";
@@ -73,5 +74,55 @@ describe("knowledge formatting helpers", () => {
   it("formats source kinds and score percentages", () => {
     expect(sourceKindLabel("google_drive")).toBe("Google Drive");
     expect(formatScore(0.876)).toBe("88%");
+  });
+});
+
+describe("knowledge eval persistence", () => {
+  it("saves retrieval queries as eval cases with evidence", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (_input, init) => {
+      expect(JSON.parse(String(init?.body))).toMatchObject({
+        query: "How do refunds work after final sale?",
+        top_chunk_id: "chunk_refunds",
+        candidate_chunk_ids: ["chunk_refunds", "chunk_legal"],
+        metadata_filters: ["locale:any"],
+        expected_citation: "refund_policy.pdf#p3",
+        evidence_ref: "retrieval.final_sale_refund.requires_exception",
+      });
+      return Response.json(
+        {
+          ok: true,
+          suite_id: "suite_retrieval",
+          case_id: "case_retrieval",
+          case: {
+            id: "case_retrieval",
+            name: "Retrieval: How do refunds work after final sale?",
+            source: "knowledge-retrieval",
+            source_ref: "retrieval.final_sale_refund.requires_exception",
+          },
+          next_url: "/agents/agt_demo/evals?case_id=case_retrieval",
+        },
+        { status: 201 },
+      );
+    });
+
+    const result = await saveRetrievalEvalCase(
+      "agt_demo",
+      {
+        query: "How do refunds work after final sale?",
+        topChunkId: "chunk_refunds",
+        candidateChunkIds: ["chunk_refunds", "chunk_legal"],
+        metadataFilters: ["locale:any"],
+        expectedCitation: "refund_policy.pdf#p3",
+        evidenceRef: "retrieval.final_sale_refund.requires_exception",
+        missedCandidateIds: ["chunk_exception"],
+      },
+      { baseUrl: "https://cp.test/v1", fetcher },
+    );
+
+    expect(result.case_id).toBe("case_retrieval");
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agt_demo/kb/retrieval-eval-cases",
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 });

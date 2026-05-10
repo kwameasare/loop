@@ -130,8 +130,24 @@ describe("KnowledgeAtelier", () => {
   });
 
   it("saves a retrieval query as an eval seed with evidence", async () => {
+    const saveRetrievalEval = vi.fn(async () => ({
+      ok: true as const,
+      suite_id: "suite_retrieval",
+      case_id: "case_retrieval",
+      case: {
+        id: "case_retrieval",
+        name: "Retrieval eval",
+        source: "knowledge-retrieval",
+        source_ref: "retrieval.final_sale_refund.requires_exception",
+      },
+      next_url: "/agents/agt_demo/evals?case_id=case_retrieval",
+    }));
     render(
-      <KnowledgeAtelier agentId="agt_demo" initialDocuments={readyDocs} />,
+      <KnowledgeAtelier
+        agentId="agt_demo"
+        initialDocuments={readyDocs}
+        saveRetrievalEval={saveRetrievalEval}
+      />,
     );
 
     fireEvent.change(screen.getByLabelText("Query"), {
@@ -141,10 +157,19 @@ describe("KnowledgeAtelier", () => {
       screen.getByRole("button", { name: "Save as retrieval eval" }),
     );
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Saved retrieval eval seed",
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Retrieval eval case_retrieval saved",
     );
-    expect(screen.getByRole("status")).toHaveTextContent("retrieval eval");
+    expect(saveRetrievalEval).toHaveBeenCalledWith(
+      "agt_demo",
+      expect.objectContaining({
+        query: "How do refunds work after final sale?",
+        topChunkId: expect.stringContaining("chunk"),
+        candidateChunkIds: expect.arrayContaining([expect.stringContaining("chunk")]),
+        metadataFilters: expect.arrayContaining(["locale:any"]),
+        evidenceRef: expect.stringContaining("Retrieval eval can seed from"),
+      }),
+    );
     await waitForDiagnosticsToSettle();
   });
 
