@@ -386,6 +386,57 @@ describe("DeployTimeline", () => {
     expect(manifest).toHaveTextContent("pdf, json, csv");
   });
 
+  it("exports evidence pack manifests with redaction proof", async () => {
+    const exportPack = vi.fn(async () => ({
+      id: "epex_1",
+      status: "ready" as const,
+      format: "json" as const,
+      purpose: "deployment evidence review",
+      workspace_id: "ws_1",
+      agent_id: "a",
+      evidence_pack_id: "ep_1",
+      deployment_id: "dep_new",
+      change_package_id: "cp_1",
+      sections: ["change_package", "eval_results", "audit_log"],
+      artifact_refs: ["evidence-pack/ep_1", "change-package/cp_1"],
+      redactions: ["credentials", "pii", "raw_tool_credentials", "secrets"],
+      download_url: "/v1/agents/a/evidence-packs/ep_1/exports/epex_1",
+      created_at: "2026-05-09T00:00:00Z",
+      expires_at: "2026-05-16T00:00:00Z",
+    }));
+    render(
+      <DeployTimeline
+        agentId="a"
+        exportPack={exportPack}
+        initialDeployments={[
+          mkDep({
+            id: "dep_new",
+            status: "live",
+            versionId: "v2",
+            evidencePackId: "ep_1",
+          }),
+        ]}
+        initialEvidencePacks={[mkEvidencePack()]}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("evidence-pack-export-ep_1-json"));
+    });
+
+    expect(exportPack).toHaveBeenCalledWith("a", "ep_1", {
+      format: "json",
+      purpose: "deployment evidence review",
+      redactions: ["secrets", "pii", "credentials", "pricing"],
+    });
+    expect(
+      screen.getByTestId("evidence-pack-export-result-ep_1"),
+    ).toHaveTextContent("epex_1");
+    expect(
+      screen.getByTestId("evidence-pack-export-result-ep_1"),
+    ).toHaveTextContent("raw_tool_credentials");
+  });
+
   it("starts shadow from an approved Change Package without routing traffic", async () => {
     const changePackage = {
       ...buildLocalChangePackage("a"),

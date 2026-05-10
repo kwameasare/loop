@@ -7,8 +7,12 @@ import {
   promoteDeployment as defaultPromote,
   rampDeployment as defaultRamp,
   rollbackDeployment as defaultRollback,
+  exportEvidencePack as defaultExportEvidencePack,
   startCanaryDeployment as defaultStartCanary,
   type Deployment,
+  type EvidencePackExport,
+  type EvidencePackExportFormat,
+  type EvidencePackExportInput,
   type DeploymentStartInput,
   type EvidencePack,
 } from "@/lib/deploys";
@@ -24,6 +28,11 @@ type StartFn = (
   agentId: string,
   input: DeploymentStartInput,
 ) => Promise<{ deployment: Deployment; evidence_pack?: EvidencePack }>;
+type ExportEvidencePackFn = (
+  agentId: string,
+  evidencePackId: string,
+  input: EvidencePackExportInput,
+) => Promise<EvidencePackExport>;
 
 const DEFAULT_CHANNEL_SCOPE = "web_chat";
 const DEFAULT_REGION_SCOPE = "global";
@@ -80,6 +89,7 @@ export interface DeployTimelineProps {
   approvedChangePackage?: ChangePackage | null;
   degradedReason?: string | undefined;
   startCanary?: StartFn;
+  exportPack?: ExportEvidencePackFn;
   promote?: ActionFn;
   ramp?: RampFn;
   pause?: ActionFn;
@@ -121,6 +131,7 @@ export function DeployTimeline({
   approvedChangePackage = null,
   degradedReason,
   startCanary = defaultStartCanary,
+  exportPack = defaultExportEvidencePack,
   promote = defaultPromote,
   ramp = defaultRamp,
   pause = defaultPause,
@@ -574,6 +585,8 @@ export function DeployTimeline({
                 evidenceById.has(dep.evidencePackId) ? (
                   <EvidencePackManifest
                     evidencePack={evidenceById.get(dep.evidencePackId)!}
+                    agentId={agentId}
+                    exportPack={exportPack}
                   />
                 ) : null}
               </li>
@@ -585,6 +598,8 @@ export function DeployTimeline({
       {latestUnmatchedEvidencePack ? (
         <EvidencePackManifest
           evidencePack={latestUnmatchedEvidencePack}
+          agentId={agentId}
+          exportPack={exportPack}
           compact
         />
       ) : null}
@@ -617,11 +632,20 @@ function manifestValue(value: unknown): string {
 
 function EvidencePackManifest({
   evidencePack,
+  agentId,
+  exportPack,
   compact = false,
 }: {
   evidencePack: EvidencePack;
+  agentId: string;
+  exportPack: ExportEvidencePackFn;
   compact?: boolean;
 }) {
+  const [exportingFormat, setExportingFormat] = useState<string | null>(null);
+  const [exportResult, setExportResult] = useState<EvidencePackExport | null>(
+    null,
+  );
+  const [exportError, setExportError] = useState<string | null>(null);
   const manifestRows: Array<[string, unknown]> = [
     ["Version", evidencePack.version_id],
     ["Deployment", evidencePack.deployment_id],
@@ -642,6 +666,25 @@ function EvidencePackManifest({
     ["Canary results", evidencePack.canary_results_ref],
     ["Audit log", evidencePack.audit_log_ref],
   ];
+
+  async function runExport(rawFormat: string) {
+    const format = rawFormat as EvidencePackExportFormat;
+    setExportingFormat(format);
+    setExportError(null);
+    setExportResult(null);
+    try {
+      const result = await exportPack(agentId, evidencePack.id, {
+        format,
+        purpose: "deployment evidence review",
+        redactions: ["secrets", "pii", "credentials", "pricing"],
+      });
+      setExportResult(result);
+    } catch (error) {
+      setExportError((error as Error).message || "Evidence export failed.");
+    } finally {
+      setExportingFormat(null);
+    }
+  }
 
   return (
     <article
@@ -688,6 +731,46 @@ function EvidencePackManifest({
       <p className="mt-3 text-xs text-muted-foreground">
         Export formats: {evidencePack.export_formats.join(", ")}
       </p>
+      <div
+        className="mt-3 flex flex-wrap items-center gap-2"
+        data-testid={`evidence-pack-export-actions-${evidencePack.id}`}
+      >
+        {evidencePack.export_formats.map((format) => (
+          <button
+            className="rounded-md border bg-background px-2 py-1 text-xs font-medium hover:bg-muted/60 disabled:opacity-50"
+            data-testid={`evidence-pack-export-${evidencePack.id}-${format}`}
+            disabled={exportingFormat !== null}
+            key={format}
+            onClick={() => void runExport(format)}
+            type="button"
+          >
+            {exportingFormat === format ? "Exporting..." : `Export ${format}`}
+          </button>
+        ))}
+      </div>
+      {exportResult ? (
+        <p
+          className="mt-2 text-xs text-success"
+          data-testid={`evidence-pack-export-result-${evidencePack.id}`}
+          role="status"
+        >
+          Export {exportResult.id} ready. Redactions:{" "}
+          {exportResult.redactions.join(", ")}. Download{" "}
+          <a className="underline" href={exportResult.download_url}>
+            {exportResult.format}
+          </a>
+          .
+        </p>
+      ) : null}
+      {exportError ? (
+        <p
+          className="mt-2 text-xs text-destructive"
+          data-testid={`evidence-pack-export-error-${evidencePack.id}`}
+          role="status"
+        >
+          {exportError}
+        </p>
+      ) : null}
     </article>
   );
 }
