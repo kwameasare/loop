@@ -10,9 +10,12 @@ import {
   buildEvalCaseFromResolution,
 } from "@/lib/inbox-resolution";
 
-export type SaveEvalFn = (
-  draft: EvalCaseFromResolution,
-) => Promise<{ ok: boolean; error?: string; suite_id?: string }>;
+export type SaveEvalFn = (draft: EvalCaseFromResolution) => Promise<{
+  ok: boolean;
+  error?: string;
+  suite_id?: string;
+  case_id?: string;
+}>;
 
 export interface ResolutionToEvalProps {
   ctx: EvidenceContext;
@@ -32,7 +35,10 @@ export function ResolutionToEval({
   const [draft, setDraft] = useState<ResolutionDraft>(initialDraft);
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [savedSuiteId, setSavedSuiteId] = useState<string | null>(null);
+  const [saved, setSaved] = useState<{
+    suiteId: string;
+    caseId: string;
+  } | null>(null);
 
   async function handleSave() {
     if (busy) return;
@@ -45,7 +51,10 @@ export function ResolutionToEval({
       });
       const res = await onSave(eval_case);
       if (res.ok) {
-        setSavedSuiteId(res.suite_id ?? "operator-resolutions");
+        setSaved({
+          suiteId: res.suite_id ?? "operator-resolutions",
+          caseId: res.case_id ?? eval_case.id,
+        });
       } else {
         setErrorMsg(res.error ?? "Could not save eval case");
       }
@@ -56,17 +65,27 @@ export function ResolutionToEval({
     }
   }
 
-  if (savedSuiteId) {
+  if (saved) {
     return (
       <section
         className="rounded-lg border border-success/40 bg-success/10 p-3 text-sm text-success"
         data-testid="resolution-to-eval-saved"
       >
-        <p className="font-medium">Saved as eval case · suite {savedSuiteId}</p>
+        <p className="font-medium">
+          Saved as eval case · suite {saved.suiteId}
+        </p>
         <p className="mt-1 text-xs">
-          Linked trace <span className="font-mono">{ctx.resolutionEvidenceRef}</span> with
+          Linked trace{" "}
+          <span className="font-mono">{ctx.resolutionEvidenceRef}</span> with
           tool and retrieval evidence attached. Audit trail recorded.
         </p>
+        <a
+          className="mt-2 inline-flex text-xs font-medium underline"
+          href={`/evals?case_id=${encodeURIComponent(saved.caseId)}`}
+          data-testid="resolution-eval-link"
+        >
+          Open eval case {saved.caseId}
+        </a>
       </section>
     );
   }
@@ -110,9 +129,13 @@ export function ResolutionToEval({
         />
       </label>
 
-      <ul className="rounded border bg-muted/45 p-2 text-xs" data-testid="resolution-attachments">
+      <ul
+        className="rounded border bg-muted/45 p-2 text-xs"
+        data-testid="resolution-attachments"
+      >
         <li>
-          Linked trace: <span className="font-mono">{ctx.resolutionEvidenceRef}</span>
+          Linked trace:{" "}
+          <span className="font-mono">{ctx.resolutionEvidenceRef}</span>
         </li>
         <li>Tools: {ctx.tools.length}</li>
         <li>Retrieval chunks: {ctx.retrieval.length}</li>

@@ -4,6 +4,16 @@ import { useMemo, useState } from "react";
 
 import { PersonalizedEmptyStateSuggestions } from "@/components/empty-state/personalized-empty-state-suggestions";
 import {
+  ResolutionToEval,
+  type SaveEvalFn,
+} from "@/components/inbox/resolution-to-eval";
+import {
+  DEFAULT_RESOLUTION,
+  createEvidenceContextFromConversation,
+  type EvidenceContext,
+  type ResolutionDraft,
+} from "@/lib/inbox-resolution";
+import {
   claimItem,
   formatRelativeMs,
   listClaimedBy,
@@ -22,11 +32,50 @@ type Props = {
   onClaimItem?: InboxMutation;
   onReleaseItem?: InboxMutation;
   onResolveItem?: InboxMutation;
+  onSaveResolutionEval?: SaveEvalFn;
 };
 
 type InboxMutation = (item: InboxItem) => Promise<InboxItem>;
 
-type Reply = { item_id: string; body: string };
+type Reply = { item_id: string; body: string; created_at_ms: number };
+
+function evidenceContextForItem(
+  item: InboxItem,
+  replies: readonly Reply[],
+): EvidenceContext {
+  return createEvidenceContextFromConversation({
+    conversation_id: item.conversation_id,
+    messages: [
+      {
+        id: `${item.id}:last-user-message`,
+        role: "user",
+        body: item.last_message_excerpt,
+        created_at_ms: item.created_at_ms,
+      },
+      ...replies.map((reply, index) => ({
+        id: `${reply.item_id}:operator-reply-${index + 1}`,
+        role: "operator" as const,
+        body: reply.body,
+        created_at_ms: reply.created_at_ms,
+      })),
+    ],
+  });
+}
+
+function resolutionDraftForItem(
+  item: InboxItem,
+  replies: readonly Reply[],
+): ResolutionDraft {
+  const latestReply = replies.at(-1)?.body.trim();
+  return {
+    ...DEFAULT_RESOLUTION,
+    expectedOutcome:
+      latestReply && latestReply.length > 0
+        ? latestReply
+        : `Resolve "${item.reason}" with a trace-backed human answer for ${item.user_id}.`,
+    failureReason: item.reason,
+  };
+}
 
 export function InboxScreen(props: Props): JSX.Element {
   const [items, setItems] = useState<InboxItem[]>(props.initialItems);
@@ -40,8 +89,7 @@ export function InboxScreen(props: Props): JSX.Element {
       items.filter(
         (item) =>
           item.workspace_id === props.workspace_id &&
-          (!props.focused_agent_id ||
-            item.agent_id === props.focused_agent_id),
+          (!props.focused_agent_id || item.agent_id === props.focused_agent_id),
       ),
     [items, props.focused_agent_id, props.workspace_id],
   );
@@ -57,6 +105,27 @@ export function InboxScreen(props: Props): JSX.Element {
   const selected = useMemo(
     () => scopedItems.find((i) => i.id === selectedId) ?? null,
     [scopedItems, selectedId],
+  );
+  const selectedReplies = useMemo(
+    () =>
+      selected === null
+        ? []
+        : sentReplies.filter((reply) => reply.item_id === selected.id),
+    [selected, sentReplies],
+  );
+  const selectedEvidence = useMemo(
+    () =>
+      selected === null
+        ? null
+        : evidenceContextForItem(selected, selectedReplies),
+    [selected, selectedReplies],
+  );
+  const selectedResolutionDraft = useMemo(
+    () =>
+      selected === null
+        ? null
+        : resolutionDraftForItem(selected, selectedReplies),
+    [selected, selectedReplies],
   );
   const suggestionAgentId =
     selected?.agent_id ??
@@ -118,7 +187,14 @@ export function InboxScreen(props: Props): JSX.Element {
 
   function handleSend(item: InboxItem): void {
     if (!draft.trim()) return;
-    setSentReplies((r) => [...r, { item_id: item.id, body: draft.trim() }]);
+    setSentReplies((r) => [
+      ...r,
+      {
+        item_id: item.id,
+        body: draft.trim(),
+        created_at_ms: props.now_ms + r.length + 1,
+      },
+    ]);
     setDraft("");
   }
 
@@ -142,10 +218,7 @@ export function InboxScreen(props: Props): JSX.Element {
   }
 
   return (
-    <section
-      className="flex h-full gap-6 p-6"
-      data-testid="inbox-screen"
-    >
+    <section className="flex h-full gap-6 p-6" data-testid="inbox-screen">
       <aside
         className="w-80 shrink-0 rounded-lg border"
         data-testid="inbox-pending"
@@ -212,9 +285,7 @@ export function InboxScreen(props: Props): JSX.Element {
           My queue ({myClaims.length})
         </h2>
         {myClaims.length === 0 ? (
-          <p className="text-muted-foreground p-4 text-sm">
-            Nothing claimed.
-          </p>
+          <p className="text-muted-foreground p-4 text-sm">Nothing claimed.</p>
         ) : (
           <ul>
             {myClaims.map((item) => (
@@ -228,9 +299,7 @@ export function InboxScreen(props: Props): JSX.Element {
                   className="block w-full text-left"
                   onClick={() => setSelectedId(item.id)}
                 >
-                  <p className="truncate text-sm font-medium">
-                    {item.user_id}
-                  </p>
+                  <p className="truncate text-sm font-medium">{item.user_id}</p>
                   <p className="text-muted-foreground truncate text-xs">
                     {item.last_message_excerpt}
                   </p>
@@ -258,9 +327,7 @@ export function InboxScreen(props: Props): JSX.Element {
         ) : (
           <div className="flex h-full flex-col">
             <header className="border-b px-6 py-4">
-              <h2 className="text-lg font-semibold">
-                {selected.user_id}
-              </h2>
+              <h2 className="text-lg font-semibold">{selected.user_id}</h2>
               <p className="text-muted-foreground text-xs">
                 Reason: {selected.reason} ·{" "}
                 {selected.status === "claimed"
@@ -268,10 +335,7 @@ export function InboxScreen(props: Props): JSX.Element {
                   : selected.status}
               </p>
             </header>
-            <div
-              className="flex-1 px-6 py-4"
-              data-testid="inbox-transcript"
-            >
+            <div className="flex-1 px-6 py-4" data-testid="inbox-transcript">
               <p className="text-sm">{selected.last_message_excerpt}</p>
               {sentReplies
                 .filter((r) => r.item_id === selected.id)
@@ -287,6 +351,23 @@ export function InboxScreen(props: Props): JSX.Element {
             </div>
             {selected.status === "claimed" ? (
               <footer className="border-t p-4">
+                {selectedEvidence && selectedResolutionDraft ? (
+                  <div className="mb-4">
+                    <ResolutionToEval
+                      key={`${selected.id}:${selectedReplies.length}`}
+                      ctx={selectedEvidence}
+                      initialDraft={selectedResolutionDraft}
+                      onSave={
+                        props.onSaveResolutionEval ??
+                        (async () => ({
+                          ok: false,
+                          error:
+                            "Resolution eval saving is unavailable until the workspace eval endpoint is connected.",
+                        }))
+                      }
+                    />
+                  </div>
+                ) : null}
                 <textarea
                   className="w-full rounded border p-2 text-sm"
                   rows={3}
