@@ -165,11 +165,9 @@ describe("channel-bindings client", () => {
   it("marks channel binding reads as degraded instead of pretending they are live", async () => {
     const listed = await listChannelBindings("agt_1", { baseUrl: "" });
 
-    expect(listed.items).toHaveLength(9);
+    expect(listed.items).toHaveLength(0);
     expect(listed.degraded_reason).toMatch(/requires cp-api/i);
-    expect(
-      listed.items.every((binding) => binding.status === "not_configured"),
-    ).toBe(true);
+    expect(listed.degraded_reason).toMatch(/not showing local channel bindings/i);
   });
 
   it("builds a local channel preview matrix with formatting failures", () => {

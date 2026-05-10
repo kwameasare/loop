@@ -612,6 +612,24 @@ export function ChannelBindingsPanel({
         </div>
       ) : null}
 
+      {ordered.length === 0 ? (
+        <div
+          className="rounded-md border bg-background p-4 text-sm"
+          data-testid="channel-bindings-empty"
+        >
+          <p className="font-medium">
+            {degradedReason
+              ? "No live channel bindings loaded."
+              : "No channel bindings configured yet."}
+          </p>
+          <p className="mt-1 max-w-2xl text-muted-foreground">
+            {focusedChannelType
+              ? `${channelLabel(focusedChannelType)} is selected in the channel catalog, but there is no authorized backend binding loaded for this agent.`
+              : "Choose a channel above to start a backend-backed setup flow. Studio will not substitute local setup templates for current agent state."}
+          </p>
+        </div>
+      ) : null}
+
       <div className="grid gap-3 xl:grid-cols-3">
         {ordered.map((binding) => {
           const Icon = ICONS[binding.channel_type];
