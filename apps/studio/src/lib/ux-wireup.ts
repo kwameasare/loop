@@ -1,3 +1,5 @@
+import { createAuthedCpApiFetch } from "@/lib/cp-api-fetch";
+
 export interface UxWireupClientOptions {
   fetcher?: typeof fetch;
   token?: string;
@@ -26,6 +28,10 @@ export function cpApiHeaders(
   return headers;
 }
 
+function refreshBaseUrl(base: string): string {
+  return base.replace(/\/v1$/, "");
+}
+
 export async function cpJson<T>(
   path: string,
   opts: UxWireupClientOptions & {
@@ -41,7 +47,9 @@ export async function cpJson<T>(
     if (fallbackEnabled) return opts.fallback;
     throw new Error("LOOP_CP_API_BASE_URL is required for cp-api calls.");
   }
-  const fetcher = opts.fetcher ?? fetch;
+  const fetcher =
+    opts.fetcher ??
+    createAuthedCpApiFetch({ refreshBaseUrl: refreshBaseUrl(base) });
   const init: RequestInit = {
     method: opts.method ?? "GET",
     headers: cpApiHeaders(opts),
