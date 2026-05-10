@@ -2649,7 +2649,29 @@ def test_telemetry_help_branding_voice_demo_and_activity(
         json={"snapshot_id": "snap_123", "expires_in_minutes": 5},
     )
     assert demo.status_code == 201, demo.text
-    assert demo.json()["url"].startswith("/voice-demo/")
+    demo_body = demo.json()
+    assert demo_body["url"].startswith("/voice-demo/")
+    assert demo_body["mic_test_required"] is True
+    token = demo_body["url"].rsplit("/", 1)[-1]
+
+    public_demo = client.get(f"/v1/voice-demo/{token}")
+    assert public_demo.status_code == 200, public_demo.text
+    assert public_demo.json()["snapshot_id"] == "snap_123"
+    assert public_demo.json()["duration_cap_minutes"] == 5
+
+    session = client.post(f"/v1/voice-demo/{token}/sessions")
+    assert session.status_code == 201, session.text
+    assert session.json()["room"].startswith("voice-demo-")
+
+    audit_actions = {
+        event["action"]
+        for event in client.get(
+            f"/v1/audit-events?workspace_id={workspace_id}",
+            headers=_auth(),
+        ).json()["items"]
+    }
+    assert "voice_demo:view" in audit_actions
+    assert "voice_demo:session_start" in audit_actions
 
     _add_trace(client, workspace_id, agent_id, "3" * 32)
     activity = client.get(f"/v1/workspaces/{workspace_id}/activity", headers=_auth())

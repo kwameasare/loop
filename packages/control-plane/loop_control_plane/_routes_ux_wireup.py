@@ -2839,13 +2839,25 @@ async def create_voice_demo_link(
         user_sub=caller_sub,
         required_role=Role.ADMIN,
     )
+    token = uuid4().hex[:18]
+    expires_at = datetime.now(UTC) + timedelta(minutes=body.expires_in_minutes)
     item = {
         "id": f"voice_demo_{uuid4().hex[:10]}",
+        "token": token,
+        "workspace_id": str(workspace_id),
         "snapshot_id": body.snapshot_id,
-        "url": f"/voice-demo/{uuid4().hex[:18]}",
-        "expires_at": (datetime.now(UTC) + timedelta(minutes=body.expires_in_minutes)).isoformat(),
+        "url": f"/voice-demo/{token}",
+        "expires_at": expires_at.isoformat(),
         "rate_limit": "5 minutes / 20 turns",
+        "duration_cap_minutes": 5,
+        "mic_test_required": True,
+        "redaction_policy": "PII and secret-like values redacted from shared traces.",
+        "trace_capture_policy": "Every demo turn is captured with snapshot, version, and trace id.",
+        "whitelabel": True,
+        "status": "active",
+        "session_count": 0,
     }
+    _bucket(request, "voice_demo_links")[token] = item
     _audit(
         request,
         workspace_id=workspace_id,
@@ -2856,6 +2868,60 @@ async def create_voice_demo_link(
         payload=item,
     )
     return item
+
+
+@router_public.get("/voice-demo/{token}")
+async def view_voice_demo_link(request: Request, token: str) -> dict[str, Any]:
+    item = _bucket(request, "voice_demo_links").get(token)
+    if not item:
+        raise HTTPException(status_code=404, detail="voice demo link not found")
+    expires_at = datetime.fromisoformat(item["expires_at"])
+    if expires_at <= datetime.now(UTC):
+        item["status"] = "expired"
+        raise HTTPException(status_code=410, detail="voice demo link expired")
+    workspace_id = UUID(item["workspace_id"])
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub="external-voice-demo-viewer",
+        action="voice_demo:view",
+        resource_type="voice_demo",
+        resource_id=item["id"],
+        payload={"snapshot_id": item["snapshot_id"], "token": token},
+    )
+    return {key: value for key, value in item.items() if key != "token"}
+
+
+@router_public.post("/voice-demo/{token}/sessions", status_code=201)
+async def start_voice_demo_session(request: Request, token: str) -> dict[str, Any]:
+    item = _bucket(request, "voice_demo_links").get(token)
+    if not item:
+        raise HTTPException(status_code=404, detail="voice demo link not found")
+    expires_at = datetime.fromisoformat(item["expires_at"])
+    if expires_at <= datetime.now(UTC):
+        item["status"] = "expired"
+        raise HTTPException(status_code=410, detail="voice demo link expired")
+    item["session_count"] = int(item.get("session_count", 0)) + 1
+    session = {
+        "id": f"voice_demo_session_{uuid4().hex[:10]}",
+        "room": f"voice-demo-{token[:10]}",
+        "identity": f"stakeholder-{uuid4().hex[:8]}",
+        "livekit_url": os.environ.get("LOOP_LIVEKIT_URL", "wss://voice.loop.dev"),
+        "expires_at": item["expires_at"],
+        "trace_capture_policy": item["trace_capture_policy"],
+    }
+    workspace_id = UUID(item["workspace_id"])
+    _bucket(request, "voice_demo_sessions").setdefault(token, []).append(session)
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub="external-voice-demo-viewer",
+        action="voice_demo:session_start",
+        resource_type="voice_demo_session",
+        resource_id=session["id"],
+        payload={"voice_demo_id": item["id"], "room": session["room"]},
+    )
+    return session
 
 
 @router_workspaces.get("/{workspace_id}/activity")
