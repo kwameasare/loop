@@ -14,6 +14,7 @@ describe("fetchReplayWorkbenchModel", () => {
     expect(model.selectedReplay.mostLikelyBreak).toBe(
       "No production traces loaded.",
     );
+    expect(model.degradedReason).toMatch(/LOOP_CP_API_BASE_URL is required/i);
   });
 
   it("builds risky replay candidates from live traces", async () => {

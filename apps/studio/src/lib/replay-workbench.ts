@@ -89,6 +89,7 @@ export interface ReplayWorkbenchModel {
   properties: readonly ConversationPropertyResult[];
   clusters: readonly ReplayFailureCluster[];
   scenes: readonly CanonicalScene[];
+  degradedReason?: string | undefined;
 }
 
 const conversations: readonly ProductionConversationCandidate[] = [
@@ -385,7 +386,10 @@ function replaySummaryForTrace(trace: TraceSummary): FutureReplaySummary {
   };
 }
 
-function modelFromTraces(traces: readonly TraceSummary[]): ReplayWorkbenchModel {
+function modelFromTraces(
+  traces: readonly TraceSummary[],
+  degradedReason?: string,
+): ReplayWorkbenchModel {
   const emptySelectedReplay: FutureReplaySummary = {
     conversationId: "no_trace_loaded",
     behavioralDistance: 0,
@@ -403,6 +407,7 @@ function modelFromTraces(traces: readonly TraceSummary[]): ReplayWorkbenchModel 
       properties: [],
       clusters: [],
       scenes: [],
+      degradedReason,
     };
   }
   const ordered = [...traces].sort((a, b) => {
@@ -417,6 +422,7 @@ function modelFromTraces(traces: readonly TraceSummary[]): ReplayWorkbenchModel 
     properties: [],
     clusters: [],
     scenes: [],
+    degradedReason,
   };
 }
 
@@ -436,7 +442,7 @@ export async function fetchReplayWorkbenchModel(
       err instanceof Error &&
       /LOOP_CP_API_BASE_URL is required/.test(err.message)
     ) {
-      return modelFromTraces([]);
+      return modelFromTraces([], err.message);
     }
     throw err;
   }

@@ -2,7 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ReplayWorkbench } from "@/components/replay/replay-workbench";
-import { getReplayWorkbenchModel } from "@/lib/replay-workbench";
+import {
+  getReplayWorkbenchModel,
+  type ReplayWorkbenchModel,
+} from "@/lib/replay-workbench";
 
 describe("ReplayWorkbench", () => {
   const previousBaseUrl = process.env.LOOP_CP_API_BASE_URL;
@@ -64,5 +67,31 @@ describe("ReplayWorkbench", () => {
     expect(
       screen.queryByText(/Local replay compares/i),
     ).not.toBeInTheDocument();
+  });
+
+  it("renders degraded replay evidence when production conversations cannot load", () => {
+    const model: ReplayWorkbenchModel = {
+      conversations: [],
+      selectedReplay: {
+        conversationId: "no_trace_loaded",
+        behavioralDistance: 0,
+        changedFrames: 0,
+        latencyDeltaMs: 0,
+        costDeltaPct: 0,
+        mostLikelyBreak: "No production traces loaded.",
+        diffRows: [],
+      },
+      personas: [],
+      properties: [],
+      clusters: [],
+      scenes: [],
+      degradedReason:
+        "LOOP_CP_API_BASE_URL is required to search production traces.",
+    };
+
+    render(<ReplayWorkbench model={model} />);
+
+    expect(screen.getByText("Replay evidence is unavailable")).toBeInTheDocument();
+    expect(screen.getByText(/LOOP_CP_API_BASE_URL/i)).toBeInTheDocument();
   });
 });

@@ -148,7 +148,9 @@ describe("fetchAgentXrayTraces", () => {
     expect(traces[0].id).toBe("f".repeat(32));
   });
 
-  it("returns an empty sample instead of fixture traces when cp-api is unset", async () => {
-    await expect(fetchAgentXrayTraces("ws-1")).resolves.toEqual([]);
+  it("requires cp-api instead of turning missing evidence into an empty sample", async () => {
+    await expect(fetchAgentXrayTraces("ws-1")).rejects.toThrow(
+      /LOOP_CP_API_BASE_URL is required/i,
+    );
   });
 });
