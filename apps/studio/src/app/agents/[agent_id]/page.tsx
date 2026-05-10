@@ -19,6 +19,7 @@ import { listEvalSuites, type EvalSuite } from "@/lib/evals";
 import { listKbDocuments, type KbDocument } from "@/lib/kb";
 import { listMemoryPolicies, type MemoryPolicy } from "@/lib/memory-policies";
 import { listToolContracts, type ToolContract } from "@/lib/tool-contracts";
+import { searchTraces, type TraceSummary } from "@/lib/traces";
 import { getAgentDetailData } from "./agent-detail-data";
 
 interface AgentOverviewPageProps {
@@ -152,6 +153,25 @@ export default async function AgentOverviewPage({
       "Could not load knowledge documents.",
     );
   }
+  let traceSummaries: TraceSummary[] = [];
+  let tracesDegradedReason: string | undefined;
+  if (!agent.workspace_id || agent.workspace_id === "unavailable") {
+    tracesDegradedReason =
+      "Workspace context is unavailable, so Studio cannot request agent-scoped trace evidence.";
+  } else {
+    try {
+      const result = await searchTraces(agent.workspace_id, {
+        agent_id: params.agent_id,
+        page_size: 10,
+      });
+      traceSummaries = result.traces;
+    } catch (error) {
+      tracesDegradedReason = errorMessage(
+        error,
+        "Could not load agent traces.",
+      );
+    }
+  }
   const combinedDegradedReason = [
     degradedReason,
     commitmentDegradedReason,
@@ -161,6 +181,7 @@ export default async function AgentOverviewPage({
     memoryDegradedReason,
     evalsDegradedReason,
     knowledgeDegradedReason,
+    tracesDegradedReason,
   ]
     .filter(Boolean)
     .join(" ");
@@ -194,6 +215,8 @@ export default async function AgentOverviewPage({
       evalsDegradedReason={evalsDegradedReason}
       knowledgeDocuments={knowledgeDocuments}
       knowledgeDegradedReason={knowledgeDegradedReason}
+      traceSummaries={traceSummaries}
+      tracesDegradedReason={tracesDegradedReason}
       commitment={commitment}
     />
   );

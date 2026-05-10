@@ -15,6 +15,7 @@ import type { EvalSuite } from "@/lib/evals";
 import type { KbDocument } from "@/lib/kb";
 import { localMemoryPolicies } from "@/lib/memory-policies";
 import { localToolContracts } from "@/lib/tool-contracts";
+import type { TraceSummary } from "@/lib/traces";
 
 const BASE_PROPS: AgentOverviewProps = {
   id: "ag_1",
@@ -59,6 +60,29 @@ const KNOWLEDGE_DOCUMENTS: KbDocument[] = [
     status: "ready",
     uploadedAt: "2026-05-01T00:00:00Z",
     lastRefreshedAt: "2026-05-09T00:00:00Z",
+  },
+];
+
+const TRACE_SUMMARIES: TraceSummary[] = [
+  {
+    id: "trc_old_ok",
+    agent_id: "ag_1",
+    agent_name: "Support Bot",
+    root_name: "turn old_ok",
+    status: "ok",
+    duration_ns: 620_000_000,
+    started_at_ms: Date.UTC(2026, 4, 9, 10, 0, 0),
+    span_count: 5,
+  },
+  {
+    id: "trc_latest_error",
+    agent_id: "ag_1",
+    agent_name: "Support Bot",
+    root_name: "turn latest_error",
+    status: "error",
+    duration_ns: 940_000_000,
+    started_at_ms: Date.UTC(2026, 4, 9, 13, 0, 0),
+    span_count: 7,
   },
 ];
 
@@ -308,6 +332,29 @@ describe("AgentOverview", () => {
     );
     expect(screen.getByTestId("agent-outline-sources-count")).toHaveTextContent(
       "1 sources",
+    );
+  });
+
+  it("surfaces persisted trace evidence and links the latest trace", () => {
+    render(
+      <AgentOverview {...BASE_PROPS} traceSummaries={TRACE_SUMMARIES} />,
+    );
+
+    expect(screen.getByTestId("agent-outline-traces")).toHaveTextContent(
+      "2 persisted traces loaded; 1 failed; latest trc_latest_error",
+    );
+    expect(screen.getByTestId("agent-outline-traces")).toHaveTextContent(
+      "Investigate 1 failed trace before promotion",
+    );
+    expect(screen.getByTestId("agent-live-preview")).toHaveTextContent(
+      "Latest persisted trace: trc_latest_error",
+    );
+    expect(screen.getByTestId("safe-action-trace")).toHaveAttribute(
+      "href",
+      "/traces/trc_latest_error",
+    );
+    expect(screen.getByTestId("safe-action-trace")).toHaveTextContent(
+      "Open latest trace",
     );
   });
 
