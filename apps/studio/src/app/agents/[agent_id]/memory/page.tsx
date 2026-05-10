@@ -11,7 +11,10 @@ import {
   type MemoryStudioData,
   type MemoryStudioEntry,
 } from "@/lib/memory-studio";
-import { approveMemoryPolicy } from "@/lib/memory-policies";
+import {
+  approveMemoryPolicy,
+  upsertMemoryPolicy,
+} from "@/lib/memory-policies";
 import { useUser } from "@/lib/use-user";
 
 interface AgentMemoryPageProps {
@@ -75,6 +78,7 @@ function AgentMemoryPageBody({ agentId }: { agentId: string }): JSX.Element {
       onDeleteEntry={(entry: MemoryStudioEntry) =>
         deleteMemoryStudioEntry(agentId, entry, user.sub)
       }
+      onSavePolicy={(policy) => upsertMemoryPolicy(agentId, policy)}
       onApprovePolicy={(scope) => approveMemoryPolicy(agentId, scope)}
     />
   );

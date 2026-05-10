@@ -24,6 +24,7 @@ import {
 import {
   type MemoryPolicy,
   type MemoryPolicyApprovalStatus,
+  type MemoryPolicyInput,
   type MemoryPolicyScope,
 } from "@/lib/memory-policies";
 import {
@@ -38,6 +39,7 @@ import { cn } from "@/lib/utils";
 export interface MemoryStudioProps {
   data: MemoryStudioData;
   onDeleteEntry?: (entry: MemoryStudioEntry) => Promise<void>;
+  onSavePolicy?: (policy: MemoryPolicyInput) => Promise<MemoryPolicy>;
   onApprovePolicy?: (scope: MemoryPolicyScope) => Promise<MemoryPolicy>;
 }
 
@@ -412,13 +414,17 @@ function ReplayControls({ data }: { data: MemoryStudioData }) {
 
 function MemoryPolicyPanel({
   policies,
+  savingScope,
   approvingScope,
   notice,
+  onSave,
   onApprove,
 }: {
   policies: MemoryPolicy[];
+  savingScope: MemoryPolicyScope | null;
   approvingScope: MemoryPolicyScope | null;
   notice: string | null;
+  onSave: (policy: MemoryPolicyInput) => void;
   onApprove: (policy: MemoryPolicy) => void;
 }) {
   return (
@@ -445,89 +451,16 @@ function MemoryPolicyPanel({
           </div>
         </div>
         <div className="grid gap-3 lg:grid-cols-3">
-          {policies.map((policy) => {
-            const canApprove =
-              policy.approval_status !== "approved" &&
-              policy.approval_status !== "blocked";
-            return (
-              <article
-                key={policy.id}
-                className="rounded-md border bg-background p-3"
-                data-testid={`memory-policy-${policy.scope}`}
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-sm font-semibold">
-                    {POLICY_SCOPE_LABEL[policy.scope]}
-                  </h3>
-                  <span
-                    className={cn(
-                      "rounded-md border px-2 py-0.5 text-xs font-medium",
-                      POLICY_STATUS_CLASS[policy.approval_status],
-                    )}
-                  >
-                    {policy.approval_status.replace("_", " ")}
-                  </span>
-                </div>
-                <dl className="mt-3 space-y-2 text-sm">
-                  <div>
-                    <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Retention
-                    </dt>
-                    <dd className="mt-1">{policy.retention}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Consent
-                    </dt>
-                    <dd className="mt-1">{policy.consent_requirement}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      PII policy
-                    </dt>
-                    <dd className="mt-1">{policy.pii_policy}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Delete behavior
-                    </dt>
-                    <dd className="mt-1">{policy.delete_behavior}</dd>
-                  </div>
-                </dl>
-                <div className="mt-3 rounded-md border bg-card p-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Privacy implications before activation
-                  </p>
-                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                    {policy.privacy_implications.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-                <p className="mt-2 font-mono text-[0.7rem] text-muted-foreground">
-                  hash {policy.content_hash.slice(0, 12)}
-                  {policy.approval_invalidated_at
-                    ? ` · invalidated ${policy.approval_invalidated_at}`
-                    : ""}
-                </p>
-                <button
-                  type="button"
-                  disabled={!canApprove || approvingScope === policy.scope}
-                  onClick={() => onApprove(policy)}
-                  className="mt-3 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
-                  data-testid={`memory-policy-approve-${policy.scope}`}
-                >
-                  {approvingScope === policy.scope
-                    ? "Approving policy"
-                    : policy.approval_status === "approved"
-                      ? "Policy approved"
-                      : policy.approval_status === "blocked"
-                        ? "Policy blocked"
-                        : "Approve policy"}
-                </button>
-              </article>
-            );
-          })}
+          {policies.map((policy) => (
+            <MemoryPolicyCard
+              key={policy.id}
+              policy={policy}
+              saving={savingScope === policy.scope}
+              approving={approvingScope === policy.scope}
+              onSave={onSave}
+              onApprove={onApprove}
+            />
+          ))}
         </div>
         {notice ? (
           <p
@@ -543,9 +476,198 @@ function MemoryPolicyPanel({
   );
 }
 
+function listToText(items: string[]): string {
+  return items.join(", ");
+}
+
+function textToList(value: string): string[] {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function MemoryPolicyCard({
+  policy,
+  saving,
+  approving,
+  onSave,
+  onApprove,
+}: {
+  policy: MemoryPolicy;
+  saving: boolean;
+  approving: boolean;
+  onSave: (policy: MemoryPolicyInput) => void;
+  onApprove: (policy: MemoryPolicy) => void;
+}) {
+  const [allowedTypes, setAllowedTypes] = useState(
+    listToText(policy.allowed_memory_types),
+  );
+  const [retention, setRetention] = useState(policy.retention);
+  const [consent, setConsent] = useState(policy.consent_requirement);
+  const [piiPolicy, setPiiPolicy] = useState(policy.pii_policy);
+  const [deleteBehavior, setDeleteBehavior] = useState(policy.delete_behavior);
+  const [privacyImplications, setPrivacyImplications] = useState(
+    listToText(policy.privacy_implications),
+  );
+  const [sourceTraceRequired, setSourceTraceRequired] = useState(
+    policy.source_trace_required,
+  );
+  const canApprove =
+    policy.approval_status !== "approved" &&
+    policy.approval_status !== "blocked";
+
+  function input(): MemoryPolicyInput {
+    return {
+      scope: policy.scope,
+      allowed_memory_types: textToList(allowedTypes),
+      retention: retention.trim(),
+      consent_requirement: consent.trim(),
+      pii_policy: piiPolicy.trim(),
+      delete_behavior: deleteBehavior.trim(),
+      privacy_implications: textToList(privacyImplications),
+      source_trace_required: sourceTraceRequired,
+    };
+  }
+
+  return (
+    <article
+      className="rounded-md border bg-background p-3"
+      data-testid={`memory-policy-${policy.scope}`}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 className="text-sm font-semibold">
+          {POLICY_SCOPE_LABEL[policy.scope]}
+        </h3>
+        <span
+          className={cn(
+            "rounded-md border px-2 py-0.5 text-xs font-medium",
+            POLICY_STATUS_CLASS[policy.approval_status],
+          )}
+        >
+          {policy.approval_status.replace("_", " ")}
+        </span>
+      </div>
+      <div
+        className="mt-3 space-y-2 text-sm"
+        data-testid={`memory-policy-editor-${policy.scope}`}
+      >
+        <label className="block">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Allowed memory types
+          </span>
+          <input
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+            value={allowedTypes}
+            onChange={(event) => setAllowedTypes(event.target.value)}
+            data-testid={`memory-policy-allowed-${policy.scope}`}
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Retention
+          </span>
+          <textarea
+            className="mt-1 min-h-16 w-full rounded-md border bg-background px-3 py-2"
+            value={retention}
+            onChange={(event) => setRetention(event.target.value)}
+            data-testid={`memory-policy-retention-${policy.scope}`}
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Consent
+          </span>
+          <textarea
+            className="mt-1 min-h-16 w-full rounded-md border bg-background px-3 py-2"
+            value={consent}
+            onChange={(event) => setConsent(event.target.value)}
+            data-testid={`memory-policy-consent-${policy.scope}`}
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            PII policy
+          </span>
+          <textarea
+            className="mt-1 min-h-16 w-full rounded-md border bg-background px-3 py-2"
+            value={piiPolicy}
+            onChange={(event) => setPiiPolicy(event.target.value)}
+            data-testid={`memory-policy-pii-${policy.scope}`}
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Delete behavior
+          </span>
+          <textarea
+            className="mt-1 min-h-16 w-full rounded-md border bg-background px-3 py-2"
+            value={deleteBehavior}
+            onChange={(event) => setDeleteBehavior(event.target.value)}
+            data-testid={`memory-policy-delete-${policy.scope}`}
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Privacy implications before activation
+          </span>
+          <textarea
+            className="mt-1 min-h-16 w-full rounded-md border bg-background px-3 py-2"
+            value={privacyImplications}
+            onChange={(event) => setPrivacyImplications(event.target.value)}
+            data-testid={`memory-policy-privacy-${policy.scope}`}
+          />
+        </label>
+        <label className="flex items-center gap-2 rounded-md border bg-card px-3 py-2">
+          <input
+            type="checkbox"
+            checked={sourceTraceRequired}
+            onChange={(event) => setSourceTraceRequired(event.target.checked)}
+            data-testid={`memory-policy-source-trace-${policy.scope}`}
+          />
+          <span>Require a source trace for every write</span>
+        </label>
+      </div>
+      <p className="mt-2 font-mono text-[0.7rem] text-muted-foreground">
+        hash {policy.content_hash.slice(0, 12)}
+        {policy.approval_invalidated_at
+          ? ` · invalidated ${policy.approval_invalidated_at}`
+          : ""}
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => onSave(input())}
+          className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
+          data-testid={`memory-policy-save-${policy.scope}`}
+        >
+          {saving ? "Saving policy" : "Save policy"}
+        </button>
+        <button
+          type="button"
+          disabled={!canApprove || approving}
+          onClick={() => onApprove(policy)}
+          className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
+          data-testid={`memory-policy-approve-${policy.scope}`}
+        >
+          {approving
+            ? "Approving policy"
+            : policy.approval_status === "approved"
+              ? "Policy approved"
+              : policy.approval_status === "blocked"
+                ? "Policy blocked"
+                : "Approve policy"}
+        </button>
+      </div>
+    </article>
+  );
+}
+
 export function MemoryStudio({
   data,
   onDeleteEntry,
+  onSavePolicy,
   onApprovePolicy,
 }: MemoryStudioProps) {
   const [entries, setEntries] = useState<MemoryStudioEntry[]>(data.entries);
@@ -557,6 +679,9 @@ export function MemoryStudio({
   const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
   const [policyNotice, setPolicyNotice] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [savingScope, setSavingScope] = useState<MemoryPolicyScope | null>(
+    null,
+  );
   const [approvingScope, setApprovingScope] =
     useState<MemoryPolicyScope | null>(null);
   const selectedEntry = useMemo(
@@ -636,6 +761,37 @@ export function MemoryStudio({
     }
   }
 
+  async function handleSavePolicy(input: MemoryPolicyInput): Promise<void> {
+    if (!onSavePolicy) {
+      setPolicyNotice(
+        `${POLICY_SCOPE_LABEL[input.scope]} policy editing requires cp-api wiring. Changes must create a new content hash before approval.`,
+      );
+      return;
+    }
+    setSavingScope(input.scope);
+    setPolicyNotice(null);
+    try {
+      const saved = await onSavePolicy(input);
+      setPolicies((current) =>
+        current.map((item) => (item.scope === saved.scope ? saved : item)),
+      );
+      setPolicyNotice(
+        `${POLICY_SCOPE_LABEL[saved.scope]} policy saved. Hash ${saved.content_hash.slice(
+          0,
+          12,
+        )} will be checked in deployment preflight.`,
+      );
+    } catch (err) {
+      setPolicyNotice(
+        err instanceof Error
+          ? err.message
+          : `Could not save ${POLICY_SCOPE_LABEL[input.scope]} policy.`,
+      );
+    } finally {
+      setSavingScope(null);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6" data-testid="memory-studio">
       <section className="rounded-md border bg-card p-4">
@@ -695,8 +851,10 @@ export function MemoryStudio({
       <section className="grid min-w-0 gap-4">
         <MemoryPolicyPanel
           policies={policies}
+          savingScope={savingScope}
           approvingScope={approvingScope}
           notice={policyNotice}
+          onSave={(policy) => void handleSavePolicy(policy)}
           onApprove={(policy) => void handleApprovePolicy(policy)}
         />
         <MemoryExplorer
