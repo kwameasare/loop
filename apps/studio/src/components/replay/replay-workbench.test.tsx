@@ -1,10 +1,20 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { ReplayWorkbench } from "@/components/replay/replay-workbench";
 import { getReplayWorkbenchModel } from "@/lib/replay-workbench";
 
 describe("ReplayWorkbench", () => {
+  const previousBaseUrl = process.env.LOOP_CP_API_BASE_URL;
+
+  afterEach(() => {
+    if (previousBaseUrl === undefined) {
+      delete process.env.LOOP_CP_API_BASE_URL;
+    } else {
+      process.env.LOOP_CP_API_BASE_URL = previousBaseUrl;
+    }
+  });
+
   it("renders replay, persona, property, and scene surfaces", () => {
     render(<ReplayWorkbench model={getReplayWorkbenchModel()} />);
 
@@ -30,5 +40,21 @@ describe("ReplayWorkbench", () => {
     fireEvent.click(screen.getByRole("button", { name: /save as eval/i }));
 
     expect(screen.getByText(/queued as a regression eval/i)).toBeInTheDocument();
+  });
+
+  it("shows backend-required errors instead of local replay-against-draft diffs", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+    render(<ReplayWorkbench model={getReplayWorkbenchModel()} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /replay against my draft/i }),
+    );
+
+    expect(
+      await screen.findByText(/LOOP_CP_API_BASE_URL is required/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Local replay compares/i),
+    ).not.toBeInTheDocument();
   });
 });
