@@ -142,6 +142,30 @@ describe("ChangePackagePanel", () => {
     );
   });
 
+  it("disables preflight actions when the Change Package backend is unavailable", () => {
+    render(
+      <ChangePackagePanel
+        agentId="agt_1"
+        initialPackage={makePackage()}
+        degradedReason="LOOP_CP_API_BASE_URL is required for cp-api calls."
+        generateChangePackage={vi.fn()}
+        submitChangePackage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("change-package-degraded")).toHaveTextContent(
+      "Change Package backend unavailable",
+    );
+    expect(
+      (screen.getByTestId("change-package-generate") as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByTestId("change-package-submit") as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+  });
+
   it("submits a generated package for approval", async () => {
     const submitChangePackage = vi.fn(async () =>
       makePackage({

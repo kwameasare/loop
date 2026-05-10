@@ -165,12 +165,13 @@ export function buildLocalChangePackage(agentId: string): ChangePackage {
 
 export async function fetchCurrentChangePackage(
   agentId: string,
-  opts: UxWireupClientOptions = {},
+  opts: ChangePackageClientOptions = {},
 ): Promise<CurrentChangePackageResponse> {
   return cpJson<CurrentChangePackageResponse>(
     `/agents/${encodeURIComponent(agentId)}/change-packages/current`,
     {
       ...opts,
+      allowFallback: opts.allowFixture === true,
       fallback: { item: null },
     },
   );
