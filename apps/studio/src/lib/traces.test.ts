@@ -305,6 +305,16 @@ describe("searchTraces", () => {
       .mockResolvedValue({ ok: false, status: 503, json: async () => ({}) });
     await expect(searchTraces("ws1", {}, { fetcher })).rejects.toThrow(/503/);
   });
+
+  it("fails before fetch when cp-api base URL is unconfigured", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+    const fetcher = vi.fn<typeof fetch>();
+
+    await expect(searchTraces("ws1", {}, { fetcher })).rejects.toThrow(
+      /LOOP_CP_API_BASE_URL is required/,
+    );
+    expect(fetcher).not.toHaveBeenCalled();
+  });
 });
 
 describe("fetchTraceByTurnId", () => {
