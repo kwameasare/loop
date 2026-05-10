@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildLocalCommitmentDocument } from "@/lib/agent-commitment";
+import { localAgentHandoff } from "@/lib/agent-handoff";
 import { buildLocalChannelBindings } from "@/lib/channel-bindings";
 import { localMemoryPolicies } from "@/lib/memory-policies";
 import { localToolContracts } from "@/lib/tool-contracts";
@@ -125,6 +126,23 @@ describe("AgentOverviewPage", () => {
             submitted_at: "2026-05-09T11:15:00Z",
             stale_at: null,
           },
+        });
+      }
+      if (url.endsWith("/agents/agent_live/handoff")) {
+        return Response.json({
+          ...localAgentHandoff("agent_live"),
+          owner_user_id: "owner@acme.test",
+          open_risks: [],
+          walkthrough_sections: [
+            {
+              id: "change-packages",
+              title: "Change Packages",
+              summary: "Approved package cp_live.",
+              count: 1,
+              evidence_refs: ["change-package/cp_live"],
+            },
+          ],
+          generated_at: "2026-05-09T12:30:00Z",
         });
       }
       if (url.endsWith("/agents/agent_live/channel-bindings")) {
@@ -255,6 +273,9 @@ describe("AgentOverviewPage", () => {
     );
     expect(screen.getByTestId("agent-outline-governance")).toHaveTextContent(
       "approved Change Package cp_live",
+    );
+    expect(screen.getByTestId("agent-outline-history")).toHaveTextContent(
+      "1 walkthrough section; 0 open risks; owner owner@acme.test",
     );
     expect(screen.getByTestId("safe-action-approval")).toHaveTextContent(
       "Generate Change Package",

@@ -28,6 +28,7 @@ import type { CommitmentDocument } from "@/lib/agent-commitment";
 import type { ChangePackage } from "@/lib/change-package";
 import type { ChannelBinding } from "@/lib/channel-bindings";
 import type { EvalSuite } from "@/lib/evals";
+import type { AgentHandoffModel } from "@/lib/agent-handoff";
 import type { KbDocument } from "@/lib/kb";
 import type { MemoryPolicy } from "@/lib/memory-policies";
 import type { ToolContract } from "@/lib/tool-contracts";
@@ -144,6 +145,8 @@ export interface AgentOverviewProps {
   changePackageDegradedReason?: string | undefined;
   traceSummaries?: TraceSummary[] | undefined;
   tracesDegradedReason?: string | undefined;
+  handoffModel?: AgentHandoffModel | undefined;
+  handoffDegradedReason?: string | undefined;
   workbench?: Partial<AgentWorkbenchData>;
   commitment?: CommitmentDocument | undefined;
   /** Called when the user saves a new description. Allows integration with server actions. */
@@ -226,6 +229,15 @@ interface ChangePackageWorkbenchSummary {
   requiredApprovals: number;
   rollbackTarget: string;
   blockedReason?: string | undefined;
+}
+
+interface HandoffWorkbenchSummary {
+  current: string;
+  lastChangedBy: string;
+  diffFromProduction: string;
+  validation: string;
+  evidence: string;
+  status: WorkbenchSectionStatus;
 }
 
 function requiredReadiness(binding: ChannelBinding) {
@@ -914,6 +926,75 @@ function summarizeChangePackage(
   };
 }
 
+function summarizeHandoff(
+  handoff: AgentHandoffModel | undefined,
+  degradedReason?: string | undefined,
+): HandoffWorkbenchSummary {
+  if (degradedReason) {
+    return {
+      current:
+        "History Walkthrough evidence is degraded; Studio is not claiming ownership continuity.",
+      lastChangedBy: "Live handoff endpoint unavailable",
+      diffFromProduction: "No handoff history loaded.",
+      validation: degradedReason,
+      evidence: "handoff.degraded",
+      status: "watching",
+    };
+  }
+
+  if (!handoff) {
+    return {
+      current: "No History Walkthrough has been generated for this agent.",
+      lastChangedBy: "No handoff packet loaded",
+      diffFromProduction: "Recent changes are unavailable in this overview.",
+      validation:
+        "A new owner should be able to inspect commitments, changes, approvals, incidents, and open risks from here.",
+      evidence: "history.unconfigured",
+      status: "watching",
+    };
+  }
+
+  const blockingRisks = handoff.open_risks.filter(
+    (risk) => risk.severity === "blocking",
+  );
+  const latestTransfer = [...handoff.transfers].sort(
+    (left, right) => Date.parse(right.created_at) - Date.parse(left.created_at),
+  )[0];
+  const sectionEvidenceCount = handoff.walkthrough_sections.reduce(
+    (sum, section) => sum + section.evidence_refs.length,
+    0,
+  );
+
+  return {
+    current: `${handoff.walkthrough_sections.length} walkthrough section${
+      handoff.walkthrough_sections.length === 1 ? "" : "s"
+    }; ${handoff.open_risks.length} open risk${
+      handoff.open_risks.length === 1 ? "" : "s"
+    }; owner ${handoff.owner_user_id || "unassigned"}.`,
+    lastChangedBy: latestTransfer
+      ? `Transfer ${latestTransfer.id} to ${latestTransfer.new_owner_user_id}`
+      : `Generated ${formatDate(handoff.generated_at)}`,
+    diffFromProduction:
+      latestTransfer?.reason ||
+      "History walkthrough reflects the current commitment and open-risk evidence.",
+    validation:
+      blockingRisks.length > 0
+        ? `Resolve ${blockingRisks.length} blocking handoff risk${
+            blockingRisks.length === 1 ? "" : "s"
+          } before ownership transfer.`
+        : "History Walkthrough is available for continuity review.",
+    evidence:
+      latestTransfer?.history_walkthrough_id ??
+      `handoff/${handoff.agent.id}/${sectionEvidenceCount}-refs`,
+    status:
+      blockingRisks.length > 0
+        ? "blocked"
+        : handoff.walkthrough_sections.length > 0
+          ? "healthy"
+          : "watching",
+  };
+}
+
 function EditDescriptionModal({
   open,
   initial,
@@ -1017,6 +1098,7 @@ function buildSections(input: {
   knowledgeSummary: KnowledgeWorkbenchSummary;
   traceSummary: TraceWorkbenchSummary;
   changePackageSummary: ChangePackageWorkbenchSummary;
+  handoffSummary: HandoffWorkbenchSummary;
   commitment?: CommitmentDocument | undefined;
 }): AgentWorkbenchSection[] {
   const commitmentMissing =
@@ -1186,13 +1268,12 @@ function buildSections(input: {
     {
       id: "history",
       label: "History",
-      current: "No history walkthrough has been generated for this agent.",
-      lastChangedBy: "No handoff packet loaded",
-      diffFromProduction: "Recent changes are unavailable in this overview.",
-      validation:
-        "A new owner should be able to inspect commitments, changes, and incidents from here.",
-      evidence: "history.unconfigured",
-      status: "watching",
+      current: input.handoffSummary.current,
+      lastChangedBy: input.handoffSummary.lastChangedBy,
+      diffFromProduction: input.handoffSummary.diffFromProduction,
+      validation: input.handoffSummary.validation,
+      evidence: input.handoffSummary.evidence,
+      status: input.handoffSummary.status,
     },
   ];
 }
@@ -1223,6 +1304,8 @@ function createDefaultWorkbenchData(
     | "changePackageDegradedReason"
     | "traceSummaries"
     | "tracesDegradedReason"
+    | "handoffModel"
+    | "handoffDegradedReason"
   > & { commitment?: CommitmentDocument | undefined },
 ): AgentWorkbenchData {
   const purpose =
@@ -1249,6 +1332,10 @@ function createDefaultWorkbenchData(
   const changePackageSummary = summarizeChangePackage(
     props.changePackage,
     props.changePackageDegradedReason,
+  );
+  const handoffSummary = summarizeHandoff(
+    props.handoffModel,
+    props.handoffDegradedReason,
   );
   const deployBlockedReason = props.changePackage
     ? changePackageSummary.blockedReason
@@ -1378,6 +1465,7 @@ function createDefaultWorkbenchData(
       knowledgeSummary,
       traceSummary,
       changePackageSummary,
+      handoffSummary,
       commitment: props.commitment,
     }),
     diff: {
@@ -1444,7 +1532,7 @@ function createDefaultWorkbenchData(
         label: "Open history walkthrough",
         description:
           "Review previous versions, incidents, approvals, and open risks.",
-        evidence: "history.empty",
+        evidence: handoffSummary.evidence,
         href: actionHref(props.id, "rollback"),
       },
     ],
@@ -1565,6 +1653,8 @@ export function AgentOverview({
   changePackageDegradedReason,
   traceSummaries,
   tracesDegradedReason,
+  handoffModel,
+  handoffDegradedReason,
   workbench,
   commitment,
   onDescriptionSave,
@@ -1599,6 +1689,8 @@ export function AgentOverview({
           changePackageDegradedReason,
           traceSummaries,
           tracesDegradedReason,
+          handoffModel,
+          handoffDegradedReason,
           commitment,
         }),
         workbench,
@@ -1628,6 +1720,8 @@ export function AgentOverview({
       changePackageDegradedReason,
       traceSummaries,
       tracesDegradedReason,
+      handoffModel,
+      handoffDegradedReason,
       workbench,
     ],
   );
