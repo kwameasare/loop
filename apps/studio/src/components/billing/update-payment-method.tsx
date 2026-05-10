@@ -55,22 +55,22 @@ export function UpdatePaymentMethod(props: UpdatePaymentMethodProps) {
 
   return (
     <section
-      className="rounded-lg border bg-white p-5"
+      className="rounded-lg border bg-card p-5"
       data-testid="payment-method-form"
     >
-      <h3 className="text-sm font-semibold uppercase text-zinc-500">
+      <h3 className="text-sm font-semibold uppercase text-muted-foreground">
         Update payment method
       </h3>
       {last4 ? (
         <p
-          className="mt-2 text-sm text-zinc-700"
+          className="mt-2 text-sm text-foreground"
           data-testid="payment-method-current"
         >
           Current card ends in {last4}.
         </p>
       ) : (
         <p
-          className="mt-2 text-sm text-zinc-500"
+          className="mt-2 text-sm text-muted-foreground"
           data-testid="payment-method-empty"
         >
           No card on file yet.
@@ -78,11 +78,11 @@ export function UpdatePaymentMethod(props: UpdatePaymentMethodProps) {
       )}
       <form className="mt-3 flex flex-col gap-3" onSubmit={onSubmit}>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-xs uppercase text-zinc-500">
+          <span className="text-xs uppercase text-muted-foreground">
             Cardholder name
           </span>
           <input
-            className="rounded border px-2 py-1"
+            className="rounded border bg-background px-2 py-1"
             data-testid="payment-method-name"
             disabled={busy}
             onChange={(e) => setName(e.target.value)}
@@ -92,21 +92,21 @@ export function UpdatePaymentMethod(props: UpdatePaymentMethodProps) {
           />
         </label>
         <div
-          className="rounded border border-dashed border-zinc-300 bg-zinc-50 px-3 py-6 text-center text-xs text-zinc-500"
+          className="rounded border border-dashed bg-muted px-3 py-6 text-center text-xs text-muted-foreground"
           data-testid="payment-method-elements-mount"
         >
           Stripe Elements card field renders here in production.
         </div>
         {error ? (
           <p
-            className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+            className="rounded border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
             data-testid="payment-method-error"
             role="alert"
           >
             {error}
             {pending3ds ? (
               <span
-                className="ml-2 rounded bg-amber-100 px-2 py-0.5 text-amber-700"
+                className="ml-2 rounded border border-warning/30 bg-warning/10 px-2 py-0.5 text-warning"
                 data-testid="payment-method-3ds-hint"
               >
                 3DS verification required
@@ -116,7 +116,7 @@ export function UpdatePaymentMethod(props: UpdatePaymentMethodProps) {
         ) : null}
         <div className="flex justify-end">
           <button
-            className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+            className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             data-testid="payment-method-submit"
             disabled={busy || name.trim().length === 0}
             type="submit"
@@ -128,7 +128,7 @@ export function UpdatePaymentMethod(props: UpdatePaymentMethodProps) {
       {toast ? (
         <p
           aria-live="polite"
-          className="mt-3 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700"
+          className="mt-3 rounded border border-success/30 bg-success/10 px-3 py-2 text-xs text-success"
           data-testid="payment-method-toast"
           role="status"
         >

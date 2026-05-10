@@ -13,9 +13,9 @@ export interface BillingPanelProps {
 }
 
 const STATUS_BAR: Record<"ok" | "warn" | "over", string> = {
-  ok: "bg-emerald-500",
-  warn: "bg-amber-500",
-  over: "bg-red-500",
+  ok: "bg-success",
+  warn: "bg-warning",
+  over: "bg-destructive",
 };
 
 const STATUS_TEXT: Record<"ok" | "warn" | "over", string> = {
@@ -58,17 +58,19 @@ export function BillingPanel({ billing, now_ms }: BillingPanelProps) {
       className="flex flex-col gap-6"
       data-testid="billing-panel"
     >
-      <header className="rounded-lg border bg-white p-5">
+      <header className="rounded-lg border bg-card p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase text-zinc-500">Current plan</p>
+            <p className="text-xs uppercase text-muted-foreground">
+              Current plan
+            </p>
             <h2
               className="mt-1 text-2xl font-semibold tracking-tight"
               data-testid="billing-plan-name"
             >
               {billing.plan.name}
             </h2>
-            <p className="text-sm text-zinc-600">
+            <p className="text-sm text-muted-foreground">
               <span data-testid="billing-plan-price">
                 {formatCents(billing.plan.monthly_price_cents)}
               </span>{" "}
@@ -77,7 +79,7 @@ export function BillingPanel({ billing, now_ms }: BillingPanelProps) {
             </p>
           </div>
           <a
-            className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             data-testid="billing-change-plan"
             href={billing.customer_portal_url}
             rel="noreferrer"
@@ -86,10 +88,13 @@ export function BillingPanel({ billing, now_ms }: BillingPanelProps) {
             Change plan
           </a>
         </div>
-        <ul className="mt-4 grid gap-1 text-sm text-zinc-700 sm:grid-cols-2">
+        <ul className="mt-4 grid gap-1 text-sm text-muted-foreground sm:grid-cols-2">
           {billing.plan.features.map((f) => (
             <li className="flex items-center gap-2" key={f}>
-              <span aria-hidden className="size-1.5 rounded-full bg-zinc-400" />
+              <span
+                aria-hidden
+                className="size-1.5 rounded-full bg-muted-foreground"
+              />
               {f}
             </li>
           ))}
@@ -97,14 +102,14 @@ export function BillingPanel({ billing, now_ms }: BillingPanelProps) {
       </header>
 
       <article
-        className="rounded-lg border bg-white p-5"
+        className="rounded-lg border bg-card p-5"
         data-testid="billing-usage"
       >
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold uppercase text-zinc-500">
+          <h3 className="text-sm font-semibold uppercase text-muted-foreground">
             This cycle
           </h3>
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-muted-foreground">
             {formatDate(billing.cycle_start_ms)} →{" "}
             {formatDate(billing.cycle_end_ms)}
           </span>
@@ -116,16 +121,16 @@ export function BillingPanel({ billing, now_ms }: BillingPanelProps) {
           >
             {usage.used.toLocaleString()}
           </span>
-          <span className="text-sm text-zinc-500">
+          <span className="text-sm text-muted-foreground">
             / {usage.cap.toLocaleString()} messages
           </span>
           <span
             className={
               usage.status === "ok"
-                ? "rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700"
+                ? "rounded border border-success/30 bg-success/10 px-2 py-0.5 text-xs text-success"
                 : usage.status === "warn"
-                  ? "rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-700"
-                  : "rounded bg-red-100 px-2 py-0.5 text-xs text-red-700"
+                  ? "rounded border border-warning/30 bg-warning/10 px-2 py-0.5 text-xs text-warning"
+                  : "rounded border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs text-destructive"
             }
             data-testid="billing-usage-status"
           >
@@ -137,7 +142,7 @@ export function BillingPanel({ billing, now_ms }: BillingPanelProps) {
           aria-valuemax={100}
           aria-valuemin={0}
           aria-valuenow={barWidth}
-          className="mt-3 h-3 w-full overflow-hidden rounded-full bg-zinc-100"
+          className="mt-3 h-3 w-full overflow-hidden rounded-full bg-muted"
           role="progressbar"
         >
           <div
@@ -148,7 +153,9 @@ export function BillingPanel({ billing, now_ms }: BillingPanelProps) {
         </div>
         <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
           <div>
-            <dt className="text-xs uppercase text-zinc-500">MTD spend</dt>
+            <dt className="text-xs uppercase text-muted-foreground">
+              MTD spend
+            </dt>
             <dd
               className="font-semibold"
               data-testid="billing-usage-mtd-cost"
@@ -157,7 +164,7 @@ export function BillingPanel({ billing, now_ms }: BillingPanelProps) {
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-zinc-500">
+            <dt className="text-xs uppercase text-muted-foreground">
               Projected end-of-cycle
             </dt>
             <dd
@@ -166,7 +173,7 @@ export function BillingPanel({ billing, now_ms }: BillingPanelProps) {
             >
               {projected.toLocaleString()} msgs
               {projectedOverage > 0 ? (
-                <span className="ml-2 text-xs text-red-600">
+                <span className="ml-2 text-xs text-destructive">
                   +{formatCents(projectedOverageCost)} overage
                 </span>
               ) : null}
@@ -176,10 +183,10 @@ export function BillingPanel({ billing, now_ms }: BillingPanelProps) {
       </article>
 
       <article
-        className="rounded-lg border bg-white p-5 text-sm"
+        className="rounded-lg border bg-card p-5 text-sm"
         data-testid="billing-payment"
       >
-        <h3 className="text-sm font-semibold uppercase text-zinc-500">
+        <h3 className="text-sm font-semibold uppercase text-muted-foreground">
           Payment method
         </h3>
         <p className="mt-2">
@@ -194,7 +201,7 @@ export function BillingPanel({ billing, now_ms }: BillingPanelProps) {
           )}
         </p>
         <a
-          className="mt-3 inline-block text-sm text-blue-600 hover:underline"
+          className="mt-3 inline-block text-sm text-info hover:underline"
           data-testid="billing-portal-link"
           href={billing.customer_portal_url}
           rel="noreferrer"
