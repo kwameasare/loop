@@ -68,6 +68,37 @@ def _audit(
     )
 
 
+def _build_approval_notifications(
+    *,
+    agent_id: UUID,
+    package: Any,
+) -> list[dict[str, Any]]:
+    notifications: list[dict[str, Any]] = []
+    for approval in package.required_approvals:
+        if not approval.get("required") or approval.get("satisfied"):
+            continue
+        approval_id = str(approval.get("id", "approval"))
+        role = str(approval.get("role", "Approver"))
+        notifications.append(
+            {
+                "id": f"notify_{package.id}_{approval_id}",
+                "change_package_id": package.id,
+                "approval_id": approval_id,
+                "recipient_role": role,
+                "summary": (
+                    f"{role} approval requested for {package.summary or package.id}."
+                ),
+                "deep_link": (
+                    f"/agents/{agent_id}/deploys?change_package_id={package.id}"
+                    f"&approval_id={approval_id}"
+                ),
+                "content_hash": package.content_hash,
+                "state": "queued",
+            }
+        )
+    return notifications
+
+
 async def _release_candidate_for_preflight(
     request: Request,
     *,
@@ -225,6 +256,13 @@ async def submit_change_package(
         agent=agent,
         package_id=package_id,
     )
+    notifications = _build_approval_notifications(
+        agent_id=agent_id,
+        package=package,
+    )
+    request.app.state.cp.ux_wireup.setdefault(
+        "change_package_approval_notifications", {}
+    )[package.id] = notifications
     _audit(
         request,
         workspace_id=agent.workspace_id,
@@ -235,9 +273,13 @@ async def submit_change_package(
             "agent_id": str(agent_id),
             "content_hash": package.content_hash,
             "status": package.status,
+            "approval_notifications": notifications,
         },
     )
-    return change_package_payload(package)
+    return {
+        **change_package_payload(package),
+        "approval_notifications": notifications,
+    }
 
 
 @router.post("/{agent_id}/change-packages/{package_id}/approvals")

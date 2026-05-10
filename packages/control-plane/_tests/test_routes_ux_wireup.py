@@ -1217,6 +1217,18 @@ def test_change_package_preflight_links_commitment_evidence_and_stales_on_change
     assert submitted.status_code == 200, submitted.text
     assert submitted.json()["status"] == "submitted"
     assert submitted.json()["submitted_at"] is not None
+    notifications = submitted.json()["approval_notifications"]
+    assert {item["approval_id"] for item in notifications} == {"owner", "compliance"}
+    assert all(item["content_hash"] == body["content_hash"] for item in notifications)
+    assert all(
+        f"/agents/{agent_id}/deploys?change_package_id={body['id']}"
+        in item["deep_link"]
+        for item in notifications
+    )
+    stored_notifications = client.app.state.cp.ux_wireup[  # type: ignore[attr-defined]
+        "change_package_approval_notifications"
+    ][body["id"]]
+    assert stored_notifications == notifications
 
     owner_approval = client.post(
         f"/v1/agents/{agent_id}/change-packages/{body['id']}/approvals",
