@@ -238,6 +238,12 @@ describe("buildCostCapacityModel", () => {
     expect(
       model.surfaces.find((surface) => surface.id === "per_channel")?.state,
     ).toBe("unsupported");
+    expect(
+      model.surfaces.find((surface) => surface.id === "per_trace")?.state,
+    ).toBe("unsupported");
+    expect(
+      model.surfaces.find((surface) => surface.id === "per_turn")?.detail,
+    ).toBe("Unsupported");
     expect(model.projectedMonthEndEvidence).toContain("projected_eom");
   });
 });
