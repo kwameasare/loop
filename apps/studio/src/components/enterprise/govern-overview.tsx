@@ -13,7 +13,6 @@ import {
   RBAC_RESOURCES,
   RBAC_ROLES,
   RESIDENCY_ZONES,
-  SSO_SUMMARIES,
   WHITELABEL_DEFAULT,
   attachComplianceProbeSuite,
   createComplianceEvidenceExport,
@@ -102,6 +101,7 @@ export function GovernOverview({
   const [probeResult, setProbeResult] =
     useState<ComplianceProbeSuiteAttachResult | null>(null);
   const [probeError, setProbeError] = useState<string | null>(null);
+  const ssoSummaries = compliance.sso_summaries ?? [];
 
   const auditRows = useMemo(
     () =>
@@ -612,24 +612,42 @@ export function GovernOverview({
         )}
 
         {section === "sso" && (
-          <ul className="space-y-2">
-            {SSO_SUMMARIES.map((s) => (
-              <li
-                key={s.protocol}
-                data-testid={`sso-row-${s.protocol}`}
-                className="flex items-start justify-between border rounded p-3"
+          <>
+            {ssoSummaries.length === 0 ? (
+              <div
+                data-testid="sso-evidence-unavailable"
+                className="rounded border border-warning/30 bg-warning/10 p-3 text-sm text-warning"
               >
-                <div>
-                  <div className="font-medium">{s.label}</div>
-                  <div className="text-sm text-muted-foreground">{s.detail}</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    evidence: {s.evidenceRef}
-                  </div>
-                </div>
-                <span className={pill(s.status)}>{s.status}</span>
-              </li>
-            ))}
-          </ul>
+                <p className="font-medium">SSO evidence unavailable.</p>
+                <p className="mt-1 text-xs">
+                  The compliance-review response did not include SSO or SCIM
+                  evidence. Studio will not substitute local connection claims
+                  for this workspace.
+                </p>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {ssoSummaries.map((s) => (
+                  <li
+                    key={s.protocol}
+                    data-testid={`sso-row-${s.protocol}`}
+                    className="flex items-start justify-between rounded border p-3"
+                  >
+                    <div>
+                      <div className="font-medium">{s.label}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {s.detail}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        evidence: {s.evidenceRef}
+                      </div>
+                    </div>
+                    <span className={pill(s.status)}>{s.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
 
         {section === "rbac" && (

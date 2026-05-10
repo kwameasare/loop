@@ -511,6 +511,12 @@ export interface ComplianceReviewModel {
   workspace_id: string;
   generated_at: string;
   summary: ComplianceReviewSummary;
+  /**
+   * SSO/SCIM evidence supplied by cp-api. If omitted, Studio must show the
+   * governance SSO tab as unavailable rather than rendering local fixture
+   * connection claims.
+   */
+  sso_summaries?: SsoSummary[];
   approval_queue: ComplianceApprovalQueueItem[];
   policy_violations: CompliancePolicyViolation[];
   policy_conflicts: CompliancePolicyConflict[];
@@ -604,6 +610,7 @@ type ComplianceReviewClientOptions = UxWireupClientOptions & {
 export const COMPLIANCE_REVIEW_FIXTURE: ComplianceReviewModel = {
   workspace_id: "workspace_local",
   generated_at: new Date(0).toISOString(),
+  sso_summaries: [...SSO_SUMMARIES],
   summary: {
     agents: 1,
     pending_approvals: 2,
