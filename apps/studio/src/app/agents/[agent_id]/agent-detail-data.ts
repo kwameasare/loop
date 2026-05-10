@@ -5,6 +5,33 @@ export interface AgentDetailData {
   degradedReason?: string;
 }
 
+export function agentProductionLabel(agent: AgentSummary): string {
+  return agent.active_version !== null
+    ? `v${agent.active_version}`
+    : "not live";
+}
+
+export function agentStateLabel(agent: AgentSummary): string {
+  return agent.object_state.replace(/_/g, " ");
+}
+
+export function agentStateSentence(agent: AgentSummary): string {
+  const subject = agent.name || agent.id;
+  const production = agentProductionLabel(agent);
+  const state = agentStateLabel(agent);
+  const reason = agent.state_reason.trim();
+  const evidence = agent.state_evidence_ref.trim();
+  return [
+    `You are working on agent \`${subject}\`.`,
+    `Current state is ${state}.`,
+    `Production is ${production}.`,
+    reason ? reason : "No additional state reason is available.",
+    evidence
+      ? `Evidence: ${evidence}.`
+      : "No state evidence reference is available.",
+  ].join(" ");
+}
+
 function slugFromAgentId(agentId: string): string {
   return (
     agentId
