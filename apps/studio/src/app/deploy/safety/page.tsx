@@ -5,11 +5,14 @@ import { useEffect, useState } from "react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { RegressionBisect } from "@/components/deploy/regression-bisect/regression-bisect";
 import { WhatCouldBreak } from "@/components/deploy/what-could-break/what-could-break";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  SectionEmpty,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import { SnapshotsList } from "@/components/snapshots/snapshots-list";
 import {
   fetchDeploySafetyModel,
-  getDeploySafetyModel,
   type DeploySafetyModel,
 } from "@/lib/snapshots";
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
@@ -24,12 +27,13 @@ export default function DeploySafetyPage(): JSX.Element {
 
 function DeploySafetyPageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
-  const [model, setModel] = useState<DeploySafetyModel>(getDeploySafetyModel());
+  const [model, setModel] = useState<DeploySafetyModel | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
+    setModel(null);
     setError(null);
     void fetchDeploySafetyModel(active.id)
       .then((next) => {
@@ -55,6 +59,51 @@ function DeploySafetyPageBody(): JSX.Element {
     );
   }
   if (!active) return <WorkspaceRequiredState title="Pre-Promote Safety" />;
+  if (!model && !error) {
+    return (
+      <main className="mx-auto max-w-6xl p-6">
+        <p className="text-sm text-muted-foreground">
+          Loading pre-promote safety...
+        </p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="mx-auto max-w-3xl p-6">
+        <SectionDegraded
+          title="Pre-Promote Safety"
+          description="Pre-promote safety could not load from the control plane."
+          evidence={error}
+        />
+      </main>
+    );
+  }
+
+  if (model?.degraded_reason) {
+    return (
+      <main className="mx-auto max-w-3xl p-6">
+        <SectionDegraded
+          title="Pre-Promote Safety"
+          description="Pre-promote safety is unavailable until backend data is connected."
+          evidence={model.degraded_reason}
+        />
+      </main>
+    );
+  }
+
+  if (model?.empty_reason) {
+    return (
+      <main className="mx-auto max-w-3xl p-6">
+        <SectionEmpty
+          title="Pre-Promote Safety"
+          description="No production trace evidence is available yet."
+          evidence={model.empty_reason}
+        />
+      </main>
+    );
+  }
 
   return (
     <main
@@ -71,15 +120,10 @@ function DeploySafetyPageBody(): JSX.Element {
           replay diffs, locate the culprit commit by bisect, and branch signed
           snapshots for incident, demo, or audit replay.
         </p>
-        {error ? (
-          <p className="text-sm text-destructive" role="alert">
-            {error}
-          </p>
-        ) : null}
       </header>
-      <WhatCouldBreak changes={model.changes} />
-      <RegressionBisect result={model.bisect} />
-      <SnapshotsList snapshots={model.snapshots} />
+      <WhatCouldBreak changes={model!.changes} />
+      {model!.bisect ? <RegressionBisect result={model!.bisect} /> : null}
+      <SnapshotsList snapshots={model!.snapshots} />
     </main>
   );
 }

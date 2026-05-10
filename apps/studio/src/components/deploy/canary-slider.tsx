@@ -10,6 +10,8 @@ import {
   AUTO_ROLLBACK_TRIGGERS,
   CANARY_METRICS,
   CANARY_STAGES,
+  type AutoRollbackTrigger,
+  type CanaryMetric,
   type CanaryPercent,
 } from "@/lib/deploy-flight";
 
@@ -26,11 +28,15 @@ function MetricValue({ value, unit }: { value: number; unit: string }) {
 }
 
 export interface CanarySliderProps {
+  metrics?: ReadonlyArray<CanaryMetric>;
+  triggers?: ReadonlyArray<AutoRollbackTrigger>;
   defaultPercent?: CanaryPercent;
   onChange?: (next: CanaryPercent) => void;
 }
 
 export function CanarySlider({
+  metrics = CANARY_METRICS,
+  triggers = AUTO_ROLLBACK_TRIGGERS,
   defaultPercent = 10,
   onChange,
 }: CanarySliderProps) {
@@ -39,7 +45,7 @@ export function CanarySlider({
     setPercent(next);
     onChange?.(next);
   };
-  const anyFiring = AUTO_ROLLBACK_TRIGGERS.some((t) => t.firing);
+  const anyFiring = triggers.some((t) => t.firing);
   return (
     <section className="space-y-3" data-testid="canary-slider">
       <header className="flex items-center justify-between">
@@ -86,7 +92,7 @@ export function CanarySlider({
             Live vs production baseline
           </h3>
           <ul className="mt-2 space-y-2">
-            {CANARY_METRICS.map((m) => (
+            {metrics.map((m) => (
               <li
                 key={m.id}
                 className="flex items-center justify-between text-sm"
@@ -119,7 +125,7 @@ export function CanarySlider({
             Auto-rollback triggers
           </h3>
           <ul className="mt-2 space-y-2">
-            {AUTO_ROLLBACK_TRIGGERS.map((t) => (
+            {triggers.map((t) => (
               <li
                 key={t.id}
                 data-testid={`auto-rollback-${t.id}`}

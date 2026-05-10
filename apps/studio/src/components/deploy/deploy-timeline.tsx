@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { DEPLOY_TIMELINE } from "@/lib/deploy-flight";
+import { DEPLOY_TIMELINE, type DeployTimelineRow } from "@/lib/deploy-flight";
 
 const STATUS_TONE: Record<string, string> = {
   passed: "border-success/40 bg-success/10 text-success",
@@ -9,7 +9,11 @@ const STATUS_TONE: Record<string, string> = {
   failed: "border-destructive bg-destructive/10 text-destructive",
 };
 
-export function DeployTimeline() {
+export function DeployTimeline({
+  rows = DEPLOY_TIMELINE,
+}: {
+  rows?: ReadonlyArray<DeployTimelineRow>;
+}) {
   return (
     <section className="space-y-3" data-testid="deploy-timeline">
       <header>
@@ -20,7 +24,7 @@ export function DeployTimeline() {
         </p>
       </header>
       <ol className="space-y-1.5" data-testid="deploy-timeline-list">
-        {DEPLOY_TIMELINE.map((row) => (
+        {rows.map((row) => (
           <li
             key={row.id}
             data-testid={`deploy-timeline-${row.id}`}

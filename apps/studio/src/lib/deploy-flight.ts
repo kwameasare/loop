@@ -292,6 +292,7 @@ export function canPromote(
   gates: ReadonlyArray<EvalGate>,
   approvals: ReadonlyArray<ApprovalRequirement>,
 ): boolean {
+  if (gates.length === 0 || approvals.length === 0) return false;
   const gatesOk = gates.every((g) => !g.blocking || g.status === "passed" || g.status === "waived");
   const approvalsOk = approvals.every((a) => !a.required || a.satisfied);
   return gatesOk && approvalsOk;
@@ -433,7 +434,13 @@ export interface DeployFlightModel {
   diffs: ReadonlyArray<PreflightDiff>;
   gates: ReadonlyArray<EvalGate>;
   approvals: ReadonlyArray<ApprovalRequirement>;
-  rollbackTarget: RollbackTarget;
+  rollbackTarget: RollbackTarget | null;
+  environments: ReadonlyArray<FlightEnvironment>;
+  canaryMetrics: ReadonlyArray<CanaryMetric>;
+  autoRollbackTriggers: ReadonlyArray<AutoRollbackTrigger>;
+  timeline: ReadonlyArray<DeployTimelineRow>;
+  degraded_reason?: string | undefined;
+  empty_reason?: string | undefined;
 }
 
 function liveDiffs(traces: readonly TraceSummary[]): PreflightDiff[] {
@@ -601,6 +608,40 @@ export function getDeployFlightModel(): DeployFlightModel {
     gates: EVAL_GATES,
     approvals: APPROVALS,
     rollbackTarget: ROLLBACK_TARGET,
+    environments: FLIGHT_ENVIRONMENTS,
+    canaryMetrics: CANARY_METRICS,
+    autoRollbackTriggers: AUTO_ROLLBACK_TRIGGERS,
+    timeline: DEPLOY_TIMELINE,
+  };
+}
+
+function unavailableDeployFlightModel(reason: string): DeployFlightModel {
+  return {
+    readiness: [],
+    diffs: [],
+    gates: [],
+    approvals: [],
+    rollbackTarget: null,
+    environments: [],
+    canaryMetrics: [],
+    autoRollbackTriggers: [],
+    timeline: [],
+    degraded_reason: reason,
+  };
+}
+
+function emptyDeployFlightModel(reason: string): DeployFlightModel {
+  return {
+    readiness: [],
+    diffs: [],
+    gates: [],
+    approvals: [],
+    rollbackTarget: null,
+    environments: [],
+    canaryMetrics: [],
+    autoRollbackTriggers: [],
+    timeline: [],
+    empty_reason: reason,
   };
 }
 
@@ -613,7 +654,11 @@ export async function fetchDeployFlightModel(
       searchTraces(workspaceId, { page_size: 20 }, opts),
       listAuditEvents(workspaceId, { ...opts, limit: 20 }),
     ]);
-    if (traceResult.traces.length === 0) return getDeployFlightModel();
+    if (traceResult.traces.length === 0) {
+      return emptyDeployFlightModel(
+        "No production traces are available for deployment preflight yet.",
+      );
+    }
     const approvals = liveApprovals(auditResult.events[0]?.action ?? null);
     return {
       readiness: liveReadiness(traceResult.traces, approvals),
@@ -621,13 +666,19 @@ export async function fetchDeployFlightModel(
       gates: liveGates(traceResult.traces),
       approvals,
       rollbackTarget: liveRollbackTarget(traceResult.traces[0]),
+      environments: [],
+      canaryMetrics: [],
+      autoRollbackTriggers: [],
+      timeline: [],
     };
   } catch (err) {
     if (
       err instanceof Error &&
       /LOOP_CP_API_BASE_URL is required/.test(err.message)
     ) {
-      return getDeployFlightModel();
+      return unavailableDeployFlightModel(
+        "Deployment flight deck requires the control-plane trace and audit endpoints.",
+      );
     }
     throw err;
   }

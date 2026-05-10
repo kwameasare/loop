@@ -18,11 +18,13 @@ const POLICY_LABEL: Record<ApprovalPolicy, string> = {
 };
 
 export interface EnvironmentStripProps {
+  environments?: ReadonlyArray<FlightEnvironment>;
   defaultEnvironmentId?: string;
   onSelect?: (env: FlightEnvironment) => void;
 }
 
 export function EnvironmentStrip({
+  environments = FLIGHT_ENVIRONMENTS,
   defaultEnvironmentId = "production",
   onSelect,
 }: EnvironmentStripProps) {
@@ -43,7 +45,7 @@ export function EnvironmentStrip({
         className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
         data-testid="environment-strip-list"
       >
-        {FLIGHT_ENVIRONMENTS.map((env) => {
+        {environments.map((env) => {
           const active = env.id === selected;
           return (
             <li key={env.id}>
