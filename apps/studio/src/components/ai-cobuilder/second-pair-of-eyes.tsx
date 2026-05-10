@@ -14,9 +14,9 @@ interface SecondPairOfEyesProps {
 }
 
 const SEVERITY_STYLE: Record<string, string> = {
-  info: "border-slate-300 bg-white text-slate-700",
-  warn: "border-amber-300 bg-amber-50 text-amber-900",
-  block: "border-rose-400 bg-rose-50 text-rose-900",
+  info: "border-border bg-background text-foreground",
+  warn: "border-warning/40 bg-warning/10 text-warning",
+  block: "border-destructive/40 bg-destructive/10 text-destructive",
 };
 
 export function SecondPairOfEyes({
@@ -39,16 +39,16 @@ export function SecondPairOfEyes({
   return (
     <section
       data-testid={`second-pair-${review.actionId}`}
-      className="space-y-3 rounded-md border border-slate-300 bg-slate-50 p-4"
+      className="space-y-3 rounded-md border bg-card p-4"
     >
       <header className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Second Pair of Eyes · adversarial review
         </p>
         {blockers.length > 0 ? (
           <p
             data-testid={`second-pair-blocked-${review.actionId}`}
-            className="rounded-full border border-rose-400 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-900"
+            className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive"
           >
             {blockers.length} blocker{blockers.length === 1 ? "" : "s"}
           </p>
@@ -58,7 +58,7 @@ export function SecondPairOfEyes({
       {shapeError ? (
         <p
           data-testid={`second-pair-shape-error-${review.actionId}`}
-          className="rounded border border-rose-300 bg-rose-50 px-2 py-1 text-xs text-rose-900"
+          className="rounded border border-destructive/40 bg-destructive/10 px-2 py-1 text-xs text-destructive"
         >
           {shapeError}
         </p>
@@ -80,7 +80,7 @@ export function SecondPairOfEyes({
             <span>{b.body}</span>
             <span
               data-testid={`second-pair-evidence-${b.id}`}
-              className="ml-2 font-mono text-[10px] text-slate-500"
+              className="ml-2 font-mono text-[10px] text-muted-foreground"
             >
               [{b.evidenceRef}]
             </span>

@@ -50,23 +50,23 @@ export function CoBuilderPanel({
   return (
     <section
       data-testid={`cobuilder-${action.id}`}
-      className="space-y-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm"
+      className="space-y-3 rounded-md border bg-card p-4 shadow-sm"
     >
       <header className="flex items-start justify-between gap-3">
         <div>
           <p
             data-testid={`cobuilder-mode-${action.id}`}
-            className="inline-block rounded-full border border-slate-300 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600"
+            className="inline-block rounded-full border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
           >
             {MODE_LABEL[action.mode] ?? action.mode}
           </p>
-          <h3 className="mt-1 text-sm font-semibold text-slate-900">
+          <h3 className="mt-1 text-sm font-semibold text-foreground">
             {action.title}
           </h3>
         </div>
         <p
           data-testid={`cobuilder-budget-${action.id}`}
-          className="text-right text-xs text-slate-500"
+          className="text-right text-xs text-muted-foreground"
         >
           ${action.cost.usd.toFixed(2)} · {action.cost.latencyMs}ms
         </p>
@@ -74,34 +74,34 @@ export function CoBuilderPanel({
 
       <p
         data-testid={`cobuilder-selection-${action.id}`}
-        className="rounded bg-slate-50 px-2 py-1 text-xs text-slate-600"
+        className="rounded bg-muted px-2 py-1 text-xs text-muted-foreground"
       >
         Selection: <span className="font-mono">{selectionContext}</span>
       </p>
 
-      <p className="text-xs text-slate-700">{action.rationale}</p>
+      <p className="text-xs text-foreground">{action.rationale}</p>
 
       <pre
         data-testid={`cobuilder-diff-${action.id}`}
-        className="overflow-auto rounded bg-slate-900 px-3 py-2 text-[11px] leading-snug text-slate-100"
+        className="overflow-auto rounded bg-foreground/95 px-3 py-2 text-[11px] leading-snug text-background"
       >
-        <span className="block text-slate-400">--- {action.diff.path}</span>
+        <span className="block text-background/70">--- {action.diff.path}</span>
         {action.diff.body}
       </pre>
 
       <div data-testid={`cobuilder-provenance-${action.id}`} className="space-y-1">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Provenance
         </p>
-        <ul className="space-y-1 text-xs text-slate-600">
+        <ul className="space-y-1 text-xs text-muted-foreground">
           {action.provenance.map((p) => (
             <li
               key={p.evidenceRef}
               data-testid={`cobuilder-provenance-row-${p.evidenceRef}`}
-              className="rounded border border-slate-200 px-2 py-1"
+              className="rounded border bg-background px-2 py-1"
             >
-              <span className="font-medium text-slate-800">{p.source}</span>
-              <span className="ml-1 text-slate-500">— {p.excerpt}</span>
+              <span className="font-medium text-foreground">{p.source}</span>
+              <span className="ml-1 text-muted-foreground">— {p.excerpt}</span>
             </li>
           ))}
         </ul>
@@ -110,7 +110,7 @@ export function CoBuilderPanel({
       {action.requiredScopes.length > 0 ? (
         <p
           data-testid={`cobuilder-scopes-${action.id}`}
-          className="text-[11px] text-slate-500"
+          className="text-[11px] text-muted-foreground"
         >
           Requires: {action.requiredScopes.join(", ")}
         </p>
@@ -119,7 +119,7 @@ export function CoBuilderPanel({
       {!evaluation.ok ? (
         <ul
           data-testid={`cobuilder-blocked-${action.id}`}
-          className="space-y-1 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900"
+          className="space-y-1 rounded border border-warning/40 bg-warning/10 p-2 text-xs text-warning"
         >
           {evaluation.reasons.map((r) => (
             <li key={r.code}>
@@ -133,7 +133,7 @@ export function CoBuilderPanel({
       {error ? (
         <p
           data-testid={`cobuilder-error-${action.id}`}
-          className="rounded border border-rose-300 bg-rose-50 px-2 py-1 text-xs text-rose-900"
+          className="rounded border border-destructive/40 bg-destructive/10 px-2 py-1 text-xs text-destructive"
         >
           {error}
         </p>
@@ -142,7 +142,7 @@ export function CoBuilderPanel({
       {appliedAt ? (
         <p
           data-testid={`cobuilder-applied-${action.id}`}
-          className="rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs text-emerald-900"
+          className="rounded border border-success/40 bg-success/10 px-2 py-1 text-xs text-success"
         >
           Applied at {appliedAt}.
         </p>
@@ -152,7 +152,7 @@ export function CoBuilderPanel({
           data-testid={`cobuilder-apply-${action.id}`}
           onClick={handleApply}
           disabled={!evaluation.ok}
-          className="rounded bg-slate-900 px-3 py-1 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="rounded bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Apply ({MODE_LABEL[action.mode] ?? action.mode})
         </button>
