@@ -69,6 +69,38 @@ def _audit(
     )
 
 
+async def _expire_preapproved_classes(
+    request: Request,
+    *,
+    agent: Any,
+    caller_sub: str,
+) -> None:
+    expired = await request.app.state.cp.preapproved_classes.expire_for_agent(
+        agent=agent
+    )
+    for record in expired:
+        record_audit_event(
+            workspace_id=agent.workspace_id,
+            actor_sub=caller_sub,
+            action="pre_approved_class:expire",
+            resource_type="pre_approved_class",
+            resource_id=record.id,
+            store=request.app.state.cp.audit_events,
+            request_id=request_id(request),
+            payload={
+                "agent_id": str(agent.id),
+                "expires_at": record.expires_at.isoformat(),
+                "expired_at": record.expired_at.isoformat()
+                if record.expired_at
+                else None,
+                "revoked_at": record.revoked_at.isoformat()
+                if record.revoked_at
+                else None,
+                "trigger": "change_package_preflight",
+            },
+        )
+
+
 def _build_approval_notifications(
     *,
     agent_id: UUID,
@@ -191,6 +223,11 @@ async def generate_change_package(
         )
     change_types = infer_change_types(body)
     risk = infer_change_risk(body)
+    await _expire_preapproved_classes(
+        request,
+        agent=agent,
+        caller_sub=caller_sub,
+    )
     preapproved = await request.app.state.cp.preapproved_classes.applicable(
         agent=agent,
         change_types=change_types,

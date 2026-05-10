@@ -23,6 +23,7 @@ export interface PreApprovedClass {
   created_at: string;
   updated_at: string;
   revoked_at: string | null;
+  expired_at?: string | null;
   invalidated_at: string | null;
   used_by_change_packages: string[];
 }

@@ -63,6 +63,37 @@ def _audit(
     )
 
 
+async def _expire_and_audit(
+    request: Request,
+    *,
+    agent: Any,
+    caller_sub: str,
+) -> list[Any]:
+    expired = await request.app.state.cp.preapproved_classes.expire_for_agent(
+        agent=agent
+    )
+    for record in expired:
+        _audit(
+            request,
+            workspace_id=agent.workspace_id,
+            caller_sub=caller_sub,
+            action="pre_approved_class:expire",
+            resource_id=record.id,
+            payload={
+                "agent_id": str(agent.id),
+                "status": record.status,
+                "expires_at": record.expires_at.isoformat(),
+                "expired_at": record.expired_at.isoformat()
+                if record.expired_at
+                else None,
+                "revoked_at": record.revoked_at.isoformat()
+                if record.revoked_at
+                else None,
+            },
+        )
+    return expired
+
+
 @router.get("/{agent_id}/pre-approved-classes")
 async def list_preapproved_classes(
     request: Request,
@@ -76,6 +107,7 @@ async def list_preapproved_classes(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    await _expire_and_audit(request, agent=agent, caller_sub=caller_sub)
     rows = await request.app.state.cp.preapproved_classes.list_for_agent(agent=agent)
     return {"items": [preapproved_class_payload(row) for row in rows]}
 

@@ -21,6 +21,7 @@ const CLASS: PreApprovedClass = {
   created_at: "2026-05-09T00:00:00Z",
   updated_at: "2026-05-09T00:00:00Z",
   revoked_at: null,
+  expired_at: null,
   invalidated_at: null,
   used_by_change_packages: ["cp_1"],
 };
@@ -88,6 +89,29 @@ describe("PreApprovedClassesPanel", () => {
     fireEvent.click(screen.getByTestId("preapproved-revoke-pac_123"));
     expect(await screen.findByText(/Revoked pre-approved class pac_123/i)).toBeInTheDocument();
     expect(revokeClass).toHaveBeenCalledWith("agent_1", "pac_123");
+  });
+
+  it("shows expired corridors as automatically revoked evidence", () => {
+    render(
+      <PreApprovedClassesPanel
+        agentId="agent_1"
+        initialItems={[
+          {
+            ...CLASS,
+            status: "expired",
+            expired_at: "2026-05-10T00:00:00Z",
+            revoked_at: "2026-05-10T00:00:00Z",
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText(/0 active pre-approved classes/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 closed corridor retained/i)).toBeInTheDocument();
+    expect(screen.getByTestId("preapproved-lifecycle-pac_123")).toHaveTextContent(
+      "Automatically expired and revoked 2026-05-10T00:00:00Z.",
+    );
+    expect(screen.getByTestId("preapproved-revoke-pac_123")).toBeDisabled();
   });
 
   it("requires a grantee and allowed change types before creating", async () => {

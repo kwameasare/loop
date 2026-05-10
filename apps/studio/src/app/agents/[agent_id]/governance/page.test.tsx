@@ -180,6 +180,7 @@ describe("AgentGovernancePage", () => {
               created_at: "2026-05-09T00:00:00Z",
               updated_at: "2026-05-09T00:00:00Z",
               revoked_at: null,
+              expired_at: null,
               invalidated_at: null,
               used_by_change_packages: ["cp_govern_1"],
             },

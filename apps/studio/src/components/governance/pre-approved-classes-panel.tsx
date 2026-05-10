@@ -51,6 +51,25 @@ function changePackageHref(agentId: string, packageId: string): string {
   )}/deploys?change_package_id=${encodeURIComponent(packageId)}`;
 }
 
+function lifecycleText(item: PreApprovedClass): string | null {
+  if (item.status === "expired") {
+    return `Automatically expired and revoked ${
+      item.expired_at ? formatDate(item.expired_at) : "when the time box ended"
+    }.`;
+  }
+  if (item.status === "revoked") {
+    return `Manually revoked ${
+      item.revoked_at ? formatDate(item.revoked_at) : "by a reviewer"
+    }.`;
+  }
+  if (item.status === "invalidated") {
+    return `Invalidated ${
+      item.invalidated_at ? formatDate(item.invalidated_at) : "by a policy change"
+    }.`;
+  }
+  return null;
+}
+
 export function PreApprovedClassesPanel({
   agentId,
   initialItems,
@@ -73,6 +92,7 @@ export function PreApprovedClassesPanel({
     () => items.filter((item) => item.status === "active").length,
     [items],
   );
+  const closedCount = items.length - activeCount;
 
   async function handleCreate() {
     setError(null);
@@ -160,6 +180,12 @@ export function PreApprovedClassesPanel({
           budget, and high-risk changes should stay excluded unless explicitly
           approved.
         </p>
+        {closedCount > 0 ? (
+          <p className="mt-2 text-xs font-medium text-muted-foreground">
+            {closedCount} closed corridor{closedCount === 1 ? "" : "s"} retained
+            for deployment evidence.
+          </p>
+        ) : null}
       </div>
 
       {error ? (
@@ -293,6 +319,14 @@ export function PreApprovedClassesPanel({
                   <p className="mt-1 text-xs text-muted-foreground">
                     grantee: {item.granted_to_user_id || item.team_id}
                   </p>
+                  {lifecycleText(item) ? (
+                    <p
+                      className="mt-1 text-xs font-medium text-muted-foreground"
+                      data-testid={`preapproved-lifecycle-${item.id}`}
+                    >
+                      {lifecycleText(item)}
+                    </p>
+                  ) : null}
                   <div
                     className="mt-2 text-xs text-muted-foreground"
                     data-testid={`preapproved-usage-${item.id}`}
