@@ -1748,6 +1748,31 @@ def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
         event["kind"] for event in fix_body["incident"]["timeline"]
     }
 
+    investigating = client.post(
+        f"/v1/agents/{agent_id}/incidents/{incident['id']}/investigate",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={"note": "Root cause owner is checking the provider schema change."},
+    )
+    assert investigating.status_code == 200, investigating.text
+    assert investigating.json()["status"] == "investigating"
+
+    resolved = client.post(
+        f"/v1/agents/{agent_id}/incidents/{incident['id']}/resolve",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={"note": "Fix package staged and regression evals are green."},
+    )
+    assert resolved.status_code == 200, resolved.text
+    assert resolved.json()["status"] == "resolved"
+    assert resolved.json()["resolved_at"] is not None
+
+    archived = client.post(
+        f"/v1/agents/{agent_id}/incidents/{incident['id']}/archive",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={"note": "Postmortem evidence exported."},
+    )
+    assert archived.status_code == 200, archived.text
+    assert archived.json()["status"] == "archived"
+
     workspace_incidents = client.get(
         f"/v1/workspaces/{workspace_id}/incidents",
         headers=_auth(),
@@ -1764,6 +1789,9 @@ def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
         "incident:create_auto_rollback",
         "incident:eval_cases_seeded",
         "incident:fix_change_package_created",
+        "incident:investigating",
+        "incident:resolved",
+        "incident:archived",
         "change_package:generate_from_incident",
     }
     rollback_incident_audit = next(

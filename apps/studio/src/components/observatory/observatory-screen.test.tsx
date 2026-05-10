@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ObservatoryScreen } from "@/components/observatory/observatory-screen";
@@ -57,5 +57,32 @@ describe("ObservatoryScreen", () => {
     expect(
       await screen.findByTestId("incident-fix-package-id-inc_rollback_schema"),
     ).toHaveTextContent("cp_inc_rollback_schema");
+  });
+
+  it("moves incidents through investigate, resolve, and archive actions", async () => {
+    render(<ObservatoryScreen model={OBSERVATORY_MODEL} />);
+
+    fireEvent.click(
+      screen.getByTestId("incident-investigate-inc_rollback_schema"),
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("incident-card-inc_rollback_schema"),
+      ).toHaveTextContent("investigating");
+    });
+
+    fireEvent.click(screen.getByTestId("incident-resolve-inc_rollback_schema"));
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("incident-card-inc_rollback_schema"),
+      ).toHaveTextContent("resolved");
+    });
+
+    fireEvent.click(screen.getByTestId("incident-archive-inc_rollback_schema"));
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("incident-card-inc_rollback_schema"),
+      ).toHaveTextContent("archived");
+    });
   });
 });

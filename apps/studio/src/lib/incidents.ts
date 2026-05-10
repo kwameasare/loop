@@ -57,6 +57,12 @@ export interface IncidentFixPackageResponse {
   incident: IncidentRecord;
 }
 
+export type IncidentTransitionAction =
+  | "contain"
+  | "investigate"
+  | "resolve"
+  | "archive";
+
 const LOCAL_INCIDENTS: IncidentRecord[] = [
   {
     id: "inc_local_rollback",
@@ -115,6 +121,17 @@ const LOCAL_INCIDENTS: IncidentRecord[] = [
   },
 ];
 
+function getLocalIncident(agentId: string, incidentId: string): IncidentRecord {
+  const incident =
+    LOCAL_INCIDENTS.find((item) => item.id === incidentId) ??
+    LOCAL_INCIDENTS[0]!;
+  return {
+    ...incident,
+    id: incidentId,
+    agent_id: agentId,
+  };
+}
+
 export async function listWorkspaceIncidents(
   workspaceId: string,
   opts: UxWireupClientOptions = {},
@@ -150,9 +167,7 @@ export async function seedIncidentEvalCases(
   incidentId: string,
   opts: UxWireupClientOptions = {},
 ): Promise<IncidentEvalSeedResponse> {
-  const localIncident =
-    LOCAL_INCIDENTS.find((incident) => incident.id === incidentId) ??
-    LOCAL_INCIDENTS[0]!;
+  const localIncident = getLocalIncident(agentId, incidentId);
   return cpJson<IncidentEvalSeedResponse>(
     `/agents/${encodeURIComponent(agentId)}/incidents/${encodeURIComponent(
       incidentId,
@@ -178,9 +193,7 @@ export async function createIncidentFixChangePackage(
   incidentId: string,
   opts: UxWireupClientOptions = {},
 ): Promise<IncidentFixPackageResponse> {
-  const localIncident =
-    LOCAL_INCIDENTS.find((incident) => incident.id === incidentId) ??
-    LOCAL_INCIDENTS[0]!;
+  const localIncident = getLocalIncident(agentId, incidentId);
   const now = new Date().toISOString();
   return cpJson<IncidentFixPackageResponse>(
     `/agents/${encodeURIComponent(agentId)}/incidents/${encodeURIComponent(
@@ -250,6 +263,48 @@ export async function createIncidentFixChangePackage(
             fix_change_package_id: `cp_${incidentId}`,
           },
         },
+      },
+    },
+  );
+}
+
+export async function transitionIncident(
+  agentId: string,
+  incidentId: string,
+  action: IncidentTransitionAction,
+  note: string,
+  opts: UxWireupClientOptions = {},
+): Promise<IncidentRecord> {
+  const localIncident = getLocalIncident(agentId, incidentId);
+  const statusByAction: Record<IncidentTransitionAction, IncidentStatus> = {
+    contain: "contained",
+    investigate: "investigating",
+    resolve: "resolved",
+    archive: "archived",
+  };
+  const nextStatus = statusByAction[action];
+  const now = new Date().toISOString();
+  return cpJson<IncidentRecord>(
+    `/agents/${encodeURIComponent(agentId)}/incidents/${encodeURIComponent(
+      incidentId,
+    )}/${action}`,
+    {
+      ...opts,
+      method: "POST",
+      body: { note },
+      fallback: {
+        ...localIncident,
+        status: nextStatus,
+        resolved_at:
+          nextStatus === "resolved" ? now : localIncident.resolved_at,
+        timeline: [
+          ...localIncident.timeline,
+          {
+            at: now,
+            kind: `incident_${nextStatus}`,
+            summary: note || `Incident moved to ${nextStatus}.`,
+          },
+        ],
       },
     },
   );

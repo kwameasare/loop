@@ -301,6 +301,46 @@ async def resolve_incident(
     )
 
 
+@router_agents.post("/{agent_id}/incidents/{incident_id}/investigate")
+async def investigate_incident(
+    request: Request,
+    agent_id: UUID,
+    incident_id: str,
+    body: IncidentTransition,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    return await _transition(
+        request,
+        agent_id=agent_id,
+        incident_id=incident_id,
+        status="investigating",
+        body=body,
+        caller_sub=caller_sub,
+        workspace_id=workspace_id,
+    )
+
+
+@router_agents.post("/{agent_id}/incidents/{incident_id}/archive")
+async def archive_incident(
+    request: Request,
+    agent_id: UUID,
+    incident_id: str,
+    body: IncidentTransition,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    return await _transition(
+        request,
+        agent_id=agent_id,
+        incident_id=incident_id,
+        status="archived",
+        body=body,
+        caller_sub=caller_sub,
+        workspace_id=workspace_id,
+    )
+
+
 @router_agents.post("/{agent_id}/incidents/{incident_id}/eval-cases", status_code=201)
 async def seed_incident_eval_cases(
     request: Request,
