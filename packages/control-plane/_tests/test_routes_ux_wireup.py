@@ -113,6 +113,27 @@ def _mark_channel_ready(
     return binding
 
 
+def _complete_commitment_body() -> dict[str, object]:
+    return {
+        "business_responsibility": "Resolve billing cancellation requests safely.",
+        "target_users": "Existing enterprise customers and support operators.",
+        "owner_user_id": "maya@acme.test",
+        "backup_owner_user_id": "diego@acme.test",
+        "worst_case_failure": "Incorrectly promises a refund outside policy.",
+        "channels": ["web", "whatsapp", "voice"],
+        "systems_touched": ["billing", "crm"],
+        "regions": ["us-east-1", "eu-west-2"],
+        "languages": ["en", "es"],
+        "success_metric": "95% eval pass rate before canary.",
+        "compliance_domain": "SOC2 support operations",
+        "expected_volume": "20k turns per month",
+        "launch_date": "2026-06-01",
+        "budget_target": "$0.08 per resolved turn",
+        "out_of_scope": "Legal advice and payment disputes above $500.",
+        "escalation_policy": "Escalate policy conflicts to support lead.",
+    }
+
+
 def _start_live_deployment(
     client: TestClient,
     workspace_id: UUID,
@@ -403,24 +424,7 @@ def test_agent_commitment_contract_can_be_drafted_accepted_and_versioned(
     assert current.json()["version"] == 1
     assert "target_users" in current.json()["structured_summary"]["missing_required_fields"]
 
-    body = {
-        "business_responsibility": "Resolve billing cancellation requests safely.",
-        "target_users": "Existing enterprise customers and support operators.",
-        "owner_user_id": "maya@acme.test",
-        "backup_owner_user_id": "diego@acme.test",
-        "worst_case_failure": "Incorrectly promises a refund outside policy.",
-        "channels": ["web", "whatsapp", "voice"],
-        "systems_touched": ["billing", "crm"],
-        "regions": ["us-east-1", "eu-west-2"],
-        "languages": ["en", "es"],
-        "success_metric": "95% eval pass rate before canary.",
-        "compliance_domain": "SOC2 support operations",
-        "expected_volume": "20k turns per month",
-        "launch_date": "2026-06-01",
-        "budget_target": "$0.08 per resolved turn",
-        "out_of_scope": "Legal advice and payment disputes above $500.",
-        "escalation_policy": "Escalate policy conflicts to support lead.",
-    }
+    body = _complete_commitment_body()
     drafted = client.post(
         f"/v1/agents/{agent_id}/commitment",
         headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
@@ -468,6 +472,118 @@ def test_agent_commitment_contract_can_be_drafted_accepted_and_versioned(
         "commitment:draft_save",
         "commitment:accept",
     }
+
+
+def test_agent_detail_exposes_durable_object_state_transitions(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    initial = client.get(
+        f"/v1/agents/{agent_id}",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert initial.status_code == 200, initial.text
+    assert initial.json()["object_state"] == "draft"
+    assert initial.json()["state_evidence_ref"].startswith("commitment/")
+
+    drafted = client.post(
+        f"/v1/agents/{agent_id}/commitment",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={"body": _complete_commitment_body(), "created_from": "studio:new_agent"},
+    )
+    assert drafted.status_code == 201, drafted.text
+    accepted = client.post(
+        f"/v1/agents/{agent_id}/commitment/accept",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert accepted.status_code == 200, accepted.text
+
+    saved = client.get(
+        f"/v1/agents/{agent_id}",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["object_state"] == "saved"
+    assert saved.json()["state_evidence_ref"] == f"commitment/{accepted.json()['id']}"
+
+    package = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "from_version_id": "v1",
+            "to_version_id": "v2",
+            "summary": "Stage approved canary.",
+            "eval_results_ref": "eval/run/v2",
+            "replay_results_ref": "replay/run/v2",
+            "rollback_target_version_id": "v1",
+        },
+    )
+    assert package.status_code == 201, package.text
+    submitted = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{package.json()['id']}/submit",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert submitted.status_code == 200, submitted.text
+
+    staged = client.get(
+        f"/v1/agents/{agent_id}",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert staged.status_code == 200, staged.text
+    assert staged.json()["object_state"] == "staged"
+    assert staged.json()["state_evidence_ref"] == f"change_package/{package.json()['id']}"
+
+    for approval_id in ("owner", "compliance"):
+        approved = client.post(
+            f"/v1/agents/{agent_id}/change-packages/{package.json()['id']}/approvals",
+            headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+            json={"approval_id": approval_id, "decision": "approve"},
+        )
+        assert approved.status_code == 200, approved.text
+    _mark_channel_ready(client, workspace_id, agent_id, "web_chat")
+    started = client.post(
+        f"/v1/agents/{agent_id}/deployments/start",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "change_package_id": package.json()["id"],
+            "version_id": "v2",
+            "traffic_percent": 10,
+            "channel_scope": ["web_chat"],
+        },
+    )
+    assert started.status_code == 201, started.text
+    deployment = started.json()["deployment"]
+
+    canary = client.get(
+        f"/v1/agents/{agent_id}",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert canary.status_code == 200, canary.text
+    assert canary.json()["object_state"] == "canary"
+    assert canary.json()["state_evidence_ref"] == f"deployment/{deployment['id']}"
+
+    promoted = client.post(
+        f"/v1/agents/{agent_id}/deployments/{deployment['id']}/promote",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert promoted.status_code == 200, promoted.text
+    production = client.get(
+        f"/v1/agents/{agent_id}",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert production.status_code == 200, production.text
+    assert production.json()["object_state"] == "production"
+
+    rolled_back = client.post(
+        f"/v1/agents/{agent_id}/deployments/{deployment['id']}/rollback",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert rolled_back.status_code == 200, rolled_back.text
+    rollback_state = client.get(
+        f"/v1/agents/{agent_id}",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert rollback_state.status_code == 200, rollback_state.text
+    assert rollback_state.json()["object_state"] == "rolled_back"
 
 
 def test_branch_change_set_and_release_candidate_state_machine(

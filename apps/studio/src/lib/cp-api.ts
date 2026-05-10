@@ -7,6 +7,16 @@ export type AgentSummary = {
   description: string;
   slug: string;
   active_version: number | null;
+  object_state:
+    | "draft"
+    | "saved"
+    | "staged"
+    | "canary"
+    | "production"
+    | "rolled_back"
+    | "archived";
+  state_reason: string;
+  state_evidence_ref: string;
   updated_at: string; // ISO 8601
   workspace_id: string;
 };
@@ -31,12 +41,30 @@ function cpApiBaseUrl(): string {
 }
 
 function toAgentSummary(agent: Agent): AgentSummary {
+  const stateful = agent as Agent & {
+    object_state?: AgentSummary["object_state"];
+    state_reason?: string;
+    state_evidence_ref?: string;
+  };
+  const fallbackState: AgentSummary["object_state"] =
+    agent.active_version !== null && agent.active_version !== undefined
+      ? "production"
+      : "draft";
   return {
     id: agent.id ?? "",
     name: agent.name ?? "Untitled agent",
     description: agent.description ?? "",
     slug: agent.slug ?? "",
     active_version: agent.active_version ?? null,
+    object_state: stateful.object_state ?? fallbackState,
+    state_reason:
+      stateful.state_reason ??
+      (fallbackState === "production"
+        ? "Agent has an active production version."
+        : "Agent has no active production version."),
+    state_evidence_ref:
+      stateful.state_evidence_ref ??
+      (fallbackState === "production" ? "agent.active_version" : "agent.draft"),
     updated_at: agent.created_at ?? "",
     workspace_id: agent.workspace_id ?? "",
   };

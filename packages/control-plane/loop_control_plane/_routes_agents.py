@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Request, Response
@@ -12,6 +12,16 @@ from loop_control_plane.authorize import authorize_workspace_access
 
 router = APIRouter(prefix="/v1/agents", tags=["Agents"])
 
+AgentObjectState = Literal[
+    "draft",
+    "saved",
+    "staged",
+    "canary",
+    "production",
+    "rolled_back",
+    "archived",
+]
+
 
 async def _authorise(request: Request, *, workspace_id: UUID, caller_sub: str) -> None:
     await authorize_workspace_access(
@@ -19,6 +29,79 @@ async def _authorise(request: Request, *, workspace_id: UUID, caller_sub: str) -
         workspace_id=workspace_id,
         user_sub=caller_sub,
     )
+
+
+async def _agent_payload_with_state(request: Request, agent: Any) -> dict[str, Any]:
+    payload = agent_payload(agent)
+    payload.update(await _derive_agent_state(request, agent))
+    return payload
+
+
+async def _derive_agent_state(request: Request, agent: Any) -> dict[str, str]:
+    if agent.archived_at is not None:
+        return {
+            "object_state": "archived",
+            "state_reason": "Agent is archived.",
+            "state_evidence_ref": f"agent/{agent.id}/archive",
+        }
+
+    deployments = await request.app.state.cp.deployments.list_for_agent(agent=agent)
+    if deployments:
+        latest_deployment = deployments[0]
+        if latest_deployment.status == "live":
+            return {
+                "object_state": "production",
+                "state_reason": f"Deployment {latest_deployment.id} is live.",
+                "state_evidence_ref": f"deployment/{latest_deployment.id}",
+            }
+        if latest_deployment.status in {"canary", "ramp", "paused"}:
+            return {
+                "object_state": "canary",
+                "state_reason": (
+                    f"Deployment {latest_deployment.id} is in {latest_deployment.status} rollout."
+                ),
+                "state_evidence_ref": f"deployment/{latest_deployment.id}",
+            }
+        if latest_deployment.status == "shadow":
+            return {
+                "object_state": "staged",
+                "state_reason": f"Deployment {latest_deployment.id} is shadowing traffic.",
+                "state_evidence_ref": f"deployment/{latest_deployment.id}",
+            }
+        if latest_deployment.status == "rolled_back":
+            return {
+                "object_state": "rolled_back",
+                "state_reason": f"Deployment {latest_deployment.id} was rolled back.",
+                "state_evidence_ref": f"deployment/{latest_deployment.id}",
+            }
+
+    current_package = await request.app.state.cp.change_packages.current(agent=agent)
+    if current_package is not None:
+        if current_package.status in {"submitted", "approved", "deployable"}:
+            return {
+                "object_state": "staged",
+                "state_reason": f"Change Package {current_package.id} is in review.",
+                "state_evidence_ref": f"change_package/{current_package.id}",
+            }
+        if current_package.status == "generated":
+            return {
+                "object_state": "saved",
+                "state_reason": f"Change Package {current_package.id} was generated.",
+                "state_evidence_ref": f"change_package/{current_package.id}",
+            }
+
+    commitment = await request.app.state.cp.agent_commitments.current(agent=agent)
+    if commitment.status == "accepted":
+        return {
+            "object_state": "saved",
+            "state_reason": f"Commitment Document {commitment.id} is accepted.",
+            "state_evidence_ref": f"commitment/{commitment.id}",
+        }
+    return {
+        "object_state": "draft",
+        "state_reason": "Commitment Document is still draft.",
+        "state_evidence_ref": f"commitment/{commitment.id}",
+    }
 
 
 @router.post("", status_code=201)
@@ -42,7 +125,7 @@ async def create_agent(
         request_id=request_id(request),
         payload=body.model_dump(mode="json"),
     )
-    return agent_payload(agent)
+    return await _agent_payload_with_state(request, agent)
 
 
 @router.get("")
@@ -53,7 +136,7 @@ async def list_agents(
 ) -> dict[str, Any]:
     await _authorise(request, workspace_id=workspace_id, caller_sub=caller_sub)
     agents = await request.app.state.cp.agents.list_for_workspace(workspace_id)
-    return {"items": [agent_payload(agent) for agent in agents]}
+    return {"items": [await _agent_payload_with_state(request, agent) for agent in agents]}
 
 
 @router.get("/{agent_id}")
@@ -65,7 +148,7 @@ async def get_agent(
 ) -> dict[str, Any]:
     await _authorise(request, workspace_id=workspace_id, caller_sub=caller_sub)
     agent = await request.app.state.cp.agents.get(workspace_id=workspace_id, agent_id=agent_id)
-    return agent_payload(agent)
+    return await _agent_payload_with_state(request, agent)
 
 
 @router.delete("/{agent_id}", status_code=204)

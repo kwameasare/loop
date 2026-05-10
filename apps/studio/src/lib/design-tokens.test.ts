@@ -83,6 +83,7 @@ describe("design-tokens module", () => {
       "staged",
       "canary",
       "production",
+      "rolled_back",
       "archived",
     ]);
     expect(tokens.OBJECT_STATE_TREATMENTS.production.shape).toBe("ring");
@@ -149,10 +150,12 @@ describe("hardcoded-colour audit", () => {
 
     if (violations.length >= 5) {
       const details = violations
-        .map((v) => `  ${v.file.replace(STUDIO_SRC, "")}:${v.line} → ${v.match}`)
+        .map(
+          (v) => `  ${v.file.replace(STUDIO_SRC, "")}:${v.line} → ${v.match}`,
+        )
         .join("\n");
       throw new Error(
-        `Found ${violations.length} hardcoded hex literals (must be < 5):\n${details}`
+        `Found ${violations.length} hardcoded hex literals (must be < 5):\n${details}`,
       );
     }
 

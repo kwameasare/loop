@@ -44,6 +44,9 @@ export default async function AgentOverviewPage({
       description={agent.description}
       model=""
       activeVersion={agent.active_version}
+      objectState={agent.object_state}
+      stateReason={agent.state_reason}
+      stateEvidenceRef={agent.state_evidence_ref}
       updatedAt={agent.updated_at}
       lastDeploy={lastDeploy}
       dataState={degradedReason ? "degraded" : "live"}
