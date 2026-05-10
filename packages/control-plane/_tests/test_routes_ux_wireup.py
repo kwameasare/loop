@@ -3093,3 +3093,66 @@ def test_telemetry_help_branding_voice_demo_and_activity(
     _add_trace(client, workspace_id, agent_id, "3" * 32)
     activity = client.get(f"/v1/workspaces/{workspace_id}/activity", headers=_auth())
     assert activity.json()["turn_rate_per_minute"] == 1
+
+
+def test_quality_reports_are_workspace_scoped_and_audited(
+    client: TestClient, workspace_id: UUID
+) -> None:
+    payload = {
+        "screen": "/agents/[id]/workbench",
+        "area": "Workbench",
+        "ownerAgent": "support_triage",
+        "reviewedAt": "2026-05-10T10:30:00Z",
+        "reviewer": "ux-lead",
+        "results": [
+            {
+                "category": "clarity",
+                "passed": ["cl-object", "cl-action"],
+                "failed": ["cl-job"],
+                "evidence": "§37.1 — primary job is not obvious on first paint.",
+            },
+            {
+                "category": "control",
+                "passed": ["co-preview"],
+                "failed": [],
+                "evidence": "§37.2",
+            },
+        ],
+        "notes": "Route uses real review evidence instead of sample reports.",
+    }
+
+    saved = client.post(
+        f"/v1/workspaces/{workspace_id}/quality/reports",
+        headers=_auth(),
+        json=payload,
+    )
+    assert saved.status_code == 201, saved.text
+    body = saved.json()
+    assert body["screen"] == payload["screen"]
+    assert body["workspace_id"] == str(workspace_id)
+    assert body["updated_at"]
+
+    listed = client.get(
+        f"/v1/workspaces/{workspace_id}/quality/reports",
+        headers=_auth(),
+    )
+    assert listed.status_code == 200, listed.text
+    assert listed.json()["items"][0]["screen"] == payload["screen"]
+
+    denied = client.get(
+        f"/v1/workspaces/{workspace_id}/quality/reports",
+        headers=_auth("outside-reviewer"),
+    )
+    assert denied.status_code in {403, 404}
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    event = next(event for event in audit if event["action"] == "quality_report:upsert")
+    assert event["resource_type"] == "quality_report"
+    assert event["resource_id"] == payload["screen"]
+    audit_payload = client.app.state.cp.audit_events.fetch_payload(  # type: ignore[attr-defined]
+        event["payload_hash"]
+    )
+    assert audit_payload["failing_categories"] == ["clarity"]
