@@ -153,8 +153,12 @@ describe("buildObservatoryModel", () => {
 describe("fetchObservatoryModel", () => {
   it("returns an empty telemetry model when cp-api is not configured", async () => {
     const model = await fetchObservatoryModel("ws1", { baseUrl: "" });
+    expect(model.degradedReason).toMatch(/LOOP_CP_API_BASE_URL/i);
     expect(model.agents).toEqual([]);
     expect(model.tail).toEqual([]);
+    expect(model.metrics.every((metric) => metric.tone === "blocked")).toBe(
+      true,
+    );
     expect(model.anomalies[0]).toMatchObject({
       id: "telemetry_not_loaded",
       title: "No production telemetry loaded",

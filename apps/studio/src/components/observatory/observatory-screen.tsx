@@ -523,6 +523,7 @@ export function ObservatoryScreen({
   const [pinned, setPinned] = useState<string[]>([]);
   const [pinning, setPinning] = useState<string | null>(null);
   const [pinError, setPinError] = useState<string | null>(null);
+  const degraded = Boolean(model.degradedReason);
 
   async function handlePin(metric: ObservatoryMetric) {
     if (!workspaceId || pinned.includes(metric.id)) return;
@@ -574,6 +575,17 @@ export function ObservatoryScreen({
           {paused ? "Resume tail" : "Pause tail"}
         </Button>
       </header>
+
+      {model.degradedReason ? (
+        <section
+          className="rounded-md border border-warning/40 bg-warning/10 p-4 text-sm text-warning"
+          data-testid="observatory-degraded"
+          role="status"
+        >
+          <p className="font-semibold">Live Observatory telemetry is unavailable.</p>
+          <p className="mt-1">{model.degradedReason}</p>
+        </section>
+      ) : null}
 
       <section
         className="grid gap-3 md:grid-cols-2 xl:grid-cols-3"
@@ -631,7 +643,7 @@ export function ObservatoryScreen({
               <h2 className="text-lg font-semibold">Production tail</h2>
             </div>
             <LiveBadge tone={paused ? "paused" : "live"}>
-              {paused ? "paused" : "streaming"}
+              {degraded ? "offline" : paused ? "paused" : "streaming"}
             </LiveBadge>
           </div>
           <div
@@ -640,19 +652,33 @@ export function ObservatoryScreen({
               paused && "opacity-70",
             )}
           >
-            {model.tail.map((event) => (
-              <TailRow key={event.id} event={event} />
-            ))}
+            {model.tail.length > 0 ? (
+              model.tail.map((event) => <TailRow key={event.id} event={event} />)
+            ) : (
+              <p className="p-4 text-sm text-muted-foreground">
+                No production tail events loaded. Studio is not streaming
+                placeholder turns.
+              </p>
+            )}
           </div>
           <EvidenceCallout
-            title="Next best operating action"
+            title={
+              degraded
+                ? "Connect telemetry before operating"
+                : "Next best operating action"
+            }
             tone="warning"
-            confidence={86}
-            source="observatory/anomaly-ranking"
+            confidence={degraded ? 0 : 86}
+            confidenceLevel={degraded ? "unsupported" : "medium"}
+            source={
+              degraded
+                ? "observatory/backend-required"
+                : "observatory/anomaly-ranking"
+            }
           >
-            Fix the legal synonym cluster before raising canary above 25%. It is
-            the only high-severity anomaly with production replay evidence and
-            active deploy exposure.
+            {degraded
+              ? "No operating recommendation is ranked until traces, usage, inbox, and incidents load from cp-api."
+              : "Fix the legal synonym cluster before raising canary above 25%. It is the only high-severity anomaly with production replay evidence and active deploy exposure."}
           </EvidenceCallout>
         </div>
       </section>
@@ -665,12 +691,21 @@ export function ObservatoryScreen({
             <Eye className="h-5 w-5 text-info" aria-hidden={true} />
             <h2 className="text-lg font-semibold">Ambient agent health</h2>
           </div>
-          <LiveBadge tone="live">peripheral signal</LiveBadge>
+          <LiveBadge tone={degraded ? "paused" : "live"}>
+            {degraded ? "offline" : "peripheral signal"}
+          </LiveBadge>
         </div>
         <div className="grid gap-3 lg:grid-cols-2">
-          {model.agents.map((agent) => (
-            <AgentHealthArc key={agent.id} agent={agent} />
-          ))}
+          {model.agents.length > 0 ? (
+            model.agents.map((agent) => (
+              <AgentHealthArc key={agent.id} agent={agent} />
+            ))
+          ) : (
+            <p className="rounded-md border bg-card p-4 text-sm text-muted-foreground lg:col-span-2">
+              No agent health arcs loaded. The rail stays empty until live
+              traces and cost records identify actual agents.
+            </p>
+          )}
         </div>
       </section>
 
