@@ -64,12 +64,24 @@ export interface AmbientAgentHealth {
   tone: ObservatoryTone;
 }
 
+export interface ObservatoryRecommendation {
+  title: string;
+  body: string;
+  observed: string;
+  intended: string;
+  source: string;
+  confidence: number;
+  confidenceLevel: "high" | "medium" | "low" | "unsupported";
+  tone: "info" | "success" | "warning" | "danger";
+}
+
 export interface ObservatoryModel {
   metrics: readonly ObservatoryMetric[];
   anomalies: readonly ObservatoryAnomaly[];
   incidents: readonly IncidentRecord[];
   tail: readonly ProductionTailEvent[];
   agents: readonly AmbientAgentHealth[];
+  recommendation: ObservatoryRecommendation;
   degradedReason?: string | undefined;
 }
 
@@ -142,6 +154,99 @@ function formatTime(ms: number): string {
 function traceTone(trace: TraceSummary): ObservatoryTone {
   if (trace.status === "error") return "blocked";
   return toneFromLatency(trace.duration_ns / 1_000_000);
+}
+
+function severityRank(severity: ObservatoryAnomaly["severity"]): number {
+  return {
+    critical: 4,
+    high: 3,
+    medium: 2,
+    low: 1,
+  }[severity];
+}
+
+function confidenceForAnomaly(
+  anomaly: ObservatoryAnomaly,
+): Pick<ObservatoryRecommendation, "confidence" | "confidenceLevel" | "tone"> {
+  if (anomaly.severity === "critical") {
+    return { confidence: 92, confidenceLevel: "high", tone: "danger" };
+  }
+  if (anomaly.severity === "high") {
+    return { confidence: 86, confidenceLevel: "medium", tone: "warning" };
+  }
+  if (anomaly.severity === "medium") {
+    return { confidence: 74, confidenceLevel: "medium", tone: "warning" };
+  }
+  return { confidence: 61, confidenceLevel: "low", tone: "info" };
+}
+
+function buildRecommendation(args: {
+  anomalies: readonly ObservatoryAnomaly[];
+  metrics: readonly ObservatoryMetric[];
+  degradedReason?: string | undefined;
+}): ObservatoryRecommendation {
+  if (args.degradedReason) {
+    return {
+      title: "Connect telemetry before operating",
+      body:
+        "No operating recommendation is ranked until traces, usage, inbox, and incidents load from cp-api.",
+      observed: args.degradedReason,
+      intended:
+        "The Observatory should only recommend action from live trace, usage, inbox, and incident evidence.",
+      source: "observatory/backend-required",
+      confidence: 0,
+      confidenceLevel: "unsupported",
+      tone: "warning",
+    };
+  }
+
+  const actionableAnomalies = [...args.anomalies].filter(
+    (anomaly) =>
+      anomaly.id !== "live_no_anomalies" &&
+      anomaly.id !== "telemetry_not_loaded",
+  );
+  const topAnomaly = actionableAnomalies.sort(
+    (a, b) => severityRank(b.severity) - severityRank(a.severity),
+  )[0];
+  if (topAnomaly) {
+    return {
+      title: "Next best operating action",
+      body: topAnomaly.nextAction,
+      observed: topAnomaly.evidence,
+      intended: `Bring ${topAnomaly.affectedObject} back inside its committed behavior before expanding production exposure.`,
+      source: `observatory/anomaly/${topAnomaly.id}`,
+      ...confidenceForAnomaly(topAnomaly),
+    };
+  }
+
+  const firstMetric = args.metrics.find(
+    (metric) => metric.tone !== "healthy",
+  ) ?? args.metrics[0];
+  if (firstMetric) {
+    return {
+      title: "Next best operating action",
+      body: firstMetric.nextAction,
+      observed: `${firstMetric.label}: ${firstMetric.value}. ${firstMetric.delta}`,
+      intended:
+        "Keep the live window inside the agent commitment before promoting more traffic.",
+      source: `observatory/metric/${firstMetric.id}`,
+      confidence: firstMetric.tone === "healthy" ? 66 : 78,
+      confidenceLevel: firstMetric.tone === "healthy" ? "low" : "medium",
+      tone: firstMetric.tone === "healthy" ? "success" : "warning",
+    };
+  }
+
+  return {
+    title: "No operating recommendation available",
+    body:
+      "Load live traces, usage, inbox, and incidents before ranking the next action.",
+    observed: "No live operating facts are present in the model.",
+    intended: "Observability recommendations must be evidence-backed.",
+    source: "observatory/empty",
+    confidence: 0,
+    confidenceLevel: "unsupported",
+    tone: "warning",
+  };
 }
 
 function tracesForAgent(traces: readonly TraceSummary[]) {
@@ -437,6 +542,11 @@ export function buildObservatoryModel(args: {
       status: traceTone(trace),
     })),
     agents,
+    recommendation: buildRecommendation({
+      anomalies,
+      metrics: visibleMetrics,
+      degradedReason: args.degradedReason,
+    }),
     degradedReason: args.degradedReason,
   };
 }

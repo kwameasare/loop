@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Activity,
   AlertTriangle,
+  ArrowRight,
   BarChart3,
   Eye,
   Pause,
@@ -12,7 +13,7 @@ import {
   Route,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   ConfidenceMeter,
   EvidenceCallout,
@@ -52,6 +53,34 @@ const SEVERITY_TONE: Record<ObservatoryAnomaly["severity"], string> = {
   high: "border-destructive/40 bg-destructive/10 text-destructive",
   critical: "border-destructive bg-destructive text-destructive-foreground",
 };
+
+function tracesHref(traceQuery: string, agentId?: string): string {
+  const params = new URLSearchParams();
+  if (agentId) params.set("agent_id", agentId);
+  if (traceQuery === "status:error") {
+    params.set("only_errors", "true");
+  } else if (traceQuery) {
+    params.set("filter", traceQuery);
+  }
+  const qs = params.toString();
+  return `/traces${qs ? `?${qs}` : ""}`;
+}
+
+function editHrefForAffectedObject(
+  anomaly: ObservatoryAnomaly,
+  agentId?: string,
+): string | null {
+  if (!agentId) return null;
+  const target = anomaly.affectedObject.toLowerCase();
+  if (target.startsWith("behavior/")) return `/agents/${agentId}/behavior`;
+  if (target.startsWith("knowledge/")) return `/agents/${agentId}/kb`;
+  if (target.startsWith("tool/")) return `/agents/${agentId}/tools`;
+  if (target.startsWith("memory/")) return `/agents/${agentId}/memory`;
+  if (target.startsWith("channel/")) return `/agents/${agentId}/channels`;
+  if (target.includes("latency")) return `/agents/${agentId}/traces`;
+  if (target.includes("operator inbox")) return `/inbox?agent_id=${agentId}`;
+  return `/agents/${agentId}/observe`;
+}
 
 function MetricCard({
   metric,
@@ -106,17 +135,20 @@ function AnomalyCard({
   anomaly,
   acknowledged,
   workspaceId,
+  agentId,
   onAcknowledge,
 }: {
   anomaly: ObservatoryAnomaly;
   acknowledged: boolean;
   workspaceId?: string | undefined;
+  agentId?: string | undefined;
   onAcknowledge: () => void;
 }) {
   const [taskRef, setTaskRef] = useState(anomaly.taskRef ?? null);
   const [evalRef, setEvalRef] = useState(anomaly.evalCandidateRef ?? null);
   const [busy, setBusy] = useState<"task" | "eval" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const editHref = editHrefForAffectedObject(anomaly, agentId);
 
   async function createTask() {
     if (!workspaceId || taskRef) return;
@@ -193,6 +225,22 @@ function AnomalyCard({
             Owner: {anomaly.owner}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
+            <a
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+              href={tracesHref(anomaly.traceQuery, agentId)}
+              data-testid={`anomaly-open-traces-${anomaly.id}`}
+            >
+              Open traces
+            </a>
+            {editHref ? (
+              <a
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+                href={editHref}
+                data-testid={`anomaly-open-edit-${anomaly.id}`}
+              >
+                Open edit surface
+              </a>
+            ) : null}
             <Button
               type="button"
               variant={acknowledged ? "subtle" : "outline"}
@@ -328,6 +376,16 @@ function TailRow({ event }: { event: ProductionTailEvent }) {
         </span>
       </div>
       <p className="mt-2 text-muted-foreground">{event.summary}</p>
+      <a
+        className={cn(
+          buttonVariants({ variant: "ghost", size: "sm" }),
+          "mt-2 px-0 text-xs text-info hover:bg-transparent",
+        )}
+        href={`/traces/${encodeURIComponent(event.traceId)}`}
+        data-testid={`tail-open-trace-${event.id}`}
+      >
+        Open trace <ArrowRight className="ml-1 h-3.5 w-3.5" />
+      </a>
     </article>
   );
 }
@@ -661,11 +719,13 @@ function IncidentResponsePanel({
 export function ObservatoryScreen({
   model,
   workspaceId,
+  agentId,
   focusedIncidentId,
   focusIncidents = false,
 }: {
   model: ObservatoryModel;
   workspaceId?: string;
+  agentId?: string | undefined;
   focusedIncidentId?: string | undefined;
   focusIncidents?: boolean | undefined;
 }) {
@@ -779,6 +839,7 @@ export function ObservatoryScreen({
               anomaly={anomaly}
               acknowledged={acknowledged.includes(anomaly.id)}
               workspaceId={workspaceId}
+              agentId={agentId}
               onAcknowledge={() =>
                 setAcknowledged((current) =>
                   current.includes(anomaly.id)
@@ -818,23 +879,19 @@ export function ObservatoryScreen({
             )}
           </div>
           <EvidenceCallout
-            title={
-              degraded
-                ? "Connect telemetry before operating"
-                : "Next best operating action"
-            }
-            tone="warning"
-            confidence={degraded ? 0 : 86}
-            confidenceLevel={degraded ? "unsupported" : "medium"}
-            source={
-              degraded
-                ? "observatory/backend-required"
-                : "observatory/anomaly-ranking"
-            }
+            title={model.recommendation.title}
+            tone={model.recommendation.tone}
+            confidence={model.recommendation.confidence}
+            confidenceLevel={model.recommendation.confidenceLevel}
+            source={model.recommendation.source}
           >
-            {degraded
-              ? "No operating recommendation is ranked until traces, usage, inbox, and incidents load from cp-api."
-              : "Fix the legal synonym cluster before raising canary above 25%. It is the only high-severity anomaly with production replay evidence and active deploy exposure."}
+            <span className="block">{model.recommendation.body}</span>
+            <span className="mt-2 block text-xs text-muted-foreground">
+              Observed: {model.recommendation.observed}
+            </span>
+            <span className="mt-1 block text-xs text-muted-foreground">
+              Intended: {model.recommendation.intended}
+            </span>
           </EvidenceCallout>
         </div>
       </section>

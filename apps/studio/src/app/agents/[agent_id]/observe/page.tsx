@@ -69,6 +69,7 @@ export default async function AgentObservabilityPage({
               agentDegradedReason ??
               "Workspace context is unavailable, so Studio cannot request agent-scoped observability evidence.",
           })}
+          agentId={params.agent_id}
           focusedIncidentId={focusedIncidentId(searchParams)}
           focusIncidents={firstParam(searchParams?.view) === "incidents"}
         />
@@ -140,6 +141,7 @@ export default async function AgentObservabilityPage({
           nowMs,
           degradedReason: degradedReasons.join(" ") || undefined,
         })}
+        agentId={params.agent_id}
         focusedIncidentId={focusedIncidentId(searchParams)}
         focusIncidents={firstParam(searchParams?.view) === "incidents"}
         workspaceId={workspaceId}

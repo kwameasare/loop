@@ -112,6 +112,12 @@ describe("buildObservatoryModel", () => {
       evalPassRate: 50,
       tone: "blocked",
     });
+    expect(model.recommendation).toMatchObject({
+      source: "observatory/anomaly/live_trace_errors",
+      body:
+        "Open the failed trace cluster and promote one failure into an eval case.",
+      observed: "1 of 2 recent traces ended in error.",
+    });
   });
 
   it("persists a metric as a custom dashboard layout", async () => {
@@ -216,6 +222,10 @@ describe("fetchObservatoryModel", () => {
     expect(model.anomalies[0]).toMatchObject({
       id: "telemetry_not_loaded",
       title: "No production telemetry loaded",
+    });
+    expect(model.recommendation).toMatchObject({
+      source: "observatory/backend-required",
+      confidenceLevel: "unsupported",
     });
   });
 
