@@ -92,8 +92,17 @@ describe("fixtures carry evidence refs", () => {
 });
 
 describe("compliance review client", () => {
-  it("returns fixture-backed compliance review when cp-api is unavailable", async () => {
-    const model = await fetchComplianceReview("workspace_1", { baseUrl: "" });
+  it("requires cp-api for compliance review by default", async () => {
+    await expect(
+      fetchComplianceReview("workspace_1", { baseUrl: "" }),
+    ).rejects.toThrow(/LOOP_CP_API_BASE_URL is required/i);
+  });
+
+  it("keeps fixture-backed compliance review explicitly opt-in", async () => {
+    const model = await fetchComplianceReview("workspace_1", {
+      baseUrl: "",
+      allowFixture: true,
+    });
 
     expect(model.workspace_id).toBe("workspace_1");
     expect(model.summary.pending_approvals).toBeGreaterThan(0);

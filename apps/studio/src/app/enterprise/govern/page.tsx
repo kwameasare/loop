@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { GovernOverview } from "@/components/enterprise/govern-overview";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import {
   fetchComplianceReview,
   type ComplianceReviewModel,
@@ -67,10 +70,12 @@ function EnterpriseGovernPageBody(): JSX.Element {
 
   if (error) {
     return (
-      <main className="mx-auto max-w-6xl p-6">
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
+      <main className="mx-auto max-w-3xl p-6">
+        <SectionDegraded
+          title="Compliance Review"
+          description="Compliance review could not load from the control plane."
+          evidence={error}
+        />
       </main>
     );
   }

@@ -597,6 +597,10 @@ type EnterpriseGovernMutationOptions = UxWireupClientOptions & {
   allowFixture?: boolean;
 };
 
+type ComplianceReviewClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 export const COMPLIANCE_REVIEW_FIXTURE: ComplianceReviewModel = {
   workspace_id: "workspace_local",
   generated_at: new Date(0).toISOString(),
@@ -792,7 +796,7 @@ export const COMPLIANCE_REVIEW_FIXTURE: ComplianceReviewModel = {
 
 export async function fetchComplianceReview(
   workspaceId: string,
-  opts: UxWireupClientOptions = {},
+  opts: ComplianceReviewClientOptions = {},
 ): Promise<ComplianceReviewModel> {
   return cpJson<ComplianceReviewModel>(
     `/workspaces/${encodeURIComponent(workspaceId)}/compliance-review`,
@@ -801,6 +805,7 @@ export async function fetchComplianceReview(
         ...COMPLIANCE_REVIEW_FIXTURE,
         workspace_id: workspaceId,
       },
+      allowFallback: opts.allowFixture === true,
       ...opts,
     },
   );
