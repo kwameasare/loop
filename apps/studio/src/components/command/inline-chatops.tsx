@@ -13,12 +13,12 @@ import { cn } from "@/lib/utils";
 export interface InlineChatOpsProps {
   /** Called when a slash command is submitted with its full text. */
   onSubmit?: (command: string) => void;
-  /** Disable the input when the live preview is read-only or unowned. */
+  /** Disable the input when the current preview is read-only or unowned. */
   disabledReason?: string;
 }
 
 /**
- * Inline ChatOps autocomplete (section 27.6). Lives inside the live-preview
+ * Inline ChatOps autocomplete (section 27.6). Lives inside the current preview
  * surface so expert builders can inject context, swap models, or replay turns
  * without leaving the conversation. Mutating commands route through the
  * normal deploy/approval model; here we only emit the literal command text.

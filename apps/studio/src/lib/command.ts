@@ -203,8 +203,8 @@ export const CANONICAL_COMMANDS: CommandEntry[] = [
 
 /**
  * Section 27.6 inline ChatOps slash-commands. These never mutate production;
- * they are routed through the live preview only and the palette uses them for
- * autocomplete in the live preview surface.
+ * they are routed through the current preview only and the palette uses them
+ * for autocomplete in that scoped preview surface.
  */
 export interface ChatOpsCommand {
   id: string;
@@ -221,7 +221,7 @@ export const CHATOPS_COMMANDS: ChatOpsCommand[] = [
   {
     id: "chatops_swap",
     trigger: "/swap",
-    description: "Swap the model used by the live preview",
+    description: "Swap the model used by the current preview",
     args: ["model="],
   },
   {

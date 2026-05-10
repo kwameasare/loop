@@ -64,7 +64,7 @@ describe("BillingPage", () => {
       expect(view.container).toHaveTextContent("Billing evidence unavailable.");
     });
     expect(view.container).toHaveTextContent(
-      "will not replace missing billing evidence with fixture spend",
+      "will not replace missing billing evidence with local sample spend",
     );
     expect(view.container).not.toHaveTextContent(
       "Billing is not yet provisioned",

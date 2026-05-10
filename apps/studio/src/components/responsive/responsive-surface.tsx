@@ -38,9 +38,9 @@ export function ResponsiveSurface({ mode, className }: ResponsiveSurfaceProps) {
       {mode === "tablet" ? <TabletReviewPane /> : null}
       {mode === "desktop" ? (
         <p className="rounded-md border border-border bg-card p-4 text-sm text-muted-foreground">
-          Desktop mode renders the full five-region shell (sidebar, topbar,
-          main editor, live preview, status footer) plus command palette and
-          multiplayer cursors (§31.1).
+          Desktop mode renders the full task shell: sidebar, topbar, primary
+          work surface, route-scoped context rail when a real object is
+          selected, command palette, and multiplayer cursors (§31.1).
         </p>
       ) : null}
       {mode === "large-display" ? (
