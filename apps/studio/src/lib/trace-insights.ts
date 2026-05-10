@@ -40,6 +40,10 @@ export interface ContextAblationModel {
   items: ContextAblationItem[];
 }
 
+type TraceInsightsClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 function fallbackLatencyBudget(trace: Trace, targetLatencyMs: number): LatencyBudgetModel {
   const spans = trace.spans.map<LatencyBudgetSpan>((span) => ({
     id: span.id,
@@ -77,7 +81,7 @@ export async function fetchLatencyBudget(
   agentId: string,
   trace: Trace,
   targetLatencyMs: number,
-  opts: UxWireupClientOptions = {},
+  opts: TraceInsightsClientOptions = {},
 ): Promise<LatencyBudgetModel> {
   return cpJson<LatencyBudgetModel>(
     `/agents/${encodeURIComponent(agentId)}/latency-budget`,
@@ -88,6 +92,7 @@ export async function fetchLatencyBudget(
         trace_id: trace.id,
         target_latency_ms: targetLatencyMs,
       },
+      allowFallback: opts.allowFixture === true,
       fallback: fallbackLatencyBudget(trace, targetLatencyMs),
     },
   );
@@ -97,7 +102,7 @@ export async function fetchContextAblation(
   agentId: string,
   turnId: string,
   toggles: Record<string, boolean>,
-  opts: UxWireupClientOptions = {},
+  opts: TraceInsightsClientOptions = {},
 ): Promise<ContextAblationModel> {
   return cpJson<ContextAblationModel>(
     `/agents/${encodeURIComponent(agentId)}/context-ablation`,
@@ -105,6 +110,7 @@ export async function fetchContextAblation(
       ...opts,
       method: "POST",
       body: { turn_id: turnId, toggles },
+      allowFallback: opts.allowFixture === true,
       fallback: {
         turn_id: turnId,
         items: [

@@ -24,12 +24,26 @@ export function CostOfContextSlider({
 }) {
   const [toggles, setToggles] = useState(DEFAULT_TOGGLES);
   const [items, setItems] = useState<ContextAblationItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    void fetchContextAblation(agentId, turnId, toggles).then((next) => {
-      if (!cancelled) setItems(next.items);
-    });
+    void fetchContextAblation(agentId, turnId, toggles)
+      .then((next) => {
+        if (!cancelled) {
+          setItems(next.items);
+          setError(null);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Could not load context ablation.",
+          );
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -52,6 +66,14 @@ export function CostOfContextSlider({
         </div>
         <LiveBadge tone="staged">{items.length || 4} ablations</LiveBadge>
       </div>
+      {error ? (
+        <p
+          className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+        >
+          {error}
+        </p>
+      ) : null}
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {items.map((item) => (
           <label

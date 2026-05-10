@@ -20,12 +20,26 @@ export function LatencyBudgetVisualizer({
 }) {
   const [target, setTarget] = useState(900);
   const [model, setModel] = useState<LatencyBudgetModel | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    void fetchLatencyBudget(agentId, trace, target).then((next) => {
-      if (!cancelled) setModel(next);
-    });
+    void fetchLatencyBudget(agentId, trace, target)
+      .then((next) => {
+        if (!cancelled) {
+          setModel(next);
+          setError(null);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Could not load latency budget.",
+          );
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -66,6 +80,14 @@ export function LatencyBudgetVisualizer({
           data-testid="latency-budget-target"
         />
       </label>
+      {error ? (
+        <p
+          className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+        >
+          {error}
+        </p>
+      ) : null}
       {model ? (
         <>
           <div className="flex h-5 overflow-hidden rounded-full bg-muted">
