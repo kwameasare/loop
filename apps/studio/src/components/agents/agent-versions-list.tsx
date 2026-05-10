@@ -99,12 +99,16 @@ export function AgentVersionsList({
   return (
     <div className="flex flex-col gap-3" data-testid="agent-versions">
       {rows.length === 0 ? (
-        <p
-          className="text-sm text-muted-foreground"
+        <div
+          className="rounded-md border border-dashed bg-muted/35 p-4 text-sm text-muted-foreground"
           data-testid="agent-versions-empty"
         >
-          No versions deployed yet. Run <code>loop deploy</code> to create one.
-        </p>
+          <p className="font-medium text-foreground">No saved versions yet.</p>
+          <p className="mt-1">
+            Create a release candidate above, run first proof, and promote only
+            after the Change Package has evidence.
+          </p>
+        </div>
       ) : (
         <ul
           className="divide-y divide-border rounded-lg border"
@@ -134,7 +138,7 @@ export function AgentVersionsList({
                   className={
                     "rounded-full px-2 py-0.5 text-xs font-medium " +
                     (v.deploy_state === "active"
-                      ? "bg-green-100 text-green-800"
+                      ? "border border-success/40 bg-success/10 text-success"
                       : "bg-muted text-muted-foreground")
                   }
                 >
@@ -153,9 +157,9 @@ export function AgentVersionsList({
                   onClick={() => handlePromote(v)}
                   disabled={pendingId === v.id}
                   data-testid={`agent-version-promote-${v.version}`}
-                  className="rounded-md border px-2 py-1 text-xs font-medium disabled:opacity-50"
+                  className="rounded-md border bg-background px-2 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
                 >
-                  {pendingId === v.id ? "Promoting…" : "Promote"}
+                  {pendingId === v.id ? "Promoting…" : "Promote to production"}
                 </button>
               </div>
             </li>
@@ -205,8 +209,8 @@ export function AgentVersionsList({
           className={
             "fixed bottom-4 right-4 z-50 rounded-md px-3 py-2 text-sm shadow " +
             (toast.kind === "success"
-              ? "bg-green-600 text-white"
-              : "bg-red-600 text-white")
+              ? "bg-success text-success-foreground"
+              : "bg-destructive text-destructive-foreground")
           }
         >
           {toast.message}
