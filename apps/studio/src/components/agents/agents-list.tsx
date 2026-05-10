@@ -28,8 +28,26 @@ function updatedLabel(agent: AgentSummary): string {
  * data fetch keeps Vitest tests simple -- the test mounts AgentsList
  * directly with a fixture; the App Router page does the IO.
  */
-export function AgentsList({ agents }: { agents: AgentSummary[] }) {
+export function AgentsList({
+  agents,
+  degradedReason,
+}: {
+  agents: AgentSummary[];
+  degradedReason?: string | undefined;
+}) {
   if (agents.length === 0) {
+    if (degradedReason) {
+      return (
+        <div
+          className="rounded-md border border-warning/40 bg-warning/10 p-4 text-sm text-warning"
+          data-testid="agents-degraded"
+          role="status"
+        >
+          <p className="font-semibold">Agent registry is unavailable.</p>
+          <p className="mt-1">{degradedReason}</p>
+        </div>
+      );
+    }
     return (
       <p className="text-muted-foreground text-sm" data-testid="agents-empty">
         No agents yet. Create one in the studio to get started.

@@ -54,4 +54,18 @@ describe("AgentsList", () => {
     expect(screen.getByTestId("agents-empty")).toBeInTheDocument();
     expect(screen.queryByTestId("agents-list")).not.toBeInTheDocument();
   });
+
+  it("renders degraded registry state separately from an empty workspace", () => {
+    render(
+      <AgentsList
+        agents={[]}
+        degradedReason="LOOP_CP_API_BASE_URL is required to list agents"
+      />,
+    );
+
+    expect(screen.getByTestId("agents-degraded")).toHaveTextContent(
+      "Agent registry is unavailable",
+    );
+    expect(screen.queryByTestId("agents-empty")).not.toBeInTheDocument();
+  });
 });
