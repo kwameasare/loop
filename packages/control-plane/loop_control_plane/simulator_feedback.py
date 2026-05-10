@@ -20,6 +20,7 @@ class SimulatorRunCreate(BaseModel):
     final_answer: str = Field(default="", max_length=8192)
     channel: str = Field(default="web", max_length=80)
     trace_id: str = Field(default="", max_length=256)
+    channel_binding_id: str = Field(default="", max_length=160)
     config: dict[str, Any] = Field(default_factory=dict)
     status: SimulatorRunStatus = "completed"
     cost_usd: float = Field(default=0, ge=0)
@@ -36,6 +37,7 @@ class SimulatorRunRecord(BaseModel):
     final_answer: str
     channel: str
     trace_id: str
+    channel_binding_id: str
     config: dict[str, Any]
     status: SimulatorRunStatus
     cost_usd: float
@@ -194,6 +196,7 @@ class SimulatorFeedbackRegistry:
                 final_answer=body.final_answer,
                 channel=body.channel,
                 trace_id=body.trace_id,
+                channel_binding_id=body.channel_binding_id,
                 config=body.config,
                 status=body.status,
                 cost_usd=body.cost_usd,

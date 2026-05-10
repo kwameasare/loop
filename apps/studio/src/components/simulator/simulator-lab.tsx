@@ -709,6 +709,11 @@ export function SimulatorLab({
             <span className="ml-2 text-muted-foreground">
               trace <code>{simulatorRun.trace_id}</code>
             </span>
+            {simulatorRun.channel_binding_id ? (
+              <span className="ml-2 text-muted-foreground">
+                binding <code>{simulatorRun.channel_binding_id}</code>
+              </span>
+            ) : null}
           </div>
         ) : null}
         {simulatorRunError ? (

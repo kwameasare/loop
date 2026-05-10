@@ -145,6 +145,7 @@ describe("rateSimulatorTurn", () => {
             final_answer: "I will check policy first.",
             channel: "whatsapp",
             trace_id: "trace_1",
+            channel_binding_id: "cb_whatsapp",
             config: { model_alias: "fast-draft" },
             status: "completed",
             cost_usd: 0.01,
@@ -173,5 +174,6 @@ describe("rateSimulatorTurn", () => {
     );
 
     expect(result.id).toBe("simrun_1");
+    expect(result.channel_binding_id).toBe("cb_whatsapp");
   });
 });
