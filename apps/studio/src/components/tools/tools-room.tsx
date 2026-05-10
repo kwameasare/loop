@@ -477,6 +477,102 @@ function SafetyContract({ tool }: { tool: ToolsRoomTool | null }) {
   );
 }
 
+function ToolEnablementChecks({
+  tool,
+  contract,
+}: {
+  tool: ToolsRoomTool | null;
+  contract: ToolContract | null;
+}) {
+  if (!tool) return null;
+  const checks = [
+    {
+      id: "schema",
+      label: "Schema validation",
+      passed: tool.schema.length > 0 && tool.outputSchema.length > 0,
+      detail: `${tool.schema.length} input field(s), ${tool.outputSchema.length} output field(s).`,
+    },
+    {
+      id: "sandbox",
+      label: "Sandbox credential test",
+      passed:
+        tool.mockStatus.toLowerCase().includes("mock") ||
+        Boolean(tool.secretRef),
+      detail: `${tool.authMode} credential represented without raw secrets.`,
+    },
+    {
+      id: "example",
+      label: "Example call passed",
+      passed: Boolean(tool.sampleCall && tool.mockResponse),
+      detail: "Sample call and mock response are recorded.",
+    },
+    {
+      id: "failure",
+      label: "Failure response configured",
+      passed: Boolean(contract?.failure_behavior || tool.safety.auditEvent),
+      detail: contract?.failure_behavior || "No saved failure behavior yet.",
+    },
+    {
+      id: "classification",
+      label: "Data classification reviewed",
+      passed: Boolean(tool.dataClassification),
+      detail: tool.dataClassification || "Missing data classification.",
+    },
+    {
+      id: "eval",
+      label: "Tool-use eval created",
+      passed: tool.evalCoveragePercent > 0,
+      detail: `${tool.evalCoveragePercent}% eval coverage.`,
+    },
+    {
+      id: "owner",
+      label: "Owner assigned",
+      passed: Boolean(contract?.owner_user_id || tool.owner),
+      detail: contract?.owner_user_id || tool.owner || "Unassigned.",
+    },
+  ];
+
+  return (
+    <section
+      className="min-w-0 rounded-md border bg-card p-4"
+      data-testid="tool-enablement-checks"
+    >
+      <p className="flex items-center gap-2 text-sm font-semibold">
+        <ShieldCheck className="h-4 w-4" aria-hidden />
+        Enablement checks before live use
+      </p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        A tool can stay in mock or sandbox while these are incomplete. Live use
+        must show each blocker as a concrete contract gap.
+      </p>
+      <ul className="mt-3 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr))]">
+        {checks.map((check) => (
+          <li
+            key={check.id}
+            className={cn(
+              "rounded-md border p-3 text-sm",
+              check.passed
+                ? "border-success/40 bg-success/5"
+                : "border-warning/40 bg-warning/10",
+            )}
+            data-testid={`tool-enablement-${check.id}`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium">{check.label}</span>
+              <span className="text-xs text-muted-foreground">
+                {check.passed ? "passed" : "blocked"}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {check.detail}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function formatRecord(record: Record<string, unknown>): string {
   const entries = Object.entries(record);
   if (entries.length === 0) return "Not set";
@@ -1014,6 +1110,10 @@ export function ToolsRoom({ data }: ToolsRoomProps) {
         />
         <DetailPanel tool={selectedTool} />
         <SafetyContract tool={selectedTool} />
+        <ToolEnablementChecks
+          tool={selectedTool}
+          contract={selectedContract}
+        />
         <ToolContractQuestionnaire
           key={selectedTool?.id ?? "no-tool"}
           agentId={data.agentId}

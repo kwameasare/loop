@@ -48,6 +48,18 @@ describe("ToolsRoom", () => {
     expect(screen.getByTestId("tools-room-safety")).toHaveTextContent(
       "Safety contract",
     );
+    expect(screen.getByTestId("tool-enablement-checks")).toHaveTextContent(
+      "Enablement checks before live use",
+    );
+    expect(screen.getByTestId("tool-enablement-schema")).toHaveTextContent(
+      "passed",
+    );
+    expect(screen.getByTestId("tool-enablement-eval")).toHaveTextContent(
+      "96% eval coverage",
+    );
+    expect(screen.getByTestId("tool-enablement-owner")).toHaveTextContent(
+      "workspace-builder",
+    );
     expect(screen.getByTestId("tool-contract-panel")).toHaveTextContent(
       "Tool contract",
     );
