@@ -1600,8 +1600,13 @@ function createDefaultWorkbenchData(
       (objectState === "production" ? "agent.active_version" : "agent.state"),
     draftChanges: workflowSummary.draftChanges,
     memoryPolicy,
-    budgetCap: "No budget cap loaded.",
-    escalationRule: "No escalation rule loaded.",
+    budgetCap:
+      props.commitment?.body.budget_target ||
+      props.changePackage?.cost_summary ||
+      "No budget cap loaded.",
+    escalationRule:
+      props.commitment?.body.escalation_policy ||
+      "No escalation rule loaded.",
     evalGate,
     toolPermissionSummary: toolSummary.current,
     knowledgeSummary: knowledgeSummary.current,
