@@ -4,10 +4,9 @@
  * cp-api list endpoint already enforces this contract; the studio
  * mirrors it by typing ``value`` away entirely.
  *
- * Add / Rotate paths are tracked under follow-up S560 — until cp-api
- * exposes ``POST /v1/agents/{id}/secrets`` and ``POST /v1/secrets/{id}/rotate``
- * we ship a workspace-local fixture + simulated network call so the
- * UX can be reviewed and tested.
+ * Fixture secret references are available only when a caller explicitly opts
+ * into fixture mode. The default path never invents KMS refs or pretends a
+ * secret was added/rotated without the control plane.
  */
 
 export interface AgentSecret {
@@ -22,17 +21,39 @@ export interface AgentSecret {
 
 export interface ListAgentSecretsOptions {
   fetcher?: typeof fetch;
+  baseUrl?: string;
+  token?: string;
+  allowFixture?: boolean;
 }
 
 export interface ListAgentSecretsResponse {
   items: AgentSecret[];
+  degraded_reason?: string | undefined;
 }
 
 export async function listAgentSecrets(
   agentId: string,
-  _opts: ListAgentSecretsOptions = {},
+  opts: ListAgentSecretsOptions = {},
 ): Promise<ListAgentSecretsResponse> {
-  return { items: fixtureSecrets(agentId) };
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    if (opts.allowFixture === true) return { items: fixtureSecrets(agentId) };
+    return {
+      items: [],
+      degraded_reason:
+        "Secrets require the control-plane vault endpoint. No local KMS references are shown.",
+    };
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const response = await fetcher(
+    `${base}/agents/${encodeURIComponent(agentId)}/secrets`,
+    { method: "GET", headers: secretHeaders(opts), cache: "no-store" },
+  );
+  if (response.status === 404) return { items: [] };
+  if (!response.ok) {
+    throw new Error(`cp-api GET /agents/${agentId}/secrets -> ${response.status}`);
+  }
+  return (await response.json()) as ListAgentSecretsResponse;
 }
 
 export interface AddAgentSecretInput {
@@ -45,6 +66,7 @@ export interface AddAgentSecretOptions {
   fetcher?: typeof fetch;
   baseUrl?: string;
   token?: string;
+  allowFixture?: boolean;
 }
 
 const SECRET_NAME_RE = /^[A-Z][A-Z0-9_]*$/;
@@ -59,13 +81,11 @@ export async function addAgentSecret(
   if (!input.ref.trim()) {
     throw new Error("Secret ref is required.");
   }
-  const baseRaw =
-    opts.baseUrl ??
-    process.env.LOOP_CP_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_LOOP_API_URL;
-  if (!baseRaw) {
-    // No live cp-api bound — return an in-memory record so UX flows
-    // remain demo-able. Tests pin baseUrl so they exercise fetch.
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    if (opts.allowFixture !== true) {
+      throw new Error("LOOP_CP_API_BASE_URL is required to add a secret.");
+    }
     return {
       id: `sec_${Math.random().toString(36).slice(2, 10)}`,
       agent_id: input.agentId,
@@ -75,19 +95,12 @@ export async function addAgentSecret(
       rotated_at: null,
     };
   }
-  const trimmed = baseRaw.replace(/\/$/, "");
-  const base = trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
   const f = opts.fetcher ?? fetch;
-  const headers: Record<string, string> = {
-    accept: "application/json",
-    "content-type": "application/json",
-  };
-  if (opts.token) headers.authorization = `Bearer ${opts.token}`;
   const response = await f(
     `${base}/agents/${encodeURIComponent(input.agentId)}/secrets`,
     {
       method: "POST",
-      headers,
+      headers: secretHeaders(opts),
       body: JSON.stringify({ name: input.name, ref: input.ref }),
     },
   );
@@ -107,30 +120,24 @@ export interface RotateAgentSecretOptions {
   fetcher?: typeof fetch;
   baseUrl?: string;
   token?: string;
+  allowFixture?: boolean;
 }
 
 export async function rotateAgentSecret(
   input: RotateAgentSecretInput,
   opts: RotateAgentSecretOptions = {},
 ): Promise<{ secretId: string; rotated_at: string }> {
-  const baseRaw =
-    opts.baseUrl ??
-    process.env.LOOP_CP_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_LOOP_API_URL;
-  if (!baseRaw) {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    if (opts.allowFixture !== true) {
+      throw new Error("LOOP_CP_API_BASE_URL is required to rotate a secret.");
+    }
     return { secretId: input.secretId, rotated_at: new Date().toISOString() };
   }
-  const trimmed = baseRaw.replace(/\/$/, "");
-  const base = trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
   const f = opts.fetcher ?? fetch;
-  const headers: Record<string, string> = {
-    accept: "application/json",
-    "content-type": "application/json",
-  };
-  if (opts.token) headers.authorization = `Bearer ${opts.token}`;
   const response = await f(
     `${base}/secrets/${encodeURIComponent(input.secretId)}/rotate`,
-    { method: "POST", headers, body: "{}" },
+    { method: "POST", headers: secretHeaders(opts), body: "{}" },
   );
   if (!response.ok) {
     throw new Error(
@@ -145,6 +152,28 @@ export async function rotateAgentSecret(
     secretId: body.secretId ?? input.secretId,
     rotated_at: body.rotated_at ?? new Date().toISOString(),
   };
+}
+
+function cpApiBaseUrl(override?: string): string | null {
+  const raw =
+    override ??
+    process.env.LOOP_CP_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  if (!raw) return null;
+  const trimmed = raw.replace(/\/$/, "");
+  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+}
+
+function secretHeaders(
+  opts: Pick<ListAgentSecretsOptions, "token">,
+): Record<string, string> {
+  const headers: Record<string, string> = {
+    accept: "application/json",
+    "content-type": "application/json",
+  };
+  const token = opts.token ?? process.env.LOOP_TOKEN;
+  if (token) headers.authorization = `Bearer ${token}`;
+  return headers;
 }
 
 function fixtureSecrets(agentId: string): AgentSecret[] {

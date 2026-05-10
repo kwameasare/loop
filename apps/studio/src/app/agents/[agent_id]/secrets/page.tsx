@@ -10,10 +10,14 @@ interface AgentSecretsPageProps {
 export default async function AgentSecretsPage({
   params,
 }: AgentSecretsPageProps) {
-  const { items } = await listAgentSecrets(params.agent_id);
+  const { items, degraded_reason } = await listAgentSecrets(params.agent_id);
   return (
     <div data-testid="agent-secrets">
-      <SecretsList agentId={params.agent_id} initialSecrets={items} />
+      <SecretsList
+        agentId={params.agent_id}
+        initialSecrets={items}
+        degradedReason={degraded_reason}
+      />
     </div>
   );
 }

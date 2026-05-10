@@ -13,6 +13,7 @@ import {
 export interface SecretsListProps {
   agentId: string;
   initialSecrets: AgentSecret[];
+  degradedReason?: string | undefined;
   /** Override for tests. */
   addSecret?: (input: AddAgentSecretInput) => Promise<AgentSecret>;
   rotateSecret?: (
@@ -35,6 +36,7 @@ const NAME_RE = /^[A-Z][A-Z0-9_]*$/;
 export function SecretsList({
   agentId,
   initialSecrets,
+  degradedReason,
   addSecret = defaultAddAgentSecret,
   rotateSecret = defaultRotateAgentSecret,
 }: SecretsListProps) {
@@ -63,8 +65,9 @@ export function SecretsList({
   const nameValid = trimmedName.length > 0 && NAME_RE.test(trimmedName);
   const duplicate = secrets.some((s) => s.name === trimmedName);
   const refValid = trimmedRef.length > 0;
+  const backendUnavailable = Boolean(degradedReason);
   const canSubmit =
-    nameValid && refValid && !duplicate && !submitting;
+    nameValid && refValid && !duplicate && !submitting && !backendUnavailable;
 
   function reset() {
     setName("");
@@ -143,13 +146,22 @@ export function SecretsList({
         <button
           type="button"
           onClick={() => setOpen(true)}
+          disabled={backendUnavailable}
           data-testid="add-secret-button"
-          className="rounded-md border px-3 py-1.5 text-sm font-medium"
+          className="rounded-md border px-3 py-1.5 text-sm font-medium disabled:opacity-50"
         >
           Add secret
         </button>
       </div>
-      {secrets.length === 0 ? (
+      {degradedReason ? (
+        <div
+          className="rounded-md border border-warning/40 bg-warning/10 p-4 text-sm text-warning"
+          data-testid="secrets-degraded"
+        >
+          <p className="font-medium">Secrets service unavailable.</p>
+          <p className="mt-1 text-warning/85">{degradedReason}</p>
+        </div>
+      ) : secrets.length === 0 ? (
         <p
           className="text-sm text-muted-foreground"
           data-testid="secrets-empty"
@@ -187,7 +199,7 @@ export function SecretsList({
               <button
                 type="button"
                 onClick={() => handleRotate(s)}
-                disabled={pendingRotateId === s.id}
+                disabled={pendingRotateId === s.id || backendUnavailable}
                 data-testid={`secret-rotate-${s.name}`}
                 className="rounded-md border px-2 py-1 text-xs font-medium disabled:opacity-50"
               >
