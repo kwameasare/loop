@@ -4,7 +4,12 @@ import { useState } from "react";
 import { Hammer, SearchCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ConfidenceMeter, EvidenceCallout, LiveBadge } from "@/components/target";
+import {
+  ConfidenceMeter,
+  EvidenceCallout,
+  LiveBadge,
+  StatePanel,
+} from "@/components/target";
 import type {
   InverseRetrievalMiss,
   InverseRetrievalModel,
@@ -19,8 +24,10 @@ const REPAIR_LABEL: Record<InverseRetrievalMiss["repair"], string> = {
 
 export function InverseRetrievalLab({
   model,
+  unavailableReason,
 }: {
   model: InverseRetrievalModel;
+  unavailableReason?: string | null;
 }) {
   const [repairs, setRepairs] = useState<string[]>([]);
   return (
@@ -53,6 +60,20 @@ export function InverseRetrievalLab({
       >
         {model.chunkPreview}
       </EvidenceCallout>
+
+      {model.misses.length === 0 ? (
+        <StatePanel
+          state={unavailableReason ? "degraded" : "empty"}
+          title={
+            unavailableReason
+              ? "Inverse retrieval unavailable"
+              : "No inverse retrieval misses loaded"
+          }
+        >
+          {unavailableReason ??
+            "The inverse retrieval service has not returned missed production queries for this chunk."}
+        </StatePanel>
+      ) : null}
 
       <div className="grid gap-3 lg:grid-cols-3">
         {model.misses.map((miss) => {
