@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import { VoiceStage } from "@/components/voice/voice-stage";
 import { VOICE_STAGE_FIXTURE, voiceStageFromConfig } from "@/lib/voice-stage";
@@ -21,12 +21,42 @@ describe("VoiceStage", () => {
     );
   });
 
-  it("generates audited voice demo links", () => {
-    render(<VoiceStage model={VOICE_STAGE_FIXTURE} />);
+  it("generates audited voice demo links through cp-api", async () => {
+    const previousBaseUrl = process.env.LOOP_CP_API_BASE_URL;
+    const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      Response.json({
+        id: "voice_demo_1",
+        token: "token_1",
+        workspace_id: "ws_1",
+        snapshot_id: "demo_exec",
+        url: "/voice-demo/token_1",
+        expires_at: "2026-05-10T12:00:00+00:00",
+        rate_limit: "5 minutes / 20 turns",
+        duration_cap_minutes: 5,
+        mic_test_required: true,
+        redaction_policy: "PII redacted.",
+        trace_capture_policy: "Trace captured.",
+        whitelabel: true,
+        status: "active",
+        session_count: 0,
+      }),
+    );
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    render(<VoiceStage model={VOICE_STAGE_FIXTURE} workspaceId="ws_1" />);
 
     fireEvent.click(screen.getAllByRole("button", { name: /generate link/i })[0]!);
 
-    expect(screen.getByText("Link copied to audit log")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(fetcher).toHaveBeenCalledWith(
+        "https://cp.test/v1/workspaces/ws_1/voice/demo-links",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
+    expect(screen.getByText("Audited link ready")).toBeInTheDocument();
+    expect(screen.getByText("/voice-demo/token_1")).toBeInTheDocument();
+    fetcher.mockRestore();
+    if (previousBaseUrl === undefined) delete process.env.LOOP_CP_API_BASE_URL;
+    else process.env.LOOP_CP_API_BASE_URL = previousBaseUrl;
   });
 
   it("renders provider labels from live voice config", () => {

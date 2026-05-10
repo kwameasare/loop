@@ -14,6 +14,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { ConfidenceMeter, EvidenceCallout, LiveBadge } from "@/components/target";
 import {
+  createVoiceDemoLink,
+  type CreatedVoiceDemoLink,
+} from "@/lib/voice-demo";
+import {
   provisionVoiceNumber,
   type VoiceLatencySpan,
   type VoiceStageModel,
@@ -117,6 +121,10 @@ export function VoiceStage({
 }) {
   const [paused, setPaused] = useState(false);
   const [demoId, setDemoId] = useState<string | null>(null);
+  const [demoLinks, setDemoLinks] = useState<
+    Record<string, CreatedVoiceDemoLink>
+  >({});
+  const [demoError, setDemoError] = useState<string | null>(null);
   const [bargeInArmed, setBargeInArmed] = useState(model.config.bargeIn);
   const [provisioned, setProvisioned] = useState<string | null>(null);
   const [queuedSpeechCancelled, setQueuedSpeechCancelled] = useState(false);
@@ -344,6 +352,7 @@ export function VoiceStage({
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {model.demoLinks.map((link) => {
               const active = demoId === link.id;
+              const generated = demoLinks[link.id];
               return (
                 <article key={link.id} className="rounded-md border bg-background p-3">
                   <div className="flex items-start justify-between gap-3">
@@ -358,15 +367,53 @@ export function VoiceStage({
                     variant={active ? "subtle" : "outline"}
                     size="sm"
                     className="mt-3 w-full"
-                    onClick={() => setDemoId(link.id)}
+                    onClick={() => {
+                      setDemoId(link.id);
+                      setDemoError(null);
+                      if (!workspaceId) {
+                        setDemoError("A workspace is required before Studio can create audited demo links.");
+                        return;
+                      }
+                      void createVoiceDemoLink(workspaceId, link.id)
+                        .then((created) =>
+                          setDemoLinks((current) => ({
+                            ...current,
+                            [link.id]: created,
+                          })),
+                        )
+                        .catch((error: unknown) =>
+                          setDemoError(
+                            error instanceof Error
+                              ? error.message
+                              : "Could not create voice demo link.",
+                          ),
+                        );
+                    }}
                   >
                     <Link2 className="mr-2 h-4 w-4" />
-                    {active ? "Link copied to audit log" : "Generate link"}
+                    {generated
+                      ? "Audited link ready"
+                      : active
+                        ? "Generating audited link"
+                        : "Generate link"}
                   </Button>
+                  {generated ? (
+                    <a
+                      className="mt-2 block truncate rounded-md border bg-card px-2 py-1 font-mono text-xs underline"
+                      href={generated.url}
+                    >
+                      {generated.url}
+                    </a>
+                  ) : null}
                 </article>
               );
             })}
           </div>
+          {demoError ? (
+            <p className="mt-3 text-xs text-destructive" role="alert">
+              {demoError}
+            </p>
+          ) : null}
         </div>
       </section>
 
