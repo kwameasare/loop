@@ -18,11 +18,14 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import {
   MarketplaceDetail,
   MarketplaceGrid,
+  MarketplaceOperations,
   PrivateSkillPublisher,
 } from "@/components/marketplace";
 import { SectionDegraded } from "@/components/section-states";
 import {
   fetchMarketplaceCatalog,
+  installMarketplaceItem,
+  type MarketplaceInstall,
   type MarketplaceItem,
 } from "@/lib/marketplace";
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
@@ -40,6 +43,10 @@ function MarketplacePageBody(): JSX.Element {
   const [tab, setTab] = useState<"browse" | "publish">("browse");
   const [items, setItems] = useState<MarketplaceItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [installStatus, setInstallStatus] = useState<MarketplaceInstall | null>(
+    null,
+  );
+  const [installError, setInstallError] = useState<string | null>(null);
   const { active } = useActiveWorkspace();
 
   useEffect(() => {
@@ -60,6 +67,38 @@ function MarketplacePageBody(): JSX.Element {
       cancelled = true;
     };
   }, []);
+
+  function replaceItem(next: MarketplaceItem): void {
+    setItems((current) =>
+      current?.map((item) => (item.id === next.id ? next : item)) ?? current,
+    );
+    setSelected(next);
+  }
+
+  function selectItem(item: MarketplaceItem): void {
+    setSelected(item);
+    setInstallStatus(null);
+    setInstallError(null);
+  }
+
+  async function installItem(item: MarketplaceItem): Promise<void> {
+    if (!active?.id) {
+      setInstallError("Select a workspace before installing marketplace items.");
+      return;
+    }
+    setInstallStatus(null);
+    setInstallError(null);
+    try {
+      const install = await installMarketplaceItem(active.id, item.id);
+      setInstallStatus(install);
+      const updated = { ...item, installCount: item.installCount + 1 };
+      replaceItem(updated);
+    } catch (err) {
+      setInstallError(
+        err instanceof Error ? err.message : "Could not install marketplace item.",
+      );
+    }
+  }
 
   return (
     <main
@@ -119,11 +158,11 @@ function MarketplacePageBody(): JSX.Element {
             evidence={error}
           />
         ) : (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_3fr]">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_2fr_1.2fr]">
             <MarketplaceGrid
               items={items ?? []}
               includeDeprecated
-              onSelect={setSelected}
+              onSelect={selectItem}
             />
             <div>
               {items === null ? (
@@ -134,7 +173,10 @@ function MarketplacePageBody(): JSX.Element {
                   Loading marketplace...
                 </p>
               ) : selected ? (
-                <MarketplaceDetail item={selected} />
+                <MarketplaceDetail
+                  item={selected}
+                  onInstall={(item) => void installItem(item)}
+                />
               ) : (
                 <p
                   role="status"
@@ -145,6 +187,15 @@ function MarketplacePageBody(): JSX.Element {
                 </p>
               )}
             </div>
+            {selected ? (
+              <MarketplaceOperations
+                item={selected}
+                installStatus={installStatus}
+                installError={installError}
+                onItemChanged={replaceItem}
+                {...(active?.id ? { workspaceId: active.id } : {})}
+              />
+            ) : null}
           </div>
         )
       ) : (

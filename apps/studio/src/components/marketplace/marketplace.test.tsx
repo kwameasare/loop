@@ -1,11 +1,15 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { ComponentProps } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { MarketplaceDetail } from "@/components/marketplace/marketplace-detail";
 import { MarketplaceGrid } from "@/components/marketplace/marketplace-grid";
+import { MarketplaceOperations } from "@/components/marketplace/marketplace-operations";
 import { PrivateSkillPublisher } from "@/components/marketplace/private-skill-publisher";
-import { DEFAULT_MARKETPLACE_CATALOG } from "@/lib/marketplace";
+import {
+  DEFAULT_MARKETPLACE_CATALOG,
+  marketplaceItemFromCp,
+} from "@/lib/marketplace";
 
 describe("MarketplaceGrid", () => {
   function renderCatalog(
@@ -121,6 +125,161 @@ describe("MarketplaceDetail", () => {
     render(<MarketplaceDetail item={item} onInstall={onInstall} />);
     fireEvent.click(screen.getByTestId(`marketplace-install-${item.id}`));
     expect(onInstall).toHaveBeenCalledWith(item);
+  });
+});
+
+describe("MarketplaceOperations", () => {
+  const ORIGINAL_BASE = process.env.LOOP_CP_API_BASE_URL;
+
+  afterEach(() => {
+    if (ORIGINAL_BASE === undefined) delete process.env.LOOP_CP_API_BASE_URL;
+    else process.env.LOOP_CP_API_BASE_URL = ORIGINAL_BASE;
+    vi.unstubAllGlobals();
+  });
+
+  it("loads install audit history and publishes private versions", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const item = DEFAULT_MARKETPLACE_CATALOG.find(
+      (candidate) => candidate.id === "mk_skill_pii_redactor",
+    )!;
+    const onItemChanged = vi.fn();
+    const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/installs?workspace_id=ws_marketplace")) {
+        return Response.json({
+          items: [
+            {
+              install_id: "inst_existing",
+              item_id: item.id,
+              workspace_id: "ws_marketplace",
+              version: "0.3.2",
+              installed_by: "owner-1",
+              installed_at: "2026-05-09T12:00:00Z",
+              audit_ref: "marketplace.install.mk_skill_pii_redactor",
+            },
+          ],
+        });
+      }
+      if (url.endsWith("/versions") && init?.method === "POST") {
+        return Response.json({
+          server_id: item.id,
+          slug: "skill-pii-redactor",
+          name: item.name,
+          publisher: "workspace:ws_marketplace",
+          description: item.description,
+          categories: ["private", "skill"],
+          latest_version: "0.4.0",
+          quality_score: 82,
+          average_rating: 0,
+          installs: 1,
+          calls: 4,
+          install_button_enabled: true,
+          lifecycle: "published",
+          permissions: ["read-pii"],
+          versions: [
+            {
+              version: "0.4.0",
+              released_at: "2026-05-09T12:01:00Z",
+              changelog: "Adds passport redaction coverage.",
+              signed: false,
+            },
+          ],
+        });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(
+      <MarketplaceOperations
+        item={item}
+        workspaceId="ws_marketplace"
+        onItemChanged={onItemChanged}
+      />,
+    );
+
+    expect(await screen.findByTestId("marketplace-installs")).toHaveTextContent(
+      "marketplace.install.mk_skill_pii_redactor",
+    );
+    fireEvent.change(screen.getByTestId("marketplace-version-input"), {
+      target: { value: "0.4.0" },
+    });
+    fireEvent.change(screen.getByTestId("marketplace-version-changelog"), {
+      target: { value: "Adds passport redaction coverage." },
+    });
+    fireEvent.click(screen.getByTestId("marketplace-publish-version"));
+
+    expect(await screen.findByTestId("marketplace-operation-status")).toHaveTextContent(
+      "Published version 0.4.0",
+    );
+    expect(onItemChanged).toHaveBeenCalledTimes(1);
+    expect(onItemChanged.mock.calls[0]?.[0].versions[0]?.version).toBe("0.4.0");
+  });
+
+  it("adds the install result to audit history", async () => {
+    const item = DEFAULT_MARKETPLACE_CATALOG.find(
+      (candidate) => candidate.id === "mk_skill_pii_redactor",
+    )!;
+
+    render(
+      <MarketplaceOperations
+        item={item}
+        installStatus={{
+          installId: "inst_new",
+          itemId: item.id,
+          workspaceId: "ws_marketplace",
+          version: "0.3.2",
+          installedBy: "owner-1",
+          installedAt: "2026-05-09T12:02:00Z",
+          auditRef: "marketplace.install.mk_skill_pii_redactor",
+        }}
+      />,
+    );
+
+    expect(screen.getByTestId("marketplace-operation-status")).toHaveTextContent(
+      "marketplace.install.mk_skill_pii_redactor",
+    );
+    expect(screen.getByTestId("marketplace-installs")).toHaveTextContent("v0.3.2");
+  });
+});
+
+describe("marketplaceItemFromCp", () => {
+  it("preserves private lifecycle, versions, permissions, and deprecation notice", () => {
+    const item = marketplaceItemFromCp({
+      server_id: "mk_private_refunds",
+      slug: "private-refunds",
+      name: "Private refunds",
+      publisher: "workspace:ws_marketplace",
+      description: "Internal refund helper",
+      categories: ["private", "skill"],
+      latest_version: "1.1.0",
+      quality_score: 82,
+      average_rating: 0,
+      installs: 2,
+      calls: 7,
+      install_button_enabled: false,
+      lifecycle: "deprecated",
+      deprecation_notice: "Use refund skill v2.",
+      permissions: ["money-movement"],
+      versions: [
+        {
+          version: "1.1.0",
+          released_at: "2026-05-09T12:00:00Z",
+          changelog: "Adds stricter refund evidence.",
+          signed: false,
+        },
+      ],
+    });
+
+    expect(item.kind).toBe("skill");
+    expect(item.publisher).toBe("private-workspace");
+    expect(item.lifecycle).toBe("deprecated");
+    expect(item.deprecationNotice).toBe("Use refund skill v2.");
+    expect(item.permissions).toContain("money-movement");
+    expect(item.versions[0]).toMatchObject({
+      version: "1.1.0",
+      releasedAt: "2026-05-09",
+    });
   });
 });
 
