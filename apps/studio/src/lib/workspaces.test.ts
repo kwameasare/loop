@@ -3,9 +3,20 @@ import { describe, expect, it } from "vitest";
 import { listFixtureWorkspaces, listWorkspaces } from "./workspaces";
 
 describe("listWorkspaces", () => {
-  it("keeps fixture workspaces for no-backend local mode", async () => {
+  it("does not create fixture workspace context by default", async () => {
+    const out = await listWorkspaces({ baseUrl: "" });
+    expect(out.workspaces).toEqual([]);
+    expect(out.degraded_reason).toMatch(/workspace endpoint/i);
+  });
+
+  it("keeps fixture workspaces only for explicit fixture mode", async () => {
     const out = await listFixtureWorkspaces();
     expect(out.workspaces.map((workspace) => workspace.slug)).toEqual([
+      "local",
+    ]);
+
+    const explicit = await listWorkspaces({ baseUrl: "", allowFixture: true });
+    expect(explicit.workspaces.map((workspace) => workspace.slug)).toEqual([
       "local",
     ]);
   });

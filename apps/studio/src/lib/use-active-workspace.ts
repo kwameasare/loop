@@ -6,7 +6,7 @@
  * Source of truth (in priority order):
  *   1. ``?ws=<slug>`` on the current URL.
  *   2. ``localStorage["loop:active-workspace"]`` for cross-tab persistence.
- *   3. The first entry returned by ``listWorkspaces()``.
+ *   3. The first authorized workspace returned by ``listWorkspaces()``.
  *
  * Updates flow back through the router so the URL stays in sync with
  * the dropdown selection — this also gives us deep-link support for
@@ -15,11 +15,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import {
-  listWorkspaces,
-  listFixtureWorkspaces,
-  type Workspace,
-} from "@/lib/workspaces";
+import { listWorkspaces, type Workspace } from "@/lib/workspaces";
 
 const STORAGE_KEY = "loop:active-workspace";
 
@@ -41,7 +37,7 @@ export function useActiveWorkspace(): UseActiveWorkspaceResult {
   useEffect(() => {
     let cancelled = false;
     void listWorkspaces()
-      .catch(() => listFixtureWorkspaces())
+      .catch(() => ({ workspaces: [] }))
       .then((res) => {
         if (cancelled) return;
         setWorkspaces(res.workspaces);
