@@ -62,6 +62,33 @@ describe("WorkspaceSwitcher", () => {
     });
   });
 
+  it("renders degraded workspace state when the control plane reports it", async () => {
+    mockedListWorkspaces.mockResolvedValue({
+      workspaces: [],
+      degraded_reason: "Workspace context requires cp-api.",
+    });
+    render(<WorkspaceSwitcher />);
+
+    expect(
+      await screen.findByTestId("workspace-switcher-degraded"),
+    ).toHaveTextContent("Workspace unavailable");
+    expect(screen.getByTestId("workspace-switcher-degraded")).toHaveAttribute(
+      "title",
+      "Workspace context requires cp-api.",
+    );
+  });
+
+  it("renders degraded workspace state when workspace loading rejects", async () => {
+    mockedListWorkspaces.mockRejectedValue(
+      new Error("cp-api GET workspaces -> 503"),
+    );
+    render(<WorkspaceSwitcher />);
+
+    expect(
+      await screen.findByTestId("workspace-switcher-degraded"),
+    ).toHaveAttribute("title", "cp-api GET workspaces -> 503");
+  });
+
   it("renders authorized workspaces from the control plane", async () => {
     params.set("ws", "acme-live");
     render(<WorkspaceSwitcher />);
