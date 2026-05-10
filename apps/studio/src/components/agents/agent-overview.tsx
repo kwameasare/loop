@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import {
   GitCompareArrows,
@@ -64,6 +65,7 @@ export interface SafeAction {
   label: string;
   description: string;
   evidence: string;
+  href: string;
   disabledReason?: string | undefined;
 }
 
@@ -549,12 +551,14 @@ function createDefaultWorkbenchData(
         label: "Run first simulator turn",
         description: "Create trace evidence for this agent before editing.",
         evidence: "simulator.required",
+        href: actionHref(props.id, "replay"),
       },
       {
         id: "eval",
         label: "Create starter evals",
         description: "Generate regression coverage from the first proof.",
         evidence: evalSuite.id,
+        href: actionHref(props.id, "eval"),
       },
       {
         id: "approval",
@@ -562,6 +566,7 @@ function createDefaultWorkbenchData(
         description:
           "Preflight must collect diff, eval, channel, tool, and rollback evidence.",
         evidence: deploy.id,
+        href: actionHref(props.id, "approval"),
         disabledReason:
           deploy.requiredApprovals === 0
             ? undefined
@@ -573,6 +578,7 @@ function createDefaultWorkbenchData(
         description:
           "Review previous versions, incidents, approvals, and open risks.",
         evidence: "history.empty",
+        href: actionHref(props.id, "rollback"),
       },
     ],
   };
@@ -623,6 +629,43 @@ function ActionIcon({ id }: { id: string }) {
     return <ShieldCheck className="h-4 w-4" aria-hidden />;
   }
   return <RotateCcw className="h-4 w-4" aria-hidden />;
+}
+
+function agentSectionHref(agentId: string, sectionId: string): string {
+  const encodedAgentId = encodeURIComponent(agentId);
+  const segmentBySection: Record<string, string> = {
+    purpose: "",
+    commitment: "contract",
+    behavior: "behavior",
+    channels: "channels",
+    tools: "tools",
+    knowledge: "kb",
+    memory: "memory",
+    evals: "evals",
+    traces: "traces",
+    deployments: "deploys",
+    governance: "governance",
+    history: "history",
+  };
+  const segment = segmentBySection[sectionId];
+  if (segment === undefined || segment === "") {
+    return `/agents/${encodedAgentId}`;
+  }
+  return `/agents/${encodedAgentId}/${segment}`;
+}
+
+function actionHref(agentId: string, actionId: string): string {
+  const encodedAgentId = encodeURIComponent(agentId);
+  const segmentByAction: Record<string, string> = {
+    replay: "simulator",
+    eval: "evals",
+    approval: "deploys",
+    rollback: "history",
+  };
+  return `/agents/${encodedAgentId}/${segmentByAction[actionId] ?? ""}`.replace(
+    /\/$/,
+    "",
+  );
 }
 
 export function AgentOverview({
@@ -1021,7 +1064,13 @@ export function AgentOverview({
               data-testid={`agent-outline-${section.id}`}
             >
               <div>
-                <p className="text-sm font-semibold">{section.label}</p>
+                <Link
+                  href={agentSectionHref(id, section.id)}
+                  className="text-sm font-semibold underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  data-testid={`agent-outline-link-${section.id}`}
+                >
+                  {section.label}
+                </Link>
                 <StatusPill status={section.status}>
                   {section.status}
                 </StatusPill>
@@ -1063,31 +1112,52 @@ export function AgentOverview({
             the approval or evidence needed.
           </p>
         </div>
-        {data.safeActions.map((action) => (
-          <button
-            key={action.id}
-            type="button"
-            disabled={Boolean(action.disabledReason)}
-            title={action.disabledReason ?? undefined}
-            className="flex min-h-24 items-start gap-3 rounded-md border bg-card p-4 text-left transition-colors duration-swift ease-standard hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-65"
-            data-testid={`safe-action-${action.id}`}
-          >
-            <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-background">
-              <ActionIcon id={action.id} />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold">
-                {action.label}
+        {data.safeActions.map((action) => {
+          const actionContent = (
+            <>
+              <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-background">
+                <ActionIcon id={action.id} />
               </span>
-              <span className="mt-1 block text-sm text-muted-foreground">
-                {action.disabledReason ?? action.description}
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold">
+                  {action.label}
+                </span>
+                <span className="mt-1 block text-sm text-muted-foreground">
+                  {action.disabledReason ?? action.description}
+                </span>
+                <span className="mt-2 block text-xs text-muted-foreground">
+                  Evidence: {action.evidence}
+                </span>
               </span>
-              <span className="mt-2 block text-xs text-muted-foreground">
-                Evidence: {action.evidence}
-              </span>
-            </span>
-          </button>
-        ))}
+            </>
+          );
+          const className =
+            "flex min-h-24 items-start gap-3 rounded-md border bg-card p-4 text-left transition-colors duration-swift ease-standard hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-65";
+          if (action.disabledReason) {
+            return (
+              <button
+                key={action.id}
+                type="button"
+                disabled
+                title={action.disabledReason}
+                className={className}
+                data-testid={`safe-action-${action.id}`}
+              >
+                {actionContent}
+              </button>
+            );
+          }
+          return (
+            <Link
+              key={action.id}
+              href={action.href}
+              className={className}
+              data-testid={`safe-action-${action.id}`}
+            >
+              {actionContent}
+            </Link>
+          );
+        })}
       </section>
 
       <EvidenceCallout
