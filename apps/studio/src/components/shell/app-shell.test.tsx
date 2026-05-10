@@ -38,6 +38,11 @@ vi.mock("@/components/shell/user-menu", () => ({
   UserMenu: () => <span>User menu</span>,
 }));
 
+vi.mock("@/components/help", () => ({
+  HelpClipLauncher: () => <button type="button">Help</button>,
+  TelemetryConsentGate: () => <div data-testid="telemetry-consent-gate" />,
+}));
+
 import { AppShell } from "@/components/shell/app-shell";
 
 describe("AppShell", () => {
@@ -56,5 +61,6 @@ describe("AppShell", () => {
     expect(screen.queryByTestId("live-preview-rail")).not.toBeInTheDocument();
     expect(screen.queryByTestId("activity-timeline")).not.toBeInTheDocument();
     expect(screen.queryByTestId("status-footer")).not.toBeInTheDocument();
+    expect(screen.getByTestId("telemetry-consent-gate")).toBeInTheDocument();
   });
 });

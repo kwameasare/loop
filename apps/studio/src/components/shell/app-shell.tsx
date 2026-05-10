@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { TelemetryConsentGate } from "@/components/help";
 import { PointerDelight } from "@/components/shell/pointer-delight";
 import { SidebarNav } from "@/components/shell/sidebar-nav";
 import { Topbar } from "@/components/shell/topbar";
@@ -31,6 +32,9 @@ export function AppShell({ children }: AppShellProps) {
       >
         {children}
       </section>
+      <Suspense fallback={null}>
+        <TelemetryConsentGate />
+      </Suspense>
     </div>
   );
 }

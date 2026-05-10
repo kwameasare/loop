@@ -18,12 +18,35 @@ type ConsentDraft = {
   crash_reports: boolean;
 };
 
+type ConsentKey = keyof ConsentDraft;
+
 const DEFAULT_DRAFT: ConsentDraft = {
   product_analytics: false,
   diagnostics: true,
   ai_improvement: false,
   crash_reports: true,
 };
+
+const CONSENT_CATEGORIES: readonly [ConsentKey, string][] = [
+  ["product_analytics", "Product analytics"],
+  ["diagnostics", "Diagnostics"],
+  ["ai_improvement", "AI improvement"],
+  ["crash_reports", "Crash reports"],
+];
+
+function applyAdminOverrides(
+  draft: ConsentDraft,
+  overrides: Record<string, boolean> | undefined,
+): ConsentDraft {
+  if (!overrides) return draft;
+  return CONSENT_CATEGORIES.reduce(
+    (next, [key]) => ({
+      ...next,
+      [key]: typeof overrides[key] === "boolean" ? overrides[key] : next[key],
+    }),
+    draft,
+  );
+}
 
 export function TelemetryConsentCard(): JSX.Element | null {
   const { active } = useActiveWorkspace();
@@ -42,14 +65,19 @@ export function TelemetryConsentCard(): JSX.Element | null {
       .then((next) => {
         if (cancelled) return;
         setModel(next);
-        setDraft({
-          product_analytics:
-            next.product_analytics ?? DEFAULT_DRAFT.product_analytics,
-          diagnostics: next.diagnostics ?? DEFAULT_DRAFT.diagnostics,
-          ai_improvement:
-            next.ai_improvement ?? DEFAULT_DRAFT.ai_improvement,
-          crash_reports: next.crash_reports ?? DEFAULT_DRAFT.crash_reports,
-        });
+        setDraft(
+          applyAdminOverrides(
+            {
+              product_analytics:
+                next.product_analytics ?? DEFAULT_DRAFT.product_analytics,
+              diagnostics: next.diagnostics ?? DEFAULT_DRAFT.diagnostics,
+              ai_improvement:
+                next.ai_improvement ?? DEFAULT_DRAFT.ai_improvement,
+              crash_reports: next.crash_reports ?? DEFAULT_DRAFT.crash_reports,
+            },
+            next.admin_overrides,
+          ),
+        );
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -77,7 +105,8 @@ export function TelemetryConsentCard(): JSX.Element | null {
     return null;
   }
 
-  function toggle(key: keyof ConsentDraft) {
+  function toggle(key: ConsentKey) {
+    if (typeof model?.admin_overrides?.[key] === "boolean") return;
     setDraft((current) => ({ ...current, [key]: !current[key] }));
   }
 
@@ -86,7 +115,10 @@ export function TelemetryConsentCard(): JSX.Element | null {
     setSaving(true);
     setError(null);
     try {
-      await saveTelemetryConsent(activeWorkspaceId, next);
+      await saveTelemetryConsent(
+        activeWorkspaceId,
+        applyAdminOverrides(next, model?.admin_overrides),
+      );
       setSaved(true);
     } catch (err) {
       setError(
@@ -107,13 +139,16 @@ export function TelemetryConsentCard(): JSX.Element | null {
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-start gap-3">
-        <ShieldCheck className="mt-0.5 h-5 w-5 text-primary" aria-hidden={true} />
-        <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold">Telemetry choices</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            No prompts, messages, KB, secrets, traces, or payloads by default.
-          </p>
-        </div>
+          <ShieldCheck
+            className="mt-0.5 h-5 w-5 text-primary"
+            aria-hidden={true}
+          />
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold">Telemetry choices</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              No prompts, messages, KB, secrets, traces, or payloads by default.
+            </p>
+          </div>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           <Button
@@ -151,29 +186,31 @@ export function TelemetryConsentCard(): JSX.Element | null {
         </p>
       ) : null}
       <div className="mt-3 grid gap-2 sm:grid-cols-4">
-        {(
-          [
-            ["product_analytics", "Product analytics"],
-            ["diagnostics", "Diagnostics"],
-            ["ai_improvement", "AI improvement"],
-            ["crash_reports", "Crash reports"],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            role="switch"
-            aria-checked={draft[key]}
-            className="interactive-lift pressable flex items-center justify-between rounded-md border bg-card/60 px-3 py-2 text-sm"
-            onClick={() => toggle(key)}
-            data-testid={`telemetry-toggle-${key}`}
-          >
-            <span>{label}</span>
-            <span className="text-xs text-muted-foreground">
-              {draft[key] ? "On" : "Off"}
-            </span>
-          </button>
-        ))}
+        {CONSENT_CATEGORIES.map(([key, label]) => {
+          const override = model?.admin_overrides?.[key];
+          const locked = typeof override === "boolean";
+          return (
+            <button
+              key={key}
+              type="button"
+              role="switch"
+              aria-checked={draft[key]}
+              disabled={locked}
+              className="interactive-lift pressable flex items-center justify-between gap-3 rounded-md border bg-card/60 px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-70"
+              onClick={() => toggle(key)}
+              data-testid={`telemetry-toggle-${key}`}
+            >
+              <span>{label}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {locked
+                  ? `Locked ${override ? "on" : "off"}`
+                  : draft[key]
+                    ? "On"
+                    : "Off"}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </section>
   );
