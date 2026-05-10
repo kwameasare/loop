@@ -229,8 +229,18 @@ describe("fetchCollaborationWorkspace", () => {
     });
 
     expect(workspace.presence[0].focus).toContain("trace/");
-    expect(workspace.changeset.title).toContain("agent.version.promoted");
+    expect(workspace.changeset?.title).toContain("agent.version.promoted");
     expect(workspace.pairDebug.trace[0].evidenceRef).toContain("span-1");
+  });
+
+  it("returns empty collaboration state instead of fixtures when cp-api is unconfigured", async () => {
+    const workspace = await fetchCollaborationWorkspace("ws-1", {
+      baseUrl: "",
+    });
+
+    expect(workspace.presence).toEqual([]);
+    expect(workspace.changeset).toBeNull();
+    expect(workspace.pairDebug.trace).toEqual([]);
   });
 });
 

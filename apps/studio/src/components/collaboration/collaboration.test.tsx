@@ -8,6 +8,7 @@ import { PresenceBar } from "./presence-bar";
 
 import { FIXTURE_THREADS } from "@/lib/comments";
 import {
+  EMPTY_PAIR_DEBUG,
   FIXTURE_CHANGESET,
   FIXTURE_PAIR_DEBUG,
   FIXTURE_PRESENCE,
@@ -145,6 +146,14 @@ describe("ChangesetApprovals", () => {
 });
 
 describe("PairDebugPanel", () => {
+  it("renders an empty trace state without a scrubber", () => {
+    render(<PairDebugPanel session={EMPTY_PAIR_DEBUG} />);
+    expect(screen.getByTestId("playhead-empty")).toHaveTextContent(
+      "No trace loaded for pair debugging.",
+    );
+    expect(screen.queryByTestId("playhead-scrubber")).not.toBeInTheDocument();
+  });
+
   it("renders presence, scrubber, and trace events with focused highlight", () => {
     render(<PairDebugPanel session={FIXTURE_PAIR_DEBUG} />);
     expect(screen.getByTestId("presence-bar")).toBeInTheDocument();
