@@ -56,6 +56,11 @@ class UserMemoryStore(Protocol):
         user_id: str,
         key: str,
         value: Any,
+        source_trace: str = "",
+        source_turn_id: UUID | None = None,
+        source_span_id: str = "",
+        write_reason: str = "",
+        policy_ref: str = "",
     ) -> MemoryEntry: ...
 
     async def delete_user(
@@ -98,6 +103,11 @@ class UserMemoryStore(Protocol):
         agent_id: UUID,
         key: str,
         value: Any,
+        source_trace: str = "",
+        source_turn_id: UUID | None = None,
+        source_span_id: str = "",
+        write_reason: str = "",
+        policy_ref: str = "",
     ) -> MemoryEntry: ...
 
 

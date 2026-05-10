@@ -75,6 +75,11 @@ class InMemoryUserMemoryStore:
         user_id: str,
         key: str,
         value: Any,
+        source_trace: str = "",
+        source_turn_id: UUID | None = None,
+        source_span_id: str = "",
+        write_reason: str = "",
+        policy_ref: str = "",
     ) -> MemoryEntry:
         entry = MemoryEntry(
             workspace_id=workspace_id,
@@ -84,6 +89,11 @@ class InMemoryUserMemoryStore:
             key=key,
             value=deepcopy(value),
             updated_at=datetime.now(UTC),
+            source_trace=source_trace,
+            source_turn_id=source_turn_id,
+            source_span_id=source_span_id,
+            write_reason=write_reason,
+            policy_ref=policy_ref,
         )
         async with self._lock:
             self._user[(workspace_id, agent_id, user_id, key)] = entry
@@ -147,6 +157,11 @@ class InMemoryUserMemoryStore:
         agent_id: UUID,
         key: str,
         value: Any,
+        source_trace: str = "",
+        source_turn_id: UUID | None = None,
+        source_span_id: str = "",
+        write_reason: str = "",
+        policy_ref: str = "",
     ) -> MemoryEntry:
         entry = MemoryEntry(
             workspace_id=workspace_id,
@@ -155,6 +170,11 @@ class InMemoryUserMemoryStore:
             key=key,
             value=deepcopy(value),
             updated_at=datetime.now(UTC),
+            source_trace=source_trace,
+            source_turn_id=source_turn_id,
+            source_span_id=source_span_id,
+            write_reason=write_reason,
+            policy_ref=policy_ref,
         )
         async with self._lock:
             self._bot[(workspace_id, agent_id, key)] = entry

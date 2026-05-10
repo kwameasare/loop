@@ -79,6 +79,19 @@ def _safe_preview(value: object) -> str:
 
 def _serialise_memory(entry: MemoryEntry) -> dict[str, Any]:
     user_id = entry.user_id or "bot"
+    source_trace = entry.source_trace.strip()
+    source_span_id = entry.source_span_id.strip()
+    flags: list[str] = []
+    if not source_trace:
+        flags.append("missing_source_trace")
+    if _safe_preview(entry.value) == "[redacted secret-like value]":
+        flags.append("secret_like_redacted")
+    policy_ref = entry.policy_ref.strip()
+    retention_policy = (
+        f"durable {entry.scope.value} memory; governed by {policy_ref}; delete with audit trail"
+        if policy_ref
+        else f"durable {entry.scope.value} memory; delete with audit trail"
+    )
     return {
         "id": f"{entry.scope.value}:{user_id}:{entry.key}",
         "workspace_id": str(entry.workspace_id),
@@ -88,13 +101,16 @@ def _serialise_memory(entry: MemoryEntry) -> dict[str, Any]:
         "key": entry.key,
         "before": "unknown",
         "after": _safe_preview(entry.value),
-        "source": "runtime memory store",
-        "source_trace": "not-attached",
-        "retention_policy": "durable user memory; delete with audit trail",
+        "source": entry.write_reason.strip() or "runtime memory store",
+        "source_trace": source_trace,
+        "source_turn_id": str(entry.source_turn_id) if entry.source_turn_id else None,
+        "source_span_id": source_span_id,
+        "policy_ref": policy_ref,
+        "retention_policy": retention_policy,
         "updated_at": entry.updated_at.isoformat(),
         "writer_version": "live",
-        "confidence": "medium",
-        "safety_flags": ["none"],
+        "confidence": "medium" if source_trace else "low",
+        "safety_flags": flags or ["none"],
         "deletion_state": "available",
         "deletion_reason": "User memory can be deleted with audit trail.",
         "replay_impact": "Replay without this memory removes the stored preference or fact.",
@@ -141,7 +157,7 @@ async def list_agent_memory(
                 "before": "unknown",
                 "after": _safe_preview(value),
                 "source": "runtime session memory store",
-                "source_trace": "not-attached",
+                "source_trace": "",
                 "retention_policy": "session memory; expires with conversation TTL",
                 "updated_at": "",
                 "writer_version": "live",
@@ -198,9 +214,7 @@ async def upsert_memory_policy(
             "approval_invalidated_at": policy.approval_invalidated_at.isoformat()
             if policy.approval_invalidated_at
             else None,
-            "invalidated_pre_approved_classes": [
-                record.id for record in invalidated
-            ],
+            "invalidated_pre_approved_classes": [record.id for record in invalidated],
         },
     )
     return memory_policy_payload(policy)

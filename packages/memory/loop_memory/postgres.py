@@ -99,7 +99,9 @@ class PostgresUserMemoryStore:
     ) -> MemoryEntry | None:
         sql = text(
             """
-            SELECT value_ciphertext, nonce, algorithm, updated_at FROM memory_user
+            SELECT value_ciphertext, nonce, algorithm, updated_at,
+                   source_trace, source_turn_id, source_span_id, write_reason, policy_ref
+            FROM memory_user
             WHERE workspace_id = :ws AND agent_id = :ag
               AND user_id = :uid AND key = :k
             """
@@ -114,7 +116,7 @@ class PostgresUserMemoryStore:
             ).first()
         if row is None:
             return None
-        value, updated = self._decode_row(
+        value, updated, metadata = self._decode_row(
             row,
             workspace_id=workspace_id,
             agent_id=agent_id,
@@ -130,6 +132,7 @@ class PostgresUserMemoryStore:
             key=key,
             value=value,
             updated_at=updated,
+            **metadata,
         )
 
     async def set_user(
@@ -140,6 +143,11 @@ class PostgresUserMemoryStore:
         user_id: str,
         key: str,
         value: Any,
+        source_trace: str = "",
+        source_turn_id: UUID | None = None,
+        source_span_id: str = "",
+        write_reason: str = "",
+        policy_ref: str = "",
     ) -> MemoryEntry:
         value_bytes = _serialize_and_check_value(value)
         nonce, ciphertext = self._encrypt_value(
@@ -153,12 +161,25 @@ class PostgresUserMemoryStore:
         sql = text(
             """
             INSERT INTO memory_user
-                (workspace_id, agent_id, user_id, key, value_ciphertext, nonce, algorithm, updated_at)
-            VALUES (:ws, :ag, :uid, :k, :ciphertext, :nonce, :algorithm, now())
+                (
+                    workspace_id, agent_id, user_id, key,
+                    value_ciphertext, nonce, algorithm, updated_at,
+                    source_trace, source_turn_id, source_span_id, write_reason, policy_ref
+                )
+            VALUES (
+                :ws, :ag, :uid, :k,
+                :ciphertext, :nonce, :algorithm, now(),
+                :source_trace, :source_turn_id, :source_span_id, :write_reason, :policy_ref
+            )
             ON CONFLICT (workspace_id, agent_id, user_id, key)
             DO UPDATE SET value_ciphertext = EXCLUDED.value_ciphertext,
                           nonce = EXCLUDED.nonce,
                           algorithm = EXCLUDED.algorithm,
+                          source_trace = EXCLUDED.source_trace,
+                          source_turn_id = EXCLUDED.source_turn_id,
+                          source_span_id = EXCLUDED.source_span_id,
+                          write_reason = EXCLUDED.write_reason,
+                          policy_ref = EXCLUDED.policy_ref,
                           updated_at = EXCLUDED.updated_at
             RETURNING updated_at
             """
@@ -176,6 +197,11 @@ class PostgresUserMemoryStore:
                         "ciphertext": ciphertext,
                         "nonce": nonce,
                         "algorithm": _ALGORITHM,
+                        "source_trace": source_trace,
+                        "source_turn_id": source_turn_id,
+                        "source_span_id": source_span_id,
+                        "write_reason": write_reason,
+                        "policy_ref": policy_ref,
                     },
                 )
             ).first()
@@ -188,6 +214,11 @@ class PostgresUserMemoryStore:
             key=key,
             value=value,
             updated_at=updated,
+            source_trace=source_trace,
+            source_turn_id=source_turn_id,
+            source_span_id=source_span_id,
+            write_reason=write_reason,
+            policy_ref=policy_ref,
         )
 
     async def delete_user(
@@ -251,7 +282,9 @@ class PostgresUserMemoryStore:
     ) -> list[MemoryEntry]:
         sql = text(
             """
-            SELECT key, value_ciphertext, nonce, algorithm, updated_at FROM memory_user
+            SELECT key, value_ciphertext, nonce, algorithm, updated_at,
+                   source_trace, source_turn_id, source_span_id, write_reason, policy_ref
+            FROM memory_user
             WHERE workspace_id = :ws AND agent_id = :ag AND user_id = :uid
             ORDER BY key
             """
@@ -262,7 +295,18 @@ class PostgresUserMemoryStore:
                 await conn.execute(sql, {"ws": workspace_id, "ag": agent_id, "uid": user_id})
             ).all()
         out: list[MemoryEntry] = []
-        for k, ciphertext, nonce, algorithm, updated in rows:
+        for (
+            k,
+            ciphertext,
+            nonce,
+            algorithm,
+            updated,
+            source_trace,
+            source_turn_id,
+            source_span_id,
+            write_reason,
+            policy_ref,
+        ) in rows:
             value = self._decrypt_value(
                 ciphertext,
                 nonce,
@@ -282,6 +326,11 @@ class PostgresUserMemoryStore:
                     key=k,
                     value=value,
                     updated_at=_coerce_dt(updated),
+                    source_trace=source_trace or "",
+                    source_turn_id=source_turn_id,
+                    source_span_id=source_span_id or "",
+                    write_reason=write_reason or "",
+                    policy_ref=policy_ref or "",
                 )
             )
         return out
@@ -301,7 +350,9 @@ class PostgresUserMemoryStore:
     ) -> MemoryEntry | None:
         sql = text(
             """
-            SELECT value_ciphertext, nonce, algorithm, updated_at FROM memory_bot
+            SELECT value_ciphertext, nonce, algorithm, updated_at,
+                   source_trace, source_turn_id, source_span_id, write_reason, policy_ref
+            FROM memory_bot
             WHERE workspace_id = :ws AND agent_id = :ag AND key = :k
             """
         )
@@ -310,7 +361,7 @@ class PostgresUserMemoryStore:
             row = (await conn.execute(sql, {"ws": workspace_id, "ag": agent_id, "k": key})).first()
         if row is None:
             return None
-        value, updated = self._decode_row(
+        value, updated, metadata = self._decode_row(
             row,
             workspace_id=workspace_id,
             agent_id=agent_id,
@@ -325,6 +376,7 @@ class PostgresUserMemoryStore:
             key=key,
             value=value,
             updated_at=updated,
+            **metadata,
         )
 
     async def set_bot(
@@ -334,6 +386,11 @@ class PostgresUserMemoryStore:
         agent_id: UUID,
         key: str,
         value: Any,
+        source_trace: str = "",
+        source_turn_id: UUID | None = None,
+        source_span_id: str = "",
+        write_reason: str = "",
+        policy_ref: str = "",
     ) -> MemoryEntry:
         value_bytes = _serialize_and_check_value(value)
         nonce, ciphertext = self._encrypt_value(
@@ -347,12 +404,25 @@ class PostgresUserMemoryStore:
         sql = text(
             """
             INSERT INTO memory_bot
-                (workspace_id, agent_id, key, value_ciphertext, nonce, algorithm, updated_at)
-            VALUES (:ws, :ag, :k, :ciphertext, :nonce, :algorithm, now())
+                (
+                    workspace_id, agent_id, key,
+                    value_ciphertext, nonce, algorithm, updated_at,
+                    source_trace, source_turn_id, source_span_id, write_reason, policy_ref
+                )
+            VALUES (
+                :ws, :ag, :k,
+                :ciphertext, :nonce, :algorithm, now(),
+                :source_trace, :source_turn_id, :source_span_id, :write_reason, :policy_ref
+            )
             ON CONFLICT (workspace_id, agent_id, key)
             DO UPDATE SET value_ciphertext = EXCLUDED.value_ciphertext,
                           nonce = EXCLUDED.nonce,
                           algorithm = EXCLUDED.algorithm,
+                          source_trace = EXCLUDED.source_trace,
+                          source_turn_id = EXCLUDED.source_turn_id,
+                          source_span_id = EXCLUDED.source_span_id,
+                          write_reason = EXCLUDED.write_reason,
+                          policy_ref = EXCLUDED.policy_ref,
                           updated_at = EXCLUDED.updated_at
             RETURNING updated_at
             """
@@ -369,6 +439,11 @@ class PostgresUserMemoryStore:
                         "ciphertext": ciphertext,
                         "nonce": nonce,
                         "algorithm": _ALGORITHM,
+                        "source_trace": source_trace,
+                        "source_turn_id": source_turn_id,
+                        "source_span_id": source_span_id,
+                        "write_reason": write_reason,
+                        "policy_ref": policy_ref,
                     },
                 )
             ).first()
@@ -380,6 +455,11 @@ class PostgresUserMemoryStore:
             key=key,
             value=value,
             updated_at=updated,
+            source_trace=source_trace,
+            source_turn_id=source_turn_id,
+            source_span_id=source_span_id,
+            write_reason=write_reason,
+            policy_ref=policy_ref,
         )
 
     def _encrypt_value(
@@ -396,7 +476,9 @@ class PostgresUserMemoryStore:
         ciphertext = self._aesgcm.encrypt(
             nonce,
             plaintext,
-            _aad(workspace_id=workspace_id, agent_id=agent_id, scope=scope, user_id=user_id, key=key),
+            _aad(
+                workspace_id=workspace_id, agent_id=agent_id, scope=scope, user_id=user_id, key=key
+            ),
         )
         return nonce, ciphertext
 
@@ -409,7 +491,7 @@ class PostgresUserMemoryStore:
         scope: MemoryScope,
         user_id: str | None,
         key: str,
-    ) -> tuple[Any, datetime]:
+    ) -> tuple[Any, datetime, dict[str, Any]]:
         ciphertext, nonce, algorithm, updated = row[0], row[1], row[2], row[3]
         return (
             self._decrypt_value(
@@ -423,6 +505,7 @@ class PostgresUserMemoryStore:
                 key=key,
             ),
             _coerce_dt(updated),
+            _metadata_from_row(row, offset=4),
         )
 
     def _decrypt_value(
@@ -443,7 +526,13 @@ class PostgresUserMemoryStore:
             plaintext = self._aesgcm.decrypt(
                 bytes(nonce),
                 bytes(ciphertext),
-                _aad(workspace_id=workspace_id, agent_id=agent_id, scope=scope, user_id=user_id, key=key),
+                _aad(
+                    workspace_id=workspace_id,
+                    agent_id=agent_id,
+                    scope=scope,
+                    user_id=user_id,
+                    key=key,
+                ),
             )
         except InvalidTag as exc:
             raise MemoryEncryptionError("memory payload authentication failed") from exc
@@ -455,6 +544,16 @@ def _serialize_and_check_value(value: Any) -> bytes:
     if len(encoded) > MAX_VALUE_BYTES:
         raise MemoryError("value exceeds 64 KiB")
     return encoded
+
+
+def _metadata_from_row(row: Any, *, offset: int) -> dict[str, Any]:
+    return {
+        "source_trace": row[offset] or "",
+        "source_turn_id": row[offset + 1],
+        "source_span_id": row[offset + 2] or "",
+        "write_reason": row[offset + 3] or "",
+        "policy_ref": row[offset + 4] or "",
+    }
 
 
 def _coerce_key(value: bytes | str | None) -> bytes:

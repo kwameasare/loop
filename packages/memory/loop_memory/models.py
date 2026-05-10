@@ -36,6 +36,11 @@ class MemoryEntry(_StrictModel):
     key: str
     value: Any
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    source_trace: str = ""
+    source_turn_id: UUID | None = None
+    source_span_id: str = ""
+    write_reason: str = ""
+    policy_ref: str = ""
 
 
 class SessionEntry(_StrictModel):

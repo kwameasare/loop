@@ -149,6 +149,15 @@ def test_dp_workspace_id_is_not_null(dp_sql: str) -> None:
         assert "workspace_id" in body and "NOT NULL" in body
 
 
+def test_dp_memory_tables_record_source_trace_evidence(dp_sql: str) -> None:
+    for table in ("memory_user", "memory_bot"):
+        assert f"ALTER TABLE {table} ADD COLUMN source_trace TEXT NOT NULL DEFAULT ''" in dp_sql
+        assert f"ALTER TABLE {table} ADD COLUMN source_turn_id UUID" in dp_sql
+        assert f"ALTER TABLE {table} ADD COLUMN source_span_id TEXT NOT NULL DEFAULT ''" in dp_sql
+        assert f"ALTER TABLE {table} ADD COLUMN write_reason TEXT NOT NULL DEFAULT ''" in dp_sql
+        assert f"ALTER TABLE {table} ADD COLUMN policy_ref TEXT NOT NULL DEFAULT ''" in dp_sql
+
+
 # ---------------------------------------------------------------------------
 # cp_0005_audit_log: append-only audit table (S630)
 # ---------------------------------------------------------------------------
@@ -166,8 +175,15 @@ def test_cp_creates_audit_log_table(cp_sql: str) -> None:
 def test_cp_audit_log_has_required_columns(cp_sql: str) -> None:
     idx = cp_sql.index("CREATE TABLE audit_log")
     body = cp_sql[idx : idx + 2000]
-    for col in ("workspace_id", "actor_user_id", "action", "resource_type",
-                "entry_hash", "previous_hash", "created_at"):
+    for col in (
+        "workspace_id",
+        "actor_user_id",
+        "action",
+        "resource_type",
+        "entry_hash",
+        "previous_hash",
+        "created_at",
+    ):
         assert col in body, f"audit_log missing column {col!r}"
 
 

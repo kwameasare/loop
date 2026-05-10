@@ -22,13 +22,18 @@ from loop_memory import (
 @pytest.mark.asyncio
 async def test_user_memory_set_then_get_round_trips_value() -> None:
     store = InMemoryUserMemoryStore()
-    ws, ag = uuid4(), uuid4()
+    ws, ag, turn = uuid4(), uuid4(), uuid4()
     entry = await store.set_user(
         workspace_id=ws,
         agent_id=ag,
         user_id="u-1",
         key="lang",
         value={"primary": "en", "secondary": "fr"},
+        source_trace="trace_lang_001",
+        source_turn_id=turn,
+        source_span_id="span_memory_write",
+        write_reason="User said English is fine.",
+        policy_ref="memory_policy/user:v1",
     )
     assert entry.scope is MemoryScope.USER
     assert entry.user_id == "u-1"
@@ -36,6 +41,11 @@ async def test_user_memory_set_then_get_round_trips_value() -> None:
     got = await store.get_user(workspace_id=ws, agent_id=ag, user_id="u-1", key="lang")
     assert got.value == {"primary": "en", "secondary": "fr"}
     assert got.workspace_id == ws
+    assert got.source_trace == "trace_lang_001"
+    assert got.source_turn_id == turn
+    assert got.source_span_id == "span_memory_write"
+    assert got.write_reason == "User said English is fine."
+    assert got.policy_ref == "memory_policy/user:v1"
 
 
 @pytest.mark.asyncio
@@ -86,12 +96,19 @@ async def test_bot_memory_round_trip_and_no_user_id_required() -> None:
     store = InMemoryUserMemoryStore()
     ws, ag = uuid4(), uuid4()
     entry = await store.set_bot(
-        workspace_id=ws, agent_id=ag, key="persona", value={"tone": "formal"}
+        workspace_id=ws,
+        agent_id=ag,
+        key="persona",
+        value={"tone": "formal"},
+        source_trace="trace_bot_001",
+        write_reason="Builder approved persona baseline.",
     )
     assert entry.scope is MemoryScope.BOT
     assert entry.user_id is None
     got = await store.get_bot(workspace_id=ws, agent_id=ag, key="persona")
     assert got.value == {"tone": "formal"}
+    assert got.source_trace == "trace_bot_001"
+    assert got.write_reason == "Builder approved persona baseline."
 
 
 @pytest.mark.asyncio
