@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { MigrationRunsPanel, MigrationScreen } from "@/components/migration";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import {
   fetchMigrationParityWorkspace,
   type MigrationParityWorkspace,
@@ -124,9 +127,13 @@ function MigratePageBody() {
   return (
     <>
       {error ? (
-        <p className="p-6 pb-0 text-sm text-destructive" role="alert">
-          {error}
-        </p>
+        <div className="mx-auto w-full max-w-7xl px-4 pt-4 lg:px-6 lg:pt-6">
+          <SectionDegraded
+            title="Migration Atelier"
+            description="Migration parity evidence could not load from the control plane."
+            evidence={error}
+          />
+        </div>
       ) : null}
       <MigrationScreen
         readiness={readiness}

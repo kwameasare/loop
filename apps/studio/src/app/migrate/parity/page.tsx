@@ -6,7 +6,10 @@ import { useSearchParams } from "next/navigation";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { CutoverPanel } from "@/components/migration/cutover-panel";
 import { ParityHarness } from "@/components/migration/parity-harness";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import {
   fetchMigrationParityWorkspace,
   type MigrationParityWorkspace,
@@ -131,12 +134,11 @@ function MigrationParityPageBody(): JSX.Element {
         </p>
       </header>
       {error ? (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-        >
-          {error}
-        </p>
+        <SectionDegraded
+          title="Migration Parity"
+          description="Parity and cutover evidence could not load from the control plane."
+          evidence={error}
+        />
       ) : null}
       {workspace ? (
         <>
