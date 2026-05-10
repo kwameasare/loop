@@ -49,15 +49,15 @@ const STATUS_BADGE: Record<
 > = {
   not_configured: {
     label: "Not configured",
-    className: "bg-zinc-100 text-zinc-600",
+    className: "border border-border bg-muted text-muted-foreground",
   },
   pending_verification: {
     label: "Pending verification",
-    className: "bg-amber-100 text-amber-700",
+    className: "border border-warning/30 bg-warning/10 text-warning",
   },
   connected: {
     label: "Connected",
-    className: "bg-emerald-100 text-emerald-700",
+    className: "border border-success/30 bg-success/10 text-success",
   },
 };
 
@@ -115,18 +115,20 @@ export function IdpConnectPanel({
       {/* Status card */}
       <div
         data-testid="idp-status-card"
-        className="rounded-lg border bg-white p-5"
+        className="rounded-lg border bg-card p-5"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase text-zinc-500">IdP connection</p>
+            <p className="text-xs uppercase text-muted-foreground">
+              IdP connection
+            </p>
             <h2 className="mt-1 text-xl font-semibold tracking-tight">
               SAML 2.0 Identity Provider
             </h2>
             {connection.entity_id && (
               <p
                 data-testid="idp-entity-id"
-                className="mt-1 text-sm text-zinc-600"
+                className="mt-1 text-sm text-muted-foreground"
               >
                 <span className="font-medium">Entity ID: </span>
                 {connection.entity_id}
@@ -135,7 +137,7 @@ export function IdpConnectPanel({
             {connection.acs_url && (
               <p
                 data-testid="idp-acs-url"
-                className="mt-1 text-sm text-zinc-600"
+                className="mt-1 text-sm text-muted-foreground"
               >
                 <span className="font-medium">ACS URL: </span>
                 {connection.acs_url}
@@ -144,7 +146,7 @@ export function IdpConnectPanel({
             {connection.connected_at && (
               <p
                 data-testid="idp-connected-at"
-                className="mt-1 text-xs text-zinc-400"
+                className="mt-1 text-xs text-muted-foreground"
               >
                 Connected {new Date(connection.connected_at).toLocaleString()}
               </p>
@@ -160,7 +162,7 @@ export function IdpConnectPanel({
       </div>
 
       {/* Connect form */}
-      <div className="rounded-lg border bg-white p-5">
+      <div className="rounded-lg border bg-card p-5">
         <h3 className="mb-4 font-medium">Connect IdP</h3>
 
         {/* Mode toggle */}
@@ -235,7 +237,7 @@ export function IdpConnectPanel({
             <p
               data-testid="idp-connect-error"
               role="alert"
-              className="text-sm text-red-600"
+              className="text-sm text-destructive"
             >
               {error}
             </p>
@@ -245,7 +247,7 @@ export function IdpConnectPanel({
             data-testid="idp-connect-submit"
             type="submit"
             disabled={submitting}
-            className="self-start rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="self-start rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {submitting ? "Connecting…" : "Connect"}
           </button>
