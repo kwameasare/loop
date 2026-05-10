@@ -85,6 +85,17 @@ export interface ServerShareLink extends ShareLink {
   redactionBanner: string;
 }
 
+export interface PublicShareView {
+  id: string;
+  workspace_id: string;
+  source_type: ShareArtifact;
+  source_id: string;
+  redactions: RedactionCategory[];
+  expires_at: string;
+  url: string;
+  redaction_banner: string;
+}
+
 type ShareLinkClientOptions = UxWireupClientOptions & {
   allowFixture?: boolean;
 };
@@ -178,6 +189,16 @@ export async function createServerShareLink(
     redactions: { categories: body.redactions },
     redactionBanner: `${body.redactions.length} redaction categories enforced server-side.`,
   };
+}
+
+export async function fetchPublicShare(
+  shareRef: string,
+  opts: ShareLinkClientOptions = {},
+): Promise<PublicShareView> {
+  return cpJson<PublicShareView>(`/shares/${encodeURIComponent(shareRef)}`, {
+    ...opts,
+    fallback: {} as PublicShareView,
+  });
 }
 
 export function revokeShareLink(

@@ -4,6 +4,7 @@ import {
   buildQuickBranchLink,
   buildShareLink,
   createServerShareLink,
+  fetchPublicShare,
   previewRedaction,
   recordAccess,
   revokeShareLink,
@@ -66,6 +67,29 @@ describe("buildShareLink", () => {
 
     expect(link.id).toBe("share_live_1");
     expect(link.redactionBanner).toContain("2 redaction");
+  });
+
+  it("loads server-redacted public share views by token", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      expect(String(input)).toBe("https://cp.test/v1/shares/token_1");
+      return Response.json({
+        id: "share_live_1",
+        workspace_id: "ws-1",
+        source_type: "trace",
+        source_id: "trace_refund_742",
+        redactions: ["pii", "secrets"],
+        expires_at: "2026-05-13T12:00:00.000Z",
+        url: "/share/token_1",
+        redaction_banner: "2 redaction categories enforced server-side.",
+      });
+    });
+
+    await expect(
+      fetchPublicShare("token_1", { baseUrl: "https://cp.test/v1", fetcher }),
+    ).resolves.toMatchObject({
+      source_id: "trace_refund_742",
+      redaction_banner: expect.stringContaining("2 redaction"),
+    });
   });
 
   it("does not fabricate server-backed share links without cp-api", async () => {

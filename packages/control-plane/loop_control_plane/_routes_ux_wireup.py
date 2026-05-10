@@ -1392,16 +1392,20 @@ async def create_share_link(
         user_sub=caller_sub,
         required_role=Role.ADMIN,
     )
+    token = uuid4().hex[:20]
     share = {
         "id": f"share_{uuid4().hex[:12]}",
+        "token": token,
         "workspace_id": str(workspace_id),
         "source_type": body.source_type,
         "source_id": body.source_id,
         "redactions": body.redactions,
         "expires_at": (datetime.now(UTC) + timedelta(minutes=body.expires_in_minutes)).isoformat(),
-        "url": f"/share/{uuid4().hex[:20]}",
+        "url": f"/share/{token}",
     }
-    _bucket(request, "shares")[share["id"]] = share
+    shares = _bucket(request, "shares")
+    shares[share["id"]] = share
+    shares[token] = share
     _audit(
         request,
         workspace_id=workspace_id,
@@ -1414,23 +1418,26 @@ async def create_share_link(
     return share
 
 
-@router_public.get("/shares/{share_id}")
-async def view_share_link(request: Request, share_id: str) -> dict[str, Any]:
-    share = _bucket(request, "shares").get(share_id)
+@router_public.get("/shares/{share_ref}")
+async def view_share_link(request: Request, share_ref: str) -> dict[str, Any]:
+    share = _bucket(request, "shares").get(share_ref)
     if not share:
         raise HTTPException(status_code=404, detail="share not found")
+    expires_at = datetime.fromisoformat(share["expires_at"])
+    if expires_at <= datetime.now(UTC):
+        raise HTTPException(status_code=410, detail="share expired")
     workspace_id = UUID(share["workspace_id"])
     record_audit_event(
         workspace_id=workspace_id,
         actor_sub="external-share-viewer",
         action="share:view",
         resource_type="share",
-        resource_id=share_id,
+        resource_id=share["id"],
         store=request.app.state.cp.audit_events,
-        payload={"redactions": share["redactions"]},
+        payload={"redactions": share["redactions"], "share_ref": share_ref},
     )
     return {
-        **share,
+        **{key: value for key, value in share.items() if key != "token"},
         "redaction_banner": f"{len(share['redactions'])} redaction categories enforced server-side.",
     }
 
