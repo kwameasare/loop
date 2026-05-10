@@ -25,7 +25,12 @@ describe("AgentChannelsPage", () => {
     process.env.LOOP_CP_API_BASE_URL = "";
     process.env.NEXT_PUBLIC_LOOP_API_URL = "";
 
-    render(await AgentChannelsPage({ params: { agent_id: "agt_1" } }));
+    render(
+      await AgentChannelsPage({
+        params: { agent_id: "agt_1" },
+        searchParams: { channel: "whatsapp" },
+      }),
+    );
 
     expect(screen.getByTestId("agent-channels")).toBeInTheDocument();
     expect(screen.getByTestId("channel-bindings-degraded")).toHaveTextContent(
@@ -36,6 +41,10 @@ describe("AgentChannelsPage", () => {
     );
     expect(screen.getByTestId("channel-type-whatsapp")).toBeInTheDocument();
     expect(screen.getByTestId("channel-type-voice")).toBeInTheDocument();
+    expect(screen.getByTestId("channel-binding-whatsapp")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
   });
 
   it("marks a missing web-channel route as degraded instead of disabled", async () => {
