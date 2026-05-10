@@ -9,7 +9,6 @@ import { LatencyBudgetVisualizer } from "@/components/trace/latency-budget";
 import { TraceScrubber } from "@/components/trace/scrubber/trace-scrubber";
 import { TraceWaterfall } from "@/components/trace/waterfall";
 import { AgentXrayPanel } from "@/components/trace/xray/agent-xray-panel";
-import { targetUxFixtures } from "@/lib/target-ux";
 import { formatDurationNs, formatUsd, type Trace } from "@/lib/traces";
 
 function Metric({
@@ -38,11 +37,20 @@ function environmentTone(environment: string): "draft" | "staged" | "live" {
   return "draft";
 }
 
+function traceAgentId(trace: Trace): string {
+  if (trace.agentId) return trace.agentId;
+  for (const span of trace.spans) {
+    const agentId = span.attributes.agent_id;
+    if (typeof agentId === "string" && agentId.length > 0) return agentId;
+  }
+  return "agent_unattributed";
+}
+
 export function TraceTheater({ trace }: { trace: Trace }) {
   const summary = trace.summary;
   const explanations = trace.explanations ?? [];
   const totalCost = summary?.total_cost_usd ?? 0;
-  const agentId = trace.agentId ?? targetUxFixtures.workspace.activeAgentId;
+  const agentId = traceAgentId(trace);
 
   return (
     <div className="space-y-6" data-testid="trace-theater">
