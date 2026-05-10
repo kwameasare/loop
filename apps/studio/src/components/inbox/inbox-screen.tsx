@@ -12,7 +12,6 @@ import {
   resolveItem,
   type InboxItem,
 } from "@/lib/inbox";
-import { targetUxFixtures } from "@/lib/target-ux";
 
 type Props = {
   initialItems: InboxItem[];
@@ -48,6 +47,12 @@ export function InboxScreen(props: Props): JSX.Element {
     () => items.find((i) => i.id === selectedId) ?? null,
     [items, selectedId],
   );
+  const suggestionAgentId =
+    selected?.agent_id ??
+    pending[0]?.agent_id ??
+    myClaims[0]?.agent_id ??
+    items.find((item) => item.workspace_id === props.workspace_id)?.agent_id ??
+    "agent_unattributed";
 
   function update(next: InboxItem): void {
     setItems((prev) => prev.map((i) => (i.id === next.id ? next : i)));
@@ -143,7 +148,7 @@ export function InboxScreen(props: Props): JSX.Element {
               No pending escalations.
             </p>
             <PersonalizedEmptyStateSuggestions
-              agentId={targetUxFixtures.workspace.activeAgentId}
+              agentId={suggestionAgentId}
               surface="inbox"
             />
           </div>
