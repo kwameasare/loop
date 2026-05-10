@@ -30,6 +30,7 @@ import type { EvalSuite } from "@/lib/evals";
 import type { KbDocument } from "@/lib/kb";
 import type { MemoryPolicy } from "@/lib/memory-policies";
 import type { ToolContract } from "@/lib/tool-contracts";
+import type { TraceSummary } from "@/lib/traces";
 import type { TargetDeploy, TargetEvalSuite } from "@/lib/target-ux";
 import { cn } from "@/lib/utils";
 import {
@@ -138,6 +139,8 @@ export interface AgentOverviewProps {
   evalsDegradedReason?: string | undefined;
   knowledgeDocuments?: KbDocument[] | undefined;
   knowledgeDegradedReason?: string | undefined;
+  traceSummaries?: TraceSummary[] | undefined;
+  tracesDegradedReason?: string | undefined;
   workbench?: Partial<AgentWorkbenchData>;
   commitment?: CommitmentDocument | undefined;
   /** Called when the user saves a new description. Allows integration with server actions. */
@@ -196,6 +199,17 @@ interface KnowledgeWorkbenchSummary {
   validation: string;
   evidence: string;
   status: WorkbenchSectionStatus;
+}
+
+interface TraceWorkbenchSummary {
+  count: number;
+  current: string;
+  lastChangedBy: string;
+  diffFromProduction: string;
+  validation: string;
+  evidence: string;
+  status: WorkbenchSectionStatus;
+  latestTrace?: TraceSummary | undefined;
 }
 
 function requiredReadiness(binding: ChannelBinding) {
@@ -667,6 +681,103 @@ function summarizeKnowledgeDocuments(
   };
 }
 
+function formatCompactDurationNs(ns: number): string {
+  if (ns < 1_000_000) return `${(ns / 1_000).toFixed(1)}µs`;
+  if (ns < 1_000_000_000) return `${(ns / 1_000_000).toFixed(1)}ms`;
+  return `${(ns / 1_000_000_000).toFixed(2)}s`;
+}
+
+function formatTraceTime(ms: number): string {
+  if (!Number.isFinite(ms)) return "unknown time";
+  const date = new Date(ms);
+  const label = date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  const hour = String(date.getUTCHours()).padStart(2, "0");
+  const minute = String(date.getUTCMinutes()).padStart(2, "0");
+  return `${label} ${hour}:${minute} UTC`;
+}
+
+function summarizeTraces(
+  traces: readonly TraceSummary[] | undefined,
+  degradedReason?: string | undefined,
+): TraceWorkbenchSummary {
+  const all = [...(traces ?? [])].sort(
+    (left, right) => right.started_at_ms - left.started_at_ms,
+  );
+  const latestTrace = all[0];
+  const failed = all.filter((trace) => trace.status === "error");
+  const totalDuration = all.reduce((sum, trace) => sum + trace.duration_ns, 0);
+  const averageDuration = all.length > 0 ? totalDuration / all.length : 0;
+
+  if (degradedReason) {
+    return {
+      count: all.length,
+      current:
+        "Trace evidence is degraded; Studio is not claiming preview or production behavior.",
+      lastChangedBy: "Live trace store unavailable",
+      diffFromProduction: "No trace diff loaded.",
+      validation: degradedReason,
+      evidence: "traces.degraded",
+      status: "watching",
+      latestTrace,
+    };
+  }
+
+  if (all.length === 0) {
+    return {
+      count: 0,
+      current: "No persisted traces loaded for this agent.",
+      lastChangedBy: "No trace loaded",
+      diffFromProduction: "Trace diff unavailable until a run exists.",
+      validation: "Run the simulator or a channel turn to create trace evidence.",
+      evidence: "traces.empty",
+      status: "watching",
+    };
+  }
+
+  if (failed.length > 0) {
+    return {
+      count: all.length,
+      current: `${all.length} persisted trace${
+        all.length === 1 ? "" : "s"
+      } loaded; ${failed.length} failed; latest ${latestTrace?.id ?? "unknown"}.`,
+      lastChangedBy: latestTrace
+        ? `Latest trace at ${formatTraceTime(latestTrace.started_at_ms)}`
+        : "Loaded from trace store",
+      diffFromProduction:
+        "Failed production or preview turns must become eval or fix evidence before promotion.",
+      validation: `Investigate ${failed.length} failed trace${
+        failed.length === 1 ? "" : "s"
+      } before promotion.`,
+      evidence: failed.map((trace) => trace.id).join(", "),
+      status: "blocked",
+      latestTrace,
+    };
+  }
+
+  return {
+    count: all.length,
+    current: `${all.length} persisted trace${
+      all.length === 1 ? "" : "s"
+    } loaded; avg ${formatCompactDurationNs(averageDuration)}; latest ${
+      latestTrace?.id ?? "unknown"
+    }.`,
+    lastChangedBy: latestTrace
+      ? `Latest trace at ${formatTraceTime(latestTrace.started_at_ms)}`
+      : "Loaded from trace store",
+    diffFromProduction:
+      "Trace rows link to span evidence, replay, cost, latency, and eval capture.",
+    validation:
+      "Use the latest representative trace to drive behavior repairs and eval coverage.",
+    evidence: latestTrace?.id ?? "traces.loaded",
+    status: "healthy",
+    latestTrace,
+  };
+}
+
 function EditDescriptionModal({
   open,
   initial,
@@ -768,6 +879,7 @@ function buildSections(input: {
   toolSummary: ToolWorkbenchSummary;
   memorySummary: MemoryWorkbenchSummary;
   knowledgeSummary: KnowledgeWorkbenchSummary;
+  traceSummary: TraceWorkbenchSummary;
   commitment?: CommitmentDocument | undefined;
 }): AgentWorkbenchSection[] {
   const commitmentMissing =
@@ -883,12 +995,12 @@ function buildSections(input: {
     {
       id: "traces",
       label: "Traces",
-      current: "No preview or production trace is pinned to this overview.",
-      lastChangedBy: "No trace loaded",
-      diffFromProduction: "Trace diff unavailable until a run exists.",
-      validation: "Run the simulator to create trace evidence.",
-      evidence: "traces.empty",
-      status: "watching",
+      current: input.traceSummary.current,
+      lastChangedBy: input.traceSummary.lastChangedBy,
+      diffFromProduction: input.traceSummary.diffFromProduction,
+      validation: input.traceSummary.validation,
+      evidence: input.traceSummary.evidence,
+      status: input.traceSummary.status,
     },
     {
       id: "deployments",
@@ -952,6 +1064,8 @@ function createDefaultWorkbenchData(
     | "evalsDegradedReason"
     | "knowledgeDocuments"
     | "knowledgeDegradedReason"
+    | "traceSummaries"
+    | "tracesDegradedReason"
   > & { commitment?: CommitmentDocument | undefined },
 ): AgentWorkbenchData {
   const purpose =
@@ -1005,6 +1119,10 @@ function createDefaultWorkbenchData(
   const knowledgeSummary = summarizeKnowledgeDocuments(
     props.knowledgeDocuments,
     props.knowledgeDegradedReason,
+  );
+  const traceSummary = summarizeTraces(
+    props.traceSummaries,
+    props.tracesDegradedReason,
   );
   const channelSummary = summarizeChannels(
     props.channelBindings,
@@ -1083,6 +1201,7 @@ function createDefaultWorkbenchData(
       toolSummary,
       memorySummary,
       knowledgeSummary,
+      traceSummary,
       commitment: props.commitment,
     }),
     diff: {
@@ -1091,20 +1210,39 @@ function createDefaultWorkbenchData(
       impact:
         "Run a preview, save an eval, and generate preflight before shipping.",
     },
-    livePreview: {
-      prompt: "No preview run loaded.",
-      response:
-        "Use the simulator rail to create a trace before evaluating behavior.",
-      evidence: "preview.empty",
-    },
+    livePreview: traceSummary.latestTrace
+      ? {
+          prompt: `Latest persisted trace: ${traceSummary.latestTrace.id}`,
+          response: `${traceSummary.latestTrace.status} · ${
+            traceSummary.latestTrace.root_name
+          } · ${formatCompactDurationNs(
+            traceSummary.latestTrace.duration_ns,
+          )} · ${traceSummary.latestTrace.span_count} spans.`,
+          evidence: traceSummary.latestTrace.id,
+        }
+      : {
+          prompt: "No preview run loaded.",
+          response:
+            "Use the simulator rail to create a trace before evaluating behavior.",
+          evidence: traceSummary.evidence,
+        },
     safeActions: [
-      {
-        id: "replay",
-        label: "Run first simulator turn",
-        description: "Create trace evidence for this agent before editing.",
-        evidence: "simulator.required",
-        href: actionHref(props.id, "replay"),
-      },
+      traceSummary.latestTrace
+        ? {
+            id: "trace",
+            label: "Open latest trace",
+            description:
+              "Inspect span evidence before changing behavior or promotion gates.",
+            evidence: traceSummary.latestTrace.id,
+            href: `/traces/${encodeURIComponent(traceSummary.latestTrace.id)}`,
+          }
+        : {
+            id: "replay",
+            label: "Run first simulator turn",
+            description: "Create trace evidence for this agent before editing.",
+            evidence: "simulator.required",
+            href: actionHref(props.id, "replay"),
+          },
       {
         id: "eval",
         label: "Create starter evals",
@@ -1173,7 +1311,9 @@ function StatusPill({
 }
 
 function ActionIcon({ id }: { id: string }) {
-  if (id === "replay") return <PlayCircle className="h-4 w-4" aria-hidden />;
+  if (id === "replay" || id === "trace") {
+    return <PlayCircle className="h-4 w-4" aria-hidden />;
+  }
   if (id === "eval") {
     return <GitCompareArrows className="h-4 w-4" aria-hidden />;
   }
@@ -1244,6 +1384,8 @@ export function AgentOverview({
   evalsDegradedReason,
   knowledgeDocuments,
   knowledgeDegradedReason,
+  traceSummaries,
+  tracesDegradedReason,
   workbench,
   commitment,
   onDescriptionSave,
@@ -1274,6 +1416,8 @@ export function AgentOverview({
           evalsDegradedReason,
           knowledgeDocuments,
           knowledgeDegradedReason,
+          traceSummaries,
+          tracesDegradedReason,
           commitment,
         }),
         workbench,
@@ -1299,6 +1443,8 @@ export function AgentOverview({
       evalsDegradedReason,
       knowledgeDocuments,
       knowledgeDegradedReason,
+      traceSummaries,
+      tracesDegradedReason,
       workbench,
     ],
   );

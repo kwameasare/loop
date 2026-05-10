@@ -142,6 +142,27 @@ describe("AgentOverviewPage", () => {
           ],
         });
       }
+      if (
+        url ===
+        "https://cp.test/v1/workspaces/ws_1/traces?agent_id=agent_live&page_size=10"
+      ) {
+        return Response.json({
+          items: [
+            {
+              workspace_id: "ws_1",
+              trace_id: "trc_live_latest",
+              turn_id: "turn_live_001",
+              conversation_id: "cnv_live_001",
+              agent_id: "agent_live",
+              started_at: "2026-05-09T12:05:00Z",
+              duration_ms: 730,
+              span_count: 6,
+              error: false,
+            },
+          ],
+          next_cursor: null,
+        });
+      }
       if (url.endsWith("/agents/agent_live")) {
         return Response.json({
           id: "agent_live",
@@ -179,6 +200,12 @@ describe("AgentOverviewPage", () => {
     );
     expect(screen.getByTestId("agent-outline-knowledge")).toHaveTextContent(
       "1 knowledge source ready",
+    );
+    expect(screen.getByTestId("agent-outline-traces")).toHaveTextContent(
+      "1 persisted trace loaded",
+    );
+    expect(screen.getByTestId("agent-live-preview")).toHaveTextContent(
+      "trc_live_latest",
     );
     expect(screen.queryByTestId("overview-deploy-unavailable")).toBeNull();
   });
