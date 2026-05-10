@@ -12,10 +12,26 @@ from pydantic import BaseModel, ConfigDict, Field
 from loop_control_plane._app_agents import AgentRecord
 from loop_control_plane.workspaces import WorkspaceError
 
-MemoryPolicyScope = Literal["turn", "conversation", "session", "user", "workspace"]
+MemoryPolicyScope = Literal[
+    "turn",
+    "conversation",
+    "session",
+    "user",
+    "account",
+    "organization",
+    "task",
+    "agent",
+    "workspace",
+]
 MemoryPolicyApprovalStatus = Literal["draft", "review_required", "approved", "blocked"]
 
-DURABLE_SCOPES: set[MemoryPolicyScope] = {"user", "workspace"}
+DURABLE_SCOPES: set[MemoryPolicyScope] = {
+    "user",
+    "account",
+    "organization",
+    "agent",
+    "workspace",
+}
 
 
 class MemoryPolicyUpsert(BaseModel):

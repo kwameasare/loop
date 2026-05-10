@@ -25,6 +25,10 @@ describe("memory-policies client", () => {
     expect(policies.map((policy) => policy.scope)).toEqual([
       "session",
       "user",
+      "account",
+      "organization",
+      "task",
+      "agent",
       "workspace",
     ]);
     expect(policies.find((policy) => policy.scope === "user")).toMatchObject({
@@ -34,6 +38,16 @@ describe("memory-policies client", () => {
     expect(
       policies.every((policy) => policy.privacy_implications.length > 0),
     ).toBe(true);
+    expect(policies.find((policy) => policy.scope === "account")).toMatchObject(
+      {
+        approval_status: "review_required",
+        source_trace_required: true,
+      },
+    );
+    expect(policies.find((policy) => policy.scope === "task")).toMatchObject({
+      approval_status: "draft",
+      source_trace_required: true,
+    });
   });
 
   it("lists, upserts, and approves through cp-api", async () => {
