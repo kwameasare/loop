@@ -8,6 +8,8 @@ import {
   type CommitmentBody,
   type CommitmentDocument,
   type CommitmentDraftInput,
+  EMPTY_COMMITMENT_BODY,
+  buildLocalCommitmentDocument,
   commitmentFieldLabel,
   missingCommitmentFields,
   parseList,
@@ -18,7 +20,7 @@ import { cn } from "@/lib/utils";
 
 interface AgentContractPanelProps {
   agentId: string;
-  initialDocument: CommitmentDocument;
+  initialDocument?: CommitmentDocument | null | undefined;
   initialHistory?: CommitmentDocument[] | undefined;
   focusedCommitmentId?: string | undefined;
   degradedReason?: string | undefined;
@@ -83,6 +85,14 @@ function upsertHistory(
   return sortHistory([...withoutCurrent, next]);
 }
 
+function isLoadedCommitment(document: CommitmentDocument): boolean {
+  return (
+    document.id !== "commitment_unconfigured" &&
+    document.content_hash !== "unconfigured" &&
+    document.created_from !== "studio:local_unconfigured"
+  );
+}
+
 export function AgentContractPanel({
   agentId,
   initialDocument,
@@ -93,20 +103,31 @@ export function AgentContractPanel({
   saveDraft = defaultSaveCommitmentDraft,
   acceptCommitment = defaultAcceptCommitment,
 }: AgentContractPanelProps) {
-  const [document, setDocument] = useState(initialDocument);
+  const fallbackDocument = useMemo(
+    () => buildLocalCommitmentDocument(agentId),
+    [agentId],
+  );
+  const [document, setDocument] = useState(
+    initialDocument ?? fallbackDocument,
+  );
   const [history, setHistory] = useState<CommitmentDocument[]>(
     sortHistory(
       initialHistory && initialHistory.length > 0
         ? initialHistory
-        : [initialDocument],
+        : initialDocument
+          ? [initialDocument]
+          : [],
     ),
   );
-  const [body, setBody] = useState<CommitmentBody>(initialDocument.body);
+  const [body, setBody] = useState<CommitmentBody>(
+    initialDocument?.body ?? EMPTY_COMMITMENT_BODY,
+  );
   const [state, setState] = useState<FormState>({ kind: "idle" });
   const missing = useMemo(() => missingCommitmentFields(body), [body]);
   const completeness = Math.round(((8 - missing.length) / 8) * 100);
   const busy = state.kind === "saving" || state.kind === "accepting";
-  const backendUnavailable = Boolean(degradedReason);
+  const loadedCommitment = isLoadedCommitment(document);
+  const backendUnavailable = Boolean(degradedReason) || !loadedCommitment;
   const focusedHistoryItem = history.find(
     (item) => focusedCommitmentId && item.id === focusedCommitmentId,
   );
@@ -222,7 +243,9 @@ export function AgentContractPanel({
               className="mt-2 max-w-3xl text-sm text-muted-foreground"
               data-testid="contract-summary-line"
             >
-              {summaryLine(document, missing.length)}
+              {loadedCommitment
+                ? summaryLine(document, missing.length)
+                : "Commitment Document is unavailable. Studio can show the contract fields, but it will not call this a saved draft until the control plane returns a durable document."}
             </p>
           </div>
           <div className="grid min-w-48 gap-2 rounded-md border bg-background p-3 text-sm">
@@ -237,13 +260,13 @@ export function AgentContractPanel({
                 )}
                 data-testid="contract-status"
               >
-                {document.status}
+                {loadedCommitment ? document.status : "unavailable"}
               </span>
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-muted-foreground">Version</span>
               <span data-testid="contract-version">
-                v{document.version || 1}
+                {loadedCommitment ? `v${document.version || 1}` : "Not loaded"}
               </span>
             </div>
             <div className="flex items-center justify-between gap-3">
@@ -619,7 +642,9 @@ export function AgentContractPanel({
           <p className="text-xs text-muted-foreground">
             Contract hash:{" "}
             <code data-testid="contract-hash">
-              {document.content_hash.slice(0, 12)}
+              {loadedCommitment
+                ? document.content_hash.slice(0, 12)
+                : "not loaded"}
             </code>
           </p>
           <div className="flex gap-2">
