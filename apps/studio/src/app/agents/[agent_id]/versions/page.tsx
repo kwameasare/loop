@@ -13,9 +13,8 @@ interface AgentVersionsPageProps {
 /**
  * Versions tab — list every deploy for this agent and let reviewers
  * compare the ``config_json`` of any version to its predecessor. The
- * data path goes through ``listAgentVersions`` which today returns a
- * studio-local fixture; once cp-api ships ``GET /v1/agents/{id}/versions``
- * (follow-up S560) the fetch can be swapped in place.
+ * data path goes through the live ``GET /v1/agents/{id}/versions`` cp-api
+ * route with an explicit local fallback when Studio is running without cp.
  */
 export default async function AgentVersionsPage({
   params,
