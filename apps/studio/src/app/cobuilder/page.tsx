@@ -60,11 +60,11 @@ function CoBuilderPageBody(): JSX.Element {
       className="mx-auto max-w-6xl space-y-6 p-6"
     >
       <header className="space-y-1 border-b pb-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           AI Co-Builder
         </p>
         <h1 className="text-2xl font-semibold">Suggest, Edit, Drive</h1>
-        <p className="max-w-3xl text-sm text-slate-600">
+        <p className="max-w-3xl text-sm text-muted-foreground">
           Every action declares its mode, exact diff, provenance, and budget.
           Apply is gated until consent passes. Rubber Duck explains failing
           traces; Second Pair of Eyes runs adversarial review.
