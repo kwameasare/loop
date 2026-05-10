@@ -4,6 +4,7 @@
  */
 import { describe, expect, it, vi } from "vitest";
 import {
+  WEB_CHANNEL_CP_API_REQUIRED,
   buildEmbedSnippet,
   disableWebChannel,
   enableWebChannel,
@@ -11,10 +12,12 @@ import {
 } from "./web-channels";
 
 describe("web-channels (unconfigured mode)", () => {
-  it("getWebChannel returns disabled when no baseUrl", async () => {
-    const binding = await getWebChannel("agt_demo");
-    expect(binding.status).toBe("disabled");
-    expect(binding.token).toBeNull();
+  it("getWebChannel requires cp-api unless fixture mode is explicit", async () => {
+    await expect(getWebChannel("agt_demo")).rejects.toThrow(
+      WEB_CHANNEL_CP_API_REQUIRED,
+    );
+    const binding = await getWebChannel("agt_demo", { allowFixture: true });
+    expect(binding).toMatchObject({ status: "disabled", token: null });
   });
 
   it("enableWebChannel refuses to mint a token without cp-api", async () => {
