@@ -200,4 +200,16 @@ export const OBSERVATORY_MODEL: ObservatoryModel = {
       tone: "watching",
     },
   ],
+  recommendation: {
+    title: "Next best operating action",
+    body: "Patch the escalation classifier, then replay the affected scene.",
+    observed:
+      "17 production-like variants failed in replay and persona simulation.",
+    intended:
+      "Bring behavior/escalation_classifier back inside its committed behavior before expanding production exposure.",
+    source: "observatory/anomaly/anom_legal_synonym",
+    confidence: 86,
+    confidenceLevel: "medium",
+    tone: "warning",
+  },
 };

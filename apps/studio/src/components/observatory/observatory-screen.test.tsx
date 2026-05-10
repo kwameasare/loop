@@ -81,6 +81,39 @@ describe("ObservatoryScreen", () => {
     expect(screen.getByTestId("ambient-health-arcs")).toHaveTextContent(
       "Ambient agent health",
     );
+    expect(screen.getByText("Next best operating action")).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        "Patch the escalation classifier, then replay the affected scene.",
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByText(/Fix the legal synonym cluster before raising canary/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("links anomalies to trace evidence and the relevant agent edit surface", () => {
+    render(
+      <ObservatoryScreen
+        model={OBSERVATORY_MODEL}
+        agentId="agent_support"
+        workspaceId="ws1"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("anomaly-open-traces-anom_legal_synonym"),
+    ).toHaveAttribute(
+      "href",
+      "/traces?agent_id=agent_support&filter=trace_legal_synonym+OR+scene%3Alegal-threat",
+    );
+    expect(
+      screen.getByTestId("anomaly-open-edit-anom_legal_synonym"),
+    ).toHaveAttribute("href", "/agents/agent_support/behavior");
+    expect(screen.getByTestId("tail-open-trace-tail_1")).toHaveAttribute(
+      "href",
+      "/traces/trace_refund_742",
+    );
   });
 
   it("focuses an incident opened from an evidence link", () => {
