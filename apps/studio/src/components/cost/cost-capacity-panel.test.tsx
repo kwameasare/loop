@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 
 import { CostCapacityPanel } from "./cost-capacity-panel";
 import { buildCostCapacityModel, type UsageRecord } from "@/lib/costs";
-import { buildLatencyBudgetModel } from "@/lib/latency";
+import {
+  buildLatencyBudgetModel,
+  buildUnavailableLatencyBudgetModel,
+} from "@/lib/latency";
 
 const WS = "ws_test";
 const APRIL_1 = Date.UTC(2026, 3, 1);
@@ -77,6 +80,9 @@ describe("CostCapacityPanel", () => {
     expect(screen.getByTestId("latency-budget-provenance")).toHaveTextContent(
       "Planning model, not live traffic",
     );
+    expect(screen.getByTestId("latency-budget-visualizer")).toHaveTextContent(
+      "Planning only",
+    );
     expect(
       screen.getByTestId("latency-suggestion-cache_pricing_policy"),
     ).toHaveTextContent("retrieval.final_sale_refund");
@@ -90,9 +96,37 @@ describe("CostCapacityPanel", () => {
     });
 
     expect(screen.getByTestId("latency-budget-visualizer")).toHaveTextContent(
-      "target marker is 1,200 ms",
+      "Target marker is 1,200 ms",
     );
     expect(screen.getByTestId("latency-budget-visualizer")).toHaveTextContent(
+      "Planning only",
+    );
+  });
+
+  it("does not invent latency success states from cost usage records", () => {
+    render(
+      <CostCapacityPanel
+        model={buildCostCapacityModel(records, {
+          workspace_id: WS,
+          now_ms: Date.UTC(2026, 3, 15),
+        })}
+        latency={buildUnavailableLatencyBudgetModel(
+          800,
+          "Cost usage records do not include span-level latency.",
+        )}
+      />,
+    );
+
+    expect(screen.getByTestId("latency-budget-visualizer")).toHaveTextContent(
+      "Trace latency unavailable",
+    );
+    expect(screen.getByTestId("latency-budget-visualizer")).toHaveTextContent(
+      "No latency suggestions yet",
+    );
+    expect(
+      screen.queryByTestId("latency-suggestion-cache_pricing_policy"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("latency-budget-visualizer")).not.toHaveTextContent(
       "Budget met",
     );
   });

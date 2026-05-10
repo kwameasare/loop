@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildLatencyBudgetModel,
+  buildUnavailableLatencyBudgetModel,
   formatMs,
   formatSignedMs,
   formatSignedUsd,
@@ -11,7 +12,7 @@ describe("latency budget model", () => {
   it("builds the canonical stacked latency segments and suggestions", () => {
     const model = buildLatencyBudgetModel(800);
 
-    expect(model.dataSource).toBe("deterministic");
+    expect(model.dataSource).toBe("planning");
     expect(model.provenance).toContain("planning model");
     expect(model.totalMs).toBeGreaterThan(800);
     expect(model.segments.map((segment) => segment.id)).toEqual([
@@ -30,6 +31,19 @@ describe("latency budget model", () => {
     );
     expect(model.suggestions[0]?.qualityImpact).toContain("quality");
     expect(model.suggestions[0]?.costImpactUsd).toBeLessThan(0);
+  });
+
+  it("builds an explicit unavailable state when span latency is missing", () => {
+    const model = buildUnavailableLatencyBudgetModel(
+      800,
+      "Cost usage records do not include span-level latency.",
+    );
+
+    expect(model.dataSource).toBe("unavailable");
+    expect(model.provenance).toContain("span-level latency");
+    expect(model.totalMs).toBe(0);
+    expect(model.segments).toEqual([]);
+    expect(model.suggestions).toEqual([]);
   });
 });
 
