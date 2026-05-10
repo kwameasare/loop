@@ -23,7 +23,9 @@ function makeInvoice(n: number): Invoice {
 }
 
 const THREE_INVOICES = [makeInvoice(3), makeInvoice(1), makeInvoice(2)]; // unsorted intentionally
-const TWELVE_INVOICES = Array.from({ length: 12 }, (_, i) => makeInvoice(i + 1));
+const TWELVE_INVOICES = Array.from({ length: 12 }, (_, i) =>
+  makeInvoice(i + 1),
+);
 
 // ---------------------------------------------------------------------------
 // paginateInvoices unit tests
@@ -68,6 +70,20 @@ describe("InvoiceList", () => {
     expect(screen.getByTestId("invoice-empty")).toBeInTheDocument();
   });
 
+  it("shows degraded evidence instead of empty state when invoice route is unavailable", () => {
+    render(
+      <InvoiceList
+        degradedReason="cp-api billing invoices route returned 404"
+        invoices={[]}
+      />,
+    );
+
+    expect(screen.getByTestId("invoice-list-degraded")).toHaveTextContent(
+      "billing invoices route returned 404",
+    );
+    expect(screen.queryByTestId("invoice-empty")).not.toBeInTheDocument();
+  });
+
   it("renders a row per invoice", () => {
     render(<InvoiceList invoices={THREE_INVOICES} />);
     expect(screen.getByTestId("invoice-row-in_001")).toBeInTheDocument();
@@ -77,18 +93,25 @@ describe("InvoiceList", () => {
 
   it("displays the formatted amount", () => {
     render(<InvoiceList invoices={[makeInvoice(1)]} />);
-    expect(screen.getByTestId("invoice-amount-in_001")).toHaveTextContent("$10.00");
+    expect(screen.getByTestId("invoice-amount-in_001")).toHaveTextContent(
+      "$10.00",
+    );
   });
 
   it("shows the correct status badge", () => {
     render(<InvoiceList invoices={[makeInvoice(1)]} />);
-    expect(screen.getByTestId("invoice-status-in_001")).toHaveTextContent("paid");
+    expect(screen.getByTestId("invoice-status-in_001")).toHaveTextContent(
+      "paid",
+    );
   });
 
   it("renders a download link with the pdf_url", () => {
     render(<InvoiceList invoices={[makeInvoice(1)]} />);
     const link = screen.getByTestId("invoice-download-in_001");
-    expect(link).toHaveAttribute("href", "https://billing.stripe.com/invoice/test_1/pdf");
+    expect(link).toHaveAttribute(
+      "href",
+      "https://billing.stripe.com/invoice/test_1/pdf",
+    );
   });
 
   it("does not show pagination when only one page", () => {

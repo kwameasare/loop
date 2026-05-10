@@ -114,7 +114,7 @@ describe("billing cp-api client", () => {
     );
   });
 
-  it("fetchInvoices returns the items array (or empty on 404)", async () => {
+  it("fetchInvoices returns the items array and marks 404 as degraded evidence", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -123,11 +123,15 @@ describe("billing cp-api client", () => {
       }),
     });
     const list = await fetchInvoices("ws1", { fetcher });
-    expect(list).toHaveLength(1);
+    expect(list.items).toHaveLength(1);
     const fetcher2 = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
-    expect(await fetchInvoices("ws1", { fetcher: fetcher2 })).toEqual([]);
+    const missing = await fetchInvoices("ws1", { fetcher: fetcher2 });
+    expect(missing.items).toEqual([]);
+    expect(missing.degraded_reason).toMatch(
+      /billing invoices route returned 404/i,
+    );
   });
 
   it("updatePaymentMethod returns ok+last4 on success", async () => {

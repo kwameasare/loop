@@ -41,19 +41,20 @@ function BillingPageBody(): JSX.Element {
     undefined,
   );
   const [invoices, setInvoices] = useState<Invoice[] | null>(null);
+  const [invoicesDegradedReason, setInvoicesDegradedReason] = useState<
+    string | undefined
+  >();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
-    void Promise.all([
-      fetchBillingSummary(active.id),
-      fetchInvoices(active.id),
-    ])
+    void Promise.all([fetchBillingSummary(active.id), fetchInvoices(active.id)])
       .then(([s, i]) => {
         if (cancelled) return;
         setSummary(s);
-        setInvoices(i);
+        setInvoices(i.items);
+        setInvoicesDegradedReason(i.degraded_reason);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -106,20 +107,21 @@ function BillingPageBody(): JSX.Element {
         </header>
         <div className="rounded-lg border p-4" role="status">
           <h2 className="text-base font-medium">
-            Billing is not yet provisioned for this workspace.
+            Billing evidence unavailable.
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            The cp-api billing endpoints are still rolling out. This page will
-            light up automatically once the workspace is enrolled in Stripe.
+            Studio could not confirm the workspace plan, usage, payment method,
+            or invoice state from cp-api. It will not replace missing billing
+            evidence with fixture spend or a guessed provisioning state.
           </p>
         </div>
       </main>
     );
   }
 
-  async function handlePaymentSubmit(args: { cardholderName: string }): Promise<
-    { ok: true; last4: string } | { ok: false; error: string }
-  > {
+  async function handlePaymentSubmit(args: {
+    cardholderName: string;
+  }): Promise<{ ok: true; last4: string } | { ok: false; error: string }> {
     if (!active) return { ok: false, error: "No active workspace" };
     const res = await updatePaymentMethod(active.id, args);
     if (res.ok) return { ok: true, last4: res.last4 };
@@ -141,7 +143,12 @@ function BillingPageBody(): JSX.Element {
           initialLast4={summary.payment_method_last4}
           submit={handlePaymentSubmit}
         />
-        <InvoiceList invoices={invoices ?? []} />
+        <InvoiceList
+          invoices={invoices ?? []}
+          {...(invoicesDegradedReason
+            ? { degradedReason: invoicesDegradedReason }
+            : {})}
+        />
       </div>
     </main>
   );

@@ -39,6 +39,11 @@ export interface Invoice {
   pdf_url: string;
 }
 
+export interface InvoiceListResponse {
+  items: Invoice[];
+  degraded_reason?: string | undefined;
+}
+
 /** Paginate a sorted list of invoices (newest-first). */
 export function paginateInvoices(
   invoices: Invoice[],
@@ -120,13 +125,20 @@ export async function fetchBillingSummary(
 export async function fetchInvoices(
   workspace_id: string,
   opts: BillingClientOptions = {},
-): Promise<Invoice[]> {
+): Promise<InvoiceListResponse> {
   const res = await cpFetch<{ items: Invoice[] }>(
     "GET",
     `/workspaces/${encodeURIComponent(workspace_id)}/billing/invoices`,
     opts,
   );
-  return res?.items ?? [];
+  if (res === null) {
+    return {
+      items: [],
+      degraded_reason:
+        "cp-api billing invoices route returned 404. Studio will not treat unavailable invoice evidence as no invoices.",
+    };
+  }
+  return { items: res.items };
 }
 
 /**
