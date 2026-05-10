@@ -664,6 +664,7 @@ export function createAgentMapDataFromVersion(
   return {
     ...base,
     agentId,
+    agentName: `Agent ${agentId}`,
     branch: `v${version.version}`,
     objectState: state,
     trust,
@@ -1060,9 +1061,12 @@ export function createAgentMapData(
 }
 
 export function createEmptyAgentMapData(agentId = "agent_empty"): AgentMapData {
-  const base = createAgentMapData(agentId);
   return {
-    ...base,
+    agentId,
+    agentName: `Agent ${agentId}`,
+    branch: "No branch loaded",
+    objectState: "draft",
+    trust: "degraded",
     nodes: [],
     edges: [],
     hazards: [],

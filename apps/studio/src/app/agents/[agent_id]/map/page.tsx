@@ -1,6 +1,6 @@
 import { AgentMap } from "@/components/agent-map/agent-map";
 import {
-  createAgentMapData,
+  createEmptyAgentMapData,
   fetchAgentMapData,
 } from "@/components/agent-map/agent-map-data";
 
@@ -10,7 +10,7 @@ interface AgentMapPageProps {
 
 export default async function AgentMapPage({ params }: AgentMapPageProps) {
   const data = await fetchAgentMapData(params.agent_id).catch(() =>
-    createAgentMapData(params.agent_id),
+    createEmptyAgentMapData(params.agent_id),
   );
   return <AgentMap data={data} />;
 }
