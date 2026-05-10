@@ -329,7 +329,10 @@ export async function fetchMarketplaceCatalog(
   opts: MarketplaceClientOptions = {},
 ): Promise<MarketplaceItem[]> {
   const base = cpApiBaseUrl(opts.baseUrl);
-  if (!base) return opts.allowFixture ? [...DEFAULT_MARKETPLACE_CATALOG] : [];
+  if (!base) {
+    if (opts.allowFixture) return [...DEFAULT_MARKETPLACE_CATALOG];
+    throw new Error("LOOP_CP_API_BASE_URL is required to load marketplace.");
+  }
   const fetcher = opts.fetcher ?? fetch;
   const response = await fetcher(`${base}/marketplace`, {
     method: "GET",

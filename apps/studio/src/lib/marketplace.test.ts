@@ -135,8 +135,10 @@ describe("formatInstallCount", () => {
 });
 
 describe("marketplace cp-api adapter", () => {
-  it("returns an empty catalog unless fixture mode is explicitly allowed", async () => {
-    await expect(fetchMarketplaceCatalog()).resolves.toEqual([]);
+  it("requires cp-api unless fixture mode is explicitly allowed", async () => {
+    await expect(fetchMarketplaceCatalog()).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required to load marketplace.",
+    );
     await expect(
       fetchMarketplaceCatalog({ allowFixture: true }),
     ).resolves.toHaveLength(DEFAULT_MARKETPLACE_CATALOG.length);
