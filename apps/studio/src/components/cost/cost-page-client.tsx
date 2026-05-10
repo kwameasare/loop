@@ -15,7 +15,7 @@ import {
   monthBoundsUTC,
   type UsageRecord,
 } from "@/lib/costs";
-import { buildLatencyBudgetModel } from "@/lib/latency";
+import { buildUnavailableLatencyBudgetModel } from "@/lib/latency";
 import { useCostFilters } from "@/lib/use-cost-filters";
 
 interface Props {
@@ -75,7 +75,14 @@ export function CostPageClient({
       }),
     [filtered, now_ms, workspace_id],
   );
-  const latencyBudget = useMemo(() => buildLatencyBudgetModel(800), []);
+  const latencyBudget = useMemo(
+    () =>
+      buildUnavailableLatencyBudgetModel(
+        800,
+        "Cost usage records do not include span-level latency. Open a trace to inspect latency budgets backed by runtime spans.",
+      ),
+    [],
+  );
 
   return (
     <div className="flex flex-col gap-6 p-6" data-testid="costs-page">

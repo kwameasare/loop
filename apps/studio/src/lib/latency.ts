@@ -30,7 +30,7 @@ export interface LatencyBudgetSuggestion {
 
 export interface LatencyBudgetModel {
   scenario: string;
-  dataSource: "deterministic" | "trace";
+  dataSource: "planning" | "trace" | "unavailable";
   provenance: string;
   targetMs: number;
   totalMs: number;
@@ -65,7 +65,7 @@ export function buildLatencyBudgetModel(
 ): LatencyBudgetModel {
   const provenance =
     options.provenance ??
-    "deterministic latency planning model; replace with trace spans when a trace is selected";
+    "latency planning model; replace with trace spans when a trace is selected";
   const segments: LatencyBudgetSegment[] = [
     {
       id: "channel_ingress",
@@ -134,7 +134,7 @@ export function buildLatencyBudgetModel(
   const totalMs = segments.reduce((sum, segment) => sum + segment.ms, 0);
   return {
     scenario: options.scenario ?? "Static planning scenario",
-    dataSource: options.dataSource ?? "deterministic",
+    dataSource: options.dataSource ?? "planning",
     provenance,
     targetMs,
     totalMs,
@@ -172,5 +172,21 @@ export function buildLatencyBudgetModel(
         state: "draft",
       },
     ],
+  };
+}
+
+export function buildUnavailableLatencyBudgetModel(
+  targetMs = 800,
+  reason =
+    "Span-level latency is not available for this surface. Open a trace to inspect latency budgets backed by runtime spans.",
+): LatencyBudgetModel {
+  return {
+    scenario: "Trace latency unavailable",
+    dataSource: "unavailable",
+    provenance: reason,
+    targetMs,
+    totalMs: 0,
+    segments: [],
+    suggestions: [],
   };
 }

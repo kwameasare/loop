@@ -55,7 +55,9 @@ function segmentWidth(segment: LatencyBudgetSegment, totalMs: number): string {
 
 export function CostCapacityPanel({ model, latency }: CostCapacityPanelProps) {
   const [targetMs, setTargetMs] = useState(latency.targetMs);
-  const overBudgetMs = latency.totalMs - targetMs;
+  const isTraceBacked = latency.dataSource === "trace";
+  const isUnavailable = latency.dataSource === "unavailable";
+  const overBudgetMs = isTraceBacked ? latency.totalMs - targetMs : 0;
   const targetPercent = Math.max(
     0,
     Math.min(100, (targetMs / Math.max(latency.totalMs, targetMs)) * 100),
@@ -67,6 +69,19 @@ export function CostCapacityPanel({ model, latency }: CostCapacityPanelProps) {
       ),
     [latency.suggestions],
   );
+  const latencyBadge =
+    latency.dataSource === "trace"
+      ? {
+          tone: overBudgetMs > 0 ? ("canary" as const) : ("live" as const),
+          label:
+            overBudgetMs > 0
+              ? `${formatMs(overBudgetMs)} over target`
+              : "Trace budget met",
+        }
+      : {
+          tone: "paused" as const,
+          label: isUnavailable ? "Trace latency unavailable" : "Planning only",
+        };
 
   return (
     <section className="space-y-6" data-testid="cost-capacity-panel">
@@ -82,11 +97,7 @@ export function CostCapacityPanel({ model, latency }: CostCapacityPanelProps) {
             decision changes production behavior.
           </p>
         </div>
-        <LiveBadge tone={overBudgetMs > 0 ? "canary" : "live"}>
-          {overBudgetMs > 0
-            ? `${formatMs(overBudgetMs)} over target`
-            : "Within target"}
-        </LiveBadge>
+        <LiveBadge tone={latencyBadge.tone}>{latencyBadge.label}</LiveBadge>
       </header>
 
       <div className="grid gap-3 2xl:grid-cols-5">
@@ -224,8 +235,13 @@ export function CostCapacityPanel({ model, latency }: CostCapacityPanelProps) {
           <div>
             <h3 className="text-lg font-semibold">Latency budget visualizer</h3>
             <p className="text-sm text-muted-foreground">
-              {latency.scenario}. Current total is {formatMs(latency.totalMs)};
-              target marker is {formatMs(targetMs)}.
+              {isTraceBacked
+                ? `${latency.scenario}. Current trace total is ${formatMs(
+                    latency.totalMs,
+                  )}; target marker is ${formatMs(targetMs)}.`
+                : `${latency.scenario}. Target marker is ${formatMs(
+                    targetMs,
+                  )}; open a trace for runtime totals.`}
             </p>
             <p
               className="mt-1 text-xs text-muted-foreground"
@@ -233,14 +249,10 @@ export function CostCapacityPanel({ model, latency }: CostCapacityPanelProps) {
             >
               {latency.dataSource === "trace"
                 ? `Trace-backed: ${latency.provenance}`
-                : `Planning model, not live traffic: ${latency.provenance}`}
+                : `${isUnavailable ? "Unavailable" : "Planning model, not live traffic"}: ${latency.provenance}`}
             </p>
           </div>
-          <LiveBadge tone={overBudgetMs > 0 ? "canary" : "live"}>
-            {overBudgetMs > 0
-              ? `${formatMs(overBudgetMs)} to remove`
-              : "Budget met"}
-          </LiveBadge>
+          <LiveBadge tone={latencyBadge.tone}>{latencyBadge.label}</LiveBadge>
         </div>
 
         <label className="flex flex-col gap-2 text-sm" htmlFor="latency-target">
@@ -258,46 +270,61 @@ export function CostCapacityPanel({ model, latency }: CostCapacityPanelProps) {
           />
         </label>
 
-        <div
-          aria-label="Latency budget stacked bar"
-          className="relative rounded-md border p-3"
-          role="img"
-        >
-          <div className="flex h-8 overflow-hidden rounded-md bg-muted">
-            {latency.segments.map((segment) => (
-              <div
-                aria-hidden="true"
-                className={
-                  segment.state === "ready"
-                    ? "border-r border-background bg-info/70"
-                    : "border-r border-background bg-muted"
-                }
-                key={segment.id}
-                style={{ width: segmentWidth(segment, latency.totalMs) }}
-                title={`${segment.label}: ${formatMs(segment.ms)}`}
-              />
-            ))}
-          </div>
+        {latency.segments.length > 0 ? (
           <div
-            aria-hidden="true"
-            className="absolute top-2 h-10 border-l-2 border-warning"
-            style={{ left: `${targetPercent}%` }}
-          />
-          <dl className="mt-3 grid gap-2 text-xs text-muted-foreground 2xl:grid-cols-3">
-            {latency.segments.map((segment) => (
-              <div key={segment.id}>
-                <dt className="font-semibold text-foreground">
-                  {segment.label}
-                </dt>
-                <dd>
-                  {formatMs(segment.ms)}. Evidence: {segment.evidence}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
+            aria-label="Latency budget stacked bar"
+            className="relative rounded-md border p-3"
+            role="img"
+          >
+            <div className="flex h-8 overflow-hidden rounded-md bg-muted">
+              {latency.segments.map((segment) => (
+                <div
+                  aria-hidden="true"
+                  className={
+                    segment.state === "ready"
+                      ? "border-r border-background bg-info/70"
+                      : "border-r border-background bg-muted"
+                  }
+                  key={segment.id}
+                  style={{ width: segmentWidth(segment, latency.totalMs) }}
+                  title={`${segment.label}: ${formatMs(segment.ms)}`}
+                />
+              ))}
+            </div>
+            <div
+              aria-hidden="true"
+              className="absolute top-2 h-10 border-l-2 border-warning"
+              style={{ left: `${targetPercent}%` }}
+            />
+            <dl className="mt-3 grid gap-2 text-xs text-muted-foreground 2xl:grid-cols-3">
+              {latency.segments.map((segment) => (
+                <div key={segment.id}>
+                  <dt className="font-semibold text-foreground">
+                    {segment.label}
+                  </dt>
+                  <dd>
+                    {formatMs(segment.ms)}. Evidence: {segment.evidence}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ) : null}
 
-        {overBudgetMs > 0 ? (
+        {!isTraceBacked ? (
+          <StatePanel
+            state={isUnavailable ? "empty" : "stale"}
+            title={
+              isUnavailable
+                ? "Trace latency is unavailable here"
+                : "Latency is planning-only"
+            }
+          >
+            {isUnavailable
+              ? "Cost records do not include runtime span timing. Open Trace Theater or Replay Workbench to inspect latency, suggestions, and budget deltas backed by trace spans."
+              : "This is a planning estimate. Do not treat it as current production latency until a trace is selected."}
+          </StatePanel>
+        ) : overBudgetMs > 0 ? (
           <StatePanel state="stale" title="Latency target needs changes">
             Shrink at least {formatMs(overBudgetMs)} before this scenario meets
             the current marker. Suggestions below show quality, eval, and cost
@@ -310,53 +337,61 @@ export function CostCapacityPanel({ model, latency }: CostCapacityPanelProps) {
           </StatePanel>
         )}
 
-        <div className="grid gap-3 2xl:grid-cols-3">
-          {orderedSuggestions.map((suggestion) => (
-            <article
-              className="rounded-md border p-4"
-              data-testid={`latency-suggestion-${suggestion.id}`}
-              key={suggestion.id}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <h4 className="font-semibold">{suggestion.label}</h4>
-                <LiveBadge
-                  tone={suggestion.state === "blocked" ? "canary" : "staged"}
-                >
-                  {suggestion.state}
-                </LiveBadge>
-              </div>
-              <dl className="mt-3 space-y-2 text-sm">
-                <div>
-                  <dt className="text-xs font-semibold uppercase text-muted-foreground">
-                    Latency
-                  </dt>
-                  <dd>{formatSignedMs(suggestion.expectedMsDelta)}</dd>
+        {orderedSuggestions.length > 0 ? (
+          <div className="grid gap-3 2xl:grid-cols-3">
+            {orderedSuggestions.map((suggestion) => (
+              <article
+                className="rounded-md border p-4"
+                data-testid={`latency-suggestion-${suggestion.id}`}
+                key={suggestion.id}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <h4 className="font-semibold">{suggestion.label}</h4>
+                  <LiveBadge
+                    tone={suggestion.state === "blocked" ? "canary" : "staged"}
+                  >
+                    {suggestion.state}
+                  </LiveBadge>
                 </div>
-                <div>
-                  <dt className="text-xs font-semibold uppercase text-muted-foreground">
-                    Cost
-                  </dt>
-                  <dd>{formatSignedUsd(suggestion.costImpactUsd)}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold uppercase text-muted-foreground">
-                    Quality
-                  </dt>
-                  <dd>{suggestion.qualityImpact}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold uppercase text-muted-foreground">
-                    Eval impact
-                  </dt>
-                  <dd>{suggestion.evalImpact}</dd>
-                </div>
-              </dl>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Evidence: {suggestion.evidence}
-              </p>
-            </article>
-          ))}
-        </div>
+                <dl className="mt-3 space-y-2 text-sm">
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Latency
+                    </dt>
+                    <dd>{formatSignedMs(suggestion.expectedMsDelta)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Cost
+                    </dt>
+                    <dd>{formatSignedUsd(suggestion.costImpactUsd)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Quality
+                    </dt>
+                    <dd>{suggestion.qualityImpact}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Eval impact
+                    </dt>
+                    <dd>{suggestion.evalImpact}</dd>
+                  </div>
+                </dl>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Evidence: {suggestion.evidence}
+                </p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <StatePanel state="empty" title="No latency suggestions yet">
+            Suggestions require span-level timing from a selected trace. This
+            page can explain spend, but it cannot invent latency fixes from cost
+            usage records alone.
+          </StatePanel>
+        )}
       </section>
     </section>
   );
