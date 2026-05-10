@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_agents import AgentRecord
+from loop_control_plane.agent_commitments import CommitmentDocumentRecord
 from loop_control_plane.audit_events import AuditEvent
 from loop_control_plane.change_packages import ChangePackageRecord
 from loop_control_plane.channel_bindings import ChannelBindingRecord
@@ -550,6 +551,8 @@ def build_evidence_export_payload(
     workspace_id: UUID,
     body: ComplianceEvidenceExportCreate,
     review: dict[str, Any],
+    commitments_by_agent: dict[UUID, list[CommitmentDocumentRecord]],
+    change_packages_by_agent: dict[UUID, list[ChangePackageRecord]],
     evidence_packs_by_agent: dict[UUID, list[EvidencePackRecord]],
     actor_sub: str,
 ) -> dict[str, Any]:
@@ -566,15 +569,57 @@ def build_evidence_export_payload(
         "channel_readiness",
     ]
     sections = body.include_sections or default_sections
+    include_all = not body.include_sections
+
+    def wants(section: str) -> bool:
+        return include_all or section in sections
+
     artifact_refs: list[str] = []
-    for row in review["approval_queue"]:
-        artifact_refs.append(str(row["evidence_ref"]))
-    for row in review["tool_grants"]:
-        artifact_refs.append(str(row["evidence_ref"]))
-    for row in review["memory_policies"]:
-        artifact_refs.append(str(row["evidence_ref"]))
-    for row in review["incidents"]:
-        artifact_refs.append(str(row["evidence_ref"]))
+    if wants("commitment"):
+        for commitments in commitments_by_agent.values():
+            artifact_refs.extend(f"commitment/{record.id}" for record in commitments)
+    if wants("change_packages"):
+        for packages in change_packages_by_agent.values():
+            artifact_refs.extend(f"change-package/{package.id}" for package in packages)
+    if wants("eval_results"):
+        for packages in change_packages_by_agent.values():
+            artifact_refs.extend(
+                f"eval-results/{package.eval_results_ref}"
+                for package in packages
+                if package.eval_results_ref
+            )
+    if wants("replay_results"):
+        for packages in change_packages_by_agent.values():
+            artifact_refs.extend(
+                f"replay-results/{package.replay_results_ref}"
+                for package in packages
+                if package.replay_results_ref
+            )
+    if wants("approvals"):
+        for packages in change_packages_by_agent.values():
+            for package in packages:
+                artifact_refs.extend(
+                    f"approval/{package.id}/{approval.get('id', 'approval')}"
+                    for approval in package.required_approvals
+                    if approval.get("required")
+                )
+        for row in review["approval_queue"]:
+            artifact_refs.append(str(row["evidence_ref"]))
+    if wants("incidents"):
+        for row in review["incidents"]:
+            artifact_refs.append(str(row["evidence_ref"]))
+    if wants("audit_events"):
+        for row in review["audit_events"]:
+            artifact_refs.append(str(row["evidence_ref"]))
+    if wants("tool_grants"):
+        for row in review["tool_grants"]:
+            artifact_refs.append(str(row["evidence_ref"]))
+    if wants("memory_policies"):
+        for row in review["memory_policies"]:
+            artifact_refs.append(str(row["evidence_ref"]))
+    if wants("channel_readiness"):
+        for row in review["channel_readiness"]:
+            artifact_refs.append(str(row["evidence_ref"]))
     for packs in evidence_packs_by_agent.values():
         artifact_refs.extend(f"evidence-pack/{pack.id}" for pack in packs)
 

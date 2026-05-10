@@ -235,6 +235,12 @@ async def create_compliance_evidence_export(
     agents = await cp.agents.list_for_workspace(workspace_id)
     if body.agent_id is not None:
         agents = [agent for agent in agents if agent.id == body.agent_id]
+    commitments_by_agent = {
+        agent.id: await cp.agent_commitments.history(agent=agent) for agent in agents
+    }
+    change_packages_by_agent = {
+        agent.id: await cp.change_packages.list_for_agent(agent=agent) for agent in agents
+    }
     evidence_packs_by_agent = {
         agent.id: await cp.deployments.list_evidence_packs(agent=agent) for agent in agents
     }
@@ -242,6 +248,8 @@ async def create_compliance_evidence_export(
         workspace_id=workspace_id,
         body=body,
         review=review,
+        commitments_by_agent=commitments_by_agent,
+        change_packages_by_agent=change_packages_by_agent,
         evidence_packs_by_agent=evidence_packs_by_agent,
         actor_sub=caller_sub,
     )
