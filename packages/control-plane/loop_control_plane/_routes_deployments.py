@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
-from loop_control_plane.authorize import authorize_workspace_access
+from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.channel_bindings import (
     ChannelBindingRecord,
     ChannelType,
@@ -69,6 +69,7 @@ async def _agent(
     agent_id: UUID,
     caller_sub: str,
     workspace_id: UUID | None = None,
+    required_role: Role | None = None,
 ) -> Any:
     cp = request.app.state.cp
     if workspace_id is None:
@@ -80,6 +81,7 @@ async def _agent(
         workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=required_role,
     )
     return await cp.agents.get(
         workspace_id=workspace_id,
@@ -274,6 +276,7 @@ async def start_deployment(
         agent_id=agent_id,
         workspace_id=workspace_id,
         caller_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     workspace_id = agent.workspace_id
     change_package = await _change_package(
@@ -344,6 +347,7 @@ async def _deployment_action(
         agent_id=agent_id,
         workspace_id=workspace_id,
         caller_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     workspace_id = agent.workspace_id
     deployment = await request.app.state.cp.deployments.action(
@@ -417,6 +421,7 @@ async def evaluate_deployment_threshold(
         agent_id=agent_id,
         workspace_id=workspace_id,
         caller_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     workspace_id = agent.workspace_id
     deployment = await _deployment(request, agent=agent, deployment_id=deployment_id)
@@ -541,6 +546,7 @@ async def ramp_deployment(
         agent_id=agent_id,
         workspace_id=workspace_id,
         caller_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     workspace_id = agent.workspace_id
     deployment = await request.app.state.cp.deployments.ramp(
@@ -634,6 +640,7 @@ async def export_evidence_pack(
         agent_id=agent_id,
         workspace_id=workspace_id,
         caller_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     workspace_id = agent.workspace_id
     pack = await _evidence_pack(request, agent=agent, evidence_pack_id=evidence_pack_id)
