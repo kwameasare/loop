@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { ObservatoryScreen } from "@/components/observatory/observatory-screen";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import {
   fetchObservatoryModel,
   type ObservatoryModel,
@@ -56,9 +59,11 @@ function ObservePageBody(): JSX.Element {
   if (error) {
     return (
       <main className="mx-auto w-full max-w-7xl p-6">
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
+        <SectionDegraded
+          title="Observatory"
+          description="Production telemetry, incidents, and anomaly evidence could not load from the control plane."
+          evidence={error}
+        />
       </main>
     );
   }

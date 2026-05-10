@@ -7,7 +7,10 @@ import { ChangesetApprovals } from "@/components/collaboration/changeset-approva
 import { PairDebugPanel } from "@/components/collaboration/pair-debug-panel";
 import { PresenceBar } from "@/components/collaboration/presence-bar";
 import { CommentThreadView } from "@/components/comments/comment-thread";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import {
   EMPTY_PAIR_DEBUG,
   fetchCollaborationWorkspace,
@@ -78,16 +81,18 @@ function CollaborateReviewPageBody(): JSX.Element {
         </p>
         <h1 className="text-2xl font-semibold">Review &amp; pair debug</h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Comments anchor to stable object IDs and survive versions.
-          Changesets surface behavior, eval, cost, and latency approvals.
-          Pair debugging keeps the trace playhead in sync.
+          Comments anchor to stable object IDs and survive versions. Changesets
+          surface behavior, eval, cost, and latency approvals. Pair debugging
+          keeps the trace playhead in sync.
         </p>
-        {error ? (
-          <p className="text-sm text-destructive" role="alert">
-            {error}
-          </p>
-        ) : null}
       </header>
+      {error ? (
+        <SectionDegraded
+          title="Collaboration evidence"
+          description="Presence, changeset, comment, and pair-debug evidence could not load from the control plane."
+          evidence={error}
+        />
+      ) : null}
       <PresenceBar users={workspace.presence} />
       {workspace.changeset ? (
         <ChangesetApprovals changeset={workspace.changeset} />
