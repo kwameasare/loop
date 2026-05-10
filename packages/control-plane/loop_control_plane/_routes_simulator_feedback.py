@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
+from hashlib import sha256
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Request
 
@@ -16,6 +18,7 @@ from loop_control_plane.simulator_feedback import (
     simulator_run_payload,
     simulator_turn_rating_payload,
 )
+from loop_control_plane.trace_search import TraceSummary
 
 router = APIRouter(prefix="/v1/agents", tags=["SimulatorFeedback"])
 
@@ -39,6 +42,13 @@ async def _agent(
     )
 
 
+def _durable_trace_id(*, body: SimulatorRunCreate, agent_id: UUID) -> str:
+    if len(body.trace_id) == 32:
+        return body.trace_id
+    seed = f"{agent_id}:{body.channel}:{body.prompt}:{body.final_answer}:{uuid4().hex}"
+    return sha256(seed.encode("utf-8")).hexdigest()[:32]
+
+
 @router.post("/{agent_id}/simulator/runs", status_code=201)
 async def create_simulator_run(
     request: Request,
@@ -54,10 +64,25 @@ async def create_simulator_run(
         workspace_id=workspace_id,
         caller_sub=caller_sub,
     )
+    trace_id = _durable_trace_id(body=body, agent_id=agent.id)
+    body = body.model_copy(update={"trace_id": trace_id})
     run = await cp.simulator_feedback.add_run(
         agent=agent,
         body=body,
         actor_sub=caller_sub,
+    )
+    cp.trace_store.add(
+        TraceSummary(
+            workspace_id=workspace_id,
+            trace_id=trace_id,
+            turn_id=uuid4(),
+            conversation_id=uuid4(),
+            agent_id=agent.id,
+            started_at=datetime.now(UTC),
+            duration_ms=body.latency_ms,
+            span_count=4,
+            error=body.status == "failed",
+        )
     )
     record_audit_event(
         workspace_id=workspace_id,

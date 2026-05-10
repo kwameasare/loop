@@ -407,7 +407,7 @@ export function SimulatorLab({
         prompt: lastPrompt,
         final_answer: state.finalAnswer ?? state.tokens ?? run.draftOutput,
         channel: config.channel,
-        trace_id: run.traceId,
+        trace_id: simulatorRun?.trace_id ?? run.traceId,
         simulator_run_id: simulatorRun?.id ?? "",
         issue_annotation: issueAnnotation,
         save_as_eval: saveAsEval,
@@ -706,6 +706,9 @@ export function SimulatorLab({
             data-testid="simulator-run-record"
           >
             Simulator run saved: <code>{simulatorRun.id}</code>
+            <span className="ml-2 text-muted-foreground">
+              trace <code>{simulatorRun.trace_id}</code>
+            </span>
           </div>
         ) : null}
         {simulatorRunError ? (
