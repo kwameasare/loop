@@ -20,6 +20,7 @@ import {
   MarketplaceGrid,
   PrivateSkillPublisher,
 } from "@/components/marketplace";
+import { SectionDegraded } from "@/components/section-states";
 import {
   fetchMarketplaceCatalog,
   type MarketplaceItem,
@@ -61,7 +62,10 @@ function MarketplacePageBody(): JSX.Element {
   }, []);
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6" aria-label="Marketplace">
+    <main
+      className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6"
+      aria-label="Marketplace"
+    >
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Marketplace</h1>
@@ -71,7 +75,11 @@ function MarketplacePageBody(): JSX.Element {
             deprecation, and review.
           </p>
         </div>
-        <div role="tablist" aria-label="Marketplace mode" className="flex gap-1">
+        <div
+          role="tablist"
+          aria-label="Marketplace mode"
+          className="flex gap-1"
+        >
           <button
             type="button"
             role="tab"
@@ -104,39 +112,41 @@ function MarketplacePageBody(): JSX.Element {
       </header>
 
       {tab === "browse" ? (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_3fr]">
-          {error ? (
-            <p className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-              {error}
-            </p>
-          ) : (
+        error ? (
+          <SectionDegraded
+            title="Marketplace"
+            description="Marketplace catalog evidence could not load from the control plane."
+            evidence={error}
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_3fr]">
             <MarketplaceGrid
               items={items ?? []}
               includeDeprecated
               onSelect={setSelected}
             />
-          )}
-          <div>
-            {items === null && !error ? (
-              <p
-                role="status"
-                className="rounded-md border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground"
-              >
-                Loading marketplace...
-              </p>
-            ) : selected ? (
-              <MarketplaceDetail item={selected} />
-            ) : (
-              <p
-                role="status"
-                className="rounded-md border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground"
-              >
-                Select an item to see permissions, security posture, sample evals,
-                screenshots, and version history.
-              </p>
-            )}
+            <div>
+              {items === null ? (
+                <p
+                  role="status"
+                  className="rounded-md border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground"
+                >
+                  Loading marketplace...
+                </p>
+              ) : selected ? (
+                <MarketplaceDetail item={selected} />
+              ) : (
+                <p
+                  role="status"
+                  className="rounded-md border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground"
+                >
+                  Select an item to see permissions, security posture, sample
+                  evals, screenshots, and version history.
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        )
       ) : (
         <PrivateSkillPublisher
           itemId="mk_skill_pii_redactor"
