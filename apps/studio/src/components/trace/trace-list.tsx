@@ -13,6 +13,10 @@ import {
 export interface TraceListProps {
   traces: TraceSummary[];
   initialPageSize?: number;
+  initialAgentId?: string | undefined;
+  initialQuery?: string | undefined;
+  initialStatus?: "all" | "ok" | "error" | undefined;
+  focusMessage?: string | undefined;
 }
 
 /**
@@ -22,9 +26,11 @@ export interface TraceListProps {
  * accept server-prepared rows page-by-page.
  */
 export function TraceList(props: TraceListProps) {
-  const [q, setQ] = useState("");
-  const [status, setStatus] = useState<"all" | "ok" | "error">("all");
-  const [agentId, setAgentId] = useState<string>("");
+  const [q, setQ] = useState(props.initialQuery ?? "");
+  const [status, setStatus] = useState<"all" | "ok" | "error">(
+    props.initialStatus ?? "all",
+  );
+  const [agentId, setAgentId] = useState<string>(props.initialAgentId ?? "");
   const [page, setPage] = useState(1);
   const pageSize = props.initialPageSize ?? 10;
 
@@ -50,6 +56,14 @@ export function TraceList(props: TraceListProps) {
 
   return (
     <section className="flex flex-col gap-3" data-testid="trace-list">
+      {props.focusMessage ? (
+        <p
+          className="rounded-md border border-info/40 bg-info/5 px-3 py-2 text-sm text-info"
+          data-testid="trace-list-focused-query"
+        >
+          {props.focusMessage}
+        </p>
+      ) : null}
       <header className="flex flex-wrap items-center gap-2">
         <input
           aria-label="Search traces"

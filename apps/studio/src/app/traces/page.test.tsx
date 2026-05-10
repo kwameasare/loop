@@ -4,8 +4,16 @@ import type { ReactNode } from "react";
 
 import TracesPage from "./page";
 
+const navigationMocks = vi.hoisted(() => ({
+  params: new URLSearchParams(),
+}));
+
 vi.mock("@/components/auth/require-auth", () => ({
   RequireAuth: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => navigationMocks.params,
 }));
 
 vi.mock("@/lib/use-active-workspace", () => ({
@@ -25,6 +33,7 @@ function restoreEnv(key: string, value: string | undefined): void {
 
 describe("TracesPage", () => {
   afterEach(() => {
+    navigationMocks.params = new URLSearchParams();
     restoreEnv("LOOP_CP_API_BASE_URL", ORIGINAL_BASE);
     restoreEnv("NEXT_PUBLIC_LOOP_API_URL", ORIGINAL_PUBLIC_BASE);
   });
@@ -39,5 +48,50 @@ describe("TracesPage", () => {
       expect(view.container).toHaveTextContent("Trace evidence is unavailable");
       expect(view.container).toHaveTextContent("LOOP_CP_API_BASE_URL");
     });
+  });
+
+  it("applies trace evidence query params instead of opening a generic list", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test/v1";
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+    navigationMocks.params = new URLSearchParams(
+      "only_errors=true&agent_id=agent_support",
+    );
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        items: [
+          {
+            workspace_id: "ws_1",
+            trace_id: "trace_error",
+            turn_id: "turn_1",
+            conversation_id: "conv_1",
+            agent_id: "agent_support",
+            agent_name: "Support Agent",
+            root_name: "turn",
+            started_at: "2026-05-09T10:00:00Z",
+            duration_ms: 100,
+            span_count: 2,
+            error: true,
+          },
+        ],
+        next_cursor: null,
+      }),
+    );
+    vi.stubGlobal("fetch", fetcher);
+
+    const view = render(<TracesPage />);
+
+    await waitFor(() => {
+      expect(view.getByTestId("trace-list-focused-query")).toHaveTextContent(
+        "showing error traces",
+      );
+      expect(view.getByTestId("trace-filter-status")).toHaveValue("error");
+      expect(view.getByTestId("trace-filter-agent")).toHaveValue(
+        "agent_support",
+      );
+    });
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/workspaces/ws_1/traces?agent_id=agent_support&page_size=100",
+      expect.objectContaining({ method: "GET" }),
+    );
   });
 });
