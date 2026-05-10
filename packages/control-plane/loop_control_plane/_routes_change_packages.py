@@ -10,6 +10,7 @@ from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.change_packages import (
     ChangePackageApprovalAction,
+    ChangePackageApprovalExpiry,
     ChangePackageGenerate,
     change_package_payload,
     infer_change_risk,
@@ -232,6 +233,49 @@ async def generate_change_package(
             if release_candidate is not None
             else None,
             "pre_approved_classes": [record.id for record in preapproved],
+        },
+    )
+    return change_package_payload(package)
+
+
+@router.post("/{agent_id}/change-packages/{package_id}/approvals/expire")
+async def expire_change_package_approvals(
+    request: Request,
+    agent_id: UUID,
+    package_id: str,
+    body: ChangePackageApprovalExpiry,
+    caller_sub: str = CALLER,
+    workspace_id: UUID | None = None,
+) -> dict[str, Any]:
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
+        workspace_id=workspace_id,
+        required_role=Role.ADMIN,
+    )
+    package = await request.app.state.cp.change_packages.expire_approvals(
+        agent=agent,
+        package_id=package_id,
+        body=body,
+    )
+    expired_ids = [
+        approval.get("id")
+        for approval in package.required_approvals
+        if approval.get("state") == "expired"
+    ]
+    _audit(
+        request,
+        workspace_id=agent.workspace_id,
+        caller_sub=caller_sub,
+        action="change_package:approval_expire",
+        resource_id=package.id,
+        payload={
+            "agent_id": str(agent_id),
+            "expired_approval_ids": expired_ids,
+            "reason": body.reason,
+            "content_hash": package.content_hash,
+            "status": package.status,
         },
     )
     return change_package_payload(package)

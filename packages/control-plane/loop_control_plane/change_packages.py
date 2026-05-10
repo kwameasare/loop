@@ -45,6 +45,13 @@ class ChangePackageApprovalAction(BaseModel):
     comment: str = Field(default="", max_length=1200)
 
 
+class ChangePackageApprovalExpiry(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    approval_ids: list[str] = Field(default_factory=list, max_length=20)
+    reason: str = Field(default="Approval request expired.", max_length=1200)
+
+
 class ChangePackageRecord(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -469,4 +476,65 @@ class ChangePackageRegistry:
                 )
                 items[index] = reviewed
                 return reviewed
+        raise WorkspaceError(f"unknown change package: {package_id}")
+
+    async def expire_approvals(
+        self,
+        *,
+        agent: AgentRecord,
+        package_id: str,
+        body: ChangePackageApprovalExpiry,
+    ) -> ChangePackageRecord:
+        async with self._lock:
+            items = self._items.get(agent.id, [])
+            target_ids = set(body.approval_ids)
+            for index, item in enumerate(items):
+                if item.id != package_id:
+                    continue
+                if item.status == "stale":
+                    raise WorkspaceError(
+                        f"change package {package_id} is stale and cannot expire approvals"
+                    )
+                if item.status not in {"submitted", "approved", "deployable"}:
+                    raise WorkspaceError(
+                        f"change package {package_id} must be submitted before approval expiry"
+                    )
+                now = datetime.now(UTC)
+                approvals: list[dict[str, Any]] = []
+                expired_ids: list[str] = []
+                for approval in item.required_approvals:
+                    approval_id = str(approval.get("id", "approval"))
+                    should_expire = (
+                        approval.get("required")
+                        and not approval.get("satisfied")
+                        and approval.get("state") == "requested"
+                        and (not target_ids or approval_id in target_ids)
+                    )
+                    if should_expire:
+                        expired_ids.append(approval_id)
+                        approvals.append(
+                            {
+                                **approval,
+                                "satisfied": False,
+                                "state": "expired",
+                                "expired_at": now.isoformat(),
+                                "expired_reason": body.reason,
+                            }
+                        )
+                    else:
+                        approvals.append(approval)
+                if not expired_ids:
+                    raise WorkspaceError(
+                        f"change package {package_id} has no requested approvals to expire"
+                    )
+                expired = item.model_copy(
+                    update={
+                        "required_approvals": approvals,
+                        "approval_status": "expired",
+                        "status": "changes_requested",
+                        "updated_at": now,
+                    }
+                )
+                items[index] = expired
+                return expired
         raise WorkspaceError(f"unknown change package: {package_id}")

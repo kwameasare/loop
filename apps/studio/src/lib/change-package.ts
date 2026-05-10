@@ -45,6 +45,8 @@ export interface ChangePackageApproval {
   comment?: string;
   invalidated_at?: string;
   invalidated_reason?: string;
+  expired_at?: string;
+  expired_reason?: string;
 }
 
 export interface PreApprovedClassUse {
@@ -74,6 +76,11 @@ export interface ChangePackageApprovalInput {
   approval_id: string;
   decision: ChangePackageApprovalDecision;
   comment?: string;
+}
+
+export interface ChangePackageApprovalExpiryInput {
+  approval_ids?: string[];
+  reason?: string;
 }
 
 export interface ChangePackageApprovalOptions extends UxWireupClientOptions {
@@ -246,6 +253,30 @@ export async function recordChangePackageApproval(
   );
 }
 
+export async function expireChangePackageApprovals(
+  agentId: string,
+  packageId: string,
+  input: ChangePackageApprovalExpiryInput = {},
+  opts: ChangePackageApprovalOptions = {},
+): Promise<ChangePackage> {
+  return cpJson<ChangePackage>(
+    `/agents/${encodeURIComponent(agentId)}/change-packages/${encodeURIComponent(
+      packageId,
+    )}/approvals/expire`,
+    {
+      ...opts,
+      method: "POST",
+      body: input,
+      allowFallback: opts.allowFixture === true,
+      fallback: applyLocalApprovalExpiry(
+        opts.fallbackPackage ?? buildLocalChangePackage(agentId),
+        packageId,
+        input,
+      ),
+    },
+  );
+}
+
 export function applyLocalApproval(
   changePackage: ChangePackage,
   packageId: string,
@@ -297,6 +328,38 @@ export function applyLocalApproval(
     required_approvals: approvals,
     approval_status,
     status,
+    updated_at: now,
+  };
+}
+
+export function applyLocalApprovalExpiry(
+  changePackage: ChangePackage,
+  packageId: string,
+  input: ChangePackageApprovalExpiryInput = {},
+): ChangePackage {
+  const now = new Date().toISOString();
+  const requested = new Set(input.approval_ids ?? []);
+  const approvals = changePackage.required_approvals.map((approval) => {
+    const shouldExpire =
+      approval.required &&
+      !approval.satisfied &&
+      (approval.state ?? "requested") === "requested" &&
+      (requested.size === 0 || requested.has(approval.id));
+    if (!shouldExpire) return approval;
+    return {
+      ...approval,
+      satisfied: false,
+      state: "expired",
+      expired_at: now,
+      expired_reason: input.reason ?? "Approval request expired.",
+    };
+  });
+  return {
+    ...changePackage,
+    id: packageId,
+    required_approvals: approvals,
+    approval_status: "expired",
+    status: "changes_requested",
     updated_at: now,
   };
 }

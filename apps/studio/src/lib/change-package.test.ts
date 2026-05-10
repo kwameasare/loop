@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildLocalChangePackage,
+  expireChangePackageApprovals,
   recordChangePackageApproval,
   fetchCurrentChangePackage,
   generateChangePackage,
@@ -87,6 +88,15 @@ describe("change package client", () => {
         { baseUrl: "", fallbackPackage: local },
       ),
     ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      expireChangePackageApprovals(
+        "agt_1",
+        "cp_1",
+        { approval_ids: ["owner"], reason: "SLA elapsed." },
+        { baseUrl: "", fallbackPackage: local },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
   });
 
   it("keeps deterministic preflight and approval mutations explicitly opt-in", async () => {
@@ -129,6 +139,26 @@ describe("change package client", () => {
       id: "cp_1",
       status: "approved",
       approval_status: "approved",
+    });
+
+    await expect(
+      expireChangePackageApprovals(
+        "agt_1",
+        "cp_1",
+        { approval_ids: ["owner"], reason: "SLA elapsed." },
+        { baseUrl: "", allowFixture: true, fallbackPackage: local },
+      ),
+    ).resolves.toMatchObject({
+      id: "cp_1",
+      status: "changes_requested",
+      approval_status: "expired",
+      required_approvals: [
+        expect.objectContaining({
+          id: "owner",
+          state: "expired",
+          expired_reason: "SLA elapsed.",
+        }),
+      ],
     });
   });
 
@@ -221,6 +251,54 @@ describe("change package client", () => {
       approval_id: "owner",
       decision: "approve",
       comment: "Looks safe.",
+    });
+  });
+
+  it("expires requested approvals through the approval expiry endpoint", async () => {
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ...buildLocalChangePackage("agt_1"),
+            id: "cp_1",
+            status: "changes_requested",
+            approval_status: "expired",
+            required_approvals: [
+              {
+                id: "compliance",
+                role: "Compliance reviewer",
+                required: true,
+                satisfied: false,
+                state: "expired",
+                reason: "Compliance approval required.",
+                expired_reason: "Compliance review SLA elapsed.",
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+    );
+
+    const expired = await expireChangePackageApprovals(
+      "agt_1",
+      "cp_1",
+      {
+        approval_ids: ["compliance"],
+        reason: "Compliance review SLA elapsed.",
+      },
+      { fetcher },
+    );
+
+    expect(expired.approval_status).toBe("expired");
+    expect(expired.required_approvals[0]?.state).toBe("expired");
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agt_1/change-packages/cp_1/approvals/expire",
+      expect.objectContaining({ method: "POST" }),
+    );
+    const [, init] = fetcher.mock.calls[0]!;
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      approval_ids: ["compliance"],
+      reason: "Compliance review SLA elapsed.",
     });
   });
 });
