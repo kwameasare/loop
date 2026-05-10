@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { describe, expect, it } from "vitest";
 
@@ -55,7 +55,15 @@ const trace: Trace = {
 };
 
 describe("TraceTheater", () => {
-  it("renders the canonical summary and evidence-backed explanation", () => {
+  async function waitForInsightPanelsToSettle() {
+    await waitFor(() =>
+      expect(
+        screen.getAllByText(/LOOP_CP_API_BASE_URL is required/i),
+      ).toHaveLength(2),
+    );
+  }
+
+  it("renders the canonical summary and evidence-backed explanation", async () => {
     render(<TraceTheater trace={trace} />);
     expect(screen.getByTestId("trace-summary")).toHaveTextContent(
       "Answered with grounded cancellation steps",
@@ -72,14 +80,16 @@ describe("TraceTheater", () => {
     expect(screen.getByTestId("latency-budget-visualizer")).toBeInTheDocument();
     expect(screen.getByTestId("cost-of-context-slider")).toBeInTheDocument();
     expect(screen.getByTestId("agent-xray")).toBeInTheDocument();
+    await waitForInsightPanelsToSettle();
   });
 
-  it("shows a degraded state when trace metadata is missing", () => {
+  it("shows a degraded state when trace metadata is missing", async () => {
     render(<TraceTheater trace={{ id: "partial", spans: trace.spans }} />);
     expect(screen.getByText("Trace metadata unavailable")).toBeInTheDocument();
     expect(screen.getAllByTestId("state-panel")[0]).toHaveTextContent(
       "Trace metadata unavailable",
     );
     expect(screen.getByTestId("trace-waterfall")).toBeInTheDocument();
+    await waitForInsightPanelsToSettle();
   });
 });

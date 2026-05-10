@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -13,12 +13,22 @@ import { BehaviorEditor } from "./behavior-editor";
 describe("BehaviorEditor", () => {
   const previousBaseUrl = process.env.LOOP_CP_API_BASE_URL;
 
+  async function waitForCatchPanelToSettle() {
+    const panel = screen.queryByTestId("adversarial-catch-panel");
+    if (!panel) return;
+    await waitFor(() =>
+      expect(panel).not.toHaveTextContent(
+        "Checking persisted catches for this rule",
+      ),
+    );
+  }
+
   afterEach(() => {
     process.env.LOOP_CP_API_BASE_URL = previousBaseUrl;
     vi.unstubAllGlobals();
   });
 
-  it("renders the behavior surface with three modes, semantic diff, eval coverage, and preview", () => {
+  it("renders the behavior surface with three modes, semantic diff, eval coverage, and preview", async () => {
     render(
       <BehaviorEditor
         data={createBehaviorEditorData("agent_support", targetUxFixtures)}
@@ -65,9 +75,10 @@ describe("BehaviorEditor", () => {
       "aria-selected",
       "true",
     );
+    await waitForCatchPanelToSettle();
   });
 
-  it("shows inline risk flags and sentence telemetry with evidence", () => {
+  it("shows inline risk flags and sentence telemetry with evidence", async () => {
     render(
       <BehaviorEditor
         data={createBehaviorEditorData("agent_support", targetUxFixtures)}
@@ -117,6 +128,7 @@ describe("BehaviorEditor", () => {
     expect(screen.getByTestId("adversarial-catch-panel")).toHaveTextContent(
       "Ask the calm adversarial question",
     );
+    await waitForCatchPanelToSettle();
   });
 
   it("uses the selected sentence action menu to generate the focused repair", async () => {
@@ -178,9 +190,10 @@ describe("BehaviorEditor", () => {
       target_object_kind: "knowledge_chunk",
       risk_tags: ["risk_eval_gap"],
     });
+    await waitForCatchPanelToSettle();
   });
 
-  it("opens directly on a linked behavior sentence", () => {
+  it("opens directly on a linked behavior sentence", async () => {
     render(
       <BehaviorEditor
         data={createBehaviorEditorData("agent_support", targetUxFixtures)}
@@ -197,6 +210,7 @@ describe("BehaviorEditor", () => {
     expect(screen.getByTestId("failure-repair-loop")).toHaveTextContent(
       "Selected failure",
     );
+    await waitForCatchPanelToSettle();
   });
 
   it("previews style-transfer rewrites with eval deltas", async () => {
@@ -229,6 +243,7 @@ describe("BehaviorEditor", () => {
       "https://cp.test/v1/agents/agent_support/style-transfer",
       expect.objectContaining({ method: "POST" }),
     );
+    await waitForCatchPanelToSettle();
   });
 
   it("requires backend style-transfer before showing voice rewrites", async () => {
@@ -247,9 +262,10 @@ describe("BehaviorEditor", () => {
     expect(
       screen.queryByTestId("style-transfer-results"),
     ).not.toBeInTheDocument();
+    await waitForCatchPanelToSettle();
   });
 
-  it("keeps apply blocked until preview policy checks pass", () => {
+  it("keeps apply blocked until preview policy checks pass", async () => {
     render(
       <BehaviorEditor
         data={createBehaviorEditorData("agent_support", targetUxFixtures)}
@@ -261,6 +277,7 @@ describe("BehaviorEditor", () => {
     );
     expect(screen.getByTestId("behavior-apply-draft")).toBeDisabled();
     expect(screen.getByTestId("behavior-run-preview")).toBeEnabled();
+    await waitForCatchPanelToSettle();
   });
 
   it("renders a useful empty state when no behavior sections exist", () => {
@@ -279,7 +296,7 @@ describe("BehaviorEditor", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("renders behavior sourced from a live agent version spec", () => {
+  it("renders behavior sourced from a live agent version spec", async () => {
     const data = createBehaviorEditorDataFromVersion("agent_support", {
       id: "ver-live",
       agent_id: "agent_support",
@@ -301,5 +318,6 @@ describe("BehaviorEditor", () => {
       screen.getAllByText(/Answer refund questions/).length,
     ).toBeGreaterThan(0);
     expect(screen.getByText("Declared tools")).toBeInTheDocument();
+    await waitForCatchPanelToSettle();
   });
 });
