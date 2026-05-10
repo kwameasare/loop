@@ -78,24 +78,12 @@ function _voiceConfigBase(override?: string): string {
   return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
 }
 
-/**
- * Fetch the voice config for a workspace.
- *
- * Falls back to the fixture only when no cp-api base URL is configured.
- */
+/** Fetch the voice config for a workspace. */
 export async function fetchVoiceConfig(
   workspace_id: string,
   opts: VoiceConfigClientOptions = {},
 ): Promise<VoiceConfig> {
-  let base: string;
-  try {
-    base = _voiceConfigBase(opts.baseUrl);
-  } catch (err) {
-    if (err instanceof Error && /LOOP_CP_API_BASE_URL/.test(err.message)) {
-      return { ...FIXTURE_VOICE_CONFIG, workspace_id };
-    }
-    throw err;
-  }
+  const base = _voiceConfigBase(opts.baseUrl);
   const fetcher = opts.fetcher ?? fetch;
   const headers: Record<string, string> = { accept: "application/json" };
   const token = opts.token ?? process.env.LOOP_TOKEN;

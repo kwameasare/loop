@@ -94,13 +94,7 @@ export async function fetchVoiceStageModel(
 ): Promise<VoiceStageModel> {
   const base = cpApiBaseUrl(opts.baseUrl);
   if (!base) {
-    return {
-      ...VOICE_STAGE_FIXTURE,
-      config: {
-        ...VOICE_STAGE_FIXTURE.config,
-        phoneNumber: "No number provisioned",
-      },
-    };
+    throw new Error("LOOP_CP_API_BASE_URL is required to load voice stage");
   }
   const response = await (opts.fetcher ?? fetch)(
     `${base}/workspaces/${encodeURIComponent(workspaceId)}/voice/stage`,
@@ -126,20 +120,7 @@ export async function provisionVoiceNumber(
 ): Promise<VoiceNumberProvisionResult> {
   const base = cpApiBaseUrl(opts.baseUrl);
   if (!base) {
-    return {
-      id: "num_local",
-      phone_number: "+14155550100",
-      provider: opts.provider ?? "twilio",
-      provisioner: "deterministic",
-      country: opts.country ?? "US",
-      status: "provisioned",
-      sip_route: `livekit://workspace/${workspaceId}/voice/local`,
-      compliance: [
-        { id: "business_profile", status: "ready" },
-        { id: "10dlc_registration", status: "pending" },
-        { id: "livekit_sip_trunk", status: "ready" },
-      ],
-    };
+    throw new Error("LOOP_CP_API_BASE_URL is required to provision voice numbers");
   }
   const response = await (opts.fetcher ?? fetch)(
     `${base}/workspaces/${encodeURIComponent(workspaceId)}/voice/numbers/provision`,
