@@ -788,11 +788,19 @@ export function SimulatorLab({
                     Eval case created:{" "}
                     <code>{ratingResult.eval_case_ref.case_id}</code>
                   </p>
-                ) : (
+                ) : null}
+                {ratingResult.behavior_note_ref ? (
+                  <p className="mt-2">
+                    Behavior note candidate:{" "}
+                    <code>{ratingResult.behavior_note_ref.id}</code>
+                  </p>
+                ) : null}
+                {!ratingResult.eval_case_ref &&
+                !ratingResult.behavior_note_ref ? (
                   <p className="mt-2">
                     Saved as a candidate behavior artifact.
                   </p>
-                )}
+                ) : null}
               </div>
             ) : null}
           </section>

@@ -36,6 +36,15 @@ export interface SimulatorTurnRatingRecord {
     case_id: string;
     case?: Record<string, unknown>;
   };
+  behavior_note_ref: null | {
+    id: string;
+    kind: "risk_rule" | "clarification_prompt";
+    status: string;
+    title: string;
+    body: string;
+    rating: FirstProofRating;
+    evidence_ref: string;
+  };
   cost_usd: number;
   latency_ms: number;
   created_by: string;
@@ -83,6 +92,21 @@ function localRating(
           case_id: `case_${input.rating}`,
         }
       : null,
+    behavior_note_ref:
+      input.rating === "risky" || input.rating === "unclear"
+        ? {
+            id: `bnote_${input.rating}`,
+            kind:
+              input.rating === "risky" ? "risk_rule" : "clarification_prompt",
+            status: "candidate",
+            title,
+            body:
+              input.issue_annotation ||
+              "Convert this first-proof finding into behavior structure.",
+            rating: input.rating,
+            evidence_ref: input.trace_id || `simulator-turn/${input.rating}`,
+          }
+        : null,
     created_by: "local",
     created_at: new Date(0).toISOString(),
   };

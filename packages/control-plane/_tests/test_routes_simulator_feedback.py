@@ -81,6 +81,7 @@ def test_simulator_turn_rating_creates_eval_case_and_audit_event(
     body = response.json()
     assert body["rating"] == "bad"
     assert body["candidate_artifact"]["kind"] == "regression_eval_candidate"
+    assert body["behavior_note_ref"] is None
     assert body["eval_case_ref"]["case"]["source"] == "first-proof:bad"
     assert (
         body["eval_case_ref"]["case"]["expected"]["outcome"]
@@ -120,4 +121,7 @@ def test_simulator_turn_rating_can_capture_unclear_turn_without_eval(
     assert response.status_code == 201, response.text
     body = response.json()
     assert body["candidate_artifact"]["kind"] == "clarification_note_candidate"
+    assert body["behavior_note_ref"]["kind"] == "clarification_prompt"
+    assert body["behavior_note_ref"]["status"] == "candidate"
+    assert body["behavior_note_ref"]["evidence_ref"].startswith("simulator-turn/")
     assert body["eval_case_ref"] is None

@@ -109,6 +109,7 @@ describe("SimulatorLab", () => {
           trace_id: input.trace_id,
         },
         eval_case_ref: { suite_id: "suite_1", case_id: "case_1" },
+        behavior_note_ref: null,
         cost_usd: input.cost_usd,
         latency_ms: input.latency_ms,
         created_by: "owner-1",
@@ -148,6 +149,86 @@ describe("SimulatorLab", () => {
     });
     expect(await screen.findByTestId("first-proof-result")).toHaveTextContent(
       "Eval case created: case_1",
+    );
+  });
+
+  it("surfaces first-proof risky ratings as behavior note candidates", async () => {
+    const invoke = vi.fn(
+      async (
+        _agentId: string,
+        _prompt: string,
+        onFrame: Parameters<SimulatorInvoke>[2],
+      ) => {
+        onFrame({
+          type: "complete",
+          payload: {
+            response: {
+              content: [{ type: "text", text: "I can try the refund tool." }],
+            },
+          },
+          ts: "2026-05-01T00:00:00Z",
+        });
+      },
+    );
+    const rateTurn = vi.fn(
+      async (
+        _agentId: string,
+        input: SimulatorTurnRatingInput,
+      ): Promise<SimulatorTurnRatingRecord> => ({
+        id: "simrate_risky",
+        workspace_id: "ws_1",
+        agent_id: "agent_support",
+        rating: input.rating,
+        prompt: input.prompt,
+        final_answer: input.final_answer,
+        channel: input.channel,
+        trace_id: input.trace_id,
+        issue_annotation: input.issue_annotation,
+        candidate_artifact: {
+          kind: "risk_rule_candidate",
+          title: "Add a risk rule or escalation",
+          expected_outcome: input.issue_annotation,
+          source: "first_proof",
+          trace_id: input.trace_id,
+        },
+        eval_case_ref: null,
+        behavior_note_ref: {
+          id: "bnote_risky",
+          kind: "risk_rule",
+          status: "candidate",
+          title: "Add a risk rule or escalation",
+          body: input.issue_annotation,
+          rating: input.rating,
+          evidence_ref: input.trace_id,
+        },
+        cost_usd: input.cost_usd,
+        latency_ms: input.latency_ms,
+        created_by: "owner-1",
+        created_at: "2026-05-01T00:00:00Z",
+      }),
+    );
+    render(
+      <SimulatorLab
+        agentId="agent_support"
+        invoke={invoke}
+        rateTurn={rateTurn}
+        initialConfig={DEFAULT_SIMULATOR_CONFIG}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("emulator-input"), {
+      target: { value: "Refund this without checking policy." },
+    });
+    fireEvent.click(screen.getByTestId("emulator-send"));
+    expect(await screen.findByTestId("first-proof-rating")).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId("first-proof-annotation"), {
+      target: { value: "Require escalation before using refund tool." },
+    });
+    fireEvent.click(screen.getByTestId("first-proof-save-eval"));
+    fireEvent.click(screen.getByTestId("first-proof-rate-risky"));
+
+    expect(await screen.findByTestId("first-proof-result")).toHaveTextContent(
+      "Behavior note candidate: bnote_risky",
     );
   });
 });

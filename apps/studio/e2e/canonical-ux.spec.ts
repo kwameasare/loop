@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const VIEWPORTS = [
   { name: "desktop", width: 1280, height: 720 },
@@ -34,6 +34,13 @@ async function openAgentWorkbench(page: Page) {
   await expect(page.getByTestId("agent-detail-shell")).toBeVisible();
 }
 
+async function clickAgentTab(page: Page, tabId: string, url: RegExp) {
+  const tab = page.getByTestId(tabId);
+  await tab.scrollIntoViewIfNeeded();
+  await expect(tab).toBeVisible();
+  await Promise.all([page.waitForURL(url, { timeout: 15_000 }), tab.click()]);
+}
+
 async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() =>
     Math.max(
@@ -63,6 +70,10 @@ async function expectVisibleFocus(page: Page) {
       focusStyle!.outlineWidth !== "0px" ||
       focusStyle!.boxShadow !== "none",
   ).toBeTruthy();
+}
+
+async function expectAbsent(locator: Locator) {
+  expect(await locator.count()).toBe(0);
 }
 
 for (const viewport of VIEWPORTS) {
@@ -102,8 +113,8 @@ for (const viewport of VIEWPORTS) {
     await expect(page.getByTestId("agents-empty")).toContainText(
       "No agents yet",
     );
-    await expect(page.getByText("Canary 12%")).toHaveCount(0);
-    await expect(page.getByText("trace_refund_742")).toHaveCount(0);
+    await expectAbsent(page.getByText("Canary 12%"));
+    await expectAbsent(page.getByText("trace_refund_742"));
 
     await expectNoHorizontalOverflow(page);
 
@@ -139,13 +150,14 @@ test("agent workbench keeps sections local and avoids fixture evidence", async (
   await expect(page.getByTestId("agent-outline-commitment")).toContainText(
     "draft v0",
   );
-  await expect(page.getByText("trace_refund_742")).toHaveCount(0);
-  await expect(
-    page.getByText("I need to cancel my annual renewal"),
-  ).toHaveCount(0);
+  await expectAbsent(page.getByText("trace_refund_742"));
+  await expectAbsent(page.getByText("I need to cancel my annual renewal"));
 
-  await page.getByTestId("agent-tab-contract").click();
-  await expect(page).toHaveURL(/\/agents\/agent-enterprise-support\/contract$/);
+  await clickAgentTab(
+    page,
+    "agent-tab-contract",
+    /\/agents\/agent-enterprise-support\/contract$/,
+  );
   await expect(page.getByTestId("agent-contract-panel")).toContainText(
     "Commitment Document",
   );
@@ -153,8 +165,11 @@ test("agent workbench keeps sections local and avoids fixture evidence", async (
     "Business responsibility",
   );
 
-  await page.getByTestId("agent-tab-channels").click();
-  await expect(page).toHaveURL(/\/agents\/agent-enterprise-support\/channels$/);
+  await clickAgentTab(
+    page,
+    "agent-tab-channels",
+    /\/agents\/agent-enterprise-support\/channels$/,
+  );
   await expect(page.getByTestId("channel-bindings-panel")).toContainText(
     "Voice is a channel binding",
   );
@@ -162,13 +177,16 @@ test("agent workbench keeps sections local and avoids fixture evidence", async (
   await expect(page.getByTestId("channel-binding-telegram")).toBeVisible();
   await expect(page.getByTestId("channel-binding-voice")).toBeVisible();
 
-  await page.getByTestId("agent-tab-deploys").click();
-  await expect(page).toHaveURL(/\/agents\/agent-enterprise-support\/deploys$/);
+  await clickAgentTab(
+    page,
+    "agent-tab-deploys",
+    /\/agents\/agent-enterprise-support\/deploys$/,
+  );
   await expect(page.getByTestId("change-package-panel")).toContainText(
     "Change Package",
   );
   await expect(page.getByTestId("change-package-status")).toContainText(
     "draft",
   );
-  await expect(page.getByText("trace_refund_742")).toHaveCount(0);
+  await expectAbsent(page.getByText("trace_refund_742"));
 });
