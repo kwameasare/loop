@@ -287,8 +287,8 @@ export function NewAgentModal({
     LOCAL_AGENT_INTAKE_TEMPLATES,
   );
   const [templateCatalogState, setTemplateCatalogState] = useState<
-    "ready" | "loading" | "fallback"
-  >("ready");
+    "approved" | "loading" | "example" | "unavailable"
+  >("example");
   const [templateId, setTemplateId] = useState(
     LOCAL_AGENT_INTAKE_TEMPLATES[0]!.id,
   );
@@ -325,6 +325,8 @@ export function NewAgentModal({
   const workspaceMissing = effectiveWorkspaceId.length === 0;
   const canSubmit =
     !workspaceMissing &&
+    (creationPath !== "enterprise_template" ||
+      templateCatalogState === "approved") &&
     trimmedName.length > 0 &&
     trimmedSlug.length > 0 &&
     missingContract.length === 0 &&
@@ -361,7 +363,9 @@ export function NewAgentModal({
   useEffect(() => {
     if (!open) return;
     if (!shouldLoadTemplateCatalog) {
-      setTemplateCatalogState("ready");
+      setTemplates(LOCAL_AGENT_INTAKE_TEMPLATES);
+      setTemplateId(LOCAL_AGENT_INTAKE_TEMPLATES[0]!.id);
+      setTemplateCatalogState("example");
       return;
     }
     let cancelled = false;
@@ -380,14 +384,14 @@ export function NewAgentModal({
             : nextTemplates[0]!.id,
         );
         setTemplateCatalogState(
-          catalog.items.length > 0 ? "ready" : "fallback",
+          catalog.items.length > 0 ? "approved" : "unavailable",
         );
       })
       .catch(() => {
         if (cancelled) return;
         setTemplates(LOCAL_AGENT_INTAKE_TEMPLATES);
         setTemplateId(LOCAL_AGENT_INTAKE_TEMPLATES[0]!.id);
-        setTemplateCatalogState("fallback");
+        setTemplateCatalogState("example");
       });
     return () => {
       cancelled = true;
@@ -754,10 +758,16 @@ export function NewAgentModal({
                 <p className="text-xs text-muted-foreground">
                   {activeTemplate?.summary}
                 </p>
-                {templateCatalogState === "fallback" ? (
-                  <p className="text-xs text-warning">
-                    Using the offline template catalog until workspace
-                    templates load.
+                {templateCatalogState !== "approved" ? (
+                  <p
+                    className="text-xs text-warning"
+                    data-testid="new-agent-template-catalog-unapproved"
+                  >
+                    {templateCatalogState === "loading"
+                      ? "Loading approved workspace templates from cp-api."
+                      : templateCatalogState === "unavailable"
+                        ? "No approved workspace templates loaded. These examples cannot be cloned as enterprise templates."
+                        : "Offline examples only. Connect the workspace template catalog before cloning an approved enterprise template."}
                   </p>
                 ) : null}
               </fieldset>
@@ -1355,6 +1365,16 @@ export function NewAgentModal({
             >
               Creation is blocked until workspace context is loaded from the
               control plane.
+            </p>
+          ) : null}
+          {creationPath === "enterprise_template" &&
+          templateCatalogState !== "approved" ? (
+            <p
+              className="text-xs text-muted-foreground"
+              data-testid="new-agent-template-submit-blocked"
+            >
+              Enterprise-template creation is blocked until the selected
+              template is loaded from the workspace-approved catalog.
             </p>
           ) : null}
 
