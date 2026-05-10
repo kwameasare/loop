@@ -983,6 +983,10 @@ export async function searchTraces(
   query: SearchTracesQuery = {},
   opts: TracesClientOptions = {},
 ): Promise<{ traces: TraceSummary[]; next_cursor: string | null }> {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    throw new Error("LOOP_CP_API_BASE_URL is required to search traces.");
+  }
   const fetcher = opts.fetcher ?? fetch;
   const headers: Record<string, string> = { accept: "application/json" };
   const token = opts.token ?? process.env.LOOP_TOKEN;
@@ -999,7 +1003,7 @@ export async function searchTraces(
   if (query.page_size) params.set("page_size", String(query.page_size));
   if (query.cursor) params.set("cursor", query.cursor);
   const qs = params.toString();
-  const url = `${cpApiBaseUrl(opts.baseUrl)}/workspaces/${encodeURIComponent(
+  const url = `${base}/workspaces/${encodeURIComponent(
     workspace_id,
   )}/traces${qs ? `?${qs}` : ""}`;
   const res = await fetcher(url, {
