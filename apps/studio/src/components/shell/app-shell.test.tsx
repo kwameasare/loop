@@ -43,6 +43,32 @@ vi.mock("@/components/help", () => ({
   TelemetryConsentGate: () => <div data-testid="telemetry-consent-gate" />,
 }));
 
+vi.mock("@/lib/use-active-workspace", () => ({
+  useActiveWorkspace: () => ({
+    active: null,
+    isLoading: false,
+    workspaces: [],
+    setActive: vi.fn(),
+  }),
+}));
+
+vi.mock("@/lib/use-user", () => ({
+  useUser: () => ({
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+  }),
+}));
+
+vi.mock("@/lib/use-presence-socket", () => ({
+  usePresenceSocket: () => ({
+    connected: false,
+    error: null,
+    socketUrl: null,
+    users: [],
+  }),
+}));
+
 import { AppShell } from "@/components/shell/app-shell";
 
 describe("AppShell", () => {
