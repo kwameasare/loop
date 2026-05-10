@@ -53,6 +53,7 @@ describe("listDeployments cp-api mode", () => {
       id: "dep_001",
       agentId: "agt_x",
       versionId: "ver_1",
+      stage: "production",
       status: "live",
       trafficPercent: 100,
       createdAt: "2025-01-01T00:00:00Z",
@@ -117,6 +118,7 @@ describe("listDeployments cp-api mode", () => {
               versionId: "v2",
               changePackageId: "cp_1",
               evidencePackId: "ep_1",
+              stage: "canary",
               status: "canary",
               trafficPercent: 10,
               createdAt: "2026-05-09T00:00:00Z",
@@ -166,6 +168,7 @@ describe("listDeployments cp-api mode", () => {
     );
 
     expect(result.deployment.evidencePackId).toBe("ep_1");
+    expect(result.deployment.stage).toBe("canary");
     const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock
       .calls[0]!;
     expect(call[0]).toBe(
@@ -177,6 +180,21 @@ describe("listDeployments cp-api mode", () => {
       change_package_id: "cp_1",
       channel_scope: ["web_chat", "whatsapp"],
     });
+  });
+
+  it("starts a shadow deployment with zero routed traffic in fixture mode", async () => {
+    const result = await startCanaryDeployment("agt_shadow", {
+      change_package_id: "cp_shadow",
+      version_id: "v2",
+      stage: "shadow",
+      traffic_percent: 40,
+      channel_scope: ["web_chat"],
+    });
+
+    expect(result.deployment.stage).toBe("shadow");
+    expect(result.deployment.status).toBe("shadow");
+    expect(result.deployment.trafficPercent).toBe(0);
+    expect(result.evidence_pack.canary_results_ref).toContain("/shadow");
   });
 
   it("rollback throws on non-ok response", async () => {
