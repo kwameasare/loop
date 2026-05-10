@@ -13,9 +13,10 @@ import {
 } from "./deploys";
 
 describe("listDeployments fixture mode", () => {
-  it("returns an empty list when no baseUrl is configured", async () => {
-    const { items } = await listDeployments("agt_fix_a");
+  it("returns degraded state when no baseUrl is configured", async () => {
+    const { items, degraded_reason } = await listDeployments("agt_fix_a");
     expect(items).toEqual([]);
+    expect(degraded_reason).toMatch(/LOOP_CP_API_BASE_URL is required/);
   });
 
   it("returns canary + live deployments seeded for the agent", async () => {

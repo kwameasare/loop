@@ -93,6 +93,11 @@ export interface DeployHelperOptions {
   allowFixture?: boolean;
 }
 
+export interface DeploymentListResponse {
+  items: Deployment[];
+  degraded_reason?: string | undefined;
+}
+
 function resolveBase(opts: DeployHelperOptions): string | null {
   const raw =
     opts.baseUrl ??
@@ -230,10 +235,15 @@ function applyRamp(
 export async function listDeployments(
   agentId: string,
   opts: DeployHelperOptions = {},
-): Promise<{ items: Deployment[] }> {
+): Promise<DeploymentListResponse> {
   const base = resolveBase(opts);
   if (!base) {
-    return { items: opts.allowFixture ? [...seedFixtures(agentId)] : [] };
+    if (opts.allowFixture) return { items: [...seedFixtures(agentId)] };
+    return {
+      items: [],
+      degraded_reason:
+        "LOOP_CP_API_BASE_URL is required to load deployment history.",
+    };
   }
   const fetcher = opts.fetcher ?? fetch;
   const res = await fetcher(`${base}/agents/${agentId}/deployments`, {

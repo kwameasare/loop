@@ -61,6 +61,23 @@ describe("DeployTimeline", () => {
     expect(screen.getByTestId("deploy-rollback-d1")).toBeDisabled();
   });
 
+  it("shows degraded deployment history separately from an empty timeline", () => {
+    render(
+      <DeployTimeline
+        agentId="a"
+        degradedReason="LOOP_CP_API_BASE_URL is required to load deployment history."
+        initialDeployments={[]}
+      />,
+    );
+
+    expect(screen.getByTestId("deploy-degraded")).toHaveTextContent(
+      "Deployment history is unavailable",
+    );
+    expect(screen.getByTestId("deploy-empty")).toHaveTextContent(
+      "Deployment state cannot be confirmed",
+    );
+  });
+
   it("ramps an active rollout to the selected traffic percentage", async () => {
     const ramp = vi.fn(async () =>
       mkDep({
