@@ -5,11 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { InboxQueue } from "@/components/inbox/inbox-queue";
 import {
-  FIXTURE_AGENTS,
-  FIXTURE_NOW_MS,
-  FIXTURE_QUEUE,
-  FIXTURE_TEAMS,
-  FIXTURE_WORKSPACE_ID,
   listInbox,
   type InboxItem,
 } from "@/lib/inbox";
@@ -25,8 +20,8 @@ export default function InboxQueuePage(): JSX.Element {
 
 function InboxQueuePageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
-  const [items, setItems] = useState<InboxItem[]>(FIXTURE_QUEUE);
-  const [workspaceId, setWorkspaceId] = useState(FIXTURE_WORKSPACE_ID);
+  const [items, setItems] = useState<InboxItem[]>([]);
+  const [workspaceId, setWorkspaceId] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,14 +36,7 @@ function InboxQueuePageBody(): JSX.Element {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        if (
-          err instanceof Error &&
-          /LOOP_CP_API_BASE_URL is required/.test(err.message)
-        ) {
-          setItems(FIXTURE_QUEUE);
-          setWorkspaceId(FIXTURE_WORKSPACE_ID);
-          return;
-        }
+        setItems([]);
         setError(err instanceof Error ? err.message : "Could not load queue");
       });
     return () => {
@@ -58,15 +46,11 @@ function InboxQueuePageBody(): JSX.Element {
 
   const teams = useMemo(() => {
     const ids = [...new Set(items.map((item) => item.team_id))].filter(Boolean);
-    return ids.length > 0
-      ? ids.map((id) => ({ id, name: id.replace(/^team-/, "") }))
-      : FIXTURE_TEAMS;
+    return ids.map((id) => ({ id, name: id.replace(/^team-/, "") }));
   }, [items]);
   const agents = useMemo(() => {
     const ids = [...new Set(items.map((item) => item.agent_id))].filter(Boolean);
-    return ids.length > 0
-      ? ids.map((id) => ({ id, name: id.slice(0, 8) }))
-      : FIXTURE_AGENTS;
+    return ids.map((id) => ({ id, name: id.slice(0, 8) }));
   }, [items]);
 
   if (wsLoading || !active) {
@@ -94,7 +78,7 @@ function InboxQueuePageBody(): JSX.Element {
       <InboxQueue
         agents={agents}
         items={items}
-        now_ms={Date.now() || FIXTURE_NOW_MS}
+        now_ms={Date.now()}
         teams={teams}
         workspace_id={workspaceId}
       />
