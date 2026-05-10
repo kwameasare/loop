@@ -7,6 +7,7 @@ import {
   listChannelBindings,
   previewChannelMatrix,
   upsertChannelBinding,
+  updateChannelReadiness,
 } from "./channel-bindings";
 
 describe("channel-bindings client", () => {
@@ -34,6 +35,24 @@ describe("channel-bindings client", () => {
   it("lists and upserts channel bindings through cp-api", async () => {
     const fetcher = vi.fn<typeof fetch>(async (input, init) => {
       const url = String(input);
+      if (url.includes("/readiness/")) {
+        return new Response(
+          JSON.stringify({
+            ...buildLocalChannelBindings("agt_1")[1],
+            status: "ready",
+            readiness: [
+              {
+                id: "business_verified",
+                label: "Business identity verified",
+                status: "passed",
+                evidence_ref: "provider/meta/business/waba_123",
+                message: "verified",
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
       if (init?.method === "POST") {
         return new Response(
           JSON.stringify({
@@ -59,9 +78,21 @@ describe("channel-bindings client", () => {
       { channel_type: "whatsapp", provider: "Meta Cloud API" },
       { baseUrl: "https://cp.test", fetcher },
     );
+    const readiness = await updateChannelReadiness(
+      "agt_1",
+      "cb_1",
+      "business_verified",
+      {
+        status: "passed",
+        evidence_ref: "provider/meta/business/waba_123",
+        message: "verified",
+      },
+      { baseUrl: "https://cp.test", fetcher },
+    );
 
     expect(listed.items).toHaveLength(9);
     expect(updated.provider).toBe("Meta Cloud API");
+    expect(readiness.readiness[0]?.status).toBe("passed");
     expect(fetcher).toHaveBeenCalledWith(
       "https://cp.test/v1/agents/agt_1/channel-bindings",
       expect.objectContaining({ method: "GET" }),
@@ -70,6 +101,10 @@ describe("channel-bindings client", () => {
       channel_type: "whatsapp",
       provider: "Meta Cloud API",
     });
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agt_1/channel-bindings/cb_1/readiness/business_verified",
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 
   it("marks channel binding reads as degraded instead of pretending they are live", async () => {
@@ -183,6 +218,16 @@ describe("channel-bindings client", () => {
     ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
 
     await expect(
+      updateChannelReadiness(
+        "agt_1",
+        "cb_1",
+        "business_verified",
+        { status: "passed", evidence_ref: "provider/meta/business/waba_123" },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
       createChannelPreviewEvalCase(
         "agt_1",
         {
@@ -254,6 +299,24 @@ describe("channel-bindings client", () => {
     ).resolves.toMatchObject({
       ok: true,
       suite_id: "local_channel_formatting_failures",
+    });
+
+    await expect(
+      updateChannelReadiness(
+        "agt_1",
+        "cb_1",
+        "business_verified",
+        { status: "passed", evidence_ref: "provider/meta/business/waba_123" },
+        { baseUrl: "", allowFixture: true },
+      ),
+    ).resolves.toMatchObject({
+      id: "cb_1",
+      readiness: [
+        expect.objectContaining({
+          id: "business_verified",
+          status: "passed",
+        }),
+      ],
     });
   });
 });

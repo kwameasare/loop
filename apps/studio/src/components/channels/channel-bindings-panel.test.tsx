@@ -147,8 +147,91 @@ describe("ChannelBindingsPanel", () => {
         }),
       );
     });
+    expect(screen.getByTestId("channel-setup-whatsapp")).toHaveTextContent(
+      "Business account",
+    );
     expect(screen.getByTestId("channel-binding-whatsapp")).toHaveTextContent(
       "draft",
+    );
+
+    fireEvent.change(screen.getByTestId("channel-provider-whatsapp"), {
+      target: { value: "Meta Cloud API" },
+    });
+    fireEvent.change(screen.getByTestId("channel-identity-whatsapp"), {
+      target: { value: "waba_123" },
+    });
+    fireEvent.change(screen.getByTestId("channel-auth-ref-whatsapp"), {
+      target: { value: "secret://channels/waba" },
+    });
+    fireEvent.click(screen.getByTestId("channel-setup-save-whatsapp"));
+
+    await waitFor(() => {
+      expect(upsertChannelBinding).toHaveBeenLastCalledWith(
+        "agt_1",
+        expect.objectContaining({
+          channel_type: "whatsapp",
+          provider: "Meta Cloud API",
+          auth_config_ref: "secret://channels/waba",
+          identity_config: expect.objectContaining({
+            business_account: "waba_123",
+          }),
+        }),
+      );
+    });
+  });
+
+  it("records readiness evidence from the channel card", async () => {
+    const [whatsapp] = buildLocalChannelBindings("agt_1").filter(
+      (binding) => binding.channel_type === "whatsapp",
+    );
+    const updateChannelReadiness = vi.fn(
+      async (
+        _agentId: string,
+        _bindingId: string,
+        checkId: string,
+        input: { status: "passed" | "failed"; evidence_ref?: string | null },
+      ) => ({
+        ...whatsapp!,
+        status: "draft" as const,
+        readiness: whatsapp!.readiness.map((check) =>
+          check.id === checkId
+            ? {
+                ...check,
+                status: input.status,
+                evidence_ref: input.evidence_ref ?? null,
+                message: "verified",
+              }
+            : check,
+        ),
+      }),
+    );
+    render(
+      <ChannelBindingsPanel
+        agentId="agt_1"
+        initialBindings={buildLocalChannelBindings("agt_1")}
+        updateChannelReadiness={updateChannelReadiness}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByTestId(
+        "channel-readiness-passed-whatsapp-business_identity_verified",
+      ),
+    );
+
+    await waitFor(() => {
+      expect(updateChannelReadiness).toHaveBeenCalledWith(
+        "agt_1",
+        whatsapp!.id,
+        "business_identity_verified",
+        expect.objectContaining({
+          status: "passed",
+          evidence_ref: "manual/whatsapp/business_identity_verified",
+        }),
+      );
+    });
+    expect(screen.getByTestId("channel-binding-whatsapp")).toHaveTextContent(
+      "Evidence: manual/whatsapp/business_identity_verified",
     );
   });
 

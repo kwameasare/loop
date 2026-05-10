@@ -125,6 +125,12 @@ export interface ChannelBindingInput {
   auth_config_ref?: string | null;
 }
 
+export interface ChannelReadinessInput {
+  status: ChannelReadinessStatus;
+  evidence_ref?: string | null;
+  message?: string;
+}
+
 type ChannelBindingClientOptions = UxWireupClientOptions & {
   allowFixture?: boolean;
 };
@@ -416,6 +422,38 @@ export async function upsertChannelBinding(
         provider: input.provider ?? defaultProvider(input.channel_type),
         display_name: input.display_name ?? channelLabel(input.channel_type),
         status: input.status ?? "draft",
+        updated_at: new Date().toISOString(),
+      },
+    },
+  );
+}
+
+export async function updateChannelReadiness(
+  agentId: string,
+  bindingId: string,
+  checkId: string,
+  input: ChannelReadinessInput,
+  opts: ChannelBindingClientOptions = {},
+): Promise<ChannelBinding> {
+  return cpJson<ChannelBinding>(
+    `/agents/${encodeURIComponent(agentId)}/channel-bindings/${encodeURIComponent(bindingId)}/readiness/${encodeURIComponent(checkId)}`,
+    {
+      ...opts,
+      method: "POST",
+      body: input,
+      allowFallback: opts.allowFixture === true,
+      fallback: {
+        ...buildLocalChannelBindings(agentId)[0]!,
+        id: bindingId,
+        readiness: [
+          {
+            id: checkId,
+            label: checkId.replace(/_/g, " "),
+            status: input.status,
+            evidence_ref: input.evidence_ref ?? null,
+            message: input.message ?? "",
+          },
+        ],
         updated_at: new Date().toISOString(),
       },
     },

@@ -18,8 +18,11 @@ import {
   type ChannelBinding,
   type ChannelBindingInput,
   type ChannelBindingType,
+  type ChannelReadinessCheck,
+  type ChannelReadinessInput,
   channelLabel,
   upsertChannelBinding as defaultUpsertChannelBinding,
+  updateChannelReadiness as defaultUpdateChannelReadiness,
 } from "@/lib/channel-bindings";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +35,12 @@ interface ChannelBindingsPanelProps {
   upsertChannelBinding?: (
     agentId: string,
     input: ChannelBindingInput,
+  ) => Promise<ChannelBinding>;
+  updateChannelReadiness?: (
+    agentId: string,
+    bindingId: string,
+    checkId: string,
+    input: ChannelReadinessInput,
   ) => Promise<ChannelBinding>;
 }
 
@@ -317,7 +326,7 @@ function draftButtonLabel(
 ) {
   if (degradedReason) return "Backend required";
   if (busyType === binding.channel_type) return "Saving...";
-  return binding.status === "not_configured" ? "Start setup" : "Update draft";
+  return binding.status === "not_configured" ? "Start setup" : "Edit setup";
 }
 
 function ContractField({ label, value }: { label: string; value: string }) {
@@ -331,6 +340,53 @@ function ContractField({ label, value }: { label: string; value: string }) {
   );
 }
 
+function identityKeyFor(channelType: ChannelBindingType): string {
+  return {
+    web_chat: "domain",
+    whatsapp: "business_account",
+    telegram: "bot_username",
+    slack: "workspace",
+    teams: "tenant",
+    sms: "phone_number",
+    email: "from_address",
+    voice: "phone_number",
+    webhook_api: "endpoint_url",
+  }[channelType];
+}
+
+function identityLabelFor(channelType: ChannelBindingType): string {
+  return {
+    web_chat: "Allowed domain",
+    whatsapp: "Business account",
+    telegram: "Bot username",
+    slack: "Workspace",
+    teams: "Tenant",
+    sms: "Phone number",
+    email: "Sender address",
+    voice: "Phone number",
+    webhook_api: "Endpoint URL",
+  }[channelType];
+}
+
+function draftFromBinding(binding: ChannelBinding) {
+  const identityKey = identityKeyFor(binding.channel_type);
+  return {
+    provider: binding.provider,
+    identity: configText(binding.identity_config, [identityKey]) ?? "",
+    authConfigRef: binding.auth_config_ref ?? "",
+  };
+}
+
+function readinessButtonLabel(
+  check: ChannelReadinessCheck,
+  status: ChannelReadinessInput["status"],
+) {
+  if (status === "passed") {
+    return check.status === "passed" ? "Passed" : "Pass";
+  }
+  return check.status === "failed" ? "Failed" : "Fail";
+}
+
 export function ChannelBindingsPanel({
   agentId,
   initialBindings,
@@ -338,29 +394,59 @@ export function ChannelBindingsPanel({
   focusedChannelType,
   focusReadiness = false,
   upsertChannelBinding = defaultUpsertChannelBinding,
+  updateChannelReadiness = defaultUpdateChannelReadiness,
 }: ChannelBindingsPanelProps) {
   const [bindings, setBindings] = useState(() =>
     sortedBindings(initialBindings),
   );
   const [busyType, setBusyType] = useState<ChannelBindingType | null>(null);
+  const [editingType, setEditingType] = useState<ChannelBindingType | null>(
+    focusedChannelType ?? null,
+  );
+  const [readinessBusy, setReadinessBusy] = useState<string | null>(null);
+  const [setupDrafts, setSetupDrafts] = useState<
+    Partial<
+      Record<
+        ChannelBindingType,
+        { provider: string; identity: string; authConfigRef: string }
+      >
+    >
+  >({});
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const ordered = useMemo(() => sortedBindings(bindings), [bindings]);
+
+  function openSetup(binding: ChannelBinding) {
+    setEditingType(binding.channel_type);
+    setSetupDrafts((previous) => ({
+      ...previous,
+      [binding.channel_type]: previous[binding.channel_type] ?? draftFromBinding(binding),
+    }));
+    setNotice(null);
+  }
 
   async function handleDraft(channelType: ChannelBindingType) {
     const current = ordered.find(
       (binding) => binding.channel_type === channelType,
     );
+    if (!current) return;
+    const draft = setupDrafts[channelType] ?? draftFromBinding(current);
+    const identityKey = identityKeyFor(channelType);
     setBusyType(channelType);
     setError(null);
+    setNotice(null);
     try {
       const input: ChannelBindingInput = {
         channel_type: channelType,
-        display_name: current?.display_name ?? channelLabel(channelType),
+        display_name: current.display_name ?? channelLabel(channelType),
         status: "draft",
-        identity_config: current?.identity_config ?? {},
-        auth_config_ref: current?.auth_config_ref ?? null,
+        identity_config: {
+          ...current.identity_config,
+          [identityKey]: draft.identity,
+        },
+        auth_config_ref: draft.authConfigRef || null,
       };
-      if (current?.provider) input.provider = current.provider;
+      if (draft.provider) input.provider = draft.provider;
       const updated = await upsertChannelBinding(agentId, input);
       setBindings((previous) =>
         sortedBindings([
@@ -368,6 +454,8 @@ export function ChannelBindingsPanel({
           updated,
         ]),
       );
+      setEditingType(updated.channel_type);
+      setNotice(`${updated.display_name} setup draft saved.`);
     } catch (err) {
       setError(
         err instanceof Error
@@ -376,6 +464,49 @@ export function ChannelBindingsPanel({
       );
     } finally {
       setBusyType(null);
+    }
+  }
+
+  async function markReadiness(
+    binding: ChannelBinding,
+    check: ChannelReadinessCheck,
+    status: ChannelReadinessInput["status"],
+  ) {
+    const busyKey = `${binding.id}:${check.id}:${status}`;
+    setReadinessBusy(busyKey);
+    setError(null);
+    setNotice(null);
+    try {
+      const updated = await updateChannelReadiness(
+        agentId,
+        binding.id,
+        check.id,
+        {
+          status,
+          evidence_ref: `manual/${binding.channel_type}/${check.id}`,
+          message:
+            status === "passed"
+              ? `${check.label} verified from Studio channel readiness.`
+              : `${check.label} failed during Studio channel readiness review.`,
+        },
+      );
+      setBindings((previous) =>
+        sortedBindings([
+          ...previous.filter((item) => item.channel_type !== updated.channel_type),
+          updated,
+        ]),
+      );
+      setNotice(
+        `${updated.display_name} readiness ${check.label.toLowerCase()} marked ${status}.`,
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not update channel readiness.",
+      );
+    } finally {
+      setReadinessBusy(null);
     }
   }
 
@@ -415,6 +546,16 @@ export function ChannelBindingsPanel({
         </p>
       ) : null}
 
+      {notice ? (
+        <p
+          className="rounded-md border border-success/40 bg-success/10 p-3 text-sm text-success"
+          role="status"
+          data-testid="channel-bindings-notice"
+        >
+          {notice}
+        </p>
+      ) : null}
+
       {degradedReason ? (
         <div
           className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
@@ -447,6 +588,9 @@ export function ChannelBindingsPanel({
           const readiness = readinessCount(binding);
           const profile = CHANNEL_PROFILE[binding.channel_type];
           const isFocused = binding.channel_type === focusedChannelType;
+          const isEditing = editingType === binding.channel_type;
+          const draft = setupDrafts[binding.channel_type] ?? draftFromBinding(binding);
+          const identityKey = identityKeyFor(binding.channel_type);
           return (
             <article
               key={binding.channel_type}
@@ -593,15 +737,128 @@ export function ChannelBindingsPanel({
                 {binding.readiness.slice(0, 4).map((check) => (
                   <li
                     key={check.id}
-                    className="flex items-center justify-between gap-2 text-xs"
+                    className="grid gap-2 rounded-md border bg-card/50 p-2 text-xs"
                   >
-                    <span className="truncate text-muted-foreground">
-                      {check.label}
-                    </span>
-                    <span>{check.status.replace("_", " ")}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-muted-foreground">
+                        {check.label}
+                      </span>
+                      <span>{check.status.replace("_", " ")}</span>
+                    </div>
+                    {check.evidence_ref ? (
+                      <span className="truncate text-muted-foreground">
+                        Evidence: {check.evidence_ref}
+                      </span>
+                    ) : null}
+                    <div className="grid grid-cols-2 gap-1">
+                      {(["passed", "failed"] as const).map((status) => {
+                        const busyKey = `${binding.id}:${check.id}:${status}`;
+                        return (
+                          <button
+                            key={status}
+                            type="button"
+                            className="rounded-md border bg-background px-2 py-1 font-medium hover:bg-muted disabled:opacity-50"
+                            disabled={
+                              Boolean(degradedReason) ||
+                              readinessBusy === busyKey ||
+                              check.status === status
+                            }
+                            onClick={() =>
+                              void markReadiness(binding, check, status)
+                            }
+                            data-testid={`channel-readiness-${status}-${binding.channel_type}-${check.id}`}
+                          >
+                            {readinessBusy === busyKey
+                              ? "Saving"
+                              : readinessButtonLabel(check, status)}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </li>
                 ))}
               </ul>
+
+              {isEditing ? (
+                <div
+                  className="mt-3 grid gap-2 rounded-md border bg-card/80 p-3 text-xs"
+                  data-testid={`channel-setup-${binding.channel_type}`}
+                >
+                  <p className="font-medium">Setup draft</p>
+                  <label className="grid gap-1">
+                    <span className="text-muted-foreground">Provider</span>
+                    <input
+                      className="rounded-md border bg-background px-2 py-1"
+                      value={draft.provider}
+                      onChange={(event) =>
+                        setSetupDrafts((previous) => ({
+                          ...previous,
+                          [binding.channel_type]: {
+                            ...draft,
+                            provider: event.target.value,
+                          },
+                        }))
+                      }
+                      data-testid={`channel-provider-${binding.channel_type}`}
+                    />
+                  </label>
+                  <label className="grid gap-1">
+                    <span className="text-muted-foreground">
+                      {identityLabelFor(binding.channel_type)}
+                    </span>
+                    <input
+                      className="rounded-md border bg-background px-2 py-1"
+                      value={draft.identity}
+                      onChange={(event) =>
+                        setSetupDrafts((previous) => ({
+                          ...previous,
+                          [binding.channel_type]: {
+                            ...draft,
+                            identity: event.target.value,
+                          },
+                        }))
+                      }
+                      data-testid={`channel-identity-${binding.channel_type}`}
+                    />
+                    <span className="text-muted-foreground">
+                      Stored as identity_config.{identityKey}.
+                    </span>
+                  </label>
+                  <label className="grid gap-1">
+                    <span className="text-muted-foreground">
+                      Auth config ref
+                    </span>
+                    <input
+                      className="rounded-md border bg-background px-2 py-1"
+                      value={draft.authConfigRef}
+                      onChange={(event) =>
+                        setSetupDrafts((previous) => ({
+                          ...previous,
+                          [binding.channel_type]: {
+                            ...draft,
+                            authConfigRef: event.target.value,
+                          },
+                        }))
+                      }
+                      data-testid={`channel-auth-ref-${binding.channel_type}`}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="rounded-md border bg-background px-3 py-2 font-medium hover:bg-muted disabled:opacity-50"
+                    disabled={
+                      busyType === binding.channel_type ||
+                      Boolean(degradedReason)
+                    }
+                    onClick={() => void handleDraft(binding.channel_type)}
+                    data-testid={`channel-setup-save-${binding.channel_type}`}
+                  >
+                    {busyType === binding.channel_type
+                      ? "Saving setup"
+                      : "Save setup draft"}
+                  </button>
+                </div>
+              ) : null}
 
               <button
                 type="button"
@@ -609,7 +866,11 @@ export function ChannelBindingsPanel({
                 disabled={
                   busyType === binding.channel_type || Boolean(degradedReason)
                 }
-                onClick={() => void handleDraft(binding.channel_type)}
+                onClick={() => {
+                  openSetup(binding);
+                  if (binding.status !== "not_configured") return;
+                  void handleDraft(binding.channel_type);
+                }}
                 data-testid={`channel-binding-draft-${binding.channel_type}`}
               >
                 {draftButtonLabel(binding, busyType, degradedReason)}
