@@ -52,6 +52,7 @@ function makeCreateIntake(result: Partial<AgentIntakeCreateResult> = {}) {
     contradictions: [],
     sensitive_data_findings: [],
     candidate_tools: [],
+    candidate_knowledge_sources: [],
     candidate_channels: [],
     candidate_memory_policy: {},
     candidate_eval_cases: [],

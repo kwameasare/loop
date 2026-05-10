@@ -123,8 +123,13 @@ def test_agent_intake_creates_governed_draft_and_seed_objects(
         "mock_billing_api",
         "mock_crm",
     }
+    assert {source["name"] for source in body["candidate_knowledge_sources"]} == {
+        "refund_policy.pdf",
+        "support_transcripts.csv",
+    }
     assert len(body["created_object_refs"]["channel_bindings"]) == 3
     assert len(body["created_object_refs"]["tool_contracts"]) == 2
+    assert len(body["created_object_refs"]["knowledge_documents"]) == 2
     assert len(body["created_object_refs"]["eval_cases"]) == 3
     assert body["created_object_refs"]["version"] == "v1"
     assert body["created_object_refs"]["branch"]["name"] == "main/draft"
@@ -141,6 +146,7 @@ def test_agent_intake_creates_governed_draft_and_seed_objects(
     assert version["spec"]["commitment_document_id"] == body["commitment"]["id"]
     assert set(version["spec"]["channels"]) == {"web_chat", "whatsapp", "voice"}
     assert set(version["spec"]["tool_contracts"]) == {"mock_billing_api", "mock_crm"}
+    assert len(version["spec"]["knowledge_documents"]) == 2
     assert version["spec"]["memory_policy_id"] == body["created_object_refs"]["memory_policy_id"]
     assert version["spec"]["eval_suite_id"] == body["created_object_refs"]["eval_suite_id"]
 
@@ -192,6 +198,16 @@ def test_agent_intake_creates_governed_draft_and_seed_objects(
     )
     assert memory.status_code == 200, memory.text
     assert memory.json()["items"][0]["scope"] == "conversation"
+
+    knowledge = client.get(
+        f"/v1/agents/{agent_id}/kb/documents",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert knowledge.status_code == 200, knowledge.text
+    assert {item["name"] for item in knowledge.json()["items"]} == {
+        "refund_policy.pdf",
+        "support_transcripts.csv",
+    }
 
     listed = client.get(
         f"/v1/workspaces/{workspace_id}/agent-intakes",
@@ -264,7 +280,9 @@ def test_agent_intake_infers_tool_contracts_from_api_artifacts(
     assert {
         tool["source"] for tool in body["candidate_tools"]
     } == {"artifact:openapi", "artifact:curl"}
+    assert body["candidate_knowledge_sources"] == []
     assert len(body["created_object_refs"]["tool_contracts"]) == 2
+    assert body["created_object_refs"]["knowledge_documents"] == []
 
     tools = client.get(
         f"/v1/agents/{agent_id}/tool-contracts",

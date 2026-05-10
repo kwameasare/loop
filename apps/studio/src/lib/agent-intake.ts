@@ -159,6 +159,7 @@ export interface AgentIntakeRecord {
   contradictions: Array<Record<string, unknown>>;
   sensitive_data_findings: Array<Record<string, unknown>>;
   candidate_tools: Array<Record<string, unknown>>;
+  candidate_knowledge_sources: Array<Record<string, unknown>>;
   candidate_channels: Array<Record<string, unknown>>;
   candidate_memory_policy: Record<string, unknown>;
   candidate_eval_cases: Array<Record<string, unknown>>;
@@ -254,6 +255,23 @@ function localIntakeResult(
       tool_id: `mock_${system.toLowerCase().replace(/\W+/g, "_")}`,
       name: `${system} mock tool`,
     })),
+    candidate_knowledge_sources: input.artifacts
+      .filter(
+        (artifact) =>
+          !["openapi", "postman", "curl", "devtools_fetch"].includes(
+            artifact.kind,
+          ),
+      )
+      .map((artifact) => ({
+        id: `knowledge_${artifact.name.toLowerCase().replace(/\W+/g, "_")}`,
+        name: artifact.name,
+        kind: artifact.kind,
+        source_ref: artifact.source_ref || artifact.name,
+        status:
+          artifact.text || artifact.source_ref
+            ? "ready_for_ingestion"
+            : "needs_content",
+      })),
     candidate_channels: channels.map((channel) => ({
       channel,
       status: "draft",
@@ -289,6 +307,14 @@ function localIntakeResult(
       agent_id: agent.id,
       channel_bindings: channels,
       tool_contracts: tools,
+      knowledge_documents: input.artifacts
+        .filter(
+          (artifact) =>
+            !["openapi", "postman", "curl", "devtools_fetch"].includes(
+              artifact.kind,
+            ),
+        )
+        .map((artifact) => artifact.name),
     },
     created_by: "local",
     created_at: new Date(0).toISOString(),

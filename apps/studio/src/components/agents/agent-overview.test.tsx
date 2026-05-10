@@ -114,6 +114,7 @@ function intakeRecord(): AgentIntakeRecord {
     contradictions: [],
     sensitive_data_findings: [],
     candidate_tools: [{ name: "lookup_order" }],
+    candidate_knowledge_sources: [{ name: "refund-policy.pdf" }],
     candidate_channels: [{ channel: "whatsapp", status: "draft" }],
     candidate_memory_policy: { scope: "conversation" },
     candidate_eval_cases: [
@@ -199,6 +200,9 @@ describe("AgentOverview", () => {
     expect(screen.getByTestId("intake-created")).toHaveTextContent(
       "1 channel candidate",
     );
+    expect(screen.getByTestId("intake-created")).toHaveTextContent(
+      "1 knowledge source candidate",
+    );
     expect(screen.getByTestId("intake-artifacts")).toHaveTextContent(
       "botpress-export.json - parsed",
     );
@@ -231,6 +235,9 @@ describe("AgentOverview", () => {
     ).toHaveAttribute("href", "/agents/ag_1/channels");
     expect(screen.getByTestId("intake-readiness-tools")).toHaveTextContent(
       "1 mock tool contract created",
+    );
+    expect(screen.getByTestId("intake-readiness-knowledge")).toHaveTextContent(
+      "1 knowledge source candidate captured",
     );
     expect(screen.getByTestId("intake-readiness-risk")).toHaveTextContent(
       "No unresolved intake risk",

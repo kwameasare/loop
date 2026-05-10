@@ -77,6 +77,7 @@ class AgentIntakeRecord(BaseModel):
     contradictions: list[dict[str, Any]]
     sensitive_data_findings: list[dict[str, Any]]
     candidate_tools: list[dict[str, Any]]
+    candidate_knowledge_sources: list[dict[str, Any]]
     candidate_channels: list[dict[str, Any]]
     candidate_memory_policy: dict[str, Any]
     candidate_eval_cases: list[dict[str, Any]]
@@ -314,6 +315,19 @@ _TOOL_ARTIFACT_KINDS: set[ArtifactKind] = {
     "devtools_fetch",
 }
 
+_KNOWLEDGE_ARTIFACT_KINDS: set[ArtifactKind] = {
+    "pdf",
+    "faq",
+    "runbook",
+    "transcript",
+    "botpress_export",
+    "dialogflow_export",
+    "rasa_export",
+    "zendesk_export",
+    "intercom_export",
+    "other",
+}
+
 
 def _label_from_url(value: str) -> str:
     parsed = urlparse(value)
@@ -435,6 +449,48 @@ def candidate_tool_specs(body: AgentIntakeCreate) -> list[dict[str, Any]]:
     return list(deduped.values())
 
 
+def _knowledge_content_type(kind: ArtifactKind) -> str:
+    if kind == "pdf":
+        return "application/pdf"
+    if kind in {"botpress_export", "dialogflow_export", "rasa_export"}:
+        return "application/json"
+    if kind in {"zendesk_export", "intercom_export"}:
+        return "application/zip"
+    if kind == "transcript":
+        return "text/csv"
+    return "text/plain"
+
+
+def candidate_knowledge_sources(body: AgentIntakeCreate) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for artifact in body.artifacts:
+        if artifact.kind not in _KNOWLEDGE_ARTIFACT_KINDS:
+            continue
+        text = artifact.text.strip()
+        source_ref = artifact.source_ref.strip()
+        byte_size = len((text or source_ref or artifact.name).encode("utf-8"))
+        rows.append(
+            {
+                "id": f"knowledge_{_normalise_token(artifact.name)}",
+                "name": artifact.name,
+                "kind": artifact.kind,
+                "source_ref": source_ref or artifact.name,
+                "status": "ready_for_ingestion"
+                if text or source_ref
+                else "needs_content",
+                "content_type": _knowledge_content_type(artifact.kind),
+                "byte_size": byte_size,
+                "coverage_hint": (
+                    "conversation examples"
+                    if artifact.kind == "transcript"
+                    else "policy and procedure grounding"
+                ),
+                "evidence_ref": source_ref or f"intake-artifact/{artifact.name}",
+            }
+        )
+    return rows
+
+
 def _candidate_channels(body: CommitmentBody) -> list[dict[str, Any]]:
     return [
         {
@@ -520,6 +576,7 @@ def build_intake_analysis(
     contradictions = _contradictions(body.artifacts)
     missing = _missing_information(body.contract, body.artifacts)
     candidate_tools = candidate_tool_specs(body)
+    knowledge_sources = candidate_knowledge_sources(body)
     candidate_channels = _candidate_channels(body.contract)
     candidate_eval_cases = _candidate_eval_cases(body.contract)
     ready = [
@@ -535,6 +592,8 @@ def build_intake_analysis(
         ready.append(f"{len(candidate_channels)} sandbox channel binding(s) created")
     if candidate_tools:
         ready.append(f"{len(candidate_tools)} mock tool contract(s) created")
+    if knowledge_sources:
+        ready.append(f"{len(knowledge_sources)} knowledge source candidate(s) captured")
     if created_object_refs.get("memory_policy_id"):
         ready.append("Conversation memory policy drafted")
     needs_attention = [row["message"] for row in missing if row["severity"] in {"high", "medium"}]
@@ -575,6 +634,7 @@ def build_intake_analysis(
         contradictions=contradictions,
         sensitive_data_findings=sensitive,
         candidate_tools=candidate_tools,
+        candidate_knowledge_sources=knowledge_sources,
         candidate_channels=candidate_channels,
         candidate_memory_policy={
             "scope": "conversation",
