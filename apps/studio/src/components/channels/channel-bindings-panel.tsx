@@ -27,6 +27,7 @@ interface ChannelBindingsPanelProps {
   agentId: string;
   initialBindings: ChannelBinding[];
   degradedReason?: string | undefined;
+  focusedChannelType?: ChannelBindingType | undefined;
   upsertChannelBinding?: (
     agentId: string,
     input: ChannelBindingInput,
@@ -339,6 +340,7 @@ export function ChannelBindingsPanel({
   agentId,
   initialBindings,
   degradedReason,
+  focusedChannelType,
   upsertChannelBinding = defaultUpsertChannelBinding,
 }: ChannelBindingsPanelProps) {
   const [bindings, setBindings] = useState(() =>
@@ -428,11 +430,16 @@ export function ChannelBindingsPanel({
           const Icon = ICONS[binding.channel_type];
           const readiness = readinessCount(binding);
           const profile = CHANNEL_PROFILE[binding.channel_type];
+          const isFocused = binding.channel_type === focusedChannelType;
           return (
             <article
               key={binding.channel_type}
-              className="rounded-md border bg-background p-3"
+              className={cn(
+                "rounded-md border bg-background p-3",
+                isFocused ? "ring-2 ring-focus ring-offset-2 ring-offset-background" : "",
+              )}
               data-testid={`channel-binding-${binding.channel_type}`}
+              data-focused={isFocused ? "true" : "false"}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">

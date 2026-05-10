@@ -82,6 +82,25 @@ describe("ChannelBindingsPanel", () => {
     ).toHaveTextContent("Idempotency key");
   });
 
+  it("focuses the channel selected from the workspace channel catalog", () => {
+    render(
+      <ChannelBindingsPanel
+        agentId="agt_1"
+        initialBindings={buildLocalChannelBindings("agt_1")}
+        focusedChannelType="whatsapp"
+      />,
+    );
+
+    expect(screen.getByTestId("channel-binding-whatsapp")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+    expect(screen.getByTestId("channel-binding-voice")).toHaveAttribute(
+      "data-focused",
+      "false",
+    );
+  });
+
   it("starts setup by upserting a draft channel binding", async () => {
     const upsertChannelBinding = vi.fn(
       async (_agentId: string, input: Partial<ChannelBinding>) => ({

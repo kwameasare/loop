@@ -5,6 +5,7 @@ import { ChannelTypeGrid } from "@/components/channels/channel-type-grid";
 import {
   buildLocalChannelBindings,
   listChannelBindings,
+  type ChannelBindingType,
 } from "@/lib/channel-bindings";
 import { type WebChannelBinding, getWebChannel } from "@/lib/web-channels";
 
@@ -12,11 +13,14 @@ export const dynamic = "force-dynamic";
 
 interface AgentChannelsPageProps {
   params: { agent_id: string };
+  searchParams?: { channel?: string | string[] | undefined } | undefined;
 }
 
 export default async function AgentChannelsPage({
   params,
+  searchParams,
 }: AgentChannelsPageProps) {
+  const focusedChannelType = parseFocusedChannel(searchParams?.channel);
   let bindings = buildLocalChannelBindings(params.agent_id);
   let bindingsDegradedReason: string | undefined;
   try {
@@ -68,6 +72,7 @@ export default async function AgentChannelsPage({
         agentId={params.agent_id}
         initialBindings={bindings}
         degradedReason={bindingsDegradedReason}
+        focusedChannelType={focusedChannelType}
       />
       <ChannelPreviewMatrix agentId={params.agent_id} bindings={bindings} />
       <section className="rounded-md border bg-card p-4">
@@ -86,4 +91,26 @@ export default async function AgentChannelsPage({
       </section>
     </div>
   );
+}
+
+const CHANNEL_TYPES = new Set<ChannelBindingType>([
+  "web_chat",
+  "whatsapp",
+  "telegram",
+  "slack",
+  "teams",
+  "sms",
+  "email",
+  "voice",
+  "webhook_api",
+]);
+
+function parseFocusedChannel(
+  value: string | string[] | undefined,
+): ChannelBindingType | undefined {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) return undefined;
+  return CHANNEL_TYPES.has(raw as ChannelBindingType)
+    ? (raw as ChannelBindingType)
+    : undefined;
 }

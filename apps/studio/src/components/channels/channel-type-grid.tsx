@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import type { ChannelBindingType } from "@/lib/channel-bindings";
 import { cn } from "@/lib/utils";
 
 interface ChannelType {
@@ -17,23 +18,31 @@ interface ChannelType {
   label: string;
   setup: string;
   summary: string;
+  focusType: ChannelBindingType;
   href: string;
   icon: LucideIcon;
 }
 
-function agentHref(agentId: string | null, fallback: string): string {
-  return agentId ? `/agents/${encodeURIComponent(agentId)}/channels` : fallback;
+function agentHref(
+  agentId: string | null,
+  fallback: string,
+  channelType: ChannelBindingType,
+): string {
+  const query = `channel=${encodeURIComponent(channelType)}`;
+  return agentId
+    ? `/agents/${encodeURIComponent(agentId)}/channels?${query}`
+    : `${fallback}?intent=channel&${query}`;
 }
 
 function channelTypes(agentId: string | null): readonly ChannelType[] {
-  const channelsHref = agentHref(agentId, "/agents");
   return [
     {
       id: "web",
       label: "Web chat",
       setup: "Agent binding",
       summary: "Embed the agent in an app or website with a scoped snippet.",
-      href: channelsHref,
+      focusType: "web_chat",
+      href: agentHref(agentId, "/agents", "web_chat"),
       icon: Globe2,
     },
     {
@@ -41,7 +50,8 @@ function channelTypes(agentId: string | null): readonly ChannelType[] {
       label: "WhatsApp",
       setup: "Agent binding",
       summary: "Template windows, handoff, media, and session policy.",
-      href: channelsHref,
+      focusType: "whatsapp",
+      href: agentHref(agentId, "/agents", "whatsapp"),
       icon: MessageCircle,
     },
     {
@@ -49,7 +59,8 @@ function channelTypes(agentId: string | null): readonly ChannelType[] {
       label: "Telegram",
       setup: "Agent binding",
       summary: "Bot token intake, command routing, and threaded traces.",
-      href: channelsHref,
+      focusType: "telegram",
+      href: agentHref(agentId, "/agents", "telegram"),
       icon: Send,
     },
     {
@@ -57,7 +68,8 @@ function channelTypes(agentId: string | null): readonly ChannelType[] {
       label: "Slack",
       setup: "Agent binding",
       summary: "Threaded replies, slash commands, approvals, and mentions.",
-      href: channelsHref,
+      focusType: "slack",
+      href: agentHref(agentId, "/agents", "slack"),
       icon: Hash,
     },
     {
@@ -65,7 +77,8 @@ function channelTypes(agentId: string | null): readonly ChannelType[] {
       label: "Teams",
       setup: "Agent binding",
       summary: "Tenant install, internal identity mapping, and safe mentions.",
-      href: channelsHref,
+      focusType: "teams",
+      href: agentHref(agentId, "/agents", "teams"),
       icon: Hash,
     },
     {
@@ -73,7 +86,8 @@ function channelTypes(agentId: string | null): readonly ChannelType[] {
       label: "SMS",
       setup: "Agent binding",
       summary: "Concise responses, opt-out policy, and carrier-safe delivery.",
-      href: channelsHref,
+      focusType: "sms",
+      href: agentHref(agentId, "/agents", "sms"),
       icon: MessagesSquare,
     },
     {
@@ -81,7 +95,8 @@ function channelTypes(agentId: string | null): readonly ChannelType[] {
       label: "Email",
       setup: "Agent binding",
       summary: "Long-form replies, attachments, routing, and SLA handling.",
-      href: channelsHref,
+      focusType: "email",
+      href: agentHref(agentId, "/agents", "email"),
       icon: Mail,
     },
     {
@@ -89,7 +104,8 @@ function channelTypes(agentId: string | null): readonly ChannelType[] {
       label: "Voice",
       setup: "Agent binding",
       summary: "Phone numbers, ASR/TTS, barge-in, and voice evals.",
-      href: channelsHref,
+      focusType: "voice",
+      href: agentHref(agentId, "/agents", "voice"),
       icon: PhoneCall,
     },
     {
@@ -97,7 +113,8 @@ function channelTypes(agentId: string | null): readonly ChannelType[] {
       label: "Webhook/API",
       setup: "Agent binding",
       summary: "Signed endpoint, retry policy, and event-shaped traces.",
-      href: channelsHref,
+      focusType: "webhook_api",
+      href: agentHref(agentId, "/agents", "webhook_api"),
       icon: Globe2,
     },
   ];
