@@ -160,6 +160,17 @@ def test_simulator_run_is_durable_and_audited(
     assert trace.json()["channel_binding_id"] == binding_id
     assert trace.json()["spans"][0]["attrs"]["channel_binding_id"] == binding_id
 
+    channels = client.get(
+        f"/v1/agents/{agent_id}/channel-bindings",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert channels.status_code == 200, channels.text
+    whatsapp = next(
+        item for item in channels.json()["items"] if item["channel_type"] == "whatsapp"
+    )
+    assert whatsapp["last_traffic_at"] is not None
+    assert whatsapp["last_failure_at"] is None
+
     audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=_auth())
     assert "simulator_run:create" in {item["action"] for item in audit.json()["items"]}
 

@@ -65,6 +65,15 @@ class ChannelReadinessUpdate(BaseModel):
     message: str = Field(default="", max_length=500)
 
 
+class ChannelActivityCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["success", "failure"] = "success"
+    trace_id: str = Field(default="", max_length=256)
+    occurred_at: datetime | None = None
+    failure_message: str = Field(default="", max_length=500)
+
+
 class ChannelPreviewMatrixRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -334,6 +343,37 @@ class ChannelBindingRegistry:
                 now = datetime.now(UTC)
                 updated = record.model_copy(
                     update={"readiness": readiness, "status": status, "updated_at": now}
+                )
+                by_channel[channel_type] = updated
+                return updated
+        raise WorkspaceError(f"unknown channel binding: {binding_id}")
+
+    async def record_activity(
+        self,
+        *,
+        agent: AgentRecord,
+        binding_id: str,
+        body: ChannelActivityCreate,
+    ) -> ChannelBindingRecord:
+        async with self._lock:
+            now = datetime.now(UTC)
+            occurred_at = body.occurred_at or now
+            by_channel = self._items.setdefault(agent.id, {})
+            configured = self._items.get(agent.id, {})
+            for channel_type in SUPPORTED_CHANNELS:
+                record = configured.get(channel_type) or _default_binding(agent, channel_type)
+                if record.id != binding_id:
+                    continue
+                updated = record.model_copy(
+                    update={
+                        "last_traffic_at": occurred_at,
+                        "last_failure_at": (
+                            occurred_at
+                            if body.status == "failure"
+                            else record.last_failure_at
+                        ),
+                        "updated_at": now,
+                    }
                 )
                 by_channel[channel_type] = updated
                 return updated

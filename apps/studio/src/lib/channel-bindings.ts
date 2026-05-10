@@ -131,6 +131,13 @@ export interface ChannelReadinessInput {
   message?: string;
 }
 
+export interface ChannelActivityInput {
+  status: "success" | "failure";
+  trace_id?: string;
+  occurred_at?: string | null;
+  failure_message?: string;
+}
+
 type ChannelBindingClientOptions = UxWireupClientOptions & {
   allowFixture?: boolean;
 };
@@ -454,6 +461,35 @@ export async function updateChannelReadiness(
             message: input.message ?? "",
           },
         ],
+        updated_at: new Date().toISOString(),
+      },
+    },
+  );
+}
+
+export async function recordChannelActivity(
+  agentId: string,
+  bindingId: string,
+  input: ChannelActivityInput,
+  opts: ChannelBindingClientOptions = {},
+): Promise<ChannelBinding> {
+  const localBinding =
+    buildLocalChannelBindings(agentId).find((item) => item.id === bindingId) ??
+    buildLocalChannelBindings(agentId)[0]!;
+  const occurredAt = input.occurred_at ?? new Date().toISOString();
+  return cpJson<ChannelBinding>(
+    `/agents/${encodeURIComponent(agentId)}/channel-bindings/${encodeURIComponent(bindingId)}/activity`,
+    {
+      ...opts,
+      method: "POST",
+      body: input,
+      allowFallback: opts.allowFixture === true,
+      fallback: {
+        ...localBinding,
+        id: bindingId,
+        last_traffic_at: occurredAt,
+        last_failure_at:
+          input.status === "failure" ? occurredAt : localBinding.last_failure_at,
         updated_at: new Date().toISOString(),
       },
     },

@@ -1427,6 +1427,31 @@ def test_channel_bindings_are_peer_agent_objects_with_readiness(
     assert checked.json()["readiness"][0]["status"] == "passed"
     assert checked.json()["readiness"][0]["evidence_ref"] == "provider/meta/business/waba_123"
 
+    activity = client.post(
+        f"/v1/agents/{agent_id}/channel-bindings/{body['id']}/activity",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "status": "failure",
+            "trace_id": "trace_whatsapp_template_failure",
+            "occurred_at": "2026-05-10T10:00:00Z",
+            "failure_message": "Template language was rejected by provider.",
+        },
+    )
+    assert activity.status_code == 200, activity.text
+    assert activity.json()["last_traffic_at"].startswith("2026-05-10T10:00:00")
+    assert activity.json()["last_failure_at"].startswith("2026-05-10T10:00:00")
+
+    relisted = client.get(
+        f"/v1/agents/{agent_id}/channel-bindings",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert relisted.status_code == 200, relisted.text
+    relisted_whatsapp = next(
+        item for item in relisted.json()["items"] if item["channel_type"] == "whatsapp"
+    )
+    assert relisted_whatsapp["last_traffic_at"].startswith("2026-05-10T10:00:00")
+    assert relisted_whatsapp["last_failure_at"].startswith("2026-05-10T10:00:00")
+
     audit = client.get(
         f"/v1/audit-events?workspace_id={workspace_id}",
         headers=_auth(),
@@ -1434,6 +1459,7 @@ def test_channel_bindings_are_peer_agent_objects_with_readiness(
     assert {event["action"] for event in audit} >= {
         "channel_binding:upsert",
         "channel_binding:readiness",
+        "channel_binding:activity",
     }
 
 

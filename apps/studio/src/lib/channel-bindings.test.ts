@@ -6,6 +6,7 @@ import {
   createChannelPreviewEvalCase,
   listChannelBindings,
   previewChannelMatrix,
+  recordChannelActivity,
   upsertChannelBinding,
   updateChannelReadiness,
 } from "./channel-bindings";
@@ -104,6 +105,39 @@ describe("channel-bindings client", () => {
     expect(fetcher).toHaveBeenCalledWith(
       "https://cp.test/v1/agents/agt_1/channel-bindings/cb_1/readiness/business_verified",
       expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("records channel activity through cp-api", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        ...buildLocalChannelBindings("agt_1")[1],
+        id: "cb_1",
+        last_traffic_at: "2026-05-10T10:00:00Z",
+        last_failure_at: "2026-05-10T10:00:00Z",
+      }),
+    );
+
+    const activity = await recordChannelActivity(
+      "agt_1",
+      "cb_1",
+      {
+        status: "failure",
+        trace_id: "trace_whatsapp_template_failure",
+        occurred_at: "2026-05-10T10:00:00Z",
+        failure_message: "Template language was rejected by provider.",
+      },
+      { baseUrl: "https://cp.test", fetcher },
+    );
+
+    expect(activity.last_traffic_at).toBe("2026-05-10T10:00:00Z");
+    expect(activity.last_failure_at).toBe("2026-05-10T10:00:00Z");
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agt_1/channel-bindings/cb_1/activity",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("trace_whatsapp_template_failure"),
+      }),
     );
   });
 
@@ -228,6 +262,15 @@ describe("channel-bindings client", () => {
     ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
 
     await expect(
+      recordChannelActivity(
+        "agt_1",
+        "cb_1",
+        { status: "success", trace_id: "trace_123" },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
       createChannelPreviewEvalCase(
         "agt_1",
         {
@@ -317,6 +360,23 @@ describe("channel-bindings client", () => {
           status: "passed",
         }),
       ],
+    });
+
+    await expect(
+      recordChannelActivity(
+        "agt_1",
+        "cb_1",
+        {
+          status: "failure",
+          trace_id: "trace_123",
+          occurred_at: "2026-05-10T10:00:00Z",
+        },
+        { baseUrl: "", allowFixture: true },
+      ),
+    ).resolves.toMatchObject({
+      id: "cb_1",
+      last_traffic_at: "2026-05-10T10:00:00Z",
+      last_failure_at: "2026-05-10T10:00:00Z",
     });
   });
 });

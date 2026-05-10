@@ -101,6 +101,28 @@ describe("ChannelBindingsPanel", () => {
     );
   });
 
+  it("shows channel activity evidence when traffic and failures are recorded", () => {
+    const bindings = buildLocalChannelBindings("agt_1").map((binding) =>
+      binding.channel_type === "whatsapp"
+        ? {
+            ...binding,
+            status: "live" as const,
+            last_traffic_at: "2026-05-10T10:00:00Z",
+            last_failure_at: "2026-05-10T10:05:00Z",
+          }
+        : binding,
+    );
+
+    render(<ChannelBindingsPanel agentId="agt_1" initialBindings={bindings} />);
+
+    expect(screen.getByTestId("channel-binding-whatsapp")).toHaveTextContent(
+      "2026-05-10 10:00",
+    );
+    expect(screen.getByTestId("channel-binding-whatsapp")).toHaveTextContent(
+      "2026-05-10 10:05",
+    );
+  });
+
   it("focuses channel readiness when opened from Workbench evidence", () => {
     render(
       <ChannelBindingsPanel

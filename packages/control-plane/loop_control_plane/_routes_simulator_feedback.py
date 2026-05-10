@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Request
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
+from loop_control_plane.channel_bindings import ChannelActivityCreate
 from loop_control_plane.eval_suites import EvalCaseCreate, serialise_case
 from loop_control_plane.simulator_feedback import (
     SimulatorRunCreate,
@@ -137,6 +138,18 @@ async def create_simulator_run(
             channel_binding_id=channel_binding_id,
         )
     )
+    if channel_binding_id:
+        await cp.channel_bindings.record_activity(
+            agent=agent,
+            binding_id=channel_binding_id,
+            body=ChannelActivityCreate(
+                status="failure" if body.status == "failed" else "success",
+                trace_id=trace_id,
+                failure_message=(
+                    "Simulator run failed." if body.status == "failed" else ""
+                ),
+            ),
+        )
     record_audit_event(
         workspace_id=workspace_id,
         actor_sub=caller_sub,

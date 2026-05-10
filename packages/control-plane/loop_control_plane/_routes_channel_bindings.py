@@ -10,6 +10,7 @@ from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.channel_bindings import (
     SUPPORTED_CHANNELS,
+    ChannelActivityCreate,
     ChannelBindingRecord,
     ChannelBindingUpsert,
     ChannelPreviewEvalCaseCreate,
@@ -284,6 +285,45 @@ async def upsert_channel_binding(
             "invalidated_pre_approved_classes": [
                 record.id for record in invalidated
             ],
+        },
+    )
+    return channel_binding_payload(binding)
+
+
+@router.post("/{agent_id}/channel-bindings/{binding_id}/activity")
+async def record_channel_activity(
+    request: Request,
+    agent_id: UUID,
+    binding_id: str,
+    body: ChannelActivityCreate,
+    caller_sub: str = CALLER,
+    workspace_id: UUID | None = None,
+) -> dict[str, Any]:
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    workspace_id = agent.workspace_id
+    binding = await request.app.state.cp.channel_bindings.record_activity(
+        agent=agent,
+        binding_id=binding_id,
+        body=body,
+    )
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="channel_binding:activity",
+        resource_id=binding.id,
+        payload={
+            "agent_id": str(agent_id),
+            "channel_type": binding.channel_type,
+            "trace_id": body.trace_id,
+            "status": body.status,
+            "failure_message": body.failure_message,
         },
     )
     return channel_binding_payload(binding)
