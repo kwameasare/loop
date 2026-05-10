@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  evidenceLinksForAgent,
   fetchAgentHandoff,
   localAgentHandoff,
   transferAgentOwner,
@@ -60,6 +61,27 @@ describe("agent handoff client", () => {
     );
     expect(transferred.transfers[0]?.notification.recipient).toBe(
       "new-owner@acme.test",
+    );
+  });
+
+  it("maps walkthrough evidence refs to source artifact links", () => {
+    expect(
+      evidenceLinksForAgent(
+        "agent_1",
+        "comment/cmt_handoff -> eval/eval_comment_cmt_handoff",
+      ),
+    ).toEqual([
+      {
+        ref: "comment/cmt_handoff",
+        href: "/agents/agent_1/history?comment_id=cmt_handoff",
+      },
+      {
+        ref: "eval/eval_comment_cmt_handoff",
+        href: "/agents/agent_1/evals?case_id=eval_comment_cmt_handoff",
+      },
+    ]);
+    expect(evidenceLinksForAgent("agent 1", "trace/trace 1")[0]?.href).toBe(
+      "/traces/trace%201",
     );
   });
 });

@@ -22,6 +22,13 @@ describe("AgentHistoryWalkthrough", () => {
     expect(
       screen.getByTestId("walkthrough-section-commitments"),
     ).toBeInTheDocument();
+    const commitmentLinks = screen.getAllByTestId(
+      "handoff-evidence-link-commitment_commitment_unconfigured",
+    );
+    expect(commitmentLinks[0]).toHaveAttribute(
+      "href",
+      "/agents/agent_1/contract?commitment_id=commitment_unconfigured",
+    );
 
     fireEvent.change(screen.getByTestId("handoff-new-owner"), {
       target: { value: "new-owner@acme.test" },

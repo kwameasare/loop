@@ -68,6 +68,11 @@ export interface OwnershipTransferInput {
   acknowledged_risk_ids?: string[];
 }
 
+export interface EvidenceLink {
+  ref: string;
+  href: string;
+}
+
 const LOCAL_NOW = new Date(0).toISOString();
 
 export function localAgentHandoff(agentId: string): AgentHandoffModel {
@@ -200,4 +205,47 @@ export async function transferAgentOwner(
       },
     },
   );
+}
+
+export function evidenceLinksForAgent(
+  agentId: string,
+  evidenceRef: string,
+): EvidenceLink[] {
+  return evidenceRef
+    .split(/\s*->\s*/)
+    .map((ref) => ref.trim())
+    .filter(Boolean)
+    .map((ref) => ({
+      ref,
+      href: evidenceHrefForAgent(agentId, ref),
+    }));
+}
+
+function evidenceHrefForAgent(agentId: string, evidenceRef: string): string {
+  const [kind = "", ...rest] = evidenceRef.split("/");
+  const id = rest.join("/");
+  const encodedAgentId = encodeURIComponent(agentId);
+  const encodedRef = encodeURIComponent(evidenceRef);
+  const encodedId = encodeURIComponent(id || evidenceRef);
+
+  switch (kind) {
+    case "commitment":
+      return `/agents/${encodedAgentId}/contract?commitment_id=${encodedId}`;
+    case "version":
+      return `/agents/${encodedAgentId}/versions?version_id=${encodedId}`;
+    case "change-package":
+      return `/agents/${encodedAgentId}/deploys?change_package_id=${encodedId}`;
+    case "deployment":
+      return `/agents/${encodedAgentId}/deploys?deployment_id=${encodedId}`;
+    case "incident":
+      return `/agents/${encodedAgentId}/observe?incident_id=${encodedId}`;
+    case "comment":
+      return `/agents/${encodedAgentId}/history?comment_id=${encodedId}`;
+    case "eval":
+      return `/agents/${encodedAgentId}/evals?case_id=${encodedId}`;
+    case "trace":
+      return `/traces/${encodedId}`;
+    default:
+      return `/agents/${encodedAgentId}/history?evidence_ref=${encodedRef}`;
+  }
 }
