@@ -25,6 +25,7 @@ import {
   type TrustState,
 } from "@/lib/design-tokens";
 import type { CommitmentDocument } from "@/lib/agent-commitment";
+import type { ChangePackage } from "@/lib/change-package";
 import type { ChannelBinding } from "@/lib/channel-bindings";
 import type { EvalSuite } from "@/lib/evals";
 import type { KbDocument } from "@/lib/kb";
@@ -139,6 +140,8 @@ export interface AgentOverviewProps {
   evalsDegradedReason?: string | undefined;
   knowledgeDocuments?: KbDocument[] | undefined;
   knowledgeDegradedReason?: string | undefined;
+  changePackage?: ChangePackage | undefined;
+  changePackageDegradedReason?: string | undefined;
   traceSummaries?: TraceSummary[] | undefined;
   tracesDegradedReason?: string | undefined;
   workbench?: Partial<AgentWorkbenchData>;
@@ -210,6 +213,19 @@ interface TraceWorkbenchSummary {
   evidence: string;
   status: WorkbenchSectionStatus;
   latestTrace?: TraceSummary | undefined;
+}
+
+interface ChangePackageWorkbenchSummary {
+  current: string;
+  lastChangedBy: string;
+  diffFromProduction: string;
+  validation: string;
+  evidence: string;
+  status: WorkbenchSectionStatus;
+  approvedApprovals: number;
+  requiredApprovals: number;
+  rollbackTarget: string;
+  blockedReason?: string | undefined;
 }
 
 function requiredReadiness(binding: ChannelBinding) {
@@ -778,6 +794,126 @@ function summarizeTraces(
   };
 }
 
+function compactContentHash(hash: string | undefined): string {
+  if (!hash || hash === "unconfigured") return hash || "unconfigured";
+  return hash.length > 18 ? `${hash.slice(0, 10)}...${hash.slice(-6)}` : hash;
+}
+
+function summarizeChangePackage(
+  changePackage: ChangePackage | undefined,
+  degradedReason?: string | undefined,
+): ChangePackageWorkbenchSummary {
+  const approvals = changePackage?.required_approvals ?? [];
+  const required = approvals.filter((approval) => approval.required);
+  const approved = required.filter((approval) => approval.satisfied);
+  const invalidated = required.filter(
+    (approval) => approval.invalidated_at || approval.state === "invalidated",
+  );
+  const stale =
+    changePackage?.status === "stale" || Boolean(changePackage?.stale_at);
+  const missingApprovals = required.length - approved.length;
+
+  if (degradedReason) {
+    return {
+      current:
+        "Change Package evidence is degraded; Studio is not claiming approval or preflight readiness.",
+      lastChangedBy: "Live Change Package endpoint unavailable",
+      diffFromProduction: "No preflight diff loaded.",
+      validation: degradedReason,
+      evidence: "change_package.degraded",
+      status: "watching",
+      approvedApprovals: 0,
+      requiredApprovals: 1,
+      rollbackTarget: "none",
+      blockedReason: degradedReason,
+    };
+  }
+
+  if (!changePackage) {
+    return {
+      current: "No preflight Change Package has been generated.",
+      lastChangedBy: "No Change Package loaded",
+      diffFromProduction: "No immutable preflight diff exists yet.",
+      validation:
+        "Generate a Change Package before requesting approval or deployment.",
+      evidence: "change_package.empty",
+      status: "watching",
+      approvedApprovals: 0,
+      requiredApprovals: 1,
+      rollbackTarget: "none",
+      blockedReason: "No Change Package or approval is loaded.",
+    };
+  }
+
+  if (stale || invalidated.length > 0) {
+    const reason = stale
+      ? "Change Package is stale after a later edit."
+      : `${invalidated.length} approval${
+          invalidated.length === 1 ? "" : "s"
+        } invalidated after content changed.`;
+    return {
+      current: `${changePackage.status} Change Package ${changePackage.id}; approvals ${approved.length}/${required.length}; hash ${compactContentHash(
+        changePackage.content_hash,
+      )}.`,
+      lastChangedBy: `Updated ${formatDate(changePackage.updated_at)}`,
+      diffFromProduction: changePackage.summary,
+      validation: reason,
+      evidence: changePackage.content_hash,
+      status: "blocked",
+      approvedApprovals: approved.length,
+      requiredApprovals: required.length || 1,
+      rollbackTarget: changePackage.rollback_target_version_id || "none",
+      blockedReason: reason,
+    };
+  }
+
+  if (missingApprovals > 0) {
+    return {
+      current: `${changePackage.status} Change Package ${changePackage.id}; approvals ${approved.length}/${required.length}; hash ${compactContentHash(
+        changePackage.content_hash,
+      )}.`,
+      lastChangedBy: `Updated ${formatDate(changePackage.updated_at)}`,
+      diffFromProduction: changePackage.summary,
+      validation: `${missingApprovals} required approval${
+        missingApprovals === 1 ? "" : "s"
+      } still pending.`,
+      evidence: changePackage.content_hash,
+      status: "blocked",
+      approvedApprovals: approved.length,
+      requiredApprovals: required.length,
+      rollbackTarget: changePackage.rollback_target_version_id || "none",
+      blockedReason: `${missingApprovals} required approval${
+        missingApprovals === 1 ? "" : "s"
+      } pending.`,
+    };
+  }
+
+  const deployable =
+    changePackage.status === "approved" ||
+    changePackage.status === "deployable" ||
+    changePackage.status === "deployed" ||
+    changePackage.approval_status === "approved";
+
+  return {
+    current: `${changePackage.status} Change Package ${changePackage.id}; approvals ${approved.length}/${required.length}; hash ${compactContentHash(
+      changePackage.content_hash,
+    )}.`,
+    lastChangedBy: `Updated ${formatDate(changePackage.updated_at)}`,
+    diffFromProduction: changePackage.summary,
+    validation: deployable
+      ? "Approval hash and rollback target are ready for controlled rollout."
+      : "Preflight exists; submit it for approval before production deploy.",
+    evidence: changePackage.content_hash,
+    status: deployable ? "healthy" : "watching",
+    approvedApprovals: approved.length,
+    requiredApprovals: required.length,
+    rollbackTarget: changePackage.rollback_target_version_id || "none",
+    blockedReason: deployable
+      ? undefined
+      : "Change Package has not reached approved or deployable state.",
+  };
+}
+
 function EditDescriptionModal({
   open,
   initial,
@@ -880,6 +1016,7 @@ function buildSections(input: {
   memorySummary: MemoryWorkbenchSummary;
   knowledgeSummary: KnowledgeWorkbenchSummary;
   traceSummary: TraceWorkbenchSummary;
+  changePackageSummary: ChangePackageWorkbenchSummary;
   commitment?: CommitmentDocument | undefined;
 }): AgentWorkbenchSection[] {
   const commitmentMissing =
@@ -932,15 +1069,29 @@ function buildSections(input: {
     {
       id: "behavior",
       label: "Behavior",
-      current: "Structured behavior editor is available for this agent.",
-      lastChangedBy: "No behavior change package loaded",
+      current:
+        input.changePackageSummary.evidence === "change_package.empty"
+          ? "Structured behavior editor is available for this agent."
+          : input.changePackageSummary.current,
+      lastChangedBy:
+        input.changePackageSummary.evidence === "change_package.empty"
+          ? "No behavior change package loaded"
+          : input.changePackageSummary.lastChangedBy,
       diffFromProduction: input.hasProduction
-        ? "No semantic behavior diff loaded."
+        ? input.changePackageSummary.diffFromProduction
         : "No production behavior baseline exists yet.",
       validation:
-        "Run simulator and save failures as evals before requesting deploy.",
-      evidence: "behavior.editor",
-      status: "watching",
+        input.changePackageSummary.evidence === "change_package.empty"
+          ? "Run simulator and save failures as evals before requesting deploy."
+          : input.changePackageSummary.validation,
+      evidence:
+        input.changePackageSummary.evidence === "change_package.empty"
+          ? "behavior.editor"
+          : input.changePackageSummary.evidence,
+      status:
+        input.changePackageSummary.evidence === "change_package.empty"
+          ? "watching"
+          : input.changePackageSummary.status,
     },
     {
       id: "channels",
@@ -1009,24 +1160,28 @@ function buildSections(input: {
       lastChangedBy: input.hasProduction
         ? "Loaded from agent active version"
         : "No deployment loaded",
-      diffFromProduction: input.hasProduction
-        ? `Active version can roll back only when a rollback target exists.`
-        : "No production deployment exists yet.",
+      diffFromProduction:
+        input.changePackageSummary.evidence === "change_package.empty"
+          ? input.hasProduction
+            ? `Active version can roll back only when a rollback target exists.`
+            : "No production deployment exists yet."
+          : input.changePackageSummary.diffFromProduction,
       validation:
-        input.deploy.blockedReason ??
-        "Generate a Change Package before deploy.",
-      evidence: input.deploy.id,
-      status: input.deploy.blockedReason ? "blocked" : "watching",
+        input.deploy.blockedReason ?? input.changePackageSummary.validation,
+      evidence: input.changePackageSummary.evidence,
+      status: input.deploy.blockedReason
+        ? "blocked"
+        : input.changePackageSummary.status,
     },
     {
       id: "governance",
       label: "Governance",
-      current: "Approval policy and audit requirements are not loaded here.",
-      lastChangedBy: "No governance packet loaded",
-      diffFromProduction: "Approval content hash unavailable until preflight.",
-      validation: "High-risk changes must produce an immutable Change Package.",
-      evidence: "governance.unconfigured",
-      status: "watching",
+      current: input.changePackageSummary.current,
+      lastChangedBy: input.changePackageSummary.lastChangedBy,
+      diffFromProduction: input.changePackageSummary.diffFromProduction,
+      validation: input.changePackageSummary.validation,
+      evidence: input.changePackageSummary.evidence,
+      status: input.changePackageSummary.status,
     },
     {
       id: "history",
@@ -1064,6 +1219,8 @@ function createDefaultWorkbenchData(
     | "evalsDegradedReason"
     | "knowledgeDocuments"
     | "knowledgeDegradedReason"
+    | "changePackage"
+    | "changePackageDegradedReason"
     | "traceSummaries"
     | "tracesDegradedReason"
   > & { commitment?: CommitmentDocument | undefined },
@@ -1089,22 +1246,36 @@ function createDefaultWorkbenchData(
     props.evalSuites,
     props.evalsDegradedReason,
   );
+  const changePackageSummary = summarizeChangePackage(
+    props.changePackage,
+    props.changePackageDegradedReason,
+  );
+  const deployBlockedReason = props.changePackage
+    ? changePackageSummary.blockedReason
+    : props.changePackageDegradedReason || !hasProduction
+      ? changePackageSummary.blockedReason
+      : undefined;
   const deploy: TargetDeploy = {
-    id: hasProduction
-      ? `agent.${props.id}.active_version`
-      : "deploy.unconfigured",
+    id:
+      props.changePackage?.id ??
+      (hasProduction
+        ? `agent.${props.id}.active_version`
+        : "deploy.unconfigured"),
     agentId: props.id,
     objectState,
     canaryPercent: hasProduction ? 100 : 0,
-    approvals: 0,
-    requiredApprovals: hasProduction ? 0 : 1,
-    rollbackTarget: hasProduction ? `v${props.activeVersion}` : "none",
-    ...(hasProduction
-      ? {}
-      : {
-          blockedReason:
-            "No Change Package or approval is loaded for first deployment.",
-        }),
+    approvals: props.changePackage ? changePackageSummary.approvedApprovals : 0,
+    requiredApprovals:
+      props.changePackage || deployBlockedReason
+        ? changePackageSummary.requiredApprovals
+        : 0,
+    rollbackTarget:
+      changePackageSummary.rollbackTarget !== "none"
+        ? changePackageSummary.rollbackTarget
+        : hasProduction
+          ? `v${props.activeVersion}`
+          : "none",
+    ...(deployBlockedReason ? { blockedReason: deployBlockedReason } : {}),
   };
   const toolPermissionSummary = "No tool contracts loaded.";
   const memoryPolicy = "No durable memory policy loaded.";
@@ -1145,7 +1316,11 @@ function createDefaultWorkbenchData(
   const stateSentence =
     props.stateReason ??
     (objectState === "production" && hasProduction
-      ? `You are viewing agent ${props.name || props.id}. Production is currently ${lastProductionVersion}; no draft branch, eval gate, or change package is loaded in this overview.`
+      ? `You are viewing agent ${props.name || props.id}. Production is currently ${lastProductionVersion}; ${
+          props.changePackage
+            ? `Change Package ${props.changePackage.id} is ${props.changePackage.status}.`
+            : "no draft branch, eval gate, or change package is loaded in this overview."
+        }`
       : objectState === "canary"
         ? `You are viewing agent ${props.name || props.id}. A controlled rollout is active; inspect rollout metrics before promotion.`
         : objectState === "staged"
@@ -1202,6 +1377,7 @@ function createDefaultWorkbenchData(
       memorySummary,
       knowledgeSummary,
       traceSummary,
+      changePackageSummary,
       commitment: props.commitment,
     }),
     diff: {
@@ -1255,12 +1431,13 @@ function createDefaultWorkbenchData(
         label: "Generate Change Package",
         description:
           "Preflight must collect diff, eval, channel, tool, and rollback evidence.",
-        evidence: deploy.id,
+        evidence: props.changePackage?.id ?? deploy.id,
         href: actionHref(props.id, "approval"),
         disabledReason:
-          deploy.requiredApprovals === 0
+          !deploy.blockedReason && deploy.requiredApprovals === deploy.approvals
             ? undefined
-            : "Blocked until commitment, channel readiness, eval coverage, and preflight exist.",
+            : deploy.blockedReason ??
+              "Blocked until commitment, channel readiness, eval coverage, and preflight exist.",
       },
       {
         id: "rollback",
@@ -1384,6 +1561,8 @@ export function AgentOverview({
   evalsDegradedReason,
   knowledgeDocuments,
   knowledgeDegradedReason,
+  changePackage,
+  changePackageDegradedReason,
   traceSummaries,
   tracesDegradedReason,
   workbench,
@@ -1416,6 +1595,8 @@ export function AgentOverview({
           evalsDegradedReason,
           knowledgeDocuments,
           knowledgeDegradedReason,
+          changePackage,
+          changePackageDegradedReason,
           traceSummaries,
           tracesDegradedReason,
           commitment,
@@ -1443,6 +1624,8 @@ export function AgentOverview({
       evalsDegradedReason,
       knowledgeDocuments,
       knowledgeDegradedReason,
+      changePackage,
+      changePackageDegradedReason,
       traceSummaries,
       tracesDegradedReason,
       workbench,
