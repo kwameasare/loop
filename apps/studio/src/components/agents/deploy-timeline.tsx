@@ -9,6 +9,7 @@ import {
   rollbackDeployment as defaultRollback,
   startCanaryDeployment as defaultStartCanary,
   type Deployment,
+  type DeploymentStartInput,
   type EvidencePack,
 } from "@/lib/deploys";
 import type { ChangePackage } from "@/lib/change-package";
@@ -21,15 +22,56 @@ type RampFn = (
 ) => Promise<Deployment>;
 type StartFn = (
   agentId: string,
-  input: {
-    change_package_id: string;
-    version_id?: string;
-    stage?: "shadow" | "canary";
-    traffic_percent?: number;
-    channel_scope?: string[];
-    notes?: string | null;
-  },
+  input: DeploymentStartInput,
 ) => Promise<{ deployment: Deployment; evidence_pack?: EvidencePack }>;
+
+const DEFAULT_CHANNEL_SCOPE = "web_chat";
+const DEFAULT_REGION_SCOPE = "global";
+const DEFAULT_SEGMENT_SCOPE = "all-customers";
+
+function parseScopeList(value: string): string[] {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function scopeLabel(scope: string[] | undefined, fallback: string): string {
+  if (!scope || scope.length === 0) return fallback;
+  return scope.join(", ");
+}
+
+function thresholdValue(
+  thresholds: Record<string, unknown> | undefined,
+  key: string,
+): string | null {
+  const raw = thresholds?.[key];
+  if (raw === null || raw === undefined || raw === "") return null;
+  return String(raw);
+}
+
+function thresholdSummary(
+  thresholds: Record<string, unknown> | undefined,
+): string {
+  if (!thresholds || Object.keys(thresholds).length === 0) {
+    return "Auto-rollback thresholds not configured.";
+  }
+  const rows = [
+    ["error rate", thresholdValue(thresholds, "error_rate_percent"), "%"],
+    ["p95 latency", thresholdValue(thresholds, "p95_latency_ms"), " ms"],
+    ["cost delta", thresholdValue(thresholds, "cost_delta_percent"), "%"],
+    [
+      "tool failure",
+      thresholdValue(thresholds, "tool_failure_rate_percent"),
+      "%",
+    ],
+  ]
+    .filter(([, value]) => value)
+    .map(([label, value, unit]) => `${label} <= ${value}${unit}`);
+  return rows.length > 0
+    ? rows.join(" · ")
+    : "Auto-rollback thresholds not configured.";
+}
 
 export interface DeployTimelineProps {
   agentId: string;
@@ -90,6 +132,15 @@ export function DeployTimeline({
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast>(null);
   const [rampTargets, setRampTargets] = useState<Record<string, number>>({});
+  const [trafficPercent, setTrafficPercent] = useState(5);
+  const [channelScope, setChannelScope] = useState(DEFAULT_CHANNEL_SCOPE);
+  const [regionScope, setRegionScope] = useState(DEFAULT_REGION_SCOPE);
+  const [segmentScope, setSegmentScope] = useState(DEFAULT_SEGMENT_SCOPE);
+  const [holdTimeMinutes, setHoldTimeMinutes] = useState(30);
+  const [errorRatePercent, setErrorRatePercent] = useState(2);
+  const [p95LatencyMs, setP95LatencyMs] = useState(2500);
+  const [costDeltaPercent, setCostDeltaPercent] = useState(20);
+  const [toolFailureRatePercent, setToolFailureRatePercent] = useState(2);
 
   async function runAction(
     dep: Deployment,
@@ -142,9 +193,18 @@ export function DeployTimeline({
         change_package_id: approvedChangePackage.id,
         version_id: approvedChangePackage.to_version_id,
         stage,
-        traffic_percent: stage === "shadow" ? 0 : 5,
-        channel_scope: ["web_chat"],
-        notes: `Started ${stage} from ${approvedChangePackage.evidence_pack_id}`,
+        traffic_percent: stage === "shadow" ? 0 : trafficPercent,
+        channel_scope: parseScopeList(channelScope),
+        region_scope: parseScopeList(regionScope),
+        segment_scope: parseScopeList(segmentScope),
+        hold_time_minutes: holdTimeMinutes,
+        auto_rollback_thresholds: {
+          error_rate_percent: errorRatePercent,
+          p95_latency_ms: p95LatencyMs,
+          cost_delta_percent: costDeltaPercent,
+          tool_failure_rate_percent: toolFailureRatePercent,
+        },
+        notes: `Started ${stage} from ${approvedChangePackage.evidence_pack_id}; hold ${holdTimeMinutes} min.`,
       });
       setItems((prev) => [result.deployment, ...prev]);
       if (result.evidence_pack) {
@@ -253,6 +313,131 @@ export function DeployTimeline({
         </p>
       </header>
 
+      <section
+        className="rounded-lg border bg-card/70 p-3"
+        data-testid="rollout-plan-controls"
+      >
+        <div className="flex flex-col gap-1">
+          <h3 className="text-sm font-semibold">Rollout plan controls</h3>
+          <p className="text-xs text-muted-foreground">
+            Shadow and canary starts must declare traffic, channel scope,
+            region scope, segment scope, hold time, and auto-rollback limits.
+          </p>
+        </div>
+        <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          <label className="flex flex-col gap-1 text-xs font-medium">
+            Canary traffic %
+            <input
+              className="rounded-md border bg-background px-2 py-1 text-sm"
+              data-testid="rollout-traffic-percent"
+              max={99}
+              min={1}
+              onChange={(event) =>
+                setTrafficPercent(Number(event.target.value))
+              }
+              type="number"
+              value={trafficPercent}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium">
+            Channel scope
+            <input
+              className="rounded-md border bg-background px-2 py-1 text-sm"
+              data-testid="rollout-channel-scope"
+              onChange={(event) => setChannelScope(event.target.value)}
+              placeholder="web_chat, whatsapp"
+              type="text"
+              value={channelScope}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium">
+            Region scope
+            <input
+              className="rounded-md border bg-background px-2 py-1 text-sm"
+              data-testid="rollout-region-scope"
+              onChange={(event) => setRegionScope(event.target.value)}
+              placeholder="global, eu-west-2"
+              type="text"
+              value={regionScope}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium">
+            Segment scope
+            <input
+              className="rounded-md border bg-background px-2 py-1 text-sm"
+              data-testid="rollout-segment-scope"
+              onChange={(event) => setSegmentScope(event.target.value)}
+              placeholder="all-customers, enterprise"
+              type="text"
+              value={segmentScope}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium">
+            Hold time minutes
+            <input
+              className="rounded-md border bg-background px-2 py-1 text-sm"
+              data-testid="rollout-hold-time"
+              min={1}
+              onChange={(event) =>
+                setHoldTimeMinutes(Number(event.target.value))
+              }
+              type="number"
+              value={holdTimeMinutes}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium">
+            Error rate limit %
+            <input
+              className="rounded-md border bg-background px-2 py-1 text-sm"
+              data-testid="rollout-error-rate"
+              min={0}
+              onChange={(event) =>
+                setErrorRatePercent(Number(event.target.value))
+              }
+              type="number"
+              value={errorRatePercent}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium">
+            p95 latency limit ms
+            <input
+              className="rounded-md border bg-background px-2 py-1 text-sm"
+              data-testid="rollout-p95-latency"
+              min={1}
+              onChange={(event) => setP95LatencyMs(Number(event.target.value))}
+              type="number"
+              value={p95LatencyMs}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium">
+            Cost delta limit %
+            <input
+              className="rounded-md border bg-background px-2 py-1 text-sm"
+              data-testid="rollout-cost-delta"
+              min={0}
+              onChange={(event) =>
+                setCostDeltaPercent(Number(event.target.value))
+              }
+              type="number"
+              value={costDeltaPercent}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium">
+            Tool failure limit %
+            <input
+              className="rounded-md border bg-background px-2 py-1 text-sm"
+              data-testid="rollout-tool-failure"
+              min={0}
+              onChange={(event) =>
+                setToolFailureRatePercent(Number(event.target.value))
+              }
+              type="number"
+              value={toolFailureRatePercent}
+            />
+          </label>
+        </div>
+      </section>
+
       {degradedReason ? (
         <p
           className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
@@ -298,6 +483,22 @@ export function DeployTimeline({
                     {dep.notes ? (
                       <p className="text-xs italic">{dep.notes}</p>
                     ) : null}
+                    <p
+                      className="text-xs"
+                      data-testid={`deploy-scope-${dep.id}`}
+                    >
+                      Scope: channels{" "}
+                      {scopeLabel(dep.channelScope, "not declared")} · regions{" "}
+                      {scopeLabel(dep.regionScope, "not declared")} · segments{" "}
+                      {scopeLabel(dep.segmentScope, "not declared")} · hold{" "}
+                      {dep.holdTimeMinutes ?? "not set"} min
+                    </p>
+                    <p
+                      className="text-xs"
+                      data-testid={`deploy-thresholds-${dep.id}`}
+                    >
+                      {thresholdSummary(dep.autoRollbackThresholds)}
+                    </p>
                     {dep.evidencePackId ? (
                       <p className="text-xs">
                         Evidence pack:{" "}

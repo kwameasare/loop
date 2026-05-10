@@ -247,7 +247,17 @@ describe("DeployTimeline", () => {
         stage: "canary",
         status: "canary",
         versionId: "v2",
-        trafficPercent: 5,
+        trafficPercent: 10,
+        channelScope: ["web_chat", "whatsapp"],
+        regionScope: ["eu-west-2"],
+        segmentScope: ["enterprise"],
+        holdTimeMinutes: 45,
+        autoRollbackThresholds: {
+          error_rate_percent: 1,
+          p95_latency_ms: 1800,
+          cost_delta_percent: 12,
+          tool_failure_rate_percent: 3,
+        },
         evidencePackId: "ep_1",
       }),
       evidence_pack: mkEvidencePack(),
@@ -261,6 +271,34 @@ describe("DeployTimeline", () => {
       />,
     );
 
+    fireEvent.change(screen.getByTestId("rollout-traffic-percent"), {
+      target: { value: "10" },
+    });
+    fireEvent.change(screen.getByTestId("rollout-channel-scope"), {
+      target: { value: "web_chat, whatsapp" },
+    });
+    fireEvent.change(screen.getByTestId("rollout-region-scope"), {
+      target: { value: "eu-west-2" },
+    });
+    fireEvent.change(screen.getByTestId("rollout-segment-scope"), {
+      target: { value: "enterprise" },
+    });
+    fireEvent.change(screen.getByTestId("rollout-hold-time"), {
+      target: { value: "45" },
+    });
+    fireEvent.change(screen.getByTestId("rollout-error-rate"), {
+      target: { value: "1" },
+    });
+    fireEvent.change(screen.getByTestId("rollout-p95-latency"), {
+      target: { value: "1800" },
+    });
+    fireEvent.change(screen.getByTestId("rollout-cost-delta"), {
+      target: { value: "12" },
+    });
+    fireEvent.change(screen.getByTestId("rollout-tool-failure"), {
+      target: { value: "3" },
+    });
+
     await act(async () => {
       fireEvent.click(screen.getByTestId("deploy-start-canary"));
     });
@@ -271,10 +309,39 @@ describe("DeployTimeline", () => {
         change_package_id: "cp_1",
         version_id: "v2",
         stage: "canary",
+        traffic_percent: 10,
+        channel_scope: ["web_chat", "whatsapp"],
+        region_scope: ["eu-west-2"],
+        segment_scope: ["enterprise"],
+        hold_time_minutes: 45,
+        auto_rollback_thresholds: {
+          error_rate_percent: 1,
+          p95_latency_ms: 1800,
+          cost_delta_percent: 12,
+          tool_failure_rate_percent: 3,
+        },
       }),
     );
     expect(screen.getByTestId("deploy-row-dep_new")).toHaveTextContent(
       "Evidence pack",
+    );
+    expect(screen.getByTestId("deploy-scope-dep_new")).toHaveTextContent(
+      "web_chat, whatsapp",
+    );
+    expect(screen.getByTestId("deploy-scope-dep_new")).toHaveTextContent(
+      "eu-west-2",
+    );
+    expect(screen.getByTestId("deploy-scope-dep_new")).toHaveTextContent(
+      "enterprise",
+    );
+    expect(screen.getByTestId("deploy-scope-dep_new")).toHaveTextContent(
+      "hold 45 min",
+    );
+    expect(screen.getByTestId("deploy-thresholds-dep_new")).toHaveTextContent(
+      "error rate <= 1%",
+    );
+    expect(screen.getByTestId("deploy-thresholds-dep_new")).toHaveTextContent(
+      "p95 latency <= 1800 ms",
     );
     expect(
       screen.getByTestId("evidence-pack-manifest-ep_1"),
