@@ -14,13 +14,14 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Protocol
+from typing import Literal, Protocol
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 __all__ = [
     "InMemoryTraceStore",
+    "TraceMemoryEvent",
     "TraceQuery",
     "TraceQueryResult",
     "TraceSearchService",
@@ -30,6 +31,27 @@ __all__ = [
 
 
 _MAX_PAGE_SIZE: int = 200
+
+
+class TraceMemoryEvent(BaseModel):
+    """Memory evidence attached to a trace detail timeline.
+
+    This keeps the Trace Theater honest while the full span lake is still
+    growing: memory writes, reads, and policy blocks are explicit events on the
+    trace summary instead of UI-only annotations.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+
+    kind: Literal["read", "write", "blocked"]
+    scope: str = Field(min_length=1, max_length=64)
+    key: str = Field(min_length=1, max_length=160)
+    value_preview: str = Field(default="", max_length=320)
+    policy_ref: str = Field(default="", max_length=256)
+    reason: str = Field(default="", max_length=512)
+    blocked_reason: str = Field(default="", max_length=512)
+    source_trace: str = Field(default="", max_length=160)
+    source_span_id: str = Field(default="", max_length=160)
 
 
 class TraceSummary(BaseModel):
@@ -44,6 +66,7 @@ class TraceSummary(BaseModel):
     span_count: int = Field(ge=1)
     error: bool = False
     channel_binding_id: str = ""
+    memory_events: tuple[TraceMemoryEvent, ...] = Field(default_factory=tuple, max_length=50)
 
 
 class TraceQuery(BaseModel):
