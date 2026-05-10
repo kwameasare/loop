@@ -1516,6 +1516,30 @@ def test_channel_bindings_are_peer_agent_objects_with_readiness(
     }
     assert all(item["readiness"] for item in bindings)
     assert sum(1 for item in bindings if item["channel_type"] == "voice") == 1
+    webhook = next(item for item in bindings if item["channel_type"] == "webhook_api")
+    assert [check["id"] for check in webhook["readiness"]] == [
+        "signed_request",
+        "retry_behavior",
+        "trace_capture",
+    ]
+    assert {item["label"] for item in webhook["required_config"]} >= {
+        "Endpoint",
+        "Signature verification",
+        "Idempotency key",
+        "Rate limits",
+    }
+    assert webhook["readiness_summary"] == {
+        "state": "not_configured",
+        "passed": 0,
+        "failed": 0,
+        "pending": 3,
+        "total": 3,
+        "blocking_check_ids": [
+            "signed_request",
+            "retry_behavior",
+            "trace_capture",
+        ],
+    }
 
     whatsapp = client.post(
         f"/v1/agents/{agent_id}/channel-bindings",
@@ -1533,6 +1557,63 @@ def test_channel_bindings_are_peer_agent_objects_with_readiness(
     assert body["status"] == "draft"
     assert body["channel_type"] == "whatsapp"
     assert body["readiness"][0]["status"] == "pending"
+    assert body["required_config"] == [
+        {
+            "id": "business_account",
+            "label": "Business account",
+            "status": "configured",
+            "source": "identity_config",
+            "key": "business_account_id",
+            "evidence_ref": None,
+            "value_summary": "waba_123",
+        },
+        {
+            "id": "provider_connection",
+            "label": "Provider connection",
+            "status": "configured",
+            "source": "auth_config_ref",
+            "key": "auth_config_ref",
+            "evidence_ref": "secret://channels/whatsapp/acme",
+            "value_summary": "Secret reference bound",
+        },
+        {
+            "id": "template_approvals",
+            "label": "Template approvals",
+            "status": "pending_verification",
+            "source": "readiness",
+            "key": "template_approved",
+            "evidence_ref": None,
+            "value_summary": "",
+        },
+        {
+            "id": "session_window_policy",
+            "label": "Session window policy",
+            "status": "missing",
+            "source": "identity_config",
+            "key": "session_window_policy",
+            "evidence_ref": None,
+            "value_summary": "",
+        },
+        {
+            "id": "media_policy",
+            "label": "Media policy",
+            "status": "missing",
+            "source": "identity_config",
+            "key": "media_policy",
+            "evidence_ref": None,
+            "value_summary": "",
+        },
+        {
+            "id": "opt_in_out_policy",
+            "label": "Opt-in/out policy",
+            "status": "missing",
+            "source": "identity_config",
+            "key": "opt_in_out_policy",
+            "evidence_ref": None,
+            "value_summary": "",
+        },
+    ]
+    assert body["readiness_summary"]["state"] == "needs_readiness"
 
     checked = client.post(
         f"/v1/agents/{agent_id}/channel-bindings/{body['id']}/readiness/business_verified",
@@ -1546,6 +1627,22 @@ def test_channel_bindings_are_peer_agent_objects_with_readiness(
     assert checked.status_code == 200, checked.text
     assert checked.json()["readiness"][0]["status"] == "passed"
     assert checked.json()["readiness"][0]["evidence_ref"] == "provider/meta/business/waba_123"
+    business_config = next(
+        item for item in checked.json()["required_config"] if item["id"] == "business_account"
+    )
+    assert business_config["status"] == "configured"
+    assert checked.json()["readiness_summary"] == {
+        "state": "needs_readiness",
+        "passed": 1,
+        "failed": 0,
+        "pending": 3,
+        "total": 4,
+        "blocking_check_ids": [
+            "template_approved",
+            "test_inbound",
+            "handoff_route",
+        ],
+    }
 
     activity = client.post(
         f"/v1/agents/{agent_id}/channel-bindings/{body['id']}/activity",

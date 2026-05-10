@@ -17,6 +17,7 @@ import {
   CHANNEL_ORDER,
   type ChannelBinding,
   type ChannelBindingInput,
+  type ChannelRequiredConfigItem,
   type ChannelBindingType,
   type ChannelReadinessCheck,
   type ChannelReadinessInput,
@@ -66,6 +67,14 @@ const STATUS_CLASS: Record<ChannelBinding["status"], string> = {
   error: "border-destructive/40 bg-destructive/10 text-destructive",
   archived: "border-border bg-muted text-muted-foreground",
 };
+
+const CONFIG_STATUS_CLASS: Record<ChannelRequiredConfigItem["status"], string> =
+  {
+    configured: "bg-success text-success-foreground",
+    missing: "bg-muted text-muted-foreground",
+    pending_verification: "bg-warning text-warning-foreground",
+    blocked: "bg-destructive text-destructive-foreground",
+  };
 
 const CHANNEL_PROFILE: Record<
   ChannelBindingType,
@@ -265,11 +274,13 @@ const CHANNEL_PROFILE: Record<
 };
 
 function readinessCount(binding: ChannelBinding) {
-  const required = binding.readiness.filter(
-    (check) => check.status !== "not_required",
-  );
-  const passed = required.filter((check) => check.status === "passed");
-  return { passed: passed.length, total: required.length };
+  return {
+    passed: binding.readiness_summary?.passed ?? 0,
+    total:
+      binding.readiness_summary?.total ??
+      binding.readiness.filter((check) => check.status !== "not_required")
+        .length,
+  };
 }
 
 function configText(
@@ -387,6 +398,22 @@ function readinessButtonLabel(
   return check.status === "failed" ? "Failed" : "Fail";
 }
 
+function requiredConfigFor(
+  binding: ChannelBinding,
+  profile: (typeof CHANNEL_PROFILE)[ChannelBindingType],
+): ChannelRequiredConfigItem[] {
+  if (binding.required_config?.length) return binding.required_config;
+  return profile.requiredConfig.map((label) => ({
+    id: label.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+    label,
+    status: "missing",
+    source: "identity_config",
+    key: "",
+    evidence_ref: null,
+    value_summary: "",
+  }));
+}
+
 export function ChannelBindingsPanel({
   agentId,
   initialBindings,
@@ -420,7 +447,8 @@ export function ChannelBindingsPanel({
     setEditingType(binding.channel_type);
     setSetupDrafts((previous) => ({
       ...previous,
-      [binding.channel_type]: previous[binding.channel_type] ?? draftFromBinding(binding),
+      [binding.channel_type]:
+        previous[binding.channel_type] ?? draftFromBinding(binding),
     }));
     setNotice(null);
   }
@@ -492,7 +520,9 @@ export function ChannelBindingsPanel({
       );
       setBindings((previous) =>
         sortedBindings([
-          ...previous.filter((item) => item.channel_type !== updated.channel_type),
+          ...previous.filter(
+            (item) => item.channel_type !== updated.channel_type,
+          ),
           updated,
         ]),
       );
@@ -589,7 +619,8 @@ export function ChannelBindingsPanel({
           const profile = CHANNEL_PROFILE[binding.channel_type];
           const isFocused = binding.channel_type === focusedChannelType;
           const isEditing = editingType === binding.channel_type;
-          const draft = setupDrafts[binding.channel_type] ?? draftFromBinding(binding);
+          const draft =
+            setupDrafts[binding.channel_type] ?? draftFromBinding(binding);
           const identityKey = identityKeyFor(binding.channel_type);
           return (
             <article
@@ -724,10 +755,32 @@ export function ChannelBindingsPanel({
                   Required configuration
                 </p>
                 <ul className="mt-2 grid gap-1 text-xs text-muted-foreground">
-                  {profile.requiredConfig.map((item) => (
-                    <li key={item} className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                      <span>{item}</span>
+                  {requiredConfigFor(binding, profile).map((item) => (
+                    <li
+                      key={item.id}
+                      className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2"
+                    >
+                      <span
+                        className={cn(
+                          "h-1.5 w-1.5 rounded-full",
+                          item.status === "configured"
+                            ? "bg-success"
+                            : item.status === "blocked"
+                              ? "bg-destructive"
+                              : item.status === "pending_verification"
+                                ? "bg-warning"
+                                : "bg-muted-foreground",
+                        )}
+                      />
+                      <span className="truncate">{item.label}</span>
+                      <span
+                        className={cn(
+                          "rounded px-1.5 py-0.5 text-[0.65rem] font-medium",
+                          CONFIG_STATUS_CLASS[item.status],
+                        )}
+                      >
+                        {item.status.replace("_", " ")}
+                      </span>
                     </li>
                   ))}
                 </ul>

@@ -31,6 +31,27 @@ describe("channel-bindings client", () => {
     expect(bindings.every((binding) => binding.readiness.length > 0)).toBe(
       true,
     );
+    expect(
+      bindings.find((binding) => binding.channel_type === "whatsapp")
+        ?.required_config,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "template_approvals",
+          label: "Template approvals",
+          status: "pending_verification",
+        }),
+        expect.objectContaining({
+          id: "provider_connection",
+          status: "missing",
+        }),
+      ]),
+    );
+    expect(
+      bindings
+        .find((binding) => binding.channel_type === "webhook_api")
+        ?.readiness.map((check) => check.id),
+    ).toEqual(["signed_request", "retry_behavior", "trace_capture"]);
   });
 
   it("lists and upserts channel bindings through cp-api", async () => {
@@ -146,8 +167,9 @@ describe("channel-bindings client", () => {
 
     expect(listed.items).toHaveLength(9);
     expect(listed.degraded_reason).toMatch(/requires cp-api/i);
-    expect(listed.items.every((binding) => binding.status === "not_configured"))
-      .toBe(true);
+    expect(
+      listed.items.every((binding) => binding.status === "not_configured"),
+    ).toBe(true);
   });
 
   it("builds a local channel preview matrix with formatting failures", () => {
@@ -311,13 +333,28 @@ describe("channel-bindings client", () => {
     await expect(
       upsertChannelBinding(
         "agt_1",
-        { channel_type: "whatsapp", provider: "Meta Cloud API" },
+        {
+          channel_type: "whatsapp",
+          provider: "Meta Cloud API",
+          identity_config: { business_account_id: "waba_123" },
+          auth_config_ref: "secret://channels/whatsapp",
+        },
         { baseUrl: "", allowFixture: true },
       ),
     ).resolves.toMatchObject({
       channel_type: "whatsapp",
       provider: "Meta Cloud API",
       status: "draft",
+      required_config: expect.arrayContaining([
+        expect.objectContaining({
+          id: "business_account",
+          status: "configured",
+        }),
+        expect.objectContaining({
+          id: "provider_connection",
+          status: "configured",
+        }),
+      ]),
     });
 
     await expect(
