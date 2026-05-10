@@ -45,6 +45,16 @@ describe("MemoryStudio", () => {
     expect(screen.getByTestId("memory-policy-user")).toHaveTextContent(
       "Privacy implications before activation",
     );
+    expect(screen.getByTestId("memory-policy-account")).toHaveTextContent(
+      "Account",
+    );
+    expect(screen.getByTestId("memory-policy-organization")).toHaveTextContent(
+      "Organization",
+    );
+    expect(screen.getByTestId("memory-policy-task")).toHaveTextContent("Task");
+    expect(screen.getByTestId("memory-policy-agent")).toHaveTextContent(
+      "Agent",
+    );
   });
 
   it("filters across enterprise and runtime memory scopes", () => {

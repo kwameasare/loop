@@ -78,6 +78,10 @@ const POLICY_SCOPE_LABEL: Record<MemoryPolicyScope, string> = {
   conversation: "Conversation",
   session: "Session",
   user: "User",
+  account: "Account",
+  organization: "Organization",
+  task: "Task",
+  agent: "Agent",
   workspace: "Workspace",
 };
 

@@ -194,3 +194,63 @@ def test_agent_memory_route_requires_membership(
         headers={"authorization": _bearer_for("stranger")},
     )
     assert response.status_code in (401, 403)
+
+
+def test_agent_memory_policies_support_enterprise_scopes(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    headers = {
+        "authorization": _bearer_for("owner-1"),
+        "x-loop-workspace-id": str(workspace_id),
+    }
+    base_body = {
+        "allowed_memory_types": ["trace_backed_fact"],
+        "retention": "Retain for 90 days unless superseded.",
+        "consent_requirement": "Admin consent required before activation.",
+        "pii_policy": "No secrets, payment data, or individual PII.",
+        "delete_behavior": "Delete on request with audit trail.",
+        "privacy_implications": ["This memory can affect future agent behavior."],
+        "source_trace_required": True,
+    }
+
+    for scope in ["account", "organization", "task", "agent"]:
+        scope_body = {
+            **base_body,
+            "scope": scope,
+            "pii_policy": "No sensitive values."
+            if scope == "task"
+            else base_body["pii_policy"],
+        }
+        response = client.put(
+            f"/v1/agents/{agent_id}/memory-policies/{scope}",
+            headers=headers,
+            json=scope_body,
+        )
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["scope"] == scope
+        assert body["source_trace_required"] is True
+        assert body["content_hash"]
+        if scope == "task":
+            assert body["approval_status"] == "draft"
+        else:
+            assert body["approval_status"] == "review_required"
+
+    approved = client.post(
+        f"/v1/agents/{agent_id}/memory-policies/account/approve",
+        headers=headers,
+    )
+    assert approved.status_code == 200, approved.text
+    assert approved.json()["approval_status"] == "approved"
+
+    listed = client.get(
+        f"/v1/agents/{agent_id}/memory-policies",
+        headers=headers,
+    )
+    assert listed.status_code == 200, listed.text
+    scopes = {item["scope"] for item in listed.json()["items"]}
+    assert {"account", "organization", "task", "agent"} <= scopes
+
+    audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=headers)
+    actions = {item["action"] for item in audit.json()["items"]}
+    assert {"memory_policy:upsert", "memory_policy:approve"} <= actions
