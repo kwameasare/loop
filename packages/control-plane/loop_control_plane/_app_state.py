@@ -194,6 +194,8 @@ class CpApiState:
     )
     voice_configs: dict[UUID, dict[str, Any]] = field(default_factory=dict)
     saml_configs: dict[UUID, dict[str, Any]] = field(default_factory=dict)
+    billing_payment_methods: dict[UUID, dict[str, Any]] = field(default_factory=dict)
+    billing_invoices: dict[UUID, list[dict[str, Any]]] = field(default_factory=dict)
     # P0.4 (conversations + takeover):
     conversations: ConversationService = field(default_factory=ConversationService)
     # UX wire-up: human escalation queue. The domain queue existed before

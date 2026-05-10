@@ -3,12 +3,9 @@
 /**
  * P0.3: ``/billing`` — Stripe billing surface.
  *
- * Wires the panels to cp-api. The cp ``/v1/workspaces/{id}/billing``
- * routes are blocked: the underlying ``billing_stripe_export.py``
- * service module exists but no FastAPI shim is mounted yet (see
- * lib/billing.ts ``fetchBillingSummary``). When cp returns 404 we
- * render a clear "billing not yet provisioned" empty state instead
- * of the old fixture so customers don't mistake it for live data.
+ * Wires the panels to cp-api. When older cp-api deployments return
+ * 404, the page renders missing evidence instead of replacing the
+ * workspace's billing state with fixture spend.
  */
 
 import { useEffect, useState } from "react";

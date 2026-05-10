@@ -1,9 +1,10 @@
 /**
- * Billing fixtures + helpers for the studio billing tab.
+ * Billing helpers for the studio billing tab.
  *
- * The data plane will eventually own these shapes; for now the
- * studio uses synthetic fixtures so the page renders end-to-end
- * without depending on Stripe.
+ * Studio reads workspace billing evidence from cp-api. The local
+ * fixtures below remain only for component tests and story fixtures;
+ * the app surface must not substitute them for missing live billing
+ * evidence.
  */
 
 export type PlanId = "free" | "starter" | "growth" | "scale";
@@ -103,12 +104,8 @@ async function cpFetch<T>(
 /**
  * Fetch the workspace's billing summary.
  *
- * Blocked on cp-api PR: ``/v1/workspaces/{id}/billing`` is not yet
- * mounted in cp's app.py. The studio code calls the (eventual)
- * endpoint and renders a "billing not yet provisioned" empty state on
- * 404 so the page is usable today and seamlessly upgrades when the
- * route lands. ``billing_stripe_export.py`` already exists; only the
- * FastAPI shim is missing.
+ * A 404 is still treated as missing evidence so Studio remains safe
+ * against older cp-api deployments; current cp-api mounts this route.
  */
 export async function fetchBillingSummary(
   workspace_id: string,
@@ -121,7 +118,6 @@ export async function fetchBillingSummary(
   );
 }
 
-/** Likewise blocked on cp-api PR. */
 export async function fetchInvoices(
   workspace_id: string,
   opts: BillingClientOptions = {},
@@ -142,10 +138,9 @@ export async function fetchInvoices(
 }
 
 /**
- * Update the customer's payment method via Stripe Setup Intent. The
- * cp-api responds with the new last-4 on success. Blocked on the
- * cp-api PR; until then the call just 404s and the form surfaces an
- * "unavailable" error.
+ * Update the customer's payment method via a cp-api Setup Intent
+ * handoff. The cp-api responds with the new last-4 on success. A 404
+ * remains a degraded older-deployment path, not a fixture fallback.
  */
 export async function updatePaymentMethod(
   workspace_id: string,
@@ -159,7 +154,7 @@ export async function updatePaymentMethod(
     args,
   );
   if (res === null) {
-    return { ok: false, reason: "Billing API not yet available" };
+    return { ok: false, reason: "Billing API route unavailable" };
   }
   return { ok: true, last4: res.last4 };
 }

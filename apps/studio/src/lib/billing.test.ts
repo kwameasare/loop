@@ -97,7 +97,7 @@ describe("billing cp-api client", () => {
     expect(url).toBe("https://cp.test/v1/workspaces/ws1/billing");
   });
 
-  it("fetchBillingSummary returns null on 404 (route not yet shipped)", async () => {
+  it("fetchBillingSummary returns null on 404 missing evidence", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
@@ -151,7 +151,7 @@ describe("billing cp-api client", () => {
     expect(JSON.parse(init.body)).toEqual({ cardholderName: "Ada Lovelace" });
   });
 
-  it("updatePaymentMethod returns ok=false on 404 (route blocked)", async () => {
+  it("updatePaymentMethod returns ok=false on 404 missing route", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
@@ -161,5 +161,6 @@ describe("billing cp-api client", () => {
       { fetcher },
     );
     expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.reason).toMatch(/route unavailable/i);
   });
 });
