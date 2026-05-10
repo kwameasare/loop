@@ -164,12 +164,13 @@ export function buildLocalCommitmentDocument(
 
 export async function fetchCurrentCommitment(
   agentId: string,
-  opts: UxWireupClientOptions = {},
+  opts: CommitmentClientOptions = {},
 ): Promise<CommitmentDocument> {
   return cpJson<CommitmentDocument>(
     `/agents/${encodeURIComponent(agentId)}/commitment/current`,
     {
       ...opts,
+      allowFallback: opts.allowFixture === true,
       fallback: buildLocalCommitmentDocument(agentId),
     },
   );

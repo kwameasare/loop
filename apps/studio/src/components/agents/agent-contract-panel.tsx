@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 interface AgentContractPanelProps {
   agentId: string;
   initialDocument: CommitmentDocument;
+  degradedReason?: string | undefined;
   saveDraft?: (
     agentId: string,
     input: CommitmentDraftInput,
@@ -67,6 +68,7 @@ function summaryLine(
 export function AgentContractPanel({
   agentId,
   initialDocument,
+  degradedReason,
   saveDraft = defaultSaveCommitmentDraft,
   acceptCommitment = defaultAcceptCommitment,
 }: AgentContractPanelProps) {
@@ -76,6 +78,7 @@ export function AgentContractPanel({
   const missing = useMemo(() => missingCommitmentFields(body), [body]);
   const completeness = Math.round(((8 - missing.length) / 8) * 100);
   const busy = state.kind === "saving" || state.kind === "accepting";
+  const backendUnavailable = Boolean(degradedReason);
 
   async function handleSave(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
@@ -146,6 +149,15 @@ export function AgentContractPanel({
 
   return (
     <section className="space-y-5" data-testid="agent-contract-panel">
+      {degradedReason ? (
+        <div
+          className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning"
+          data-testid="contract-degraded"
+          role="alert"
+        >
+          Commitment backend unavailable. {degradedReason}
+        </div>
+      ) : null}
       <div className="rounded-md border bg-card p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
@@ -475,7 +487,7 @@ export function AgentContractPanel({
           <div className="flex gap-2">
             <button
               type="submit"
-              disabled={busy}
+              disabled={busy || backendUnavailable}
               className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
               data-testid="contract-save-draft"
             >
@@ -483,7 +495,7 @@ export function AgentContractPanel({
             </button>
             <button
               type="button"
-              disabled={missing.length > 0 || busy}
+              disabled={missing.length > 0 || busy || backendUnavailable}
               onClick={handleAccept}
               className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               data-testid="contract-accept"
