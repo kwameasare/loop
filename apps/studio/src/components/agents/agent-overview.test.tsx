@@ -14,6 +14,7 @@ import { buildLocalChangePackage } from "@/lib/change-package";
 import { buildLocalChannelBindings } from "@/lib/channel-bindings";
 import type { EvalSuite } from "@/lib/evals";
 import { localAgentHandoff } from "@/lib/agent-handoff";
+import { localAgentWorkflow } from "@/lib/agent-workflow";
 import type { KbDocument } from "@/lib/kb";
 import { localMemoryPolicies } from "@/lib/memory-policies";
 import { localToolContracts } from "@/lib/tool-contracts";
@@ -474,6 +475,23 @@ describe("AgentOverview", () => {
     );
     expect(screen.getByTestId("safe-action-rollback")).toHaveTextContent(
       "walk_1",
+    );
+  });
+
+  it("surfaces workflow branch, Change Set, and release candidate evidence", () => {
+    const workflow = localAgentWorkflow("ag_1");
+
+    render(<AgentOverview {...BASE_PROPS} workflow={workflow} />);
+
+    expect(screen.getByTestId("overview-branch")).toHaveTextContent(
+      "draft/refund-policy-fix",
+    );
+    expect(screen.getByText(/Change Set cs_local_refund/)).toBeInTheDocument();
+    expect(screen.getAllByTestId("diff-ribbon")[0]).toHaveTextContent(
+      "ver_local_refund",
+    );
+    expect(screen.getAllByTestId("diff-ribbon")[0]).toHaveTextContent(
+      "2 release approvals pending",
     );
   });
 

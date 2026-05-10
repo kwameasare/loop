@@ -29,6 +29,12 @@ import type { ChangePackage } from "@/lib/change-package";
 import type { ChannelBinding } from "@/lib/channel-bindings";
 import type { EvalSuite } from "@/lib/evals";
 import type { AgentHandoffModel } from "@/lib/agent-handoff";
+import type {
+  AgentBranch,
+  AgentChangeSet,
+  AgentReleaseCandidate,
+  AgentWorkflow,
+} from "@/lib/agent-workflow";
 import type { KbDocument } from "@/lib/kb";
 import type { MemoryPolicy } from "@/lib/memory-policies";
 import type { ToolContract } from "@/lib/tool-contracts";
@@ -147,6 +153,8 @@ export interface AgentOverviewProps {
   tracesDegradedReason?: string | undefined;
   handoffModel?: AgentHandoffModel | undefined;
   handoffDegradedReason?: string | undefined;
+  workflow?: AgentWorkflow | undefined;
+  workflowDegradedReason?: string | undefined;
   workbench?: Partial<AgentWorkbenchData>;
   commitment?: CommitmentDocument | undefined;
   /** Called when the user saves a new description. Allows integration with server actions. */
@@ -232,6 +240,18 @@ interface ChangePackageWorkbenchSummary {
 }
 
 interface HandoffWorkbenchSummary {
+  current: string;
+  lastChangedBy: string;
+  diffFromProduction: string;
+  validation: string;
+  evidence: string;
+  status: WorkbenchSectionStatus;
+}
+
+interface WorkflowWorkbenchSummary {
+  branchLabel: string;
+  draftChanges: string;
+  diffAfter: string;
   current: string;
   lastChangedBy: string;
   diffFromProduction: string;
@@ -995,6 +1015,143 @@ function summarizeHandoff(
   };
 }
 
+function latestByUpdatedAt<T extends { updated_at: string }>(
+  items: readonly T[],
+): T | undefined {
+  return [...items].sort(
+    (left, right) => Date.parse(right.updated_at) - Date.parse(left.updated_at),
+  )[0];
+}
+
+function summarizeWorkflow(
+  workflow: AgentWorkflow | undefined,
+  degradedReason?: string | undefined,
+): WorkflowWorkbenchSummary {
+  const branch = workflow
+    ? latestByUpdatedAt<AgentBranch>(
+        workflow.branches.filter((item) => item.status === "active"),
+      ) ?? latestByUpdatedAt<AgentBranch>(workflow.branches)
+    : undefined;
+  const changeSet = workflow
+    ? latestByUpdatedAt<AgentChangeSet>(workflow.change_sets)
+    : undefined;
+  const releaseCandidate = workflow
+    ? latestByUpdatedAt<AgentReleaseCandidate>(workflow.release_candidates)
+    : undefined;
+
+  if (degradedReason) {
+    return {
+      branchLabel: "Release workflow unavailable",
+      draftChanges:
+        "Branch, Change Set, and release candidate evidence could not load.",
+      diffAfter: "Workflow unavailable",
+      current:
+        "Release workflow evidence is degraded; Studio is not claiming branch or Change Set readiness.",
+      lastChangedBy: "Live workflow endpoint unavailable",
+      diffFromProduction: "No branch or Change Set diff loaded.",
+      validation: degradedReason,
+      evidence: "workflow.degraded",
+      status: "watching",
+    };
+  }
+
+  if (!workflow) {
+    return {
+      branchLabel: "No branch loaded",
+      draftChanges: "No draft change set loaded.",
+      diffAfter: "No draft diff loaded",
+      current: "No branch, Change Set, or release candidate loaded.",
+      lastChangedBy: "No release workflow loaded",
+      diffFromProduction: "No branch diff loaded.",
+      validation: "Create a branch and Change Set before requesting release.",
+      evidence: "workflow.unconfigured",
+      status: "watching",
+    };
+  }
+
+  if (!branch && !changeSet && !releaseCandidate) {
+    return {
+      branchLabel: "No active branch",
+      draftChanges: "No open Change Set is present for this agent.",
+      diffAfter: "No draft diff loaded",
+      current: "Release workflow returned no branch, Change Set, or release candidate.",
+      lastChangedBy: "Workflow endpoint returned an empty set",
+      diffFromProduction: "No branch diff loaded.",
+      validation: "Start a branch from the current production version.",
+      evidence: "workflow.empty",
+      status: "watching",
+    };
+  }
+
+  const failedGates =
+    releaseCandidate?.readiness.filter((gate) => gate.status === "failed") ?? [];
+  const pendingGates =
+    releaseCandidate?.readiness.filter((gate) => gate.status === "pending") ??
+    [];
+  const pendingApprovals =
+    releaseCandidate?.required_approvals.filter(
+      (approval) => !approval.satisfied,
+    ) ?? [];
+  const status: WorkbenchSectionStatus =
+    failedGates.length > 0
+      ? "blocked"
+      : pendingGates.length > 0 || pendingApprovals.length > 0
+        ? "blocked"
+        : releaseCandidate?.status === "deployable" ||
+            releaseCandidate?.status === "approved"
+          ? "healthy"
+          : "watching";
+  const validation =
+    failedGates.length > 0
+      ? `${failedGates.length} release gate${
+          failedGates.length === 1 ? "" : "s"
+        } failed.`
+      : pendingApprovals.length > 0
+        ? `${pendingApprovals.length} release approval${
+            pendingApprovals.length === 1 ? "" : "s"
+          } pending.`
+        : pendingGates.length > 0
+          ? `${pendingGates.length} release gate${
+              pendingGates.length === 1 ? "" : "s"
+            } pending.`
+          : releaseCandidate
+            ? `Release candidate ${releaseCandidate.status}.`
+            : changeSet
+              ? `Change Set ${changeSet.status}.`
+              : "Branch is active.";
+
+  return {
+    branchLabel: branch?.name ?? "No active branch",
+    draftChanges: changeSet
+      ? `Change Set ${changeSet.id}: ${changeSet.summary || changeSet.name}`
+      : "No open Change Set is present for this agent.",
+    diffAfter:
+      releaseCandidate?.candidate_version_id ??
+      changeSet?.id ??
+      branch?.id ??
+      "No draft diff loaded",
+    current: `${branch ? `Branch ${branch.name}` : "No branch"}; ${
+      changeSet ? `Change Set ${changeSet.status}` : "no Change Set"
+    }; ${
+      releaseCandidate
+        ? `Release Candidate ${releaseCandidate.status}`
+        : "no Release Candidate"
+    }.`,
+    lastChangedBy:
+      changeSet?.created_by_user_id ??
+      branch?.created_by_user_id ??
+      "Workflow endpoint",
+    diffFromProduction:
+      changeSet?.summary ||
+      (branch
+        ? `Branch ${branch.name} starts from ${branch.base_version_id}.`
+        : "No branch diff loaded."),
+    validation,
+    evidence: releaseCandidate?.id ?? changeSet?.id ?? branch?.id ?? "workflow",
+    status,
+  };
+}
+
 function EditDescriptionModal({
   open,
   initial,
@@ -1306,6 +1463,8 @@ function createDefaultWorkbenchData(
     | "tracesDegradedReason"
     | "handoffModel"
     | "handoffDegradedReason"
+    | "workflow"
+    | "workflowDegradedReason"
   > & { commitment?: CommitmentDocument | undefined },
 ): AgentWorkbenchData {
   const purpose =
@@ -1336,6 +1495,10 @@ function createDefaultWorkbenchData(
   const handoffSummary = summarizeHandoff(
     props.handoffModel,
     props.handoffDegradedReason,
+  );
+  const workflowSummary = summarizeWorkflow(
+    props.workflow,
+    props.workflowDegradedReason,
   );
   const deployBlockedReason = props.changePackage
     ? changePackageSummary.blockedReason
@@ -1429,15 +1592,13 @@ function createDefaultWorkbenchData(
     objectState,
     trust,
     environment: "unconfigured",
-    branch: "No branch loaded",
+    branch: workflowSummary.branchLabel,
     lastProductionVersion,
     stateSentence,
     stateEvidenceRef:
       props.stateEvidenceRef ??
       (objectState === "production" ? "agent.active_version" : "agent.state"),
-    draftChanges: hasProduction
-      ? "No draft change set loaded."
-      : "First draft has not produced a release candidate.",
+    draftChanges: workflowSummary.draftChanges,
     memoryPolicy,
     budgetCap: "No budget cap loaded.",
     escalationRule: "No escalation rule loaded.",
@@ -1470,9 +1631,11 @@ function createDefaultWorkbenchData(
     }),
     diff: {
       before: hasProduction ? lastProductionVersion : "No production baseline",
-      after: "No draft diff loaded",
+      after: workflowSummary.diffAfter,
       impact:
-        "Run a preview, save an eval, and generate preflight before shipping.",
+        workflowSummary.status === "blocked"
+          ? workflowSummary.validation
+          : "Run a preview, save an eval, and generate preflight before shipping.",
     },
     livePreview: traceSummary.latestTrace
       ? {
@@ -1655,6 +1818,8 @@ export function AgentOverview({
   tracesDegradedReason,
   handoffModel,
   handoffDegradedReason,
+  workflow,
+  workflowDegradedReason,
   workbench,
   commitment,
   onDescriptionSave,
@@ -1691,6 +1856,8 @@ export function AgentOverview({
           tracesDegradedReason,
           handoffModel,
           handoffDegradedReason,
+          workflow,
+          workflowDegradedReason,
           commitment,
         }),
         workbench,
@@ -1722,6 +1889,8 @@ export function AgentOverview({
       tracesDegradedReason,
       handoffModel,
       handoffDegradedReason,
+      workflow,
+      workflowDegradedReason,
       workbench,
     ],
   );
