@@ -72,8 +72,8 @@ export function DiffViewerModal({
           className="text-xs text-muted-foreground"
           data-testid="diff-viewer-stats"
         >
-          <span className="text-green-700">+{added}</span>{" "}
-          <span className="text-red-700">-{removed}</span> lines
+          <span className="text-success">+{added}</span>{" "}
+          <span className="text-destructive">-{removed}</span> lines
         </p>
         <pre
           data-testid="diff-viewer-body"
@@ -82,10 +82,10 @@ export function DiffViewerModal({
           {lines.map((line, idx) => {
             const cls =
               line.op === "add"
-                ? "bg-green-50 text-green-900"
+                ? "bg-success/10 text-success"
                 : line.op === "remove"
-                ? "bg-red-50 text-red-900"
-                : "text-muted-foreground";
+                  ? "bg-destructive/10 text-destructive"
+                  : "text-muted-foreground";
             const sigil =
               line.op === "add" ? "+" : line.op === "remove" ? "-" : " ";
             return (
