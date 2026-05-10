@@ -259,6 +259,7 @@ async def upsert_channel_binding(
         agent_id=agent_id,
         workspace_id=workspace_id,
         caller_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     workspace_id = agent.workspace_id
     binding = await request.app.state.cp.channel_bindings.upsert(
@@ -293,6 +294,7 @@ async def preview_channel_matrix(
         agent_id=agent_id,
         workspace_id=workspace_id,
         caller_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     bindings = await request.app.state.cp.channel_bindings.list_for_agent(agent=agent)
     selected = set(body.channel_types or [])
@@ -413,6 +415,7 @@ async def update_channel_readiness(
         agent_id=agent_id,
         workspace_id=workspace_id,
         caller_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     workspace_id = agent.workspace_id
     binding = await request.app.state.cp.channel_bindings.set_readiness(
