@@ -10,13 +10,19 @@ describe("AgentWorkbenchControls", () => {
     expect(
       screen.getByTestId("agent-workbench-control-versions"),
     ).toHaveAttribute("href", "/agents/agent_1/versions");
+    expect(
+      screen.getByTestId("agent-workbench-control-environment"),
+    ).toHaveAttribute("href", "/agents/agent_1/deploys?panel=environments");
     expect(screen.getByTestId("agent-workbench-control-tests")).toHaveAttribute(
       "href",
       "/agents/agent_1/simulator",
     );
     expect(
       screen.getByTestId("agent-workbench-control-change-set"),
-    ).toHaveAttribute("href", "/agents/agent_1/deploys?panel=change-package");
+    ).toHaveTextContent("Open Change Set");
+    expect(
+      screen.getByTestId("agent-workbench-control-change-set"),
+    ).toHaveAttribute("href", "/agents/agent_1/workflow");
     expect(
       screen.getByTestId("agent-workbench-control-promote"),
     ).toHaveAttribute("href", "/agents/agent_1/deploys?panel=promotion");

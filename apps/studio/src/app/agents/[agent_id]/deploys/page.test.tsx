@@ -67,4 +67,24 @@ describe("AgentDeploysPage", () => {
       "true",
     );
   });
+
+  it("focuses environment controls from Workbench environment links", async () => {
+    delete process.env.LOOP_CP_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+
+    render(
+      await AgentDeploysPage({
+        params: { agent_id: "agent_deploy" },
+        searchParams: { panel: "environments" },
+      }),
+    );
+
+    expect(screen.getByTestId("deploy-focused-panel")).toHaveTextContent(
+      "environment selector is highlighted",
+    );
+    expect(screen.getByTestId("deploy-environment-selector")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+  });
 });
