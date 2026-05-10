@@ -61,6 +61,11 @@ export const OBSERVATORY_MODEL: ObservatoryModel = {
       evidence:
         "17 production-like variants failed in replay and persona simulation.",
       affectedObject: "behavior/escalation_classifier",
+      observedBehavior:
+        "Attorney and lawyer synonyms skipped the legal handoff branch in 17 replayed variants.",
+      intendedBehavior:
+        "Legal-threat language must trigger the escalation classifier before any refund guidance is sent.",
+      editSurface: "behavior",
       nextAction:
         "Patch the escalation classifier, then replay the affected scene.",
       owner: "CX Policy",
@@ -73,6 +78,11 @@ export const OBSERVATORY_MODEL: ObservatoryModel = {
       severity: "medium",
       evidence: "6 missed retrievals should have cited refund_policy_2026.pdf.",
       affectedObject: "knowledge/refund_policy_2026.pdf",
+      observedBehavior:
+        "Six renewal-region questions retrieved no eligible policy chunk.",
+      intendedBehavior:
+        "Renewal-region questions should cite the active refund policy chunk with region metadata attached.",
+      editSurface: "knowledge",
       nextAction: "Backfill region metadata and regenerate retrieval evals.",
       owner: "Knowledge Lead",
       traceQuery: "retrieval:zero-result source:refund_policy_2026.pdf",
@@ -84,6 +94,11 @@ export const OBSERVATORY_MODEL: ObservatoryModel = {
       severity: "medium",
       evidence: "lookup_order adds 180 ms where the voice budget is 160 ms.",
       affectedObject: "tool/lookup_order",
+      observedBehavior:
+        "lookup_order added 180 ms to voice turns that had a 160 ms tool budget.",
+      intendedBehavior:
+        "Voice calls should keep order lookup inside the committed tool budget or use a lower-latency fallback.",
+      editSurface: "tools",
       nextAction: "Use preview batching before enabling phone canary.",
       owner: "Platform Integrations",
       traceQuery: "tool:lookup_order duration_ms:>160 channel:voice",

@@ -38,6 +38,18 @@ export interface ObservatoryAnomaly {
   severity: "low" | "medium" | "high" | "critical";
   evidence: string;
   affectedObject: string;
+  observedBehavior: string;
+  intendedBehavior: string;
+  editSurface:
+    | "behavior"
+    | "knowledge"
+    | "tools"
+    | "memory"
+    | "channels"
+    | "traces"
+    | "inbox"
+    | "incidents"
+    | "observe";
   nextAction: string;
   owner: string;
   traceQuery: string;
@@ -212,8 +224,8 @@ function buildRecommendation(args: {
     return {
       title: "Next best operating action",
       body: topAnomaly.nextAction,
-      observed: topAnomaly.evidence,
-      intended: `Bring ${topAnomaly.affectedObject} back inside its committed behavior before expanding production exposure.`,
+      observed: topAnomaly.observedBehavior,
+      intended: topAnomaly.intendedBehavior,
       source: `observatory/anomaly/${topAnomaly.id}`,
       ...confidenceForAnomaly(topAnomaly),
     };
@@ -324,7 +336,11 @@ export function buildObservatoryModel(args: {
       title: "Production trace errors need triage",
       severity: errorCount >= 5 ? "critical" : "high",
       evidence: `${errorCount} of ${totalTraces} recent traces ended in error.`,
-      affectedObject: "production trace cluster",
+      affectedObject: "behavior/runtime_error_handling",
+      observedBehavior: `${errorCount} of ${totalTraces} recent production traces errored before completing the turn.`,
+      intendedBehavior:
+        "Production turns should either complete the committed behavior or fail into a recoverable handoff with trace and eval evidence.",
+      editSurface: "behavior",
       nextAction:
         "Open the failed trace cluster and promote one failure into an eval case.",
       owner: "Runtime owner",
@@ -338,6 +354,10 @@ export function buildObservatoryModel(args: {
       severity: p95LatencyMs > 4_000 ? "high" : "medium",
       evidence: `Recent p95 is ${formatLatency(p95LatencyMs)} across ${totalTraces} traces.`,
       affectedObject: "latency budget",
+      observedBehavior: `Recent p95 is ${formatLatency(p95LatencyMs)} across ${totalTraces} production traces.`,
+      intendedBehavior:
+        "Interactive channels should stay inside the committed latency budget before canary or ramp expansion.",
+      editSurface: "traces",
       nextAction:
         "Open the latency budget view and target the slowest span family first.",
       owner: "Platform integrations",
@@ -351,6 +371,10 @@ export function buildObservatoryModel(args: {
       severity: openInbox.length >= 10 ? "high" : "medium",
       evidence: `${openInbox.length} escalations are pending or claimed.`,
       affectedObject: "operator inbox",
+      observedBehavior: `${openInbox.length} handoff${openInbox.length === 1 ? "" : "s"} are still pending or claimed in the live queue.`,
+      intendedBehavior:
+        "Human handoffs should route to an owner, resolve with evidence, and become regression coverage when they reveal a behavior gap.",
+      editSurface: "inbox",
       nextAction:
         "Route the oldest pending escalation, then convert the final resolution into an eval.",
       owner: "Support operations",
@@ -369,6 +393,10 @@ export function buildObservatoryModel(args: {
       severity: highest.severity,
       evidence: `${highest.trigger}; ${highest.affected_conversation_count} conversations flagged.`,
       affectedObject: `incident/${highest.id}`,
+      observedBehavior: `${highest.affected_conversation_count} conversation${highest.affected_conversation_count === 1 ? "" : "s"} were flagged by ${highest.trigger}.`,
+      intendedBehavior:
+        "Incident response should contain the rollout, attach affected traces, seed regression evals, and stage a fix Change Package before traffic resumes.",
+      editSurface: "incidents",
       nextAction:
         highest.candidate_eval_suite_id === null
           ? "Seed candidate regression evals from the incident report."
@@ -391,6 +419,11 @@ export function buildObservatoryModel(args: {
         evidence:
           "No traces, usage records, inbox items, or incidents were returned for this workspace.",
         affectedObject: "workspace telemetry",
+        observedBehavior:
+          "The Observatory has no live traces, usage records, inbox items, or incidents to inspect.",
+        intendedBehavior:
+          "The Observatory should only make operating claims from connected telemetry, never from placeholder liveness.",
+        editSurface: "observe",
         nextAction:
           "Connect cp-api telemetry before treating this observatory as live.",
         owner: "Workspace owner",
@@ -405,6 +438,12 @@ export function buildObservatoryModel(args: {
           costSummary.total_cents,
         )} month-to-date usage.`,
         affectedObject: "workspace live window",
+        observedBehavior: `${totalTraces} traces, ${openInbox.length} open escalations, and ${formatUSD(
+          costSummary.total_cents,
+        )} month-to-date usage are inside the current live window.`,
+        intendedBehavior:
+          "Production should remain observable, regression-backed, and ready for rollback while canary traffic bakes.",
+        editSurface: "observe",
         nextAction:
           "Keep the production tail pinned while the next canary bakes.",
         owner: "Workspace owner",
@@ -665,6 +704,9 @@ export async function createObservatoryAnomalyTask(
         title: anomaly.title,
         evidence: anomaly.evidence,
         affected_object: anomaly.affectedObject,
+        observed_behavior: anomaly.observedBehavior,
+        intended_behavior: anomaly.intendedBehavior,
+        edit_surface: anomaly.editSurface,
         next_action: anomaly.nextAction,
         owner: anomaly.owner,
         trace_query: anomaly.traceQuery,
@@ -694,7 +736,9 @@ export async function createObservatoryAnomalyEvalCase(
         source_type: "incident_cluster",
         source_ref: anomaly.id,
         affected_object: anomaly.affectedObject,
-        expected_behavior: anomaly.nextAction,
+        observed_behavior: anomaly.observedBehavior,
+        expected_behavior: anomaly.intendedBehavior,
+        edit_surface: anomaly.editSurface,
         evidence: anomaly.evidence,
         trace_query: anomaly.traceQuery,
       },

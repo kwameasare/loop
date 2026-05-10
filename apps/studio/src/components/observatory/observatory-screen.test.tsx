@@ -119,6 +119,15 @@ describe("ObservatoryScreen", () => {
     expect(
       screen.getByTestId("anomaly-open-edit-anom_legal_synonym"),
     ).toHaveAttribute("href", "/agents/agent_support/behavior");
+    expect(
+      screen.getByTestId("anomaly-open-edit-anom_legal_synonym"),
+    ).toHaveTextContent("Open behavior");
+    expect(
+      screen.getByTestId("anomaly-commitment-delta-anom_legal_synonym"),
+    ).toHaveTextContent("Attorney and lawyer synonyms skipped");
+    expect(
+      screen.getByTestId("anomaly-commitment-delta-anom_legal_synonym"),
+    ).toHaveTextContent("Legal-threat language must trigger");
     expect(screen.getByTestId("tail-open-trace-tail_1")).toHaveAttribute(
       "href",
       "/traces/trace_refund_742",

@@ -695,6 +695,9 @@ def test_observatory_anomaly_can_create_task_and_eval_case(
             "title": "Tool wait exceeds voice budget",
             "evidence": "lookup_order adds 180 ms where the voice budget is 160 ms.",
             "affected_object": "tool/lookup_order",
+            "observed_behavior": "lookup_order added 180 ms to voice turns.",
+            "intended_behavior": "Voice tool calls stay under 160 ms.",
+            "edit_surface": "tools",
             "next_action": "Use preview batching before enabling phone canary.",
             "owner": "Platform Integrations",
             "trace_query": "tool:lookup_order duration_ms:>160 channel:voice",
@@ -713,7 +716,9 @@ def test_observatory_anomaly_can_create_task_and_eval_case(
             "source_type": "incident_cluster",
             "source_ref": "anom_tool_wait",
             "affected_object": "tool/lookup_order",
+            "observed_behavior": "lookup_order added 180 ms to voice turns.",
             "expected_behavior": "Batch or avoid lookup_order in voice calls.",
+            "edit_surface": "tools",
             "evidence": "lookup_order adds 180 ms where the voice budget is 160 ms.",
             "trace_query": "tool:lookup_order duration_ms:>160 channel:voice",
         },
@@ -743,6 +748,9 @@ def test_observatory_anomaly_can_create_task_and_eval_case(
     assert case["source"] == "incident_cluster"
     assert case["source_ref"] == "anom_tool_wait"
     assert case["input"]["trace_query"] == "tool:lookup_order duration_ms:>160 channel:voice"
+    assert case["input"]["observed_behavior"] == "lookup_order added 180 ms to voice turns."
+    assert case["input"]["edit_surface"] == "tools"
+    assert case["expected"]["behavior"] == "Batch or avoid lookup_order in voice calls."
 
     audit = client.get(
         f"/v1/audit-events?workspace_id={workspace_id}",
