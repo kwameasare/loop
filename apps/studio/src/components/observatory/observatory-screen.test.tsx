@@ -2,7 +2,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ObservatoryScreen } from "@/components/observatory/observatory-screen";
-import { buildObservatoryModel, OBSERVATORY_MODEL } from "@/lib/observatory";
+import { OBSERVATORY_MODEL } from "@/components/observatory/observatory-test-fixtures";
+import { buildObservatoryModel } from "@/lib/observatory";
 
 describe("ObservatoryScreen", () => {
   const ORIGINAL_BASE_URL = process.env.LOOP_CP_API_BASE_URL;
@@ -109,7 +110,9 @@ describe("ObservatoryScreen", () => {
   it("pins dashboard metrics only after backend persistence succeeds", async () => {
     process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
     const fetcher = vi.fn<typeof fetch>(async (input, init) => {
-      expect(String(input)).toBe("https://cp.test/v1/workspaces/ws1/dashboards");
+      expect(String(input)).toBe(
+        "https://cp.test/v1/workspaces/ws1/dashboards",
+      );
       expect(init?.method).toBe("POST");
       return Response.json({
         id: "dash_quality",
@@ -211,12 +214,18 @@ describe("ObservatoryScreen", () => {
     expect(screen.getByTestId("observatory-metric-quality")).toHaveTextContent(
       "Telemetry backend not connected",
     );
-    expect(screen.getByText(/No production tail events loaded/i))
-      .toBeInTheDocument();
-    expect(screen.queryByText(/legal synonym cluster/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/No operating recommendation is ranked/i))
-      .toBeInTheDocument();
-    expect(screen.getByText(/No agent health arcs loaded/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/No production tail events loaded/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/legal synonym cluster/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/No operating recommendation is ranked/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/No agent health arcs loaded/i),
+    ).toBeInTheDocument();
   });
 
   it("seeds incident evals from the incident panel", async () => {
