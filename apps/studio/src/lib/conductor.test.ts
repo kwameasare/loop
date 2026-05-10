@@ -12,6 +12,14 @@ describe("conductor cp-api client", () => {
     vi.restoreAllMocks();
   });
 
+  it("requires cp-api configuration instead of returning fixture topology", async () => {
+    delete process.env.LOOP_CP_API_BASE_URL;
+
+    await expect(fetchConductorData("agent-1")).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required for conductor calls",
+    );
+  });
+
   it("fetches live conductor topology", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,

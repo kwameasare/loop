@@ -116,15 +116,7 @@ export async function fetchConductorData(
   agentId: string,
   opts: ConductorClientOptions = {},
 ): Promise<ConductorData> {
-  let base: string;
-  try {
-    base = cpApiBaseUrl(opts.baseUrl);
-  } catch (err) {
-    if (err instanceof Error && /LOOP_CP_API_BASE_URL/.test(err.message)) {
-      return createConductorData(agentId);
-    }
-    throw err;
-  }
+  const base = cpApiBaseUrl(opts.baseUrl);
   const fetcher = opts.fetcher ?? fetch;
   const headers: Record<string, string> = { accept: "application/json" };
   const token = opts.token ?? process.env.LOOP_TOKEN;
