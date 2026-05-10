@@ -99,6 +99,7 @@ export interface EvalsHelperOptions {
   fetcher?: typeof fetch;
   baseUrl?: string;
   token?: string;
+  allowFixture?: boolean;
 }
 
 export interface EvalCreationSource {
@@ -478,7 +479,7 @@ export async function listEvalSuites(
   opts: EvalsHelperOptions = {},
 ): Promise<{ items: EvalSuite[] }> {
   const base = resolveBase(opts);
-  if (!base) return { items: FIXTURE_SUITES };
+  if (!base) return { items: opts.allowFixture ? FIXTURE_SUITES : [] };
   const fetcher = opts.fetcher ?? fetch;
   const res = await fetcher(`${base}/evals/suites`, {
     method: "GET",
@@ -493,7 +494,7 @@ export async function getEvalSuite(
   opts: EvalsHelperOptions = {},
 ): Promise<EvalSuiteDetail | null> {
   const base = resolveBase(opts);
-  if (!base) return fixtureSuiteDetail(suiteId);
+  if (!base) return opts.allowFixture ? fixtureSuiteDetail(suiteId) : null;
   const fetcher = opts.fetcher ?? fetch;
   const res = await fetcher(`${base}/evals/suites/${suiteId}`, {
     method: "GET",
@@ -509,7 +510,7 @@ export async function getEvalRun(
   opts: EvalsHelperOptions = {},
 ): Promise<EvalRunDetail | null> {
   const base = resolveBase(opts);
-  if (!base) return fixtureRunDetail(runId);
+  if (!base) return opts.allowFixture ? fixtureRunDetail(runId) : null;
   const fetcher = opts.fetcher ?? fetch;
   const res = await fetcher(`${base}/evals/runs/${runId}`, {
     method: "GET",
@@ -608,9 +609,14 @@ export function getEvalFoundryModel(
       latencyBudgetMs: 1_500,
     };
   });
-  const featuredRun = fixtureRunDetail("evr_evs_support_smoke_002");
+  const hasFixtureSuite = suites.some(
+    (suite) => suite.id === "evs_support_smoke",
+  );
+  const featuredRun = hasFixtureSuite
+    ? fixtureRunDetail("evr_evs_support_smoke_002")
+    : null;
   return {
-    creationSources: CREATION_SOURCES,
+    creationSources: suites.length > 0 ? CREATION_SOURCES : [],
     suiteBuilders,
     featuredResult: featuredRun ? resultDiffForRun(featuredRun) : null,
   };
@@ -650,8 +656,9 @@ export async function createEvalSuite(
 ): Promise<EvalSuite> {
   const base = resolveBase(opts);
   if (!base) {
-    // The fixture mode used in dev/tests can't really create rows;
-    // we return an in-memory shape so the form smoke-passes.
+    if (!opts.allowFixture) {
+      throw new Error("LOOP_CP_API_BASE_URL is required to create eval suites");
+    }
     return {
       id: `evs_${Math.random().toString(36).slice(2, 10)}`,
       name: input.name,
@@ -706,6 +713,9 @@ export async function triggerEvalSuiteRun(
 ): Promise<TriggerEvalSuiteRunResult> {
   const base = resolveBase(opts);
   if (!base) {
+    if (!opts.allowFixture) {
+      throw new Error("LOOP_CP_API_BASE_URL is required to trigger eval runs");
+    }
     return { id: `evr_${Math.random().toString(36).slice(2, 10)}` };
   }
   const fetcher = opts.fetcher ?? fetch;
