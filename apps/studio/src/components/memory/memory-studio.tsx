@@ -44,6 +44,10 @@ export interface MemoryStudioProps {
 const SCOPE_LABEL: Record<MemoryScope, string> = {
   session: "Session",
   user: "User",
+  account: "Account",
+  organization: "Organization",
+  task: "Task",
+  agent: "Agent",
   episodic: "Episodic",
   scratch: "Scratch",
 };
@@ -72,6 +76,18 @@ const POLICY_SCOPE_LABEL: Record<MemoryPolicyScope, string> = {
   workspace: "Workspace",
 };
 
+const MEMORY_SCOPE_OPTIONS: readonly (MemoryScope | "all")[] = [
+  "all",
+  "session",
+  "user",
+  "account",
+  "organization",
+  "task",
+  "agent",
+  "episodic",
+  "scratch",
+];
+
 function liveBadgeTone(
   state: MemoryStudioData["objectState"],
 ): "live" | "draft" | "staged" | "canary" | "paused" {
@@ -89,6 +105,23 @@ function riskLevel(flags: MemorySafetyFlag[]) {
   }
   if (flags.includes("stale")) return "low";
   return "none";
+}
+
+function policyActionFor(entry: MemoryStudioEntry): string {
+  if (
+    entry.safetyFlags.includes("pii") ||
+    entry.safetyFlags.includes("secret-like")
+  ) {
+    return "Block or require human review before storage";
+  }
+  if (
+    entry.safetyFlags.includes("conflict") ||
+    entry.safetyFlags.includes("weak-evidence")
+  ) {
+    return "Require review before durable write";
+  }
+  if (entry.scope === "scratch") return "Expire automatically at turn end";
+  return "Approve automatically under current policy";
 }
 
 function MemoryExplorer({
@@ -123,26 +156,24 @@ function MemoryExplorer({
           role="tablist"
           aria-label="Memory scopes"
         >
-          {(["all", "session", "user", "episodic", "scratch"] as const).map(
-            (option) => (
-              <button
-                key={option}
-                type="button"
-                role="tab"
-                aria-selected={scope === option}
-                className={cn(
-                  "rounded-md border px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
-                  scope === option
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-background",
-                )}
-                onClick={() => onScopeChange(option)}
-                data-testid={`memory-scope-${option}`}
-              >
-                {option === "all" ? "All" : SCOPE_LABEL[option]}
-              </button>
-            ),
-          )}
+          {MEMORY_SCOPE_OPTIONS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              role="tab"
+              aria-selected={scope === option}
+              className={cn(
+                "rounded-md border px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+                scope === option
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background",
+              )}
+              onClick={() => onScopeChange(option)}
+              data-testid={`memory-scope-${option}`}
+            >
+              {option === "all" ? "All" : SCOPE_LABEL[option]}
+            </button>
+          ))}
         </div>
         {filtered.length === 0 ? (
           <StatePanel state="empty" title="No memory in this scope">
@@ -253,6 +284,42 @@ function MemoryDetail({
           label="Memory confidence"
           evidence={`Source: ${entry.source}; trace ${entry.sourceTrace}`}
         />
+        <section
+          className="rounded-md border bg-background p-3"
+          data-testid="memory-write-preview"
+        >
+          <p className="text-sm font-semibold">Memory write preview</p>
+          <dl className="mt-2 grid gap-2 text-sm [grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr))]">
+            <div>
+              <dt className="text-muted-foreground">Proposed value</dt>
+              <dd>{entry.after}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Scope</dt>
+              <dd>{SCOPE_LABEL[entry.scope]}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Reason</dt>
+              <dd>{entry.source}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Source trace</dt>
+              <dd>{entry.sourceTrace}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Policy check</dt>
+              <dd>{entry.safetyFlags.join(", ")}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Retention</dt>
+              <dd>{entry.retentionPolicy}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Action</dt>
+              <dd>{policyActionFor(entry)}</dd>
+            </div>
+          </dl>
+        </section>
         <RiskHalo
           level={riskLevel(entry.safetyFlags)}
           label={`Safety flags: ${entry.safetyFlags.join(", ")}`}
@@ -592,8 +659,9 @@ export function MemoryStudio({
           </span>
         </div>
         <p className="mt-3 text-sm text-muted-foreground">
-          Inspect session, user, episodic, and scratch memory with trace-backed
-          diffs, retention policy, safety flags, deletion, and replay controls.
+          Inspect session, user, account, organization, task, agent, episodic,
+          and scratch memory with trace-backed diffs, retention policy, safety
+          flags, deletion, and replay controls.
         </p>
       </section>
 

@@ -10,7 +10,15 @@ import {
 } from "@/lib/memory-policies";
 import { targetUxFixtures, type TargetUXFixture } from "@/lib/target-ux";
 
-export type MemoryScope = "session" | "user" | "episodic" | "scratch";
+export type MemoryScope =
+  | "session"
+  | "user"
+  | "account"
+  | "organization"
+  | "task"
+  | "agent"
+  | "episodic"
+  | "scratch";
 export type MemorySafetyFlag =
   | "none"
   | "pii"
@@ -67,7 +75,14 @@ export interface MemoryStudioClientOptions {
 
 interface CpMemoryEntry {
   id: string;
-  scope: "user" | "bot" | "session";
+  scope:
+    | "user"
+    | "bot"
+    | "session"
+    | "account"
+    | "organization"
+    | "task"
+    | "agent";
   key: string;
   before: string;
   after: string;
@@ -104,6 +119,10 @@ function headers(opts: MemoryStudioClientOptions): Record<string, string> {
 
 function scopeFromCp(scope: CpMemoryEntry["scope"]): MemoryScope {
   if (scope === "session") return "session";
+  if (scope === "account") return "account";
+  if (scope === "organization") return "organization";
+  if (scope === "task") return "task";
+  if (scope === "agent" || scope === "bot") return "agent";
   return "user";
 }
 
@@ -252,7 +271,7 @@ export function createMemoryStudioData(
       },
       {
         id: "mem_refund_policy_context",
-        scope: "episodic",
+        scope: "task",
         key: "refund_policy_context",
         before: "refund_policy_2024.pdf ranked first",
         after: "refund_policy_2026.pdf ranked above refund_policy_2024.pdf",
@@ -267,6 +286,44 @@ export function createMemoryStudioData(
         deletionReason: "Episodic memory can be pruned from this trace.",
         replayImpact:
           "Without this memory, cancellation answers may cite the archived policy first.",
+      },
+      {
+        id: "mem_account_tier",
+        scope: "account",
+        key: "account_plan_tier",
+        before: "unknown",
+        after: "enterprise annual",
+        source: "Account lookup result approved for account-scope memory",
+        sourceTrace: trace.id,
+        retentionPolicy: "account memory, 90 day retention",
+        lastWrite: "2026-05-06T08:42:20Z",
+        writerVersion: trace.version,
+        confidence: "medium",
+        safetyFlags: ["none"],
+        deletionState: "available",
+        deletionReason:
+          "Account memory can be deleted with tenant audit and replay impact.",
+        replayImpact:
+          "Without account memory, replies must call account lookup before plan-specific guidance.",
+      },
+      {
+        id: "mem_org_escalation",
+        scope: "organization",
+        key: "escalation_contract_owner",
+        before: "support_lead@acme.test",
+        after: "enterprise_success@acme.test",
+        source: "Approved organization routing policy",
+        sourceTrace: "trace_refund_742#policy_resolution",
+        retentionPolicy: "organization memory, policy-bound retention",
+        lastWrite: "2026-05-06T08:43:03Z",
+        writerVersion: trace.version,
+        confidence: "high",
+        safetyFlags: ["none"],
+        deletionState: "available",
+        deletionReason:
+          "Organization routing memory can be reverted through policy change.",
+        replayImpact:
+          "Historical replay routes contract escalations to the previous owner.",
       },
       {
         id: "mem_scratch_order",
@@ -305,6 +362,25 @@ export function createMemoryStudioData(
           "Queued for review because the write was rejected before durable storage.",
         replayImpact:
           "Replay without memory confirms the answer does not depend on the rejected value.",
+      },
+      {
+        id: "mem_agent_guardrail",
+        scope: "agent",
+        key: "refund_exception_guardrail",
+        before: "per-call cap only",
+        after: "cumulative cap across conversation",
+        source: "Catch resolution accepted by builder",
+        sourceTrace: "catch/cumulative_refund_cap",
+        retentionPolicy: "agent memory, version-bound retention",
+        lastWrite: "2026-05-06T08:45:10Z",
+        writerVersion: "v23.1.4-draft",
+        confidence: "high",
+        safetyFlags: ["none"],
+        deletionState: "available",
+        deletionReason:
+          "Agent memory can be superseded by a new accepted behavior version.",
+        replayImpact:
+          "Without agent memory, replay may approve multiple refunds below per-call cap.",
       },
       {
         id: "mem_conflict_language",
