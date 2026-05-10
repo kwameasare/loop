@@ -66,6 +66,7 @@ from loop_control_plane.trace_search import (
     TraceStore,
 )
 from loop_control_plane.usage import UsageLedger
+from loop_control_plane.web_channels import WebChannelRegistry
 from loop_control_plane.workspace_api import WorkspaceAPI
 from loop_control_plane.workspaces import PostgresWorkspaceService, WorkspaceService
 
@@ -234,6 +235,9 @@ class CpApiState:
         self.preapproved_classes = PreApprovedClassRegistry()
         # Agent-flow implementation: every agent owns peer channel bindings.
         self.channel_bindings = ChannelBindingRegistry()
+        # Agent-flow implementation: web chat is a governed channel binding
+        # with explicit token mint/revoke state, not a local Studio fixture.
+        self.web_channels = WebChannelRegistry()
         # Agent-flow implementation: tools require durable safety contracts.
         self.tool_contracts = ToolContractRegistry()
         # Agent-flow implementation: branch/change-set/release-candidate
