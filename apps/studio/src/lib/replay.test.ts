@@ -5,6 +5,7 @@ import {
   buildReplayRequest,
   collapseToBubbles,
   diffReplayTraces,
+  getReplayTrace,
   nextBoundary,
   previousBoundary,
   replayTraceFromTrace,
@@ -48,6 +49,18 @@ describe("replay run request", () => {
       target_version: "agent-v2",
       frame_count: FIXTURE_REPLAY.events.length,
     });
+  });
+});
+
+describe("getReplayTrace", () => {
+  it("does not serve fixture replay detail unless explicitly allowed", async () => {
+    await expect(getReplayTrace(FIXTURE_REPLAY.id)).resolves.toBeNull();
+  });
+
+  it("serves fixture replay detail for explicit local/demo callers", async () => {
+    await expect(
+      getReplayTrace(FIXTURE_REPLAY.id, { allowFixture: true }),
+    ).resolves.toBe(FIXTURE_REPLAY);
   });
 });
 

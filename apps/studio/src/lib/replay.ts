@@ -1,4 +1,10 @@
-import { getTrace, type Span, type Trace, type TracePayload } from "@/lib/traces";
+import {
+  getTrace,
+  type GetTraceOptions,
+  type Span,
+  type Trace,
+  type TracePayload,
+} from "@/lib/traces";
 
 /**
  * Replay / time-travel debugging.
@@ -523,8 +529,15 @@ export function replayTraceFromTrace(trace: Trace): ReplayTrace {
   };
 }
 
-export async function getReplayTrace(id: string): Promise<ReplayTrace | null> {
-  if (id === FIXTURE_REPLAY.id) return FIXTURE_REPLAY;
-  const trace = await getTrace(id);
+export interface GetReplayTraceOptions extends GetTraceOptions {
+  allowFixture?: boolean | undefined;
+}
+
+export async function getReplayTrace(
+  id: string,
+  opts: GetReplayTraceOptions = {},
+): Promise<ReplayTrace | null> {
+  if (opts.allowFixture && id === FIXTURE_REPLAY.id) return FIXTURE_REPLAY;
+  const trace = await getTrace(id, opts);
   return trace ? replayTraceFromTrace(trace) : null;
 }
