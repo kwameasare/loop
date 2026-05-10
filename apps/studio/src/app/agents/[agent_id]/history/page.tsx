@@ -1,5 +1,8 @@
 import { AgentHistoryWalkthrough } from "@/components/agents/agent-history-walkthrough";
-import { fetchAgentHandoff, localAgentHandoff } from "@/lib/agent-handoff";
+import {
+  fetchAgentHandoff,
+  type AgentHandoffModel,
+} from "@/lib/agent-handoff";
 
 export const dynamic = "force-dynamic";
 
@@ -8,11 +11,17 @@ interface PageProps {
 }
 
 export default async function AgentHistoryPage({ params }: PageProps) {
-  let model = localAgentHandoff(params.agent_id);
+  let model: AgentHandoffModel;
   try {
     model = await fetchAgentHandoff(params.agent_id);
-  } catch {
-    model = localAgentHandoff(params.agent_id);
+  } catch (error) {
+    return (
+      <p className="p-6 text-sm text-destructive" role="alert">
+        {error instanceof Error
+          ? error.message
+          : "Could not load agent handoff history."}
+      </p>
+    );
   }
 
   return (
