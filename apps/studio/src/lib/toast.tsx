@@ -135,11 +135,11 @@ export function useToasts(): ToastContextValue {
 function toneClass(tone: ToastTone): string {
   switch (tone) {
     case "error":
-      return "border-red-300 bg-red-50 text-red-900";
+      return "border-destructive/30 bg-destructive/10 text-destructive";
     case "success":
-      return "border-green-300 bg-green-50 text-green-900";
+      return "border-success/30 bg-success/10 text-success";
     default:
-      return "border-slate-300 bg-white text-slate-900";
+      return "border-border bg-card text-foreground";
   }
 }
 
