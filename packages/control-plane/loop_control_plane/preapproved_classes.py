@@ -52,6 +52,7 @@ class PreApprovedClassRecord(BaseModel):
     created_at: datetime
     updated_at: datetime
     revoked_at: datetime | None = None
+    expired_at: datetime | None = None
     invalidated_at: datetime | None = None
     used_by_change_packages: list[str] = Field(default_factory=list)
 
@@ -122,23 +123,40 @@ class PreApprovedClassRegistry:
             self._items.setdefault(agent.id, []).insert(0, record)
             return record
 
-    async def list_for_agent(self, *, agent: AgentRecord) -> list[PreApprovedClassRecord]:
+    async def expire_for_agent(
+        self,
+        *,
+        agent: AgentRecord,
+        now: datetime | None = None,
+    ) -> list[PreApprovedClassRecord]:
         async with self._lock:
-            now = datetime.now(UTC)
+            timestamp = now or datetime.now(UTC)
             rows = self._items.get(agent.id, [])
             updated: list[PreApprovedClassRecord] = []
+            expired: list[PreApprovedClassRecord] = []
             changed = False
             for record in rows:
-                if record.status == "active" and _is_expired(record, now):
-                    updated.append(
-                        record.model_copy(update={"status": "expired", "updated_at": now})
+                if record.status == "active" and _is_expired(record, timestamp):
+                    expired_record = record.model_copy(
+                        update={
+                            "status": "expired",
+                            "revoked_at": timestamp,
+                            "expired_at": timestamp,
+                            "updated_at": timestamp,
+                        }
                     )
+                    updated.append(expired_record)
+                    expired.append(expired_record)
                     changed = True
                 else:
                     updated.append(record)
             if changed:
                 self._items[agent.id] = updated
-            return list(updated)
+            return expired
+
+    async def list_for_agent(self, *, agent: AgentRecord) -> list[PreApprovedClassRecord]:
+        async with self._lock:
+            return list(self._items.get(agent.id, []))
 
     async def revoke(
         self,
@@ -172,6 +190,7 @@ class PreApprovedClassRegistry:
         actor_sub: str,
     ) -> list[PreApprovedClassRecord]:
         requested = _normalise(change_types)
+        await self.expire_for_agent(agent=agent)
         rows = await self.list_for_agent(agent=agent)
         matches: list[PreApprovedClassRecord] = []
         for record in rows:

@@ -178,6 +178,79 @@ def test_preapproved_class_does_not_cover_excluded_or_high_risk_change(
     )
 
 
+def test_expired_preapproved_class_is_revoked_before_preflight_and_audited(
+    client: TestClient,
+    workspace_id: UUID,
+    agent_id: UUID,
+) -> None:
+    _complete_commitment(client, workspace_id, agent_id)
+    created = client.post(
+        f"/v1/agents/{agent_id}/pre-approved-classes",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "granted_to_user_id": "owner-1",
+            "allowed_change_types": ["instruction"],
+            "excluded_change_types": ["tool", "memory", "channel", "budget"],
+            "risk_ceiling": "low",
+            "expires_at": (datetime.now(UTC) + timedelta(days=1)).isoformat(),
+            "reason": "Short-lived instruction corridor.",
+        },
+    )
+    assert created.status_code == 201, created.text
+    class_id = created.json()["id"]
+    registry = client.app.state.cp.preapproved_classes  # type: ignore[attr-defined]
+    record = registry._items[agent_id][0]
+    registry._items[agent_id][0] = record.model_copy(
+        update={"expires_at": datetime.now(UTC) - timedelta(seconds=1)}
+    )
+
+    generated = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "target_environment": "production",
+            "semantic_diff": [
+                {
+                    "dimension": "instruction",
+                    "summary": "Clarifies refund deadline copy.",
+                    "evidence_ref": "behavior/sentence/refund_deadline",
+                }
+            ],
+            "summary": "Instruction-only refund copy clarification.",
+        },
+    )
+    assert generated.status_code == 201, generated.text
+    package = generated.json()
+    assert package["pre_approved_classes"] == []
+    assert package["approval_status"] == "blocked"
+
+    listed = client.get(
+        f"/v1/agents/{agent_id}/pre-approved-classes",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert listed.status_code == 200, listed.text
+    item = listed.json()["items"][0]
+    assert item["id"] == class_id
+    assert item["status"] == "expired"
+    assert item["expired_at"] is not None
+    assert item["revoked_at"] is not None
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    expiry_event = next(
+        event for event in audit if event["action"] == "pre_approved_class:expire"
+    )
+    assert expiry_event["resource_id"] == class_id
+    payload = fetch_payload(
+        client.app.state.cp.audit_events,  # type: ignore[attr-defined]
+        expiry_event["payload_hash"],
+    )
+    assert payload is not None
+    assert payload["trigger"] == "change_package_preflight"
+
+
 def test_preapproved_class_creation_requires_narrow_explicit_boundaries(
     client: TestClient,
     workspace_id: UUID,
