@@ -15,8 +15,13 @@ import {
 } from "./evals";
 
 describe("listEvalSuites", () => {
-  it("returns fixture suites when no baseUrl is configured", async () => {
+  it("returns an empty list when no baseUrl is configured", async () => {
     const { items } = await listEvalSuites();
+    expect(items).toEqual([]);
+  });
+
+  it("returns fixture suites only when explicitly allowed", async () => {
+    const { items } = await listEvalSuites({ allowFixture: true });
     expect(items.length).toBeGreaterThan(0);
     expect(items[0]).toMatchObject({ id: expect.stringMatching(/^evs_/) });
   });
@@ -55,7 +60,9 @@ describe("listEvalSuites", () => {
 
 describe("getEvalSuite / getEvalRun", () => {
   it("fixture mode returns suite with two runs and pass rate", async () => {
-    const detail = await getEvalSuite("evs_support_smoke");
+    const detail = await getEvalSuite("evs_support_smoke", {
+      allowFixture: true,
+    });
     expect(detail).not.toBeNull();
     expect(detail!.runs).toHaveLength(2);
     expect(detail!.runs[0].baselineRunId).toBe(detail!.runs[1].id);
@@ -75,7 +82,9 @@ describe("getEvalSuite / getEvalRun", () => {
   });
 
   it("getEvalRun fixture exposes per-case statuses", async () => {
-    const run = await getEvalRun("evr_evs_support_smoke_002");
+    const run = await getEvalRun("evr_evs_support_smoke_002", {
+      allowFixture: true,
+    });
     expect(run).not.toBeNull();
     expect(run!.cases.some((c) => c.status === "fail")).toBe(true);
   });
@@ -193,7 +202,7 @@ describe("formatPassRate", () => {
 
 describe("eval foundry model", () => {
   it("includes creation sources, suite builder controls, and featured result diffs", async () => {
-    const { items } = await listEvalSuites();
+    const { items } = await listEvalSuites({ allowFixture: true });
     const model = getEvalFoundryModel(items);
     expect(model.creationSources.map((source) => source.source)).toEqual(
       expect.arrayContaining([
@@ -222,7 +231,8 @@ describe("eval foundry model", () => {
   it("builds an empty suite-builder state when no suites exist", () => {
     const model = getEvalFoundryModel([]);
     expect(model.suiteBuilders).toEqual([]);
-    expect(model.creationSources.length).toBeGreaterThan(0);
+    expect(model.creationSources).toEqual([]);
+    expect(model.featuredResult).toBeNull();
   });
 });
 
@@ -264,12 +274,25 @@ describe("formatEvalUsd", () => {
 });
 
 describe("createEvalSuite", () => {
-  it("returns an in-memory suite when no baseUrl is configured", async () => {
-    const created = await createEvalSuite({
-      name: "smoke",
-      dataset_ref: "datasets/support-smoke-v1",
-      metrics: ["accuracy"],
-    });
+  it("requires cp-api when no baseUrl is configured", async () => {
+    await expect(
+      createEvalSuite({
+        name: "smoke",
+        dataset_ref: "datasets/support-smoke-v1",
+        metrics: ["accuracy"],
+      }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required to create eval suites");
+  });
+
+  it("returns an in-memory suite only when fixture mode is explicitly allowed", async () => {
+    const created = await createEvalSuite(
+      {
+        name: "smoke",
+        dataset_ref: "datasets/support-smoke-v1",
+        metrics: ["accuracy"],
+      },
+      { allowFixture: true },
+    );
     expect(created.name).toBe("smoke");
     expect(created.agentId).toBe("");
     expect(created.id).toMatch(/^evs_/);
@@ -321,8 +344,14 @@ describe("createEvalSuite", () => {
 });
 
 describe("triggerEvalSuiteRun", () => {
-  it("returns in-memory run id in fixture mode", async () => {
-    const result = await triggerEvalSuiteRun("evs_1");
+  it("requires cp-api when no baseUrl is configured", async () => {
+    await expect(triggerEvalSuiteRun("evs_1")).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required to trigger eval runs",
+    );
+  });
+
+  it("returns in-memory run id only when fixture mode is explicitly allowed", async () => {
+    const result = await triggerEvalSuiteRun("evs_1", { allowFixture: true });
     expect(result.id).toMatch(/^evr_/);
   });
 
