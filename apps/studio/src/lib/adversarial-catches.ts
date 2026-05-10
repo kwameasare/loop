@@ -81,6 +81,10 @@ export interface ListAdversarialCatchesResponse {
   items: AdversarialCatch[];
 }
 
+type AdversarialCatchesClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 function localQuestionFor(ruleText: string): {
   question: string;
   generated_scenario: string;
@@ -213,33 +217,35 @@ function localResolvedCatch(
 export async function runAdversarialProbe(
   agentId: string,
   input: AdversarialProbeRunInput,
-  opts: UxWireupClientOptions = {},
+  opts: AdversarialCatchesClientOptions = {},
 ): Promise<AdversarialProbeRunResponse> {
   return cpJson<AdversarialProbeRunResponse>(
     `/agents/${encodeURIComponent(agentId)}/adversarial-probes/run`,
     {
+      ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: localProbeRun(agentId, input),
-      ...opts,
     },
   );
 }
 
 export async function getAdversarialProbeBudgets(
   workspaceId: string,
-  opts: UxWireupClientOptions = {},
+  opts: AdversarialCatchesClientOptions = {},
 ): Promise<AdversarialProbeBudgets> {
   return cpJson<AdversarialProbeBudgets>(
     `/workspaces/${encodeURIComponent(workspaceId)}/adversarial-probe-budgets`,
     {
+      ...opts,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         workspace_id: workspaceId,
         budgets: { low: 1000, medium: 2000, high: 4000 },
         updated_by: "local-studio",
         updated_at: new Date(0).toISOString(),
       },
-      ...opts,
     },
   );
 }
@@ -247,13 +253,15 @@ export async function getAdversarialProbeBudgets(
 export async function updateAdversarialProbeBudgets(
   workspaceId: string,
   input: AdversarialProbeBudgetUpdate,
-  opts: UxWireupClientOptions = {},
+  opts: AdversarialCatchesClientOptions = {},
 ): Promise<AdversarialProbeBudgets> {
   return cpJson<AdversarialProbeBudgets>(
     `/workspaces/${encodeURIComponent(workspaceId)}/adversarial-probe-budgets`,
     {
+      ...opts,
       method: "PATCH",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         workspace_id: workspaceId,
         budgets: {
@@ -264,20 +272,20 @@ export async function updateAdversarialProbeBudgets(
         updated_by: "local-studio",
         updated_at: new Date(0).toISOString(),
       },
-      ...opts,
     },
   );
 }
 
 export async function listAdversarialCatches(
   agentId: string,
-  opts: UxWireupClientOptions = {},
+  opts: AdversarialCatchesClientOptions = {},
 ): Promise<ListAdversarialCatchesResponse> {
   return cpJson<ListAdversarialCatchesResponse>(
     `/agents/${encodeURIComponent(agentId)}/catches`,
     {
-      fallback: { items: [] },
       ...opts,
+      allowFallback: opts.allowFixture === true,
+      fallback: { items: [] },
     },
   );
 }
@@ -286,17 +294,18 @@ export async function resolveAdversarialCatch(
   agentId: string,
   catchId: string,
   input: CatchResolutionInput,
-  opts: UxWireupClientOptions = {},
+  opts: AdversarialCatchesClientOptions = {},
 ): Promise<AdversarialCatch> {
   return cpJson<AdversarialCatch>(
     `/agents/${encodeURIComponent(agentId)}/catches/${encodeURIComponent(
       catchId,
     )}/resolve`,
     {
+      ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: localResolvedCatch(agentId, catchId, input),
-      ...opts,
     },
   );
 }
