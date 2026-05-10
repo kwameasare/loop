@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  OBSERVATORY_MODEL,
   buildObservatoryModel,
+  createObservatoryAnomalyEvalCase,
+  createObservatoryAnomalyTask,
   fetchObservatoryModel,
   pinObservatoryMetric,
 } from "@/lib/observatory";
@@ -97,6 +100,11 @@ describe("buildObservatoryModel", () => {
     expect(model.anomalies.map((anomaly) => anomaly.id)).toContain(
       "live_trace_errors",
     );
+    expect(model.anomalies.find((anomaly) => anomaly.id === "live_trace_errors"))
+      .toMatchObject({
+        affectedObject: "production trace cluster",
+        traceQuery: "status:error",
+      });
     expect(model.tail[0]?.traceId).toBe("trace-error");
     expect(model.agents[0]).toMatchObject({
       id: "agent-a",
@@ -147,6 +155,51 @@ describe("buildObservatoryModel", () => {
     );
 
     expect(dashboard.id).toBe("dash_1");
+  });
+
+  it("creates tasks and eval cases from observatory anomalies through cp-api", async () => {
+    const anomaly = OBSERVATORY_MODEL.anomalies[0]!;
+    const fetcher = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        const body = JSON.parse(String(init?.body));
+        expect(body).toMatchObject({
+          affected_object: anomaly.affectedObject,
+          evidence: anomaly.evidence,
+          trace_query: anomaly.traceQuery,
+        });
+        if (url.endsWith("/tasks")) {
+          return response({
+            id: "task_1",
+            evidence: "task created from anomaly",
+          });
+        }
+        return response({
+          id: "eval_1",
+          evidence: "eval created from anomaly",
+        });
+      },
+    );
+
+    const task = await createObservatoryAnomalyTask("ws1", anomaly, {
+      baseUrl: "https://cp.test/v1",
+      fetcher: fetcher as unknown as typeof fetch,
+    });
+    const evalCase = await createObservatoryAnomalyEvalCase("ws1", anomaly, {
+      baseUrl: "https://cp.test/v1",
+      fetcher: fetcher as unknown as typeof fetch,
+    });
+
+    expect(task.id).toBe("task_1");
+    expect(evalCase.id).toBe("eval_1");
+    expect(fetcher).toHaveBeenCalledWith(
+      `https://cp.test/v1/workspaces/ws1/observatory/anomalies/${anomaly.id}/tasks`,
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(fetcher).toHaveBeenCalledWith(
+      `https://cp.test/v1/workspaces/ws1/observatory/anomalies/${anomaly.id}/eval-cases`,
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 });
 

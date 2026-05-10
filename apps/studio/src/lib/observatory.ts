@@ -38,8 +38,12 @@ export interface ObservatoryAnomaly {
   title: string;
   severity: "low" | "medium" | "high" | "critical";
   evidence: string;
+  affectedObject: string;
   nextAction: string;
   owner: string;
+  traceQuery: string;
+  taskRef?: string | undefined;
+  evalCandidateRef?: string | undefined;
 }
 
 export interface ProductionTailEvent {
@@ -75,6 +79,12 @@ export interface ObservatoryDashboardLayout {
   name: string;
   layout: readonly { source_type: string; source_id: string; title: string }[];
   shared_with: readonly string[];
+}
+
+export interface ObservatoryActionRef {
+  id: string;
+  href?: string | undefined;
+  evidence: string;
 }
 
 export interface ObservatoryClientOptions
@@ -210,9 +220,11 @@ export function buildObservatoryModel(args: {
       title: "Production trace errors need triage",
       severity: errorCount >= 5 ? "critical" : "high",
       evidence: `${errorCount} of ${totalTraces} recent traces ended in error.`,
+      affectedObject: "production trace cluster",
       nextAction:
         "Open the failed trace cluster and promote one failure into an eval case.",
       owner: "Runtime owner",
+      traceQuery: "status:error",
     });
   }
   if (p95LatencyMs > 2_000) {
@@ -221,9 +233,11 @@ export function buildObservatoryModel(args: {
       title: "P95 latency is outside the interactive budget",
       severity: p95LatencyMs > 4_000 ? "high" : "medium",
       evidence: `Recent p95 is ${formatLatency(p95LatencyMs)} across ${totalTraces} traces.`,
+      affectedObject: "latency budget",
       nextAction:
         "Open the latency budget view and target the slowest span family first.",
       owner: "Platform integrations",
+      traceQuery: "duration_ms:>2000",
     });
   }
   if (openInbox.length > 0) {
@@ -232,9 +246,11 @@ export function buildObservatoryModel(args: {
       title: "Human handoff queue has unresolved work",
       severity: openInbox.length >= 10 ? "high" : "medium",
       evidence: `${openInbox.length} escalations are pending or claimed.`,
+      affectedObject: "operator inbox",
       nextAction:
         "Route the oldest pending escalation, then convert the final resolution into an eval.",
       owner: "Support operations",
+      traceQuery: "handoff:open",
     });
   }
   const activeIncidents = [...(args.incidents ?? [])].filter(
@@ -248,11 +264,14 @@ export function buildObservatoryModel(args: {
       title: "Incident response is active",
       severity: highest.severity,
       evidence: `${highest.trigger}; ${highest.affected_conversation_count} conversations flagged.`,
+      affectedObject: `incident/${highest.id}`,
       nextAction:
         highest.candidate_eval_suite_id === null
           ? "Seed candidate regression evals from the incident report."
           : "Review the seeded eval suite before staging the fix.",
       owner: highest.created_by,
+      traceQuery: highest.affected_trace_ids.join(" OR "),
+      evalCandidateRef: highest.candidate_eval_suite_id ?? undefined,
     });
   }
   if (anomalies.length === 0) {
@@ -267,9 +286,11 @@ export function buildObservatoryModel(args: {
         severity: "low",
         evidence:
           "No traces, usage records, inbox items, or incidents were returned for this workspace.",
+        affectedObject: "workspace telemetry",
         nextAction:
           "Connect cp-api telemetry before treating this observatory as live.",
         owner: "Workspace owner",
+        traceQuery: "workspace:empty",
       });
     } else {
       anomalies.push({
@@ -279,9 +300,11 @@ export function buildObservatoryModel(args: {
         evidence: `${totalTraces} traces, ${openInbox.length} open escalations, ${formatUSD(
           costSummary.total_cents,
         )} month-to-date usage.`,
+        affectedObject: "workspace live window",
         nextAction:
           "Keep the production tail pinned while the next canary bakes.",
         owner: "Workspace owner",
+        traceQuery: "status:any",
       });
     }
   }
@@ -516,6 +539,64 @@ export async function pinObservatoryMetric(
   );
 }
 
+export async function createObservatoryAnomalyTask(
+  workspaceId: string,
+  anomaly: ObservatoryAnomaly,
+  opts: ObservatoryMutationOptions = {},
+): Promise<ObservatoryActionRef> {
+  return cpJson<ObservatoryActionRef>(
+    `/workspaces/${encodeURIComponent(
+      workspaceId,
+    )}/observatory/anomalies/${encodeURIComponent(anomaly.id)}/tasks`,
+    {
+      ...opts,
+      method: "POST",
+      allowFallback: opts.allowFixture === true,
+      body: {
+        title: anomaly.title,
+        evidence: anomaly.evidence,
+        affected_object: anomaly.affectedObject,
+        next_action: anomaly.nextAction,
+        owner: anomaly.owner,
+        trace_query: anomaly.traceQuery,
+      },
+      fallback: {
+        id: `task_local_${anomaly.id}`,
+        evidence: anomaly.evidence,
+      },
+    },
+  );
+}
+
+export async function createObservatoryAnomalyEvalCase(
+  workspaceId: string,
+  anomaly: ObservatoryAnomaly,
+  opts: ObservatoryMutationOptions = {},
+): Promise<ObservatoryActionRef> {
+  return cpJson<ObservatoryActionRef>(
+    `/workspaces/${encodeURIComponent(
+      workspaceId,
+    )}/observatory/anomalies/${encodeURIComponent(anomaly.id)}/eval-cases`,
+    {
+      ...opts,
+      method: "POST",
+      allowFallback: opts.allowFixture === true,
+      body: {
+        source_type: "incident_cluster",
+        source_ref: anomaly.id,
+        affected_object: anomaly.affectedObject,
+        expected_behavior: anomaly.nextAction,
+        evidence: anomaly.evidence,
+        trace_query: anomaly.traceQuery,
+      },
+      fallback: {
+        id: `eval_local_${anomaly.id}`,
+        evidence: anomaly.evidence,
+      },
+    },
+  );
+}
+
 export const OBSERVATORY_MODEL: ObservatoryModel = {
   metrics: [
     {
@@ -576,25 +657,33 @@ export const OBSERVATORY_MODEL: ObservatoryModel = {
       severity: "high",
       evidence:
         "17 production-like variants failed in replay and persona simulation.",
+      affectedObject: "behavior/escalation_classifier",
       nextAction:
         "Patch the escalation classifier, then replay the affected scene.",
       owner: "CX Policy",
+      traceQuery: "trace_legal_synonym OR scene:legal-threat",
+      taskRef: "task/legal-synonym-classifier",
     },
     {
       id: "anom_region_metadata",
       title: "Region metadata absent on renewal chunks",
       severity: "medium",
       evidence: "6 missed retrievals should have cited refund_policy_2026.pdf.",
+      affectedObject: "knowledge/refund_policy_2026.pdf",
       nextAction: "Backfill region metadata and regenerate retrieval evals.",
       owner: "Knowledge Lead",
+      traceQuery: "retrieval:zero-result source:refund_policy_2026.pdf",
+      evalCandidateRef: "eval/retrieval/region-metadata",
     },
     {
       id: "anom_tool_wait",
       title: "Tool wait exceeds voice budget",
       severity: "medium",
       evidence: "lookup_order adds 180 ms where the voice budget is 160 ms.",
+      affectedObject: "tool/lookup_order",
       nextAction: "Use preview batching before enabling phone canary.",
       owner: "Platform Integrations",
+      traceQuery: "tool:lookup_order duration_ms:>160 channel:voice",
     },
   ],
   incidents: [

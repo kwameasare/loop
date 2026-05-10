@@ -23,7 +23,11 @@ import {
   seedIncidentEvalCases,
   transitionIncident,
 } from "@/lib/incidents";
-import { pinObservatoryMetric } from "@/lib/observatory";
+import {
+  createObservatoryAnomalyEvalCase,
+  createObservatoryAnomalyTask,
+  pinObservatoryMetric,
+} from "@/lib/observatory";
 import type { IncidentRecord } from "@/lib/incidents";
 import type {
   AmbientAgentHealth,
@@ -101,12 +105,53 @@ function MetricCard({
 function AnomalyCard({
   anomaly,
   acknowledged,
+  workspaceId,
   onAcknowledge,
 }: {
   anomaly: ObservatoryAnomaly;
   acknowledged: boolean;
+  workspaceId?: string | undefined;
   onAcknowledge: () => void;
 }) {
+  const [taskRef, setTaskRef] = useState(anomaly.taskRef ?? null);
+  const [evalRef, setEvalRef] = useState(anomaly.evalCandidateRef ?? null);
+  const [busy, setBusy] = useState<"task" | "eval" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function createTask() {
+    if (!workspaceId || taskRef) return;
+    setBusy("task");
+    setError(null);
+    try {
+      const ref = await createObservatoryAnomalyTask(workspaceId, anomaly);
+      setTaskRef(ref.id);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not create anomaly task.",
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function createEval() {
+    if (!workspaceId || evalRef) return;
+    setBusy("eval");
+    setError(null);
+    try {
+      const ref = await createObservatoryAnomalyEvalCase(workspaceId, anomaly);
+      setEvalRef(ref.id);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not create anomaly eval case.",
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <article className="rounded-md border bg-card p-4">
       <div className="flex items-start gap-3">
@@ -129,19 +174,84 @@ function AnomalyCard({
           <p className="mt-2 text-sm text-muted-foreground">
             {anomaly.evidence}
           </p>
+          <dl className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+            <div>
+              <dt className="font-semibold uppercase tracking-wide">
+                Affected object
+              </dt>
+              <dd className="mt-1 break-all">{anomaly.affectedObject}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold uppercase tracking-wide">
+                Trace query
+              </dt>
+              <dd className="mt-1 break-all">{anomaly.traceQuery}</dd>
+            </div>
+          </dl>
           <p className="mt-3 text-sm">{anomaly.nextAction}</p>
           <p className="mt-2 text-xs text-muted-foreground">
             Owner: {anomaly.owner}
           </p>
-          <Button
-            type="button"
-            variant={acknowledged ? "subtle" : "outline"}
-            size="sm"
-            className="mt-3"
-            onClick={onAcknowledge}
-          >
-            {acknowledged ? "Acknowledged" : "Acknowledge with evidence"}
-          </Button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant={acknowledged ? "subtle" : "outline"}
+              size="sm"
+              onClick={onAcknowledge}
+            >
+              {acknowledged ? "Acknowledged" : "Acknowledge with evidence"}
+            </Button>
+            {workspaceId ? (
+              <>
+                <Button
+                  type="button"
+                  variant={taskRef ? "subtle" : "outline"}
+                  size="sm"
+                  disabled={busy === "task" || Boolean(taskRef)}
+                  onClick={() => void createTask()}
+                  data-testid={`anomaly-task-${anomaly.id}`}
+                >
+                  {busy === "task"
+                    ? "Creating task"
+                    : taskRef
+                      ? "Task created"
+                      : "Create task"}
+                </Button>
+                <Button
+                  type="button"
+                  variant={evalRef ? "subtle" : "outline"}
+                  size="sm"
+                  disabled={busy === "eval" || Boolean(evalRef)}
+                  onClick={() => void createEval()}
+                  data-testid={`anomaly-eval-${anomaly.id}`}
+                >
+                  {busy === "eval"
+                    ? "Saving eval"
+                    : evalRef
+                      ? "Eval seeded"
+                      : "Seed eval"}
+                </Button>
+              </>
+            ) : null}
+          </div>
+          {taskRef || evalRef ? (
+            <p
+              className="mt-2 text-xs text-muted-foreground"
+              data-testid={`anomaly-action-refs-${anomaly.id}`}
+            >
+              {taskRef ? `Task: ${taskRef}` : null}
+              {taskRef && evalRef ? " · " : null}
+              {evalRef ? `Eval: ${evalRef}` : null}
+            </p>
+          ) : null}
+          {error ? (
+            <p
+              className="mt-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive"
+              role="alert"
+            >
+              {error}
+            </p>
+          ) : null}
         </div>
       </div>
     </article>
@@ -625,6 +735,7 @@ export function ObservatoryScreen({
               key={anomaly.id}
               anomaly={anomaly}
               acknowledged={acknowledged.includes(anomaly.id)}
+              workspaceId={workspaceId}
               onAcknowledge={() =>
                 setAcknowledged((current) =>
                   current.includes(anomaly.id)
