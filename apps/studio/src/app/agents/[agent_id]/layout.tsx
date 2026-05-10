@@ -6,10 +6,10 @@ import {
   agentStateSentence,
   getAgentDetailData,
 } from "./agent-detail-data";
+import { AgentEvidenceRail } from "@/components/agents/agent-evidence-rail";
 import { AgentTestDrawer } from "@/components/agents/agent-test-drawer";
 import { AgentTabs } from "@/components/agents/agent-tabs";
 import { AgentWorkbenchControls } from "@/components/agents/agent-workbench-controls";
-import { EmulatorPanel } from "@/components/agents/emulator-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -85,7 +85,7 @@ export default async function AgentDetailLayout({
         className="lg:sticky lg:top-10 lg:max-h-[calc(100vh-5rem)]"
         data-testid="agent-emulator-rail"
       >
-        <EmulatorPanel agentId={params.agent_id} evidenceMode="empty" />
+        <AgentEvidenceRail agentId={params.agent_id} />
       </aside>
     </main>
   );
