@@ -58,6 +58,32 @@ export interface ObservedFailureRepairResponse {
   evidence_refs: string[];
 }
 
+export type ObservedFailureRepairDecision = "accepted" | "edited" | "rejected";
+
+export interface ObservedFailureRepairDecisionInput {
+  decision: ObservedFailureRepairDecision;
+  sentence_id: string;
+  trace_id: string;
+  proposal_diff: string;
+  edited_diff?: string;
+  reason?: string;
+  replay_ref?: string;
+  evidence_refs?: string[];
+  target_object_kind?: string;
+}
+
+export interface ObservedFailureRepairDecisionResponse {
+  ok: boolean;
+  id: string;
+  proposal_id: string;
+  status: ObservedFailureRepairDecision;
+  accepted_diff: string | null;
+  draft_ref: string;
+  audit_ref: string;
+  next_actions: string[];
+  evidence_refs: string[];
+}
+
 export interface ObservedFailureEvalCase {
   id: string;
   suite_id: string;
@@ -189,6 +215,35 @@ function localObservedFailureRepair(
   };
 }
 
+function localObservedFailureRepairDecision(
+  proposalId: string,
+  input: ObservedFailureRepairDecisionInput,
+): ObservedFailureRepairDecisionResponse {
+  const replayRef = input.replay_ref ?? "replay/not-run";
+  const acceptedDiff =
+    input.decision === "rejected"
+      ? null
+      : input.decision === "edited" && input.edited_diff
+        ? input.edited_diff
+        : input.proposal_diff;
+  return {
+    ok: true,
+    id: `repair_decision_${proposalId}`,
+    proposal_id: proposalId,
+    status: input.decision,
+    accepted_diff: acceptedDiff,
+    draft_ref: replayRef,
+    audit_ref: `audit/local/behavior-repair/${proposalId}`,
+    next_actions:
+      input.decision === "rejected"
+        ? ["dismiss_repair", "keep_original_failure_eval"]
+        : ["save_regression_eval", "open_change_set"],
+    evidence_refs: Array.from(
+      new Set([input.trace_id, replayRef, ...(input.evidence_refs ?? [])]),
+    ),
+  };
+}
+
 export async function requestObservedFailureRepair(
   agentId: string,
   input: ObservedFailureRepairInput,
@@ -202,6 +257,26 @@ export async function requestObservedFailureRepair(
       body: input,
       allowFallback: opts.allowFixture === true,
       fallback: localObservedFailureRepair(agentId, input),
+    },
+  );
+}
+
+export async function decideObservedFailureRepair(
+  agentId: string,
+  proposalId: string,
+  input: ObservedFailureRepairDecisionInput,
+  opts: BehaviorRepairClientOptions = {},
+): Promise<ObservedFailureRepairDecisionResponse> {
+  return cpJson<ObservedFailureRepairDecisionResponse>(
+    `/agents/${encodeURIComponent(agentId)}/behavior/repair-proposals/${encodeURIComponent(
+      proposalId,
+    )}/decision`,
+    {
+      ...opts,
+      method: "POST",
+      body: input,
+      allowFallback: opts.allowFixture === true,
+      fallback: localObservedFailureRepairDecision(proposalId, input),
     },
   );
 }

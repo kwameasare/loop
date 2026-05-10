@@ -81,6 +81,18 @@ describe("FailureRepairLoopPanel", () => {
       suite_id: "suite_observed",
       case_id: "case_observed",
     }));
+    const decideRepair = vi.fn(async () => ({
+      ok: true,
+      id: "decision_1",
+      proposal_id: "repair_1",
+      status: "edited" as const,
+      accepted_diff:
+        "Require current May policy citation before refund windows.",
+      draft_ref: "replay/sentence_purpose_cancel/nearby-turns",
+      audit_ref: "audit/repair_1/decision_1",
+      next_actions: ["save_regression_eval"],
+      evidence_refs: ["trace_refund_742", sentence.id],
+    }));
 
     render(
       <FailureRepairLoopPanel
@@ -88,6 +100,7 @@ describe("FailureRepairLoopPanel", () => {
         sentence={sentence}
         requestRepair={requestRepair}
         saveEval={saveEval}
+        decideRepair={decideRepair}
       />,
     );
 
@@ -98,6 +111,32 @@ describe("FailureRepairLoopPanel", () => {
     ).toHaveTextContent("Regressed");
     expect(screen.getByTestId("failure-repair-proposal")).toHaveTextContent(
       "0",
+    );
+
+    fireEvent.change(screen.getByTestId("failure-repair-edit"), {
+      target: {
+        value: "Require current May policy citation before refund windows.",
+      },
+    });
+    fireEvent.click(screen.getByTestId("failure-repair-accept-edit"));
+
+    expect(
+      await screen.findByTestId("failure-repair-decision"),
+    ).toHaveTextContent(
+      "Require current May policy citation before refund windows.",
+    );
+    expect(decideRepair).toHaveBeenCalledWith(
+      "agent_support",
+      "repair_1",
+      expect.objectContaining({
+        decision: "edited",
+        sentence_id: sentence.id,
+        proposal_diff:
+          "Require current May policy citation before refund windows.",
+        edited_diff:
+          "Require current May policy citation before refund windows.",
+        replay_ref: "replay/sentence_purpose_cancel/nearby-turns",
+      }),
     );
 
     fireEvent.click(screen.getByTestId("failure-repair-save-eval"));

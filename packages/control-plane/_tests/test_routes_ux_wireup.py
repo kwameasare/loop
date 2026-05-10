@@ -729,9 +729,7 @@ def test_estate_health_derives_claims_from_workspace_objects(
         "adversarial_catch",
     }
     catch_cluster = next(
-        cluster
-        for cluster in body["failure_clusters"]
-        if cluster["kind"] == "adversarial_catch"
+        cluster for cluster in body["failure_clusters"] if cluster["kind"] == "adversarial_catch"
     )
     assert "sentence_id=refund_cap" in catch_cluster["href"]
     assert "catch_id=catch_" in catch_cluster["href"]
@@ -795,9 +793,7 @@ def test_observatory_anomaly_can_create_task_and_eval_case(
     )
     assert suites.status_code == 200, suites.text
     suite = next(
-        item
-        for item in suites.json()["items"]
-        if item["name"] == "Observatory failure regressions"
+        item for item in suites.json()["items"] if item["name"] == "Observatory failure regressions"
     )
     cases = client.get(
         f"/v1/eval-suites/{suite['id']}/cases",
@@ -1371,8 +1367,7 @@ def test_change_package_preflight_links_commitment_evidence_and_stales_on_change
     assert {item["approval_id"] for item in notifications} == {"owner", "compliance"}
     assert all(item["content_hash"] == body["content_hash"] for item in notifications)
     assert all(
-        f"/agents/{agent_id}/deploys?change_package_id={body['id']}"
-        in item["deep_link"]
+        f"/agents/{agent_id}/deploys?change_package_id={body['id']}" in item["deep_link"]
         for item in notifications
     )
     stored_notifications = client.app.state.cp.ux_wireup[  # type: ignore[attr-defined]
@@ -1545,9 +1540,7 @@ def test_change_package_requested_approvals_can_expire(
     body = expired.json()
     assert body["status"] == "changes_requested"
     assert body["approval_status"] == "expired"
-    compliance = next(
-        item for item in body["required_approvals"] if item["id"] == "compliance"
-    )
+    compliance = next(item for item in body["required_approvals"] if item["id"] == "compliance")
     assert compliance["state"] == "expired"
     assert compliance["satisfied"] is False
     assert compliance["expired_reason"] == "Compliance review SLA elapsed."
@@ -2250,9 +2243,7 @@ def test_deployment_threshold_breach_pauses_rollout_by_policy(
     assert body["incident"]["affected_trace_ids"] == [trace_id]
     assert body["incident"]["report"]["rollback_status"] == "paused"
     assert body["incident"]["report"]["affected_channels"] == ["web_chat"]
-    assert body["incident"]["report"]["actions_taken"] == [
-        f"deployment/{deployment['id']}/pause"
-    ]
+    assert body["incident"]["report"]["actions_taken"] == [f"deployment/{deployment['id']}/pause"]
 
     audit = client.get(
         f"/v1/audit-events?workspace_id={workspace_id}",
@@ -2453,6 +2444,68 @@ def test_behavior_repair_proposal_runs_replay_summary_before_eval_save(
     assert "behavior:repair_proposal:create" in {event["action"] for event in audit}
 
 
+def test_behavior_repair_proposal_decision_is_audited_before_eval_save(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    proposal = client.post(
+        f"/v1/agents/{agent_id}/behavior/repair-proposals",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "sentence_id": "sentence_purpose_cancel",
+            "sentence_text": "When a customer asks to cancel, cite May 2026 policy.",
+            "sentence_role": "promise",
+            "trace_id": "trace_refund_742",
+            "failure_reason": "Agent cited archived policy before current policy.",
+            "replay_ref": "replay/run/trace_refund_742/fixed",
+            "risk_tags": ["risk_eval_gap"],
+        },
+    )
+    assert proposal.status_code == 201, proposal.text
+    proposal_body = proposal.json()
+
+    decided = client.post(
+        f"/v1/agents/{agent_id}/behavior/repair-proposals/{proposal_body['id']}/decision",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "decision": "edited",
+            "sentence_id": "sentence_purpose_cancel",
+            "trace_id": "trace_refund_742",
+            "proposal_diff": proposal_body["proposal"]["diff"],
+            "edited_diff": "Require current May 2026 policy citation before refund windows.",
+            "reason": "Builder narrowed the fix before saving regression coverage.",
+            "replay_ref": proposal_body["replay"]["draft_ref"],
+            "target_object_kind": proposal_body["target_object"]["kind"],
+            "evidence_refs": proposal_body["evidence_refs"],
+        },
+    )
+
+    assert decided.status_code == 200, decided.text
+    body = decided.json()
+    assert body["ok"] is True
+    assert body["proposal_id"] == proposal_body["id"]
+    assert body["status"] == "edited"
+    assert body["accepted_diff"] == (
+        "Require current May 2026 policy citation before refund windows."
+    )
+    assert body["draft_ref"] == "replay/run/trace_refund_742/fixed"
+    assert "save_regression_eval" in body["next_actions"]
+    assert "trace_refund_742" in body["evidence_refs"]
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    decision_events = [
+        event for event in audit if event["action"] == "behavior:repair_proposal:decision"
+    ]
+    assert decision_events
+    payload = client.app.state.cp.audit_events.fetch_payload(  # type: ignore[attr-defined]
+        decision_events[-1]["payload_hash"]
+    )
+    assert payload["decision"] == "edited"
+    assert payload["proposal_id"] == proposal_body["id"]
+
+
 def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:
@@ -2625,9 +2678,7 @@ def test_workspace_comment_threads_are_listed_for_review(
         ],
     }
     ux_wireup = client.app.state.cp.ux_wireup  # type: ignore[attr-defined]
-    ux_wireup.setdefault("comment_threads", {}).setdefault(str(workspace_id), []).append(
-        thread
-    )
+    ux_wireup.setdefault("comment_threads", {}).setdefault(str(workspace_id), []).append(thread)
 
     response = client.get(
         f"/v1/workspaces/{workspace_id}/comment-threads",
@@ -2758,10 +2809,7 @@ def test_behavior_telemetry_inverse_retrieval_voice_and_scenes(
     )
     assert retrieval_eval.status_code == 201, retrieval_eval.text
     assert retrieval_eval.json()["case"]["source"] == "knowledge-retrieval"
-    assert (
-        retrieval_eval.json()["case"]["expected"]["citation"]
-        == "refund_policy.pdf#p3"
-    )
+    assert retrieval_eval.json()["case"]["expected"]["citation"] == "refund_policy.pdf#p3"
 
     number = client.post(
         f"/v1/workspaces/{workspace_id}/voice/numbers/provision",

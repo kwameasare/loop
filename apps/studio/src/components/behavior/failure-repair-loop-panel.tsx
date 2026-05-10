@@ -10,10 +10,14 @@ import {
 
 import { StatePanel } from "@/components/target";
 import {
+  decideObservedFailureRepair,
   requestObservedFailureRepair,
   saveObservedFailureEval,
   type ObservedFailureEvalInput,
   type ObservedFailureEvalResponse,
+  type ObservedFailureRepairDecision,
+  type ObservedFailureRepairDecisionInput,
+  type ObservedFailureRepairDecisionResponse,
   type ObservedFailureRepairInput,
   type ObservedFailureRepairResponse,
 } from "@/lib/behavior-repair";
@@ -32,6 +36,11 @@ export interface FailureRepairLoopPanelProps {
     agentId: string,
     input: ObservedFailureRepairInput,
   ) => Promise<ObservedFailureRepairResponse>;
+  decideRepair?: (
+    agentId: string,
+    proposalId: string,
+    input: ObservedFailureRepairDecisionInput,
+  ) => Promise<ObservedFailureRepairDecisionResponse>;
 }
 
 function evidenceTraceRef(sentence: BehaviorSentence): string {
@@ -96,10 +105,16 @@ export function FailureRepairLoopPanel({
   autoSaveKey,
   saveEval = saveObservedFailureEval,
   requestRepair = requestObservedFailureRepair,
+  decideRepair = decideObservedFailureRepair,
 }: FailureRepairLoopPanelProps) {
   const [proposing, setProposing] = useState(false);
   const [proposal, setProposal] =
     useState<ObservedFailureRepairResponse | null>(null);
+  const [proposalEdit, setProposalEdit] = useState("");
+  const [deciding, setDeciding] =
+    useState<ObservedFailureRepairDecision | null>(null);
+  const [decision, setDecision] =
+    useState<ObservedFailureRepairDecisionResponse | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<ObservedFailureEvalResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -126,6 +141,8 @@ export function FailureRepairLoopPanel({
       }
       const response = await requestRepair(agentId, repairInput);
       setProposal(response);
+      setProposalEdit(response.proposal.diff);
+      setDecision(null);
     } catch (err) {
       setError(
         err instanceof Error
@@ -137,6 +154,55 @@ export function FailureRepairLoopPanel({
     }
   }, [agentId, requestRepair, sentence]);
 
+  const handleDecision = useCallback(
+    async (nextDecision: ObservedFailureRepairDecision) => {
+      if (!sentence || !proposal) return;
+      setDeciding(nextDecision);
+      setSaved(null);
+      setError(null);
+      try {
+        const input = inputForSentence(sentence);
+        const decisionInput: ObservedFailureRepairDecisionInput = {
+          decision: nextDecision,
+          sentence_id: input.sentence_id,
+          trace_id: input.trace_id,
+          proposal_diff: proposal.proposal.diff,
+          replay_ref: proposal.replay.draft_ref,
+          evidence_refs: proposal.evidence_refs,
+          target_object_kind: proposal.target_object.kind,
+        };
+        if (nextDecision === "edited") {
+          decisionInput.edited_diff = proposalEdit.trim();
+          decisionInput.reason =
+            "Builder edited the focused fix before saving regression coverage.";
+        }
+        if (nextDecision === "accepted") {
+          decisionInput.reason =
+            "Builder accepted the focused fix after draft replay summary.";
+        }
+        if (nextDecision === "rejected") {
+          decisionInput.reason =
+            "Builder rejected the focused fix from the repair loop.";
+        }
+        const response = await decideRepair(
+          agentId,
+          proposal.id,
+          decisionInput,
+        );
+        setDecision(response);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Could not record the repair decision.",
+        );
+      } finally {
+        setDeciding(null);
+      }
+    },
+    [agentId, decideRepair, proposal, proposalEdit, sentence],
+  );
+
   const handleSave = useCallback(async () => {
     if (!sentence) return;
     setSaving(true);
@@ -147,11 +213,15 @@ export function FailureRepairLoopPanel({
       const evalInput: ObservedFailureEvalInput = {
         ...input,
         expected_outcome: proposal
-          ? `Future answers satisfy this behavior after ${proposal.proposal.title}: ${sentence.text}`
+          ? `Future answers satisfy this behavior after ${decision?.status ?? "proposed"} repair ${proposal.proposal.title}: ${sentence.text}`
           : input.expected_outcome,
-        proposed_fix: proposal?.proposal.diff ?? input.proposed_fix,
+        proposed_fix:
+          decision?.accepted_diff ??
+          proposal?.proposal.diff ??
+          input.proposed_fix,
       };
-      const replayRef = proposal?.replay.draft_ref ?? input.replay_ref;
+      const replayRef =
+        decision?.draft_ref ?? proposal?.replay.draft_ref ?? input.replay_ref;
       if (replayRef) evalInput.replay_ref = replayRef;
       const response = await saveEval(agentId, evalInput);
       setSaved(response);
@@ -164,7 +234,7 @@ export function FailureRepairLoopPanel({
     } finally {
       setSaving(false);
     }
-  }, [agentId, proposal, saveEval, sentence]);
+  }, [agentId, decision, proposal, saveEval, sentence]);
 
   useEffect(() => {
     if (!autoGenerateKey) return;
@@ -292,19 +362,92 @@ export function FailureRepairLoopPanel({
           <p className="mt-2 text-muted-foreground">
             Evidence: {proposal.evidence_refs.join(", ")}
           </p>
+          <label className="mt-3 block text-xs font-medium">
+            Edit before accepting
+            <textarea
+              className="mt-1 min-h-24 w-full rounded-md border bg-background p-2 text-sm font-normal text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+              value={proposalEdit}
+              onChange={(event) => setProposalEdit(event.target.value)}
+              data-testid="failure-repair-edit"
+            />
+          </label>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={deciding !== null}
+              onClick={() => void handleDecision("accepted")}
+              data-testid="failure-repair-accept"
+            >
+              <ShieldCheck className="h-4 w-4" aria-hidden />
+              {deciding === "accepted" ? "Accepting" : "Accept fix"}
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={deciding !== null || !proposalEdit.trim()}
+              onClick={() => void handleDecision("edited")}
+              data-testid="failure-repair-accept-edit"
+            >
+              <ShieldCheck className="h-4 w-4" aria-hidden />
+              {deciding === "edited" ? "Saving edit" : "Save edited fix"}
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={deciding !== null}
+              onClick={() => void handleDecision("rejected")}
+              data-testid="failure-repair-reject"
+            >
+              <ListRestart className="h-4 w-4" aria-hidden />
+              {deciding === "rejected" ? "Rejecting" : "Reject fix"}
+            </button>
+          </div>
         </div>
+      ) : null}
+
+      {decision ? (
+        <StatePanel
+          className="mt-4"
+          state={decision.status === "rejected" ? "stale" : "success"}
+          title={`Repair ${decision.status}`}
+        >
+          <div data-testid="failure-repair-decision">
+            {decision.accepted_diff ? (
+              <p>{decision.accepted_diff}</p>
+            ) : (
+              <p>
+                The proposal was rejected; the original failure can still be
+                kept as eval coverage.
+              </p>
+            )}
+            <p className="mt-1 text-xs text-muted-foreground">
+              Draft replay: {decision.draft_ref}. Audit: {decision.audit_ref}.
+            </p>
+          </div>
+        </StatePanel>
       ) : null}
 
       <button
         type="button"
         className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={saving}
+        disabled={saving || (proposal !== null && decision === null)}
         onClick={() => void handleSave()}
         data-testid="failure-repair-save-eval"
       >
         <ListRestart className="h-4 w-4" aria-hidden />
-        {saving ? "Saving eval" : "Save failure as eval"}
+        {saving
+          ? "Saving eval"
+          : decision?.accepted_diff
+            ? "Save accepted fix as eval"
+            : "Save failure as eval"}
       </button>
+      {proposal !== null && decision === null ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Accept, edit, or reject the proposal before saving regression coverage
+          from this repair.
+        </p>
+      ) : null}
 
       {saved ? (
         <StatePanel
