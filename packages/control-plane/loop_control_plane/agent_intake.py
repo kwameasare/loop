@@ -220,23 +220,90 @@ def _display(value: str) -> str:
     return " ".join(part.capitalize() for part in re.split(r"[\s_\-]+", value.strip()) if part)
 
 
+def _artifact_parse_result(artifact: AgentIntakeArtifactInput) -> dict[str, Any]:
+    text = artifact.text.strip()
+    source_ref = artifact.source_ref.strip()
+    if not text and not source_ref:
+        return {
+            "status": "needs_content",
+            "recoverable": True,
+            "recovery_action": "upload_content_or_connect_source",
+            "error": "",
+            "progress_percent": 35,
+            "summary": "Artifact shell captured; content or connector is still needed.",
+        }
+
+    json_kinds = {"botpress_export", "dialogflow_export", "rasa_export", "postman"}
+    if text and artifact.kind in json_kinds:
+        try:
+            json.loads(text)
+        except json.JSONDecodeError as exc:
+            return {
+                "status": "failed",
+                "recoverable": True,
+                "recovery_action": "replace_file_or_continue_without_source",
+                "error": f"Expected valid JSON for {artifact.kind}: {exc.msg}.",
+                "progress_percent": 100,
+                "summary": "Parsing failed before this artifact could shape the draft.",
+            }
+
+    if text and artifact.kind == "openapi":
+        lowered = text.lower()
+        if "openapi" not in lowered or "paths" not in lowered:
+            return {
+                "status": "failed",
+                "recoverable": True,
+                "recovery_action": "replace_openapi_or_continue_without_source",
+                "error": "OpenAPI artifact must include an openapi version and paths.",
+                "progress_percent": 100,
+                "summary": "OpenAPI parsing failed before tool inference.",
+            }
+
+    if text and artifact.kind in {"curl", "devtools_fetch"} and not _first_url(text):
+        return {
+            "status": "failed",
+            "recoverable": True,
+            "recovery_action": "paste_request_with_url_or_continue_without_source",
+            "error": f"{artifact.kind} artifact does not include a request URL.",
+            "progress_percent": 100,
+            "summary": "Request parsing failed before tool inference.",
+        }
+
+    return {
+        "status": "parsed",
+        "recoverable": False,
+        "recovery_action": "",
+        "error": "",
+        "progress_percent": 100,
+        "summary": "",
+    }
+
+
 def _artifact_report(artifact: AgentIntakeArtifactInput) -> dict[str, Any]:
     text = artifact.text.strip()
     words = re.findall(r"[A-Za-z][A-Za-z0-9_-]{2,}", text)
     detected = sorted({word.lower() for word in words[:80]})[:10]
-    status = "parsed" if text or artifact.source_ref else "needs_content"
+    parse = _artifact_parse_result(artifact)
+    status = str(parse["status"])
+    summary = str(parse["summary"])
+    if status == "parsed":
+        summary = f"Parsed {len(words)} token(s) from {artifact.kind}."
     return {
         "name": artifact.name,
         "kind": artifact.kind,
         "status": status,
         "source_ref": artifact.source_ref,
         "detected_items": detected,
-        "summary": (
-            f"Parsed {len(words)} token(s) from {artifact.kind}."
-            if status == "parsed"
-            else "Artifact shell captured; content or connector is still needed."
-        ),
+        "summary": summary,
+        "recoverable": bool(parse["recoverable"]),
+        "recovery_action": parse["recovery_action"],
+        "error": parse["error"],
+        "progress_percent": parse["progress_percent"],
     }
+
+
+def _artifact_is_parsed(artifact: AgentIntakeArtifactInput) -> bool:
+    return _artifact_parse_result(artifact)["status"] == "parsed"
 
 
 def _sensitive_findings(artifact: AgentIntakeArtifactInput) -> list[dict[str, Any]]:
@@ -415,6 +482,8 @@ def _artifact_tool_candidates(
     for artifact in artifacts:
         if artifact.kind not in _TOOL_ARTIFACT_KINDS:
             continue
+        if not _artifact_is_parsed(artifact):
+            continue
         label = _artifact_tool_label(artifact)
         tool_id = f"mock_{_normalise_token(label)}"
         tools.append(
@@ -465,6 +534,8 @@ def candidate_knowledge_sources(body: AgentIntakeCreate) -> list[dict[str, Any]]
     rows: list[dict[str, Any]] = []
     for artifact in body.artifacts:
         if artifact.kind not in _KNOWLEDGE_ARTIFACT_KINDS:
+            continue
+        if not _artifact_is_parsed(artifact):
             continue
         text = artifact.text.strip()
         source_ref = artifact.source_ref.strip()
@@ -532,6 +603,8 @@ def _artifact_channel_candidates(
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for artifact in artifacts:
+        if not _artifact_is_parsed(artifact):
+            continue
         haystack = " ".join(
             [artifact.name, artifact.kind, artifact.source_ref, artifact.text]
         ).lower()
@@ -639,6 +712,133 @@ def _missing_information(
     return rows
 
 
+def _intake_job(
+    *,
+    name: str,
+    state: str,
+    count: int,
+    progress_percent: int,
+    partial_results_ref: str,
+    partial_result_count: int | None = None,
+    recoverable: bool = False,
+    error: str = "",
+) -> dict[str, Any]:
+    return {
+        "name": name,
+        "state": state,
+        "count": count,
+        "progress_percent": max(0, min(100, progress_percent)),
+        "partial_results_ref": partial_results_ref,
+        "partial_result_count": count
+        if partial_result_count is None
+        else partial_result_count,
+        "recoverable": recoverable,
+        "error": error,
+    }
+
+
+def _analysis_jobs(
+    *,
+    body: AgentIntakeCreate,
+    artifact_reports: list[dict[str, Any]],
+    intent_map: list[dict[str, Any]],
+    contradictions: list[dict[str, Any]],
+    sensitive: list[dict[str, Any]],
+    candidate_tools: list[dict[str, Any]],
+    candidate_channels: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    failed_artifacts = [
+        report for report in artifact_reports if report.get("status") == "failed"
+    ]
+    recoverable_artifacts = [
+        report
+        for report in artifact_reports
+        if bool(report.get("recoverable")) or report.get("status") == "needs_content"
+    ]
+    parse_state = "needs_recovery" if recoverable_artifacts else "completed"
+    parse_error = "; ".join(
+        str(report.get("error", ""))
+        for report in failed_artifacts[:3]
+        if str(report.get("error", "")).strip()
+    )
+    transcript_count = len(
+        [
+            artifact
+            for artifact in body.artifacts
+            if artifact.kind == "transcript" and _artifact_is_parsed(artifact)
+        ]
+    )
+    return [
+        _intake_job(
+            name="parse_artifacts",
+            state=parse_state,
+            count=len(artifact_reports),
+            progress_percent=100 if body.artifacts else 0,
+            partial_results_ref="artifact_reports",
+            partial_result_count=len(artifact_reports),
+            recoverable=bool(recoverable_artifacts),
+            error=parse_error,
+        ),
+        _intake_job(
+            name="extract_intents",
+            state="completed",
+            count=len(intent_map),
+            progress_percent=100,
+            partial_results_ref="intent_map",
+        ),
+        _intake_job(
+            name="cluster_transcripts",
+            state="completed" if transcript_count else "skipped",
+            count=transcript_count,
+            progress_percent=100,
+            partial_results_ref="intent_map",
+            partial_result_count=transcript_count,
+        ),
+        _intake_job(
+            name="detect_contradictions",
+            state="completed",
+            count=len(contradictions),
+            progress_percent=100,
+            partial_results_ref="contradictions",
+        ),
+        _intake_job(
+            name="detect_sensitive_data",
+            state="completed",
+            count=len(sensitive),
+            progress_percent=100,
+            partial_results_ref="sensitive_data_findings",
+        ),
+        _intake_job(
+            name="infer_tools",
+            state="completed",
+            count=len(candidate_tools),
+            progress_percent=100,
+            partial_results_ref="candidate_tools",
+        ),
+        _intake_job(
+            name="infer_channels",
+            state="completed",
+            count=len(candidate_channels),
+            progress_percent=100,
+            partial_results_ref="candidate_channels",
+        ),
+        _intake_job(
+            name="draft_commitment_document",
+            state="completed",
+            count=1,
+            progress_percent=100,
+            partial_results_ref="commitment",
+        ),
+        _intake_job(
+            name="draft_agent_plan",
+            state="completed",
+            count=1,
+            progress_percent=100,
+            partial_results_ref="created_object_refs",
+        ),
+    ]
+
+
 def build_intake_analysis(
     *,
     body: AgentIntakeCreate,
@@ -657,6 +857,16 @@ def build_intake_analysis(
     knowledge_sources = candidate_knowledge_sources(body)
     candidate_channels = candidate_channel_specs(body)
     candidate_eval_cases = _candidate_eval_cases(body.contract)
+    intent_map = _intent_map(body.contract, body.capabilities)
+    jobs = _analysis_jobs(
+        body=body,
+        artifact_reports=artifact_reports,
+        intent_map=intent_map,
+        contradictions=contradictions,
+        sensitive=sensitive,
+        candidate_tools=candidate_tools,
+        candidate_channels=candidate_channels,
+    )
     ready = []
     if body.contract.business_responsibility.strip():
         ready.append("Mission defined")
@@ -679,6 +889,11 @@ def build_intake_analysis(
     needs_attention = [row["message"] for row in missing if row["severity"] in {"high", "medium"}]
     needs_attention.extend(row["message"] for row in contradictions)
     needs_attention.extend(row["message"] for row in sensitive)
+    needs_attention.extend(
+        f"{report['name']} needs recovery: {report['summary']}"
+        for report in artifact_reports
+        if report.get("recoverable")
+    )
     blocker_count = len([row for row in missing if row["severity"] == "high"]) + len(
         [row for row in sensitive if row["severity"] == "high"]
     )
@@ -690,27 +905,9 @@ def build_intake_analysis(
         agent_id=agent.id,
         state=state,
         creation_path=body.creation_path,
-        jobs=[
-            {"name": "parse_artifacts", "state": "completed", "count": len(body.artifacts)},
-            {
-                "name": "extract_intents",
-                "state": "completed",
-                "count": len(_intent_map(body.contract, body.capabilities)),
-            },
-            {
-                "name": "cluster_transcripts",
-                "state": "completed",
-                "count": len([a for a in body.artifacts if a.kind == "transcript"]),
-            },
-            {"name": "detect_contradictions", "state": "completed", "count": len(contradictions)},
-            {"name": "detect_sensitive_data", "state": "completed", "count": len(sensitive)},
-            {"name": "infer_tools", "state": "completed", "count": len(candidate_tools)},
-            {"name": "infer_channels", "state": "completed", "count": len(candidate_channels)},
-            {"name": "draft_commitment_document", "state": "completed", "count": 1},
-            {"name": "draft_agent_plan", "state": "completed", "count": 1},
-        ],
+        jobs=jobs,
         artifact_reports=artifact_reports,
-        intent_map=_intent_map(body.contract, body.capabilities),
+        intent_map=intent_map,
         contradictions=contradictions,
         sensitive_data_findings=sensitive,
         candidate_tools=candidate_tools,

@@ -247,6 +247,56 @@ describe("AgentOverview", () => {
     );
   });
 
+  it("renders intake job progress and recoverable artifact parse failures", () => {
+    const record = intakeRecord();
+    record.jobs = [
+      {
+        name: "parse_artifacts",
+        state: "needs_recovery",
+        count: 2,
+        progress_percent: 100,
+        partial_results_ref: "artifact_reports",
+        partial_result_count: 2,
+        recoverable: true,
+        error: "OpenAPI artifact must include an openapi version and paths.",
+      },
+    ];
+    record.artifact_reports = [
+      {
+        name: "broken-openapi.yaml",
+        kind: "openapi",
+        status: "failed",
+        recoverable: true,
+        recovery_action: "replace_openapi_or_continue_without_source",
+        error: "OpenAPI artifact must include an openapi version and paths.",
+      },
+    ];
+
+    render(
+      <AgentOverview
+        {...BASE_PROPS}
+        focusedIntakeId="intake_1"
+        intakeRecord={record}
+      />,
+    );
+
+    expect(screen.getByTestId("intake-jobs")).toHaveTextContent(
+      "parse_artifacts: needs_recovery (2)",
+    );
+    expect(screen.getByTestId("intake-jobs")).toHaveTextContent(
+      "2 partial results in artifact_reports",
+    );
+    expect(
+      screen.getByRole("progressbar", { name: /parse_artifacts/i }),
+    ).toHaveAttribute("aria-valuenow", "100");
+    expect(screen.getByTestId("intake-artifacts")).toHaveTextContent(
+      "broken-openapi.yaml - failed",
+    );
+    expect(screen.getByTestId("intake-artifacts")).toHaveTextContent(
+      "OpenAPI artifact must include an openapi version and paths.",
+    );
+  });
+
   it("does not fake intake details when the focused intake cannot load", () => {
     render(
       <AgentOverview
