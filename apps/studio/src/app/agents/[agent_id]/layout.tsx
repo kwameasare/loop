@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 
-import { getAgentDetailData } from "./agent-detail-data";
+import {
+  agentProductionLabel,
+  agentStateLabel,
+  agentStateSentence,
+  getAgentDetailData,
+} from "./agent-detail-data";
 import { AgentTabs } from "@/components/agents/agent-tabs";
 import { EmulatorPanel } from "@/components/agents/emulator-panel";
 
@@ -23,8 +28,8 @@ export default async function AgentDetailLayout({
   params,
 }: AgentDetailLayoutProps) {
   const { agent } = await getAgentDetailData(params.agent_id);
-  const productionLabel =
-    agent.active_version !== null ? `v${agent.active_version}` : "not live";
+  const productionLabel = agentProductionLabel(agent);
+  const stateLabel = agentStateLabel(agent);
   return (
     <main
       className="container mx-auto grid max-w-7xl gap-6 py-8 lg:grid-cols-[15rem_minmax(0,1fr)_22rem]"
@@ -55,14 +60,17 @@ export default async function AgentDetailLayout({
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span>Production {productionLabel}</span>
             <span aria-hidden>·</span>
-            <span>Branch not loaded</span>
+            <span>State {stateLabel}</span>
             <span aria-hidden>·</span>
-            <span>Environment not selected</span>
+            <span className="break-all">
+              Evidence {agent.state_evidence_ref}
+            </span>
           </div>
-          <p className="mt-2 text-sm text-foreground">
-            {agent.active_version !== null
-              ? `You are viewing ${agent.name || agent.id}. Production is ${productionLabel}; create a draft change package before promotion.`
-              : `You are drafting ${agent.name || agent.id}. Production is not live; commitment, channels, evals, and preflight are required before deploy.`}
+          <p
+            className="mt-2 text-sm text-foreground"
+            data-testid="agent-state-sentence"
+          >
+            {agentStateSentence(agent)}
           </p>
         </header>
         <section data-testid="agent-tab-content">{children}</section>
