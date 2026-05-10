@@ -9,10 +9,15 @@ import {
   INVALID_AGENT_MAP_EDIT,
 } from "./agent-map-data";
 import { AgentMap } from "./agent-map";
+import { targetUxFixtures } from "@/lib/target-ux";
+
+function fixtureMap() {
+  return createAgentMapData("agent_support", targetUxFixtures);
+}
 
 describe("AgentMap", () => {
   it("renders a comprehension-first map with inspector evidence and coverage", () => {
-    render(<AgentMap data={createAgentMapData("agent_support")} />);
+    render(<AgentMap data={fixtureMap()} />);
 
     expect(screen.getByTestId("agent-map")).toHaveTextContent("Agent map");
     expect(screen.getByTestId("agent-map-canvas")).toHaveTextContent(
@@ -33,7 +38,7 @@ describe("AgentMap", () => {
   });
 
   it("opens the same inspector from the accessible list view", () => {
-    render(<AgentMap data={createAgentMapData("agent_support")} />);
+    render(<AgentMap data={fixtureMap()} />);
 
     fireEvent.click(screen.getByTestId("agent-map-view-list"));
     expect(screen.getByTestId("agent-map-list-view")).toHaveTextContent(
@@ -50,7 +55,7 @@ describe("AgentMap", () => {
   });
 
   it("rejects invalid circular edits before the map changes", () => {
-    const data = createAgentMapData("agent_support");
+    const data = fixtureMap();
     expect(evaluateAgentMapEdit(data, INVALID_AGENT_MAP_EDIT)).toMatchObject({
       accepted: false,
     });
@@ -66,7 +71,7 @@ describe("AgentMap", () => {
   });
 
   it("stages a fork preview from a trace-backed node", () => {
-    render(<AgentMap data={createAgentMapData("agent_support")} />);
+    render(<AgentMap data={fixtureMap()} />);
 
     fireEvent.click(screen.getByTestId("agent-map-node-output-answer"));
     fireEvent.click(screen.getByTestId("agent-map-fork"));

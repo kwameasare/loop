@@ -8,7 +8,7 @@ import {
   type AgentVersionDetail,
   type EvalStatus,
 } from "@/lib/agent-versions";
-import { targetUxFixtures, type TargetUXFixture } from "@/lib/target-ux";
+import type { TargetUXFixture } from "@/lib/target-ux/types";
 
 export type AgentMapNodeKind =
   | "trigger"
@@ -314,9 +314,7 @@ function uniqueLabels(labels: readonly string[]): string[] {
 export function createAgentMapDataFromVersion(
   agentId: string,
   version: AgentVersionDetail,
-  fixture: TargetUXFixture = targetUxFixtures,
 ): AgentMapData {
-  const base = createAgentMapData(agentId, fixture);
   const spec = parseVersionSpec(version);
   const prompt = textFromSpec(spec, [
     "system_prompt",
@@ -662,7 +660,6 @@ export function createAgentMapDataFromVersion(
   }
 
   return {
-    ...base,
     agentId,
     agentName: `Agent ${agentId}`,
     branch: `v${version.version}`,
@@ -723,7 +720,7 @@ export async function fetchAgentMapData(
 
 export function createAgentMapData(
   agentId: string,
-  fixture: TargetUXFixture = targetUxFixtures,
+  fixture: TargetUXFixture,
 ): AgentMapData {
   const agent =
     fixture.agents.find((candidate) => candidate.id === agentId) ??
