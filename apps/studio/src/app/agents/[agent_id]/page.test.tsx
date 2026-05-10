@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildLocalCommitmentDocument } from "@/lib/agent-commitment";
 import { localAgentHandoff } from "@/lib/agent-handoff";
+import { localAgentWorkflow } from "@/lib/agent-workflow";
 import { buildLocalChannelBindings } from "@/lib/channel-bindings";
 import { localMemoryPolicies } from "@/lib/memory-policies";
 import { localToolContracts } from "@/lib/tool-contracts";
@@ -145,6 +146,38 @@ describe("AgentOverviewPage", () => {
           generated_at: "2026-05-09T12:30:00Z",
         });
       }
+      if (url.endsWith("/agents/agent_live/workflow")) {
+        return Response.json({
+          ...localAgentWorkflow("agent_live"),
+          branches: [
+            {
+              ...(localAgentWorkflow("agent_live").branches[0]!),
+              id: "br_live",
+              name: "draft/live-support-fix",
+              updated_at: "2026-05-09T12:45:00Z",
+            },
+          ],
+          change_sets: [
+            {
+              ...(localAgentWorkflow("agent_live").change_sets[0]!),
+              id: "cs_live",
+              branch_id: "br_live",
+              summary: "Tighten live support refund answer.",
+              updated_at: "2026-05-09T12:50:00Z",
+            },
+          ],
+          release_candidates: [
+            {
+              ...(localAgentWorkflow("agent_live").release_candidates[0]!),
+              id: "rc_live",
+              branch_id: "br_live",
+              change_set_id: "cs_live",
+              candidate_version_id: "ver_12",
+              updated_at: "2026-05-09T13:00:00Z",
+            },
+          ],
+        });
+      }
       if (url.endsWith("/agents/agent_live/channel-bindings")) {
         return Response.json({
           items: buildLocalChannelBindings("agent_live").map((binding) =>
@@ -276,6 +309,12 @@ describe("AgentOverviewPage", () => {
     );
     expect(screen.getByTestId("agent-outline-history")).toHaveTextContent(
       "1 walkthrough section; 0 open risks; owner owner@acme.test",
+    );
+    expect(screen.getByTestId("overview-branch")).toHaveTextContent(
+      "draft/live-support-fix",
+    );
+    expect(screen.getAllByTestId("diff-ribbon")[0]).toHaveTextContent(
+      "ver_12",
     );
     expect(screen.getByTestId("safe-action-approval")).toHaveTextContent(
       "Generate Change Package",

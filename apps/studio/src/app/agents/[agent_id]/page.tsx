@@ -24,6 +24,7 @@ import {
   fetchAgentHandoff,
   type AgentHandoffModel,
 } from "@/lib/agent-handoff";
+import { listAgentWorkflow, type AgentWorkflow } from "@/lib/agent-workflow";
 import { listKbDocuments, type KbDocument } from "@/lib/kb";
 import { listMemoryPolicies, type MemoryPolicy } from "@/lib/memory-policies";
 import { listToolContracts, type ToolContract } from "@/lib/tool-contracts";
@@ -201,6 +202,17 @@ export default async function AgentOverviewPage({
       "Could not load agent handoff history.",
     );
   }
+  let workflow: AgentWorkflow | undefined;
+  let workflowDegradedReason: string | undefined;
+  try {
+    workflow = await listAgentWorkflow(params.agent_id);
+    workflowDegradedReason = workflow.degraded_reason;
+  } catch (error) {
+    workflowDegradedReason = errorMessage(
+      error,
+      "Could not load agent release workflow.",
+    );
+  }
   const combinedDegradedReason = [
     degradedReason,
     commitmentDegradedReason,
@@ -213,6 +225,7 @@ export default async function AgentOverviewPage({
     changePackageDegradedReason,
     tracesDegradedReason,
     handoffDegradedReason,
+    workflowDegradedReason,
   ]
     .filter(Boolean)
     .join(" ");
@@ -252,6 +265,8 @@ export default async function AgentOverviewPage({
       tracesDegradedReason={tracesDegradedReason}
       handoffModel={handoffModel}
       handoffDegradedReason={handoffDegradedReason}
+      workflow={workflow}
+      workflowDegradedReason={workflowDegradedReason}
       commitment={commitment}
     />
   );
