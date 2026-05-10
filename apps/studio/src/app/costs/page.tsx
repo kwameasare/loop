@@ -36,6 +36,7 @@ export default function CostsPage(): JSX.Element {
 
 function CostsPageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [records, setRecords] = useState<UsageRecord[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const nowMs = useMemo(() => Date.now(), []);
@@ -45,9 +46,9 @@ function CostsPageBody(): JSX.Element {
   const window_ = useMemo(() => monthBoundsUTC(nowMs), [nowMs]);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
-    void fetchUsageRecords(active.id, {
+    void fetchUsageRecords(activeWorkspaceId, {
       start_ms: window_.period_start_ms,
       end_ms: window_.period_end_ms,
     })
@@ -62,7 +63,7 @@ function CostsPageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active, window_.period_start_ms, window_.period_end_ms]);
+  }, [activeWorkspaceId, window_.period_start_ms, window_.period_end_ms]);
 
   if (wsLoading) {
     return (
@@ -74,7 +75,7 @@ function CostsPageBody(): JSX.Element {
       </p>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Costs" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Costs" />;
   if (error) {
     return (
       <main className="container mx-auto p-6">
@@ -97,6 +98,10 @@ function CostsPageBody(): JSX.Element {
     );
   }
   return (
-    <CostPageClient records={records} workspace_id={active.id} now_ms={nowMs} />
+    <CostPageClient
+      records={records}
+      workspace_id={activeWorkspaceId}
+      now_ms={nowMs}
+    />
   );
 }

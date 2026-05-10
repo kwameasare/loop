@@ -24,15 +24,16 @@ export default function ObservePage(): JSX.Element {
 
 function ObservePageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [model, setModel] = useState<ObservatoryModel | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
     setModel(null);
     setError(null);
-    void fetchObservatoryModel(active.id)
+    void fetchObservatoryModel(activeWorkspaceId)
       .then((next) => {
         if (cancelled) return;
         setModel(next);
@@ -46,7 +47,7 @@ function ObservePageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   if (wsLoading) {
     return (
@@ -55,7 +56,7 @@ function ObservePageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Observatory" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Observatory" />;
   if (error) {
     return (
       <main className="mx-auto w-full max-w-7xl p-6">
@@ -74,5 +75,5 @@ function ObservePageBody(): JSX.Element {
       </main>
     );
   }
-  return <ObservatoryScreen model={model} workspaceId={active.id} />;
+  return <ObservatoryScreen model={model} workspaceId={activeWorkspaceId} />;
 }

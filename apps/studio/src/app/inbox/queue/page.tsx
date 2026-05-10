@@ -24,16 +24,17 @@ export default function InboxQueuePage(): JSX.Element {
 
 function InboxQueuePageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [items, setItems] = useState<InboxItem[]>([]);
   const [workspaceId, setWorkspaceId] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
     setError(null);
-    setWorkspaceId(active.id);
-    void listInbox(active.id)
+    setWorkspaceId(activeWorkspaceId);
+    void listInbox(activeWorkspaceId)
       .then((result) => {
         if (cancelled) return;
         setItems(result.items);
@@ -47,7 +48,7 @@ function InboxQueuePageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   const teams = useMemo(() => {
     const ids = [...new Set(items.map((item) => item.team_id))].filter(Boolean);
@@ -65,7 +66,7 @@ function InboxQueuePageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Inbox Queue" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Inbox Queue" />;
   if (error) {
     return (
       <main className="container mx-auto p-6">

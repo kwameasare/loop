@@ -25,15 +25,16 @@ export default function DeploysPage() {
 
 function DeploysPageBody() {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [model, setModel] = useState<DeployFlightModel | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
     setModel(null);
     setError(null);
-    void fetchDeployFlightModel(active.id)
+    void fetchDeployFlightModel(activeWorkspaceId)
       .then((next) => {
         if (cancelled) return;
         setModel(next);
@@ -47,7 +48,7 @@ function DeploysPageBody() {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   if (wsLoading) {
     return (
@@ -58,7 +59,7 @@ function DeploysPageBody() {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Deployments" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Deployments" />;
   if (!model && !error) {
     return (
       <main className="p-6">

@@ -24,15 +24,16 @@ export default function VoicePage(): JSX.Element {
 
 function VoicePageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [model, setModel] = useState<VoiceStageModel | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
     setModel(null);
     setError(null);
-    void fetchVoiceStageModel(active.id)
+    void fetchVoiceStageModel(activeWorkspaceId)
       .then((next) => {
         if (cancelled) return;
         setModel(next);
@@ -44,7 +45,7 @@ function VoicePageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   if (wsLoading) {
     return (
@@ -53,7 +54,7 @@ function VoicePageBody(): JSX.Element {
       </p>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Voice Stage" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Voice Stage" />;
   if (!model && !error) {
     return (
       <p className="p-6 text-sm text-muted-foreground" data-testid="voice-loading">
@@ -72,5 +73,5 @@ function VoicePageBody(): JSX.Element {
       </main>
     );
   }
-  return <VoiceStage model={model!} workspaceId={active.id} />;
+  return <VoiceStage model={model!} workspaceId={activeWorkspaceId} />;
 }

@@ -93,7 +93,7 @@ function CollaborateReviewPageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Review" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Review" />;
 
   return (
     <main

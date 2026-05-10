@@ -48,6 +48,7 @@ function MarketplacePageBody(): JSX.Element {
   );
   const [installError, setInstallError] = useState<string | null>(null);
   const { active } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
 
   useEffect(() => {
     let cancelled = false;
@@ -82,14 +83,14 @@ function MarketplacePageBody(): JSX.Element {
   }
 
   async function installItem(item: MarketplaceItem): Promise<void> {
-    if (!active?.id) {
+    if (!activeWorkspaceId) {
       setInstallError("Select a workspace before installing marketplace items.");
       return;
     }
     setInstallStatus(null);
     setInstallError(null);
     try {
-      const install = await installMarketplaceItem(active.id, item.id);
+      const install = await installMarketplaceItem(activeWorkspaceId, item.id);
       setInstallStatus(install);
       const updated = { ...item, installCount: item.installCount + 1 };
       replaceItem(updated);
@@ -193,7 +194,7 @@ function MarketplacePageBody(): JSX.Element {
                 installStatus={installStatus}
                 installError={installError}
                 onItemChanged={replaceItem}
-                {...(active?.id ? { workspaceId: active.id } : {})}
+                {...(activeWorkspaceId ? { workspaceId: activeWorkspaceId } : {})}
               />
             ) : null}
           </div>
@@ -201,7 +202,7 @@ function MarketplacePageBody(): JSX.Element {
       ) : (
         <PrivateSkillPublisher
           itemId="mk_skill_pii_redactor"
-          {...(active?.id ? { workspaceId: active.id } : {})}
+          {...(activeWorkspaceId ? { workspaceId: activeWorkspaceId } : {})}
         />
       )}
     </main>

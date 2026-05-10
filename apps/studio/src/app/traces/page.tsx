@@ -30,13 +30,14 @@ export default function TracesPage(): JSX.Element {
 
 function TracesPageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [traces, setTraces] = useState<TraceSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
-    void searchTraces(active.id, { page_size: 100 })
+    void searchTraces(activeWorkspaceId, { page_size: 100 })
       .then((res) => {
         if (cancelled) return;
         setTraces(res.traces);
@@ -48,7 +49,7 @@ function TracesPageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   if (wsLoading) {
     return (
@@ -62,7 +63,7 @@ function TracesPageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Traces" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Traces" />;
   if (error) {
     return (
       <main className="container mx-auto p-6">

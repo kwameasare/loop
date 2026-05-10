@@ -125,7 +125,9 @@ function MigrationParityPageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Migration Parity" />;
+  if (!activeWorkspaceId) {
+    return <WorkspaceRequiredState title="Migration Parity" />;
+  }
   if (!workspace && !error) {
     return (
       <main className="mx-auto max-w-6xl p-6">

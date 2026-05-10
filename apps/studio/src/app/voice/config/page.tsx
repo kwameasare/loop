@@ -32,12 +32,13 @@ export default function VoiceConfigPage(): JSX.Element {
 
 function VoiceConfigBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [config, setConfig] = useState<VoiceConfig | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
-    void fetchVoiceConfig(active.id)
+    void fetchVoiceConfig(activeWorkspaceId)
       .then((c) => {
         if (cancelled) return;
         setConfig(c);
@@ -46,7 +47,7 @@ function VoiceConfigBody(): JSX.Element {
         if (cancelled) return;
         setConfig(
           createDegradedVoiceConfig(
-            active.id,
+            activeWorkspaceId,
             err instanceof Error ? err.message : "Could not load voice config",
           ),
         );
@@ -54,13 +55,13 @@ function VoiceConfigBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   async function handleSave(
     next: Pick<VoiceConfig, "asr_provider" | "tts_provider">,
   ) {
-    if (!active) return { ok: false, error: "No active workspace" };
-    return saveVoiceConfig(active.id, next);
+    if (!activeWorkspaceId) return { ok: false, error: "No active workspace" };
+    return saveVoiceConfig(activeWorkspaceId, next);
   }
 
   if (wsLoading) {
@@ -70,7 +71,7 @@ function VoiceConfigBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Voice Config" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Voice Config" />;
   if (!config) {
     return (
       <main className="container mx-auto p-6">

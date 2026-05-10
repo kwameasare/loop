@@ -40,6 +40,7 @@ export default function BillingPage(): JSX.Element {
 
 function BillingPageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [summary, setSummary] = useState<BillingSummary | null | undefined>(
     undefined,
   );
@@ -50,9 +51,12 @@ function BillingPageBody(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
-    void Promise.all([fetchBillingSummary(active.id), fetchInvoices(active.id)])
+    void Promise.all([
+      fetchBillingSummary(activeWorkspaceId),
+      fetchInvoices(activeWorkspaceId),
+    ])
       .then(([s, i]) => {
         if (cancelled) return;
         setSummary(s);
@@ -66,7 +70,7 @@ function BillingPageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   if (wsLoading) {
     return (
@@ -80,7 +84,7 @@ function BillingPageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Billing" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Billing" />;
   if (error) {
     return (
       <main className="container mx-auto p-6">
@@ -127,8 +131,8 @@ function BillingPageBody(): JSX.Element {
   async function handlePaymentSubmit(args: {
     cardholderName: string;
   }): Promise<{ ok: true; last4: string } | { ok: false; error: string }> {
-    if (!active) return { ok: false, error: "No active workspace" };
-    const res = await updatePaymentMethod(active.id, args);
+    if (!activeWorkspaceId) return { ok: false, error: "No active workspace" };
+    const res = await updatePaymentMethod(activeWorkspaceId, args);
     if (res.ok) return { ok: true, last4: res.last4 };
     return { ok: false, error: res.reason };
   }

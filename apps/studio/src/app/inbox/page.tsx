@@ -37,14 +37,15 @@ export default function InboxPage(): JSX.Element {
 function InboxPageBody(): JSX.Element {
   const { user } = useUser();
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [items, setItems] = useState<InboxItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const nowMs = useMemo(() => Date.now(), []);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
-    void listInbox(active.id)
+    void listInbox(activeWorkspaceId)
       .then((res) => {
         if (cancelled) return;
         setItems(res.items);
@@ -57,7 +58,7 @@ function InboxPageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   if (wsLoading) {
     return (
@@ -66,7 +67,7 @@ function InboxPageBody(): JSX.Element {
       </p>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Inbox" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Inbox" />;
   if (!user) {
     return (
       <p className="p-6 text-sm text-muted-foreground">
@@ -96,7 +97,7 @@ function InboxPageBody(): JSX.Element {
   return (
     <InboxScreen
       initialItems={items}
-      workspace_id={active.id}
+      workspace_id={activeWorkspaceId}
       operator_id={user.sub}
       now_ms={nowMs}
       onClaimItem={(item) => claimInboxItem(item.id, user.sub)}

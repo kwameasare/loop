@@ -27,6 +27,7 @@ const DEFAULT_DRAFT: ConsentDraft = {
 
 export function TelemetryConsentCard(): JSX.Element | null {
   const { active } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [model, setModel] = useState<TelemetryConsentModel | null>(null);
   const [draft, setDraft] = useState<ConsentDraft>(DEFAULT_DRAFT);
   const [saved, setSaved] = useState(false);
@@ -34,10 +35,10 @@ export function TelemetryConsentCard(): JSX.Element | null {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
     setError(null);
-    void fetchTelemetryConsent(active.id)
+    void fetchTelemetryConsent(activeWorkspaceId)
       .then((next) => {
         if (cancelled) return;
         setModel(next);
@@ -53,7 +54,7 @@ export function TelemetryConsentCard(): JSX.Element | null {
       .catch((err: unknown) => {
         if (cancelled) return;
         setModel({
-          workspace_id: active.id,
+          workspace_id: activeWorkspaceId,
           user_sub: "unavailable",
           product_analytics: null,
           diagnostics: null,
@@ -70,20 +71,22 @@ export function TelemetryConsentCard(): JSX.Element | null {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
-  if (!active || saved || model?.annual_review_due === false) return null;
+  if (!activeWorkspaceId || saved || model?.annual_review_due === false) {
+    return null;
+  }
 
   function toggle(key: keyof ConsentDraft) {
     setDraft((current) => ({ ...current, [key]: !current[key] }));
   }
 
   async function save(next: ConsentDraft) {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     setSaving(true);
     setError(null);
     try {
-      await saveTelemetryConsent(active.id, next);
+      await saveTelemetryConsent(activeWorkspaceId, next);
       setSaved(true);
     } catch (err) {
       setError(
