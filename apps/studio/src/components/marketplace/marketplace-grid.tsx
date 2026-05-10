@@ -5,7 +5,6 @@ import { Search, Star } from "lucide-react";
 
 import { LiveBadge } from "@/components/target";
 import {
-  DEFAULT_MARKETPLACE_CATALOG,
   MARKETPLACE_ITEM_KIND_LABELS,
   MARKETPLACE_ITEM_KINDS,
   MARKETPLACE_PUBLISHERS,
@@ -38,7 +37,7 @@ const PUBLISHER_LABEL: Record<MarketplacePublisher, string> = {
 };
 
 export function MarketplaceGrid({
-  items = DEFAULT_MARKETPLACE_CATALOG,
+  items = [],
   curatedIds,
   enterpriseCurated = false,
   includeDeprecated = false,

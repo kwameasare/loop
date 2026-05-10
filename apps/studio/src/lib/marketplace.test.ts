@@ -135,6 +135,13 @@ describe("formatInstallCount", () => {
 });
 
 describe("marketplace cp-api adapter", () => {
+  it("returns an empty catalog unless fixture mode is explicitly allowed", async () => {
+    await expect(fetchMarketplaceCatalog()).resolves.toEqual([]);
+    await expect(
+      fetchMarketplaceCatalog({ allowFixture: true }),
+    ).resolves.toHaveLength(DEFAULT_MARKETPLACE_CATALOG.length);
+  });
+
   it("maps first-party MCP browse items into Studio marketplace items", () => {
     const item = marketplaceItemFromCp({
       server_id: "first-party.salesforce",
@@ -227,7 +234,10 @@ describe("marketplace cp-api adapter", () => {
         permissions: ["read-traces"],
         reviewers: ["lead@example.com"],
       },
-      { baseUrl: "https://cp.test/v1", fetcher: fetcher as unknown as typeof fetch },
+      {
+        baseUrl: "https://cp.test/v1",
+        fetcher: fetcher as unknown as typeof fetch,
+      },
     );
     expect(published).toMatchObject({
       ok: true,
@@ -240,5 +250,26 @@ describe("marketplace cp-api adapter", () => {
       fetcher: fetcher as unknown as typeof fetch,
     });
     expect(installed.install_id).toBe("inst_1");
+  });
+
+  it("requires cp-api for publish and install mutations", async () => {
+    const published = await publishPrivateMarketplaceItem("ws-1", {
+      itemId: "private_refunds",
+      version: "1.0.0",
+      changelog: "Adds refund policy automation.",
+      permissions: ["read-traces"],
+      reviewers: ["lead@example.com"],
+    });
+
+    expect(published).toMatchObject({
+      ok: false,
+      lifecycle: "draft",
+    });
+    expect(published.errors.join(" ")).toMatch(/LOOP_CP_API_BASE_URL/);
+    await expect(
+      installMarketplaceItem("ws-1", "private.refunds"),
+    ).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required to install marketplace items",
+    );
   });
 });
