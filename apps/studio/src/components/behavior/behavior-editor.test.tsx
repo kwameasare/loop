@@ -104,6 +104,25 @@ describe("BehaviorEditor", () => {
     );
   });
 
+  it("opens directly on a linked behavior sentence", () => {
+    render(
+      <BehaviorEditor
+        data={createBehaviorEditorData("agent_support")}
+        initialSelectedSentenceId="sentence_purpose_cancel"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("behavior-context-actions-sentence_purpose_cancel"),
+    ).toHaveTextContent("Fix this");
+    expect(screen.getByTestId("behavior-sentence-telemetry")).toHaveTextContent(
+      "When a customer asks to cancel, cite the May 2026 refund policy",
+    );
+    expect(screen.getByTestId("failure-repair-loop")).toHaveTextContent(
+      "Selected failure",
+    );
+  });
+
   it("previews style-transfer rewrites with eval deltas", async () => {
     process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
     const fetcher = vi.fn<typeof fetch>(async () =>

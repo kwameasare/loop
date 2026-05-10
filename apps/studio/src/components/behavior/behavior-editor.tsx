@@ -43,6 +43,8 @@ import { cn } from "@/lib/utils";
 
 export interface BehaviorEditorProps {
   data: BehaviorEditorData;
+  initialSelectedSentenceId?: string | undefined;
+  initialCatchId?: string | undefined;
 }
 
 const MODE_ORDER: BehaviorMode[] = ["plain", "policy", "config"];
@@ -574,11 +576,25 @@ function SemanticDiffPanel({ data }: { data: BehaviorEditorData }) {
   );
 }
 
-export function BehaviorEditor({ data }: BehaviorEditorProps) {
+function initialSentenceId(
+  sentences: readonly BehaviorSentence[],
+  requested?: string,
+): string | null {
+  if (requested && sentences.some((sentence) => sentence.id === requested)) {
+    return requested;
+  }
+  return sentences[0]?.id ?? null;
+}
+
+export function BehaviorEditor({
+  data,
+  initialSelectedSentenceId,
+  initialCatchId,
+}: BehaviorEditorProps) {
   const [mode, setMode] = useState<BehaviorMode>("plain");
   const sentences = useMemo(() => allSentences(data.sections), [data.sections]);
   const [selectedSentenceId, setSelectedSentenceId] = useState<string | null>(
-    sentences[0]?.id ?? null,
+    () => initialSentenceId(sentences, initialSelectedSentenceId),
   );
   const risks = useMemo(() => riskMap(data.riskFlags), [data.riskFlags]);
   const selectedSentence =
@@ -694,6 +710,7 @@ export function BehaviorEditor({ data }: BehaviorEditorProps) {
           <AdversarialCatchPanel
             agentId={data.agentId}
             sentence={selectedSentence}
+            initialCatchId={initialCatchId}
           />
           <StyleTransferPanel
             agentId={data.agentId}

@@ -25,6 +25,7 @@ import type { BehaviorSentence } from "@/lib/behavior";
 export interface AdversarialCatchPanelProps {
   agentId: string;
   sentence: BehaviorSentence | null;
+  initialCatchId?: string | undefined;
   runProbe?: (
     agentId: string,
     input: AdversarialProbeRunInput,
@@ -66,6 +67,7 @@ function defaultRejected(catchItem: AdversarialCatch | null): string {
 export function AdversarialCatchPanel({
   agentId,
   sentence,
+  initialCatchId,
   runProbe = runAdversarialProbe,
   resolveCatch = resolveAdversarialCatch,
   listCatches = listAdversarialCatches,
@@ -103,6 +105,9 @@ export function AdversarialCatchPanel({
       .then((response) => {
         if (cancelled) return;
         const matching =
+          (initialCatchId
+            ? response.items.find((item) => item.id === initialCatchId)
+            : null) ??
           response.items.find(
             (item) => item.rule_id === sentenceId && item.status === "open",
           ) ??
@@ -131,7 +136,7 @@ export function AdversarialCatchPanel({
     return () => {
       cancelled = true;
     };
-  }, [agentId, listCatches, sentenceId]);
+  }, [agentId, initialCatchId, listCatches, sentenceId]);
 
   const probeInput = useMemo<AdversarialProbeRunInput | null>(() => {
     if (!sentence) return null;
