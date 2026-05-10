@@ -147,4 +147,8 @@ describe("fetchAgentXrayTraces", () => {
     expect(traces).toHaveLength(1);
     expect(traces[0].id).toBe("f".repeat(32));
   });
+
+  it("returns an empty sample instead of fixture traces when cp-api is unset", async () => {
+    await expect(fetchAgentXrayTraces("ws-1")).resolves.toEqual([]);
+  });
 });
