@@ -8,6 +8,7 @@ import {
 } from "./agent-detail-data";
 import { AgentTestDrawer } from "@/components/agents/agent-test-drawer";
 import { AgentTabs } from "@/components/agents/agent-tabs";
+import { AgentWorkbenchControls } from "@/components/agents/agent-workbench-controls";
 import { EmulatorPanel } from "@/components/agents/emulator-panel";
 
 export const dynamic = "force-dynamic";
@@ -67,12 +68,15 @@ export default async function AgentDetailLayout({
               Evidence {agent.state_evidence_ref}
             </span>
           </div>
-          <p
-            className="mt-2 text-sm text-foreground"
-            data-testid="agent-state-sentence"
-          >
-            {agentStateSentence(agent)}
-          </p>
+          <div className="mt-3 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+            <p
+              className="max-w-3xl text-sm text-foreground"
+              data-testid="agent-state-sentence"
+            >
+              {agentStateSentence(agent)}
+            </p>
+            <AgentWorkbenchControls agentId={params.agent_id} />
+          </div>
         </header>
         <section data-testid="agent-tab-content">{children}</section>
         <AgentTestDrawer agentId={params.agent_id} />
