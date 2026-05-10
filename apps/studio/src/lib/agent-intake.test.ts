@@ -129,8 +129,17 @@ describe("createAgentIntake", () => {
     expect(result.readiness.score).toBe(82);
   });
 
-  it("falls back to a local governed draft when no base URL exists", async () => {
-    const result = await createAgentIntake("local-workspace", INPUT);
+  it("does not fabricate a created agent intake when cp-api is unconfigured", async () => {
+    await expect(
+      createAgentIntake("local-workspace", INPUT, { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps deterministic governed intake drafts explicitly opt-in", async () => {
+    const result = await createAgentIntake("local-workspace", INPUT, {
+      baseUrl: "",
+      allowFixture: true,
+    });
 
     expect(result.state).toBe("draft_ready");
     expect(result.agent.slug).toBe("billing-support");

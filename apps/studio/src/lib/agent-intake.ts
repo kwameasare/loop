@@ -185,6 +185,7 @@ export interface AgentIntakeCreateResult extends AgentIntakeRecord {
 
 export interface AgentIntakeOptions extends UxWireupClientOptions {
   workspaceId?: string;
+  allowFixture?: boolean;
 }
 
 function localAgent(
@@ -323,7 +324,7 @@ function localIntakeResult(
 export async function createAgentIntake(
   workspaceId: string,
   input: AgentIntakeCreateInput,
-  opts: UxWireupClientOptions = {},
+  opts: AgentIntakeOptions = {},
 ): Promise<AgentIntakeCreateResult> {
   return cpJson<AgentIntakeCreateResult>(
     `/workspaces/${encodeURIComponent(workspaceId)}/agent-intakes`,
@@ -331,6 +332,7 @@ export async function createAgentIntake(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: localIntakeResult(input, workspaceId),
     },
   );
