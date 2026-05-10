@@ -3,20 +3,28 @@ import { cpJson, type UxWireupClientOptions } from "@/lib/ux-wireup";
 export interface ObservedFailureEvalInput {
   sentence_id: string;
   sentence_text: string;
+  sentence_role?: string;
   trace_id: string;
   failure_reason: string;
   expected_outcome: string;
   proposed_fix: string;
   replay_ref?: string;
   source?: string;
+  channel?: string;
+  version_ref?: string;
+  risk_tags?: string[];
+  target_object_kind?: string;
 }
 
 export interface ObservedFailureRepairInput {
   sentence_id: string;
   sentence_text: string;
+  sentence_role?: string;
   trace_id: string;
   failure_reason: string;
   replay_ref?: string;
+  risk_tags?: string[];
+  target_object_kind?: string;
 }
 
 export interface ObservedFailureRepairResponse {
@@ -76,6 +84,18 @@ type BehaviorRepairClientOptions = UxWireupClientOptions & {
   allowFixture?: boolean;
 };
 
+function localTargetObjectLabel(kind: string): string {
+  return (
+    {
+      tool_contract: "Responsible tool contract",
+      memory_policy: "Responsible memory policy",
+      knowledge_chunk: "Responsible knowledge source",
+      channel_constraint: "Responsible channel constraint",
+      behavior_sentence: "Responsible behavior sentence",
+    }[kind] ?? "Responsible object"
+  );
+}
+
 function localObservedFailureEval(
   agentId: string,
   input: ObservedFailureEvalInput,
@@ -96,9 +116,14 @@ function localObservedFailureEval(
         agent_id: agentId,
         sentence_id: input.sentence_id,
         sentence_text: input.sentence_text,
+        sentence_role: input.sentence_role,
         trace_id: input.trace_id,
         failure_reason: input.failure_reason,
         replay_ref: replayRef,
+        channel: input.channel,
+        version_ref: input.version_ref,
+        risk_tags: input.risk_tags ?? [],
+        target_object_kind: input.target_object_kind,
       },
       expected: {
         outcome: input.expected_outcome,
@@ -129,14 +154,15 @@ function localObservedFailureRepair(
 ): ObservedFailureRepairResponse {
   const replayRef =
     input.replay_ref ?? `replay/${input.sentence_id}/nearby-turns`;
+  const targetKind = input.target_object_kind ?? "behavior_sentence";
   return {
     id: `repair_${input.sentence_id}`,
     workspace_id: "local",
     agent_id: agentId,
     target_object: {
-      kind: "behavior_sentence",
+      kind: targetKind,
       id: input.sentence_id,
-      label: "Responsible behavior sentence",
+      label: localTargetObjectLabel(targetKind),
     },
     proposal: {
       title: `Tighten behavior for ${input.sentence_id}`,

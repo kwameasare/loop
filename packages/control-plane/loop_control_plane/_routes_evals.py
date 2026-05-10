@@ -51,12 +51,17 @@ class ObservedFailureEvalCaseBody(BaseModel):
 
     sentence_id: str = Field(min_length=1, max_length=256)
     sentence_text: str = Field(min_length=1, max_length=4096)
+    sentence_role: str | None = Field(default=None, max_length=64)
     trace_id: str = Field(min_length=1, max_length=512)
     failure_reason: str = Field(min_length=1, max_length=1024)
     expected_outcome: str = Field(min_length=1, max_length=4096)
     proposed_fix: str = Field(min_length=1, max_length=4096)
     replay_ref: str = Field(default="replay/not-run", max_length=512)
     source: str = Field(default="behavior-fix", max_length=128)
+    channel: str | None = Field(default=None, max_length=64)
+    version_ref: str | None = Field(default=None, max_length=256)
+    risk_tags: list[str] = Field(default_factory=list, max_length=32)
+    target_object_kind: str | None = Field(default=None, max_length=128)
 
 
 class ObservedFailureRepairBody(BaseModel):
@@ -64,9 +69,12 @@ class ObservedFailureRepairBody(BaseModel):
 
     sentence_id: str = Field(min_length=1, max_length=256)
     sentence_text: str = Field(min_length=1, max_length=4096)
+    sentence_role: str | None = Field(default=None, max_length=64)
     trace_id: str = Field(min_length=1, max_length=512)
     failure_reason: str = Field(min_length=1, max_length=1024)
     replay_ref: str = Field(default="replay/not-run", max_length=512)
+    risk_tags: list[str] = Field(default_factory=list, max_length=32)
+    target_object_kind: str | None = Field(default=None, max_length=128)
 
 
 async def _agent(
@@ -131,6 +139,47 @@ def _run_summary(run: Any) -> dict[str, Any]:
     payload.update(_run_counts(run))
     payload["baseline_run_id"] = None
     return payload
+
+
+def _responsible_object_kind(
+    sentence_text: str,
+    *,
+    sentence_role: str | None = None,
+    explicit_kind: str | None = None,
+) -> str:
+    if explicit_kind:
+        return explicit_kind
+    text = sentence_text.lower()
+    if sentence_role == "tool" or "tool" in text:
+        return "tool_contract"
+    if sentence_role == "memory" or "memory" in text:
+        return "memory_policy"
+    if "knowledge" in text or "cite" in text or "policy" in text:
+        return "knowledge_chunk"
+    if any(
+        channel in text
+        for channel in (
+            "channel",
+            "whatsapp",
+            "telegram",
+            "slack",
+            "sms",
+            "voice",
+            "email",
+        )
+    ):
+        return "channel_constraint"
+    return "behavior_sentence"
+
+
+def _responsible_object_label(kind: str) -> str:
+    return {
+        "tool_contract": "Responsible tool contract",
+        "memory_policy": "Responsible memory policy",
+        "knowledge_chunk": "Responsible knowledge source",
+        "channel_constraint": "Responsible channel constraint",
+        "behavior_sentence": "Responsible behavior sentence",
+    }.get(kind, "Responsible object")
 
 
 @router_workspaces.get("/{workspace_id}/eval-suites")
@@ -275,10 +324,15 @@ async def create_behavior_repair_proposal(
     )
     workspace_id = agent.workspace_id
     proposal_id = f"repair_{uuid4().hex[:12]}"
+    target_kind = _responsible_object_kind(
+        body.sentence_text,
+        sentence_role=body.sentence_role,
+        explicit_kind=body.target_object_kind,
+    )
     target_object = {
-        "kind": "behavior_sentence",
+        "kind": target_kind,
         "id": body.sentence_id,
-        "label": "Responsible behavior sentence",
+        "label": _responsible_object_label(target_kind),
     }
     proposal = {
         "title": f"Tighten behavior for {body.sentence_id}",
@@ -316,8 +370,11 @@ async def create_behavior_repair_proposal(
         payload={
             "agent_id": str(agent_id),
             "sentence_id": body.sentence_id,
+            "sentence_role": body.sentence_role,
+            "target_object_kind": target_kind,
             "trace_id": body.trace_id,
             "replay_ref": body.replay_ref,
+            "risk_tags": body.risk_tags,
         },
     )
     return {
@@ -349,6 +406,11 @@ async def create_case_from_observed_failure(
         required_role=Role.ADMIN,
     )
     workspace_id = agent.workspace_id
+    target_kind = _responsible_object_kind(
+        body.sentence_text,
+        sentence_role=body.sentence_role,
+        explicit_kind=body.target_object_kind,
+    )
     suite = await cp.eval_suites.get_or_create_suite(
         workspace_id=workspace_id,
         name="Observed behavior failures",
@@ -365,9 +427,14 @@ async def create_case_from_observed_failure(
                 "agent_id": str(agent_id),
                 "sentence_id": body.sentence_id,
                 "sentence_text": body.sentence_text,
+                "sentence_role": body.sentence_role,
                 "trace_id": body.trace_id,
                 "failure_reason": body.failure_reason,
                 "replay_ref": body.replay_ref,
+                "channel": body.channel,
+                "version_ref": body.version_ref,
+                "risk_tags": body.risk_tags,
+                "target_object_kind": target_kind,
             },
             expected={
                 "outcome": body.expected_outcome,
@@ -405,8 +472,13 @@ async def create_case_from_observed_failure(
             "case_id": str(case.id),
             "suite_id": str(suite.id),
             "sentence_id": body.sentence_id,
+            "sentence_role": body.sentence_role,
+            "target_object_kind": target_kind,
             "trace_id": body.trace_id,
             "replay_ref": body.replay_ref,
+            "channel": body.channel,
+            "version_ref": body.version_ref,
+            "risk_tags": body.risk_tags,
         },
     )
     return {

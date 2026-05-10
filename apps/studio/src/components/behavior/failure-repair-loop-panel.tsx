@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   CheckCircle2,
   ListRestart,
@@ -22,6 +22,8 @@ import type { BehaviorSentence } from "@/lib/behavior";
 export interface FailureRepairLoopPanelProps {
   agentId: string;
   sentence: BehaviorSentence | null;
+  autoGenerateKey?: number | undefined;
+  autoSaveKey?: number | undefined;
   saveEval?: (
     agentId: string,
     input: ObservedFailureEvalInput,
@@ -49,17 +51,49 @@ function inputForSentence(
   return {
     sentence_id: sentence.id,
     sentence_text: sentence.text,
+    sentence_role: sentence.role,
     trace_id: traceRef,
     failure_reason: `Observed failure against ${sentence.id}: ${sentence.telemetry.contradictedTraces} contradictions and ${sentence.telemetry.neverInvokedTurns} not-invoked turns in sampled telemetry.`,
     expected_outcome: `Future answers satisfy this behavior: ${sentence.text}`,
     proposed_fix: `Tighten the behavior rule and replay nearby production turns for: ${sentence.text}`,
     replay_ref: `replay/${sentence.id}/nearby-turns`,
+    risk_tags: sentence.riskIds,
+    target_object_kind: targetObjectKind(sentence),
   };
+}
+
+function targetObjectKind(sentence: BehaviorSentence): string {
+  const text = sentence.text.toLowerCase();
+  if (sentence.role === "tool" || text.includes("tool")) return "tool_contract";
+  if (sentence.role === "memory" || text.includes("memory")) {
+    return "memory_policy";
+  }
+  if (
+    text.includes("knowledge") ||
+    text.includes("cite") ||
+    text.includes("policy")
+  ) {
+    return "knowledge_chunk";
+  }
+  if (
+    text.includes("channel") ||
+    text.includes("whatsapp") ||
+    text.includes("telegram") ||
+    text.includes("slack") ||
+    text.includes("sms") ||
+    text.includes("voice") ||
+    text.includes("email")
+  ) {
+    return "channel_constraint";
+  }
+  return "behavior_sentence";
 }
 
 export function FailureRepairLoopPanel({
   agentId,
   sentence,
+  autoGenerateKey,
+  autoSaveKey,
   saveEval = saveObservedFailureEval,
   requestRepair = requestObservedFailureRepair,
 }: FailureRepairLoopPanelProps) {
@@ -70,7 +104,7 @@ export function FailureRepairLoopPanel({
   const [saved, setSaved] = useState<ObservedFailureEvalResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handlePropose() {
+  const handlePropose = useCallback(async () => {
     if (!sentence) return;
     setProposing(true);
     setProposal(null);
@@ -85,6 +119,11 @@ export function FailureRepairLoopPanel({
         failure_reason: input.failure_reason,
       };
       if (input.replay_ref) repairInput.replay_ref = input.replay_ref;
+      if (input.sentence_role) repairInput.sentence_role = input.sentence_role;
+      if (input.risk_tags) repairInput.risk_tags = input.risk_tags;
+      if (input.target_object_kind) {
+        repairInput.target_object_kind = input.target_object_kind;
+      }
       const response = await requestRepair(agentId, repairInput);
       setProposal(response);
     } catch (err) {
@@ -96,9 +135,9 @@ export function FailureRepairLoopPanel({
     } finally {
       setProposing(false);
     }
-  }
+  }, [agentId, requestRepair, sentence]);
 
-  async function handleSave() {
+  const handleSave = useCallback(async () => {
     if (!sentence) return;
     setSaving(true);
     setSaved(null);
@@ -125,7 +164,17 @@ export function FailureRepairLoopPanel({
     } finally {
       setSaving(false);
     }
-  }
+  }, [agentId, proposal, saveEval, sentence]);
+
+  useEffect(() => {
+    if (!autoGenerateKey) return;
+    void handlePropose();
+  }, [autoGenerateKey, handlePropose]);
+
+  useEffect(() => {
+    if (!autoSaveKey) return;
+    void handleSave();
+  }, [autoSaveKey, handleSave]);
 
   if (!sentence) {
     return (

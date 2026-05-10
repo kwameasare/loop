@@ -85,6 +85,15 @@ describe("BehaviorEditor", () => {
     expect(
       screen.getByTestId("behavior-context-actions-sentence_purpose_cancel"),
     ).toHaveTextContent("Save as eval");
+    fireEvent.click(
+      screen.getByTestId("behavior-action-show-source-sentence_purpose_cancel"),
+    );
+    expect(
+      screen.getByTestId("behavior-selection-action-panel"),
+    ).toHaveTextContent("Stable source reference");
+    expect(
+      screen.getByTestId("behavior-selection-action-panel"),
+    ).toHaveTextContent("trace/sentence_purpose_cancel");
 
     const telemetry = screen.getByTestId("behavior-sentence-telemetry");
     expect(telemetry).toHaveTextContent("Cited");
@@ -102,6 +111,63 @@ describe("BehaviorEditor", () => {
     expect(screen.getByTestId("adversarial-catch-panel")).toHaveTextContent(
       "Ask the calm adversarial question",
     );
+  });
+
+  it("uses the selected sentence action menu to generate the focused repair", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        id: "repair_1",
+        workspace_id: "ws_1",
+        agent_id: "agent_support",
+        target_object: {
+          kind: "knowledge_chunk",
+          id: "sentence_purpose_cancel",
+          label: "Responsible knowledge source",
+        },
+        proposal: {
+          title: "Tighten behavior for cancellation policy",
+          diff: "Require current May policy citation before refund windows.",
+          rationale: "Archived policy was cited.",
+          evidence_ref: "trace_refund_742",
+        },
+        replay: {
+          draft_ref: "replay/sentence_purpose_cancel/nearby-turns",
+          improved: 3,
+          unchanged: 1,
+          regressed: 0,
+          needs_review: 1,
+          examples: [],
+        },
+        next_actions: ["accept_or_edit_fix", "save_regression_eval"],
+        evidence_refs: ["trace_refund_742", "sentence_purpose_cancel"],
+      }),
+    );
+    vi.stubGlobal("fetch", fetcher);
+    render(<BehaviorEditor data={createBehaviorEditorData("agent_support")} />);
+
+    fireEvent.mouseEnter(
+      screen.getByTestId("behavior-sentence-sentence_purpose_cancel"),
+    );
+    fireEvent.click(
+      screen.getByTestId("behavior-action-fix-this-sentence_purpose_cancel"),
+    );
+
+    expect(
+      screen.getByTestId("behavior-selection-action-panel"),
+    ).toHaveTextContent("Repair target opened");
+    expect(
+      await screen.findByTestId("failure-repair-proposal"),
+    ).toHaveTextContent("Tighten behavior for cancellation policy");
+    const [, init] = fetcher.mock.calls.find(([url]) =>
+      String(url).includes("/behavior/repair-proposals"),
+    )!;
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      sentence_id: "sentence_purpose_cancel",
+      sentence_role: "promise",
+      target_object_kind: "knowledge_chunk",
+      risk_tags: ["risk_eval_gap"],
+    });
   });
 
   it("opens directly on a linked behavior sentence", () => {

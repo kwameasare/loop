@@ -48,6 +48,17 @@ export interface BehaviorEditorProps {
 }
 
 const MODE_ORDER: BehaviorMode[] = ["plain", "policy", "config"];
+type BehaviorContextAction = "explain" | "source" | "fix" | "eval";
+
+const CONTEXT_ACTIONS: Array<{
+  id: BehaviorContextAction;
+  label: string;
+}> = [
+  { id: "explain", label: "Explain" },
+  { id: "source", label: "Show source" },
+  { id: "fix", label: "Fix this" },
+  { id: "eval", label: "Save as eval" },
+];
 
 const RISK_CLASS: Record<BehaviorRiskLevel, string> = {
   low: "border-info/40 bg-info/5 text-info",
@@ -107,6 +118,48 @@ function sectionTextForSentence(
       candidate.sentences.some((sentence) => sentence.id === sentenceId),
     ) ?? sections[0];
   return section?.sentences.map((sentence) => sentence.text).join("\n") ?? "";
+}
+
+function traceRefForSentence(sentence: BehaviorSentence): string {
+  const evidenceParts = sentence.telemetry.evidence
+    .split(/[\s,]+/)
+    .filter(Boolean);
+  return (
+    evidenceParts.find((part) => part.toLowerCase().includes("trace")) ??
+    `trace/${sentence.id}`
+  );
+}
+
+function responsibleObjectForSentence(sentence: BehaviorSentence): {
+  kind: string;
+  label: string;
+} {
+  const text = sentence.text.toLowerCase();
+  if (sentence.role === "tool" || text.includes("tool")) {
+    return { kind: "tool_contract", label: "tool contract" };
+  }
+  if (sentence.role === "memory" || text.includes("memory")) {
+    return { kind: "memory_policy", label: "memory policy" };
+  }
+  if (
+    text.includes("knowledge") ||
+    text.includes("cite") ||
+    text.includes("policy")
+  ) {
+    return { kind: "knowledge_chunk", label: "knowledge source" };
+  }
+  if (
+    text.includes("channel") ||
+    text.includes("whatsapp") ||
+    text.includes("telegram") ||
+    text.includes("slack") ||
+    text.includes("sms") ||
+    text.includes("voice") ||
+    text.includes("email")
+  ) {
+    return { kind: "channel_constraint", label: "channel constraint" };
+  }
+  return { kind: "behavior_sentence", label: "behavior sentence" };
 }
 
 function riskMap(flags: BehaviorRiskFlag[]): Map<string, BehaviorRiskFlag> {
@@ -182,30 +235,38 @@ function SentenceButton({
   risks,
   selected,
   onSelect,
+  activeAction,
+  onAction,
 }: {
   sentence: BehaviorSentence;
   risks: Map<string, BehaviorRiskFlag>;
   selected: boolean;
   onSelect: (sentenceId: string) => void;
+  activeAction: BehaviorContextAction | null;
+  onAction: (action: BehaviorContextAction, sentenceId: string) => void;
 }) {
   const sentenceRisks = sentence.riskIds
     .map((riskId) => risks.get(riskId))
     .filter((risk): risk is BehaviorRiskFlag => Boolean(risk));
   return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      title={telemetrySummary(sentence.telemetry)}
+    <div
       className={cn(
-        "w-full rounded-md border bg-background p-3 text-left text-sm leading-6 transition-colors duration-swift ease-standard hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+        "rounded-md border bg-background p-3 transition-colors duration-swift ease-standard",
         selected ? "border-primary ring-1 ring-primary/40" : "border-border",
       )}
       onMouseEnter={() => onSelect(sentence.id)}
-      onFocus={() => onSelect(sentence.id)}
-      onClick={() => onSelect(sentence.id)}
       data-testid={`behavior-sentence-${sentence.id}`}
     >
-      <span>{sentence.text}</span>
+      <button
+        type="button"
+        aria-pressed={selected}
+        title={telemetrySummary(sentence.telemetry)}
+        className="w-full text-left text-sm leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        onFocus={() => onSelect(sentence.id)}
+        onClick={() => onSelect(sentence.id)}
+      >
+        <span>{sentence.text}</span>
+      </button>
       <span className="mt-2 flex flex-wrap gap-1">
         <span className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
           {sentence.role}
@@ -218,26 +279,31 @@ function SentenceButton({
         ))}
       </span>
       {selected ? (
-        <span
+        <div
           className="mt-3 grid gap-1 sm:grid-cols-4"
           data-testid={`behavior-context-actions-${sentence.id}`}
         >
-          {(
-            ["Explain", "Show source", "Fix this", "Save as eval"] as const
-          ).map((action) => (
-            <span
-              key={action}
-              className="rounded-md border bg-card px-2 py-1 text-center text-xs font-medium text-foreground"
-              data-testid={`behavior-action-${action
+          {CONTEXT_ACTIONS.map((action) => (
+            <button
+              key={action.id}
+              type="button"
+              className={cn(
+                "rounded-md border px-2 py-1 text-center text-xs font-medium transition-colors duration-swift ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+                activeAction === action.id
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "bg-card text-foreground hover:bg-muted",
+              )}
+              onClick={() => onAction(action.id, sentence.id)}
+              data-testid={`behavior-action-${action.label
                 .toLowerCase()
                 .replace(/\s+/g, "-")}-${sentence.id}`}
             >
-              {action}
-            </span>
+              {action.label}
+            </button>
           ))}
-        </span>
+        </div>
       ) : null}
-    </button>
+    </div>
   );
 }
 
@@ -246,11 +312,15 @@ function PlainLanguageMode({
   risks,
   selectedSentenceId,
   onSelectSentence,
+  activeAction,
+  onSentenceAction,
 }: {
   sections: BehaviorSection[];
   risks: Map<string, BehaviorRiskFlag>;
   selectedSentenceId: string | null;
   onSelectSentence: (sentenceId: string) => void;
+  activeAction: BehaviorContextAction | null;
+  onSentenceAction: (action: BehaviorContextAction, sentenceId: string) => void;
 }) {
   return (
     <div className="space-y-4" data-testid="behavior-plain-mode">
@@ -284,6 +354,10 @@ function PlainLanguageMode({
                 risks={risks}
                 selected={sentence.id === selectedSentenceId}
                 onSelect={onSelectSentence}
+                activeAction={
+                  sentence.id === selectedSentenceId ? activeAction : null
+                }
+                onAction={onSentenceAction}
               />
             ))}
           </div>
@@ -397,6 +471,43 @@ function SentenceTelemetryPanel({
         evidence={`Evidence: ${telemetry.evidence}`}
       />
     </section>
+  );
+}
+
+function SelectionActionPanel({
+  sentence,
+  action,
+}: {
+  sentence: BehaviorSentence | null;
+  action: BehaviorContextAction | null;
+}) {
+  if (!sentence || !action) return null;
+
+  const traceRef = traceRefForSentence(sentence);
+  const responsibleObject = responsibleObjectForSentence(sentence);
+  const heading =
+    action === "explain"
+      ? "Why this sentence matters"
+      : action === "source"
+        ? "Stable source reference"
+        : action === "fix"
+          ? "Repair target opened"
+          : "Regression eval target";
+  const body =
+    action === "explain"
+      ? `Studio maps this sentence to the ${responsibleObject.label}, ${sentence.telemetry.evalCases} eval cases, and ${sentence.telemetry.contradictedTraces} contradicted traces before proposing changes.`
+      : action === "source"
+        ? `Selected utterance is pinned to ${traceRef}. Repair and eval creation will preserve this trace/span reference.`
+        : action === "fix"
+          ? `A narrow repair proposal is being generated for the ${responsibleObject.label}; replay runs against the draft reference before anything can affect production.`
+          : `Saving will create regression coverage with source trace ${traceRef}, target ${responsibleObject.kind}, expected behavior, and risk tags: ${sentence.riskIds.join(", ") || "none"}.`;
+
+  return (
+    <div data-testid="behavior-selection-action-panel">
+      <StatePanel state={action === "fix" ? "stale" : "success"} title={heading}>
+        <p>{body}</p>
+      </StatePanel>
+    </div>
   );
 }
 
@@ -596,6 +707,10 @@ export function BehaviorEditor({
   const [selectedSentenceId, setSelectedSentenceId] = useState<string | null>(
     () => initialSentenceId(sentences, initialSelectedSentenceId),
   );
+  const [selectedAction, setSelectedAction] =
+    useState<BehaviorContextAction | null>(null);
+  const [autoGenerateRepairKey, setAutoGenerateRepairKey] = useState(0);
+  const [autoSaveEvalKey, setAutoSaveEvalKey] = useState(0);
   const risks = useMemo(() => riskMap(data.riskFlags), [data.riskFlags]);
   const selectedSentence =
     sentences.find((sentence) => sentence.id === selectedSentenceId) ??
@@ -608,6 +723,24 @@ export function BehaviorEditor({
     data.sections,
     selectedSentence?.id ?? null,
   );
+  function selectSentence(sentenceId: string) {
+    setSelectedSentenceId(sentenceId);
+    if (sentenceId !== selectedSentenceId) setSelectedAction(null);
+  }
+
+  function handleSentenceAction(
+    action: BehaviorContextAction,
+    sentenceId: string,
+  ) {
+    setSelectedSentenceId(sentenceId);
+    setSelectedAction(action);
+    if (action === "fix") {
+      setAutoGenerateRepairKey((key) => key + 1);
+    }
+    if (action === "eval") {
+      setAutoSaveEvalKey((key) => key + 1);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6" data-testid="behavior-editor">
@@ -688,7 +821,9 @@ export function BehaviorEditor({
               sections={data.sections}
               risks={risks}
               selectedSentenceId={selectedSentence?.id ?? null}
-              onSelectSentence={setSelectedSentenceId}
+              onSelectSentence={selectSentence}
+              activeAction={selectedAction}
+              onSentenceAction={handleSentenceAction}
             />
           ) : null}
           {mode === "policy" ? (
@@ -702,10 +837,16 @@ export function BehaviorEditor({
         </div>
 
         <aside className="space-y-4">
+          <SelectionActionPanel
+            sentence={selectedSentence}
+            action={selectedAction}
+          />
           <SentenceTelemetryPanel sentence={selectedSentence} />
           <FailureRepairLoopPanel
             agentId={data.agentId}
             sentence={selectedSentence}
+            autoGenerateKey={autoGenerateRepairKey}
+            autoSaveKey={autoSaveEvalKey}
           />
           <AdversarialCatchPanel
             agentId={data.agentId}
