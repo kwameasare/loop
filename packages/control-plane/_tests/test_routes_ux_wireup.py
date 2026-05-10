@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+import loop_control_plane._routes_ux_wireup as ux_wireup_routes
 import pytest
 from fastapi.testclient import TestClient
 from loop_control_plane.app import create_app
@@ -3022,6 +3023,58 @@ def test_pair_debug_audio_and_voice_provisioner_modes(
     )
     assert blocked.status_code == 503, blocked.text
     assert "Twilio and LiveKit credentials" in blocked.json()["detail"]
+
+    calls: list[dict[str, object]] = []
+
+    def fake_provider_provision(**kwargs: object) -> dict[str, object]:
+        calls.append(kwargs)
+        return {
+            "phone_number": "+14155550100",
+            "provider_resource_id": "PN123",
+            "provider_status": "in-use",
+            "livekit_trunk_id": "SIPTRUNK123",
+            "livekit_dispatch_rule_id": "SIPDISPATCH123",
+            "sip_route": "livekit://sip/SIPTRUNK123/SIPDISPATCH123",
+        }
+
+    for name in [
+        "TWILIO_ACCOUNT_SID",
+        "TWILIO_AUTH_TOKEN",
+        "LOOP_TWILIO_VOICE_WEBHOOK_URL",
+        "LIVEKIT_URL",
+        "LIVEKIT_API_KEY",
+        "LIVEKIT_API_SECRET",
+    ]:
+        monkeypatch.setenv(name, f"{name.lower()}_value")
+    monkeypatch.setenv("LOOP_VOICE_PROVISIONER", "twilio_livekit")
+    monkeypatch.setattr(
+        ux_wireup_routes,
+        "_voice_provider_provision",
+        fake_provider_provision,
+    )
+    provisioned = client.post(
+        f"/v1/workspaces/{workspace_id}/voice/numbers/provision",
+        headers=_auth(),
+        json={
+            "country": "US",
+            "area_code": "415",
+            "capability": "voice",
+            "provider": "twilio",
+        },
+    )
+    assert provisioned.status_code == 200, provisioned.text
+    body = provisioned.json()
+    assert calls
+    assert body["id"] == "PN123"
+    assert body["phone_number"] == "+14155550100"
+    assert body["provisioner"] == "twilio_livekit"
+    assert body["sip_route"] == "livekit://sip/SIPTRUNK123/SIPDISPATCH123"
+
+    voice_config = client.get(
+        f"/v1/workspaces/{workspace_id}/voice/config",
+        headers=_auth(),
+    )
+    assert voice_config.json()["numbers"][0]["e164"] == "+14155550100"
 
 
 def test_telemetry_help_branding_voice_demo_and_activity(

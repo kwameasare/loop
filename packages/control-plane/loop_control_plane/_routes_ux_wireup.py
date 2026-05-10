@@ -8,10 +8,17 @@ tables without changing the Studio-facing API.
 
 from __future__ import annotations
 
+import base64
+import hmac
+import json
 import os
+import time
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from typing import Any
+from urllib import error as url_error
+from urllib import parse as url_parse
+from urllib import request as url_request
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Query, Request, WebSocket
@@ -2393,6 +2400,271 @@ def _voice_provisioner_mode() -> str:
     return os.environ.get("LOOP_VOICE_PROVISIONER", "deterministic").strip().lower()
 
 
+def _basic_auth_header(username: str, password: str) -> str:
+    token = base64.b64encode(f"{username}:{password}".encode()).decode("ascii")
+    return f"Basic {token}"
+
+
+def _b64url(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def _livekit_sip_admin_token(*, now: int | None = None) -> str:
+    api_key = os.environ["LIVEKIT_API_KEY"]
+    api_secret = os.environ["LIVEKIT_API_SECRET"]
+    issued_at = int(now if now is not None else time.time())
+    header = {"alg": "HS256", "typ": "JWT"}
+    claims = {
+        "iss": api_key,
+        "sub": api_key,
+        "nbf": issued_at - 10,
+        "exp": issued_at + 300,
+        "sip": {"admin": True},
+    }
+    signing_input = ".".join(
+        [
+            _b64url(json.dumps(header, separators=(",", ":")).encode("utf-8")),
+            _b64url(json.dumps(claims, separators=(",", ":")).encode("utf-8")),
+        ]
+    )
+    signature = hmac.new(
+        api_secret.encode("utf-8"),
+        signing_input.encode("ascii"),
+        "sha256",
+    ).digest()
+    return f"{signing_input}.{_b64url(signature)}"
+
+
+def _voice_provider_http_url(url: str) -> str:
+    parsed = url_parse.urlparse(url)
+    allow_local_http = os.environ.get("LOOP_ALLOW_INSECURE_VOICE_PROVIDER_URLS") == "1"
+    if parsed.scheme == "https":
+        return url
+    if allow_local_http and parsed.scheme == "http" and parsed.hostname in {
+        "localhost",
+        "127.0.0.1",
+    }:
+        return url
+    raise HTTPException(
+        status_code=500,
+        detail="voice provider URLs must use https",
+    )
+
+
+def _http_json(
+    method: str,
+    url: str,
+    *,
+    headers: dict[str, str],
+    body: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    safe_url = _voice_provider_http_url(url)
+    payload = None if body is None else json.dumps(body).encode("utf-8")
+    request = url_request.Request(  # noqa: S310 - URL is scheme-validated above.
+        safe_url,
+        data=payload,
+        method=method,
+        headers=headers,
+    )
+    try:
+        with url_request.urlopen(  # noqa: S310 - URL is scheme-validated above.
+            request,
+            timeout=15,
+        ) as response:
+            raw = response.read().decode("utf-8")
+    except url_error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise HTTPException(
+            status_code=502,
+            detail=f"voice provider {method} {url} -> {exc.code}: {detail[:240]}",
+        ) from exc
+    except url_error.URLError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"voice provider {method} {url} failed: {exc.reason}",
+        ) from exc
+    if not raw:
+        return {}
+    parsed = json.loads(raw)
+    if not isinstance(parsed, dict):
+        raise HTTPException(
+            status_code=502,
+            detail="voice provider returned non-object JSON",
+        )
+    return parsed
+
+
+def _http_form(
+    url: str,
+    *,
+    headers: dict[str, str],
+    body: dict[str, str],
+) -> dict[str, Any]:
+    safe_url = _voice_provider_http_url(url)
+    encoded = url_parse.urlencode(body).encode("utf-8")
+    request = url_request.Request(  # noqa: S310 - URL is scheme-validated above.
+        safe_url,
+        data=encoded,
+        method="POST",
+        headers=headers,
+    )
+    try:
+        with url_request.urlopen(  # noqa: S310 - URL is scheme-validated above.
+            request,
+            timeout=15,
+        ) as response:
+            raw = response.read().decode("utf-8")
+    except url_error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Twilio phone-number provision -> {exc.code}: {detail[:240]}",
+        ) from exc
+    except url_error.URLError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Twilio phone-number provision failed: {exc.reason}",
+        ) from exc
+    parsed = json.loads(raw)
+    if not isinstance(parsed, dict):
+        raise HTTPException(
+            status_code=502,
+            detail="Twilio returned non-object JSON",
+        )
+    return parsed
+
+
+def _twilio_api_base() -> str:
+    return os.environ.get("TWILIO_API_BASE", "https://api.twilio.com").rstrip("/")
+
+
+def _twilio_purchase_number(body: VoiceNumberProvisionBody) -> dict[str, Any]:
+    sid = os.environ["TWILIO_ACCOUNT_SID"]
+    auth = _basic_auth_header(sid, os.environ["TWILIO_AUTH_TOKEN"])
+    headers = {"Authorization": auth, "Accept": "application/json"}
+    query = {
+        "VoiceEnabled": "true",
+        "PageSize": "1",
+    }
+    if body.area_code:
+        query["AreaCode"] = body.area_code
+    available_url = (
+        f"{_twilio_api_base()}/2010-04-01/Accounts/{sid}/"
+        f"AvailablePhoneNumbers/{body.country}/Local.json?"
+        f"{url_parse.urlencode(query)}"
+    )
+    available = _http_json("GET", available_url, headers=headers)
+    candidates = available.get("available_phone_numbers") or []
+    if not candidates:
+        raise HTTPException(
+            status_code=409,
+            detail="Twilio returned no available voice numbers for that request",
+        )
+    first = candidates[0]
+    if not isinstance(first, dict) or not first.get("phone_number"):
+        raise HTTPException(
+            status_code=502,
+            detail="Twilio returned malformed number data",
+        )
+    phone_number = str(first["phone_number"])
+    purchase_headers = {
+        **headers,
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+    purchased = _http_form(
+        f"{_twilio_api_base()}/2010-04-01/Accounts/{sid}/IncomingPhoneNumbers.json",
+        headers=purchase_headers,
+        body={
+            "PhoneNumber": phone_number,
+            "VoiceUrl": os.environ["LOOP_TWILIO_VOICE_WEBHOOK_URL"],
+            "VoiceMethod": "POST",
+            "FriendlyName": f"Loop {body.country} {body.capability} line",
+        },
+    )
+    return {
+        "phone_number": str(purchased.get("phone_number") or phone_number),
+        "provider_resource_id": str(purchased.get("sid") or ""),
+        "provider_status": str(purchased.get("status") or "in-use"),
+    }
+
+
+def _livekit_twirp(method: str, payload: dict[str, Any]) -> dict[str, Any]:
+    livekit_url = os.environ["LIVEKIT_URL"].rstrip("/")
+    headers = {
+        "Authorization": f"Bearer {_livekit_sip_admin_token()}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    return _http_json(
+        "POST",
+        f"{livekit_url}/twirp/livekit.SIP/{method}",
+        headers=headers,
+        body=payload,
+    )
+
+
+def _voice_provider_provision(
+    *,
+    provisioner: str,
+    workspace_id: UUID,
+    body: VoiceNumberProvisionBody,
+) -> dict[str, Any]:
+    if provisioner == "livekit":
+        raise HTTPException(
+            status_code=501,
+            detail=(
+                "LiveKit-only phone-number purchase is not implemented; "
+                "use LOOP_VOICE_PROVISIONER=twilio_livekit"
+            ),
+        )
+    purchased = _twilio_purchase_number(body)
+    phone_number = purchased["phone_number"]
+    trunk = _livekit_twirp(
+        "CreateSIPInboundTrunk",
+        {
+            "name": f"Loop workspace {workspace_id}",
+            "numbers": [phone_number],
+            "metadata": json.dumps(
+                {"workspace_id": str(workspace_id), "provider": body.provider}
+            ),
+        },
+    )
+    trunk_info = trunk.get("trunk") if isinstance(trunk.get("trunk"), dict) else trunk
+    trunk_id = str(
+        trunk_info.get("sip_trunk_id")
+        or trunk_info.get("sipTrunkId")
+        or trunk_info.get("id")
+        or ""
+    )
+    dispatch = _livekit_twirp(
+        "CreateSIPDispatchRule",
+        {
+            "name": f"Loop dispatch {workspace_id}",
+            "trunk_ids": [trunk_id] if trunk_id else [],
+            "rule": {
+                "dispatch_rule_individual": {
+                    "room_prefix": f"loop_{str(workspace_id).replace('-', '')[:12]}"
+                }
+            },
+        },
+    )
+    dispatch_id = str(
+        dispatch.get("sip_dispatch_rule_id")
+        or dispatch.get("sipDispatchRuleId")
+        or dispatch.get("id")
+        or ""
+    )
+    return {
+        **purchased,
+        "livekit_trunk_id": trunk_id,
+        "livekit_dispatch_rule_id": dispatch_id,
+        "sip_route": (
+            f"livekit://sip/{trunk_id or 'inbound'}/"
+            f"{dispatch_id or 'dispatch'}"
+        ),
+    }
+
+
 @router_workspaces.post("/{workspace_id}/voice/numbers/provision")
 async def provision_voice_number(
     request: Request,
@@ -2408,10 +2680,14 @@ async def provision_voice_number(
     )
     provisioner = _voice_provisioner_mode()
     if provisioner not in {"deterministic", "twilio", "livekit", "twilio_livekit"}:
-        raise HTTPException(status_code=400, detail="unsupported voice provisioner")
+        raise HTTPException(
+            status_code=400,
+            detail="unsupported voice provisioner",
+        )
     if provisioner != "deterministic" and not (
         os.environ.get("TWILIO_ACCOUNT_SID")
         and os.environ.get("TWILIO_AUTH_TOKEN")
+        and os.environ.get("LOOP_TWILIO_VOICE_WEBHOOK_URL")
         and os.environ.get("LIVEKIT_URL")
         and os.environ.get("LIVEKIT_API_KEY")
         and os.environ.get("LIVEKIT_API_SECRET")
@@ -2423,14 +2699,38 @@ async def provision_voice_number(
                 "set LOOP_VOICE_PROVISIONER=deterministic for local runs"
             ),
         )
+    provider_result: dict[str, Any]
+    if provisioner == "deterministic":
+        provider_result = {
+            "phone_number": (
+                f"+1{body.area_code or '415'}555{str(uuid4().int)[-4:]}"
+            ),
+            "provider_resource_id": "",
+            "provider_status": "in-use",
+            "livekit_trunk_id": "",
+            "livekit_dispatch_rule_id": "",
+            "sip_route": (
+                f"livekit://workspace/{workspace_id}/voice/{uuid4().hex[:8]}"
+            ),
+        }
+    else:
+        provider_result = _voice_provider_provision(
+            provisioner=provisioner,
+            workspace_id=workspace_id,
+            body=body,
+        )
+    provider_status = str(provider_result.get("provider_status") or "in-use")
     number = {
-        "id": f"num_{uuid4().hex[:10]}",
-        "phone_number": f"+1{body.area_code or '415'}555{str(uuid4().int)[-4:]}",
+        "id": provider_result.get("provider_resource_id")
+        or f"num_{uuid4().hex[:10]}",
+        "phone_number": provider_result["phone_number"],
         "provider": body.provider,
         "provisioner": provisioner,
         "country": body.country,
         "capability": body.capability,
-        "status": "provisioned",
+        "status": "provisioned"
+        if provider_status in {"", "in-use", "active"}
+        else provider_status,
         "compliance": [
             {"id": "business_profile", "status": "ready"},
             {
@@ -2439,7 +2739,11 @@ async def provision_voice_number(
             },
             {"id": "livekit_sip_trunk", "status": "ready"},
         ],
-        "sip_route": f"livekit://workspace/{workspace_id}/voice/{uuid4().hex[:8]}",
+        "sip_route": provider_result["sip_route"],
+        "livekit_trunk_id": provider_result.get("livekit_trunk_id") or None,
+        "livekit_dispatch_rule_id": (
+            provider_result.get("livekit_dispatch_rule_id") or None
+        ),
     }
     _bucket(request, "voice_numbers").setdefault(str(workspace_id), []).append(number)
     cp = request.app.state.cp
