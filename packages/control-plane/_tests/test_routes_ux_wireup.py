@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 import pytest
 from fastapi.testclient import TestClient
 from loop_control_plane.app import create_app
+from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.paseto import encode_local
 from loop_control_plane.trace_search import TraceSummary
 
@@ -3156,3 +3157,76 @@ def test_quality_reports_are_workspace_scoped_and_audited(
         event["payload_hash"]
     )
     assert audit_payload["failing_categories"] == ["clarity"]
+
+
+def test_onboarding_recap_and_concierge_are_live_workspace_flows(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    store = client.app.state.cp.audit_events  # type: ignore[attr-defined]
+    for action, resource_type in [
+        ("deployment:promote", "deployment"),
+        ("deployment:rollback", "deployment"),
+        ("eval:case:create_from_observed_failure", "eval_case"),
+        ("knowledge:source_update", "knowledge_source"),
+    ]:
+        record_audit_event(
+            workspace_id=workspace_id,
+            actor_sub="owner-1",
+            action=action,
+            resource_type=resource_type,
+            resource_id=f"{resource_type}-1",
+            store=store,
+            now=datetime.now(UTC),
+        )
+
+    recap = client.get(
+        f"/v1/workspaces/{workspace_id}/onboarding/weekly-recap",
+        headers=_auth(),
+    )
+    assert recap.status_code == 200, recap.text
+    recap_body = recap.json()
+    assert recap_body["promotions"] == 1
+    assert recap_body["rollbacks"] == 1
+    assert recap_body["evalsSaved"] == 1
+    assert recap_body["kbSourcesUpdated"] == 1
+
+    _add_trace(client, workspace_id, agent_id, "4" * 32)
+    _add_trace(client, workspace_id, agent_id, "5" * 32)
+    concierge = client.post(
+        f"/v1/workspaces/{workspace_id}/onboarding/concierge",
+        headers=_auth(),
+        json={
+            "scopes": ["transcripts", "kb-citations"],
+            "conversationsRequested": 20,
+            "reviewer": "builder@acme.test",
+            "consentAcceptedAt": "2026-05-10T12:00:00Z",
+        },
+    )
+    assert concierge.status_code == 200, concierge.text
+    body = concierge.json()
+    assert body["consent"]["reviewer"] == "builder@acme.test"
+    assert body["consent"]["conversationsRequested"] == 20
+    assert body["recommendations"]["starterEvalIds"]
+    assert body["recommendations"]["scenes"]
+    assert body["recommendations"]["safeFirstImprovement"]
+
+    invalid = client.post(
+        f"/v1/workspaces/{workspace_id}/onboarding/concierge",
+        headers=_auth(),
+        json={
+            "scopes": ["everything"],
+            "conversationsRequested": 20,
+            "reviewer": "builder@acme.test",
+            "consentAcceptedAt": "2026-05-10T12:00:00Z",
+        },
+    )
+    assert invalid.status_code == 422
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    event = next(event for event in audit if event["action"] == "onboarding:concierge_run")
+    audit_payload = store.fetch_payload(event["payload_hash"])
+    assert audit_payload["scopes"] == ["transcripts", "kb-citations"]
+    assert audit_payload["starter_eval_count"] == 2
