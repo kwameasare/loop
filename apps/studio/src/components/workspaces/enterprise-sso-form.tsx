@@ -29,6 +29,8 @@ export interface EnterpriseSsoFormProps {
   onSubmit: (payload: EnterpriseSsoSubmitPayload) => Promise<void> | void;
   /** Optional error message surfaced from the parent (e.g. cp-api 4xx). */
   errorMessage?: string;
+  /** Disable mutation controls when backend evidence is unavailable. */
+  disabled?: boolean;
 }
 
 const STATUS_LABEL: Record<SsoStatus, string> = {
@@ -38,7 +40,12 @@ const STATUS_LABEL: Record<SsoStatus, string> = {
   error: "Error",
 };
 
-export function EnterpriseSsoForm({ status, onSubmit, errorMessage }: EnterpriseSsoFormProps) {
+export function EnterpriseSsoForm({
+  status,
+  onSubmit,
+  errorMessage,
+  disabled = false,
+}: EnterpriseSsoFormProps) {
   const [metadataUrl, setMetadataUrl] = useState("");
   const [metadataXml, setMetadataXml] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
@@ -66,8 +73,11 @@ export function EnterpriseSsoForm({ status, onSubmit, errorMessage }: Enterprise
       className="flex max-w-xl flex-col gap-4"
       onSubmit={async (event) => {
         event.preventDefault();
+        if (disabled) return;
         if (!metadataUrl && !metadataXml) {
-          setLocalError("Provide either a metadata URL or upload metadata XML.");
+          setLocalError(
+            "Provide either a metadata URL or upload metadata XML.",
+          );
           return;
         }
         if (metadataUrl && metadataXml) {
@@ -77,9 +87,7 @@ export function EnterpriseSsoForm({ status, onSubmit, errorMessage }: Enterprise
         setLocalError(null);
         setSubmitting(true);
         try {
-          await onSubmit(
-            metadataUrl ? { metadataUrl } : { metadataXml },
-          );
+          await onSubmit(metadataUrl ? { metadataUrl } : { metadataXml });
         } finally {
           setSubmitting(false);
         }
@@ -104,11 +112,14 @@ export function EnterpriseSsoForm({ status, onSubmit, errorMessage }: Enterprise
           className="rounded-md border bg-background px-2 py-1"
           value={metadataUrl}
           placeholder="https://login.example.com/app/.../sso/saml/metadata"
+          disabled={disabled}
           onChange={(e) => setMetadataUrl(e.target.value)}
         />
       </label>
 
-      <div className="text-center text-xs uppercase text-muted-foreground">or</div>
+      <div className="text-center text-xs uppercase text-muted-foreground">
+        or
+      </div>
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Upload IdP metadata XML</span>
@@ -116,6 +127,7 @@ export function EnterpriseSsoForm({ status, onSubmit, errorMessage }: Enterprise
           type="file"
           accept=".xml,application/xml,text/xml"
           data-testid="enterprise-sso-metadata-file"
+          disabled={disabled}
           onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
         />
         {metadataXml && (
@@ -134,8 +146,9 @@ export function EnterpriseSsoForm({ status, onSubmit, errorMessage }: Enterprise
         role="note"
       >
         Status flips to <strong>Connected</strong> only after a successful ACS
-        round-trip from your IdP. If it stays <strong>Pending</strong>, verify the ACS URL and
-        Entity ID configured at the IdP match the values shown in your workspace.
+        round-trip from your IdP. If it stays <strong>Pending</strong>, verify
+        the ACS URL and Entity ID configured at the IdP match the values shown
+        in your workspace.
       </p>
 
       {(localError || errorMessage) && (
@@ -151,7 +164,7 @@ export function EnterpriseSsoForm({ status, onSubmit, errorMessage }: Enterprise
       <button
         type="submit"
         data-testid="enterprise-sso-submit"
-        disabled={submitting}
+        disabled={submitting || disabled}
         className="rounded-md border bg-primary px-3 py-1 text-sm text-primary-foreground disabled:opacity-50"
       >
         {submitting ? "Connecting…" : "Connect IdP"}
