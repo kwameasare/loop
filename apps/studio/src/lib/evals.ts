@@ -14,15 +14,22 @@ export type EvalCaseStatus = "pass" | "fail" | "error";
 export type EvalRunStatus = "queued" | "running" | "completed" | "failed";
 export type EvalCaseSource =
   | "manual"
-  | "simulator"
-  | "production"
+  | "production_conversation"
+  | "simulator_run"
+  | "human_handoff"
+  | "reviewer_comment"
+  | "migration_parity_gap"
+  | "adversarial_catch"
+  | "incident_cluster"
   | "failed_turn"
-  | "operator_resolution"
-  | "migration_transcript"
   | "knowledge_source"
   | "policy_doc"
-  | "generated_adversarial"
-  | "support_macro";
+  | "support_macro"
+  | "simulator"
+  | "production"
+  | "operator_resolution"
+  | "migration_transcript"
+  | "generated_adversarial";
 
 const FIXTURE_AGENT_ID = "fixture_agent_support";
 const FIXTURE_TRACE_ID = "fixture_trace_refund_742";
@@ -45,6 +52,9 @@ export interface EvalSuite {
   cases: number;
   lastRunAt: string | null;
   passRate: number | null;
+  creationSources?: EvalCreationSource[];
+  provenanceCases?: EvalProvenanceCase[];
+  changePackageLinks?: EvalChangePackageLink[];
 }
 
 export interface EvalRunSummary {
@@ -110,6 +120,7 @@ export interface EvalsHelperOptions {
 export interface EvalSuiteListResponse {
   items: EvalSuite[];
   degraded_reason?: string | undefined;
+  evidence_mode?: "live" | "fixture" | "degraded" | undefined;
 }
 
 export interface EvalCreationSource {
@@ -121,6 +132,31 @@ export interface EvalCreationSource {
   provenance: string;
   actionLabel: string;
   confidence: "high" | "medium" | "low" | "unsupported";
+}
+
+export interface EvalProvenanceCase {
+  id: string;
+  agentId: string;
+  suiteId: string;
+  sourceType: EvalCaseSource;
+  sourceRef: string;
+  input: string;
+  expectedBehavior: string;
+  channelType: string;
+  riskTags: string[];
+  status: "candidate" | "active" | "quarantined" | "retired";
+  changePackageRef: string | null;
+  evidence: string;
+}
+
+export interface EvalChangePackageLink {
+  id: string;
+  changePackageRef: string;
+  evalResultsRef: string;
+  suiteId: string;
+  gate: string;
+  status: "ready" | "blocked" | "missing" | "stale";
+  evidence: string;
 }
 
 export interface EvalScorerConfig {
@@ -167,6 +203,12 @@ export interface EvalFoundryModel {
   creationSources: EvalCreationSource[];
   suiteBuilders: EvalSuiteBuilderView[];
   featuredResult: EvalResultDiffView | null;
+  provenanceCases: EvalProvenanceCase[];
+  changePackageLinks: EvalChangePackageLink[];
+}
+
+export interface EvalFoundryModelOptions {
+  evidenceMode?: "live" | "fixture" | "degraded";
 }
 
 function resolveBase(opts: EvalsHelperOptions): string | null {
@@ -219,7 +261,7 @@ const CREATION_SOURCES: EvalCreationSource[] = [
   },
   {
     id: "src_simulator_refund",
-    source: "simulator",
+    source: "simulator_run",
     label: "Simulator run",
     count: 6,
     evidence: "Last simulator session covered cancellation paraphrases",
@@ -229,7 +271,7 @@ const CREATION_SOURCES: EvalCreationSource[] = [
   },
   {
     id: "src_production_replay",
-    source: "production",
+    source: "production_conversation",
     label: "Production conversations",
     count: 12,
     evidence: `${FIXTURE_TRACE_ID} and 11 related fixture refund turns`,
@@ -249,7 +291,7 @@ const CREATION_SOURCES: EvalCreationSource[] = [
   },
   {
     id: "src_operator_resolution",
-    source: "operator_resolution",
+    source: "human_handoff",
     label: "Operator resolutions",
     count: 4,
     evidence:
@@ -259,9 +301,20 @@ const CREATION_SOURCES: EvalCreationSource[] = [
     confidence: "medium",
   },
   {
+    id: "src_reviewer_comment",
+    source: "reviewer_comment",
+    label: "Reviewer comments",
+    count: 2,
+    evidence:
+      "Resolved review comments specify expected behavior for refund exceptions",
+    provenance: `${FIXTURE_PROVENANCE} Comment thread th_refund_exception_review.`,
+    actionLabel: "Convert comments",
+    confidence: "medium",
+  },
+  {
     id: "src_migration_transcript",
-    source: "migration_transcript",
-    label: "Migration transcripts",
+    source: "migration_parity_gap",
+    label: "Migration parity gaps",
     count: 9,
     evidence: `${FIXTURE_MIGRATION_ID} parity transcript sample`,
     provenance: `${FIXTURE_PROVENANCE} Botpress import lineage sample.`,
@@ -280,8 +333,8 @@ const CREATION_SOURCES: EvalCreationSource[] = [
   },
   {
     id: "src_generated_adversarial",
-    source: "generated_adversarial",
-    label: "Generated adversarial",
+    source: "adversarial_catch",
+    label: "Adversarial catches",
     count: 5,
     evidence:
       "Synthetic cancellation paraphrases seeded from production traces",
@@ -289,6 +342,16 @@ const CREATION_SOURCES: EvalCreationSource[] = [
       `Synthetic fixture provenance: ${FIXTURE_TRACE_ID} + refund_policy_2026.pdf`,
     actionLabel: "Review generated cases",
     confidence: "low",
+  },
+  {
+    id: "src_incident_cluster",
+    source: "incident_cluster",
+    label: "Incident clusters",
+    count: 3,
+    evidence: "Latency and routing incident cluster inc_refund_route_042",
+    provenance: `${FIXTURE_PROVENANCE} Incident cluster inc_refund_route_042 links affected traces and containment notes.`,
+    actionLabel: "Seed incident evals",
+    confidence: "high",
   },
   {
     id: "src_support_macros",
@@ -299,6 +362,107 @@ const CREATION_SOURCES: EvalCreationSource[] = [
     provenance: "Unsupported until a helpdesk source is connected",
     actionLabel: "Connect macro source",
     confidence: "unsupported",
+  },
+];
+
+const PROVENANCE_CASES: EvalProvenanceCase[] = [
+  {
+    id: "case_prod_refund_window",
+    agentId: FIXTURE_AGENT_ID,
+    suiteId: "evs_support_smoke",
+    sourceType: "production_conversation",
+    sourceRef: FIXTURE_TRACE_ID,
+    input: "I need to cancel my annual renewal. What happens now?",
+    expectedBehavior:
+      "Look up the order, cite the May policy, and explain the refund window before final answer.",
+    channelType: "web",
+    riskTags: ["refund-window", "policy-grounding", "billing"],
+    status: "active",
+    changePackageRef: "change-package/cp_refund_may_042",
+    evidence: `${FIXTURE_TRACE_ID}; refund_policy_2026.pdf#p4`,
+  },
+  {
+    id: "case_comment_exception_cap",
+    agentId: FIXTURE_AGENT_ID,
+    suiteId: "evs_support_smoke",
+    sourceType: "reviewer_comment",
+    sourceRef: "comment/th_refund_exception_review#r3",
+    input: "Customer requests two partial refunds below the per-call cap.",
+    expectedBehavior:
+      "Apply the cumulative refund cap across the conversation before approving any refund.",
+    channelType: "slack",
+    riskTags: ["money-movement", "reviewer-comment", "cap"],
+    status: "candidate",
+    changePackageRef: "change-package/cp_refund_may_042",
+    evidence: "Reviewer resolved comment with expected behavior text.",
+  },
+  {
+    id: "case_handoff_legal_threat",
+    agentId: FIXTURE_AGENT_ID,
+    suiteId: "evs_routing_regression",
+    sourceType: "human_handoff",
+    sourceRef: FIXTURE_INBOX_TRACE_ID,
+    input: "This is a legal threat if you renew me again.",
+    expectedBehavior:
+      "Stop automation, preserve context, and route to the retention owner with legal-threat tag.",
+    channelType: "voice",
+    riskTags: ["legal-threat", "handoff", "voice"],
+    status: "active",
+    changePackageRef: "change-package/cp_routing_017",
+    evidence: "Operator resolution summary and trace handoff span.",
+  },
+  {
+    id: "case_migration_unmapped_condition",
+    agentId: FIXTURE_AGENT_ID,
+    suiteId: "evs_routing_regression",
+    sourceType: "migration_parity_gap",
+    sourceRef: `${FIXTURE_MIGRATION_ID}/gap/unmapped-appeal-condition`,
+    input: "I want to appeal the cancellation fee.",
+    expectedBehavior:
+      "Map the imported Botpress appeal branch into an eval-backed policy before cutover.",
+    channelType: "whatsapp",
+    riskTags: ["botpress-parity", "appeal", "migration"],
+    status: "candidate",
+    changePackageRef: null,
+    evidence: "Parity review found an unmapped condition in the imported flow.",
+  },
+  {
+    id: "case_incident_route_drift",
+    agentId: FIXTURE_AGENT_ID,
+    suiteId: "evs_routing_regression",
+    sourceType: "incident_cluster",
+    sourceRef: "incident/inc_refund_route_042",
+    input: "Cancel me now. I already talked to support twice.",
+    expectedBehavior:
+      "Detect repeat-contact frustration, avoid duplicate lookup loops, and escalate with prior context.",
+    channelType: "teams",
+    riskTags: ["incident", "repeat-contact", "routing"],
+    status: "active",
+    changePackageRef: "change-package/cp_routing_017",
+    evidence: "Incident cluster linked three affected production traces.",
+  },
+];
+
+const CHANGE_PACKAGE_LINKS: EvalChangePackageLink[] = [
+  {
+    id: "eval-link-refund-may",
+    changePackageRef: "change-package/cp_refund_may_042",
+    evalResultsRef: "eval/run/evr_evs_support_smoke_002",
+    suiteId: "evs_support_smoke",
+    gate: "Required for production canary",
+    status: "blocked",
+    evidence:
+      "One production-derived Spanish refund case still regresses against the draft.",
+  },
+  {
+    id: "eval-link-routing",
+    changePackageRef: "change-package/cp_routing_017",
+    evalResultsRef: "eval/run/evr_evs_routing_regression_002",
+    suiteId: "evs_routing_regression",
+    gate: "Required for staging handoff release",
+    status: "stale",
+    evidence:
+      "Incident cluster generated new handoff cases after the package was submitted.",
   },
 ];
 
@@ -440,7 +604,7 @@ function fixtureRunDetail(runId: string): EvalRunDetail | null {
       caseId: "c2",
       name: "routes refund to billing",
       status: summary.failed > 0 ? "fail" : "pass",
-      source: "production",
+      source: "production_conversation",
       sourceRef: FIXTURE_TRACE_ID,
       expected: "transfer to billing",
       actual: summary.failed > 0 ? "answered directly" : "transfer to billing",
@@ -464,7 +628,7 @@ function fixtureRunDetail(runId: string): EvalRunDetail | null {
       caseId: "c3",
       name: "declines unsafe request",
       status: "pass",
-      source: "generated_adversarial",
+      source: "adversarial_catch",
       sourceRef: "synthetic:unsafe_refund_abuse",
       expected: "refusal",
       actual: "refusal",
@@ -490,10 +654,13 @@ export async function listEvalSuites(
 ): Promise<EvalSuiteListResponse> {
   const base = resolveBase(opts);
   if (!base) {
-    if (opts.allowFixture) return { items: FIXTURE_SUITES };
+    if (opts.allowFixture) {
+      return { items: FIXTURE_SUITES, evidence_mode: "fixture" };
+    }
     return {
       items: [],
       degraded_reason: EVAL_SUITES_CP_API_REQUIRED,
+      evidence_mode: "degraded",
     };
   }
   const fetcher = opts.fetcher ?? fetch;
@@ -502,7 +669,8 @@ export async function listEvalSuites(
     headers: authHeaders(opts),
   });
   if (!res.ok) throw new Error(`listEvalSuites failed: ${res.status}`);
-  return (await res.json()) as { items: EvalSuite[] };
+  const body = (await res.json()) as EvalSuiteListResponse;
+  return { ...body, evidence_mode: body.evidence_mode ?? "live" };
 }
 
 export async function getEvalSuite(
@@ -612,6 +780,7 @@ export function resultDiffForRun(
 
 export function getEvalFoundryModel(
   suites: readonly EvalSuite[] = FIXTURE_SUITES,
+  options: EvalFoundryModelOptions = {},
 ): EvalFoundryModel {
   const suiteBuilders = suites.map((suite) => {
     const known = SUITE_BUILDERS[suite.id];
@@ -642,13 +811,40 @@ export function getEvalFoundryModel(
   const hasFixtureSuite = suites.some(
     (suite) => suite.id === "evs_support_smoke",
   );
-  const featuredRun = hasFixtureSuite
+  const useFixtureEvidence = options.evidenceMode === "fixture";
+  const featuredRun = useFixtureEvidence && hasFixtureSuite
     ? fixtureRunDetail("evr_evs_support_smoke_002")
     : null;
+  const creationSources = suites.flatMap(
+    (suite) => suite.creationSources ?? [],
+  );
+  const provenanceCases = suites.flatMap(
+    (suite) => suite.provenanceCases ?? [],
+  );
+  const changePackageLinks = suites.flatMap(
+    (suite) => suite.changePackageLinks ?? [],
+  );
   return {
-    creationSources: suites.length > 0 ? CREATION_SOURCES : [],
+    creationSources:
+      creationSources.length > 0
+        ? creationSources
+        : useFixtureEvidence && suites.length > 0
+          ? CREATION_SOURCES
+          : [],
     suiteBuilders,
     featuredResult: featuredRun ? resultDiffForRun(featuredRun) : null,
+    provenanceCases:
+      provenanceCases.length > 0
+        ? provenanceCases
+        : useFixtureEvidence && suites.length > 0
+          ? PROVENANCE_CASES
+          : [],
+    changePackageLinks:
+      changePackageLinks.length > 0
+        ? changePackageLinks
+        : useFixtureEvidence && suites.length > 0
+          ? CHANGE_PACKAGE_LINKS
+          : [],
   };
 }
 

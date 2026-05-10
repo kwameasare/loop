@@ -233,16 +233,39 @@ describe("formatPassRate", () => {
 
 describe("eval foundry model", () => {
   it("includes creation sources, suite builder controls, and featured result diffs", async () => {
-    const { items } = await listEvalSuites({ allowFixture: true });
-    const model = getEvalFoundryModel(items);
+    const { evidence_mode, items } = await listEvalSuites({
+      allowFixture: true,
+    });
+    const model = getEvalFoundryModel(items, { evidenceMode: evidence_mode });
     expect(model.creationSources.map((source) => source.source)).toEqual(
       expect.arrayContaining([
-        "simulator",
-        "production",
-        "operator_resolution",
-        "migration_transcript",
+        "simulator_run",
+        "production_conversation",
+        "human_handoff",
+        "reviewer_comment",
+        "migration_parity_gap",
         "knowledge_source",
-        "generated_adversarial",
+        "adversarial_catch",
+        "incident_cluster",
+      ]),
+    );
+    expect(
+      model.provenanceCases.map((item) => item.sourceType),
+    ).toEqual(
+      expect.arrayContaining([
+        "production_conversation",
+        "reviewer_comment",
+        "human_handoff",
+        "migration_parity_gap",
+        "incident_cluster",
+      ]),
+    );
+    expect(model.changePackageLinks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          changePackageRef: "change-package/cp_refund_may_042",
+          evalResultsRef: "eval/run/evr_evs_support_smoke_002",
+        }),
       ]),
     );
     expect(model.suiteBuilders[0]?.scorers.map((scorer) => scorer.id)).toEqual(
@@ -263,7 +286,29 @@ describe("eval foundry model", () => {
     const model = getEvalFoundryModel([]);
     expect(model.suiteBuilders).toEqual([]);
     expect(model.creationSources).toEqual([]);
+    expect(model.provenanceCases).toEqual([]);
+    expect(model.changePackageLinks).toEqual([]);
     expect(model.featuredResult).toBeNull();
+  });
+
+  it("does not invent provenance for live suite summaries without case evidence", () => {
+    const model = getEvalFoundryModel(
+      [
+        {
+          agentId: "agent-live",
+          cases: 4,
+          id: "evs_live",
+          lastRunAt: null,
+          name: "Live suite",
+          passRate: null,
+        },
+      ],
+      { evidenceMode: "live" },
+    );
+
+    expect(model.creationSources).toEqual([]);
+    expect(model.provenanceCases).toEqual([]);
+    expect(model.changePackageLinks).toEqual([]);
   });
 });
 
