@@ -39,6 +39,12 @@ describe("AgentHistoryWalkthrough", () => {
     expect(screen.getByTestId("handoff-transfers")).toHaveTextContent(
       "new-owner@acme.test",
     );
+    expect(screen.getByTestId("handoff-transfers")).toHaveTextContent(
+      "Walkthrough sent to new-owner@acme.test",
+    );
+    expect(screen.getByTestId("handoff-transfers")).toHaveTextContent(
+      "risks: commitment_missing_fields",
+    );
     expect(screen.getByTestId("handoff-notice")).toHaveTextContent(
       /Ownership transfer recorded/i,
     );

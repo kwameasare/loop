@@ -264,6 +264,16 @@ export function AgentHistoryWalkthrough({
                 <p className="mt-1 font-mono text-xs text-muted-foreground">
                   {transfer.history_walkthrough_id}
                 </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Walkthrough sent to {transfer.notification.recipient} ·{" "}
+                  {transfer.walkthrough_section_ids.length} sections ·{" "}
+                  {transfer.open_risk_ids.length} open risks
+                </p>
+                {transfer.open_risk_ids.length ? (
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">
+                    risks: {transfer.open_risk_ids.join(", ")}
+                  </p>
+                ) : null}
               </li>
             ))}
           </ul>

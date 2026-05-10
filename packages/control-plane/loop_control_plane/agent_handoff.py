@@ -31,6 +31,9 @@ class OwnershipTransferRecord(BaseModel):
     backup_owner_user_id: str
     reason: str
     acknowledged_risk_ids: list[str]
+    open_risk_ids: list[str]
+    walkthrough_section_ids: list[str]
+    notification: dict[str, str]
     history_walkthrough_id: str
     created_by_user_id: str
     created_at: datetime
@@ -52,6 +55,8 @@ class AgentHandoffRegistry:
         previous_owner_user_id: str,
         body: OwnershipTransferCreate,
         actor_sub: str,
+        open_risk_ids: list[str] | None = None,
+        walkthrough_section_ids: list[str] | None = None,
     ) -> OwnershipTransferRecord:
         if previous_owner_user_id == body.new_owner_user_id:
             raise WorkspaceError("new owner already owns this agent")
@@ -66,6 +71,15 @@ class AgentHandoffRegistry:
                 backup_owner_user_id=body.backup_owner_user_id,
                 reason=body.reason,
                 acknowledged_risk_ids=body.acknowledged_risk_ids,
+                open_risk_ids=open_risk_ids or [],
+                walkthrough_section_ids=walkthrough_section_ids or [],
+                notification={
+                    "recipient": body.new_owner_user_id,
+                    "channel": "in_app",
+                    "status": "queued",
+                    "sent_at": now.isoformat(),
+                    "summary": "Agent ownership transferred. Review the history walkthrough before editing.",
+                },
                 history_walkthrough_id=f"walk_{uuid4().hex[:12]}",
                 created_by_user_id=actor_sub,
                 created_at=now,

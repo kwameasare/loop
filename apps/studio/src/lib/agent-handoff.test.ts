@@ -44,4 +44,22 @@ describe("agent handoff client", () => {
     ).resolves.toMatchObject({ owner_user_id: "new-owner@acme.test" });
     expect(capturedUrl).toContain("/agents/agent_1/handoff/transfer");
   });
+
+  it("keeps handoff risk and walkthrough receipts in local fallback mode", async () => {
+    const transferred = await transferAgentOwner("agent_1", {
+      new_owner_user_id: "new-owner@acme.test",
+      backup_owner_user_id: "backup@acme.test",
+      acknowledged_risk_ids: ["commitment_missing_fields"],
+    });
+
+    expect(transferred.transfers[0]?.open_risk_ids).toContain(
+      "commitment_missing_fields",
+    );
+    expect(transferred.transfers[0]?.walkthrough_section_ids).toContain(
+      "important-comments",
+    );
+    expect(transferred.transfers[0]?.notification.recipient).toBe(
+      "new-owner@acme.test",
+    );
+  });
 });

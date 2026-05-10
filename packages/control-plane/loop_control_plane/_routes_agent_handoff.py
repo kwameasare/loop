@@ -277,12 +277,17 @@ async def transfer_agent_owner(
     )
     cp = request.app.state.cp
     commitment = await cp.agent_commitments.current(agent=agent)
+    handoff_before_transfer = await _handoff_model(request, agent=agent)
     try:
         transfer = await cp.agent_handoffs.create_transfer(
             agent=agent,
             previous_owner_user_id=commitment.body.owner_user_id,
             body=body,
             actor_sub=caller_sub,
+            open_risk_ids=[risk["id"] for risk in handoff_before_transfer["open_risks"]],
+            walkthrough_section_ids=[
+                section["id"] for section in handoff_before_transfer["walkthrough_sections"]
+            ],
         )
     except WorkspaceError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -310,7 +315,10 @@ async def transfer_agent_owner(
             "new_owner_user_id": transfer.new_owner_user_id,
             "backup_owner_user_id": transfer.backup_owner_user_id,
             "acknowledged_risk_ids": transfer.acknowledged_risk_ids,
+            "open_risk_ids": transfer.open_risk_ids,
+            "walkthrough_section_ids": transfer.walkthrough_section_ids,
             "history_walkthrough_id": transfer.history_walkthrough_id,
+            "notification_recipient": transfer.notification["recipient"],
         },
     )
     return await _handoff_model(request, agent=agent)
