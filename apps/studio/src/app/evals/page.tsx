@@ -9,10 +9,15 @@ export default async function EvalsIndexPage() {
     items: [],
     degraded_reason:
       error instanceof Error ? error.message : "Could not load eval suites.",
+    evidence_mode: "degraded" as const,
   }));
   const { items, degraded_reason: degradedReason } = evalSuitesResult;
   const existingNames = items.map((s) => s.name);
-  const model = getEvalFoundryModel(items);
+  const model = evalSuitesResult.evidence_mode
+    ? getEvalFoundryModel(items, {
+        evidenceMode: evalSuitesResult.evidence_mode,
+      })
+    : getEvalFoundryModel(items);
   const suggestionsAgentId = items[0]?.agentId;
   return (
     <EvalFoundry

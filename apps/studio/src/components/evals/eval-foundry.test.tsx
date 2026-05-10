@@ -25,7 +25,7 @@ describe("EvalFoundry", () => {
     render(
       <EvalFoundry
         createAction={<button type="button">New suite</button>}
-        model={getEvalFoundryModel(suites)}
+        model={getEvalFoundryModel(suites, { evidenceMode: "fixture" })}
         suites={suites}
       />,
     );
@@ -36,7 +36,22 @@ describe("EvalFoundry", () => {
       "Production conversations",
     );
     expect(screen.getByTestId("eval-creation-sources")).toHaveTextContent(
-      "Generated adversarial",
+      "Adversarial catches",
+    );
+    expect(screen.getByTestId("eval-provenance-contract")).toHaveTextContent(
+      "Production Conversation",
+    );
+    expect(screen.getByTestId("eval-provenance-contract")).toHaveTextContent(
+      "Expected behavior",
+    );
+    expect(screen.getByTestId("eval-provenance-contract")).toHaveTextContent(
+      "reviewer-comment",
+    );
+    expect(screen.getByTestId("eval-change-package-links")).toHaveTextContent(
+      "eval/run/evr_evs_support_smoke_002",
+    );
+    expect(screen.getByTestId("eval-change-package-links")).toHaveTextContent(
+      "Required for production canary",
     );
     expect(screen.getByTestId("suite-builder")).toHaveTextContent(
       "Grounded answer",
@@ -55,7 +70,9 @@ describe("EvalFoundry", () => {
   it("shows useful empty states for missing suite config and result diffs", () => {
     const model: EvalFoundryModel = {
       creationSources: [],
+      changePackageLinks: [],
       featuredResult: null,
+      provenanceCases: [],
       suiteBuilders: [],
     };
     render(
@@ -75,7 +92,13 @@ describe("EvalFoundry", () => {
       <EvalFoundry
         createAction={<button type="button">New suite</button>}
         degradedReason="LOOP_CP_API_BASE_URL is required to load eval suites."
-        model={{ creationSources: [], featuredResult: null, suiteBuilders: [] }}
+        model={{
+          creationSources: [],
+          changePackageLinks: [],
+          featuredResult: null,
+          provenanceCases: [],
+          suiteBuilders: [],
+        }}
         suites={[]}
       />,
     );

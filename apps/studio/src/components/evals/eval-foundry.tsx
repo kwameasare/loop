@@ -4,6 +4,7 @@ import { PersonalizedEmptyStateSuggestions } from "@/components/empty-state/pers
 import { EvidenceCallout, LiveBadge, StatePanel } from "@/components/target";
 import { EvalSuiteList } from "@/components/evals/eval-suite-list";
 import {
+  type EvalCaseSource,
   formatEvalUsd,
   type EvalFoundryModel,
   type EvalSuite,
@@ -20,6 +21,12 @@ export interface EvalFoundryProps {
 function formatLatencyDelta(ms: number): string {
   if (ms === 0) return "0 ms";
   return `${ms > 0 ? "+" : ""}${ms} ms`;
+}
+
+function formatSourceType(source: EvalCaseSource): string {
+  return source
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export function EvalFoundry({
@@ -113,6 +120,168 @@ export function EvalFoundry({
                 >
                   {source.actionLabel}
                 </button>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section
+        aria-labelledby="eval-provenance-heading"
+        className="space-y-3"
+        data-testid="eval-provenance-contract"
+      >
+        <div>
+          <h2 className="text-lg font-semibold" id="eval-provenance-heading">
+            Provenance contract
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Every case must preserve source type, source reference, input,
+            expected behavior, channel, risk tags, status, and promotion
+            evidence before it can act as a gate.
+          </p>
+        </div>
+        {model.provenanceCases.length === 0 ? (
+          <StatePanel
+            state={suites.length > 0 ? "degraded" : "empty"}
+            title="No eval provenance loaded"
+          >
+            {suites.length > 0
+              ? "The control plane returned suite summaries without case-level provenance. Studio will not infer source refs or Change Package links."
+              : "Create a suite from a simulator run, production turn, comment, handoff, migration gap, catch, or incident cluster."}
+          </StatePanel>
+        ) : (
+          <div className="grid gap-3 xl:grid-cols-2">
+            {model.provenanceCases.map((item) => (
+              <article
+                className="rounded-md border bg-card p-4"
+                data-testid={`eval-provenance-${item.id}`}
+                key={item.id}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold">
+                      {formatSourceType(item.sourceType)}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {item.sourceRef}
+                    </p>
+                  </div>
+                  <LiveBadge tone={item.status === "active" ? "live" : "staged"}>
+                    {item.status}
+                  </LiveBadge>
+                </div>
+                <dl className="mt-4 grid gap-2 text-sm md:grid-cols-2">
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Input
+                    </dt>
+                    <dd>{item.input}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Expected behavior
+                    </dt>
+                    <dd>{item.expectedBehavior}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Channel
+                    </dt>
+                    <dd>{item.channelType}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Risk tags
+                    </dt>
+                    <dd>{item.riskTags.join(", ")}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Change Package
+                    </dt>
+                    <dd>{item.changePackageRef ?? "not attached yet"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Evidence
+                    </dt>
+                    <dd>{item.evidence}</dd>
+                  </div>
+                </dl>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section
+        aria-labelledby="eval-change-package-heading"
+        className="space-y-3"
+        data-testid="eval-change-package-links"
+      >
+        <div>
+          <h2
+            className="text-lg font-semibold"
+            id="eval-change-package-heading"
+          >
+            Change Package links
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Promotion proof must point at exact eval result refs. Missing or
+            stale links block deploy instead of being treated as green evidence.
+          </p>
+        </div>
+        {model.changePackageLinks.length === 0 ? (
+          <StatePanel
+            state={suites.length > 0 ? "degraded" : "empty"}
+            title="No Change Package eval links"
+          >
+            {suites.length > 0
+              ? "No eval_results_ref links were loaded with these suites."
+              : "Run a suite during preflight to attach eval results to a Change Package."}
+          </StatePanel>
+        ) : (
+          <div className="grid gap-3 lg:grid-cols-2">
+            {model.changePackageLinks.map((link) => (
+              <article
+                className="rounded-md border bg-card p-4"
+                data-testid={`eval-change-package-${link.id}`}
+                key={link.id}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold">{link.changePackageRef}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {link.evalResultsRef}
+                    </p>
+                  </div>
+                  <LiveBadge
+                    tone={link.status === "ready" ? "live" : "canary"}
+                  >
+                    {link.status}
+                  </LiveBadge>
+                </div>
+                <dl className="mt-4 grid gap-2 text-sm md:grid-cols-2">
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Suite
+                    </dt>
+                    <dd>{link.suiteId}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Gate
+                    </dt>
+                    <dd>{link.gate}</dd>
+                  </div>
+                  <div className="md:col-span-2">
+                    <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                      Evidence
+                    </dt>
+                    <dd>{link.evidence}</dd>
+                  </div>
+                </dl>
               </article>
             ))}
           </div>
