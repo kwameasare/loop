@@ -35,7 +35,7 @@ export async function cpJson<T>(
     allowFallback?: boolean;
   },
 ): Promise<T> {
-  const fallbackEnabled = opts.allowFallback ?? true;
+  const fallbackEnabled = opts.allowFallback === true;
   const base = cpApiBaseUrl(opts.baseUrl);
   if (!base) {
     if (fallbackEnabled) return opts.fallback;

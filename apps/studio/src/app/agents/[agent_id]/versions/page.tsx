@@ -24,7 +24,15 @@ export default async function AgentVersionsPage({
     listAgentVersions(params.agent_id, {
       pageSize: 100,
     }),
-    listAgentWorkflow(params.agent_id),
+    listAgentWorkflow(params.agent_id).catch((error: unknown) => ({
+      branches: [],
+      change_sets: [],
+      release_candidates: [],
+      degraded_reason:
+        error instanceof Error
+          ? error.message
+          : "Could not load release workflow.",
+    })),
   ]);
   return (
     <div className="flex flex-col gap-4" data-testid="agent-versions-tab">

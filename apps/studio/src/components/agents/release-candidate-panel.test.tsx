@@ -39,6 +39,25 @@ describe("ReleaseCandidatePanel", () => {
     expect(screen.getByTestId("workflow-approve-owner")).toBeEnabled();
   });
 
+  it("shows degraded workflow state without enabling release actions", () => {
+    render(
+      <ReleaseCandidatePanel
+        agentId="agent-1"
+        initialWorkflow={{
+          ...emptyWorkflow(),
+          degraded_reason: "LOOP_CP_API_BASE_URL is required",
+        }}
+      />,
+    );
+
+    expect(screen.getByTestId("workflow-degraded")).toHaveTextContent(
+      "Release workflow is unavailable",
+    );
+    expect(screen.getByTestId("workflow-create-branch")).toBeDisabled();
+    expect(screen.getByTestId("workflow-create-change-set")).toBeDisabled();
+    expect(screen.getByTestId("workflow-create-release-candidate")).toBeDisabled();
+  });
+
   it("walks an empty agent through branch, change set, tests, and release candidate", async () => {
     const branch: AgentBranch = {
       ...localAgentWorkflow("agent-1").branches[0]!,

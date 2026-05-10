@@ -29,12 +29,13 @@ type HelpClipOptions = UxWireupClientOptions & {
 
 export async function fetchTelemetryConsent(
   workspaceId: string,
-  opts: UxWireupClientOptions = {},
+  opts: TelemetryConsentOptions = {},
 ): Promise<TelemetryConsentModel> {
   return cpJson<TelemetryConsentModel>(
     `/workspaces/${encodeURIComponent(workspaceId)}/telemetry-consent`,
     {
       ...opts,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         workspace_id: workspaceId,
         user_sub: "local-builder",

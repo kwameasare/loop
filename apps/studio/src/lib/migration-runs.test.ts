@@ -10,8 +10,16 @@ import {
 } from "./migration-runs";
 
 describe("migration-runs client", () => {
-  it("falls back to empty list when no cp-api base URL is configured", async () => {
-    await expect(listMigrationImports("ws_1")).resolves.toEqual({ items: [] });
+  it("does not fabricate an empty import list when cp-api is unconfigured", async () => {
+    await expect(listMigrationImports("ws_1")).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required",
+    );
+  });
+
+  it("keeps an empty import fixture explicitly opt-in", async () => {
+    await expect(
+      listMigrationImports("ws_1", { allowFixture: true }),
+    ).resolves.toEqual({ items: [] });
   });
 
   it("defines import profiles for non-Botpress migration sources", () => {

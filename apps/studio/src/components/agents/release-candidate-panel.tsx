@@ -92,6 +92,8 @@ export function ReleaseCandidatePanel({
     () => latest(workflow.release_candidates),
     [workflow.release_candidates],
   );
+  const degradedReason = workflow.degraded_reason;
+  const workflowUnavailable = Boolean(degradedReason);
 
   const canCreateChangeSet = Boolean(branch) && !changeSet;
   const canMarkReadyForTests = changeSet?.status === "draft";
@@ -307,7 +309,7 @@ export function ReleaseCandidatePanel({
             <button
               type="button"
               className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted/50 disabled:opacity-50"
-              disabled={busy !== "idle"}
+              disabled={workflowUnavailable || busy !== "idle"}
               onClick={handleCreateBranch}
               data-testid="workflow-create-branch"
             >
@@ -320,7 +322,9 @@ export function ReleaseCandidatePanel({
             <button
               type="button"
               className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted/50 disabled:opacity-50"
-              disabled={!canCreateChangeSet || busy !== "idle"}
+              disabled={
+                workflowUnavailable || !canCreateChangeSet || busy !== "idle"
+              }
               onClick={handleCreateChangeSet}
               data-testid="workflow-create-change-set"
             >
@@ -328,6 +332,16 @@ export function ReleaseCandidatePanel({
             </button>
           </div>
         </div>
+
+        {degradedReason ? (
+          <p
+            className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+            data-testid="workflow-degraded"
+            role="status"
+          >
+            Release workflow is unavailable. {degradedReason}
+          </p>
+        ) : null}
 
         <div className="grid gap-3 lg:grid-cols-3">
           <article
@@ -381,7 +395,9 @@ export function ReleaseCandidatePanel({
                   <button
                     type="button"
                     className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted/50 disabled:opacity-50"
-                    disabled={!canMarkReadyForTests || busy !== "idle"}
+                    disabled={
+                      workflowUnavailable || !canMarkReadyForTests || busy !== "idle"
+                    }
                     onClick={handleReadyForTests}
                     data-testid="workflow-ready-tests"
                   >
@@ -390,7 +406,11 @@ export function ReleaseCandidatePanel({
                   <button
                     type="button"
                     className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted/50 disabled:opacity-50"
-                    disabled={!canMarkReadyForReview || busy !== "idle"}
+                    disabled={
+                      workflowUnavailable ||
+                      !canMarkReadyForReview ||
+                      busy !== "idle"
+                    }
                     onClick={handleReadyForReview}
                     data-testid="workflow-ready-review"
                   >
@@ -449,7 +469,9 @@ export function ReleaseCandidatePanel({
                       <button
                         type="button"
                         className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted/50 disabled:opacity-50"
-                        disabled={approval.satisfied || busy !== "idle"}
+                        disabled={
+                          workflowUnavailable || approval.satisfied || busy !== "idle"
+                        }
                         onClick={() => handleApprove(approval.id)}
                         data-testid={`workflow-approve-${approval.id}`}
                       >
@@ -468,7 +490,11 @@ export function ReleaseCandidatePanel({
                 <button
                   type="button"
                   className="mt-3 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                  disabled={!canCreateReleaseCandidate || busy !== "idle"}
+                  disabled={
+                    workflowUnavailable ||
+                    !canCreateReleaseCandidate ||
+                    busy !== "idle"
+                  }
                   onClick={handleCreateReleaseCandidate}
                   data-testid="workflow-create-release-candidate"
                 >

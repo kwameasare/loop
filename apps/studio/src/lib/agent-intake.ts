@@ -188,6 +188,10 @@ export interface AgentIntakeOptions extends UxWireupClientOptions {
   allowFixture?: boolean;
 }
 
+export interface AgentIntakeTemplateOptions extends UxWireupClientOptions {
+  allowFixture?: boolean;
+}
+
 function localAgent(
   input: AgentIntakeCreateInput,
   workspaceId: string,
@@ -340,12 +344,13 @@ export async function createAgentIntake(
 
 export async function listAgentIntakeTemplates(
   workspaceId: string,
-  opts: UxWireupClientOptions = {},
+  opts: AgentIntakeTemplateOptions = {},
 ): Promise<AgentIntakeTemplateList> {
   return cpJson<AgentIntakeTemplateList>(
     `/workspaces/${encodeURIComponent(workspaceId)}/agent-intake-templates`,
     {
       ...opts,
+      allowFallback: opts.allowFixture === true,
       fallback: { items: LOCAL_AGENT_INTAKE_TEMPLATES },
     },
   );
