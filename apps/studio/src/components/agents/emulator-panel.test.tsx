@@ -120,7 +120,13 @@ describe("EmulatorPanel", () => {
   });
 
   it("supports channel shells, seeded controls, tool disable, and version diff", () => {
-    render(<EmulatorPanel agentId="agt_1" invoke={vi.fn()} />);
+    render(
+      <EmulatorPanel
+        agentId="agt_1"
+        evidenceMode="fixture"
+        invoke={vi.fn()}
+      />,
+    );
 
     fireEvent.click(screen.getByTestId("sim-channel-whatsapp"));
     fireEvent.change(screen.getByTestId("sim-persona"), {
@@ -149,7 +155,13 @@ describe("EmulatorPanel", () => {
   });
 
   it("logs ChatOps replay commands and surfaces unsupported voice preview", async () => {
-    render(<EmulatorPanel agentId="agt_1" invoke={vi.fn()} />);
+    render(
+      <EmulatorPanel
+        agentId="agt_1"
+        evidenceMode="fixture"
+        invoke={vi.fn()}
+      />,
+    );
 
     fireEvent.click(screen.getByTestId("sim-channel-voice"));
     expect(screen.getByTestId("sim-unsupported")).toHaveTextContent(
@@ -184,5 +196,15 @@ describe("EmulatorPanel", () => {
     expect(screen.getByTestId("emulator-error")).toHaveTextContent(
       "Unsupported command",
     );
+  });
+
+  it("defaults to no seeded production context instead of fixture evidence", () => {
+    render(<EmulatorPanel agentId="agt_1" invoke={vi.fn()} />);
+
+    expect(screen.getByTestId("sim-result-view")).toHaveTextContent(
+      "No production baseline loaded for this agent.",
+    );
+    expect(screen.queryByText("trace_refund_742")).not.toBeInTheDocument();
+    expect(screen.getByTestId("sim-seed")).toHaveValue("blank");
   });
 });
