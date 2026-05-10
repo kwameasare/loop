@@ -7,11 +7,10 @@ import {
 } from "./kb";
 import type { KbDocument, UploaderFn } from "./kb";
 
-describe("kb (fixture mode)", () => {
-  it("listKbDocuments returns a seeded handbook", async () => {
+describe("kb (local mode)", () => {
+  it("listKbDocuments starts empty instead of inventing seeded sources", async () => {
     const { items } = await listKbDocuments("agt_fixture_a");
-    expect(items.length).toBeGreaterThanOrEqual(1);
-    expect(items[0]?.contentType).toBe("text/markdown");
+    expect(items).toEqual([]);
   });
 
   it("uploadKbDocument streams progress and appends to the list", async () => {
