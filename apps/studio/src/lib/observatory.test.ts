@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { OBSERVATORY_MODEL } from "@/components/observatory/observatory-test-fixtures";
 import {
-  OBSERVATORY_MODEL,
   buildObservatoryModel,
   createObservatoryAnomalyEvalCase,
   createObservatoryAnomalyTask,
@@ -100,11 +100,12 @@ describe("buildObservatoryModel", () => {
     expect(model.anomalies.map((anomaly) => anomaly.id)).toContain(
       "live_trace_errors",
     );
-    expect(model.anomalies.find((anomaly) => anomaly.id === "live_trace_errors"))
-      .toMatchObject({
-        affectedObject: "production trace cluster",
-        traceQuery: "status:error",
-      });
+    expect(
+      model.anomalies.find((anomaly) => anomaly.id === "live_trace_errors"),
+    ).toMatchObject({
+      affectedObject: "production trace cluster",
+      traceQuery: "status:error",
+    });
     expect(model.tail[0]?.traceId).toBe("trace-error");
     expect(model.agents[0]).toMatchObject({
       id: "agent-a",
