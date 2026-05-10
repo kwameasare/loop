@@ -2036,6 +2036,34 @@ async def provision_voice_number(
         "sip_route": f"livekit://workspace/{workspace_id}/voice/{uuid4().hex[:8]}",
     }
     _bucket(request, "voice_numbers").setdefault(str(workspace_id), []).append(number)
+    cp = request.app.state.cp
+    voice_config = dict(
+        cp.voice_configs.get(
+            workspace_id,
+            {
+                "workspace_id": str(workspace_id),
+                "numbers": [],
+                "asr_provider": "deepgram",
+                "tts_provider": "elevenlabs",
+            },
+        )
+    )
+    configured_numbers = list(voice_config.get("numbers") or [])
+    configured_numbers.append(
+        {
+            "id": number["id"],
+            "e164": number["phone_number"],
+            "label": f"{body.country} {body.capability} line",
+            "region": f"{body.country.lower()}-{body.area_code or 'default'}",
+            "provisioned_at_ms": int(datetime.now(UTC).timestamp() * 1000),
+            "provider": body.provider,
+            "sip_route": number["sip_route"],
+            "compliance": number["compliance"],
+        }
+    )
+    voice_config["workspace_id"] = str(workspace_id)
+    voice_config["numbers"] = configured_numbers
+    cp.voice_configs[workspace_id] = voice_config
     _audit(
         request,
         workspace_id=workspace_id,
