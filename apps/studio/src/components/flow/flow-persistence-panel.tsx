@@ -101,11 +101,11 @@ export function FlowPersistencePanel(props: FlowPersistencePanelProps) {
   return (
     <section
       aria-label="Flow persistence"
-      className="flex items-center gap-3 border-b bg-white px-4 py-2"
+      className="flex items-center gap-3 border-b bg-card px-4 py-2"
       data-testid="flow-persistence"
     >
       <button
-        className="rounded bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-500 disabled:bg-zinc-300"
+        className="rounded bg-primary px-3 py-1 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground"
         data-testid="flow-save"
         disabled={status.kind === "saving" || status.kind === "loading"}
         onClick={save}
@@ -114,7 +114,7 @@ export function FlowPersistencePanel(props: FlowPersistencePanelProps) {
         Save
       </button>
       <button
-        className="rounded border px-3 py-1 text-sm hover:bg-zinc-50 disabled:bg-zinc-100"
+        className="rounded border bg-background px-3 py-1 text-sm text-foreground hover:bg-muted disabled:opacity-50"
         data-testid="flow-reload"
         disabled={status.kind === "loading"}
         onClick={reloadFromServer}
@@ -123,14 +123,14 @@ export function FlowPersistencePanel(props: FlowPersistencePanelProps) {
         Reload
       </button>
       <span
-        className="font-mono text-xs text-zinc-500"
+        className="font-mono text-xs text-muted-foreground"
         data-testid="flow-version-tag"
       >
         {versionTag ? `version: ${versionTag}` : "version: (unsaved)"}
       </span>
       {status.kind === "saving" || status.kind === "loading" ? (
         <span
-          className="text-xs text-zinc-500"
+          className="text-xs text-muted-foreground"
           data-testid="flow-persistence-busy"
         >
           {status.kind === "saving" ? "Saving…" : "Loading…"}
@@ -138,7 +138,7 @@ export function FlowPersistencePanel(props: FlowPersistencePanelProps) {
       ) : null}
       {status.kind === "saved" ? (
         <span
-          className="text-xs text-emerald-700"
+          className="text-xs text-success"
           data-testid="flow-saved"
           role="status"
         >
@@ -147,7 +147,7 @@ export function FlowPersistencePanel(props: FlowPersistencePanelProps) {
       ) : null}
       {status.kind === "loaded" ? (
         <span
-          className="text-xs text-zinc-600"
+          className="text-xs text-muted-foreground"
           data-testid="flow-loaded"
           role="status"
         >
@@ -156,7 +156,7 @@ export function FlowPersistencePanel(props: FlowPersistencePanelProps) {
       ) : null}
       {status.kind === "error" ? (
         <span
-          className="text-xs text-red-600"
+          className="text-xs text-destructive"
           data-testid="flow-persistence-error"
           role="alert"
         >
@@ -165,7 +165,7 @@ export function FlowPersistencePanel(props: FlowPersistencePanelProps) {
       ) : null}
       {status.kind === "conflict" ? (
         <div
-          className="flex items-center gap-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900"
+          className="flex items-center gap-2 rounded border border-warning/30 bg-warning/10 px-2 py-1 text-xs text-warning"
           data-testid="flow-conflict"
           role="alert"
         >
@@ -174,7 +174,7 @@ export function FlowPersistencePanel(props: FlowPersistencePanelProps) {
             saving.
           </span>
           <button
-            className="rounded border border-amber-400 bg-white px-2 py-0.5 hover:bg-amber-100"
+            className="rounded border border-warning/40 bg-background px-2 py-0.5 hover:bg-warning/10"
             data-testid="flow-conflict-reload"
             onClick={reloadFromServer}
             type="button"
