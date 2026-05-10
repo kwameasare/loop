@@ -22,10 +22,14 @@ export const PERSONA_SET_LABELS: Record<PersonaSet, string> = {
   accessibility: "Accessibility",
 };
 
+type PersonaSimulatorClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 export async function runPersonaSimulation(
   agentId: string,
   personaSet: PersonaSet,
-  opts: UxWireupClientOptions = {},
+  opts: PersonaSimulatorClientOptions = {},
 ): Promise<PersonaSimulationResponse> {
   return cpJson<PersonaSimulationResponse>(
     `/agents/${encodeURIComponent(agentId)}/persona-test`,
@@ -33,6 +37,7 @@ export async function runPersonaSimulation(
       ...opts,
       method: "POST",
       body: { persona_set: personaSet },
+      allowFallback: opts.allowFixture === true,
       fallback: {
         persona_set: personaSet,
         items: [

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   SimulatorLab,
@@ -14,7 +14,37 @@ import type {
 } from "@/lib/simulator-feedback";
 
 describe("SimulatorLab", () => {
+  const ORIGINAL_BASE_URL = process.env.LOOP_CP_API_BASE_URL;
+
+  afterEach(() => {
+    if (ORIGINAL_BASE_URL === undefined) {
+      delete process.env.LOOP_CP_API_BASE_URL;
+    } else {
+      process.env.LOOP_CP_API_BASE_URL = ORIGINAL_BASE_URL;
+    }
+    vi.unstubAllGlobals();
+  });
+
   it("runs the first-user persona suite from the simulator surface", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        Response.json({
+          persona_set: "first-user",
+          items: [
+            {
+              persona: "journalist",
+              scenarios: 10,
+              pass_rate: 0.9,
+              failed_scenarios: 1,
+              candidate_eval_id: "eval.persona.journalist.policy_provenance",
+              evidence_ref: "persona-test/agent_support/journalist",
+            },
+          ],
+        }),
+      ),
+    );
     render(
       <SimulatorLab
         agentId="agent_support"
