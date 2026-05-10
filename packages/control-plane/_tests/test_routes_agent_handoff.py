@@ -111,9 +111,22 @@ def test_handoff_walkthrough_and_owner_transfer_are_audited(
     assert body["transfers"][0]["previous_owner_user_id"] == ""
     assert body["transfers"][0]["new_owner_user_id"] == "new-owner@acme.test"
     assert body["transfers"][0]["history_walkthrough_id"].startswith("walk_")
+    assert body["transfers"][0]["open_risk_ids"] == ["commitment_missing_fields"]
+    assert "important-comments" in body["transfers"][0]["walkthrough_section_ids"]
+    assert body["transfers"][0]["notification"]["recipient"] == "new-owner@acme.test"
     assert body["commitment"]["created_from"] == "handoff:ownership_transfer"
     actions = [
         event.action
         for event in client.app.state.cp.audit_events.list_for_workspace(workspace_id)  # type: ignore[attr-defined]
     ]
     assert "agent_handoff:ownership_transfer" in actions
+    transfer_event = next(
+        event
+        for event in client.app.state.cp.audit_events.list_for_workspace(workspace_id)  # type: ignore[attr-defined]
+        if event.action == "agent_handoff:ownership_transfer"
+    )
+    payload = client.app.state.cp.audit_events.fetch_payload(  # type: ignore[attr-defined]
+        transfer_event.payload_hash
+    )
+    assert payload["notification_recipient"] == "new-owner@acme.test"
+    assert payload["open_risk_ids"] == ["commitment_missing_fields"]

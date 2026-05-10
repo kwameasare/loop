@@ -31,6 +31,15 @@ export interface OwnershipTransfer {
   backup_owner_user_id: string;
   reason: string;
   acknowledged_risk_ids: string[];
+  open_risk_ids: string[];
+  walkthrough_section_ids: string[];
+  notification: {
+    recipient: string;
+    channel: string;
+    status: string;
+    sent_at: string;
+    summary: string;
+  };
   history_walkthrough_id: string;
   created_by_user_id: string;
   created_at: string;
@@ -136,6 +145,7 @@ export async function transferAgentOwner(
   opts: UxWireupClientOptions & { fallbackModel?: AgentHandoffModel } = {},
 ): Promise<AgentHandoffModel> {
   const fallback = opts.fallbackModel ?? localAgentHandoff(agentId);
+  const now = new Date().toISOString();
   const nextCommitment = {
     ...fallback.commitment,
     body: {
@@ -145,7 +155,7 @@ export async function transferAgentOwner(
     },
     owner_user_id: input.new_owner_user_id,
     created_from: "handoff:ownership_transfer",
-    updated_at: new Date().toISOString(),
+    updated_at: now,
   };
   return cpJson<AgentHandoffModel>(
     `/agents/${encodeURIComponent(agentId)}/handoff/transfer`,
@@ -168,9 +178,21 @@ export async function transferAgentOwner(
             backup_owner_user_id: input.backup_owner_user_id ?? "",
             reason: input.reason ?? "",
             acknowledged_risk_ids: input.acknowledged_risk_ids ?? [],
+            open_risk_ids: fallback.open_risks.map((risk) => risk.id),
+            walkthrough_section_ids: fallback.walkthrough_sections.map(
+              (section) => section.id,
+            ),
+            notification: {
+              recipient: input.new_owner_user_id,
+              channel: "in_app",
+              status: "queued",
+              sent_at: now,
+              summary:
+                "Agent ownership transferred. Review the history walkthrough before editing.",
+            },
             history_walkthrough_id: `walk_local_${Date.now()}`,
             created_by_user_id: "local-builder",
-            created_at: new Date().toISOString(),
+            created_at: now,
           },
           ...fallback.transfers,
         ],
