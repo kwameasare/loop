@@ -94,6 +94,10 @@ export interface BehaviorEditorData {
   degradedReason?: string | undefined;
 }
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export const BEHAVIOR_MODE_LABEL: Record<BehaviorMode, string> = {
   plain: "Plain language",
   policy: "Structured policy",
@@ -527,7 +531,16 @@ export async function fetchBehaviorEditorData(
   opts: ListAgentVersionsOptions = {},
 ): Promise<BehaviorEditorData> {
   const versions = await listAgentVersions(agentId, { ...opts, pageSize: 1 });
-  const data = createBehaviorEditorDataFromVersion(agentId, versions.items[0] ?? null);
+  const data =
+    versions.degraded_reason && versions.items.length === 0
+      ? createDegradedBehaviorEditorData(agentId, versions.degraded_reason)
+      : {
+          ...createBehaviorEditorDataFromVersion(
+            agentId,
+            versions.items[0] ?? null,
+          ),
+          degradedReason: versions.degraded_reason,
+        };
   let telemetry: {
     items?: Array<{
       sentence_id: string;
@@ -548,10 +561,18 @@ export async function fetchBehaviorEditorData(
         fallback: { items: [] },
       },
     );
-  } catch {
-    return markBehaviorTelemetryUnavailable(data);
+  } catch (error) {
+    return markBehaviorTelemetryUnavailable(
+      data,
+      `Behavior sentence telemetry is unavailable: ${errorMessage(error)}`,
+    );
   }
-  if (!telemetry.items?.length) return markBehaviorTelemetryUnavailable(data);
+  if (!telemetry.items?.length) {
+    return markBehaviorTelemetryUnavailable(
+      data,
+      "Behavior sentence telemetry is unavailable from cp-api.",
+    );
+  }
   const telemetryById = new Map(telemetry.items.map((item) => [item.sentence_id, item]));
   return {
     ...data,
@@ -580,9 +601,11 @@ export async function fetchBehaviorEditorData(
 
 function markBehaviorTelemetryUnavailable(
   data: BehaviorEditorData,
+  degradedReason?: string,
 ): BehaviorEditorData {
   return {
     ...data,
+    degradedReason: data.degradedReason ?? degradedReason,
     sections: data.sections.map((section) => ({
       ...section,
       sentences: section.sentences.map((sentence) => ({
@@ -628,5 +651,22 @@ export function createEmptyBehaviorEditorData(
     },
     degradedReason:
       "No behavior object is loaded yet. Import instructions or create the first policy section.",
+  };
+}
+
+export function createDegradedBehaviorEditorData(
+  agentId: string,
+  reason: string,
+): BehaviorEditorData {
+  const data = createEmptyBehaviorEditorData(agentId);
+  return {
+    ...data,
+    evalEvidence: reason,
+    preview: {
+      ...data.preview,
+      evidence: reason,
+      blockedReason: `Behavior data is unavailable: ${reason}`,
+    },
+    degradedReason: reason,
   };
 }

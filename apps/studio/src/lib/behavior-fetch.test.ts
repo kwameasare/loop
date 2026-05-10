@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { fetchBehaviorEditorData } from "@/lib/behavior";
 
@@ -23,6 +23,27 @@ function versionResponse() {
 }
 
 describe("fetchBehaviorEditorData", () => {
+  const previousBaseUrl = process.env.LOOP_CP_API_BASE_URL;
+  const previousPublicBaseUrl = process.env.NEXT_PUBLIC_LOOP_API_URL;
+
+  afterEach(() => {
+    if (previousBaseUrl === undefined) delete process.env.LOOP_CP_API_BASE_URL;
+    else process.env.LOOP_CP_API_BASE_URL = previousBaseUrl;
+    if (previousPublicBaseUrl === undefined) delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+    else process.env.NEXT_PUBLIC_LOOP_API_URL = previousPublicBaseUrl;
+  });
+
+  it("returns a degraded empty model instead of fixture behavior without cp-api", async () => {
+    delete process.env.LOOP_CP_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+
+    const data = await fetchBehaviorEditorData("agent_support");
+
+    expect(data.sections).toEqual([]);
+    expect(data.degradedReason).toMatch(/control-plane versions endpoint/i);
+    expect(data.agentName).toBe("Agent agent_support");
+  });
+
   it("marks sentence telemetry as unavailable when cp-api has no telemetry evidence", async () => {
     const fetcher = vi.fn<typeof fetch>(async (input) => {
       const url = String(input);
