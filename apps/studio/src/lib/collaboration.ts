@@ -160,6 +160,10 @@ export interface CommentResolutionResult {
   source_trace?: string | null;
 }
 
+type CommentResolutionClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 export class PlayheadError extends Error {
   constructor(message: string) {
     super(message);
@@ -223,7 +227,7 @@ export async function resolveCommentAsEvalCase(
   agentId: string,
   commentId: string,
   payload: CommentResolutionPayload,
-  opts: UxWireupClientOptions = {},
+  opts: CommentResolutionClientOptions = {},
 ): Promise<CommentResolutionResult> {
   return cpJson<CommentResolutionResult>(
     `/agents/${encodeURIComponent(agentId)}/comments/${encodeURIComponent(
@@ -236,6 +240,7 @@ export async function resolveCommentAsEvalCase(
         ...payload,
         also_create_eval_case: payload.also_create_eval_case ?? true,
       },
+      allowFallback: opts.allowFixture === true,
       fallback: {
         comment_id: commentId,
         resolved_by: "local-builder",

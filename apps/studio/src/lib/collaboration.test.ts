@@ -291,4 +291,36 @@ describe("collaboration wireup", () => {
       also_create_eval_case: true,
     });
   });
+
+  it("does not fabricate comment-to-eval resolutions without cp-api", async () => {
+    await expect(
+      resolveCommentAsEvalCase(
+        "agt_1",
+        "cmt_1",
+        {
+          expected_behavior: "Refund the order.",
+          failure_reason: "The agent escalated.",
+        },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps deterministic comment-to-eval resolution explicitly opt-in", async () => {
+    await expect(
+      resolveCommentAsEvalCase(
+        "agt_1",
+        "cmt_1",
+        {
+          expected_behavior: "Refund the order.",
+          failure_reason: "The agent escalated.",
+        },
+        { baseUrl: "", allowFixture: true },
+      ),
+    ).resolves.toMatchObject({
+      comment_id: "cmt_1",
+      eval_case_created: true,
+      case_id: "eval_comment_cmt_1",
+    });
+  });
 });
