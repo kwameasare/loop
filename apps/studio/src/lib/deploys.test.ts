@@ -13,47 +13,76 @@ import {
 } from "./deploys";
 
 describe("listDeployments fixture mode", () => {
-  it("returns canary + live deployments seeded for the agent", async () => {
+  it("returns an empty list when no baseUrl is configured", async () => {
     const { items } = await listDeployments("agt_fix_a");
+    expect(items).toEqual([]);
+  });
+
+  it("returns canary + live deployments seeded for the agent", async () => {
+    const { items } = await listDeployments("agt_fix_a", {
+      allowFixture: true,
+    });
     expect(items.find((d) => d.status === "canary")).toBeDefined();
     expect(items.find((d) => d.status === "live")).toBeDefined();
   });
 
   it("promote moves canary to live and supersedes prior live", async () => {
-    const { items: before } = await listDeployments("agt_fix_b");
+    const fixtureOpts = { allowFixture: true };
+    const { items: before } = await listDeployments("agt_fix_b", fixtureOpts);
     const canary = findCurrentCanary(before)!;
-    const promoted = await promoteDeployment("agt_fix_b", canary.id);
+    const promoted = await promoteDeployment(
+      "agt_fix_b",
+      canary.id,
+      fixtureOpts,
+    );
     expect(promoted.status).toBe("live");
     expect(promoted.trafficPercent).toBe(100);
-    const { items: after } = await listDeployments("agt_fix_b");
+    const { items: after } = await listDeployments("agt_fix_b", fixtureOpts);
     const lives = after.filter((d) => d.status === "live");
     expect(lives).toHaveLength(1);
     expect(after.some((d) => d.status === "superseded")).toBe(true);
   });
 
   it("pause freezes the deployment without changing traffic", async () => {
-    const { items } = await listDeployments("agt_fix_c");
+    const fixtureOpts = { allowFixture: true };
+    const { items } = await listDeployments("agt_fix_c", fixtureOpts);
     const canary = findCurrentCanary(items)!;
-    const paused = await pauseDeployment("agt_fix_c", canary.id);
+    const paused = await pauseDeployment("agt_fix_c", canary.id, fixtureOpts);
     expect(paused.status).toBe("paused");
     expect(paused.pausedAt).not.toBeNull();
   });
 
   it("ramp increases an active rollout before production", async () => {
-    const { items } = await listDeployments("agt_fix_ramp");
+    const fixtureOpts = { allowFixture: true };
+    const { items } = await listDeployments("agt_fix_ramp", fixtureOpts);
     const canary = findCurrentCanary(items)!;
-    const ramped = await rampDeployment("agt_fix_ramp", canary.id, 50);
+    const ramped = await rampDeployment(
+      "agt_fix_ramp",
+      canary.id,
+      50,
+      fixtureOpts,
+    );
     expect(ramped.status).toBe("ramp");
     expect(ramped.stage).toBe("ramp");
     expect(ramped.trafficPercent).toBe(50);
   });
 
   it("rollback flips a live deployment to rolled_back and restores prior", async () => {
-    const { items } = await listDeployments("agt_fix_d");
+    const fixtureOpts = { allowFixture: true };
+    const { items } = await listDeployments("agt_fix_d", fixtureOpts);
     const live = findLiveDeployment(items)!;
-    const result = await rollbackDeployment("agt_fix_d", live.id);
+    const result = await rollbackDeployment("agt_fix_d", live.id, fixtureOpts);
     expect(result.status).toBe("rolled_back");
     expect(result.trafficPercent).toBe(0);
+  });
+
+  it("requires cp-api before mutating deployments", async () => {
+    await expect(promoteDeployment("agt_fix", "dep_001")).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required to promote deployments",
+    );
+    await expect(rampDeployment("agt_fix", "dep_001", 50)).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required to ramp deployments",
+    );
   });
 });
 
@@ -225,14 +254,27 @@ describe("listDeployments cp-api mode", () => {
     });
   });
 
-  it("starts a shadow deployment with zero routed traffic in fixture mode", async () => {
-    const result = await startCanaryDeployment("agt_shadow", {
-      change_package_id: "cp_shadow",
-      version_id: "v2",
-      stage: "shadow",
-      traffic_percent: 40,
-      channel_scope: ["web_chat"],
-    });
+  it("requires cp-api before starting a deployment", async () => {
+    await expect(
+      startCanaryDeployment("agt_shadow", {
+        change_package_id: "cp_shadow",
+        version_id: "v2",
+      }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required to start deployments");
+  });
+
+  it("starts a shadow deployment with zero routed traffic only in explicit fixture mode", async () => {
+    const result = await startCanaryDeployment(
+      "agt_shadow",
+      {
+        change_package_id: "cp_shadow",
+        version_id: "v2",
+        stage: "shadow",
+        traffic_percent: 40,
+        channel_scope: ["web_chat"],
+      },
+      { allowFixture: true },
+    );
 
     expect(result.deployment.stage).toBe("shadow");
     expect(result.deployment.status).toBe("shadow");

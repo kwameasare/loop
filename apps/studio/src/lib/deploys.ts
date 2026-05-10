@@ -8,8 +8,7 @@
  *   POST /v1/agents/{id}/deployments/{dep_id}/pause   → Deployment
  *   POST /v1/agents/{id}/deployments/{dep_id}/rollback → Deployment
  *
- * Without a configured base URL the helpers serve fixture data backed
- * by an in-memory store so the UI can be reviewed end-to-end.
+ * Fixture data is available only through explicit test/demo opt-in.
  */
 
 export type DeploymentStatus =
@@ -91,6 +90,7 @@ export interface DeployHelperOptions {
   fetcher?: typeof fetch;
   baseUrl?: string;
   token?: string;
+  allowFixture?: boolean;
 }
 
 function resolveBase(opts: DeployHelperOptions): string | null {
@@ -232,7 +232,9 @@ export async function listDeployments(
   opts: DeployHelperOptions = {},
 ): Promise<{ items: Deployment[] }> {
   const base = resolveBase(opts);
-  if (!base) return { items: [...seedFixtures(agentId)] };
+  if (!base) {
+    return { items: opts.allowFixture ? [...seedFixtures(agentId)] : [] };
+  }
   const fetcher = opts.fetcher ?? fetch;
   const res = await fetcher(`${base}/agents/${agentId}/deployments`, {
     method: "GET",
@@ -250,6 +252,11 @@ async function callAction(
 ): Promise<Deployment> {
   const base = resolveBase(opts);
   if (!base) {
+    if (!opts.allowFixture) {
+      throw new Error(
+        `LOOP_CP_API_BASE_URL is required to ${action} deployments`,
+      );
+    }
     return applyAction(seedFixtures(agentId), depId, action);
   }
   const fetcher = opts.fetcher ?? fetch;
@@ -268,6 +275,9 @@ export async function startCanaryDeployment(
 ): Promise<{ deployment: Deployment; evidence_pack: EvidencePack }> {
   const base = resolveBase(opts);
   if (!base) {
+    if (!opts.allowFixture) {
+      throw new Error("LOOP_CP_API_BASE_URL is required to start deployments");
+    }
     const now = new Date().toISOString();
     const stage = input.stage ?? "canary";
     const deployment: Deployment = {
@@ -344,6 +354,9 @@ export async function rampDeployment(
 ): Promise<Deployment> {
   const base = resolveBase(opts);
   if (!base) {
+    if (!opts.allowFixture) {
+      throw new Error("LOOP_CP_API_BASE_URL is required to ramp deployments");
+    }
     return applyRamp(seedFixtures(agentId), depId, trafficPercent);
   }
   const fetcher = opts.fetcher ?? fetch;
