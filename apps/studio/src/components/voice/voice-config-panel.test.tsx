@@ -37,6 +37,28 @@ describe("VoiceConfigPanel", () => {
     expect(screen.getByTestId("voice-numbers-empty")).toBeInTheDocument();
   });
 
+  it("shows degraded config evidence instead of enabling edits for unavailable routes", () => {
+    const config = clone();
+    config.numbers = [];
+    config.degraded_reason = "cp-api voice config route returned 404";
+    render(
+      <VoiceConfigPanel
+        config={config}
+        save={async () => ({ ok: true })}
+      />,
+    );
+
+    expect(screen.getByTestId("voice-config-degraded")).toHaveTextContent(
+      "voice config route returned 404",
+    );
+    expect(screen.getByTestId("voice-numbers-empty")).toHaveTextContent(
+      "Phone-number evidence unavailable.",
+    );
+    expect(screen.getByTestId("voice-asr-select")).toBeDisabled();
+    expect(screen.getByTestId("voice-tts-select")).toBeDisabled();
+    expect(screen.getByTestId("voice-config-save")).toBeDisabled();
+  });
+
   it("save button is disabled until a provider changes", () => {
     render(
       <VoiceConfigPanel

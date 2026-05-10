@@ -90,13 +90,14 @@ describe("voice-config cp-api client", () => {
     );
   });
 
-  it("fetchVoiceConfig falls back to a default empty config on 404", async () => {
+  it("fetchVoiceConfig marks 404 as degraded instead of pretending no numbers are configured", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
     const res = await fetchVoiceConfig("ws1", { fetcher });
     expect(res.workspace_id).toBe("ws1");
     expect(res.numbers).toEqual([]);
+    expect(res.degraded_reason).toMatch(/voice config route returned 404/i);
   });
 
   it("saveVoiceConfig PATCHes provider selections", async () => {
