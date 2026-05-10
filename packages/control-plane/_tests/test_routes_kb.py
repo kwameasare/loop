@@ -167,6 +167,60 @@ def test_kb_routes_emit_audit_events(
     assert "kb:document:delete" in actions
 
 
+def test_agent_scoped_kb_upload_refresh_and_delete(
+    client: TestClient, workspace_id: UUID
+) -> None:
+    headers = {
+        "authorization": _bearer_for("owner-1"),
+        "x-loop-workspace-id": str(workspace_id),
+    }
+    agent = client.post(
+        "/v1/agents",
+        headers=headers,
+        json={"name": "Support Agent", "slug": "support-agent"},
+    ).json()
+    agent_id = agent["id"]
+
+    created = client.post(
+        f"/v1/agents/{agent_id}/kb/documents",
+        headers={"authorization": _bearer_for("owner-1")},
+        files={"file": ("refund-policy.md", b"# Refund policy", "text/markdown")},
+    )
+    assert created.status_code == 201, created.text
+    body = created.json()
+    assert body["agentId"] == agent_id
+    assert body["name"] == "refund-policy.md"
+    assert body["contentType"] == "text/markdown"
+    assert body["status"] == "indexing"
+    assert body["bytes"] > 0
+
+    listed = client.get(
+        f"/v1/agents/{agent_id}/kb/documents",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert listed.status_code == 200, listed.text
+    assert listed.json()["items"][0]["id"] == body["id"]
+
+    refreshed = client.post(
+        f"/v1/kb/documents/{body['id']}/refresh",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert refreshed.status_code == 200, refreshed.text
+    assert refreshed.json()["status"] == "running"
+
+    deleted = client.delete(
+        f"/v1/agents/{agent_id}/kb/documents/{body['id']}",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert deleted.status_code == 204, deleted.text
+
+    state = client.app.state.cp  # type: ignore[attr-defined]
+    actions = [e.action for e in state.audit_events.list_for_workspace(workspace_id)]
+    assert "kb:document:create" in actions
+    assert "kb:document:refresh" in actions
+    assert "kb:document:delete" in actions
+
+
 def test_cross_tenant_isolation(client: TestClient) -> None:
     headers = {"authorization": _bearer_for("owner-1")}
     a_id = UUID(

@@ -65,6 +65,8 @@ from loop_control_plane._routes_incidents import (
     router_workspaces as workspace_incidents_router,
 )
 from loop_control_plane._routes_kb import router as kb_router
+from loop_control_plane._routes_kb import router_agents as agent_kb_router
+from loop_control_plane._routes_kb import router_global as kb_global_router
 from loop_control_plane._routes_marketplace import router as marketplace_router
 from loop_control_plane._routes_migration_imports import (
     router as migration_imports_router,
@@ -192,6 +194,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         budgets_router,
         # P0.4: KB document CRUD + refresh.
         kb_router,
+        agent_kb_router,
+        kb_global_router,
         # P0.4: eval suites + runs.
         # Agent-flow implementation: observed behavior failures become eval cases.
         agent_evals_router,
