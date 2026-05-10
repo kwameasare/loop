@@ -2050,6 +2050,7 @@ def test_observed_failure_eval_case_closes_90_second_editing_loop(
         json={
             "sentence_id": "sentence_purpose_cancel",
             "sentence_text": "When a customer asks to cancel, cite May 2026 policy.",
+            "sentence_role": "promise",
             "trace_id": "trace_refund_742",
             "failure_reason": ("Agent cited archived policy before current May 2026 policy."),
             "expected_outcome": ("Cite the May 2026 refund policy before quoting refund window."),
@@ -2057,6 +2058,10 @@ def test_observed_failure_eval_case_closes_90_second_editing_loop(
                 "Add a behavior rule requiring current policy citation before refund windows."
             ),
             "replay_ref": "replay/run/trace_refund_742/fixed",
+            "channel": "web_chat",
+            "version_ref": "version/v23",
+            "risk_tags": ["risk_eval_gap"],
+            "target_object_kind": "knowledge_chunk",
         },
     )
     assert response.status_code == 201, response.text
@@ -2067,6 +2072,10 @@ def test_observed_failure_eval_case_closes_90_second_editing_loop(
     assert body["case"]["source"] == "behavior-fix"
     assert body["case"]["source_ref"] == "trace_refund_742"
     assert body["case"]["input"]["sentence_id"] == "sentence_purpose_cancel"
+    assert body["case"]["input"]["target_object_kind"] == "knowledge_chunk"
+    assert body["case"]["input"]["channel"] == "web_chat"
+    assert body["case"]["input"]["version_ref"] == "version/v23"
+    assert body["case"]["input"]["risk_tags"] == ["risk_eval_gap"]
     assert body["case"]["expected"]["proposed_fix"].startswith("Add a behavior rule")
     assert body["case"]["scorers"][1]["kind"] == "trace_regression"
 
@@ -2093,16 +2102,19 @@ def test_behavior_repair_proposal_runs_replay_summary_before_eval_save(
         json={
             "sentence_id": "sentence_purpose_cancel",
             "sentence_text": "When a customer asks to cancel, cite May 2026 policy.",
+            "sentence_role": "promise",
             "trace_id": "trace_refund_742",
             "failure_reason": "Agent cited archived policy before current policy.",
             "replay_ref": "replay/run/trace_refund_742/fixed",
+            "risk_tags": ["risk_eval_gap"],
         },
     )
 
     assert response.status_code == 201, response.text
     body = response.json()
     assert body["id"].startswith("repair_")
-    assert body["target_object"]["kind"] == "behavior_sentence"
+    assert body["target_object"]["kind"] == "knowledge_chunk"
+    assert body["target_object"]["label"] == "Responsible knowledge source"
     assert body["proposal"]["evidence_ref"] == "trace_refund_742"
     assert body["replay"]["draft_ref"] == "replay/run/trace_refund_742/fixed"
     assert body["replay"]["regressed"] == 0

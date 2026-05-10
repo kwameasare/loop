@@ -8,12 +8,17 @@ import {
 const INPUT = {
   sentence_id: "sentence_purpose_cancel",
   sentence_text: "Cite the May 2026 policy before refund windows.",
+  sentence_role: "promise",
   trace_id: "trace_refund_742",
   failure_reason: "The production answer cited the archived policy.",
   expected_outcome: "The answer cites the current May 2026 refund policy.",
   proposed_fix:
     "Require current policy citation before quoting refund windows.",
   replay_ref: "replay/run/trace_refund_742/fixed",
+  channel: "web_chat",
+  version_ref: "version/v23",
+  risk_tags: ["risk_eval_gap"],
+  target_object_kind: "knowledge_chunk",
 };
 
 describe("behavior repair client", () => {
@@ -33,7 +38,7 @@ describe("behavior repair client", () => {
       allowFixture: true,
     });
 
-    expect(response.target_object.kind).toBe("behavior_sentence");
+    expect(response.target_object.kind).toBe("knowledge_chunk");
     expect(response.proposal.evidence_ref).toBe(INPUT.trace_id);
     expect(response.replay).toMatchObject({
       improved: 3,
@@ -82,8 +87,13 @@ describe("behavior repair client", () => {
     const [, init] = fetcher.mock.calls[0]!;
     expect(JSON.parse(String(init?.body))).toMatchObject({
       sentence_id: INPUT.sentence_id,
+      sentence_role: INPUT.sentence_role,
       trace_id: INPUT.trace_id,
       proposed_fix: INPUT.proposed_fix,
+      channel: INPUT.channel,
+      version_ref: INPUT.version_ref,
+      risk_tags: INPUT.risk_tags,
+      target_object_kind: INPUT.target_object_kind,
     });
   });
 
@@ -134,8 +144,11 @@ describe("behavior repair client", () => {
     const [, init] = fetcher.mock.calls[0]!;
     expect(JSON.parse(String(init?.body))).toMatchObject({
       sentence_id: INPUT.sentence_id,
+      sentence_role: INPUT.sentence_role,
       trace_id: INPUT.trace_id,
       replay_ref: INPUT.replay_ref,
+      risk_tags: INPUT.risk_tags,
+      target_object_kind: INPUT.target_object_kind,
     });
   });
 });
