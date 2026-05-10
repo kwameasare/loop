@@ -55,12 +55,12 @@ describe("MemoryStudio", () => {
     );
   });
 
-  it("queues deletion for durable memory and explains blocked scratch deletion", () => {
+  it("requires backend deletion wiring and explains blocked scratch deletion", () => {
     render(<MemoryStudio data={createMemoryStudioData("agent_support")} />);
 
     fireEvent.click(screen.getByTestId("memory-delete"));
     expect(screen.getByTestId("memory-delete-notice")).toHaveTextContent(
-      "Deletion queued for preferred_language",
+      "Deletion requires cp-api wiring for preferred_language",
     );
 
     fireEvent.click(screen.getByTestId("memory-entry-mem_scratch_order"));
@@ -97,6 +97,16 @@ describe("MemoryStudio", () => {
     );
     expect(screen.getByTestId("memory-policy-notice")).toHaveTextContent(
       "ready for deployment preflight",
+    );
+  });
+
+  it("requires backend policy approval wiring when no action is provided", () => {
+    render(<MemoryStudio data={createMemoryStudioData("agent_support")} />);
+
+    fireEvent.click(screen.getByTestId("memory-policy-approve-user"));
+
+    expect(screen.getByTestId("memory-policy-notice")).toHaveTextContent(
+      "User policy approval requires cp-api wiring",
     );
   });
 

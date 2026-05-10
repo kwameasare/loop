@@ -509,7 +509,7 @@ export function MemoryStudio({
   async function handleDelete(entry: MemoryStudioEntry): Promise<void> {
     if (!onDeleteEntry) {
       setDeleteNotice(
-        `Deletion queued for ${entry.key}. Evidence: ${entry.sourceTrace}.`,
+        `Deletion requires cp-api wiring for ${entry.key}. Evidence: ${entry.sourceTrace}.`,
       );
       return;
     }
@@ -536,7 +536,7 @@ export function MemoryStudio({
   async function handleApprovePolicy(policy: MemoryPolicy): Promise<void> {
     if (!onApprovePolicy) {
       setPolicyNotice(
-        `${POLICY_SCOPE_LABEL[policy.scope]} policy approval queued. Hash ${policy.content_hash.slice(
+        `${POLICY_SCOPE_LABEL[policy.scope]} policy approval requires cp-api wiring. Hash ${policy.content_hash.slice(
           0,
           12,
         )} must appear in preflight before activation.`,
