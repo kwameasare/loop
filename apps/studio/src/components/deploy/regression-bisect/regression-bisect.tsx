@@ -1,9 +1,21 @@
 "use client";
 
-import type { BisectResult, BisectStatus } from "@/lib/snapshots";
+import { useState } from "react";
+
+import {
+  runRegressionBisect as defaultRunRegressionBisect,
+  type BisectResult,
+  type BisectStatus,
+  type RunRegressionBisectInput,
+} from "@/lib/snapshots";
 
 interface RegressionBisectProps {
   result: BisectResult;
+  agentId?: string | undefined;
+  runBisect?: (
+    agentId: string,
+    input: RunRegressionBisectInput,
+  ) => Promise<BisectResult>;
 }
 
 const STATUS_TONE: Record<BisectStatus, string> = {
@@ -13,7 +25,37 @@ const STATUS_TONE: Record<BisectStatus, string> = {
 };
 
 export function RegressionBisect(props: RegressionBisectProps): JSX.Element {
-  const { result } = props;
+  const { agentId, runBisect = defaultRunRegressionBisect } = props;
+  const [result, setResult] = useState(props.result);
+  const [caseId, setCaseId] = useState(props.result.caseId);
+  const [sinceRef, setSinceRef] = useState("last-green");
+  const [untilRef, setUntilRef] = useState("current");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function runLiveBisect(): Promise<void> {
+    if (!agentId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      setResult(
+        await runBisect(agentId, {
+          failing_eval_case_id: caseId,
+          since_ref: sinceRef,
+          until_ref: untilRef,
+        }),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Regression bisect could not run.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section
       data-testid="regression-bisect"
@@ -28,6 +70,63 @@ export function RegressionBisect(props: RegressionBisectProps): JSX.Element {
           Confidence {result.confidence}%
         </p>
       </header>
+      <div
+        className="grid gap-2 rounded-md border bg-background/70 p-3 text-xs md:grid-cols-[1.2fr_1fr_1fr_auto]"
+        data-testid="bisect-runner"
+      >
+        <label className="space-y-1">
+          <span className="font-medium text-muted-foreground">
+            Failing eval case
+          </span>
+          <input
+            className="h-8 w-full rounded-md border bg-card px-2 font-mono"
+            value={caseId}
+            onChange={(event) => setCaseId(event.currentTarget.value)}
+            data-testid="bisect-case"
+          />
+        </label>
+        <label className="space-y-1">
+          <span className="font-medium text-muted-foreground">Since</span>
+          <input
+            className="h-8 w-full rounded-md border bg-card px-2 font-mono"
+            value={sinceRef}
+            onChange={(event) => setSinceRef(event.currentTarget.value)}
+            data-testid="bisect-since"
+          />
+        </label>
+        <label className="space-y-1">
+          <span className="font-medium text-muted-foreground">Until</span>
+          <input
+            className="h-8 w-full rounded-md border bg-card px-2 font-mono"
+            value={untilRef}
+            onChange={(event) => setUntilRef(event.currentTarget.value)}
+            data-testid="bisect-until"
+          />
+        </label>
+        <button
+          type="button"
+          className="interactive-lift mt-5 h-8 rounded-md border bg-card px-3 font-medium disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={() => void runLiveBisect()}
+          disabled={!agentId || busy || caseId.trim() === ""}
+          data-testid="bisect-run"
+          title={
+            agentId
+              ? "Run regression bisect against the live agent history"
+              : "Select an agent-backed production change before running bisect"
+          }
+        >
+          {busy ? "Running" : "Run bisect"}
+        </button>
+        {error ? (
+          <p
+            className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-destructive md:col-span-4"
+            data-testid="bisect-error"
+            role="alert"
+          >
+            {error}
+          </p>
+        ) : null}
+      </div>
       <div className="grid gap-3 rounded-md bg-muted p-3 text-xs sm:grid-cols-2">
         <p data-testid="bisect-expected">
           <strong className="text-foreground">Expected:</strong> {result.expected}

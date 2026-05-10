@@ -4,6 +4,7 @@ import {
   type TraceSummary,
   type TracesClientOptions,
 } from "@/lib/traces";
+import { cpJson, type UxWireupClientOptions } from "@/lib/ux-wireup";
 
 /**
  * Time-travel safety model (UX304).
@@ -28,6 +29,7 @@ export type LikelihoodTier = "high" | "medium" | "low";
 
 export interface BehaviorChange {
   id: string;
+  agentId?: string;
   surface: string;
   summary: string;
   exemplarTranscriptId: string;
@@ -78,6 +80,7 @@ function changesFromTraces(traces: readonly TraceSummary[]): BehaviorChange[] {
     const likelihood = likelihoodForTrace(trace);
     return {
       id: `live_bc_${trace.id.slice(0, 12)}`,
+      agentId: trace.agent_id,
       surface: `${trace.agent_name} / ${trace.root_name}`,
       summary:
         likelihood === "high"
@@ -176,6 +179,98 @@ export interface BisectResult {
   /** 0..100 — confidence that the culprit is correct. */
   confidence: number;
   steps: readonly BisectStep[];
+}
+
+export interface RunRegressionBisectInput {
+  failing_eval_case_id: string;
+  since_ref: string;
+  until_ref: string;
+}
+
+interface CpRegressionBisectResult {
+  status: string;
+  failing_eval_case_id: string;
+  culprit: {
+    ref: string;
+    author: string;
+    object: string;
+    confidence: number;
+    diff: string;
+  };
+  elapsed_ms: number;
+}
+
+function confidencePercent(value: number): number {
+  return Math.round(value <= 1 ? value * 100 : value);
+}
+
+export function bisectResultFromCp(
+  agentId: string,
+  input: RunRegressionBisectInput,
+  body: CpRegressionBisectResult,
+): BisectResult {
+  const confidence = confidencePercent(body.culprit.confidence);
+  const evidenceBase = `bisect/${agentId}/${body.failing_eval_case_id}`;
+  return {
+    caseId: body.failing_eval_case_id,
+    transcript: `Bisected ${body.failing_eval_case_id} from ${input.since_ref} to ${input.until_ref} in ${body.elapsed_ms} ms.`,
+    expected: `Behavior last known good at ${input.since_ref}.`,
+    observed: `${body.culprit.object} changed at ${body.culprit.ref}.`,
+    culpritCommit: body.culprit.ref,
+    confidence,
+    steps: [
+      {
+        commit: input.since_ref,
+        ts: new Date().toISOString(),
+        status: "pass",
+        summary: "Last known green reference.",
+        evidenceRef: `${evidenceBase}/since`,
+      },
+      {
+        commit: body.culprit.ref,
+        ts: new Date().toISOString(),
+        status: "regress",
+        summary: `${body.culprit.object}: ${body.culprit.diff}`,
+        evidenceRef: `${evidenceBase}/culprit`,
+      },
+      {
+        commit: input.until_ref,
+        ts: new Date().toISOString(),
+        status: "regress",
+        summary: `Current reference includes the suspected culprit. Author: ${body.culprit.author}.`,
+        evidenceRef: `${evidenceBase}/until`,
+      },
+    ],
+  };
+}
+
+export async function runRegressionBisect(
+  agentId: string,
+  input: RunRegressionBisectInput,
+  opts: UxWireupClientOptions = {},
+): Promise<BisectResult> {
+  const body = await cpJson<CpRegressionBisectResult>(
+    `/agents/${encodeURIComponent(agentId)}/bisect`,
+    {
+      ...opts,
+      method: "POST",
+      body: input,
+      fallback: {
+        status: "unavailable",
+        failing_eval_case_id: input.failing_eval_case_id,
+        culprit: {
+          ref: input.until_ref,
+          author: "unavailable",
+          object: "unknown",
+          confidence: 0,
+          diff: "Regression bisect requires cp-api.",
+        },
+        elapsed_ms: 0,
+      },
+      allowFallback: false,
+    },
+  );
+  return bisectResultFromCp(agentId, input, body);
 }
 
 export function bisectStepsBetween(

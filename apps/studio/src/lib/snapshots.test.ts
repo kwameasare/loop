@@ -8,6 +8,7 @@ import {
   FIXTURE_BEHAVIOR_CHANGES,
   FIXTURE_BISECT,
   FIXTURE_SNAPSHOTS,
+  runRegressionBisect,
   SnapshotSignatureError,
   topLikelyChanges,
   verifySnapshotSignature,
@@ -77,6 +78,7 @@ describe("fetchDeploySafetyModel", () => {
     });
 
     expect(model.changes[0]).toMatchObject({
+      agentId: "33333333-3333-4333-8333-333333333333",
       exemplarTranscriptId: "c".repeat(32),
       likelihood: "high",
     });
@@ -118,6 +120,69 @@ describe("fetchDeploySafetyModel", () => {
     expect(model.empty_reason).toMatch(/no production traces/i);
     expect(model.changes).toEqual([]);
     expect(model.bisect).toBeNull();
+  });
+});
+
+describe("runRegressionBisect", () => {
+  it("posts the failing eval case to the live agent bisect endpoint", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+      expect(String(input)).toBe(
+        "https://cp.example.test/v1/agents/agent_1/bisect",
+      );
+      expect(init?.method).toBe("POST");
+      expect(JSON.parse(String(init?.body))).toEqual({
+        failing_eval_case_id: "case_refund_es",
+        since_ref: "v22",
+        until_ref: "v25",
+      });
+      return Response.json({
+        status: "complete",
+        failing_eval_case_id: "case_refund_es",
+        culprit: {
+          ref: "v24",
+          author: "sam@example.com",
+          object: "behavior section",
+          confidence: 0.88,
+          diff: "Removed Spanish escalation branch.",
+        },
+        elapsed_ms: 28_000,
+      });
+    });
+
+    const result = await runRegressionBisect(
+      "agent_1",
+      {
+        failing_eval_case_id: "case_refund_es",
+        since_ref: "v22",
+        until_ref: "v25",
+      },
+      { baseUrl: "https://cp.example.test/v1", fetcher },
+    );
+
+    expect(result).toMatchObject({
+      caseId: "case_refund_es",
+      culpritCommit: "v24",
+      confidence: 88,
+    });
+    expect(result.steps.map((step) => step.commit)).toEqual([
+      "v22",
+      "v24",
+      "v25",
+    ]);
+  });
+
+  it("does not fabricate regression bisect results without cp-api", async () => {
+    await expect(
+      runRegressionBisect(
+        "agent_1",
+        {
+          failing_eval_case_id: "case_refund_es",
+          since_ref: "v22",
+          until_ref: "v25",
+        },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow(/LOOP_CP_API_BASE_URL/i);
   });
 });
 
