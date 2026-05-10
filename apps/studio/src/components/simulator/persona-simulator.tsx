@@ -7,6 +7,7 @@ import { ConfidenceMeter, LiveBadge, StatePanel } from "@/components/target";
 import {
   PERSONA_SET_LABELS,
   runPersonaSimulation,
+  savePersonaFailureAsEvalCase,
   type PersonaSet,
   type PersonaSimulationItem,
 } from "@/lib/persona-simulator";
@@ -25,7 +26,8 @@ export function PersonaSimulatorPanel({ agentId }: { agentId: string }) {
   const [personaSet, setPersonaSet] = useState<PersonaSet>("first-user");
   const [items, setItems] = useState<PersonaSimulationItem[]>([]);
   const [running, setRunning] = useState(false);
-  const [saved, setSaved] = useState<string[]>([]);
+  const [savedCases, setSavedCases] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function runSuite() {
@@ -34,10 +36,37 @@ export function PersonaSimulatorPanel({ agentId }: { agentId: string }) {
     try {
       const result = await runPersonaSimulation(agentId, personaSet);
       setItems(result.items);
+      setSavedCases({});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Persona run failed.");
     } finally {
       setRunning(false);
+    }
+  }
+
+  async function saveFailure(item: PersonaSimulationItem) {
+    setSaving(item.candidate_eval_id);
+    setError(null);
+    try {
+      const response = await savePersonaFailureAsEvalCase(agentId, {
+        personaSet,
+        item,
+        expectedBehavior: `The agent should satisfy the ${personaLabel(
+          item.persona,
+        )} persona without losing policy, safety, channel, or citation requirements.`,
+      });
+      setSavedCases((current) => ({
+        ...current,
+        [item.candidate_eval_id]: response.case_id,
+      }));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not save persona failure as an eval case.",
+      );
+    } finally {
+      setSaving(null);
     }
   }
 
@@ -102,7 +131,8 @@ export function PersonaSimulatorPanel({ agentId }: { agentId: string }) {
         <div className="mt-4 grid gap-3 lg:grid-cols-2" data-testid="persona-results">
           {items.map((item) => {
             const percent = Math.round(item.pass_rate * 100);
-            const isSaved = saved.includes(item.candidate_eval_id);
+            const savedCaseId = savedCases[item.candidate_eval_id];
+            const isSaving = saving === item.candidate_eval_id;
             return (
               <article key={item.persona} className="rounded-md border bg-background p-3">
                 <div className="flex items-start justify-between gap-3">
@@ -134,17 +164,16 @@ export function PersonaSimulatorPanel({ agentId }: { agentId: string }) {
                 <button
                   type="button"
                   className="mt-3 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-muted/50"
-                  onClick={() =>
-                    setSaved((current) =>
-                      current.includes(item.candidate_eval_id)
-                        ? current
-                        : [...current, item.candidate_eval_id],
-                    )
-                  }
+                  onClick={() => void saveFailure(item)}
+                  disabled={isSaving || Boolean(savedCaseId)}
                   data-testid={`save-persona-eval-${item.persona}`}
                 >
                   <TestTube2 className="h-4 w-4" aria-hidden />
-                  {isSaved ? "Eval saved" : "Save failures as eval"}
+                  {savedCaseId
+                    ? `Eval ${savedCaseId} saved`
+                    : isSaving
+                      ? "Saving eval"
+                      : "Save failures as eval"}
                 </button>
               </article>
             );

@@ -33,6 +33,7 @@ import {
   replayAgainstDraft,
   saveReplayAsEvalCase,
 } from "@/lib/replay-workbench";
+import { savePersonaFailureAsEvalCase } from "@/lib/persona-simulator";
 import { cn } from "@/lib/utils";
 
 const RISK_TONE: Record<ProductionConversationCandidate["risk"], string> = {
@@ -409,11 +410,48 @@ function MetricTile({
 }
 
 function PersonaSimulator({
+  agentId,
   personas,
 }: {
+  agentId: string;
   personas: readonly PersonaSimulationResult[];
 }) {
-  const [converted, setConverted] = useState<string[]>([]);
+  const [savedCases, setSavedCases] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function savePersona(persona: PersonaSimulationResult) {
+    setSaving(persona.id);
+    setError(null);
+    try {
+      const response = await savePersonaFailureAsEvalCase(agentId, {
+        personaSet: "first-user",
+        item: {
+          persona: persona.persona,
+          scenarios: persona.scenarios,
+          pass_rate: persona.passRate / 100,
+          failed_scenarios: persona.failedScenarios,
+          candidate_eval_id: persona.candidateEvalId,
+          evidence_ref: `persona-test/${agentId}/${persona.id}`,
+        },
+        expectedBehavior: `The agent should satisfy ${persona.persona} scenarios without losing policy, safety, citation, or escalation requirements.`,
+        riskTags: ["persona-test", persona.id],
+      });
+      setSavedCases((current) => ({
+        ...current,
+        [persona.id]: response.case_id,
+      }));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not convert persona result into an eval case.",
+      );
+    } finally {
+      setSaving(null);
+    }
+  }
+
   return (
     <section className="space-y-3" data-testid="persona-simulator">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -425,9 +463,15 @@ function PersonaSimulator({
         </div>
         <LiveBadge tone="staged">50 scenarios</LiveBadge>
       </div>
+      {error ? (
+        <StatePanel state="degraded" title="Persona eval save failed">
+          {error}
+        </StatePanel>
+      ) : null}
       <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-5">
         {personas.map((persona) => {
-          const isConverted = converted.includes(persona.id);
+          const savedCaseId = savedCases[persona.id];
+          const isSaving = saving === persona.id;
           return (
             <article key={persona.id} className="rounded-md border bg-card p-4">
               <div className="flex items-start justify-between gap-2">
@@ -446,19 +490,18 @@ function PersonaSimulator({
               <p className="mt-3 text-xs text-muted-foreground">{persona.insight}</p>
               <Button
                 type="button"
-                variant={isConverted ? "subtle" : "outline"}
+                variant={savedCaseId ? "subtle" : "outline"}
                 size="sm"
                 className="mt-3 min-h-9 w-full whitespace-normal"
-                onClick={() =>
-                  setConverted((current) =>
-                    current.includes(persona.id)
-                      ? current
-                      : [...current, persona.id],
-                  )
-                }
+                onClick={() => void savePersona(persona)}
+                disabled={isSaving || Boolean(savedCaseId)}
               >
                 <Save className="mr-2 h-4 w-4" />
-                {isConverted ? "Eval linked" : "Convert to eval"}
+                {savedCaseId
+                  ? `Eval ${savedCaseId} linked`
+                  : isSaving
+                    ? "Saving eval"
+                    : "Convert to eval"}
               </Button>
             </article>
           );
@@ -646,7 +689,7 @@ export function ReplayWorkbench({ model }: { model: ReplayWorkbenchModel }) {
         <FutureReplayPanel key={selected.id} model={model} selected={selected} />
       </section>
 
-      <PersonaSimulator personas={model.personas} />
+      <PersonaSimulator agentId={selected.agentId} personas={model.personas} />
       <PropertyTester model={model} />
       <CostOfContextSlider
         agentId={selected.agentId}

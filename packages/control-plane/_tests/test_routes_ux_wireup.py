@@ -2285,6 +2285,25 @@ def test_tool_import_persona_semantic_diff_style_bisect_and_shares(
         json={"persona_set": "first-user"},
     )
     assert len(persona.json()["items"]) == 5
+    persona_item = persona.json()["items"][0]
+    persona_eval = client.post(
+        f"/v1/agents/{agent_id}/persona-test/eval-cases",
+        headers=_auth(),
+        json={
+            "persona_set": "first-user",
+            "persona": persona_item["persona"],
+            "candidate_eval_id": persona_item["candidate_eval_id"],
+            "evidence_ref": persona_item["evidence_ref"],
+            "scenarios": persona_item["scenarios"],
+            "failed_scenarios": persona_item["failed_scenarios"],
+            "pass_rate": persona_item["pass_rate"],
+            "expected_behavior": "Preserve grounded answers for this persona cluster.",
+            "risk_tags": ["persona-test", persona_item["persona"]],
+        },
+    )
+    assert persona_eval.status_code == 201, persona_eval.text
+    assert persona_eval.json()["case"]["source"] == "persona-test"
+    assert persona_eval.json()["case"]["source_ref"] == persona_item["evidence_ref"]
 
     latency = client.post(
         f"/v1/agents/{agent_id}/latency-budget",

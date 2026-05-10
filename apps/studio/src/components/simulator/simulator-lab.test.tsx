@@ -29,8 +29,32 @@ describe("SimulatorLab", () => {
     process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
     vi.stubGlobal(
       "fetch",
-      vi.fn<typeof fetch>(async () =>
-        Response.json({
+      vi.fn<typeof fetch>(async (input, init) => {
+        const url = String(input);
+        if (url.endsWith("/persona-test/eval-cases")) {
+          expect(JSON.parse(String(init?.body))).toMatchObject({
+            persona_set: "first-user",
+            persona: "journalist",
+            candidate_eval_id: "eval.persona.journalist.policy_provenance",
+            evidence_ref: "persona-test/agent_support/journalist",
+          });
+          return Response.json(
+            {
+              ok: true,
+              suite_id: "suite_persona",
+              case_id: "case_persona",
+              case: {
+                id: "case_persona",
+                name: "journalist persona failure",
+                source: "persona-test",
+                source_ref: "persona-test/agent_support/journalist",
+              },
+              next_url: "/agents/agent_support/evals?case_id=case_persona",
+            },
+            { status: 201 },
+          );
+        }
+        return Response.json({
           persona_set: "first-user",
           items: [
             {
@@ -42,8 +66,8 @@ describe("SimulatorLab", () => {
               evidence_ref: "persona-test/agent_support/journalist",
             },
           ],
-        }),
-      ),
+        });
+      }),
     );
     render(
       <SimulatorLab
@@ -63,8 +87,8 @@ describe("SimulatorLab", () => {
     );
     fireEvent.click(screen.getByTestId("save-persona-eval-journalist"));
     expect(
-      screen.getByTestId("save-persona-eval-journalist"),
-    ).toHaveTextContent("Eval saved");
+      await screen.findByText(/Eval case_persona saved/i),
+    ).toBeInTheDocument();
   });
 
   it("maps single-key channel switching to Slack, WhatsApp, SMS, and voice", () => {
