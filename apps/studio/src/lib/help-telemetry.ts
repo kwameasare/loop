@@ -19,6 +19,10 @@ export interface HelpClip {
   transcript: string;
 }
 
+type TelemetryConsentOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 export async function fetchTelemetryConsent(
   workspaceId: string,
   opts: UxWireupClientOptions = {},
@@ -48,7 +52,7 @@ export async function saveTelemetryConsent(
     ai_improvement: boolean;
     crash_reports: boolean;
   },
-  opts: UxWireupClientOptions = {},
+  opts: TelemetryConsentOptions = {},
 ): Promise<TelemetryConsentModel> {
   return cpJson<TelemetryConsentModel>(
     `/workspaces/${encodeURIComponent(workspaceId)}/telemetry-consent`,
@@ -56,6 +60,7 @@ export async function saveTelemetryConsent(
       ...opts,
       method: "POST",
       body: consent,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         workspace_id: workspaceId,
         user_sub: "local-builder",

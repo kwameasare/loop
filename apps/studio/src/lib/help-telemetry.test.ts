@@ -62,6 +62,21 @@ describe("help and telemetry cp clients", () => {
     expect(saved.annual_review_due).toBe(false);
   });
 
+  it("requires cp-api before saving telemetry consent", async () => {
+    await expect(
+      saveTelemetryConsent(
+        "ws-1",
+        {
+          product_analytics: false,
+          diagnostics: false,
+          ai_improvement: false,
+          crash_reports: false,
+        },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow(/LOOP_CP_API_BASE_URL is required/i);
+  });
+
   it("loads contextual show-me clips for the current surface", async () => {
     const fetcher = vi.fn<typeof fetch>(async (input) => {
       expect(String(input)).toBe("https://cp.test/v1/help-clips?surface=pipeline");
