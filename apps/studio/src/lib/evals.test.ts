@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  EVAL_RUN_DETAIL_CP_API_REQUIRED,
+  EVAL_SUITE_DETAIL_CP_API_REQUIRED,
   createEvalSuite,
   diffAgainstBaseline,
   formatEvalUsd,
@@ -60,6 +62,12 @@ describe("listEvalSuites", () => {
 });
 
 describe("getEvalSuite / getEvalRun", () => {
+  it("requires cp-api for suite details unless fixture mode is explicit", async () => {
+    await expect(getEvalSuite("evs_support_smoke")).rejects.toThrow(
+      EVAL_SUITE_DETAIL_CP_API_REQUIRED,
+    );
+  });
+
   it("fixture mode returns suite with two runs and pass rate", async () => {
     const detail = await getEvalSuite("evs_support_smoke", {
       allowFixture: true,
@@ -88,6 +96,12 @@ describe("getEvalSuite / getEvalRun", () => {
     });
     expect(run).not.toBeNull();
     expect(run!.cases.some((c) => c.status === "fail")).toBe(true);
+  });
+
+  it("requires cp-api for run details unless fixture mode is explicit", async () => {
+    await expect(getEvalRun("evr_evs_support_smoke_002")).rejects.toThrow(
+      EVAL_RUN_DETAIL_CP_API_REQUIRED,
+    );
   });
 });
 
