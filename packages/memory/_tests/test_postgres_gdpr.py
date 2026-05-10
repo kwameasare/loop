@@ -58,6 +58,11 @@ class _Conn:
                 "nonce": params["nonce"],
                 "algorithm": params["algorithm"],
                 "updated_at": self._engine.now,
+                "source_trace": params["source_trace"],
+                "source_turn_id": params["source_turn_id"],
+                "source_span_id": params["source_span_id"],
+                "write_reason": params["write_reason"],
+                "policy_ref": params["policy_ref"],
             }
             return _Result(rows=[(self._engine.now,)], rowcount=1)
         if "INSERT INTO memory_bot" in statement:
@@ -70,12 +75,19 @@ class _Conn:
                 "nonce": params["nonce"],
                 "algorithm": params["algorithm"],
                 "updated_at": self._engine.now,
+                "source_trace": params["source_trace"],
+                "source_turn_id": params["source_turn_id"],
+                "source_span_id": params["source_span_id"],
+                "write_reason": params["write_reason"],
+                "policy_ref": params["policy_ref"],
             }
             return _Result(rows=[(self._engine.now,)], rowcount=1)
-        if "SELECT value_ciphertext, nonce, algorithm, updated_at FROM memory_user" in statement:
-            row = self._engine.user_rows.get((params["ws"], params["ag"], params["uid"], params["k"]))
+        if "FROM memory_user" in statement and "user_id = :uid AND key = :k" in statement:
+            row = self._engine.user_rows.get(
+                (params["ws"], params["ag"], params["uid"], params["k"])
+            )
             return _Result(rows=[self._value_row(row)] if row else [])
-        if "SELECT key, value_ciphertext, nonce, algorithm, updated_at FROM memory_user" in statement:
+        if "FROM memory_user" in statement and "ORDER BY key" in statement:
             rows = [
                 (
                     row["key"],
@@ -83,21 +95,30 @@ class _Conn:
                     row["nonce"],
                     row["algorithm"],
                     row["updated_at"],
+                    row["source_trace"],
+                    row["source_turn_id"],
+                    row["source_span_id"],
+                    row["write_reason"],
+                    row["policy_ref"],
                 )
-                for row in sorted(self._engine.user_rows.values(), key=lambda candidate: candidate["key"])
+                for row in sorted(
+                    self._engine.user_rows.values(), key=lambda candidate: candidate["key"]
+                )
                 if row["workspace_id"] == params["ws"]
                 and row["agent_id"] == params["ag"]
                 and row["user_id"] == params["uid"]
             ]
             return _Result(rows=rows)
-        if "SELECT value_ciphertext, nonce, algorithm, updated_at FROM memory_bot" in statement:
+        if "FROM memory_bot" in statement and "key = :k" in statement:
             row = self._engine.bot_rows.get((params["ws"], params["ag"], params["k"]))
             return _Result(rows=[self._value_row(row)] if row else [])
         if "DELETE FROM memory_user" in statement:
             return self._delete_user(statement, params)
         if "DELETE FROM memory_bot" in statement:
             deleted = [
-                key for key, row in self._engine.bot_rows.items() if row["workspace_id"] == params["ws"]
+                key
+                for key, row in self._engine.bot_rows.items()
+                if row["workspace_id"] == params["ws"]
             ]
             for key in deleted:
                 self._engine.bot_rows.pop(key)
@@ -107,7 +128,17 @@ class _Conn:
     @staticmethod
     def _value_row(row: dict[str, Any] | None) -> tuple[Any, ...]:
         assert row is not None
-        return (row["value_ciphertext"], row["nonce"], row["algorithm"], row["updated_at"])
+        return (
+            row["value_ciphertext"],
+            row["nonce"],
+            row["algorithm"],
+            row["updated_at"],
+            row["source_trace"],
+            row["source_turn_id"],
+            row["source_span_id"],
+            row["write_reason"],
+            row["policy_ref"],
+        )
 
     def _delete_user(self, statement: str, params: dict[str, Any]) -> _Result:
         if "agent_id = :ag" in statement and "key = :k" in statement:
@@ -147,7 +178,9 @@ async def test_delete_all_for_user_removes_every_user_key_and_is_idempotent() ->
 
     assert await store.delete_all_for_user(workspace_id=ws, user_id="u-1") == 2
     assert await store.delete_all_for_user(workspace_id=ws, user_id="u-1") == 0
-    assert await store.get_user_or_none(workspace_id=ws, agent_id=ag_a, user_id="u-1", key="a") is None
+    assert (
+        await store.get_user_or_none(workspace_id=ws, agent_id=ag_a, user_id="u-1", key="a") is None
+    )
     assert (await store.get_user(workspace_id=ws, agent_id=ag_a, user_id="u-2", key="a")).value == 3
 
 
@@ -162,7 +195,9 @@ async def test_delete_all_for_workspace_removes_user_and_bot_memory() -> None:
 
     assert await store.delete_all_for_workspace(ws_a) == 2
     assert await store.delete_all_for_workspace(ws_a) == 0
-    assert await store.get_user_or_none(workspace_id=ws_a, agent_id=ag, user_id="u", key="a") is None
+    assert (
+        await store.get_user_or_none(workspace_id=ws_a, agent_id=ag, user_id="u", key="a") is None
+    )
     assert (await store.get_user(workspace_id=ws_b, agent_id=ag, user_id="u", key="a")).value == 2
 
 
@@ -196,9 +231,51 @@ async def test_encrypted_round_trip_does_not_store_plaintext_json() -> None:
     assert b"secret@example.com" not in row["value_ciphertext"]
     assert row["nonce"]
     assert row["algorithm"] == "loop.memory.aesgcm.v1"
-    assert (await store.get_user(workspace_id=ws, agent_id=ag, user_id="u", key="profile")).value == {
-        "email": "secret@example.com"
-    }
+    assert (
+        await store.get_user(workspace_id=ws, agent_id=ag, user_id="u", key="profile")
+    ).value == {"email": "secret@example.com"}
+
+
+@pytest.mark.asyncio
+async def test_postgres_memory_preserves_source_trace_metadata() -> None:
+    engine = _FakeEngine()
+    store = PostgresUserMemoryStore(engine, encryption_key=b"5" * 32)  # type: ignore[arg-type]
+    ws, ag, turn = uuid4(), uuid4(), uuid4()
+    await store.set_user(
+        workspace_id=ws,
+        agent_id=ag,
+        user_id="u",
+        key="lang",
+        value="English",
+        source_trace="trace_lang_001",
+        source_turn_id=turn,
+        source_span_id="span_memory_write",
+        write_reason="User confirmed English preference.",
+        policy_ref="memory_policy/user:v1",
+    )
+
+    got = await store.get_user(workspace_id=ws, agent_id=ag, user_id="u", key="lang")
+    assert got.source_trace == "trace_lang_001"
+    assert got.source_turn_id == turn
+    assert got.source_span_id == "span_memory_write"
+    assert got.write_reason == "User confirmed English preference."
+    assert got.policy_ref == "memory_policy/user:v1"
+
+    listed = await store.list_user(workspace_id=ws, agent_id=ag, user_id="u")
+    assert listed[0].source_trace == "trace_lang_001"
+    assert listed[0].source_turn_id == turn
+
+    await store.set_bot(
+        workspace_id=ws,
+        agent_id=ag,
+        key="persona",
+        value={"tone": "plain"},
+        source_trace="trace_bot_001",
+        write_reason="Builder approved persona.",
+    )
+    bot = await store.get_bot(workspace_id=ws, agent_id=ag, key="persona")
+    assert bot.source_trace == "trace_bot_001"
+    assert bot.write_reason == "Builder approved persona."
 
 
 @pytest.mark.asyncio
@@ -209,5 +286,9 @@ async def test_cross_workspace_isolation_for_same_agent_user_key() -> None:
     await store.set_user(workspace_id=ws_a, agent_id=ag, user_id="u", key="lang", value="en")
     await store.set_user(workspace_id=ws_b, agent_id=ag, user_id="u", key="lang", value="fr")
 
-    assert (await store.get_user(workspace_id=ws_a, agent_id=ag, user_id="u", key="lang")).value == "en"
-    assert (await store.get_user(workspace_id=ws_b, agent_id=ag, user_id="u", key="lang")).value == "fr"
+    assert (
+        await store.get_user(workspace_id=ws_a, agent_id=ag, user_id="u", key="lang")
+    ).value == "en"
+    assert (
+        await store.get_user(workspace_id=ws_b, agent_id=ag, user_id="u", key="lang")
+    ).value == "fr"

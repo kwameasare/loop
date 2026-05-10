@@ -75,6 +75,9 @@ async def test_agent_memory_route_lists_and_deletes_user_memory(
     assert listed.status_code == 200, listed.text
     assert listed.json()["items"][0]["key"] == "preferred_language"
     assert listed.json()["items"][0]["after"] == "English"
+    assert listed.json()["items"][0]["source_trace"] == ""
+    assert listed.json()["items"][0]["confidence"] == "low"
+    assert "missing_source_trace" in listed.json()["items"][0]["safety_flags"]
 
     deleted = client.delete(
         f"/v1/agents/{agent_id}/memory/user/preferred_language?user_id=owner-1",
@@ -87,6 +90,41 @@ async def test_agent_memory_route_lists_and_deletes_user_memory(
         headers={"authorization": _bearer_for("owner-1")},
     )
     assert after.json()["items"] == []
+
+
+@pytest.mark.asyncio
+async def test_agent_memory_route_surfaces_source_trace_evidence(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    cp = client.app.state.cp  # type: ignore[attr-defined]
+    source_turn_id = UUID("11111111-1111-4111-8111-111111111111")
+    await cp.user_memory_store.set_user(
+        workspace_id=workspace_id,
+        agent_id=agent_id,
+        user_id="owner-1",
+        key="preferred_language",
+        value="English",
+        source_trace="trace_refund_2026_05_10",
+        source_turn_id=source_turn_id,
+        source_span_id="span_memory_write",
+        write_reason='User said "English is fine".',
+        policy_ref="memory_policy/user:v1",
+    )
+
+    response = client.get(
+        f"/v1/agents/{agent_id}/memory?user_id=owner-1",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert response.status_code == 200, response.text
+    item = response.json()["items"][0]
+    assert item["source"] == 'User said "English is fine".'
+    assert item["source_trace"] == "trace_refund_2026_05_10"
+    assert item["source_turn_id"] == str(source_turn_id)
+    assert item["source_span_id"] == "span_memory_write"
+    assert item["policy_ref"] == "memory_policy/user:v1"
+    assert item["confidence"] == "medium"
+    assert item["safety_flags"] == ["none"]
+    assert "memory_policy/user:v1" in item["retention_policy"]
 
 
 @pytest.mark.asyncio
@@ -186,9 +224,7 @@ def test_agent_session_memory_lookup_requires_admin(
     assert allowed.status_code == 200, allowed.text
 
 
-def test_agent_memory_route_requires_membership(
-    client: TestClient, agent_id: UUID
-) -> None:
+def test_agent_memory_route_requires_membership(client: TestClient, agent_id: UUID) -> None:
     response = client.get(
         f"/v1/agents/{agent_id}/memory?user_id=owner-1",
         headers={"authorization": _bearer_for("stranger")},
@@ -217,9 +253,7 @@ def test_agent_memory_policies_support_enterprise_scopes(
         scope_body = {
             **base_body,
             "scope": scope,
-            "pii_policy": "No sensitive values."
-            if scope == "task"
-            else base_body["pii_policy"],
+            "pii_policy": "No sensitive values." if scope == "task" else base_body["pii_policy"],
         }
         response = client.put(
             f"/v1/agents/{agent_id}/memory-policies/{scope}",
