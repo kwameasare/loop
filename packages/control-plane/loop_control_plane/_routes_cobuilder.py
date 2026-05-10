@@ -522,6 +522,7 @@ async def apply_cobuilder_action(
         workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     agents = await cp.agents.list_for_workspace(workspace_id)
     agent = None
