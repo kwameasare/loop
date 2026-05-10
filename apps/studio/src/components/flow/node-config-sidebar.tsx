@@ -57,7 +57,7 @@ export function NodeConfigSidebar(props: NodeConfigSidebarProps) {
   return (
     <aside
       aria-label="Node configuration"
-      className="flex w-80 flex-col gap-4 border-l bg-white p-4"
+      className="flex w-80 flex-col gap-4 border-l bg-card p-4"
       data-testid="node-sidebar"
     >
       <header className="flex items-center justify-between">
@@ -69,11 +69,11 @@ export function NodeConfigSidebar(props: NodeConfigSidebarProps) {
             {kind.icon}
           </span>
           <div>
-            <p className="text-xs uppercase text-zinc-500">
+            <p className="text-xs uppercase text-muted-foreground">
               {kind.label} node
             </p>
             <p
-              className="font-mono text-xs text-zinc-700"
+              className="font-mono text-xs text-foreground"
               data-testid="node-sidebar-id"
             >
               {props.node.id}
@@ -82,7 +82,7 @@ export function NodeConfigSidebar(props: NodeConfigSidebarProps) {
         </div>
         <button
           aria-label="Close node configuration"
-          className="rounded border px-2 py-1 text-xs hover:bg-zinc-50"
+          className="rounded border bg-background px-2 py-1 text-xs hover:bg-muted"
           data-testid="node-sidebar-close"
           onClick={props.onClose}
           type="button"
@@ -92,9 +92,9 @@ export function NodeConfigSidebar(props: NodeConfigSidebarProps) {
       </header>
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-xs uppercase text-zinc-500">Label</span>
+        <span className="text-xs uppercase text-muted-foreground">Label</span>
         <input
-          className="rounded border px-2 py-1"
+          className="rounded border bg-background px-2 py-1"
           data-testid="node-config-label"
           onBlur={blur}
           onChange={(e) => setField("label", e.target.value)}
@@ -106,7 +106,7 @@ export function NodeConfigSidebar(props: NodeConfigSidebarProps) {
       {props.node.type === "message" ? (
         <Field error={errors.body} label="Body" testid="node-config-body">
           <textarea
-            className="rounded border px-2 py-1"
+            className="rounded border bg-background px-2 py-1"
             data-testid="node-config-body-input"
             onBlur={blur}
             onChange={(e) => setField("body", e.target.value)}
@@ -123,7 +123,7 @@ export function NodeConfigSidebar(props: NodeConfigSidebarProps) {
           testid="node-config-expression"
         >
           <input
-            className="rounded border px-2 py-1 font-mono"
+            className="rounded border bg-background px-2 py-1 font-mono"
             data-testid="node-config-expression-input"
             onBlur={blur}
             onChange={(e) => setField("expression", e.target.value)}
@@ -141,7 +141,7 @@ export function NodeConfigSidebar(props: NodeConfigSidebarProps) {
             testid="node-config-model"
           >
             <input
-              className="rounded border px-2 py-1"
+              className="rounded border bg-background px-2 py-1"
               data-testid="node-config-model-input"
               onBlur={blur}
               onChange={(e) => setField("model", e.target.value)}
@@ -155,7 +155,7 @@ export function NodeConfigSidebar(props: NodeConfigSidebarProps) {
             testid="node-config-prompt"
           >
             <textarea
-              className="rounded border px-2 py-1"
+              className="rounded border bg-background px-2 py-1"
               data-testid="node-config-prompt-input"
               onBlur={blur}
               onChange={(e) => setField("prompt", e.target.value)}
@@ -174,7 +174,7 @@ export function NodeConfigSidebar(props: NodeConfigSidebarProps) {
             testid="node-config-method"
           >
             <select
-              className="rounded border px-2 py-1"
+              className="rounded border bg-background px-2 py-1"
               data-testid="node-config-method-input"
               onBlur={blur}
               onChange={(e) => setField("method", e.target.value)}
@@ -188,7 +188,7 @@ export function NodeConfigSidebar(props: NodeConfigSidebarProps) {
           </Field>
           <Field error={errors.url} label="URL" testid="node-config-url">
             <input
-              className="rounded border px-2 py-1 font-mono"
+              className="rounded border bg-background px-2 py-1 font-mono"
               data-testid="node-config-url-input"
               onBlur={blur}
               onChange={(e) => setField("url", e.target.value)}
@@ -206,7 +206,7 @@ export function NodeConfigSidebar(props: NodeConfigSidebarProps) {
           testid="node-config-source"
         >
           <textarea
-            className="rounded border px-2 py-1 font-mono text-xs"
+            className="rounded border bg-background px-2 py-1 font-mono text-xs"
             data-testid="node-config-source-input"
             onBlur={blur}
             onChange={(e) => setField("source", e.target.value)}
@@ -218,7 +218,7 @@ export function NodeConfigSidebar(props: NodeConfigSidebarProps) {
 
       {props.node.type === "start" || props.node.type === "end" ? (
         <p
-          className="rounded border border-dashed border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-500"
+          className="rounded border border-dashed border-border bg-muted px-3 py-2 text-xs text-muted-foreground"
           data-testid="node-config-no-fields"
         >
           {kind.label} nodes have no additional configuration.
@@ -241,11 +241,11 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1 text-sm" data-testid={testid}>
-      <span className="text-xs uppercase text-zinc-500">{label}</span>
+      <span className="text-xs uppercase text-muted-foreground">{label}</span>
       {children}
       {error ? (
         <p
-          className="text-xs text-red-600"
+          className="text-xs text-destructive"
           data-testid={`${testid}-error`}
           role="alert"
         >

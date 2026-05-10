@@ -174,22 +174,22 @@ export function FlowEditor(props: FlowEditorProps) {
 
   return (
     <section
-      className="flex h-[640px] w-full overflow-hidden rounded-lg border bg-zinc-50"
+      className="flex h-[640px] w-full overflow-hidden rounded-lg border bg-muted"
       data-testid="flow-editor"
     >
       <NodePalette onDragStart={(type) => setPending(type)} />
       <div className="flex flex-1 flex-col">
         <header
-          className="flex items-center justify-between border-b bg-white px-4 py-2"
+          className="flex items-center justify-between border-b bg-card px-4 py-2"
           data-testid="flow-toolbar"
         >
-          <span className="font-mono text-xs text-zinc-500">
+          <span className="font-mono text-xs text-muted-foreground">
             agent-id: {props.agentId}
           </span>
           <div className="flex items-center gap-2">
             <button
               aria-label="Zoom out"
-              className="rounded border px-2 py-1 text-sm hover:bg-zinc-100 disabled:opacity-40"
+              className="rounded border bg-background px-2 py-1 text-sm hover:bg-muted disabled:opacity-40"
               data-testid="flow-zoom-out"
               disabled={viewport.zoom <= MIN_ZOOM + 1e-9}
               onClick={zoomOut}
@@ -205,7 +205,7 @@ export function FlowEditor(props: FlowEditorProps) {
             </span>
             <button
               aria-label="Zoom in"
-              className="rounded border px-2 py-1 text-sm hover:bg-zinc-100 disabled:opacity-40"
+              className="rounded border bg-background px-2 py-1 text-sm hover:bg-muted disabled:opacity-40"
               data-testid="flow-zoom-in"
               disabled={viewport.zoom >= MAX_ZOOM - 1e-9}
               onClick={zoomIn}
@@ -215,7 +215,7 @@ export function FlowEditor(props: FlowEditorProps) {
             </button>
             <button
               aria-label="Undo"
-              className="rounded border px-2 py-1 text-sm hover:bg-zinc-100 disabled:opacity-40"
+              className="rounded border bg-background px-2 py-1 text-sm hover:bg-muted disabled:opacity-40"
               data-testid="flow-undo"
               disabled={!canUndo}
               onClick={undo}
@@ -225,7 +225,7 @@ export function FlowEditor(props: FlowEditorProps) {
             </button>
             <button
               aria-label="Redo"
-              className="rounded border px-2 py-1 text-sm hover:bg-zinc-100 disabled:opacity-40"
+              className="rounded border bg-background px-2 py-1 text-sm hover:bg-muted disabled:opacity-40"
               data-testid="flow-redo"
               disabled={!canRedo}
               onClick={redo}
@@ -234,7 +234,7 @@ export function FlowEditor(props: FlowEditorProps) {
               ↪
             </button>
             <button
-              className="rounded border px-2 py-1 text-sm hover:bg-zinc-100"
+              className="rounded border bg-background px-2 py-1 text-sm hover:bg-muted"
               data-testid="flow-reset"
               onClick={reset}
               type="button"
@@ -242,7 +242,7 @@ export function FlowEditor(props: FlowEditorProps) {
               Reset
             </button>
             <button
-              className="rounded border border-blue-300 px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
+              className="rounded border border-info/30 bg-info/10 px-2 py-1 text-sm text-info hover:bg-info/15"
               data-testid="flow-templates"
               onClick={() => setShowTemplatePicker(true)}
               type="button"
@@ -322,7 +322,7 @@ export function FlowEditor(props: FlowEditorProps) {
                   }}
                 >
                   <button
-                    className={`flex min-w-[7rem] items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm shadow-sm hover:bg-zinc-50 ${isSelected ? "ring-2 ring-blue-500" : ""}`}
+                    className={`flex min-w-[7rem] items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm shadow-sm hover:bg-muted ${isSelected ? "ring-2 ring-info" : ""}`}
                     data-testid={`flow-node-${n.id}`}
                     data-node-type={n.type}
                     onClick={(e) => {
@@ -355,7 +355,7 @@ export function FlowEditor(props: FlowEditorProps) {
                   </button>
                   <button
                     aria-label={`Connect from ${n.id}`}
-                    className={`absolute -right-2 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-white shadow ${isConnectSource ? "bg-blue-500" : "bg-zinc-400 hover:bg-blue-500"}`}
+                    className={`absolute -right-2 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-background shadow ${isConnectSource ? "bg-info" : "bg-muted-foreground hover:bg-info"}`}
                     data-testid={`flow-handle-${n.id}`}
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => {
@@ -373,7 +373,7 @@ export function FlowEditor(props: FlowEditorProps) {
               className="pointer-events-none absolute inset-0 flex items-center justify-center"
               data-testid="flow-placeholder"
             >
-              <div className="rounded-lg border border-dashed border-zinc-300 bg-white/80 px-6 py-4 text-center text-sm text-zinc-500">
+              <div className="rounded-lg border border-dashed border-border bg-card/80 px-6 py-4 text-center text-sm text-muted-foreground">
                 <p className="font-medium">Flow canvas is empty.</p>
                 <p className="text-xs">
                   Drag a node from the palette to get started.
