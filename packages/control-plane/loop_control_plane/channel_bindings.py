@@ -229,6 +229,19 @@ def _default_binding(agent: AgentRecord, channel_type: ChannelType) -> ChannelBi
     )
 
 
+def channel_readiness_state(binding: ChannelBindingRecord) -> str:
+    required = [item for item in binding.readiness if item.get("status") != "not_required"]
+    if binding.status == "not_configured":
+        return "not_configured"
+    if not required:
+        return "ready"
+    if any(item.get("status") == "failed" for item in required):
+        return "blocked"
+    if all(item.get("status") == "passed" for item in required):
+        return "ready"
+    return "needs_readiness"
+
+
 def _payload(record: ChannelBindingRecord) -> dict[str, Any]:
     return record.model_dump(mode="json")
 

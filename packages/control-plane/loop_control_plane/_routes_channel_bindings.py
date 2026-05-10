@@ -16,6 +16,7 @@ from loop_control_plane.channel_bindings import (
     ChannelPreviewMatrixRequest,
     ChannelReadinessUpdate,
     channel_binding_payload,
+    channel_readiness_state,
 )
 from loop_control_plane.eval_suites import EvalCaseCreate, serialise_case
 
@@ -61,19 +62,6 @@ def _audit(
         request_id=request_id(request),
         payload=payload,
     )
-
-
-def _readiness_state(binding: ChannelBindingRecord) -> str:
-    required = [item for item in binding.readiness if item.get("status") not in {"not_required"}]
-    if binding.status == "not_configured":
-        return "not_configured"
-    if not required:
-        return "ready"
-    if any(item.get("status") == "failed" for item in required):
-        return "blocked"
-    if all(item.get("status") == "passed" for item in required):
-        return "ready"
-    return "needs_readiness"
 
 
 def _compact_expected(expected: str, *, limit: int) -> str:
@@ -164,7 +152,7 @@ def _formatting_failures(
                 "expected_outcome": "Configure the channel binding before production rollout.",
             }
         )
-    readiness = _readiness_state(binding)
+    readiness = channel_readiness_state(binding)
     if readiness in {"blocked", "needs_readiness"}:
         failures.append(
             {
@@ -217,7 +205,7 @@ def _matrix_row(
         "display_name": binding.display_name,
         "provider": binding.provider,
         "binding_status": binding.status,
-        "readiness_state": _readiness_state(binding),
+        "readiness_state": channel_readiness_state(binding),
         "rendered_preview": rendered_preview,
         "adaptation_notes": _channel_notes(binding.channel_type),
         "constraints": _channel_constraints(binding.channel_type),

@@ -9,6 +9,11 @@ from pydantic import BaseModel, ConfigDict, Field
 from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import authorize_workspace_access
+from loop_control_plane.channel_bindings import (
+    ChannelBindingRecord,
+    ChannelType,
+    channel_readiness_state,
+)
 from loop_control_plane.deployments import (
     DeploymentStart,
     deployment_payload,
@@ -90,6 +95,80 @@ def _audit(
     )
 
 
+def _channel_blocking_checks(binding: ChannelBindingRecord) -> list[dict[str, Any]]:
+    checks = [
+        {
+            "id": str(check.get("id", "")),
+            "label": str(check.get("label", "")),
+            "status": str(check.get("status", "")),
+            "evidence_ref": check.get("evidence_ref"),
+        }
+        for check in binding.readiness
+        if check.get("status") in {"pending", "failed"}
+    ]
+    if checks:
+        return checks
+    return [
+        {
+            "id": f"{binding.channel_type}_not_ready",
+            "label": f"{binding.display_name} is not ready",
+            "status": channel_readiness_state(binding),
+            "evidence_ref": None,
+        }
+    ]
+
+
+def _ready_channel_scope(
+    *,
+    bindings: list[ChannelBindingRecord],
+    requested_scope: list[ChannelType],
+) -> tuple[list[ChannelType], list[dict[str, Any]]]:
+    by_type = {binding.channel_type: binding for binding in bindings}
+    scope = requested_scope or [
+        binding.channel_type for binding in bindings if channel_readiness_state(binding) == "ready"
+    ]
+    blockers: list[dict[str, Any]] = []
+    if not scope:
+        blockers.append(
+            {
+                "channel_type": "none",
+                "readiness_state": "no_ready_channels",
+                "display_name": "No ready channel bindings",
+                "blocking_checks": [
+                    {
+                        "id": "channel_scope_empty",
+                        "label": "At least one requested channel must be ready",
+                        "status": "failed",
+                        "evidence_ref": None,
+                    }
+                ],
+            }
+        )
+        return scope, blockers
+
+    for channel_type in scope:
+        binding = by_type[channel_type]
+        state = channel_readiness_state(binding)
+        if state == "ready":
+            continue
+        blockers.append(
+            {
+                "channel_type": binding.channel_type,
+                "readiness_state": state,
+                "display_name": binding.display_name,
+                "blocking_checks": _channel_blocking_checks(binding),
+            }
+        )
+    return scope, blockers
+
+
+def _channel_blocker_message(blockers: list[dict[str, Any]]) -> str:
+    summary = ", ".join(
+        f"{blocker['channel_type']} {blocker['readiness_state']}" for blocker in blockers
+    )
+    return f"channel readiness blocks rollout: {summary}"
+
+
 @router.get("/{agent_id}/deployments")
 async def list_deployments(
     request: Request,
@@ -126,6 +205,27 @@ async def start_deployment(
         agent=agent,
         package_id=body.change_package_id,
     )
+    bindings = await request.app.state.cp.channel_bindings.list_for_agent(agent=agent)
+    channel_scope, channel_blockers = _ready_channel_scope(
+        bindings=bindings,
+        requested_scope=body.channel_scope,
+    )
+    if channel_blockers:
+        _audit(
+            request,
+            workspace_id=workspace_id,
+            caller_sub=caller_sub,
+            action="deployment:start_blocked",
+            resource_id=change_package.id,
+            payload={
+                "agent_id": str(agent_id),
+                "change_package_id": change_package.id,
+                "requested_channel_scope": body.channel_scope,
+                "channel_blockers": channel_blockers,
+            },
+        )
+        raise WorkspaceError(_channel_blocker_message(channel_blockers))
+    body = body.model_copy(update={"channel_scope": channel_scope})
     deployment, evidence_pack = await request.app.state.cp.deployments.start(
         agent=agent,
         change_package=change_package,
