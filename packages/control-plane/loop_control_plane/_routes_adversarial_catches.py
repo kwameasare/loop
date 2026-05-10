@@ -27,6 +27,7 @@ async def _agent(
     agent_id: UUID,
     caller_sub: str,
     workspace_id: UUID | None = None,
+    required_role: Role | None = None,
 ) -> Any:
     cp = request.app.state.cp
     if workspace_id is None:
@@ -38,7 +39,7 @@ async def _agent(
         workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
-        required_role=Role.ADMIN,
+        required_role=required_role,
     )
     return await cp.agents.get(
         workspace_id=workspace_id,
@@ -132,6 +133,7 @@ async def run_adversarial_probe(
         agent_id=agent_id,
         workspace_id=workspace_id,
         caller_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     workspace_id = agent.workspace_id
     run, catches = await cp.adversarial_catches.run_probe(
@@ -191,6 +193,7 @@ async def resolve_catch(
         agent_id=agent_id,
         workspace_id=workspace_id,
         caller_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     workspace_id = agent.workspace_id
     catches = await cp.adversarial_catches.list_for_agent(agent=agent)
