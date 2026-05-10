@@ -34,6 +34,15 @@ describe("AgentDeploysPage", () => {
     expect(
       screen.getByTestId("change-package-release-candidate-card"),
     ).toHaveAttribute("data-focused", "true");
+    expect(screen.getByTestId("change-package-status")).toHaveTextContent(
+      "unavailable",
+    );
+    expect(screen.getByTestId("change-package-hash")).toHaveTextContent(
+      "not loaded",
+    );
+    expect(screen.getByTestId("change-package-summary")).toHaveTextContent(
+      "will not render local preflight placeholders",
+    );
   });
 
   it("focuses promotion controls from Workbench deploy links", async () => {

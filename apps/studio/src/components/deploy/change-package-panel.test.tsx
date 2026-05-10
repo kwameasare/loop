@@ -17,6 +17,7 @@ function makePackage(overrides: Partial<ChangePackage> = {}): ChangePackage {
     commitment_document_version: 2,
     release_candidate_id: "rc_refund_v2",
     content_hash: "abcdef1234567890",
+    evidence_pack_id: "evidence_pack_cp_1",
     semantic_diff: [
       {
         dimension: "behavior",
@@ -260,6 +261,16 @@ describe("ChangePackagePanel", () => {
         generateChangePackage={generateChangePackage}
         submitChangePackage={vi.fn()}
       />,
+    );
+
+    expect(screen.getByTestId("change-package-status")).toHaveTextContent(
+      "not generated",
+    );
+    expect(screen.getByTestId("change-package-hash")).toHaveTextContent(
+      "not loaded",
+    );
+    expect(screen.getByTestId("change-package-summary")).toHaveTextContent(
+      "No Change Package has been generated",
     );
 
     fireEvent.click(screen.getByTestId("change-package-generate"));
