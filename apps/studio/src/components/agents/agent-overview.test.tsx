@@ -98,8 +98,16 @@ describe("AgentOverview", () => {
     expect(screen.getByTestId("agent-outline-channels")).toHaveTextContent(
       "Channel readiness is not loaded",
     );
+    expect(screen.getByTestId("agent-outline-link-channels")).toHaveAttribute(
+      "href",
+      "/agents/ag_1/channels",
+    );
     expect(screen.getByTestId("agent-outline-tools")).toHaveTextContent(
       "No tool contracts loaded",
+    );
+    expect(screen.getByTestId("agent-outline-link-tools")).toHaveAttribute(
+      "href",
+      "/agents/ag_1/tools",
     );
     expect(screen.getByTestId("agent-live-preview")).toHaveTextContent(
       "No preview run loaded",
@@ -109,6 +117,14 @@ describe("AgentOverview", () => {
     );
     expect(screen.getByTestId("safe-next-actions")).toHaveTextContent(
       "Run first simulator turn",
+    );
+    expect(screen.getByTestId("safe-action-replay")).toHaveAttribute(
+      "href",
+      "/agents/ag_1/simulator",
+    );
+    expect(screen.getByTestId("safe-action-eval")).toHaveAttribute(
+      "href",
+      "/agents/ag_1/evals",
     );
     expect(screen.queryByText("trace_refund_742")).not.toBeInTheDocument();
     expect(screen.queryByText("I need to cancel my annual renewal")).toBeNull();
