@@ -188,6 +188,7 @@ function Topology({
   data: ConductorData;
   selectedAgentId: string | null;
 }) {
+  const emptyTopology = data.subAgents.length === 0 && data.topology.length === 0;
   return (
     <section
       className="min-w-0 rounded-md border bg-card p-4"
@@ -201,6 +202,14 @@ function Topology({
             Conductor topology
           </h3>
         </div>
+        {emptyTopology ? (
+          <StatePanel state="empty" title="No topology loaded">
+            <p>
+              Attach reviewed sub-agent assets before Studio can show handoff
+              edges, owners, and orchestration evidence.
+            </p>
+          </StatePanel>
+        ) : null}
         <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr))]">
           {data.subAgents.map((agent) => (
             <div
@@ -272,6 +281,14 @@ function HandoffContracts({
         </h3>
       </div>
       <div className="space-y-3">
+        {contracts.length === 0 ? (
+          <StatePanel state="empty" title="No handoff contracts">
+            <p>
+              Create a contract only after a source agent, target agent, schema,
+              timeout, fallback, memory access, and tool grant are known.
+            </p>
+          </StatePanel>
+        ) : null}
         {contracts.map((contract) => (
           <RiskHalo
             key={contract.id}
@@ -526,6 +543,14 @@ function DelegationTrace({ data }: { data: ConductorData }) {
         </h3>
       </div>
       <div className="space-y-3">
+        {data.delegations.length === 0 ? (
+          <StatePanel state="empty" title="No delegation traces">
+            <p>
+              Run a simulator scenario or inspect production traffic to capture
+              traceable handoffs.
+            </p>
+          </StatePanel>
+        ) : null}
         {data.delegations.map((delegation) => (
           <div
             key={delegation.id}
@@ -595,6 +620,10 @@ export function ConductorStudio({ data }: ConductorStudioProps) {
     data.subAgents.length > 0
       ? Math.max(...data.subAgents.map((agent) => agent.latencyP95Ms))
       : 0;
+  const hasConductorEvidence =
+    data.subAgents.length > 0 ||
+    data.contracts.length > 0 ||
+    data.delegations.length > 0;
 
   return (
     <main
@@ -698,15 +727,19 @@ export function ConductorStudio({ data }: ConductorStudioProps) {
           <AgentInspector agent={selectedAgent} />
           <ContractDetail contract={selectedContract} />
           <EvidenceCallout
-            title="No hidden orchestration"
+            title={
+              hasConductorEvidence
+                ? "No hidden orchestration"
+                : "Waiting for orchestration evidence"
+            }
             source={data.orchestrationEvidence}
-            confidence={92}
-            confidenceLevel="high"
-            tone="success"
+            confidence={hasConductorEvidence ? 92 : 0}
+            confidenceLevel={hasConductorEvidence ? "high" : "unsupported"}
+            tone={hasConductorEvidence ? "success" : "info"}
           >
-            Each delegation names the source agent, target agent, contract,
-            current owner, span evidence, budget, latency, fallback, and
-            memory/tool grants before a composed answer can proceed.
+            {hasConductorEvidence
+              ? "Each delegation names the source agent, target agent, contract, current owner, span evidence, budget, latency, fallback, and memory/tool grants before a composed answer can proceed."
+              : "Studio will not invent sub-agents, contracts, or delegation traces. Once the control plane records them, this panel becomes the evidence trail."}
           </EvidenceCallout>
         </aside>
       </div>

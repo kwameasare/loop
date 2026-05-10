@@ -129,7 +129,7 @@ export async function fetchConductorData(
       cache: "no-store",
     },
   );
-  if (response.status === 404) return createBlockedConductorData(agentId);
+  if (response.status === 404) return createEmptyConductorData(agentId);
   if (!response.ok) {
     throw new Error(`cp-api GET agent conductor -> ${response.status}`);
   }
@@ -386,5 +386,24 @@ export function createBlockedConductorData(
         contract.violation ??
         "Blocked by workspace policy until handoff approval is granted.",
     })),
+  };
+}
+
+export function createEmptyConductorData(
+  agentId = "agent_empty",
+): ConductorData {
+  return {
+    agentId,
+    agentName: `Agent ${agentId}`,
+    branch: "No branch loaded",
+    objectState: "draft",
+    trust: "degraded",
+    subAgents: [],
+    contracts: [],
+    delegations: [],
+    topology: [],
+    orchestrationEvidence: "No conductor topology loaded from cp-api.",
+    degradedReason:
+      "No conductor topology exists for this agent yet. Attach a reviewed sub-agent asset before creating handoff contracts.",
   };
 }

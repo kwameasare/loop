@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   createBlockedConductorData,
   createConductorData,
+  createEmptyConductorData,
 } from "@/lib/conductor";
 
 import { ConductorStudio } from "./conductor-studio";
@@ -84,5 +85,22 @@ describe("ConductorStudio", () => {
     expect(screen.getByTestId("conductor-contracts")).toHaveTextContent(
       "Blocked by workspace policy",
     );
+  });
+
+  it("renders missing conductor data as empty evidence, not fixture topology", () => {
+    render(<ConductorStudio data={createEmptyConductorData("agent_support")} />);
+
+    expect(screen.getByText("Conductor data degraded")).toBeInTheDocument();
+    expect(screen.getByTestId("conductor-topology")).toHaveTextContent(
+      "No topology loaded",
+    );
+    expect(screen.getByTestId("conductor-contracts")).toHaveTextContent(
+      "No handoff contracts",
+    );
+    expect(screen.getByTestId("conductor-delegation")).toHaveTextContent(
+      "No delegation traces",
+    );
+    expect(screen.getByText("Waiting for orchestration evidence")).toBeInTheDocument();
+    expect(screen.queryByText("Refund Specialist")).not.toBeInTheDocument();
   });
 });
