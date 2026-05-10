@@ -5,6 +5,7 @@ import type {
   AgentIntakeCreateInput,
   AgentIntakeCreateResult,
 } from "@/lib/agent-intake";
+import { LOCAL_AGENT_INTAKE_TEMPLATES } from "@/lib/agent-intake";
 
 const push = vi.fn();
 
@@ -256,15 +257,22 @@ describe("NewAgentModal", () => {
 
   it("applies approved enterprise template defaults before submit", async () => {
     const createAgentIntake = makeCreateIntake();
+    const listAgentIntakeTemplates = vi.fn(async () => ({
+      items: LOCAL_AGENT_INTAKE_TEMPLATES,
+    }));
     render(
       <NewAgentModal
         existingSlugs={[]}
         workspaceId="ws_1"
         createAgentIntake={createAgentIntake}
+        listAgentIntakeTemplates={listAgentIntakeTemplates}
       />,
     );
 
     fireEvent.click(screen.getByTestId("new-agent-button"));
+    await waitFor(() => {
+      expect(listAgentIntakeTemplates).toHaveBeenCalledWith("ws_1");
+    });
     fill("new-agent-name", "Receptionist");
     fill("new-agent-slug", "receptionist");
     fireEvent.click(screen.getByLabelText(/Enterprise template/i));
@@ -293,6 +301,33 @@ describe("NewAgentModal", () => {
         }),
       );
     });
+  });
+
+  it("does not treat offline example templates as approved workspace templates", () => {
+    const createAgentIntake = makeCreateIntake();
+    render(
+      <NewAgentModal
+        existingSlugs={[]}
+        workspaceId="ws_1"
+        createAgentIntake={createAgentIntake}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("new-agent-button"));
+    fill("new-agent-name", "Receptionist");
+    fill("new-agent-slug", "receptionist");
+    fireEvent.click(screen.getByLabelText(/Enterprise template/i));
+    fill("new-agent-owner", "maya@acme.test");
+
+    expect(
+      screen.getByTestId("new-agent-template-catalog-unapproved"),
+    ).toHaveTextContent(/Offline examples only/i);
+    expect(
+      screen.getByTestId("new-agent-template-submit-blocked"),
+    ).toHaveTextContent(/workspace-approved catalog/i);
+    expect(screen.getByTestId("new-agent-submit")).toBeDisabled();
+    fireEvent.click(screen.getByTestId("new-agent-submit"));
+    expect(createAgentIntake).not.toHaveBeenCalled();
   });
 
   it("uses workspace approved templates when the catalog endpoint returns them", async () => {
