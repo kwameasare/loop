@@ -66,7 +66,7 @@ export function EmulatorPanel({
   agentId,
   invoke,
   client,
-  evidenceMode = "fixture",
+  evidenceMode = "empty",
 }: EmulatorPanelProps) {
   const submit =
     invoke ??

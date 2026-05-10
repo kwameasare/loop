@@ -356,7 +356,7 @@ export function parseSimulatorCommand(
     if (!tool || !toolNames().includes(tool)) {
       return {
         ok: false,
-        message: "Tool is not available in this simulator fixture.",
+        message: "Tool is not available in this simulator tool set.",
         nextConfig: config,
       };
     }
@@ -389,7 +389,7 @@ export function parseSimulatorCommand(
     if (!persona || !isPersona(persona)) {
       return {
         ok: false,
-        message: "Persona is not part of this simulator fixture.",
+        message: "Persona is not part of this simulator persona set.",
         nextConfig: config,
       };
     }
@@ -426,7 +426,7 @@ export function parseSimulatorCommand(
     if (!tool || !toolNames().includes(tool)) {
       return {
         ok: false,
-        message: "Tool is not available in this simulator fixture.",
+        message: "Tool is not available in this simulator tool set.",
         nextConfig: config,
       };
     }
