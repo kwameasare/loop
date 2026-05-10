@@ -30,6 +30,8 @@ export function TelemetryConsentCard(): JSX.Element | null {
   const [model, setModel] = useState<TelemetryConsentModel | null>(null);
   const [draft, setDraft] = useState<ConsentDraft>(DEFAULT_DRAFT);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!active) return;
@@ -57,8 +59,20 @@ export function TelemetryConsentCard(): JSX.Element | null {
 
   async function save(next: ConsentDraft) {
     if (!active) return;
-    await saveTelemetryConsent(active.id, next);
-    setSaved(true);
+    setSaving(true);
+    setError(null);
+    try {
+      await saveTelemetryConsent(active.id, next);
+      setSaved(true);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not save telemetry consent.",
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -82,6 +96,7 @@ export function TelemetryConsentCard(): JSX.Element | null {
             type="button"
             variant="outline"
             size="sm"
+            disabled={saving}
             onClick={() =>
               void save({
                 product_analytics: false,
@@ -93,11 +108,24 @@ export function TelemetryConsentCard(): JSX.Element | null {
           >
             Decline
           </Button>
-          <Button type="button" size="sm" onClick={() => void save(draft)}>
-            Save
+          <Button
+            type="button"
+            size="sm"
+            disabled={saving}
+            onClick={() => void save(draft)}
+          >
+            {saving ? "Saving" : "Save"}
           </Button>
         </div>
       </div>
+      {error ? (
+        <p
+          className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive"
+          role="alert"
+        >
+          {error}
+        </p>
+      ) : null}
       <div className="mt-3 grid gap-2 sm:grid-cols-4">
         {(
           [
