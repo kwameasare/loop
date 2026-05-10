@@ -213,6 +213,14 @@ export interface MigrationRunsResponse {
   items: MigrationRun[];
 }
 
+type MigrationRunClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
+type MigrationCutoverClientOptions = MigrationRunClientOptions & {
+  fallbackRun?: MigrationRun;
+};
+
 const LOCAL_NOW = new Date(0).toISOString();
 
 export function localMigrationRun(workspaceId: string): MigrationRun {
@@ -320,23 +328,25 @@ export async function listMigrationImports(
 export async function createMigrationImport(
   workspaceId: string,
   input: MigrationImportInput,
-  opts: UxWireupClientOptions = {},
+  opts: MigrationRunClientOptions = {},
 ): Promise<MigrationRun> {
+  const source = input.source ?? "botpress";
+  const sourceDefinition = migrationSourceById(source);
+  const localRun = localMigrationRun(workspaceId);
   return cpJson<MigrationRun>(
     `/workspaces/${encodeURIComponent(workspaceId)}/migrations/imports`,
     {
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
-        ...localMigrationRun(workspaceId),
-        source: input.source ?? "botpress",
+        ...localRun,
+        source,
         source_profile: {
-          ...localMigrationRun(workspaceId).source_profile,
-          label: migrationSourceById(input.source ?? "botpress").label,
-          accepted_inputs: [
-            ...migrationSourceById(input.source ?? "botpress").acceptedInputs,
-          ],
+          ...localRun.source_profile,
+          label: sourceDefinition.label,
+          accepted_inputs: [...sourceDefinition.acceptedInputs],
         },
         archive_name: input.archive_name,
         target_agent_name: input.target_agent_name,
@@ -350,7 +360,7 @@ export async function advanceMigrationCutover(
   workspaceId: string,
   migrationId: string,
   input: { stage_id: string; evidence_ref?: string },
-  opts: UxWireupClientOptions & { fallbackRun?: MigrationRun } = {},
+  opts: MigrationCutoverClientOptions = {},
 ): Promise<MigrationRun> {
   const fallback = opts.fallbackRun ?? localMigrationRun(workspaceId);
   const stageIndex = fallback.cutover_stages.findIndex(
@@ -372,6 +382,7 @@ export async function advanceMigrationCutover(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...fallback,
         status:
@@ -389,7 +400,7 @@ export async function rollbackMigrationCutover(
   workspaceId: string,
   migrationId: string,
   input: { trigger_id?: string; reason?: string },
-  opts: UxWireupClientOptions & { fallbackRun?: MigrationRun } = {},
+  opts: MigrationCutoverClientOptions = {},
 ): Promise<MigrationRun> {
   const fallback = opts.fallbackRun ?? localMigrationRun(workspaceId);
   return cpJson<MigrationRun>(
@@ -400,6 +411,7 @@ export async function rollbackMigrationCutover(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...fallback,
         status: "rolled_back",

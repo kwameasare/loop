@@ -32,10 +32,15 @@ export async function cpJson<T>(
     method?: string;
     body?: unknown;
     fallback: T;
+    allowFallback?: boolean;
   },
 ): Promise<T> {
+  const fallbackEnabled = opts.allowFallback ?? true;
   const base = cpApiBaseUrl(opts.baseUrl);
-  if (!base) return opts.fallback;
+  if (!base) {
+    if (fallbackEnabled) return opts.fallback;
+    throw new Error("LOOP_CP_API_BASE_URL is required for cp-api calls.");
+  }
   const fetcher = opts.fetcher ?? fetch;
   const init: RequestInit = {
     method: opts.method ?? "GET",
@@ -47,7 +52,7 @@ export async function cpJson<T>(
   try {
     response = await fetcher(`${base}${path}`, init);
   } catch (error) {
-    if (error instanceof TypeError) return opts.fallback;
+    if (error instanceof TypeError && fallbackEnabled) return opts.fallback;
     throw error;
   }
   if (!response.ok) {
