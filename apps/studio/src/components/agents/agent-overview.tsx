@@ -1810,16 +1810,222 @@ function recordLabel(
   return fallback;
 }
 
+interface IntakeReadinessItem {
+  id: string;
+  label: string;
+  status: WorkbenchSectionStatus;
+  detail: string;
+  evidence: string;
+  href: string;
+}
+
+function sectionById(
+  sections: AgentWorkbenchSection[],
+  sectionId: string,
+): AgentWorkbenchSection | undefined {
+  return sections.find((section) => section.id === sectionId);
+}
+
+function objectCount(value: unknown): number {
+  if (Array.isArray(value)) return value.length;
+  if (value && typeof value === "object") return Object.keys(value).length;
+  return 0;
+}
+
+function buildIntakeReadinessChecklist({
+  agentId,
+  intakeRecord,
+  sections,
+}: {
+  agentId: string;
+  intakeRecord: AgentIntakeRecord;
+  sections: AgentWorkbenchSection[];
+}): IntakeReadinessItem[] {
+  const commitment = sectionById(sections, "commitment");
+  const behavior = sectionById(sections, "behavior");
+  const channels = sectionById(sections, "channels");
+  const tools = sectionById(sections, "tools");
+  const knowledge = sectionById(sections, "knowledge");
+  const memory = sectionById(sections, "memory");
+  const evals = sectionById(sections, "evals");
+  const deployments = sectionById(sections, "deployments");
+  const riskFindingCount =
+    intakeRecord.risk_notes.length +
+    intakeRecord.missing_information.length +
+    intakeRecord.contradictions.length +
+    intakeRecord.sensitive_data_findings.length;
+  const candidateChannelCount = intakeRecord.candidate_channels.length;
+  const candidateToolCount = intakeRecord.candidate_tools.length;
+  const candidateEvalCount = intakeRecord.candidate_eval_cases.length;
+  const parsedArtifactCount = intakeRecord.artifact_reports.length;
+  const memoryPolicyCount = objectCount(intakeRecord.candidate_memory_policy);
+
+  return [
+    {
+      id: "commitment",
+      label: "Commitment accepted",
+      status: commitment?.status === "healthy" ? "healthy" : "blocked",
+      detail:
+        commitment?.status === "healthy"
+          ? "Accepted Commitment Document can be cited by preflight."
+          : commitment?.validation ??
+            "Accept the Commitment Document before production actions unlock.",
+      evidence: commitment?.evidence ?? "commitment.unloaded",
+      href: agentSectionHref(agentId, "commitment"),
+    },
+    {
+      id: "behavior",
+      label: "Behavior reviewed",
+      status:
+        behavior?.status === "healthy"
+          ? "healthy"
+          : behavior?.status ?? "watching",
+      detail:
+        behavior?.validation ??
+        "Open the behavior editor and review the generated outline.",
+      evidence: behavior?.evidence ?? "behavior.editor",
+      href: agentSectionHref(agentId, "behavior"),
+    },
+    {
+      id: "channels",
+      label: "At least one channel configured",
+      status:
+        channels?.status === "healthy"
+          ? "healthy"
+          : candidateChannelCount > 0
+            ? "watching"
+            : "blocked",
+      detail:
+        channels?.status === "healthy"
+          ? channels.validation
+          : candidateChannelCount > 0
+            ? `${candidateChannelCount} draft channel binding${
+                candidateChannelCount === 1 ? "" : "s"
+              } created; finish readiness checks before deploy.`
+            : "Create at least one channel binding.",
+      evidence: channels?.evidence ?? "agent_intake.candidate_channels",
+      href: agentSectionHref(agentId, "channels"),
+    },
+    {
+      id: "tools",
+      label: "Required tools mocked or connected",
+      status:
+        tools?.status === "healthy"
+          ? "healthy"
+          : candidateToolCount > 0
+            ? "healthy"
+            : "watching",
+      detail:
+        tools?.status === "healthy"
+          ? tools.validation
+          : candidateToolCount > 0
+            ? `${candidateToolCount} mock tool contract${
+                candidateToolCount === 1 ? "" : "s"
+              } created from the intake systems list.`
+            : "Add mock or sandbox tool contracts before testing tool behavior.",
+      evidence: tools?.evidence ?? "agent_intake.candidate_tools",
+      href: agentSectionHref(agentId, "tools"),
+    },
+    {
+      id: "knowledge",
+      label: "Knowledge source added",
+      status:
+        knowledge?.status === "healthy"
+          ? "healthy"
+          : parsedArtifactCount > 0
+            ? "watching"
+            : "blocked",
+      detail:
+        knowledge?.status === "healthy"
+          ? knowledge.validation
+          : parsedArtifactCount > 0
+            ? `${parsedArtifactCount} artifact${
+                parsedArtifactCount === 1 ? "" : "s"
+              } parsed; review ingestion before relying on retrieval.`
+            : "Add at least one policy, FAQ, transcript, or runbook source.",
+      evidence: knowledge?.evidence ?? "agent_intake.artifact_reports",
+      href: agentSectionHref(agentId, "knowledge"),
+    },
+    {
+      id: "memory",
+      label: "Memory policy reviewed",
+      status:
+        memory?.status === "healthy"
+          ? "healthy"
+          : memoryPolicyCount > 0
+            ? "watching"
+            : "blocked",
+      detail:
+        memory?.status === "healthy"
+          ? memory.validation
+          : memoryPolicyCount > 0
+            ? "A draft memory policy exists; review retention, PII, and source-trace requirements."
+            : "Create a memory policy before durable memory can be enabled.",
+      evidence: memory?.evidence ?? "agent_intake.candidate_memory_policy",
+      href: agentSectionHref(agentId, "memory"),
+    },
+    {
+      id: "evals",
+      label: "Starter evals run",
+      status:
+        evals?.status === "healthy"
+          ? "healthy"
+          : candidateEvalCount > 0
+            ? "watching"
+            : "blocked",
+      detail:
+        evals?.status === "healthy"
+          ? evals.validation
+          : candidateEvalCount > 0
+            ? `${candidateEvalCount} starter eval case candidate${
+                candidateEvalCount === 1 ? "" : "s"
+              } created; run the suite before preflight.`
+            : "Create starter eval cases from intake or simulator evidence.",
+      evidence: evals?.evidence ?? "agent_intake.candidate_eval_cases",
+      href: agentSectionHref(agentId, "evals"),
+    },
+    {
+      id: "risk",
+      label: "Risk flags reviewed",
+      status: riskFindingCount === 0 ? "healthy" : "blocked",
+      detail:
+        riskFindingCount === 0
+          ? "No unresolved intake risk, contradiction, sensitive-data, or missing-information finding is attached."
+          : `${riskFindingCount} intake finding${
+              riskFindingCount === 1 ? "" : "s"
+            } must be reviewed before promotion.`,
+      evidence:
+        riskFindingCount === 0
+          ? "agent_intake.risk_notes.empty"
+          : "agent_intake.risk_notes",
+      href: agentSectionHref(agentId, "behavior"),
+    },
+    {
+      id: "preflight",
+      label: "Preflight completed",
+      status: deployments?.status === "healthy" ? "healthy" : "blocked",
+      detail:
+        deployments?.status === "healthy"
+          ? deployments.validation
+          : "Generate a Change Package after the commitment, channels, tools, memory, and evals are ready.",
+      evidence: deployments?.evidence ?? "change_package.required",
+      href: agentSectionHref(agentId, "deployments"),
+    },
+  ];
+}
+
 function IntakeLandingPanel({
   agentId,
   focusedIntakeId,
   intakeRecord,
   degradedReason,
+  sections,
 }: {
   agentId: string;
   focusedIntakeId?: string | undefined;
   intakeRecord?: AgentIntakeRecord | undefined;
   degradedReason?: string | undefined;
+  sections: AgentWorkbenchSection[];
 }) {
   if (!focusedIntakeId) return null;
 
@@ -1836,6 +2042,12 @@ function IntakeLandingPanel({
       </section>
     );
   }
+
+  const readinessChecklist = buildIntakeReadinessChecklist({
+    agentId,
+    intakeRecord,
+    sections,
+  });
 
   return (
     <section
@@ -1909,6 +2121,39 @@ function IntakeLandingPanel({
             )}
           </ul>
         </div>
+      </div>
+
+      <div className="mt-4 rounded-md border bg-background/70 p-3">
+        <h4 className="text-sm font-semibold">Draft readiness checklist</h4>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Computed from the loaded agent objects and intake analysis. Each item
+          links to the workbench section that resolves it.
+        </p>
+        <ul className="mt-3 grid gap-2" data-testid="intake-readiness-checklist">
+          {readinessChecklist.map((item) => (
+            <li
+              key={item.id}
+              className="grid gap-2 rounded-md border bg-card p-3 text-sm [grid-template-columns:minmax(0,1fr)_auto]"
+              data-testid={`intake-readiness-${item.id}`}
+            >
+              <div className="min-w-0">
+                <Link
+                  href={item.href}
+                  className="font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                >
+                  {item.label}
+                </Link>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {item.detail}
+                </p>
+                <p className="mt-1 font-mono text-[0.7rem] text-muted-foreground">
+                  {item.evidence}
+                </p>
+              </div>
+              <StatusPill status={item.status}>{item.status}</StatusPill>
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
@@ -2216,6 +2461,7 @@ export function AgentOverview({
         focusedIntakeId={focusedIntakeId}
         intakeRecord={intakeRecord}
         degradedReason={intakeDegradedReason}
+        sections={data.sections}
       />
 
       {approvalBlocked ? (
