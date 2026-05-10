@@ -1,4 +1,3 @@
-import { targetUxFixtures } from "@/lib/target-ux";
 import type { KbDocument } from "@/lib/kb";
 
 export type KnowledgeSourceKind =
@@ -473,15 +472,12 @@ export function getKnowledgeAtelierModel(
   agentId: string,
   docs: KbDocument[],
 ): KnowledgeAtelierModel {
-  const agent =
-    targetUxFixtures.agents.find((candidate) => candidate.id === agentId) ??
-    targetUxFixtures.agents[0];
   const sources = buildSources(agentId, docs);
   const chunks = buildChunks(sources);
   const retrievalLab = buildRetrievalLab(chunks);
   return {
     agentId,
-    agentName: agent?.name ?? "Agent",
+    agentName: `Agent ${agentId}`,
     sources,
     chunks,
     retrievalLab,
