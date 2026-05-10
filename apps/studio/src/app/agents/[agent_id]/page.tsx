@@ -7,8 +7,8 @@ import {
   type DeploySummary,
 } from "@/components/agents/agent-overview";
 import {
-  buildLocalCommitmentDocument,
   fetchCurrentCommitment,
+  type CommitmentDocument,
 } from "@/lib/agent-commitment";
 import {
   fetchCurrentChangePackage,
@@ -90,12 +90,11 @@ export default async function AgentOverviewPage({
 }: AgentOverviewPageProps) {
   const { agent, degradedReason } = await getAgentDetailData(params.agent_id);
   const focusedIntakeId = firstParam(searchParams?.intake);
-  let commitment = buildLocalCommitmentDocument(params.agent_id);
+  let commitment: CommitmentDocument | undefined;
   let commitmentDegradedReason: string | undefined;
   try {
     commitment = await fetchCurrentCommitment(params.agent_id);
   } catch (error) {
-    commitment = buildLocalCommitmentDocument(params.agent_id);
     commitmentDegradedReason = errorMessage(
       error,
       "Could not load the current Commitment Document.",

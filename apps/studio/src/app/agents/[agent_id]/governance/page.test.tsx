@@ -34,7 +34,8 @@ describe("AgentGovernancePage", () => {
       /will not claim approvals, secrets, auditability, or residency posture/i,
     );
     expect(screen.queryByTestId("agent-section-placeholder")).toBeNull();
-    expect(screen.getByText("unconfigured")).toBeInTheDocument();
+    expect(screen.getByText("Unavailable")).toBeInTheDocument();
+    expect(screen.getAllByText("Not loaded").length).toBeGreaterThan(0);
   });
 
   it("keeps audit evidence-link view focused instead of opening generic governance", async () => {

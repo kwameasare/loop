@@ -19,6 +19,7 @@ function makeDocument(
     workspace_id: "ws_1",
     version: 1,
     content_hash: "abcdef1234567890",
+    created_from: "test:commitment",
     ...overrides,
   };
 }
@@ -83,6 +84,34 @@ describe("AgentContractPanel", () => {
     ).toBe(true);
     expect(
       (screen.getByTestId("contract-accept") as HTMLButtonElement).disabled,
+    ).toBe(true);
+  });
+
+  it("does not present an unconfigured local form as a saved draft", () => {
+    render(
+      <AgentContractPanel
+        agentId="agt_1"
+        degradedReason="Could not load the current Commitment Document."
+        saveDraft={vi.fn()}
+        acceptCommitment={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("contract-summary-line")).toHaveTextContent(
+      "will not call this a saved draft",
+    );
+    expect(screen.getByTestId("contract-status")).toHaveTextContent(
+      "unavailable",
+    );
+    expect(screen.getByTestId("contract-version")).toHaveTextContent(
+      "Not loaded",
+    );
+    expect(screen.getByTestId("contract-hash")).toHaveTextContent("not loaded");
+    expect(screen.getByTestId("contract-version-history")).toHaveTextContent(
+      "0 versions",
+    );
+    expect(
+      (screen.getByTestId("contract-save-draft") as HTMLButtonElement).disabled,
     ).toBe(true);
   });
 

@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { SectionDegraded, SectionEmpty } from "@/components/section-states";
 import type { AuditEventRow } from "@/components/workspaces/audit-log-page";
 import {
-  buildLocalCommitmentDocument,
   fetchCurrentCommitment,
   type CommitmentDocument,
 } from "@/lib/agent-commitment";
@@ -30,7 +29,7 @@ interface PageProps {
 }
 
 interface GovernanceEvidence {
-  commitment: CommitmentDocument;
+  commitment?: CommitmentDocument | undefined;
   secrets: AgentSecret[];
   preApprovedClasses: PreApprovedClass[];
   auditEvents: AuditEventRow[];
@@ -81,7 +80,7 @@ async function loadGovernanceEvidence(
     degradedReasons.push(
       messageFromError(error, "Could not load the current commitment document."),
     );
-    return buildLocalCommitmentDocument(agentId);
+    return undefined;
   });
 
   const secrets = await listAgentSecrets(agentId)
@@ -193,34 +192,42 @@ export default async function AgentGovernancePage({
   ]
     .filter(Boolean)
     .join(" ");
+  const missingCommitmentFields =
+    evidence.commitment?.structured_summary.missing_required_fields ?? [];
+  const commitmentChannels =
+    evidence.commitment?.structured_summary.channels ?? [];
 
   const commitmentFields = [
     {
       label: "Status",
-      value: evidence.commitment.status,
+      value: evidence.commitment?.status ?? "Unavailable",
     },
     {
       label: "Content hash",
-      value: compactHash(evidence.commitment.content_hash),
+      value: evidence.commitment
+        ? compactHash(evidence.commitment.content_hash)
+        : "Not loaded",
     },
     {
       label: "Version",
-      value: String(evidence.commitment.version),
+      value: evidence.commitment
+        ? String(evidence.commitment.version)
+        : "Not loaded",
     },
     {
       label: "Owner",
       value: formatValue(
-        evidence.commitment.structured_summary.owner ||
-          evidence.commitment.owner_user_id,
+        evidence.commitment?.structured_summary.owner ||
+          evidence.commitment?.owner_user_id,
       ),
     },
     {
       label: "Readiness",
-      value: evidence.commitment.structured_summary.readiness,
+      value: evidence.commitment?.structured_summary.readiness ?? "Unverified",
     },
     {
       label: "Updated",
-      value: formatTimestamp(evidence.commitment.updated_at),
+      value: formatTimestamp(evidence.commitment?.updated_at),
     },
   ];
 
@@ -333,13 +340,9 @@ export default async function AgentGovernancePage({
           description="The accepted commitment is the object approvals bind to. Editing after approval must create a different hash and require renewed approval."
         >
           <FieldList fields={commitmentFields} />
-          {evidence.commitment.structured_summary.missing_required_fields
-            .length > 0 ? (
+          {missingCommitmentFields.length > 0 ? (
             <p className="mt-3 rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-              Missing required fields:{" "}
-              {evidence.commitment.structured_summary.missing_required_fields.join(
-                ", ",
-              )}
+              Missing required fields: {missingCommitmentFields.join(", ")}
             </p>
           ) : null}
         </EvidenceCard>
@@ -411,8 +414,8 @@ export default async function AgentGovernancePage({
                   Declared channels
                 </dt>
                 <dd className="mt-1 break-words font-medium">
-                  {evidence.commitment.structured_summary.channels.length > 0
-                    ? evidence.commitment.structured_summary.channels.join(", ")
+                  {commitmentChannels.length > 0
+                    ? commitmentChannels.join(", ")
                     : "Not recorded"}
                 </dd>
               </div>

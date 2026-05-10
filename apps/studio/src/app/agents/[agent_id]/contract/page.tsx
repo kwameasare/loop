@@ -1,8 +1,8 @@
 import { AgentContractPanel } from "@/components/agents/agent-contract-panel";
 import {
-  buildLocalCommitmentDocument,
   fetchCurrentCommitment,
   listCommitments,
+  type CommitmentDocument,
 } from "@/lib/agent-commitment";
 
 interface PageProps {
@@ -18,16 +18,14 @@ export default async function AgentContractPage({
   params,
   searchParams,
 }: PageProps) {
-  let commitment = buildLocalCommitmentDocument(params.agent_id);
-  let history = [commitment];
+  let commitment: CommitmentDocument | undefined;
+  let history: CommitmentDocument[] = [];
   let degradedReason: string | undefined;
   let historyDegradedReason: string | undefined;
   try {
     commitment = await fetchCurrentCommitment(params.agent_id);
     history = [commitment];
   } catch (error) {
-    commitment = buildLocalCommitmentDocument(params.agent_id);
-    history = [commitment];
     degradedReason =
       error instanceof Error
         ? error.message

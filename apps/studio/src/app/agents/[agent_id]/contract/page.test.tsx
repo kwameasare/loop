@@ -44,6 +44,7 @@ describe("AgentContractPage", () => {
       workspace_id: "ws_1",
       status: "draft",
       content_hash: "hash_current_contract",
+      created_from: "test:contract",
     };
     const accepted = {
       ...current,
@@ -82,6 +83,30 @@ describe("AgentContractPage", () => {
     expect(fetcher).toHaveBeenCalledWith(
       "https://cp.test/v1/agents/agent_contract/commitments",
       expect.objectContaining({ method: "GET" }),
+    );
+  });
+
+  it("shows unavailable commitment state instead of a local saved draft when cp-api is unavailable", async () => {
+    delete process.env.LOOP_CP_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+
+    render(
+      await AgentContractPage({
+        params: { agent_id: "agent_contract" },
+      }),
+    );
+
+    expect(screen.getByTestId("contract-degraded")).toHaveTextContent(
+      "LOOP_CP_API_BASE_URL",
+    );
+    expect(screen.getByTestId("contract-status")).toHaveTextContent(
+      "unavailable",
+    );
+    expect(screen.getByTestId("contract-version")).toHaveTextContent(
+      "Not loaded",
+    );
+    expect(screen.getByTestId("contract-version-history")).toHaveTextContent(
+      "0 versions",
     );
   });
 });

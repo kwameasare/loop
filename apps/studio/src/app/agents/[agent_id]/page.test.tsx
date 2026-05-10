@@ -388,7 +388,7 @@ describe("AgentOverviewPage", () => {
       "2 tool contracts loaded",
     );
     expect(screen.getByTestId("agent-outline-memory")).toHaveTextContent(
-      "3 memory policies loaded",
+      "7 memory policies loaded",
     );
     expect(screen.getByTestId("agent-outline-evals")).toHaveTextContent(
       "Live support suite at 97%",
