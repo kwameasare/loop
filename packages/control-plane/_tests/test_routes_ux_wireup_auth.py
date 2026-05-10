@@ -188,3 +188,105 @@ def test_members_can_still_read_and_replay_shared_ux_artifacts(
     )
     assert replay.status_code == 200, replay.text
     assert replay.json()["status"] == "queued"
+
+
+def test_dashboard_visibility_and_mutation_are_owner_scoped(
+    client: TestClient,
+    workspace_id: UUID,
+    member_auth: dict[str, str],
+) -> None:
+    private_dashboard = client.post(
+        f"/v1/workspaces/{workspace_id}/dashboards",
+        headers=_auth(),
+        json={
+            "name": "Owner private",
+            "layout": [{"metric_id": "p95_latency", "span": 4}],
+            "shared_with": [],
+        },
+    )
+    assert private_dashboard.status_code == 201, private_dashboard.text
+    private_id = private_dashboard.json()["id"]
+
+    hidden_list = client.get(
+        f"/v1/workspaces/{workspace_id}/dashboards",
+        headers=member_auth,
+    )
+    assert hidden_list.status_code == 200, hidden_list.text
+    assert hidden_list.json()["items"] == []
+
+    private_update = client.patch(
+        f"/v1/workspaces/{workspace_id}/dashboards/{private_id}",
+        headers=member_auth,
+        json={
+            "name": "Member takeover",
+            "layout": [{"metric_id": "spend", "span": 6}],
+            "shared_with": [],
+        },
+    )
+    assert private_update.status_code == 403, private_update.text
+
+    private_delete = client.delete(
+        f"/v1/workspaces/{workspace_id}/dashboards/{private_id}",
+        headers=member_auth,
+    )
+    assert private_delete.status_code == 403, private_delete.text
+
+    shared_dashboard = client.post(
+        f"/v1/workspaces/{workspace_id}/dashboards",
+        headers=_auth(),
+        json={
+            "name": "Shared production health",
+            "layout": [{"metric_id": "escalations", "span": 3}],
+            "shared_with": ["alice"],
+        },
+    )
+    assert shared_dashboard.status_code == 201, shared_dashboard.text
+    shared_id = shared_dashboard.json()["id"]
+
+    visible_list = client.get(
+        f"/v1/workspaces/{workspace_id}/dashboards",
+        headers=member_auth,
+    )
+    assert visible_list.status_code == 200, visible_list.text
+    assert [item["id"] for item in visible_list.json()["items"]] == [shared_id]
+
+    shared_update = client.patch(
+        f"/v1/workspaces/{workspace_id}/dashboards/{shared_id}",
+        headers=member_auth,
+        json={
+            "name": "Shared takeover",
+            "layout": [{"metric_id": "spend", "span": 6}],
+            "shared_with": ["alice"],
+        },
+    )
+    assert shared_update.status_code == 403, shared_update.text
+
+    member_dashboard = client.post(
+        f"/v1/workspaces/{workspace_id}/dashboards",
+        headers=member_auth,
+        json={
+            "name": "My work queue",
+            "layout": [{"metric_id": "blocked_deploys", "span": 4}],
+            "shared_with": [],
+        },
+    )
+    assert member_dashboard.status_code == 201, member_dashboard.text
+    member_id = member_dashboard.json()["id"]
+
+    member_update = client.patch(
+        f"/v1/workspaces/{workspace_id}/dashboards/{member_id}",
+        headers=member_auth,
+        json={
+            "name": "My active work queue",
+            "layout": [{"metric_id": "blocked_deploys", "span": 8}],
+            "shared_with": ["owner-1"],
+        },
+    )
+    assert member_update.status_code == 200, member_update.text
+    assert member_update.json()["layout"][0]["span"] == 8
+
+    member_delete = client.delete(
+        f"/v1/workspaces/{workspace_id}/dashboards/{member_id}",
+        headers=member_auth,
+    )
+    assert member_delete.status_code == 204, member_delete.text
