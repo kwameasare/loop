@@ -4,9 +4,10 @@ import { formatPassRate, type EvalSuite } from "@/lib/evals";
 
 export interface EvalSuiteListProps {
   suites: EvalSuite[];
+  focusedSuiteId?: string | undefined;
 }
 
-export function EvalSuiteList({ suites }: EvalSuiteListProps) {
+export function EvalSuiteList({ suites, focusedSuiteId }: EvalSuiteListProps) {
   if (suites.length === 0) {
     return (
       <p
@@ -20,9 +21,16 @@ export function EvalSuiteList({ suites }: EvalSuiteListProps) {
   return (
     <ul className="flex flex-col gap-2" data-testid="eval-suites-list">
       {suites.map((suite) => (
-        <li key={suite.id}>
+        <li
+          key={suite.id}
+          data-focused={suite.id === focusedSuiteId ? "true" : "false"}
+        >
           <Link
-            className="block rounded-md border bg-card p-3 target-transition hover:bg-muted"
+            className={`block rounded-md border bg-card p-3 target-transition hover:bg-muted ${
+              suite.id === focusedSuiteId
+                ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+                : ""
+            }`}
             data-testid={`eval-suite-${suite.id}`}
             href={`/evals/suites/${suite.id}`}
           >

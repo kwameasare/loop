@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { ObservatoryScreen } from "@/components/observatory/observatory-screen";
@@ -24,6 +25,9 @@ export default function ObservePage(): JSX.Element {
 
 function ObservePageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const searchParams = useSearchParams();
+  const focusedIncidentId =
+    searchParams.get("incident_id") ?? searchParams.get("incident") ?? undefined;
   const activeWorkspaceId = active?.id;
   const [model, setModel] = useState<ObservatoryModel | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,5 +79,11 @@ function ObservePageBody(): JSX.Element {
       </main>
     );
   }
-  return <ObservatoryScreen model={model} workspaceId={activeWorkspaceId} />;
+  return (
+    <ObservatoryScreen
+      model={model}
+      focusedIncidentId={focusedIncidentId}
+      workspaceId={activeWorkspaceId}
+    />
+  );
 }

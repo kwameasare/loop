@@ -82,6 +82,22 @@ describe("ObservatoryScreen", () => {
     );
   });
 
+  it("focuses an incident opened from an evidence link", () => {
+    render(
+      <ObservatoryScreen
+        model={OBSERVATORY_MODEL}
+        focusedIncidentId="inc_rollback_schema"
+      />,
+    );
+
+    expect(
+      screen.getByTestId("incident-card-inc_rollback_schema"),
+    ).toHaveAttribute("data-focused", "true");
+    expect(
+      screen.getByTestId("incident-focused-inc_rollback_schema"),
+    ).toHaveTextContent("incident inc_rollback_schema is focused");
+  });
+
   it("allows operators to pause the production tail", () => {
     render(<ObservatoryScreen model={OBSERVATORY_MODEL} />);
 

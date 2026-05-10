@@ -77,6 +77,24 @@ describe("DeployTimeline", () => {
     expect(screen.getByTestId("deploy-current-live")).toHaveTextContent("v0");
   });
 
+  it("focuses a deployment opened from an evidence link", () => {
+    render(
+      <DeployTimeline
+        agentId="a"
+        focusedDeploymentId="d1"
+        initialDeployments={[mkDep({ id: "d1", status: "canary" })]}
+      />,
+    );
+
+    expect(screen.getByTestId("deploy-row-d1")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+    expect(screen.getByTestId("deploy-focused-d1")).toHaveTextContent(
+      "deployment d1 is focused",
+    );
+  });
+
   it("disables promote/pause for non-canary rows and rollback for non-live rows", () => {
     render(
       <DeployTimeline

@@ -98,6 +98,45 @@ describe("EvalsIndexPage", () => {
     expect(screen.queryByText(/Eval suites unavailable/)).toBeNull();
   });
 
+  it("keeps focused case links visible in Eval Foundry", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test/v1";
+    process.env.LOOP_TOKEN = "test-token";
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+    delete process.env.LOOP_DEFAULT_WORKSPACE_ID;
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url === "https://cp.test/v1/workspaces") {
+        return Response.json({
+          items: [
+            {
+              id: "ws_eval",
+              name: "Eval workspace",
+              slug: "eval",
+              role: "owner",
+            },
+          ],
+        });
+      }
+      if (url === "https://cp.test/v1/workspaces/ws_eval/eval-suites") {
+        return Response.json({ items: [] });
+      }
+      return new Response("missing", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(
+      await EvalsIndexPage({
+        searchParams: {
+          case_id: "case_refund_regression",
+        },
+      }),
+    );
+
+    expect(screen.getByTestId("eval-foundry-focused-case")).toHaveTextContent(
+      "case_refund_regression",
+    );
+  });
+
   it("surfaces missing workspace context instead of fixture suites", async () => {
     delete process.env.LOOP_CP_API_BASE_URL;
     delete process.env.NEXT_PUBLIC_LOOP_API_URL;

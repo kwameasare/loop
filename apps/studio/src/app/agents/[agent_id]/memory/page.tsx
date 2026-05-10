@@ -19,17 +19,34 @@ import { useUser } from "@/lib/use-user";
 
 interface AgentMemoryPageProps {
   params: { agent_id: string };
+  searchParams?: { policy_id?: string | string[] | undefined } | undefined;
 }
 
-export default function AgentMemoryPage({ params }: AgentMemoryPageProps) {
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default function AgentMemoryPage({
+  params,
+  searchParams,
+}: AgentMemoryPageProps) {
   return (
     <RequireAuth>
-      <AgentMemoryPageBody agentId={params.agent_id} />
+      <AgentMemoryPageBody
+        agentId={params.agent_id}
+        initialPolicyId={firstParam(searchParams?.policy_id)}
+      />
     </RequireAuth>
   );
 }
 
-function AgentMemoryPageBody({ agentId }: { agentId: string }): JSX.Element {
+function AgentMemoryPageBody({
+  agentId,
+  initialPolicyId,
+}: {
+  agentId: string;
+  initialPolicyId?: string | undefined;
+}): JSX.Element {
   const { user } = useUser();
   const [data, setData] = useState<MemoryStudioData | null>(null);
 
@@ -75,6 +92,7 @@ function AgentMemoryPageBody({ agentId }: { agentId: string }): JSX.Element {
   return (
     <MemoryStudio
       data={data}
+      initialPolicyId={initialPolicyId}
       onDeleteEntry={(entry: MemoryStudioEntry) =>
         deleteMemoryStudioEntry(agentId, entry, user.sub)
       }

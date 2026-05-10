@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 
 export interface ToolsRoomProps {
   data: ToolsRoomData;
+  initialToolId?: string | undefined;
 }
 
 const SIDE_EFFECT_CLASS: Record<ToolSideEffect, string> = {
@@ -1026,9 +1027,11 @@ function MockLivePanel({ tool }: { tool: ToolsRoomTool | null }) {
   );
 }
 
-export function ToolsRoom({ data }: ToolsRoomProps) {
+export function ToolsRoom({ data, initialToolId }: ToolsRoomProps) {
   const [selectedToolId, setSelectedToolId] = useState<string | null>(
-    data.tools[0]?.id ?? null,
+    data.tools.some((tool) => tool.id === initialToolId)
+      ? (initialToolId ?? null)
+      : (data.tools[0]?.id ?? null),
   );
   const [contracts, setContracts] = useState<ToolContract[]>(
     data.toolContracts,
@@ -1103,6 +1106,14 @@ export function ToolsRoom({ data }: ToolsRoomProps) {
       </section>
 
       <section className="grid min-w-0 gap-4">
+        {initialToolId && selectedTool?.id === initialToolId ? (
+          <p
+            className="rounded-md border border-info/40 bg-info/5 px-3 py-2 text-sm text-info"
+            data-testid="tools-room-focused-tool"
+          >
+            Opened from evidence link: {selectedTool.name} is selected.
+          </p>
+        ) : null}
         <Catalog
           tools={data.tools}
           selectedId={selectedTool?.id ?? null}

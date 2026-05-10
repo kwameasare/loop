@@ -7,13 +7,26 @@ import { getAgentDetailData } from "../agent-detail-data";
 
 interface PageProps {
   params: { agent_id: string };
+  searchParams?:
+    | {
+        suite_id?: string | string[] | undefined;
+        case_id?: string | string[] | undefined;
+      }
+    | undefined;
 }
 
 function messageFromError(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-export default async function AgentEvalsPage({ params }: PageProps) {
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function AgentEvalsPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { agent, degradedReason: agentDegradedReason } =
     await getAgentDetailData(params.agent_id);
   let suites: EvalSuite[] = [];
@@ -40,6 +53,8 @@ export default async function AgentEvalsPage({ params }: PageProps) {
   const degradedEvidence = [agentDegradedReason, evalsDegradedReason]
     .filter(Boolean)
     .join(" ");
+  const focusedSuiteId = firstParam(searchParams?.suite_id);
+  const focusedCaseId = firstParam(searchParams?.case_id);
 
   return (
     <section className="space-y-5" data-testid="agent-evals-page">
@@ -75,9 +90,27 @@ export default async function AgentEvalsPage({ params }: PageProps) {
         />
       ) : null}
 
+      {focusedCaseId ? (
+        <section
+          className="rounded-md border border-info/40 bg-info/5 p-4 text-sm text-info"
+          data-testid="agent-evals-focused-case"
+        >
+          <p className="font-medium">Opened eval case from evidence link.</p>
+          <p className="mt-1 font-mono text-xs">{focusedCaseId}</p>
+          <Link
+            href={`/evals?agent_id=${encodeURIComponent(
+              params.agent_id,
+            )}&case_id=${encodeURIComponent(focusedCaseId)}`}
+            className="mt-3 inline-flex rounded-md border border-info/40 bg-background px-3 py-2 text-xs font-medium hover:bg-muted"
+          >
+            Open case in Eval Foundry
+          </Link>
+        </section>
+      ) : null}
+
       {suites.length > 0 ? (
         <div className="rounded-md border bg-card p-4">
-          <EvalSuiteList suites={suites} />
+          <EvalSuiteList suites={suites} focusedSuiteId={focusedSuiteId} />
         </div>
       ) : !degradedEvidence ? (
         <SectionEmpty

@@ -163,4 +163,34 @@ describe("AgentHistoryWalkthrough", () => {
     );
     expect(screen.queryByTestId("handoff-transfers")).not.toBeInTheDocument();
   });
+
+  it("keeps the selected evidence ref visible during handoff review", () => {
+    const initialModel = {
+      ...localAgentHandoff("agent_1"),
+      walkthrough_sections: localAgentHandoff("agent_1").walkthrough_sections.map(
+        (section) =>
+          section.id === "important-comments"
+            ? {
+                ...section,
+                evidence_refs: ["comment/cmt_handoff"],
+              }
+            : section,
+      ),
+    };
+
+    render(
+      <AgentHistoryWalkthrough
+        agentId="agent_1"
+        focusedEvidenceRef="comment/cmt_handoff"
+        initialModel={initialModel}
+      />,
+    );
+
+    expect(screen.getByTestId("handoff-focused-evidence")).toHaveTextContent(
+      "comment/cmt_handoff",
+    );
+    expect(
+      screen.getByTestId("handoff-evidence-link-comment_cmt_handoff"),
+    ).toHaveClass("text-info");
+  });
 });

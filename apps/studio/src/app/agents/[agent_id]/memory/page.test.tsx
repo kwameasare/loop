@@ -35,7 +35,12 @@ describe("AgentMemoryPage", () => {
     delete process.env.LOOP_CP_API_BASE_URL;
     delete process.env.NEXT_PUBLIC_LOOP_API_URL;
 
-    render(<AgentMemoryPage params={{ agent_id: "agent_memory" }} />);
+    render(
+      <AgentMemoryPage
+        params={{ agent_id: "agent_memory" }}
+        searchParams={{ policy_id: "mp_local_user" }}
+      />,
+    );
 
     expect(await screen.findByTestId("memory-studio")).toBeInTheDocument();
     expect(screen.getByText("Memory data is empty")).toBeInTheDocument();

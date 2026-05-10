@@ -86,6 +86,26 @@ describe("AgentContractPanel", () => {
     ).toBe(true);
   });
 
+  it("focuses a Commitment Document opened from an evidence link", () => {
+    render(
+      <AgentContractPanel
+        agentId="agt_1"
+        focusedCommitmentId="commit_1"
+        initialDocument={makeDocument()}
+        saveDraft={vi.fn()}
+        acceptCommitment={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("agent-contract-panel")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+    expect(screen.getByTestId("contract-focused")).toHaveTextContent(
+      "Commitment Document commit_1 is focused",
+    );
+  });
+
   it("saves a detailed contract draft", async () => {
     const saveDraft = vi.fn(async (_agentId: string, input) =>
       makeDocument(input.body, {

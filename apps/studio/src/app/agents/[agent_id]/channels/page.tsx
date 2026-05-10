@@ -13,14 +13,18 @@ export const dynamic = "force-dynamic";
 
 interface AgentChannelsPageProps {
   params: { agent_id: string };
-  searchParams?: { channel?: string | string[] | undefined } | undefined;
+  searchParams?:
+    | {
+        channel?: string | string[] | undefined;
+        binding_id?: string | string[] | undefined;
+      }
+    | undefined;
 }
 
 export default async function AgentChannelsPage({
   params,
   searchParams,
 }: AgentChannelsPageProps) {
-  const focusedChannelType = parseFocusedChannel(searchParams?.channel);
   let bindings = buildLocalChannelBindings(params.agent_id);
   let bindingsDegradedReason: string | undefined;
   try {
@@ -34,6 +38,9 @@ export default async function AgentChannelsPage({
         ? err.message
         : "Channel binding status requires cp-api.";
   }
+  const focusedChannelType =
+    parseFocusedChannel(searchParams?.channel) ??
+    channelTypeForBindingId(bindings, searchParams?.binding_id);
 
   let binding: WebChannelBinding = {
     agentId: params.agent_id,
@@ -113,4 +120,13 @@ function parseFocusedChannel(
   return CHANNEL_TYPES.has(raw as ChannelBindingType)
     ? (raw as ChannelBindingType)
     : undefined;
+}
+
+function channelTypeForBindingId(
+  bindings: readonly { id: string; channel_type: ChannelBindingType }[],
+  value: string | string[] | undefined,
+): ChannelBindingType | undefined {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) return undefined;
+  return bindings.find((binding) => binding.id === raw)?.channel_type;
 }

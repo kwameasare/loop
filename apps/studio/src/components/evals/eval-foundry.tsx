@@ -14,6 +14,8 @@ export interface EvalFoundryProps {
   suites: EvalSuite[];
   model: EvalFoundryModel;
   createAction: ReactNode;
+  focusedCaseId?: string | undefined;
+  focusedSuiteId?: string | undefined;
   suggestionsAgentId?: string | undefined;
   degradedReason?: string | undefined;
 }
@@ -33,6 +35,8 @@ export function EvalFoundry({
   suites,
   model,
   createAction,
+  focusedCaseId,
+  focusedSuiteId,
   suggestionsAgentId,
   degradedReason,
 }: EvalFoundryProps) {
@@ -57,6 +61,16 @@ export function EvalFoundry({
         <StatePanel state="degraded" title="Eval suites unavailable">
           {degradedReason}
         </StatePanel>
+      ) : null}
+
+      {focusedCaseId ? (
+        <section
+          className="rounded-md border border-info/40 bg-info/5 p-4 text-sm text-info"
+          data-testid="eval-foundry-focused-case"
+        >
+          <p className="font-medium">Opened eval case from evidence link.</p>
+          <p className="mt-1 font-mono text-xs">{focusedCaseId}</p>
+        </section>
       ) : null}
 
       <section
@@ -303,7 +317,7 @@ export function EvalFoundry({
           </p>
         </div>
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)]">
-          <EvalSuiteList suites={suites} />
+          <EvalSuiteList suites={suites} focusedSuiteId={focusedSuiteId} />
           {model.suiteBuilders.length === 0 ? (
             <StatePanel state="empty" title="No suite builder config">
               Create a suite to attach scorers, fixtures, thresholds, latency

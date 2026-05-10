@@ -12,7 +12,23 @@ export function resolveEvalWorkspaceId(
   return workspaces[0]?.id || fallback || null;
 }
 
-export default async function EvalsIndexPage() {
+interface EvalsIndexPageProps {
+  searchParams?:
+    | {
+        agent_id?: string | string[] | undefined;
+        suite_id?: string | string[] | undefined;
+        case_id?: string | string[] | undefined;
+      }
+    | undefined;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function EvalsIndexPage({
+  searchParams,
+}: EvalsIndexPageProps = {}) {
   const { workspaces, degraded_reason: workspacesDegradedReason } =
     await listWorkspaces().catch((error: unknown) => ({
       workspaces: [],
@@ -48,6 +64,9 @@ export default async function EvalsIndexPage() {
       })
     : getEvalFoundryModel(items);
   const suggestionsAgentId = items[0]?.agentId;
+  const focusedAgentId = firstParam(searchParams?.agent_id);
+  const focusedSuiteId = firstParam(searchParams?.suite_id);
+  const focusedCaseId = firstParam(searchParams?.case_id);
   return (
     <EvalFoundry
       createAction={
@@ -57,8 +76,10 @@ export default async function EvalsIndexPage() {
         />
       }
       degradedReason={combinedDegradedReason || undefined}
+      focusedCaseId={focusedCaseId}
+      focusedSuiteId={focusedSuiteId}
       model={model}
-      suggestionsAgentId={suggestionsAgentId}
+      suggestionsAgentId={focusedAgentId ?? suggestionsAgentId}
       suites={items}
     />
   );

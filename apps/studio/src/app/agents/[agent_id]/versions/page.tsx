@@ -8,6 +8,11 @@ export const dynamic = "force-dynamic";
 
 interface AgentVersionsPageProps {
   params: { agent_id: string };
+  searchParams?: { version_id?: string | string[] | undefined } | undefined;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 /**
@@ -19,6 +24,7 @@ interface AgentVersionsPageProps {
  */
 export default async function AgentVersionsPage({
   params,
+  searchParams,
 }: AgentVersionsPageProps) {
   const [versionPage, workflow] = await Promise.all([
     listAgentVersions(params.agent_id, {
@@ -44,6 +50,7 @@ export default async function AgentVersionsPage({
       <EditHistoryScrubber agentId={params.agent_id} />
       <AgentVersionsList
         versions={versionPage.items}
+        focusedVersionId={firstParam(searchParams?.version_id)}
         degradedReason={versionPage.degraded_reason}
       />
     </div>

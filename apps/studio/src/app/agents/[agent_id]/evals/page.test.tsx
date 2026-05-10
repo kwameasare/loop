@@ -89,4 +89,56 @@ describe("AgentEvalsPage", () => {
     expect(screen.queryByTestId("eval-suite-suite_other")).toBeNull();
     expect(screen.queryByTestId("target-state")).toBeNull();
   });
+
+  it("surfaces eval case evidence links without dropping agent context", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test/v1";
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.endsWith("/agents/agent_eval")) {
+        return Response.json({
+          id: "agent_eval",
+          name: "Eval Agent",
+          description: "Evaluated support agent.",
+          slug: "eval-agent",
+          active_version: 3,
+          created_at: "2026-05-09T10:00:00Z",
+          workspace_id: "ws_eval",
+        });
+      }
+      if (url === "https://cp.test/v1/workspaces/ws_eval/eval-suites") {
+        return Response.json({
+          items: [
+            {
+              id: "suite_agent",
+              name: "Refund regression",
+              agent_id: "agent_eval",
+              cases: 12,
+              last_run_at: "2026-05-09T10:05:00Z",
+              pass_rate: 0.92,
+            },
+          ],
+        });
+      }
+      return new Response("missing", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(
+      await AgentEvalsPage({
+        params: { agent_id: "agent_eval" },
+        searchParams: { case_id: "case_refund_regression" },
+      }),
+    );
+
+    expect(screen.getByTestId("agent-evals-focused-case")).toHaveTextContent(
+      "case_refund_regression",
+    );
+    expect(
+      screen.getByRole("link", { name: /open case in eval foundry/i }),
+    ).toHaveAttribute(
+      "href",
+      "/evals?agent_id=agent_eval&case_id=case_refund_regression",
+    );
+  });
 });

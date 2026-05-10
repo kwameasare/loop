@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 interface ChangePackagePanelProps {
   agentId: string;
   initialPackage?: ChangePackage | null;
+  focusedChangePackageId?: string | undefined;
   degradedReason?: string | undefined;
   generateChangePackage?: (
     agentId: string,
@@ -102,6 +103,7 @@ function versionManifestRows(
 export function ChangePackagePanel({
   agentId,
   initialPackage,
+  focusedChangePackageId,
   degradedReason,
   generateChangePackage = defaultGenerateChangePackage,
   submitChangePackage = defaultSubmitChangePackage,
@@ -130,6 +132,9 @@ export function ChangePackagePanel({
   const isReviewableStatus =
     changePackage.status === "submitted" || changePackage.status === "approved";
   const canReview = isReviewableStatus && !busy && !backendUnavailable;
+  const isFocused =
+    Boolean(focusedChangePackageId) &&
+    focusedChangePackageId === changePackage.id;
 
   async function handleGenerate() {
     setState({ kind: "generating" });
@@ -219,10 +224,23 @@ export function ChangePackagePanel({
 
   return (
     <section
-      className="space-y-4 rounded-md border bg-card p-5"
+      className={cn(
+        "space-y-4 rounded-md border bg-card p-5",
+        isFocused ? "ring-2 ring-focus ring-offset-2 ring-offset-background" : "",
+      )}
       data-testid="change-package-panel"
+      data-focused={isFocused ? "true" : "false"}
       aria-labelledby="change-package-heading"
     >
+      {isFocused ? (
+        <p
+          className="rounded-md border border-info/40 bg-info/5 px-3 py-2 text-sm text-info"
+          data-testid="change-package-focused"
+        >
+          Opened from evidence link: Change Package {changePackage.id} is
+          focused.
+        </p>
+      ) : null}
       {degradedReason ? (
         <div
           className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning"
