@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  createDegradedMemoryStudioData,
   deleteMemoryStudioEntry,
   fetchMemoryStudioData,
 } from "./memory-studio";
@@ -21,6 +22,18 @@ describe("memory studio cp-api client", () => {
     await expect(fetchMemoryStudioData("agent-1", "alice")).rejects.toThrow(
       "LOOP_CP_API_BASE_URL is required for memory calls",
     );
+  });
+
+  it("builds an explicit degraded Memory Studio model from load failures", () => {
+    const data = createDegradedMemoryStudioData(
+      "agent-1",
+      "LOOP_CP_API_BASE_URL is required for memory calls",
+    );
+
+    expect(data.entries).toEqual([]);
+    expect(data.agentName).toBe("Agent agent-1");
+    expect(data.degradedReason).toContain("LOOP_CP_API_BASE_URL");
+    expect(data.retentionEvidence).toContain("LOOP_CP_API_BASE_URL");
   });
 
   it("fetches and normalizes live memory entries", async () => {

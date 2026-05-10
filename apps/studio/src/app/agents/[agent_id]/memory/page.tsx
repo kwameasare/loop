@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { MemoryStudio } from "@/components/memory/memory-studio";
 import {
+  createDegradedMemoryStudioData,
   deleteMemoryStudioEntry,
   fetchMemoryStudioData,
   type MemoryStudioData,
@@ -28,7 +29,6 @@ export default function AgentMemoryPage({ params }: AgentMemoryPageProps) {
 function AgentMemoryPageBody({ agentId }: { agentId: string }): JSX.Element {
   const { user } = useUser();
   const [data, setData] = useState<MemoryStudioData | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -40,7 +40,12 @@ function AgentMemoryPageBody({ agentId }: { agentId: string }): JSX.Element {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Could not load memory");
+        setData(
+          createDegradedMemoryStudioData(
+            agentId,
+            err instanceof Error ? err.message : "Could not load memory",
+          ),
+        );
       });
     return () => {
       cancelled = true;
@@ -51,13 +56,6 @@ function AgentMemoryPageBody({ agentId }: { agentId: string }): JSX.Element {
     return (
       <p className="p-6 text-sm text-muted-foreground">
         Sign in to inspect memory.
-      </p>
-    );
-  }
-  if (error) {
-    return (
-      <p className="p-6 text-sm text-destructive" role="alert">
-        {error}
       </p>
     );
   }

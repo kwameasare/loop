@@ -376,3 +376,16 @@ export function createEmptyMemoryStudioData(
       "No memory writes have been captured yet. Replay a turn or run a simulator scenario to inspect memory.",
   };
 }
+
+export function createDegradedMemoryStudioData(
+  agentId: string,
+  reason: string,
+  policies: MemoryPolicy[] = [],
+): MemoryStudioData {
+  const data = createEmptyMemoryStudioData(agentId, policies);
+  return {
+    ...data,
+    retentionEvidence: reason,
+    degradedReason: reason,
+  };
+}
