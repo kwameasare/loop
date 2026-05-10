@@ -79,12 +79,15 @@ describe("AgentMap", () => {
   });
 
   it("renders an empty and degraded state when instrumentation is unavailable", () => {
-    render(<AgentMap data={createEmptyAgentMapData("agent_empty")} />);
+    const data = createEmptyAgentMapData("agent_empty");
+    render(<AgentMap data={data} />);
 
     expect(screen.getByText("Map data is degraded")).toBeInTheDocument();
     expect(screen.getByText("No map instrumentation yet")).toBeInTheDocument();
     expect(screen.getByTestId("agent-map-invalid-edit")).toBeDisabled();
     expect(screen.getByText("No object selected")).toBeInTheDocument();
+    expect(data.agentName).toBe("Agent agent_empty");
+    expect(screen.queryByText("Acme Support Concierge")).not.toBeInTheDocument();
   });
 
   it("builds the comprehension map from a live agent version spec", () => {
@@ -105,6 +108,7 @@ describe("AgentMap", () => {
     });
 
     expect(data.branch).toBe("v7");
+    expect(data.agentName).toBe("Agent agent_support");
     expect(data.objectState).toBe("production");
     expect(data.nodes.some((node) => node.label === "issue_refund")).toBe(true);
     expect(data.hazards.map((hazard) => hazard.id)).toContain(
