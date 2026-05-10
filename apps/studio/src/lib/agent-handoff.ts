@@ -73,6 +73,14 @@ export interface EvidenceLink {
   href: string;
 }
 
+type AgentHandoffClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
+type OwnershipTransferOptions = AgentHandoffClientOptions & {
+  fallbackModel?: AgentHandoffModel;
+};
+
 const LOCAL_NOW = new Date(0).toISOString();
 
 export function localAgentHandoff(agentId: string): AgentHandoffModel {
@@ -133,12 +141,13 @@ export function localAgentHandoff(agentId: string): AgentHandoffModel {
 
 export async function fetchAgentHandoff(
   agentId: string,
-  opts: UxWireupClientOptions = {},
+  opts: AgentHandoffClientOptions = {},
 ): Promise<AgentHandoffModel> {
   return cpJson<AgentHandoffModel>(
     `/agents/${encodeURIComponent(agentId)}/handoff`,
     {
       ...opts,
+      allowFallback: opts.allowFixture === true,
       fallback: localAgentHandoff(agentId),
     },
   );
@@ -147,7 +156,7 @@ export async function fetchAgentHandoff(
 export async function transferAgentOwner(
   agentId: string,
   input: OwnershipTransferInput,
-  opts: UxWireupClientOptions & { fallbackModel?: AgentHandoffModel } = {},
+  opts: OwnershipTransferOptions = {},
 ): Promise<AgentHandoffModel> {
   const fallback = opts.fallbackModel ?? localAgentHandoff(agentId);
   const now = new Date().toISOString();
@@ -168,6 +177,7 @@ export async function transferAgentOwner(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...fallback,
         owner_user_id: input.new_owner_user_id,

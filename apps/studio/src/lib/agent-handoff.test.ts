@@ -8,8 +8,11 @@ import {
 } from "./agent-handoff";
 
 describe("agent handoff client", () => {
-  it("falls back to a local walkthrough when cp-api is not configured", async () => {
-    const model = await fetchAgentHandoff("agent_1");
+  it("keeps local walkthroughs explicitly opt-in", async () => {
+    const model = await fetchAgentHandoff("agent_1", {
+      baseUrl: "",
+      allowFixture: true,
+    });
     expect(model.agent.id).toBe("agent_1");
     expect(model.open_risks[0]?.id).toBe("commitment_missing_fields");
     expect(model.walkthrough_sections.map((section) => section.id)).toContain(
@@ -46,12 +49,36 @@ describe("agent handoff client", () => {
     expect(capturedUrl).toContain("/agents/agent_1/handoff/transfer");
   });
 
-  it("keeps handoff risk and walkthrough receipts in local fallback mode", async () => {
-    const transferred = await transferAgentOwner("agent_1", {
-      new_owner_user_id: "new-owner@acme.test",
-      backup_owner_user_id: "backup@acme.test",
-      acknowledged_risk_ids: ["commitment_missing_fields"],
-    });
+  it("does not fabricate handoff reads or ownership transfers without cp-api", async () => {
+    await expect(fetchAgentHandoff("agent_1", { baseUrl: "" })).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required",
+    );
+    await expect(
+      transferAgentOwner(
+        "agent_1",
+        {
+          new_owner_user_id: "new-owner@acme.test",
+          backup_owner_user_id: "backup@acme.test",
+          acknowledged_risk_ids: ["commitment_missing_fields"],
+        },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps handoff risk and walkthrough receipts in explicit fixture mode", async () => {
+    const transferred = await transferAgentOwner(
+      "agent_1",
+      {
+        new_owner_user_id: "new-owner@acme.test",
+        backup_owner_user_id: "backup@acme.test",
+        acknowledged_risk_ids: ["commitment_missing_fields"],
+      },
+      {
+        baseUrl: "",
+        allowFixture: true,
+      },
+    );
 
     expect(transferred.transfers[0]?.open_risk_ids).toContain(
       "commitment_missing_fields",
