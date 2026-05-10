@@ -46,21 +46,21 @@ type Toast = { kind: "success" | "error"; message: string } | null;
 function statusColor(status: Deployment["status"]): string {
   switch (status) {
     case "shadow":
-      return "border-sky-300 bg-sky-50 text-sky-900";
+      return "border-info/40 bg-info/10 text-info";
     case "canary":
-      return "border-amber-300 bg-amber-50 text-amber-900";
+      return "border-warning/40 bg-warning/10 text-warning";
     case "ramp":
-      return "border-cyan-300 bg-cyan-50 text-cyan-900";
+      return "border-info/40 bg-info/10 text-info";
     case "live":
-      return "border-emerald-300 bg-emerald-50 text-emerald-900";
+      return "border-success/40 bg-success/10 text-success";
     case "paused":
-      return "border-slate-300 bg-slate-50 text-slate-900";
+      return "border-border bg-muted text-foreground";
     case "rolled_back":
-      return "border-red-300 bg-red-50 text-red-900";
+      return "border-destructive/40 bg-destructive/10 text-destructive";
     case "superseded":
-      return "border-gray-200 bg-white text-gray-500";
+      return "border-border bg-card text-muted-foreground";
     default:
-      return "border-gray-200 bg-white text-gray-700";
+      return "border-border bg-card text-foreground";
   }
 }
 
@@ -351,8 +351,8 @@ export function DeployTimeline({
         <p
           className={
             toast.kind === "success"
-              ? "text-xs text-emerald-700"
-              : "text-xs text-red-600"
+              ? "text-xs text-success"
+              : "text-xs text-destructive"
           }
           data-testid={`deploy-toast-${toast.kind}`}
           role="status"

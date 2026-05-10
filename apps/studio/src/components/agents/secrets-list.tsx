@@ -218,7 +218,7 @@ export function SecretsList({
                 value={name}
                 onChange={(e) => setName(e.target.value.toUpperCase())}
                 data-testid="add-secret-name"
-                className="rounded-md border px-2 py-1 text-sm"
+                className="rounded-md border bg-background px-2 py-1 text-sm"
                 placeholder="OPENAI_API_KEY"
                 autoFocus
               />
@@ -235,7 +235,7 @@ export function SecretsList({
                 value={secretRef}
                 onChange={(e) => setSecretRef(e.target.value)}
                 data-testid="add-secret-ref"
-                className="rounded-md border px-2 py-1 text-sm"
+                className="rounded-md border bg-background px-2 py-1 text-sm"
                 placeholder="kms://prod/openai-key"
               />
               <span className="text-xs text-muted-foreground">
@@ -244,7 +244,7 @@ export function SecretsList({
             </div>
             {formError ? (
               <p
-                className="text-xs text-red-600"
+                className="text-xs text-destructive"
                 data-testid="add-secret-error"
               >
                 {formError}
@@ -282,8 +282,8 @@ export function SecretsList({
           className={
             "fixed bottom-4 right-4 z-50 rounded-md px-3 py-2 text-sm shadow " +
             (toast.kind === "success"
-              ? "bg-green-600 text-white"
-              : "bg-red-600 text-white")
+              ? "bg-success text-success-foreground"
+              : "bg-destructive text-destructive-foreground")
           }
         >
           {toast.message}
