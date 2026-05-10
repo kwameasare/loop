@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { KnowledgeAtelier } from "./knowledge-atelier";
 import type { KbDocument } from "@/lib/kb";
@@ -18,7 +18,26 @@ const readyDocs: KbDocument[] = [
 ];
 
 describe("KnowledgeAtelier", () => {
-  it("renders source health, chunks, retrieval lab, Why panel, and readiness", () => {
+  const previousBaseUrl = process.env.LOOP_CP_API_BASE_URL;
+
+  beforeEach(() => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+  });
+
+  afterEach(() => {
+    if (previousBaseUrl === undefined) {
+      delete process.env.LOOP_CP_API_BASE_URL;
+    } else {
+      process.env.LOOP_CP_API_BASE_URL = previousBaseUrl;
+    }
+    vi.unstubAllGlobals();
+  });
+
+  async function waitForDiagnosticsToSettle() {
+    await screen.findAllByText(/LOOP_CP_API_BASE_URL is required/i);
+  }
+
+  it("renders source health, chunks, retrieval lab, Why panel, and readiness", async () => {
     render(
       <KnowledgeAtelier agentId="agt_demo" initialDocuments={readyDocs} />,
     );
@@ -36,9 +55,10 @@ describe("KnowledgeAtelier", () => {
     expect(screen.getByTestId("knowledge-readiness")).toHaveTextContent(
       "Generated eval cases",
     );
+    await waitForDiagnosticsToSettle();
   });
 
-  it("saves a retrieval query as an eval seed with evidence", () => {
+  it("saves a retrieval query as an eval seed with evidence", async () => {
     render(
       <KnowledgeAtelier agentId="agt_demo" initialDocuments={readyDocs} />,
     );
@@ -54,9 +74,10 @@ describe("KnowledgeAtelier", () => {
       "Saved retrieval eval seed",
     );
     expect(screen.getByRole("status")).toHaveTextContent("retrieval eval");
+    await waitForDiagnosticsToSettle();
   });
 
-  it("shows unsupported empty states without retrieval candidates", () => {
+  it("shows unsupported empty states without retrieval candidates", async () => {
     render(<KnowledgeAtelier agentId="agt_demo" initialDocuments={[]} />);
 
     expect(
@@ -72,9 +93,25 @@ describe("KnowledgeAtelier", () => {
     expect(screen.getByTestId("retrieval-why-panel")).toHaveTextContent(
       "No retrieval to explain",
     );
+    await waitForDiagnosticsToSettle();
   });
 
-  it("surfaces degraded source errors and readiness blockers", () => {
+  it("does not show fixture inverse-retrieval misses when cp-api is unavailable", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+
+    render(
+      <KnowledgeAtelier agentId="agt_demo" initialDocuments={readyDocs} />,
+    );
+
+    expect(
+      await screen.findByText(/LOOP_CP_API_BASE_URL is required/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Can I cancel my annual plan if I am in California/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("surfaces degraded source errors and readiness blockers", async () => {
     render(
       <KnowledgeAtelier
         agentId="agt_demo"
@@ -95,5 +132,6 @@ describe("KnowledgeAtelier", () => {
     expect(screen.getByTestId("knowledge-readiness")).toHaveTextContent(
       "Fix failed syncs",
     );
+    await waitForDiagnosticsToSettle();
   });
 });

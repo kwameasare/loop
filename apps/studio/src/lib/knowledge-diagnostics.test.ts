@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   buildEmbeddingsExplorerModel,
   buildInverseRetrievalModel,
+  fetchInverseRetrievalModel,
 } from "@/lib/knowledge-diagnostics";
 import { getKnowledgeAtelierModel } from "@/lib/knowledge";
 import type { KbDocument } from "@/lib/kb";
@@ -28,6 +29,42 @@ describe("knowledge diagnostics", () => {
     expect(inverse.selectedChunkId).toContain("chunk");
     expect(inverse.misses).toHaveLength(3);
     expect(inverse.misses.map((miss) => miss.repair)).toContain("metadata");
+  });
+
+  it("loads inverse retrieval misses from cp-api", async () => {
+    const atelier = getKnowledgeAtelierModel("agent_support", docs);
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        chunk_id: "chunk_refund",
+        items: [
+          {
+            query: "Do renewal refunds work in California?",
+            trace_id: "trace_1",
+            rank: 4,
+            miss_reason: "reranked_low",
+            fix_path: "re-rank renewal policy chunk",
+          },
+        ],
+      }),
+    );
+
+    const inverse = await fetchInverseRetrievalModel("agent_support", atelier, {
+      baseUrl: "https://cp.test/v1",
+      fetcher,
+    });
+
+    expect(inverse.misses[0]).toMatchObject({
+      productionQuery: "Do renewal refunds work in California?",
+      repair: "re-rank",
+    });
+  });
+
+  it("requires cp-api before reporting inverse retrieval diagnostics", async () => {
+    const atelier = getKnowledgeAtelierModel("agent_support", docs);
+
+    await expect(
+      fetchInverseRetrievalModel("agent_support", atelier, { baseUrl: "" }),
+    ).rejects.toThrow(/LOOP_CP_API_BASE_URL is required/i);
   });
 
   it("builds an accessible embedding map and table fallback", () => {

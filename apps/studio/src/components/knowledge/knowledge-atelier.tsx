@@ -242,21 +242,33 @@ export function KnowledgeAtelier({
   const [liveInverseModel, setLiveInverseModel] = useState<ReturnType<
     typeof buildInverseRetrievalModel
   > | null>(null);
+  const [liveInverseError, setLiveInverseError] = useState<string | null>(null);
 
   const model: KnowledgeAtelierModel = useMemo(
     () => getKnowledgeAtelierModel(agentId, documents),
     [agentId, documents],
   );
   const inverseModel = useMemo(
-    () => buildInverseRetrievalModel(model),
+    () => ({ ...buildInverseRetrievalModel(model), misses: [] }),
     [model],
   );
   useEffect(() => {
     let cancelled = false;
     setLiveInverseModel(null);
-    void fetchInverseRetrievalModel(agentId, model).then((next) => {
-      if (!cancelled) setLiveInverseModel(next);
-    });
+    setLiveInverseError(null);
+    void fetchInverseRetrievalModel(agentId, model)
+      .then((next) => {
+        if (!cancelled) setLiveInverseModel(next);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setLiveInverseError(
+            err instanceof Error
+              ? err.message
+              : "Could not load inverse retrieval diagnostics.",
+          );
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -499,7 +511,10 @@ export function KnowledgeAtelier({
         </div>
       </section>
 
-      <InverseRetrievalLab model={liveInverseModel ?? inverseModel} />
+      <InverseRetrievalLab
+        model={liveInverseModel ?? inverseModel}
+        unavailableReason={liveInverseError}
+      />
       <EmbeddingsExplorer model={embeddingsModel} />
 
       <section

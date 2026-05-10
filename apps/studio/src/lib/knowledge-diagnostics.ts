@@ -98,10 +98,14 @@ export function buildInverseRetrievalModel(
   };
 }
 
+type KnowledgeDiagnosticsOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 export async function fetchInverseRetrievalModel(
   agentId: string,
   model: KnowledgeAtelierModel,
-  opts: UxWireupClientOptions = {},
+  opts: KnowledgeDiagnosticsOptions = {},
 ): Promise<InverseRetrievalModel> {
   const fallback = buildInverseRetrievalModel(model);
   const body = await cpJson<{
@@ -119,10 +123,11 @@ export async function fetchInverseRetrievalModel(
       ...opts,
       method: "POST",
       body: { chunk_id: fallback.selectedChunkId },
+      allowFallback: opts.allowFixture === true,
       fallback: { chunk_id: fallback.selectedChunkId, items: [] },
     },
-  ).catch(() => ({ chunk_id: fallback.selectedChunkId, items: [] }));
-  if (!body.items?.length) return fallback;
+  );
+  if (!body.items?.length) return { ...fallback, misses: [] };
   return {
     ...fallback,
     selectedChunkId: body.chunk_id,
