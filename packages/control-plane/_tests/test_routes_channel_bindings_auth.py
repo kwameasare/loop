@@ -115,3 +115,34 @@ def test_members_cannot_mutate_channel_readiness(
         },
     )
     assert denied.status_code == 403
+
+
+def test_members_cannot_record_channel_activity(
+    client: TestClient,
+    workspace_and_agent: tuple[UUID, UUID],
+) -> None:
+    _, agent_id = workspace_and_agent
+    owner = {"authorization": _bearer_for("owner-1")}
+    member = {"authorization": _bearer_for("alice")}
+
+    created = client.post(
+        f"/v1/agents/{agent_id}/channel-bindings",
+        headers=owner,
+        json={
+            "channel_type": "whatsapp",
+            "provider": "Meta Cloud API",
+            "display_name": "WhatsApp",
+            "status": "draft",
+            "identity_config": {"handle": "+15550101010"},
+            "auth_config_ref": "vault://channels/whatsapp",
+        },
+    )
+    assert created.status_code == 201, created.text
+    binding_id = created.json()["id"]
+
+    denied = client.post(
+        f"/v1/agents/{agent_id}/channel-bindings/{binding_id}/activity",
+        headers=member,
+        json={"status": "success", "trace_id": "trace_123"},
+    )
+    assert denied.status_code == 403
