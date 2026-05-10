@@ -8,7 +8,7 @@ import {
   fetchVoiceConfig,
   saveVoiceConfig,
 } from "./voice-config";
-import { fetchVoiceStageModel } from "./voice-stage";
+import { fetchVoiceStageModel, provisionVoiceNumber } from "./voice-stage";
 import { mintVoiceToken } from "./voice-transport";
 
 const ORIG_BASE = process.env.LOOP_CP_API_BASE_URL;
@@ -82,6 +82,12 @@ describe("voice-config cp-api client", () => {
     expect(res.asr_provider).toBe("google");
     const [url] = fetcher.mock.calls[0];
     expect(url).toBe("https://cp.test/v1/workspaces/ws1/voice/config");
+  });
+
+  it("fetchVoiceConfig does not fall back to fixture config when cp-api is unconfigured", async () => {
+    await expect(fetchVoiceConfig("ws1", { baseUrl: "" })).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required for voice-config calls",
+    );
   });
 
   it("fetchVoiceConfig falls back to a default empty config on 404", async () => {
@@ -162,5 +168,17 @@ describe("voice-stage cp-api client", () => {
     expect(model.agentName).toBe("Voice Concierge");
     const [url] = fetcher.mock.calls[0];
     expect(url).toBe("https://cp.test/v1/workspaces/ws1/voice/stage");
+  });
+
+  it("fetchVoiceStageModel does not fall back to the stage fixture when cp-api is unconfigured", async () => {
+    await expect(
+      fetchVoiceStageModel("ws1", { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required to load voice stage");
+  });
+
+  it("provisionVoiceNumber does not mint deterministic phone numbers when cp-api is unconfigured", async () => {
+    await expect(provisionVoiceNumber("ws1", { baseUrl: "" })).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required to provision voice numbers",
+    );
   });
 });
