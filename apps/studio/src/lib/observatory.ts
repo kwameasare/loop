@@ -256,7 +256,11 @@ export function buildObservatoryModel(args: {
     });
   }
   if (anomalies.length === 0) {
-    if (totalTraces === 0 && args.usage.length === 0 && openInbox.length === 0) {
+    if (
+      totalTraces === 0 &&
+      args.usage.length === 0 &&
+      openInbox.length === 0
+    ) {
       anomalies.push({
         id: "telemetry_not_loaded",
         title: "No production telemetry loaded",
@@ -433,18 +437,37 @@ export async function fetchObservatoryModel(
   }
   const nowMs = Date.now();
   const month = monthBoundsUTC(nowMs);
-  const [traces, usage, inbox, incidents] = await Promise.all([
-    searchTraces(workspaceId, { page_size: 100 }, opts).then(
-      (result) => result.traces,
-    ),
-    fetchUsageRecords(
+  let traces: TraceSummary[];
+  let usage: UsageRecord[];
+  let inbox: InboxItem[];
+  let incidents: IncidentRecord[];
+  try {
+    [traces, usage, inbox, incidents] = await Promise.all([
+      searchTraces(workspaceId, { page_size: 100 }, opts).then(
+        (result) => result.traces,
+      ),
+      fetchUsageRecords(
+        workspaceId,
+        { start_ms: month.period_start_ms, end_ms: month.period_end_ms },
+        opts,
+      ),
+      listInbox(workspaceId, opts).then((result) => result.items),
+      listWorkspaceIncidents(workspaceId, opts).then((result) => result.items),
+    ]);
+  } catch (error) {
+    return buildObservatoryModel({
       workspaceId,
-      { start_ms: month.period_start_ms, end_ms: month.period_end_ms },
-      opts,
-    ),
-    listInbox(workspaceId, opts).then((result) => result.items),
-    listWorkspaceIncidents(workspaceId, opts).then((result) => result.items),
-  ]);
+      traces: [],
+      usage: [],
+      inbox: [],
+      incidents: [],
+      nowMs,
+      degradedReason:
+        error instanceof Error
+          ? `Live Observatory telemetry is unavailable: ${error.message}`
+          : "Live Observatory telemetry is unavailable.",
+    });
+  }
   return buildObservatoryModel({
     workspaceId,
     traces,
