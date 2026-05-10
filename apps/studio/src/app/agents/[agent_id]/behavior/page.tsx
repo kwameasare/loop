@@ -1,6 +1,6 @@
 import { BehaviorEditor } from "@/components/behavior/behavior-editor";
 import {
-  createEmptyBehaviorEditorData,
+  createDegradedBehaviorEditorData,
   fetchBehaviorEditorData,
 } from "@/lib/behavior";
 
@@ -9,8 +9,11 @@ interface AgentBehaviorPageProps {
 }
 
 export default async function AgentBehaviorPage({ params }: AgentBehaviorPageProps) {
-  const data = await fetchBehaviorEditorData(params.agent_id).catch(() =>
-    createEmptyBehaviorEditorData(params.agent_id),
+  const data = await fetchBehaviorEditorData(params.agent_id).catch((error) =>
+    createDegradedBehaviorEditorData(
+      params.agent_id,
+      error instanceof Error ? error.message : String(error),
+    ),
   );
   return <BehaviorEditor data={data} />;
 }
