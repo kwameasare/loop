@@ -317,6 +317,35 @@ describe("NewAgentModal", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
+  it("blocks governed intake when no real workspace is selected", () => {
+    const createAgentIntake = makeCreateIntake();
+    const listAgentIntakeTemplates = vi.fn(async () => ({ items: [] }));
+    render(
+      <NewAgentModal
+        existingSlugs={[]}
+        workspaceId={undefined}
+        createAgentIntake={createAgentIntake}
+        listAgentIntakeTemplates={listAgentIntakeTemplates}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("new-agent-button"));
+    expect(screen.getByTestId("new-agent-workspace-required")).toHaveTextContent(
+      /real workspace/i,
+    );
+    fill("new-agent-name", "Support Bot");
+    fill("new-agent-slug", "support-bot");
+    fillContract();
+
+    expect(screen.getByTestId("new-agent-submit")).toBeDisabled();
+    fireEvent.click(screen.getByTestId("new-agent-submit"));
+    expect(createAgentIntake).not.toHaveBeenCalled();
+    expect(listAgentIntakeTemplates).not.toHaveBeenCalled();
+    expect(screen.getByTestId("new-agent-submit-blocked")).toHaveTextContent(
+      /workspace context/i,
+    );
+  });
+
   it("rejects malformed slugs before round-tripping", () => {
     const createAgentIntake = makeCreateIntake();
     render(
