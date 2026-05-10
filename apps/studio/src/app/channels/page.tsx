@@ -18,14 +18,6 @@ export function resolveChannelsWorkspaceId(
 }
 
 export default async function ChannelsPage() {
-  const agentsResult = await listAgents()
-    .then((result) => ({ ...result, degradedReason: undefined }))
-    .catch((error: unknown) => ({
-      agents: [],
-      degradedReason:
-        error instanceof Error ? error.message : "Could not load agents.",
-    }));
-  const { agents, degradedReason: agentsDegradedReason } = agentsResult;
   const { workspaces, degraded_reason: workspacesDegradedReason } =
     await listWorkspaces().catch((error: unknown) => ({
       workspaces: [],
@@ -34,9 +26,27 @@ export default async function ChannelsPage() {
           ? error.message
           : "Could not load workspace context.",
     }));
+  const initialWorkspaceId = resolveChannelsWorkspaceId([], workspaces);
+  const agentsResult = initialWorkspaceId
+    ? await listAgents({ workspaceId: initialWorkspaceId })
+        .then((result) => ({ ...result, degradedReason: undefined }))
+        .catch((error: unknown) => ({
+          agents: [],
+          degradedReason:
+            error instanceof Error ? error.message : "Could not load agents.",
+        }))
+    : {
+        agents: [],
+        degradedReason: "Workspace context is required before listing agents.",
+      };
+  const { agents, degradedReason: agentsDegradedReason } = agentsResult;
   const existingSlugs = agents.map((agent) => agent.slug).filter(Boolean);
   const activeAgentId = agents[0]?.id ?? null;
-  const workspaceId = resolveChannelsWorkspaceId(agents, workspaces);
+  const workspaceId = resolveChannelsWorkspaceId(
+    agents,
+    workspaces,
+    initialWorkspaceId ?? undefined,
+  );
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-5 p-4 lg:p-6">
