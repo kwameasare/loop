@@ -14,12 +14,13 @@ interface AgentVersionsPageProps {
  * Versions tab — list every deploy for this agent and let reviewers
  * compare the ``config_json`` of any version to its predecessor. The
  * data path goes through the live ``GET /v1/agents/{id}/versions`` cp-api
- * route with an explicit local fallback when Studio is running without cp.
+ * route and shows a degraded state instead of demo deploy history when the
+ * control plane is not configured.
  */
 export default async function AgentVersionsPage({
   params,
 }: AgentVersionsPageProps) {
-  const [{ items }, workflow] = await Promise.all([
+  const [versionPage, workflow] = await Promise.all([
     listAgentVersions(params.agent_id, {
       pageSize: 100,
     }),
@@ -33,7 +34,10 @@ export default async function AgentVersionsPage({
         initialWorkflow={workflow}
       />
       <EditHistoryScrubber agentId={params.agent_id} />
-      <AgentVersionsList versions={items} />
+      <AgentVersionsList
+        versions={versionPage.items}
+        degradedReason={versionPage.degraded_reason}
+      />
     </div>
   );
 }
