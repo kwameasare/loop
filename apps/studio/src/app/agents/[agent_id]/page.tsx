@@ -10,10 +10,54 @@ import {
   buildLocalCommitmentDocument,
   fetchCurrentCommitment,
 } from "@/lib/agent-commitment";
+import { listDeployments, type Deployment } from "@/lib/deploys";
 import { getAgentDetailData } from "./agent-detail-data";
 
 interface AgentOverviewPageProps {
   params: { agent_id: string };
+}
+
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+function deployedAt(deployment: Deployment): string {
+  return deployment.promotedAt ?? deployment.createdAt;
+}
+
+function latestDeployment(deployments: Deployment[]): Deployment | null {
+  return (
+    [...deployments].sort(
+      (left, right) =>
+        Date.parse(deployedAt(right)) - Date.parse(deployedAt(left)),
+    )[0] ?? null
+  );
+}
+
+function versionNumberFromDeployment(deployment: Deployment): number | null {
+  const match = deployment.versionId.match(/(\d+)$/);
+  return match ? Number.parseInt(match[1]!, 10) : null;
+}
+
+function deploySummaryFromHistory(
+  deployments: Deployment[],
+  unavailableReason?: string,
+): DeploySummary {
+  if (unavailableReason) {
+    return {
+      deployed_at: null,
+      version: null,
+      status: null,
+      unavailableReason,
+    };
+  }
+  const latest = latestDeployment(deployments);
+  if (!latest) return { deployed_at: null, version: null, status: null };
+  return {
+    deployed_at: deployedAt(latest),
+    version: versionNumberFromDeployment(latest),
+    status: latest.status,
+  };
 }
 
 export default async function AgentOverviewPage({
@@ -26,23 +70,34 @@ export default async function AgentOverviewPage({
     commitment = await fetchCurrentCommitment(params.agent_id);
   } catch (error) {
     commitment = buildLocalCommitmentDocument(params.agent_id);
-    commitmentDegradedReason =
-      error instanceof Error
-        ? error.message
-        : "Could not load the current Commitment Document.";
+    commitmentDegradedReason = errorMessage(
+      error,
+      "Could not load the current Commitment Document.",
+    );
   }
-  const combinedDegradedReason = [degradedReason, commitmentDegradedReason]
+  let deployments: Deployment[] = [];
+  let deploymentsDegradedReason: string | undefined;
+  try {
+    const result = await listDeployments(params.agent_id);
+    deployments = result.items;
+    deploymentsDegradedReason = result.degraded_reason;
+  } catch (error) {
+    deploymentsDegradedReason = errorMessage(
+      error,
+      "Could not load deployment history.",
+    );
+  }
+  const combinedDegradedReason = [
+    degradedReason,
+    commitmentDegradedReason,
+    deploymentsDegradedReason,
+  ]
     .filter(Boolean)
     .join(" ");
-
-  // Derive last-deploy summary from the agent summary until a dedicated
-  // deploys endpoint is wired. active_version serves as a version proxy;
-  // updated_at approximates deploy time.
-  const lastDeploy: DeploySummary = {
-    deployed_at: agent.active_version !== null ? agent.updated_at : null,
-    version: agent.active_version,
-    status: agent.active_version !== null ? "active" : null,
-  };
+  const lastDeploy = deploySummaryFromHistory(
+    deployments,
+    deploymentsDegradedReason,
+  );
 
   return (
     <AgentOverview

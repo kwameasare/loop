@@ -173,13 +173,36 @@ describe("AgentOverview", () => {
       <AgentOverview
         {...BASE_PROPS}
         dataState="degraded"
-        degradedReason="Showing cached target fixture because cp-api GET /agents/agt_1 returned 503."
+        degradedReason="cp-api GET /agents/agt_1 returned 503."
       />,
     );
 
     expect(screen.getByTestId("agent-workbench-degraded")).toHaveTextContent(
       "cp-api GET /agents/agt_1 returned 503",
     );
+  });
+
+  it("does not proxy last deploy from agent summary when deployment history is unavailable", () => {
+    render(
+      <AgentOverview
+        {...BASE_PROPS}
+        lastDeploy={{
+          deployed_at: null,
+          version: null,
+          status: null,
+          unavailableReason:
+            "LOOP_CP_API_BASE_URL is required to load deployment history.",
+        }}
+      />,
+    );
+
+    expect(screen.getByTestId("overview-deploy-time")).toHaveTextContent(
+      "Unavailable",
+    );
+    expect(
+      screen.getByTestId("overview-deploy-unavailable"),
+    ).toHaveTextContent("deployment history");
+    expect(screen.queryByTestId("overview-deploy-version")).toBeNull();
   });
 
   it("keeps production promotion visible but blocked when approval is missing", () => {
