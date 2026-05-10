@@ -10,12 +10,14 @@ export type Workspace = {
 
 export type ListWorkspacesResponse = {
   workspaces: Workspace[];
+  degraded_reason?: string | undefined;
 };
 
 export interface ListWorkspacesOptions {
   fetcher?: typeof fetch;
   token?: string;
   baseUrl?: string;
+  allowFixture?: boolean;
 }
 
 interface CpWorkspace {
@@ -74,7 +76,14 @@ export async function listWorkspaces(
 ): Promise<ListWorkspacesResponse> {
   const base = cpApiBaseUrl(opts.baseUrl);
   if (!base) {
-    return Promise.resolve({ workspaces: [...FIXTURE] });
+    if (opts.allowFixture === true) {
+      return Promise.resolve({ workspaces: [...FIXTURE] });
+    }
+    return Promise.resolve({
+      workspaces: [],
+      degraded_reason:
+        "Workspace context requires the control-plane workspace endpoint.",
+    });
   }
   const explicitToken = opts.token ?? process.env.LOOP_TOKEN;
   const hasBrowserSession =
@@ -85,7 +94,14 @@ export async function listWorkspaces(
     !explicitToken &&
     !hasBrowserSession
   ) {
-    return Promise.resolve({ workspaces: [...FIXTURE] });
+    if (opts.allowFixture === true) {
+      return Promise.resolve({ workspaces: [...FIXTURE] });
+    }
+    return Promise.resolve({
+      workspaces: [],
+      degraded_reason:
+        "Sign in before workspace context can be loaded from the control plane.",
+    });
   }
   const fetcher = createAuthedCpApiFetch({
     ...(opts.fetcher ? { fetcher: opts.fetcher } : {}),
