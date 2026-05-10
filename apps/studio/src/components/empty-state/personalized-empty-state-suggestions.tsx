@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 
-import { EvidenceCallout } from "@/components/target";
+import { EvidenceCallout, StatePanel } from "@/components/target";
 import {
   fetchEmptyStateSuggestions,
   type EmptyStateSuggestion,
@@ -18,21 +18,39 @@ export function PersonalizedEmptyStateSuggestions({
   surface: EmptyStateSurface;
 }) {
   const [items, setItems] = useState<EmptyStateSuggestion[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    void fetchEmptyStateSuggestions(agentId, surface).then((next) => {
-      if (!cancelled) setItems(next);
-    });
+    setError(null);
+    setItems([]);
+    void fetchEmptyStateSuggestions(agentId, surface)
+      .then((next) => {
+        if (!cancelled) setItems(next);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Could not load personalized suggestions.",
+          );
+        }
+      });
     return () => {
       cancelled = true;
     };
   }, [agentId, surface]);
 
-  if (items.length === 0) return null;
+  if (items.length === 0 && !error) return null;
 
   return (
     <div className="mt-3 space-y-2" data-testid={`personalized-empty-${surface}`}>
+      {error ? (
+        <StatePanel state="degraded" title="Personalized suggestions unavailable">
+          {error}
+        </StatePanel>
+      ) : null}
       {items.map((item) => (
         <EvidenceCallout
           key={item.id}
