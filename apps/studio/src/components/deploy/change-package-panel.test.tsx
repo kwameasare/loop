@@ -100,6 +100,24 @@ describe("ChangePackagePanel", () => {
     );
   });
 
+  it("focuses the Change Package panel from Workbench controls", () => {
+    render(
+      <ChangePackagePanel
+        agentId="agt_1"
+        focusedPanel="change-package"
+        initialPackage={makePackage()}
+      />,
+    );
+
+    expect(screen.getByTestId("change-package-panel")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+    expect(
+      screen.getByTestId("change-package-focused-workbench-panel"),
+    ).toHaveTextContent("Change Package evidence is highlighted");
+  });
+
   it("focuses release candidate and rollback panels from evidence links", () => {
     const view = render(
       <ChangePackagePanel

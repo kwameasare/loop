@@ -137,6 +137,24 @@ describe("DeployTimeline", () => {
     );
   });
 
+  it("focuses promotion controls from the Workbench deploy button", () => {
+    render(
+      <DeployTimeline
+        agentId="a"
+        focusedPanel="promotion"
+        initialDeployments={[mkDep({ id: "d1", status: "canary" })]}
+      />,
+    );
+
+    expect(screen.getByTestId("deploy-focused-panel")).toHaveTextContent(
+      "promotion controls are highlighted",
+    );
+    expect(screen.getByTestId("rollout-plan-controls")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+  });
+
   it("disables promote/pause for non-canary rows and rollback for non-live rows", () => {
     render(
       <DeployTimeline
