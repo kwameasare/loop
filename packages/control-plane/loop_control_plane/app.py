@@ -90,6 +90,7 @@ from loop_control_plane._routes_ux_wireup import (
 )
 from loop_control_plane._routes_voice import router as voice_router
 from loop_control_plane._routes_voice import router_tokens as voice_tokens_router
+from loop_control_plane._routes_web_channels import router as web_channels_router
 from loop_control_plane._routes_webhooks_incoming import (
     router as webhooks_incoming_router,
 )
@@ -159,6 +160,8 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         change_packages_router,
         # Agent-flow implementation: omnichannel bindings are agent-scoped peers.
         channel_bindings_router,
+        # Agent-flow implementation: web chat has real token mint/revoke state.
+        web_channels_router,
         # Agent-flow implementation: rollout state generates Evidence Packs.
         deployments_router,
         # Agent-flow implementation: incidents connect rollbacks, traces, and evals.
