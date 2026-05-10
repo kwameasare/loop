@@ -52,6 +52,8 @@ class ChangePackageRecord(BaseModel):
     workspace_id: UUID
     agent_id: UUID
     branch_id: str
+    change_set_id: str
+    release_candidate_id: str
     from_version_id: str
     to_version_id: str
     commitment_document_id: str
@@ -239,11 +241,15 @@ def build_change_package(
         "latency": "change_package.latency_summary",
         "channels": "change_package.channel_readiness_summary",
         "rollback": body.rollback_target_version_id,
+        "change_set": body.change_set_id,
+        "release_candidate": body.release_candidate_id,
         "pre_approved_classes": ",".join(item["id"] for item in preapprovals),
     }
     claims = {
         "agent_id": str(agent.id),
         "branch_id": body.branch_id,
+        "change_set_id": body.change_set_id,
+        "release_candidate_id": body.release_candidate_id,
         "from_version_id": body.from_version_id,
         "to_version_id": body.to_version_id,
         "commitment_document_id": commitment.id,
@@ -270,6 +276,8 @@ def build_change_package(
         workspace_id=agent.workspace_id,
         agent_id=agent.id,
         branch_id=body.branch_id,
+        change_set_id=body.change_set_id,
+        release_candidate_id=body.release_candidate_id,
         from_version_id=body.from_version_id,
         to_version_id=body.to_version_id,
         commitment_document_id=commitment.id,

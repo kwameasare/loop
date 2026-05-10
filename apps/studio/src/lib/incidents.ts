@@ -197,6 +197,8 @@ export async function createIncidentFixChangePackage(
           workspace_id: localIncident.workspace_id,
           agent_id: agentId,
           branch_id: "incident/fix",
+          change_set_id: `cs_${incidentId}`,
+          release_candidate_id: `rc_${incidentId}`,
           from_version_id: "production",
           to_version_id: "draft-incident-fix",
           commitment_document_id: "commitment_local",

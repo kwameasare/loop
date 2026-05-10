@@ -15,6 +15,7 @@ function makePackage(overrides: Partial<ChangePackage> = {}): ChangePackage {
     summary: "Promote draft to canary.",
     commitment_document_id: "commit_1",
     commitment_document_version: 2,
+    release_candidate_id: "rc_refund_v2",
     content_hash: "abcdef1234567890",
     semantic_diff: [
       {
@@ -55,6 +56,9 @@ describe("ChangePackagePanel", () => {
     expect(screen.getByTestId("change-package-commitment")).toHaveTextContent(
       "commit_1 v2",
     );
+    expect(
+      screen.getByTestId("change-package-release-candidate"),
+    ).toHaveTextContent("rc_refund_v2");
     expect(
       screen.getByTestId("change-package-approval-owner"),
     ).toHaveTextContent("Agent owner");

@@ -85,6 +85,8 @@ export interface ChangePackage {
   workspace_id: string;
   agent_id: string;
   branch_id: string;
+  change_set_id: string;
+  release_candidate_id: string;
   from_version_id: string;
   to_version_id: string;
   commitment_document_id: string;
@@ -124,6 +126,8 @@ export function buildLocalChangePackage(agentId: string): ChangePackage {
     workspace_id: "",
     agent_id: agentId,
     branch_id: "main/draft",
+    change_set_id: "manual-change-set",
+    release_candidate_id: "rc-current",
     from_version_id: "production",
     to_version_id: "draft",
     commitment_document_id: "commitment_unconfigured",

@@ -655,8 +655,12 @@ def test_change_package_preflight_links_commitment_evidence_and_stales_on_change
     assert package.status_code == 201, package.text
     body = package.json()
     assert body["status"] == "generated"
+    assert body["change_set_id"] == "cs_refund"
+    assert body["release_candidate_id"] == "rc_refund_v2"
     assert body["commitment_document_id"].startswith("commit_")
     assert body["evidence"]["commitment"] == body["commitment_document_id"]
+    assert body["evidence"]["change_set"] == "cs_refund"
+    assert body["evidence"]["release_candidate"] == "rc_refund_v2"
     assert body["required_approvals"][0]["role"] == "Agent owner"
 
     submitted = client.post(
@@ -1039,6 +1043,9 @@ def test_deployment_start_creates_evidence_pack_from_approved_change_package(
     assert deployment["evidencePackId"] == evidence_pack["id"]
     assert evidence_pack["change_package_id"] == package["id"]
     assert evidence_pack["version_manifest"]["content_hash"] == package["content_hash"]
+    assert (
+        evidence_pack["version_manifest"]["release_candidate_id"] == package["release_candidate_id"]
+    )
 
     promoted = client.post(
         f"/v1/agents/{agent_id}/deployments/{deployment['id']}/promote",
