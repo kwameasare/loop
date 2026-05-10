@@ -14,10 +14,19 @@ export const dynamic = "force-dynamic";
  * validate uniqueness before round-tripping POST /v1/agents.
  */
 export default async function AgentsPage() {
-  const { agents } = await listAgents().catch(() => ({ agents: [] }));
-  const { workspaces } = await listWorkspaces().catch(() => ({
-    workspaces: [],
-  }));
+  const agentsResult = await listAgents()
+    .then((result) => ({ ...result, degradedReason: undefined }))
+    .catch((error) => ({
+      agents: [],
+      degradedReason:
+        error instanceof Error ? error.message : "Could not load agents.",
+    }));
+  const { agents, degradedReason: agentsDegradedReason } = agentsResult;
+  const { workspaces, degraded_reason: workspacesDegradedReason } =
+    await listWorkspaces().catch(() => ({
+      workspaces: [],
+      degraded_reason: "Could not load workspace context.",
+    }));
   const existingSlugs = agents.map((a) => a.slug).filter(Boolean);
   const workspaceId =
     agents[0]?.workspace_id ||
@@ -38,7 +47,16 @@ export default async function AgentsPage() {
           conversations, tools, and recent traces.
         </p>
       </header>
-      <AgentsList agents={agents} />
+      {workspacesDegradedReason ? (
+        <p
+          className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+          data-testid="agents-workspace-degraded"
+          role="status"
+        >
+          {workspacesDegradedReason}
+        </p>
+      ) : null}
+      <AgentsList agents={agents} degradedReason={agentsDegradedReason} />
     </main>
   );
 }
