@@ -240,6 +240,83 @@ def test_agent_intake_requires_workspace_admin(
     assert response.status_code in (401, 403)
 
 
+def test_agent_intake_missing_contract_requests_clarification_before_generation(
+    client: TestClient,
+    workspace_id: UUID,
+) -> None:
+    incomplete = {
+        **_contract(),
+        "owner_user_id": "",
+        "worst_case_failure": "",
+    }
+
+    response = client.post(
+        f"/v1/workspaces/{workspace_id}/agent-intakes",
+        headers=_auth(),
+        json={
+            "agent_name": "Clarification Agent",
+            "slug": "clarification-agent",
+            "creation_path": "business_intent",
+            "contract": incomplete,
+            "capabilities": ["Answer billing questions"],
+            "artifacts": [
+                {
+                    "name": "billing-policy.md",
+                    "kind": "runbook",
+                    "text": "Use approved billing policy.",
+                }
+            ],
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    agent_id = body["agent"]["id"]
+    assert body["state"] == "needs_clarification"
+    assert body["created_object_refs"] == {
+        "agent_id": agent_id,
+        "commitment_id": body["commitment"]["id"],
+        "blocked_before_generation": True,
+        "missing_required_fields": ["owner_user_id", "worst_case_failure"],
+    }
+    questions = {
+        item["field"]: item["question"] for item in body["missing_information"]
+    }
+    assert "Who owns this agent" in questions["owner_user_id"]
+    assert "worst outcome" in questions["worst_case_failure"]
+    assert "Initial behavior generated" not in body["readiness"]["ready"]
+    assert not body["created_object_refs"].get("eval_cases")
+
+    versions = client.get(
+        f"/v1/agents/{agent_id}/versions",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert versions.status_code == 200, versions.text
+    assert versions.json()["items"] == []
+
+    workflow = client.get(
+        f"/v1/agents/{agent_id}/workflow",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert workflow.status_code == 200, workflow.text
+    assert workflow.json()["branches"] == []
+    assert workflow.json()["change_sets"] == []
+
+    channels = client.get(
+        f"/v1/agents/{agent_id}/channel-bindings",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert channels.status_code == 200, channels.text
+    assert {
+        item["status"] for item in channels.json()["items"]
+    } == {"not_configured"}
+
+    audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=_auth())
+    actions = {item["action"] for item in audit.json()["items"]}
+    assert "agent_intake:clarification_requested" in actions
+    assert "agent_intake:draft_objects_create" not in actions
+
+
 def test_agent_intake_infers_tool_contracts_from_api_artifacts(
     client: TestClient,
     workspace_id: UUID,

@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 from loop_control_plane._app_agents import AgentCreate, agent_payload
 from loop_control_plane._app_common import CALLER, request_id
+from loop_control_plane.agent_commitments import missing_required_fields
 from loop_control_plane.agent_intake import (
     AgentIntakeCreate,
     agent_intake_payload,
@@ -28,6 +29,13 @@ from loop_control_plane.memory_policies import MemoryPolicyUpsert
 from loop_control_plane.tool_contracts import ToolContractUpsert
 
 router = APIRouter(prefix="/v1/workspaces", tags=["AgentIntake"])
+
+_CLARIFICATION_BLOCKING_FIELDS = {
+    "business_responsibility",
+    "target_users",
+    "owner_user_id",
+    "worst_case_failure",
+}
 
 
 _CHANNEL_ALIASES = {
@@ -162,6 +170,69 @@ async def create_agent_intake(
         body=body.contract,
         created_from=f"agent_intake:{body.creation_path}",
     )
+    contract_gaps = [
+        field
+        for field in missing_required_fields(body.contract)
+        if field in _CLARIFICATION_BLOCKING_FIELDS
+    ]
+    if contract_gaps:
+        refs = {
+            "agent_id": str(agent.id),
+            "commitment_id": commitment.id,
+            "blocked_before_generation": True,
+            "missing_required_fields": contract_gaps,
+        }
+        intake = await cp.agent_intakes.add(
+            build_intake_analysis(
+                body=body,
+                agent=agent,
+                created_by=caller_sub,
+                created_object_refs=refs,
+            )
+        )
+        _audit(
+            request,
+            workspace_id=workspace_id,
+            caller_sub=caller_sub,
+            action="agent_intake:create",
+            resource_type="agent_intake",
+            resource_id=intake.id,
+            payload={
+                "agent_id": str(agent.id),
+                "creation_path": body.creation_path,
+                "template_id": body.template_id,
+                "state": intake.state,
+                "readiness_score": intake.readiness["score"],
+                "artifacts": len(body.artifacts),
+            },
+        )
+        _audit(
+            request,
+            workspace_id=workspace_id,
+            caller_sub=caller_sub,
+            action="agent_intake:clarification_requested",
+            resource_type="agent_intake",
+            resource_id=intake.id,
+            payload={
+                "agent_id": str(agent.id),
+                "missing_required_fields": contract_gaps,
+                "questions": [
+                    row.get("question", "")
+                    for row in intake.missing_information
+                    if row.get("severity") == "high"
+                ],
+            },
+        )
+        return {
+            **agent_intake_payload(intake),
+            "agent": {
+                **agent_payload(agent),
+                "object_state": "draft",
+                "state_reason": "Commitment Document needs clarification before draft generation.",
+                "state_evidence_ref": f"commitment/{commitment.id}",
+            },
+            "commitment": commitment.model_dump(mode="json"),
+        }
 
     channel_refs: list[dict[str, str]] = []
     for channel in candidate_channel_specs(body):
