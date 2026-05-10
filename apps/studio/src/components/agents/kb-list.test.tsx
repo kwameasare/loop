@@ -33,6 +33,23 @@ describe("KbList", () => {
     expect(screen.getByTestId("kb-empty")).toBeTruthy();
   });
 
+  it("shows degraded state and suppresses stale document rows when KB service is unavailable", () => {
+    render(
+      <KbList
+        agentId="agt_demo"
+        degradedReason="Knowledge documents require cp-api."
+        initialDocuments={seed}
+      />,
+    );
+    expect(screen.getByTestId("kb-degraded")).toHaveTextContent(
+      /knowledge service unavailable/i,
+    );
+    expect(
+      (screen.getByTestId("kb-upload-open") as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(screen.queryByTestId("kb-doc-doc_a")).not.toBeInTheDocument();
+  });
+
   it("uploads a file with progress and prepends to the list", async () => {
     let progressFn: ((r: number) => void) | undefined;
     const upload = vi.fn(async (input: { onProgress?: (r: number) => void }) => {

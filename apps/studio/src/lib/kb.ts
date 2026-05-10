@@ -5,9 +5,9 @@
  *   - ``GET /v1/agents/{id}/kb/documents``
  *   - ``POST /v1/agents/{id}/kb/documents``  (multipart/form-data)
  *   - ``DELETE /v1/agents/{id}/kb/documents/{doc_id}``
- * are mirrored here. When no cp-api base URL is configured the helpers
- * use an empty in-memory store so the UX can still exercise upload/delete
- * without inventing knowledge sources.
+ * are mirrored here. When no cp-api base URL is configured, helpers return
+ * explicit degraded read state and reject mutations unless the caller opts into
+ * fixture mode.
  *
  * Upload uses XHR so we can surface a real progress percentage; a
  * pluggable ``uploader`` keeps the unit tests deterministic.
@@ -32,6 +32,7 @@ export interface KbHelperOptions {
   fetcher?: typeof fetch;
   baseUrl?: string;
   token?: string;
+  allowFixture?: boolean;
 }
 
 function resolveBase(opts: KbHelperOptions): string | null {
@@ -62,9 +63,16 @@ function localDocsFor(agentId: string): KbDocument[] {
 export async function listKbDocuments(
   agentId: string,
   opts: KbHelperOptions = {},
-): Promise<{ items: KbDocument[] }> {
+): Promise<{ items: KbDocument[]; degraded_reason?: string | undefined }> {
   const base = resolveBase(opts);
-  if (!base) return { items: [...localDocsFor(agentId)] };
+  if (!base) {
+    if (opts.allowFixture === true) return { items: [...localDocsFor(agentId)] };
+    return {
+      items: [],
+      degraded_reason:
+        "Knowledge documents require the control-plane KB endpoint. No local uploads or source claims are shown.",
+    };
+  }
   const f = opts.fetcher ?? fetch;
   const response = await f(
     `${base}/agents/${encodeURIComponent(agentId)}/kb/documents`,
@@ -89,6 +97,9 @@ export async function deleteKbDocument(
 ): Promise<{ documentId: string }> {
   const base = resolveBase(opts);
   if (!base) {
+    if (opts.allowFixture !== true) {
+      throw new Error("LOOP_CP_API_BASE_URL is required to delete a KB document.");
+    }
     const docs = localDocsFor(input.agentId);
     const idx = docs.findIndex((d) => d.id === input.documentId);
     if (idx >= 0) docs.splice(idx, 1);
@@ -165,6 +176,9 @@ export async function uploadKbDocument(
 ): Promise<KbDocument> {
   const base = resolveBase(opts);
   if (!base) {
+    if (opts.allowFixture !== true) {
+      throw new Error("LOOP_CP_API_BASE_URL is required to upload a KB document.");
+    }
     // Fixture path: simulate 0→100 progress and append to the in-memory list.
     for (const ratio of [0.1, 0.4, 0.8, 1.0]) {
       input.onProgress?.(ratio);
@@ -240,7 +254,10 @@ export async function getDocRefreshStatus(
   opts: KbHelperOptions = {},
 ): Promise<DocRefreshStatus> {
   const base = resolveBase(opts);
-  if (!base) return { ...fixtureRefreshFor(documentId) };
+  if (!base) {
+    if (opts.allowFixture === true) return { ...fixtureRefreshFor(documentId) };
+    throw new Error("LOOP_CP_API_BASE_URL is required to read KB refresh status.");
+  }
   const f = opts.fetcher ?? fetch;
   const res = await f(
     `${base}/kb/documents/${encodeURIComponent(documentId)}/refresh`,
@@ -258,6 +275,9 @@ export async function setDocRefreshCadence(
 ): Promise<DocRefreshStatus> {
   const base = resolveBase(opts);
   if (!base) {
+    if (opts.allowFixture !== true) {
+      throw new Error("LOOP_CP_API_BASE_URL is required to update KB refresh cadence.");
+    }
     const rec = fixtureRefreshFor(documentId);
     rec.cadence = cadence;
     return { ...rec };
@@ -282,6 +302,9 @@ export async function triggerDocRefresh(
 ): Promise<DocRefreshStatus> {
   const base = resolveBase(opts);
   if (!base) {
+    if (opts.allowFixture !== true) {
+      throw new Error("LOOP_CP_API_BASE_URL is required to refresh a KB document.");
+    }
     const rec = fixtureRefreshFor(documentId);
     rec.status = "running";
     rec.lastRunAt = new Date().toISOString();

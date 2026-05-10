@@ -7,35 +7,59 @@ import {
 } from "./kb";
 import type { KbDocument, UploaderFn } from "./kb";
 
-describe("kb (local mode)", () => {
-  it("listKbDocuments starts empty instead of inventing seeded sources", async () => {
-    const { items } = await listKbDocuments("agt_fixture_a");
+describe("kb (no cp-api)", () => {
+  it("listKbDocuments returns explicit degraded state instead of local source claims", async () => {
+    const { items, degraded_reason } = await listKbDocuments("agt_fixture_a");
     expect(items).toEqual([]);
+    expect(degraded_reason).toMatch(/control-plane KB endpoint/i);
   });
 
-  it("uploadKbDocument streams progress and appends to the list", async () => {
+  it("rejects upload/delete without cp-api unless fixture mode is explicit", async () => {
+    const file = new File(["hello"], "notes.md", { type: "text/markdown" });
+    await expect(
+      uploadKbDocument({ agentId: "agt_fixture_b", file }),
+    ).rejects.toThrow(/required to upload/);
+    await expect(
+      deleteKbDocument({ agentId: "agt_fixture_b", documentId: "doc_missing" }),
+    ).rejects.toThrow(/required to delete/);
+  });
+
+  it("uploadKbDocument streams progress and appends only in explicit fixture mode", async () => {
     const file = new File(["hello"], "notes.md", { type: "text/markdown" });
     const ratios: number[] = [];
-    const doc = await uploadKbDocument({
-      agentId: "agt_fixture_b",
-      file,
-      onProgress: (r) => ratios.push(r),
-    });
+    const doc = await uploadKbDocument(
+      {
+        agentId: "agt_fixture_b",
+        file,
+        onProgress: (r) => ratios.push(r),
+      },
+      { allowFixture: true },
+    );
     expect(doc.name).toBe("notes.md");
     expect(doc.status).toBe("indexing");
     expect(ratios.at(-1)).toBe(1);
-    const { items } = await listKbDocuments("agt_fixture_b");
+    const { items } = await listKbDocuments("agt_fixture_b", {
+      allowFixture: true,
+    });
     expect(items.some((d) => d.id === doc.id)).toBe(true);
   });
 
-  it("deleteKbDocument removes the entry", async () => {
+  it("deleteKbDocument removes the entry only in explicit fixture mode", async () => {
     const file = new File(["x"], "x.txt", { type: "text/plain" });
-    const doc = await uploadKbDocument({ agentId: "agt_fixture_c", file });
-    await deleteKbDocument({
-      agentId: "agt_fixture_c",
-      documentId: doc.id,
+    const doc = await uploadKbDocument(
+      { agentId: "agt_fixture_c", file },
+      { allowFixture: true },
+    );
+    await deleteKbDocument(
+      {
+        agentId: "agt_fixture_c",
+        documentId: doc.id,
+      },
+      { allowFixture: true },
+    );
+    const { items } = await listKbDocuments("agt_fixture_c", {
+      allowFixture: true,
     });
-    const { items } = await listKbDocuments("agt_fixture_c");
     expect(items.some((d) => d.id === doc.id)).toBe(false);
   });
 });

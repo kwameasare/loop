@@ -21,6 +21,7 @@ type RefreshFn = typeof defaultTriggerRefresh;
 export interface KbListProps {
   agentId: string;
   initialDocuments: KbDocument[];
+  degradedReason?: string | undefined;
   upload?: UploadFn;
   remove?: DeleteFn;
   triggerRefresh?: RefreshFn;
@@ -41,6 +42,7 @@ const DELETE_PHRASE = "DELETE";
 export function KbList({
   agentId,
   initialDocuments,
+  degradedReason,
   upload = defaultUpload,
   remove = defaultDelete,
   triggerRefresh = defaultTriggerRefresh,
@@ -153,6 +155,7 @@ export function KbList({
   }
 
   const canDelete = confirmText === DELETE_PHRASE && !deleting;
+  const backendUnavailable = Boolean(degradedReason);
 
   return (
     <section className="flex flex-col gap-3" data-testid="kb-list">
@@ -166,6 +169,7 @@ export function KbList({
         <button
           className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground target-transition hover:bg-primary/90"
           data-testid="kb-upload-open"
+          disabled={backendUnavailable}
           onClick={() => setUploadOpen(true)}
           type="button"
         >
@@ -173,7 +177,15 @@ export function KbList({
         </button>
       </header>
 
-      {docs.length === 0 ? (
+      {degradedReason ? (
+        <div
+          className="rounded-md border border-warning/40 bg-warning/10 p-4 text-sm text-warning"
+          data-testid="kb-degraded"
+        >
+          <p className="font-medium">Knowledge service unavailable.</p>
+          <p className="mt-1 text-warning/85">{degradedReason}</p>
+        </div>
+      ) : docs.length === 0 ? (
         <p className="text-sm text-muted-foreground" data-testid="kb-empty">
           No documents yet. Upload a markdown, text, or PDF file to start.
         </p>
@@ -207,7 +219,7 @@ export function KbList({
                 <button
                   className="text-xs font-medium text-info hover:underline disabled:opacity-50"
                   data-testid={`kb-doc-refresh-${doc.id}`}
-                  disabled={refreshingIds.has(doc.id)}
+                  disabled={refreshingIds.has(doc.id) || backendUnavailable}
                   onClick={() => handleRefresh(doc.id)}
                   type="button"
                 >
@@ -216,6 +228,7 @@ export function KbList({
                 <button
                   className="text-xs font-medium text-destructive hover:underline"
                   data-testid={`kb-doc-delete-${doc.id}`}
+                  disabled={backendUnavailable}
                   onClick={() => {
                     setConfirmDoc(doc);
                     setConfirmText("");

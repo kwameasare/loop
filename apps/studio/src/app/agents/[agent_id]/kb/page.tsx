@@ -8,10 +8,14 @@ interface AgentKbPageProps {
 }
 
 export default async function AgentKbPage({ params }: AgentKbPageProps) {
-  const { items } = await listKbDocuments(params.agent_id);
+  const { items, degraded_reason } = await listKbDocuments(params.agent_id);
   return (
     <div data-testid="agent-kb">
-      <KnowledgeAtelier agentId={params.agent_id} initialDocuments={items} />
+      <KnowledgeAtelier
+        agentId={params.agent_id}
+        degradedReason={degraded_reason}
+        initialDocuments={items}
+      />
     </div>
   );
 }
