@@ -11,6 +11,7 @@ import {
   buildLocalCommitmentDocument,
 } from "@/lib/agent-commitment";
 import { buildLocalChannelBindings } from "@/lib/channel-bindings";
+import { localMemoryPolicies } from "@/lib/memory-policies";
 import { localToolContracts } from "@/lib/tool-contracts";
 
 const BASE_PROPS: AgentOverviewProps = {
@@ -215,6 +216,31 @@ describe("AgentOverview", () => {
     );
     expect(screen.getByTestId("agent-outline-tools-count")).toHaveTextContent(
       "2 tools",
+    );
+  });
+
+  it("surfaces memory policy review from real memory policies", () => {
+    const memoryPolicies = localMemoryPolicies("ag_1").map((policy) =>
+      policy.scope === "workspace"
+        ? { ...policy, approval_status: "approved" as const }
+        : policy,
+    );
+
+    render(
+      <AgentOverview
+        {...BASE_PROPS}
+        memoryPolicies={memoryPolicies}
+      />,
+    );
+
+    expect(screen.getByTestId("agent-outline-memory")).toHaveTextContent(
+      "3 memory policies loaded; 2 durable; 1 review-required.",
+    );
+    expect(screen.getByTestId("agent-outline-memory")).toHaveTextContent(
+      "Review user memory policy before promotion",
+    );
+    expect(screen.getByTestId("agent-outline-memory-count")).toHaveTextContent(
+      "3 memory rules",
     );
   });
 
