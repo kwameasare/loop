@@ -209,6 +209,164 @@ async def _create_repair_eval_case(
     }
 
 
+async def _create_initial_parity_eval_cases(
+    request: Request,
+    *,
+    workspace_id: UUID,
+    run: Any,
+    caller_sub: str,
+) -> list[dict[str, str]]:
+    cp = request.app.state.cp
+    suite = await cp.eval_suites.get_or_create_suite(
+        workspace_id=workspace_id,
+        name=f"Migration parity - {run.target_agent_name}",
+        dataset_ref=f"agent:{run.target_agent_id}:migration:{run.id}:parity",
+        metrics=["migration_parity", "regression_guard", "tool_safety"],
+        actor_sub=caller_sub,
+    )
+    source_ref_base = f"migration/{run.id}/import"
+    case_specs: list[EvalCaseCreate] = [
+        EvalCaseCreate(
+            name=f"Migration parity smoke: {run.archive_name}",
+            input={
+                "migration_id": run.id,
+                "source": run.source,
+                "archive_name": run.archive_name,
+                "archive_sha": run.archive_sha,
+                "agent_id": str(run.target_agent_id),
+                "branch_id": run.target_branch_id,
+                "change_set_id": run.target_change_set_id,
+                "inventory_total": sum(item.count for item in run.inventory),
+                "lineage_steps": [step.id for step in run.lineage_steps],
+            },
+            expected={
+                "outcome": (
+                    "Imported behavior is represented by Loop primitives with "
+                    "source lineage, parity replay, and rollback evidence."
+                ),
+                "minimum_parity_score": 95,
+                "cutover_blocking": run.readiness.blocking_count > 0,
+            },
+            scorers=[
+                {
+                    "kind": "migration_parity",
+                    "config": {"source": run.source, "mode": "smoke"},
+                },
+                {
+                    "kind": "trace_regression",
+                    "config": {"migration_id": run.id},
+                },
+            ],
+            source="migration_import",
+            source_ref=f"{source_ref_base}/smoke",
+            attachments=[
+                run.archive_sha,
+                run.target_branch_id,
+                run.target_change_set_id,
+            ],
+        )
+    ]
+    if run.readiness.parity_total > 0:
+        case_specs.append(
+            EvalCaseCreate(
+                name=f"Migration transcript replay: {run.archive_name}",
+                input={
+                    "migration_id": run.id,
+                    "source": run.source,
+                    "archive_name": run.archive_name,
+                    "agent_id": str(run.target_agent_id),
+                    "sample_count": min(run.readiness.parity_total, 20),
+                    "parity_total": run.readiness.parity_total,
+                    "parity_passing": run.readiness.parity_passing,
+                },
+                expected={
+                    "outcome": (
+                        "Historical source conversations produce equivalent "
+                        "answers, tool calls, escalation, and safety outcomes."
+                    ),
+                    "minimum_pass_rate": 0.95,
+                    "no_regressions": True,
+                },
+                scorers=[
+                    {
+                        "kind": "migration_transcript_replay",
+                        "config": {
+                            "source": run.source,
+                            "archive_sha": run.archive_sha,
+                        },
+                    },
+                    {
+                        "kind": "llm_judge",
+                        "config": {"rubric": "source parity and safe escalation"},
+                    },
+                ],
+                source="migration_transcript",
+                source_ref=f"{source_ref_base}/transcripts",
+                attachments=[run.archive_sha, f"migration/{run.id}/parity"],
+            )
+        )
+    for item in run.inventory:
+        if item.severity == "ok":
+            continue
+        case_specs.append(
+            EvalCaseCreate(
+                name=f"Migration inventory guard: {item.label}",
+                input={
+                    "migration_id": run.id,
+                    "source": run.source,
+                    "archive_name": run.archive_name,
+                    "agent_id": str(run.target_agent_id),
+                    "inventory_item_id": item.id,
+                    "inventory_kind": item.kind,
+                    "count": item.count,
+                    "loop_target": item.loop_target,
+                    "confidence": item.confidence,
+                    "severity": item.severity,
+                    "evidence_ref": item.evidence_ref,
+                },
+                expected={
+                    "outcome": (
+                        f"{item.label} is mapped to {item.loop_target} or "
+                        "explicitly blocked before cutover."
+                    ),
+                    "cutover_blocking": item.severity == "blocking",
+                },
+                scorers=[
+                    {
+                        "kind": "migration_inventory_mapping",
+                        "config": {"inventory_item_id": item.id},
+                    },
+                    {
+                        "kind": "regression_guard",
+                        "config": {"source": run.source},
+                    },
+                ],
+                source="migration_inventory",
+                source_ref=f"{source_ref_base}/inventory/{item.id}",
+                attachments=[item.evidence_ref, run.target_change_set_id],
+            )
+        )
+
+    refs: list[dict[str, str]] = []
+    for case_spec in case_specs:
+        case = await cp.eval_suites.add_case(
+            workspace_id=workspace_id,
+            suite_id=suite.id,
+            body=case_spec,
+            actor_sub=caller_sub,
+        )
+        refs.append(
+            {
+                "suite_id": str(suite.id),
+                "case_id": str(case.id),
+                "repair_id": "",
+                "source_ref": case_spec.source_ref,
+                "evidence_ref": case_spec.attachments[0] if case_spec.attachments else "",
+            }
+        )
+    return refs
+
+
 @router.get("/{workspace_id}/migrations/imports")
 async def list_migration_imports(
     request: Request,
@@ -285,6 +443,18 @@ async def create_migration_import(
             commitment_document_id=commitment.id,
             actor_sub=caller_sub,
         )
+        eval_refs = await _create_initial_parity_eval_cases(
+            request,
+            workspace_id=workspace_id,
+            run=run,
+            caller_sub=caller_sub,
+        )
+        for eval_ref in reversed(eval_refs):
+            run = await cp.migration_runs.record_eval_case_ref(
+                workspace_id=workspace_id,
+                migration_id=run.id,
+                eval_ref=eval_ref,
+            )
     except WorkspaceError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     _audit(
@@ -300,6 +470,7 @@ async def create_migration_import(
             "target_agent_id": str(run.target_agent_id),
             "target_branch_id": run.target_branch_id,
             "target_change_set_id": run.target_change_set_id,
+            "generated_eval_cases": len(run.eval_case_refs),
         },
     )
     return migration_run_payload(run)

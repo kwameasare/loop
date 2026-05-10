@@ -149,6 +149,18 @@ def test_botpress_import_creates_durable_lineage_and_cutover_state(
     assert run["commitment_document_id"].startswith("commit_")
     assert run["readiness"]["parity_total"] == 20
     assert run["cutover_stages"][0]["status"] == "in_progress"
+    assert {ref["source_ref"] for ref in run["eval_case_refs"]} >= {
+        f"migration/{run['id']}/import/smoke",
+        f"migration/{run['id']}/import/transcripts",
+    }
+    generated_suite_id = run["eval_case_refs"][0]["suite_id"]
+    generated_cases = client.get(
+        f"/v1/eval-suites/{generated_suite_id}/cases",
+        headers=headers,
+    )
+    assert generated_cases.status_code == 200, generated_cases.text
+    generated_sources = {case["source"] for case in generated_cases.json()["items"]}
+    assert {"migration_import", "migration_transcript"} <= generated_sources
 
     agents = client.get(
         "/v1/agents",
@@ -202,6 +214,15 @@ def test_botpress_import_creates_durable_lineage_and_cutover_state(
     assert "migration:import_create" in actions
     assert "migration:cutover_advance" in actions
     assert "migration:cutover_rollback" in actions
+    import_event = next(
+        event
+        for event in client.app.state.cp.audit_events.list_for_workspace(workspace_id)  # type: ignore[attr-defined]
+        if event.action == "migration:import_create"
+    )
+    import_payload = client.app.state.cp.audit_events.fetch_payload(  # type: ignore[attr-defined]
+        import_event.payload_hash
+    )
+    assert import_payload["generated_eval_cases"] == len(run["eval_case_refs"])
 
 
 def test_accepting_migration_repair_resolves_blocker_and_arms_cutover(
