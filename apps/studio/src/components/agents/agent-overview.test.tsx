@@ -11,6 +11,7 @@ import {
   buildLocalCommitmentDocument,
 } from "@/lib/agent-commitment";
 import { buildLocalChannelBindings } from "@/lib/channel-bindings";
+import type { EvalSuite } from "@/lib/evals";
 import { localMemoryPolicies } from "@/lib/memory-policies";
 import { localToolContracts } from "@/lib/tool-contracts";
 
@@ -27,6 +28,25 @@ const BASE_PROPS: AgentOverviewProps = {
     status: "active",
   },
 };
+
+const EVAL_SUITES: EvalSuite[] = [
+  {
+    id: "suite_refund",
+    name: "Refund regression",
+    agentId: "ag_1",
+    cases: 24,
+    lastRunAt: "2026-05-09T12:00:00Z",
+    passRate: 0.96,
+  },
+  {
+    id: "suite_voice",
+    name: "Voice handoff",
+    agentId: "ag_1",
+    cases: 12,
+    lastRunAt: "2026-05-08T12:00:00Z",
+    passRate: 0.9,
+  },
+];
 
 describe("AgentOverview", () => {
   it("renders description text", () => {
@@ -241,6 +261,20 @@ describe("AgentOverview", () => {
     );
     expect(screen.getByTestId("agent-outline-memory-count")).toHaveTextContent(
       "3 memory rules",
+    );
+  });
+
+  it("surfaces weakest eval coverage from agent eval suites", () => {
+    render(<AgentOverview {...BASE_PROPS} evalSuites={EVAL_SUITES} />);
+
+    expect(screen.getByTestId("agent-outline-evals")).toHaveTextContent(
+      "2 eval suites: 36 cases; weakest gate Voice handoff at 90%",
+    );
+    expect(screen.getByTestId("agent-outline-evals")).toHaveTextContent(
+      "90% pass rate",
+    );
+    expect(screen.getByTestId("agent-live-preview")).toHaveTextContent(
+      "last run May",
     );
   });
 

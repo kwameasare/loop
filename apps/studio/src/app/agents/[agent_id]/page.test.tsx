@@ -112,6 +112,20 @@ describe("AgentOverviewPage", () => {
           ),
         });
       }
+      if (url.endsWith("/evals/suites")) {
+        return Response.json({
+          items: [
+            {
+              id: "suite_live",
+              name: "Live support suite",
+              agentId: "agent_live",
+              cases: 18,
+              lastRunAt: "2026-05-09T12:00:00Z",
+              passRate: 0.97,
+            },
+          ],
+        });
+      }
       if (url.endsWith("/agents/agent_live")) {
         return Response.json({
           id: "agent_live",
@@ -143,6 +157,9 @@ describe("AgentOverviewPage", () => {
     );
     expect(screen.getByTestId("agent-outline-memory")).toHaveTextContent(
       "3 memory policies loaded",
+    );
+    expect(screen.getByTestId("agent-outline-evals")).toHaveTextContent(
+      "Live support suite at 97%",
     );
     expect(screen.queryByTestId("overview-deploy-unavailable")).toBeNull();
   });

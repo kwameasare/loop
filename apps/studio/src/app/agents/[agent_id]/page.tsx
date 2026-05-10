@@ -15,6 +15,7 @@ import {
   type ChannelBinding,
 } from "@/lib/channel-bindings";
 import { listDeployments, type Deployment } from "@/lib/deploys";
+import { listEvalSuites, type EvalSuite } from "@/lib/evals";
 import { listMemoryPolicies, type MemoryPolicy } from "@/lib/memory-policies";
 import { listToolContracts, type ToolContract } from "@/lib/tool-contracts";
 import { getAgentDetailData } from "./agent-detail-data";
@@ -127,6 +128,17 @@ export default async function AgentOverviewPage({
       "Could not load memory policies.",
     );
   }
+  let evalSuites: EvalSuite[] = [];
+  let evalsDegradedReason: string | undefined;
+  try {
+    const result = await listEvalSuites();
+    evalSuites = result.items.filter(
+      (suite) => suite.agentId === params.agent_id,
+    );
+    evalsDegradedReason = result.degraded_reason;
+  } catch (error) {
+    evalsDegradedReason = errorMessage(error, "Could not load eval suites.");
+  }
   const combinedDegradedReason = [
     degradedReason,
     commitmentDegradedReason,
@@ -134,6 +146,7 @@ export default async function AgentOverviewPage({
     channelsDegradedReason,
     toolsDegradedReason,
     memoryDegradedReason,
+    evalsDegradedReason,
   ]
     .filter(Boolean)
     .join(" ");
@@ -163,6 +176,8 @@ export default async function AgentOverviewPage({
       toolsDegradedReason={toolsDegradedReason}
       memoryPolicies={memoryPolicies}
       memoryDegradedReason={memoryDegradedReason}
+      evalSuites={evalSuites}
+      evalsDegradedReason={evalsDegradedReason}
       commitment={commitment}
     />
   );
