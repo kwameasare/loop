@@ -92,6 +92,47 @@ describe("memory studio cp-api client", () => {
     expect(url).toBe("https://cp.test/v1/agents/agent-1/memory?user_id=alice");
   });
 
+  it("keeps cp-api policies when the memory store has no entries", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.endsWith("/memory-policies")) {
+        return new Response(
+          JSON.stringify({
+            items: [
+              {
+                id: "mp_user",
+                workspace_id: "workspace-1",
+                agent_id: "agent-1",
+                scope: "user",
+                allowed_memory_types: ["preference"],
+                retention: "365 days",
+                consent_requirement: "Explicit consent required.",
+                pii_policy: "No payment data.",
+                delete_behavior: "Delete on request.",
+                privacy_implications: ["Affects future turns."],
+                source_trace_required: true,
+                approval_status: "review_required",
+                content_hash: "hash_user",
+                approval_invalidated_at: null,
+                created_at: "2026-05-01T10:00:00Z",
+                updated_at: "2026-05-01T10:00:00Z",
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response("", { status: 404 });
+    });
+
+    const data = await fetchMemoryStudioData("agent-1", "alice", { fetcher });
+
+    expect(data.entries).toEqual([]);
+    expect(data.policies).toHaveLength(1);
+    expect(data.retentionEvidence).toMatch(/Loaded memory policy records/i);
+    expect(data.degradedReason).toMatch(/No memory writes/i);
+  });
+
   it("deletes durable user memory by key", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
