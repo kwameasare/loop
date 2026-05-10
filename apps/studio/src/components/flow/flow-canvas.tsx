@@ -53,22 +53,22 @@ export function FlowCanvas(props: FlowCanvasProps) {
 
   return (
     <section
-      className="flex h-[640px] w-full flex-col rounded-lg border bg-zinc-50"
+      className="flex h-[640px] w-full flex-col rounded-lg border bg-muted"
       data-testid="flow-canvas"
     >
       <header
-        className="flex items-center justify-between border-b bg-white px-4 py-2"
+        className="flex items-center justify-between border-b bg-card px-4 py-2"
         data-testid="flow-toolbar"
       >
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-mono text-xs text-zinc-500">
+          <span className="font-mono text-xs text-muted-foreground">
             agent-id: {props.agentId}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <button
             aria-label="Zoom out"
-            className="rounded border px-2 py-1 text-sm hover:bg-zinc-100 disabled:opacity-40"
+            className="rounded border bg-background px-2 py-1 text-sm hover:bg-muted disabled:opacity-40"
             data-testid="flow-zoom-out"
             disabled={viewport.zoom <= MIN_ZOOM + 1e-9}
             onClick={zoomOut}
@@ -84,7 +84,7 @@ export function FlowCanvas(props: FlowCanvasProps) {
           </span>
           <button
             aria-label="Zoom in"
-            className="rounded border px-2 py-1 text-sm hover:bg-zinc-100 disabled:opacity-40"
+            className="rounded border bg-background px-2 py-1 text-sm hover:bg-muted disabled:opacity-40"
             data-testid="flow-zoom-in"
             disabled={viewport.zoom >= MAX_ZOOM - 1e-9}
             onClick={zoomIn}
@@ -93,7 +93,7 @@ export function FlowCanvas(props: FlowCanvasProps) {
             +
           </button>
           <button
-            className="rounded border px-2 py-1 text-sm hover:bg-zinc-100"
+            className="rounded border bg-background px-2 py-1 text-sm hover:bg-muted"
             data-testid="flow-reset"
             onClick={reset}
             type="button"
@@ -119,7 +119,7 @@ export function FlowCanvas(props: FlowCanvasProps) {
           style={{
             transform,
             transformOrigin: "0 0",
-              backgroundImage:
+            backgroundImage:
               `radial-gradient(circle, ${FLOW_DOT_GRID} 1px, transparent 1px)`,
             backgroundSize: "24px 24px",
             backgroundPosition: "0 0",
@@ -129,7 +129,7 @@ export function FlowCanvas(props: FlowCanvasProps) {
           className="pointer-events-none absolute inset-0 flex items-center justify-center"
           data-testid="flow-placeholder"
         >
-          <div className="rounded-lg border border-dashed border-zinc-300 bg-white/80 px-6 py-4 text-center text-sm text-zinc-500">
+          <div className="rounded-lg border border-dashed bg-card/80 px-6 py-4 text-center text-sm text-muted-foreground">
             <p className="font-medium">Flow canvas is empty.</p>
             <p className="text-xs">
               Node palette and edge editing arrive in S461.
