@@ -528,7 +528,7 @@ export async function fetchBehaviorEditorData(
 ): Promise<BehaviorEditorData> {
   const versions = await listAgentVersions(agentId, { ...opts, pageSize: 1 });
   const data = createBehaviorEditorDataFromVersion(agentId, versions.items[0] ?? null);
-  const telemetry = await cpJson<{
+  let telemetry: {
     items?: Array<{
       sentence_id: string;
       cited_outputs_7d: number;
@@ -538,11 +538,20 @@ export async function fetchBehaviorEditorData(
       confidence: ConfidenceLevel;
       representative_traces?: string[];
     }>;
-  }>(`/agents/${encodeURIComponent(agentId)}/behavior/sentence-telemetry`, {
-    ...opts,
-    fallback: { items: [] },
-  }).catch(() => ({ items: [] }));
-  if (!telemetry.items?.length) return data;
+  };
+  try {
+    telemetry = await cpJson(
+      `/agents/${encodeURIComponent(agentId)}/behavior/sentence-telemetry`,
+      {
+        ...opts,
+        allowFallback: false,
+        fallback: { items: [] },
+      },
+    );
+  } catch {
+    return markBehaviorTelemetryUnavailable(data);
+  }
+  if (!telemetry.items?.length) return markBehaviorTelemetryUnavailable(data);
   const telemetryById = new Map(telemetry.items.map((item) => [item.sentence_id, item]));
   return {
     ...data,
@@ -565,6 +574,28 @@ export async function fetchBehaviorEditorData(
           },
         };
       }),
+    })),
+  };
+}
+
+function markBehaviorTelemetryUnavailable(
+  data: BehaviorEditorData,
+): BehaviorEditorData {
+  return {
+    ...data,
+    sections: data.sections.map((section) => ({
+      ...section,
+      sentences: section.sentences.map((sentence) => ({
+        ...sentence,
+        telemetry: {
+          citedOutputs7d: 0,
+          contradictedTraces: 0,
+          neverInvokedTurns: 0,
+          evalCases: 0,
+          evidence: "No evidence yet. Run replay, create evals, or sample production safely.",
+          confidence: "unsupported",
+        },
+      })),
     })),
   };
 }
