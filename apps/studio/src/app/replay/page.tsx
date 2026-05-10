@@ -54,7 +54,9 @@ function ReplayPageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Replay Workbench" />;
+  if (!activeWorkspaceId) {
+    return <WorkspaceRequiredState title="Replay Workbench" />;
+  }
   if (!model && !error) {
     return (
       <main className="mx-auto w-full max-w-7xl p-6">
@@ -73,5 +75,5 @@ function ReplayPageBody(): JSX.Element {
       </main>
     );
   }
-  return <ReplayWorkbench model={model!} workspaceId={active.id} />;
+  return <ReplayWorkbench model={model!} workspaceId={activeWorkspaceId} />;
 }

@@ -42,6 +42,7 @@ export default function EnterpriseSsoPage() {
 
 function EnterpriseSsoBody() {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [status, setStatus] = useState<SsoStatus>("not_connected");
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined,
@@ -49,9 +50,9 @@ function EnterpriseSsoBody() {
   const [backendUnavailable, setBackendUnavailable] = useState(false);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
-    void fetchSamlConfig(active.id)
+    void fetchSamlConfig(activeWorkspaceId)
       .then((c) => {
         if (cancelled) return;
         if (c.degraded_reason) {
@@ -75,15 +76,15 @@ function EnterpriseSsoBody() {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   async function handleSubmit(payload: EnterpriseSsoSubmitPayload) {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     setErrorMessage(undefined);
     setBackendUnavailable(false);
     setStatus("pending");
     try {
-      const next = await postSamlConfig(active.id, {
+      const next = await postSamlConfig(activeWorkspaceId, {
         ...(payload.metadataUrl ? { metadata_url: payload.metadataUrl } : {}),
         ...(payload.metadataXml ? { metadata_xml: payload.metadataXml } : {}),
       });
@@ -106,7 +107,9 @@ function EnterpriseSsoBody() {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Enterprise SSO" />;
+  if (!activeWorkspaceId) {
+    return <WorkspaceRequiredState title="Enterprise SSO" />;
+  }
 
   return (
     <main className="flex flex-col gap-4 p-6">

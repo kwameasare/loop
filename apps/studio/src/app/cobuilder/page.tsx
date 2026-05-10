@@ -26,15 +26,16 @@ export default function CoBuilderPage(): JSX.Element {
 
 function CoBuilderPageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [workspace, setWorkspace] = useState<CoBuilderWorkspace | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
     setWorkspace(null);
     setError(null);
-    void fetchCoBuilderWorkspace(active.id)
+    void fetchCoBuilderWorkspace(activeWorkspaceId)
       .then((next) => {
         if (cancelled) return;
         setWorkspace(next);
@@ -48,7 +49,7 @@ function CoBuilderPageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   if (wsLoading) {
     return (
@@ -57,7 +58,7 @@ function CoBuilderPageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="AI Co-Builder" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="AI Co-Builder" />;
   if (!workspace && !error) {
     return (
       <main className="mx-auto max-w-6xl p-6">

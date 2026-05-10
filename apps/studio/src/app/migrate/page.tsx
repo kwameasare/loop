@@ -77,16 +77,17 @@ function reviewItemFromDiff(diff: DiffEntry): ReviewItem {
 
 function MigratePageBody() {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [workspace, setWorkspace] = useState<MigrationParityWorkspace | null>(
     null,
   );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
     setError(null);
-    void fetchMigrationParityWorkspace(active.id)
+    void fetchMigrationParityWorkspace(activeWorkspaceId)
       .then((next) => {
         if (cancelled) return;
         setWorkspace(next);
@@ -100,7 +101,7 @@ function MigratePageBody() {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   const readiness = useMemo(
     () =>
@@ -122,7 +123,9 @@ function MigratePageBody() {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Migration Atelier" />;
+  if (!activeWorkspaceId) {
+    return <WorkspaceRequiredState title="Migration Atelier" />;
+  }
 
   return (
     <>
@@ -140,9 +143,9 @@ function MigratePageBody() {
         reviewItems={reviewItems}
         migrationRunsSlot={
           <MigrationRunsPanel
-            workspaceId={active.id}
+            workspaceId={activeWorkspaceId}
             onCreated={(run) => {
-              void fetchMigrationParityWorkspace(active.id, {
+              void fetchMigrationParityWorkspace(activeWorkspaceId, {
                 migrationId: run.id,
               }).then(setWorkspace);
             }}

@@ -27,15 +27,16 @@ export default function DeploySafetyPage(): JSX.Element {
 
 function DeploySafetyPageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [model, setModel] = useState<DeploySafetyModel | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
     setModel(null);
     setError(null);
-    void fetchDeploySafetyModel(active.id)
+    void fetchDeploySafetyModel(activeWorkspaceId)
       .then((next) => {
         if (cancelled) return;
         setModel(next);
@@ -47,7 +48,7 @@ function DeploySafetyPageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   if (wsLoading) {
     return (
@@ -58,7 +59,9 @@ function DeploySafetyPageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Pre-Promote Safety" />;
+  if (!activeWorkspaceId) {
+    return <WorkspaceRequiredState title="Pre-Promote Safety" />;
+  }
   if (!model && !error) {
     return (
       <main className="mx-auto max-w-6xl p-6">

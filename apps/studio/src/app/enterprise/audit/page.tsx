@@ -25,6 +25,7 @@ export default function EnterpriseAuditPage(): JSX.Element {
 
 function EnterpriseAuditPageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [events, setEvents] = useState<AuditEventRow[]>([]);
   const [filters, setFilters] = useState<AuditLogFilters>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
@@ -32,11 +33,11 @@ function EnterpriseAuditPageBody(): JSX.Element {
   const [error, setError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
     setLoading(true);
     setError(undefined);
-    void listAuditEvents(active.id)
+    void listAuditEvents(activeWorkspaceId)
       .then((result) => {
         if (cancelled) return;
         setEvents(result.events);
@@ -50,7 +51,7 @@ function EnterpriseAuditPageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   const filtered = useMemo(
     () => filterAuditRows(events, filters),
@@ -70,7 +71,7 @@ function EnterpriseAuditPageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Audit Log" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Audit Log" />;
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-6">

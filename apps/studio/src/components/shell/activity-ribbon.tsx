@@ -13,6 +13,7 @@ interface ActivityModel {
 
 export function ActivityRibbon(): JSX.Element {
   const { active } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [activity, setActivity] = useState<ActivityModel>({
     turn_rate_per_minute: 0,
     ribbon_intensity: 0,
@@ -21,9 +22,9 @@ export function ActivityRibbon(): JSX.Element {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     setLoaded(false);
-    if (active.id === "local-workspace") {
+    if (activeWorkspaceId === "local-workspace") {
       setActivity({
         turn_rate_per_minute: 0,
         ribbon_intensity: 0,
@@ -33,7 +34,7 @@ export function ActivityRibbon(): JSX.Element {
     }
     let cancelled = false;
     void cpJson<ActivityModel>(
-      `/workspaces/${encodeURIComponent(active.id)}/activity`,
+      `/workspaces/${encodeURIComponent(activeWorkspaceId)}/activity`,
       {
         allowFallback: false,
         fallback: {
@@ -62,7 +63,7 @@ export function ActivityRibbon(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   const opacity = loaded
     ? Math.max(0.18, Math.min(0.9, activity.ribbon_intensity))

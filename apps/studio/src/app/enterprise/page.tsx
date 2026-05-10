@@ -33,12 +33,13 @@ export default function EnterprisePage(): JSX.Element {
 
 function EnterprisePageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [config, setConfig] = useState<SamlConfigResponse | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
-    void fetchSamlConfig(active.id)
+    void fetchSamlConfig(activeWorkspaceId)
       .then((c) => {
         if (cancelled) return;
         setConfig(c);
@@ -54,17 +55,17 @@ function EnterprisePageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   async function handleConnect(source: IdpMetadataSource) {
-    if (!active) {
+    if (!activeWorkspaceId) {
       throw new Error("No active workspace");
     }
     const body =
       "url" in source
         ? { metadata_url: source.url }
         : { metadata_xml: source.xml };
-    const next = await postSamlConfig(active.id, body);
+    const next = await postSamlConfig(activeWorkspaceId, body);
     setConfig(next);
     return {
       status: next.status,
@@ -86,7 +87,7 @@ function EnterprisePageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Enterprise" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Enterprise" />;
   if (!config) {
     return (
       <main className="container mx-auto p-6">

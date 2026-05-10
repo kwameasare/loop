@@ -23,15 +23,16 @@ export default function XrayPage(): JSX.Element {
 
 function XrayPageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [traces, setTraces] = useState<Trace[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
     setTraces(null);
     setError(null);
-    void fetchAgentXrayTraces(active.id)
+    void fetchAgentXrayTraces(activeWorkspaceId)
       .then((next) => {
         if (cancelled) return;
         setTraces(next);
@@ -43,7 +44,7 @@ function XrayPageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   if (wsLoading) {
     return (
@@ -52,7 +53,7 @@ function XrayPageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Agent X-Ray" />;
+  if (!activeWorkspaceId) return <WorkspaceRequiredState title="Agent X-Ray" />;
   if (!traces && !error) {
     return (
       <main className="mx-auto w-full max-w-7xl p-6">

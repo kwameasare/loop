@@ -24,13 +24,14 @@ export default function EnterpriseGovernPage(): JSX.Element {
 
 function EnterpriseGovernPageBody(): JSX.Element {
   const { active, isLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [model, setModel] = useState<ComplianceReviewModel | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
-    void fetchComplianceReview(active.id)
+    void fetchComplianceReview(activeWorkspaceId)
       .then((next) => {
         if (!cancelled) setModel(next);
       })
@@ -46,7 +47,7 @@ function EnterpriseGovernPageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   if (isLoading) {
     return (
@@ -57,7 +58,9 @@ function EnterpriseGovernPageBody(): JSX.Element {
       </main>
     );
   }
-  if (!active) return <WorkspaceRequiredState title="Compliance Review" />;
+  if (!activeWorkspaceId) {
+    return <WorkspaceRequiredState title="Compliance Review" />;
+  }
   if (!model && !error) {
     return (
       <main className="mx-auto max-w-6xl p-6">

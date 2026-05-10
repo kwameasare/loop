@@ -43,6 +43,7 @@ function ConversationPageBody({
   const [insertedDraft, setInsertedDraft] = useState<string | null>(null);
   const [detail, setDetail] = useState<ConversationDetailView | null>(null);
   const { active } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const subscriber = useMemo(() => createPollingSubscriber(), []);
   const evidence = useMemo(
     () =>
@@ -143,8 +144,8 @@ function ConversationPageBody({
               <ResolutionToEval
                 ctx={evidence}
                 onSave={(draft) =>
-                  active
-                    ? saveResolutionEvalCase(active.id, draft)
+                  activeWorkspaceId
+                    ? saveResolutionEvalCase(activeWorkspaceId, draft)
                     : Promise.resolve({
                         ok: false,
                         error: "No active workspace selected.",
