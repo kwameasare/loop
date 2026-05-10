@@ -15,16 +15,18 @@ export function ActivityRibbon(): JSX.Element {
   const { active } = useActiveWorkspace();
   const [activity, setActivity] = useState<ActivityModel>({
     turn_rate_per_minute: 0,
-    ribbon_intensity: 0.08,
+    ribbon_intensity: 0,
     tone: "quiet",
   });
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!active) return;
+    setLoaded(false);
     if (active.id === "local-workspace") {
       setActivity({
         turn_rate_per_minute: 0,
-        ribbon_intensity: 0.08,
+        ribbon_intensity: 0,
         tone: "quiet",
       });
       return;
@@ -33,37 +35,51 @@ export function ActivityRibbon(): JSX.Element {
     void cpJson<ActivityModel>(
       `/workspaces/${encodeURIComponent(active.id)}/activity`,
       {
+        allowFallback: false,
         fallback: {
           turn_rate_per_minute: 0,
-          ribbon_intensity: 0.08,
+          ribbon_intensity: 0,
           tone: "quiet",
         },
       },
     )
-      .catch(() => ({
-        turn_rate_per_minute: 0,
-        ribbon_intensity: 0.08,
-        tone: "quiet" as const,
-      }))
       .then((next) => {
-        if (!cancelled) setActivity(next);
+        if (!cancelled) {
+          setActivity(next);
+          setLoaded(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setActivity({
+            turn_rate_per_minute: 0,
+            ribbon_intensity: 0,
+            tone: "quiet",
+          });
+          setLoaded(false);
+        }
       });
     return () => {
       cancelled = true;
     };
   }, [active]);
 
-  const opacity = Math.max(0.18, Math.min(0.9, activity.ribbon_intensity));
-  const width = `${Math.max(12, Math.round(activity.ribbon_intensity * 100))}%`;
+  const opacity = loaded
+    ? Math.max(0.18, Math.min(0.9, activity.ribbon_intensity))
+    : 0;
+  const width = loaded
+    ? `${Math.max(12, Math.round(activity.ribbon_intensity * 100))}%`
+    : "0%";
   return (
     <div
       className="pointer-events-none absolute inset-x-0 top-0 h-0.5 overflow-hidden bg-muted"
       aria-hidden="true"
       data-testid="workspace-activity-ribbon"
-      title={`${activity.turn_rate_per_minute} turns/min`}
+      title={loaded ? `${activity.turn_rate_per_minute} turns/min` : "Activity unavailable"}
     >
       <div
         className="activity-ribbon-flow h-full bg-gradient-to-r from-success via-info via-primary to-warning transition-all duration-700 ease-standard"
+        data-testid="workspace-activity-ribbon-fill"
         style={{ width, opacity }}
       />
     </div>
