@@ -20,16 +20,16 @@ export function NodePalette(props: NodePaletteProps) {
   return (
     <aside
       aria-label="Flow node palette"
-      className="flex w-48 flex-col gap-2 border-r bg-white p-3"
+      className="flex w-48 flex-col gap-2 border-r bg-card p-3"
       data-testid="flow-palette"
     >
-      <h3 className="text-xs font-semibold uppercase text-zinc-500">
+      <h3 className="text-xs font-semibold uppercase text-muted-foreground">
         Nodes
       </h3>
       {FLOW_NODE_KINDS.map((kind) => (
         <button
           aria-label={`Add ${kind.label} node`}
-          className="flex items-center gap-2 rounded border px-2 py-2 text-left text-sm hover:bg-zinc-50"
+          className="flex items-center gap-2 rounded border bg-background px-2 py-2 text-left text-sm hover:bg-muted"
           data-testid={`palette-item-${kind.type}`}
           draggable
           key={kind.type}
@@ -51,7 +51,7 @@ export function NodePalette(props: NodePaletteProps) {
           </span>
           <span className="flex flex-col">
             <span className="font-medium">{kind.label}</span>
-            <span className="text-[11px] text-zinc-500">
+            <span className="text-[11px] text-muted-foreground">
               {kind.description}
             </span>
           </span>

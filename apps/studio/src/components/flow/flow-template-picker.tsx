@@ -30,12 +30,12 @@ export function FlowTemplatePicker({
       data-testid="flow-template-picker"
       role="dialog"
     >
-      <div className="flex w-[640px] flex-col gap-4 rounded-xl border bg-white p-6 shadow-xl">
+      <div className="flex w-[640px] flex-col gap-4 rounded-xl border bg-card p-6 shadow-xl">
         <header className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">New agent from template</h2>
           <button
             aria-label="Close"
-            className="rounded p-1 hover:bg-zinc-100"
+            className="rounded p-1 hover:bg-muted"
             data-testid="flow-template-close"
             onClick={onDismiss}
             type="button"
@@ -44,7 +44,7 @@ export function FlowTemplatePicker({
           </button>
         </header>
 
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-muted-foreground">
           Pick a starter flow. You can customise it after loading.
         </p>
 
@@ -54,8 +54,8 @@ export function FlowTemplatePicker({
             return (
               <li
                 aria-selected={isSelected}
-                className={`cursor-pointer rounded-lg border p-4 transition-colors hover:bg-zinc-50 ${
-                  isSelected ? "border-blue-500 bg-blue-50" : ""
+                className={`cursor-pointer rounded-lg border p-4 transition-colors hover:bg-muted ${
+                  isSelected ? "border-info bg-info/10" : ""
                 }`}
                 data-testid={`flow-template-card-${tpl.id}`}
                 key={tpl.id}
@@ -63,8 +63,10 @@ export function FlowTemplatePicker({
                 role="option"
               >
                 <p className="font-medium">{tpl.name}</p>
-                <p className="mt-1 text-sm text-zinc-500">{tpl.description}</p>
-                <p className="mt-2 text-xs text-zinc-400">
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {tpl.description}
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
                   {tpl.nodes.length} nodes · {tpl.edges.length} edges
                 </p>
               </li>
@@ -74,7 +76,7 @@ export function FlowTemplatePicker({
 
         <footer className="flex justify-end gap-2 pt-2">
           <button
-            className="rounded border px-4 py-2 text-sm hover:bg-zinc-100"
+            className="rounded border bg-background px-4 py-2 text-sm hover:bg-muted"
             data-testid="flow-template-cancel"
             onClick={onDismiss}
             type="button"
@@ -82,7 +84,7 @@ export function FlowTemplatePicker({
             Cancel
           </button>
           <button
-            className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-40"
+            className="rounded bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
             data-testid="flow-template-apply"
             disabled={!selected}
             onClick={handleApply}
