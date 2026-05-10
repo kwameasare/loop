@@ -155,6 +155,56 @@ describe("DeployTimeline", () => {
     );
   });
 
+  it("focuses environment context from the Workbench environment control", () => {
+    render(
+      <DeployTimeline
+        agentId="a"
+        focusedPanel="environments"
+        initialDeployments={[
+          mkDep({
+            id: "d_shadow",
+            status: "shadow",
+            stage: "shadow",
+            trafficPercent: 0,
+            versionId: "v2",
+            evidencePackId: "ep_shadow",
+          }),
+          mkDep({
+            id: "d_canary",
+            status: "canary",
+            stage: "canary",
+            trafficPercent: 25,
+            versionId: "v3",
+          }),
+          mkDep({
+            id: "d_live",
+            status: "live",
+            stage: "production",
+            trafficPercent: 100,
+            versionId: "v1",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId("deploy-focused-panel")).toHaveTextContent(
+      "environment selector is highlighted",
+    );
+    expect(screen.getByTestId("deploy-environment-selector")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+    expect(screen.getByTestId("deploy-environment-shadow")).toHaveTextContent(
+      "v2",
+    );
+    expect(screen.getByTestId("deploy-environment-shadow")).toHaveTextContent(
+      "ep_shadow",
+    );
+    expect(
+      screen.getByTestId("deploy-environment-production"),
+    ).toHaveTextContent("100% traffic");
+  });
+
   it("disables promote/pause for non-canary rows and rollback for non-live rows", () => {
     render(
       <DeployTimeline

@@ -73,5 +73,11 @@ describe("AgentTabs", () => {
     expect(screen.getByTestId("agent-tab-contract")).toHaveTextContent(
       "Commitment document",
     );
+    expect(screen.getByTestId("agent-tab-channels")).toHaveTextContent(
+      "WhatsApp",
+    );
+    expect(screen.getByTestId("agent-tab-simulator")).toHaveTextContent(
+      "Simulations",
+    );
   });
 });

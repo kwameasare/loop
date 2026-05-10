@@ -15,14 +15,14 @@ interface AgentWorkbenchControlsProps {
 const CONTROLS = [
   {
     id: "versions",
-    label: "Version",
+    label: "Versions",
     href: "versions",
     icon: GitBranch,
   },
   {
     id: "environment",
     label: "Environment",
-    href: "deploys?view=environments",
+    href: "deploys?panel=environments",
     icon: SlidersHorizontal,
   },
   {
@@ -33,8 +33,8 @@ const CONTROLS = [
   },
   {
     id: "change-set",
-    label: "Change Set",
-    href: "deploys?panel=change-package",
+    label: "Open Change Set",
+    href: "workflow",
     icon: PackageCheck,
   },
   {

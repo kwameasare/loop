@@ -370,30 +370,34 @@ export function DeployTimeline({
   const canary = items.find(
     (d) => d.status === "canary" || d.status === "ramp",
   );
+  const shadow = items.find((d) => d.status === "shadow");
   const live = items.find((d) => d.status === "live");
   const rolloutFocused =
     focusedPanel === "rollout" || focusedPanel === "promotion";
   const rollbackFocused = focusedPanel === "rollback";
+  const environmentFocused = focusedPanel === "environments";
   const evidenceById = new Map(evidencePacks.map((pack) => [pack.id, pack]));
   const deploymentEvidenceIds = new Set(
     items.map((item) => item.evidencePackId).filter(Boolean),
   );
   const latestUnmatchedEvidencePack =
     evidencePacks.find((pack) => !deploymentEvidenceIds.has(pack.id)) ?? null;
+  const focusMessage = environmentFocused
+    ? "environment selector is highlighted."
+    : focusedPanel === "promotion"
+      ? "promotion controls are highlighted."
+      : rolloutFocused
+        ? "rollout controls are highlighted."
+        : "rollback candidates are highlighted.";
 
   return (
     <section className="flex flex-col gap-4" data-testid="deploy-timeline">
-      {rolloutFocused || rollbackFocused ? (
+      {rolloutFocused || rollbackFocused || environmentFocused ? (
         <p
           className="rounded-md border border-info/40 bg-info/5 px-3 py-2 text-sm text-info"
           data-testid="deploy-focused-panel"
         >
-          Opened from evidence link:{" "}
-          {focusedPanel === "promotion"
-            ? "promotion controls are highlighted."
-            : rolloutFocused
-              ? "rollout controls are highlighted."
-            : "rollback candidates are highlighted."}
+          Opened from evidence link: {focusMessage}
         </p>
       ) : null}
       <header className="flex flex-col gap-1">
@@ -443,6 +447,58 @@ export function DeployTimeline({
             : "No live deployment."}
         </p>
       </header>
+
+      <section
+        className={`rounded-lg border bg-card/70 p-3 ${
+          environmentFocused
+            ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+            : ""
+        }`}
+        data-focused={environmentFocused ? "true" : "false"}
+        data-testid="deploy-environment-selector"
+      >
+        <div className="flex flex-col gap-1">
+          <h3 className="text-sm font-semibold">Environment selector</h3>
+          <p className="text-xs text-muted-foreground">
+            Builder context stays explicit: shadow, canary, and production each
+            show version, traffic, and evidence before a promotion moves
+            customer traffic.
+          </p>
+        </div>
+        <div className="mt-3 grid gap-2 md:grid-cols-3">
+          {[
+            { id: "shadow", label: "Shadow", deployment: shadow },
+            { id: "canary", label: "Canary", deployment: canary },
+            { id: "production", label: "Production", deployment: live },
+          ].map((environment) => (
+            <article
+              key={environment.id}
+              className="rounded-md border bg-background p-3 text-sm"
+              data-testid={`deploy-environment-${environment.id}`}
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {environment.label}
+              </p>
+              <p className="mt-1 font-medium">
+                {environment.deployment
+                  ? environment.deployment.versionId
+                  : "No deployment"}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {environment.deployment
+                  ? `${environment.deployment.status} · ${environment.deployment.trafficPercent}% traffic`
+                  : "No authorized backend deployment loaded."}
+              </p>
+              <p className="mt-1 truncate text-xs text-muted-foreground">
+                Evidence:{" "}
+                {environment.deployment?.evidencePackId ??
+                  environment.deployment?.id ??
+                  "deployment.empty"}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section
         className={`rounded-lg border bg-card/70 p-3 ${
