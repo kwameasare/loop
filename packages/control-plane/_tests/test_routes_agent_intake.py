@@ -224,6 +224,63 @@ def test_agent_intake_requires_workspace_admin(
     assert response.status_code in (401, 403)
 
 
+def test_agent_intake_infers_tool_contracts_from_api_artifacts(
+    client: TestClient,
+    workspace_id: UUID,
+) -> None:
+    contract = {**_contract(), "systems_touched": []}
+    response = client.post(
+        f"/v1/workspaces/{workspace_id}/agent-intakes",
+        headers=_auth(),
+        json={
+            "agent_name": "Artifact Tool Agent",
+            "slug": "artifact-tool-agent",
+            "creation_path": "business_intent",
+            "contract": contract,
+            "artifacts": [
+                {
+                    "name": "refund-api.yaml",
+                    "kind": "openapi",
+                    "text": "openapi: 3.0.0\ninfo:\n  title: Refund API\npaths:\n  /refunds:\n    post: {}",
+                    "source_ref": "upload/refund-api.yaml",
+                },
+                {
+                    "name": "orders-curl.txt",
+                    "kind": "curl",
+                    "text": "curl -X GET https://orders.example.test/v1/orders/123",
+                    "source_ref": "",
+                },
+            ],
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    agent_id = body["agent"]["id"]
+    assert {tool["tool_id"] for tool in body["candidate_tools"]} == {
+        "mock_refund_api",
+        "mock_orders_api",
+    }
+    assert {
+        tool["source"] for tool in body["candidate_tools"]
+    } == {"artifact:openapi", "artifact:curl"}
+    assert len(body["created_object_refs"]["tool_contracts"]) == 2
+
+    tools = client.get(
+        f"/v1/agents/{agent_id}/tool-contracts",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert tools.status_code == 200, tools.text
+    tool_rows = tools.json()["items"]
+    assert {item["tool_id"] for item in tool_rows} == {
+        "mock_refund_api",
+        "mock_orders_api",
+    }
+    assert all(item["sandbox_status"] == "mock" for item in tool_rows)
+    assert any("upload/refund-api.yaml" in item["description"] for item in tool_rows)
+    assert any("Import mode: curl" in item["failure_behavior"] for item in tool_rows)
+
+
 def test_enterprise_template_intake_clones_approved_defaults(
     client: TestClient,
     workspace_id: UUID,
