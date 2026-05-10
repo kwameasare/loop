@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from loop_control_plane._app_agents import AgentCreate, agent_payload
 from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
-from loop_control_plane.authorize import authorize_workspace_access
+from loop_control_plane.authorize import Role, authorize_workspace_access
 
 router = APIRouter(prefix="/v1/agents", tags=["Agents"])
 
@@ -23,15 +23,28 @@ AgentObjectState = Literal[
 ]
 
 
-async def _authorise(request: Request, *, workspace_id: UUID, caller_sub: str) -> None:
+async def _authorise(
+    request: Request,
+    *,
+    workspace_id: UUID,
+    caller_sub: str,
+    required_role: Role | None = None,
+) -> None:
     await authorize_workspace_access(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=required_role,
     )
 
 
-async def _agent_by_id(request: Request, *, agent_id: UUID, caller_sub: str) -> Any:
+async def _agent_by_id(
+    request: Request,
+    *,
+    agent_id: UUID,
+    caller_sub: str,
+    required_role: Role | None = None,
+) -> Any:
     cp = request.app.state.cp
     agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
     if agent is None:
@@ -40,6 +53,7 @@ async def _agent_by_id(request: Request, *, agent_id: UUID, caller_sub: str) -> 
         request,
         workspace_id=agent.workspace_id,
         caller_sub=caller_sub,
+        required_role=required_role,
     )
     return agent
 
@@ -125,7 +139,12 @@ async def create_agent(
     workspace_id: UUID = ACTIVE_WORKSPACE,
 ) -> dict[str, Any]:
     runtime = request.app.state.cp
-    await _authorise(request, workspace_id=workspace_id, caller_sub=caller_sub)
+    await _authorise(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
     agent = await runtime.agents.create(workspace_id=workspace_id, body=body)
     await runtime.agent_commitments.ensure_current(agent=agent, created_from="agent:create")
     record_audit_event(
@@ -158,7 +177,11 @@ async def get_agent(
     agent_id: UUID,
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
-    agent = await _agent_by_id(request, agent_id=agent_id, caller_sub=caller_sub)
+    agent = await _agent_by_id(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
+    )
     return await _agent_payload_with_state(request, agent)
 
 
@@ -168,7 +191,12 @@ async def archive_agent(
     agent_id: UUID,
     caller_sub: str = CALLER,
 ) -> Response:
-    agent = await _agent_by_id(request, agent_id=agent_id, caller_sub=caller_sub)
+    agent = await _agent_by_id(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
     await request.app.state.cp.agents.archive(
         workspace_id=agent.workspace_id,
         agent_id=agent_id,
