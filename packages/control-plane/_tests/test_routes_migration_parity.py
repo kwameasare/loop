@@ -242,9 +242,25 @@ def test_accepting_migration_repair_resolves_blocker_and_arms_cutover(
     assert body["status"] == "parity_ready"
     assert body["readiness"]["blocking_count"] == 0
     assert body["cutover_stages"][0]["status"] == "in_progress"
+    eval_ref = body["eval_case_refs"][0]
+    assert eval_ref["repair_id"] == "rep_inv_integrations"
+    assert eval_ref["source_ref"] == f"migration/{run['id']}/repair/rep_inv_integrations"
     inventory = {item["id"]: item for item in body["inventory"]}
     assert inventory["inv_integrations"]["severity"] == "ok"
     assert inventory["inv_integrations"]["resolved_by_repair_id"] == "rep_inv_integrations"
+
+    cases = client.get(
+        f"/v1/eval-suites/{eval_ref['suite_id']}/cases",
+        headers=headers,
+    )
+    assert cases.status_code == 200, cases.text
+    case = cases.json()["items"][0]
+    assert case["id"] == eval_ref["case_id"]
+    assert case["source"] == "migration_repair"
+    assert case["input"]["repair_id"] == "rep_inv_integrations"
+    assert case["input"]["agent_id"] == run["target_agent_id"]
+    assert case["expected"]["cutover_blocking"] is False
+    assert case["scorers"][0]["kind"] == "migration_parity"
 
     parity = client.get(
         f"/v1/workspaces/{workspace_id}/migration/parity",
@@ -260,6 +276,15 @@ def test_accepting_migration_repair_resolves_blocker_and_arms_cutover(
         for event in client.app.state.cp.audit_events.list_for_workspace(workspace_id)  # type: ignore[attr-defined]
     ]
     assert "migration:repair_accept" in actions
+    repair_event = next(
+        event
+        for event in client.app.state.cp.audit_events.list_for_workspace(workspace_id)  # type: ignore[attr-defined]
+        if event.action == "migration:repair_accept"
+    )
+    audit_payload = client.app.state.cp.audit_events.fetch_payload(  # type: ignore[attr-defined]
+        repair_event.payload_hash
+    )
+    assert audit_payload["eval_case"]["case_id"] == eval_ref["case_id"]
 
 
 def test_migration_import_supports_dialogflow_cx_source_profile(

@@ -169,6 +169,14 @@ export interface MigrationCutoverEvent {
   created_at: string;
 }
 
+export interface MigrationEvalCaseRef {
+  suite_id: string;
+  case_id: string;
+  repair_id: string;
+  source_ref: string;
+  evidence_ref: string;
+}
+
 export interface MigrationRun {
   id: string;
   workspace_id: string;
@@ -192,6 +200,7 @@ export interface MigrationRun {
   readiness: MigrationReadinessRecord;
   cutover_stages: MigrationCutoverStage[];
   cutover_events: MigrationCutoverEvent[];
+  eval_case_refs: MigrationEvalCaseRef[];
   rollback_triggers: Array<Record<string, unknown>>;
   created_by_user_id: string;
   created_at: string;
@@ -306,6 +315,7 @@ export function localMigrationRun(workspaceId: string): MigrationRun {
       },
     ],
     cutover_events: [],
+    eval_case_refs: [],
     rollback_triggers: [],
     created_by_user_id: "local-builder",
     created_at: LOCAL_NOW,

@@ -11,6 +11,7 @@ from loop_control_plane.agent_commitments import CommitmentBody
 from loop_control_plane.agent_workflow import BranchCreate, ChangeSetCreate
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
+from loop_control_plane.eval_suites import EvalCaseCreate
 from loop_control_plane.migration_runs import (
     CutoverAdvance,
     CutoverRollback,
@@ -113,6 +114,99 @@ def _commitment_body(body: MigrationImportCreate, *, actor_sub: str) -> Commitme
         out_of_scope="Direct production overwrite before parity, approval, and rollback evidence.",
         escalation_policy="Rollback to source-platform routing if canary guardrails fail.",
     )
+
+
+async def _create_repair_eval_case(
+    request: Request,
+    *,
+    workspace_id: UUID,
+    run: Any,
+    repair_id: str,
+    payload: MigrationRepairAccept,
+    caller_sub: str,
+) -> dict[str, str]:
+    resolved_item = next(
+        (
+            item
+            for item in run.inventory
+            if item.resolved_by_repair_id == repair_id
+        ),
+        None,
+    )
+    if resolved_item is None:
+        raise WorkspaceError(f"accepted repair did not resolve an inventory item: {repair_id}")
+
+    cp = request.app.state.cp
+    suite = await cp.eval_suites.get_or_create_suite(
+        workspace_id=workspace_id,
+        name=f"Migration parity - {run.target_agent_name}",
+        dataset_ref=f"agent:{run.target_agent_id}:migration:{run.id}:parity",
+        metrics=["migration_parity", "regression_guard", "tool_safety"],
+        actor_sub=caller_sub,
+    )
+    evidence_ref = payload.evidence_ref or resolved_item.evidence_ref
+    case = await cp.eval_suites.add_case(
+        workspace_id=workspace_id,
+        suite_id=suite.id,
+        body=EvalCaseCreate(
+            name=f"Migration repair regression: {resolved_item.label}",
+            input={
+                "migration_id": run.id,
+                "source": run.source,
+                "archive_name": run.archive_name,
+                "archive_sha": run.archive_sha,
+                "agent_id": str(run.target_agent_id),
+                "branch_id": run.target_branch_id,
+                "change_set_id": run.target_change_set_id,
+                "repair_id": repair_id,
+                "inventory_item_id": resolved_item.id,
+                "inventory_kind": resolved_item.kind,
+                "source_artifact": f"{run.source}.{resolved_item.kind}",
+                "loop_target": resolved_item.loop_target,
+                "patch_summary": payload.patch_summary,
+                "evidence_ref": evidence_ref,
+            },
+            expected={
+                "outcome": (
+                    f"{resolved_item.label} remains mapped to "
+                    f"{resolved_item.loop_target} without parity regression."
+                ),
+                "severity": "ok",
+                "cutover_blocking": False,
+            },
+            scorers=[
+                {
+                    "kind": "migration_parity",
+                    "config": {
+                        "source": run.source,
+                        "inventory_item_id": resolved_item.id,
+                    },
+                },
+                {
+                    "kind": "trace_regression",
+                    "config": {
+                        "migration_id": run.id,
+                        "archive_sha": run.archive_sha,
+                    },
+                },
+            ],
+            source="migration_repair",
+            source_ref=f"migration/{run.id}/repair/{repair_id}",
+            attachments=[
+                evidence_ref,
+                run.target_branch_id,
+                run.target_change_set_id,
+            ],
+        ),
+        actor_sub=caller_sub,
+    )
+    return {
+        "suite_id": str(suite.id),
+        "case_id": str(case.id),
+        "repair_id": repair_id,
+        "source_ref": f"migration/{run.id}/repair/{repair_id}",
+        "evidence_ref": evidence_ref,
+    }
 
 
 @router.get("/{workspace_id}/migrations/imports")
@@ -287,6 +381,19 @@ async def accept_migration_repair(
             body=payload,
             actor_sub=caller_sub,
         )
+        eval_ref = await _create_repair_eval_case(
+            request,
+            workspace_id=workspace_id,
+            run=run,
+            repair_id=repair_id,
+            payload=payload,
+            caller_sub=caller_sub,
+        )
+        run = await request.app.state.cp.migration_runs.record_eval_case_ref(
+            workspace_id=workspace_id,
+            migration_id=migration_id,
+            eval_ref=eval_ref,
+        )
     except WorkspaceError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     _audit(
@@ -301,6 +408,7 @@ async def accept_migration_repair(
             "status": run.status,
             "blocking_count": run.readiness.blocking_count,
             "evidence_ref": payload.evidence_ref,
+            "eval_case": eval_ref,
         },
     )
     return migration_run_payload(run)
