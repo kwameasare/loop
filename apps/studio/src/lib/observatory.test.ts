@@ -103,7 +103,10 @@ describe("buildObservatoryModel", () => {
     expect(
       model.anomalies.find((anomaly) => anomaly.id === "live_trace_errors"),
     ).toMatchObject({
-      affectedObject: "production trace cluster",
+      affectedObject: "behavior/runtime_error_handling",
+      editSurface: "behavior",
+      observedBehavior:
+        "1 of 2 recent production traces errored before completing the turn.",
       traceQuery: "status:error",
     });
     expect(model.tail[0]?.traceId).toBe("trace-error");
@@ -116,7 +119,8 @@ describe("buildObservatoryModel", () => {
       source: "observatory/anomaly/live_trace_errors",
       body:
         "Open the failed trace cluster and promote one failure into an eval case.",
-      observed: "1 of 2 recent traces ended in error.",
+      observed:
+        "1 of 2 recent production traces errored before completing the turn.",
     });
   });
 
@@ -172,7 +176,9 @@ describe("buildObservatoryModel", () => {
         const body = JSON.parse(String(init?.body));
         expect(body).toMatchObject({
           affected_object: anomaly.affectedObject,
+          observed_behavior: anomaly.observedBehavior,
           evidence: anomaly.evidence,
+          edit_surface: anomaly.editSurface,
           trace_query: anomaly.traceQuery,
         });
         if (url.endsWith("/tasks")) {

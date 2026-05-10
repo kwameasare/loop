@@ -109,17 +109,67 @@ function reportTimeline(incident: IncidentRecord) {
 function editHrefForAffectedObject(
   anomaly: ObservatoryAnomaly,
   agentId?: string,
-): string | null {
+): { href: string; label: string } | null {
+  if (anomaly.editSurface === "inbox") {
+    return {
+      href: agentId ? `/inbox?agent_id=${agentId}` : "/inbox",
+      label: "Open inbox",
+    };
+  }
+  if (anomaly.editSurface === "incidents") {
+    const params = new URLSearchParams();
+    if (agentId) params.set("agent_id", agentId);
+    params.set("incident_id", anomaly.id.replace(/^incident_/, ""));
+    return {
+      href: `/observe?${params.toString()}`,
+      label: "Open incident",
+    };
+  }
+  if (anomaly.editSurface === "observe") {
+    return { href: "/observe", label: "Open observatory" };
+  }
   if (!agentId) return null;
+  if (anomaly.editSurface === "behavior") {
+    return { href: `/agents/${agentId}/behavior`, label: "Open behavior" };
+  }
+  if (anomaly.editSurface === "knowledge") {
+    return { href: `/agents/${agentId}/kb`, label: "Open knowledge" };
+  }
+  if (anomaly.editSurface === "tools") {
+    return { href: `/agents/${agentId}/tools`, label: "Open tools" };
+  }
+  if (anomaly.editSurface === "memory") {
+    return { href: `/agents/${agentId}/memory`, label: "Open memory" };
+  }
+  if (anomaly.editSurface === "channels") {
+    return { href: `/agents/${agentId}/channels`, label: "Open channels" };
+  }
+  if (anomaly.editSurface === "traces") {
+    return { href: `/agents/${agentId}/traces`, label: "Inspect spans" };
+  }
   const target = anomaly.affectedObject.toLowerCase();
-  if (target.startsWith("behavior/")) return `/agents/${agentId}/behavior`;
-  if (target.startsWith("knowledge/")) return `/agents/${agentId}/kb`;
-  if (target.startsWith("tool/")) return `/agents/${agentId}/tools`;
-  if (target.startsWith("memory/")) return `/agents/${agentId}/memory`;
-  if (target.startsWith("channel/")) return `/agents/${agentId}/channels`;
-  if (target.includes("latency")) return `/agents/${agentId}/traces`;
-  if (target.includes("operator inbox")) return `/inbox?agent_id=${agentId}`;
-  return `/agents/${agentId}/observe`;
+  if (target.startsWith("behavior/")) {
+    return { href: `/agents/${agentId}/behavior`, label: "Open behavior" };
+  }
+  if (target.startsWith("knowledge/")) {
+    return { href: `/agents/${agentId}/kb`, label: "Open knowledge" };
+  }
+  if (target.startsWith("tool/")) {
+    return { href: `/agents/${agentId}/tools`, label: "Open tools" };
+  }
+  if (target.startsWith("memory/")) {
+    return { href: `/agents/${agentId}/memory`, label: "Open memory" };
+  }
+  if (target.startsWith("channel/")) {
+    return { href: `/agents/${agentId}/channels`, label: "Open channels" };
+  }
+  if (target.includes("latency")) {
+    return { href: `/agents/${agentId}/traces`, label: "Inspect spans" };
+  }
+  if (target.includes("operator inbox")) {
+    return { href: `/inbox?agent_id=${agentId}`, label: "Open inbox" };
+  }
+  return { href: `/agents/${agentId}/observe`, label: "Open observatory" };
 }
 
 function MetricCard({
@@ -188,7 +238,7 @@ function AnomalyCard({
   const [evalRef, setEvalRef] = useState(anomaly.evalCandidateRef ?? null);
   const [busy, setBusy] = useState<"task" | "eval" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const editHref = editHrefForAffectedObject(anomaly, agentId);
+  const editLink = editHrefForAffectedObject(anomaly, agentId);
 
   async function createTask() {
     if (!workspaceId || taskRef) return;
@@ -260,6 +310,23 @@ function AnomalyCard({
               <dd className="mt-1 break-all">{anomaly.traceQuery}</dd>
             </div>
           </dl>
+          <div
+            className="mt-3 grid gap-3 rounded-md border bg-background/60 p-3 text-xs sm:grid-cols-2"
+            data-testid={`anomaly-commitment-delta-${anomaly.id}`}
+          >
+            <div>
+              <p className="font-semibold uppercase tracking-wide text-muted-foreground">
+                Observed
+              </p>
+              <p className="mt-1 text-foreground">{anomaly.observedBehavior}</p>
+            </div>
+            <div>
+              <p className="font-semibold uppercase tracking-wide text-muted-foreground">
+                Intended
+              </p>
+              <p className="mt-1 text-foreground">{anomaly.intendedBehavior}</p>
+            </div>
+          </div>
           <p className="mt-3 text-sm">{anomaly.nextAction}</p>
           <p className="mt-2 text-xs text-muted-foreground">
             Owner: {anomaly.owner}
@@ -272,13 +339,13 @@ function AnomalyCard({
             >
               Open traces
             </a>
-            {editHref ? (
+            {editLink ? (
               <a
                 className={buttonVariants({ variant: "outline", size: "sm" })}
-                href={editHref}
+                href={editLink.href}
                 data-testid={`anomaly-open-edit-${anomaly.id}`}
               >
-                Open edit surface
+                {editLink.label}
               </a>
             ) : null}
             <Button

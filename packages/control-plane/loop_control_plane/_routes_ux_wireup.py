@@ -961,6 +961,9 @@ class ObservatoryAnomalyTaskBody(BaseModel):
     title: str = Field(min_length=1, max_length=256)
     evidence: str = Field(min_length=1, max_length=2000)
     affected_object: str = Field(min_length=1, max_length=256)
+    observed_behavior: str = Field(default="", max_length=2000)
+    intended_behavior: str = Field(default="", max_length=2000)
+    edit_surface: str = Field(default="", max_length=64)
     next_action: str = Field(min_length=1, max_length=1000)
     owner: str = Field(default="", max_length=160)
     trace_query: str = Field(default="", max_length=1000)
@@ -970,7 +973,9 @@ class ObservatoryAnomalyEvalCaseBody(BaseModel):
     source_type: str = Field(default="incident_cluster", max_length=128)
     source_ref: str = Field(min_length=1, max_length=256)
     affected_object: str = Field(min_length=1, max_length=256)
+    observed_behavior: str = Field(default="", max_length=2000)
     expected_behavior: str = Field(min_length=1, max_length=2000)
+    edit_surface: str = Field(default="", max_length=64)
     evidence: str = Field(min_length=1, max_length=2000)
     trace_query: str = Field(default="", max_length=1000)
 
@@ -1002,6 +1007,9 @@ async def create_observatory_anomaly_task(
         "title": body.title,
         "evidence": body.evidence,
         "affected_object": body.affected_object,
+        "observed_behavior": body.observed_behavior,
+        "intended_behavior": body.intended_behavior,
+        "edit_surface": body.edit_surface,
         "next_action": body.next_action,
         "owner": body.owner,
         "trace_query": body.trace_query,
@@ -1023,6 +1031,7 @@ async def create_observatory_anomaly_task(
         payload={
             "anomaly_id": anomaly_id,
             "affected_object": body.affected_object,
+            "edit_surface": body.edit_surface,
             "trace_query": body.trace_query,
         },
     )
@@ -1064,6 +1073,8 @@ async def create_observatory_anomaly_eval_case(
                 "source_type": body.source_type,
                 "source_ref": body.source_ref,
                 "affected_object": body.affected_object,
+                "observed_behavior": body.observed_behavior,
+                "edit_surface": body.edit_surface,
                 "trace_query": body.trace_query,
                 "evidence": body.evidence,
             },
@@ -1105,6 +1116,7 @@ async def create_observatory_anomaly_eval_case(
             "source_type": body.source_type,
             "source_ref": body.source_ref,
             "affected_object": body.affected_object,
+            "edit_surface": body.edit_surface,
         },
     )
     return {
