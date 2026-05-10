@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   findCurrentCanary,
   findLiveDeployment,
+  exportEvidencePack,
   listDeployments,
   listEvidencePacks,
   pauseDeployment,
@@ -173,6 +174,58 @@ describe("listDeployments cp-api mode", () => {
     expect(call[0]).toBe(
       "https://api.loop.dev/v1/agents/agt_x/evidence-packs",
     );
+  });
+
+  it("exports an evidence pack with enforced redactions", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: "epex_1",
+            status: "ready",
+            format: "json",
+            purpose: "security review",
+            workspace_id: "ws_1",
+            agent_id: "agt_x",
+            evidence_pack_id: "ep_1",
+            deployment_id: "dep_1",
+            change_package_id: "cp_1",
+            sections: ["change_package", "eval_results", "audit_log"],
+            artifact_refs: ["evidence-pack/ep_1", "change-package/cp_1"],
+            redactions: ["credentials", "pricing", "raw_tool_credentials", "secrets"],
+            download_url:
+              "/v1/agents/agt_x/evidence-packs/ep_1/exports/epex_1",
+            created_at: "2026-05-09T00:00:00Z",
+            expires_at: "2026-05-16T00:00:00Z",
+          }),
+          { status: 201, headers: { "content-type": "application/json" } },
+        ),
+    );
+
+    const result = await exportEvidencePack(
+      "agt_x",
+      "ep_1",
+      { format: "json", purpose: "security review", redactions: ["pricing"] },
+      {
+        fetcher: fetcher as unknown as typeof fetch,
+        baseUrl: "https://api.loop.dev/v1",
+        token: "tok",
+      },
+    );
+
+    expect(result.status).toBe("ready");
+    expect(result.redactions).toContain("raw_tool_credentials");
+    expect(result.sections).toContain("eval_results");
+    const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0]!;
+    expect(call[0]).toBe(
+      "https://api.loop.dev/v1/agents/agt_x/evidence-packs/ep_1/exports",
+    );
+    expect(JSON.parse(String((call[1] as RequestInit).body))).toEqual({
+      format: "json",
+      purpose: "security review",
+      redactions: ["pricing"],
+    });
   });
 
   it("promote POSTs to the promote endpoint", async () => {

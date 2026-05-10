@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, ConfigDict, Field
@@ -51,6 +52,17 @@ class DeploymentRampBody(BaseModel):
     traffic_percent: int = Field(ge=1, le=99)
 
 
+class EvidencePackExportBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    format: Literal["pdf", "json", "csv", "grc_integration", "api"] = "json"
+    purpose: str = Field(default="review", max_length=240)
+    redactions: list[str] = Field(
+        default_factory=lambda: ["secrets", "pii", "credentials"],
+        max_length=20,
+    )
+
+
 async def _agent(
     request: Request,
     *,
@@ -83,6 +95,19 @@ async def _deployment(request: Request, *, agent: Any, deployment_id: str) -> De
         if deployment.id == deployment_id:
             return deployment
     raise WorkspaceError(f"unknown deployment: {deployment_id}")
+
+
+async def _evidence_pack(
+    request: Request,
+    *,
+    agent: Any,
+    evidence_pack_id: str,
+) -> Any:
+    packs = await request.app.state.cp.deployments.list_evidence_packs(agent=agent)
+    for pack in packs:
+        if pack.id == evidence_pack_id:
+            return pack
+    raise WorkspaceError(f"unknown evidence pack: {evidence_pack_id}")
 
 
 async def _notification_targets(request: Request, *, agent: Any, fallback: str) -> list[str]:
@@ -583,3 +608,146 @@ async def list_evidence_packs(
     )
     packs = await request.app.state.cp.deployments.list_evidence_packs(agent=agent)
     return {"items": [evidence_pack_payload(pack) for pack in packs]}
+
+
+@router.post("/{agent_id}/evidence-packs/{evidence_pack_id}/exports", status_code=201)
+async def export_evidence_pack(
+    request: Request,
+    agent_id: UUID,
+    evidence_pack_id: str,
+    body: EvidencePackExportBody,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+    )
+    pack = await _evidence_pack(request, agent=agent, evidence_pack_id=evidence_pack_id)
+    if body.format not in pack.export_formats:
+        raise WorkspaceError(
+            f"evidence pack {evidence_pack_id} cannot export format: {body.format}"
+        )
+
+    now = datetime.now(UTC)
+    export_id = f"epex_{uuid4().hex[:12]}"
+    redactions = sorted(
+        set(body.redactions)
+        | {"secrets", "credentials", "raw_secret_values", "raw_tool_credentials"}
+    )
+    sections = [
+        "commitment",
+        "change_package",
+        "version_manifest",
+        "behavior_diff",
+        "tool_permissions",
+        "knowledge_diff",
+        "memory_policy",
+        "channel_deployment_plan",
+        "eval_results",
+        "approvals",
+        "canary_results",
+        "rollback_plan",
+        "audit_log",
+    ]
+    artifact_refs = [
+        f"evidence-pack/{pack.id}",
+        f"agent/{pack.agent_id}",
+        f"deployment/{pack.deployment_id}",
+        f"change-package/{pack.change_package_id}",
+        pack.behavior_diff_ref,
+        pack.tool_permission_diff_ref,
+        pack.knowledge_diff_ref,
+        pack.memory_policy_ref,
+        pack.channel_deployment_plan_ref,
+        pack.eval_results_ref,
+        pack.approval_records_ref,
+        pack.canary_results_ref,
+        pack.rollback_plan_ref,
+        pack.audit_log_ref,
+    ]
+    payload = {
+        "id": export_id,
+        "status": "ready",
+        "format": body.format,
+        "purpose": body.purpose,
+        "workspace_id": str(pack.workspace_id),
+        "agent_id": str(pack.agent_id),
+        "evidence_pack_id": pack.id,
+        "deployment_id": pack.deployment_id,
+        "change_package_id": pack.change_package_id,
+        "sections": sections,
+        "artifact_refs": artifact_refs,
+        "redactions": redactions,
+        "download_url": (
+            f"/v1/agents/{agent_id}/evidence-packs/{pack.id}/exports/{export_id}"
+        ),
+        "created_at": now.isoformat(),
+        "expires_at": (now + timedelta(days=7)).isoformat(),
+    }
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="evidence_pack:export",
+        resource_type="evidence_pack",
+        resource_id=pack.id,
+        store=request.app.state.cp.audit_events,
+        request_id=request_id(request),
+        payload={
+            "agent_id": str(agent_id),
+            "evidence_pack_id": pack.id,
+            "export_id": export_id,
+            "format": body.format,
+            "redactions": redactions,
+        },
+    )
+    return payload
+
+
+@router.get("/{agent_id}/evidence-packs/{evidence_pack_id}/exports/{export_id}")
+async def download_evidence_pack_export(
+    request: Request,
+    agent_id: UUID,
+    evidence_pack_id: str,
+    export_id: str,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+    )
+    pack = await _evidence_pack(request, agent=agent, evidence_pack_id=evidence_pack_id)
+    redactions = [
+        "secrets",
+        "credentials",
+        "raw_secret_values",
+        "raw_tool_credentials",
+    ]
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="evidence_pack:export_download",
+        resource_type="evidence_pack",
+        resource_id=pack.id,
+        store=request.app.state.cp.audit_events,
+        request_id=request_id(request),
+        payload={
+            "agent_id": str(agent_id),
+            "evidence_pack_id": pack.id,
+            "export_id": export_id,
+            "redactions": redactions,
+        },
+    )
+    return {
+        "id": export_id,
+        "status": "ready",
+        "evidence_pack_id": pack.id,
+        "redactions": redactions,
+        "secret_policy": "Raw secrets and tool credentials are never included in evidence exports.",
+        "evidence_pack": evidence_pack_payload(pack),
+    }

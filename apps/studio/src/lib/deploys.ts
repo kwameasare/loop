@@ -86,6 +86,37 @@ export interface EvidencePack {
   export_formats: string[];
 }
 
+export type EvidencePackExportFormat =
+  | "pdf"
+  | "json"
+  | "csv"
+  | "grc_integration"
+  | "api";
+
+export interface EvidencePackExportInput {
+  format: EvidencePackExportFormat;
+  purpose?: string;
+  redactions?: string[];
+}
+
+export interface EvidencePackExport {
+  id: string;
+  status: "ready";
+  format: EvidencePackExportFormat;
+  purpose: string;
+  workspace_id: string;
+  agent_id: string;
+  evidence_pack_id: string;
+  deployment_id: string;
+  change_package_id: string;
+  sections: string[];
+  artifact_refs: string[];
+  redactions: string[];
+  download_url: string;
+  created_at: string;
+  expires_at: string;
+}
+
 export interface DeployHelperOptions {
   fetcher?: typeof fetch;
   baseUrl?: string;
@@ -279,6 +310,68 @@ export async function listEvidencePacks(
   });
   if (!res.ok) throw new Error(`listEvidencePacks failed: ${res.status}`);
   return (await res.json()) as EvidencePackListResponse;
+}
+
+export async function exportEvidencePack(
+  agentId: string,
+  evidencePackId: string,
+  input: EvidencePackExportInput,
+  opts: DeployHelperOptions = {},
+): Promise<EvidencePackExport> {
+  const base = resolveBase(opts);
+  if (!base) {
+    if (!opts.allowFixture) {
+      throw new Error(
+        "LOOP_CP_API_BASE_URL is required to export evidence packs",
+      );
+    }
+    const now = new Date().toISOString();
+    return {
+      id: "epex_local",
+      status: "ready",
+      format: input.format,
+      purpose: input.purpose ?? "review",
+      workspace_id: "",
+      agent_id: agentId,
+      evidence_pack_id: evidencePackId,
+      deployment_id: "local",
+      change_package_id: "local",
+      sections: [
+        "commitment",
+        "change_package",
+        "version_manifest",
+        "eval_results",
+        "approvals",
+        "canary_results",
+        "rollback_plan",
+        "audit_log",
+      ],
+      artifact_refs: [`evidence-pack/${evidencePackId}`],
+      redactions: Array.from(
+        new Set([
+          ...(input.redactions ?? []),
+          "secrets",
+          "credentials",
+          "raw_secret_values",
+          "raw_tool_credentials",
+        ]),
+      ).sort(),
+      download_url: `/v1/agents/${agentId}/evidence-packs/${evidencePackId}/exports/epex_local`,
+      created_at: now,
+      expires_at: now,
+    };
+  }
+  const fetcher = opts.fetcher ?? fetch;
+  const res = await fetcher(
+    `${base}/agents/${agentId}/evidence-packs/${evidencePackId}/exports`,
+    {
+      method: "POST",
+      headers: authHeaders(opts),
+      body: JSON.stringify(input),
+    },
+  );
+  if (!res.ok) throw new Error(`exportEvidencePack failed: ${res.status}`);
+  return (await res.json()) as EvidencePackExport;
 }
 
 async function callAction(

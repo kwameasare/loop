@@ -1476,6 +1476,34 @@ def test_deployment_start_creates_evidence_pack_from_approved_change_package(
     assert packs.status_code == 200, packs.text
     assert packs.json()["items"][0]["id"] == evidence_pack["id"]
 
+    export = client.post(
+        f"/v1/agents/{agent_id}/evidence-packs/{evidence_pack['id']}/exports",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={"format": "json", "purpose": "security review", "redactions": ["pricing"]},
+    )
+    assert export.status_code == 201, export.text
+    exported = export.json()
+    assert exported["status"] == "ready"
+    assert exported["format"] == "json"
+    assert exported["evidence_pack_id"] == evidence_pack["id"]
+    assert exported["change_package_id"] == package["id"]
+    assert "change_package" in exported["sections"]
+    assert "eval_results" in exported["sections"]
+    assert "audit_log" in exported["sections"]
+    assert any(ref.startswith("change-package/") for ref in exported["artifact_refs"])
+    assert {"secrets", "raw_tool_credentials", "pricing"} <= set(exported["redactions"])
+    assert exported["download_url"].endswith(exported["id"])
+
+    download = client.get(
+        exported["download_url"],
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert download.status_code == 200, download.text
+    downloaded = download.json()
+    assert downloaded["id"] == exported["id"]
+    assert downloaded["evidence_pack"]["id"] == evidence_pack["id"]
+    assert "raw secrets" in downloaded["secret_policy"].lower()
+
     audit = client.get(
         f"/v1/audit-events?workspace_id={workspace_id}",
         headers=_auth(),
@@ -1483,6 +1511,8 @@ def test_deployment_start_creates_evidence_pack_from_approved_change_package(
     assert {event["action"] for event in audit} >= {
         "deployment:start",
         "deployment:promote",
+        "evidence_pack:export",
+        "evidence_pack:export_download",
     }
 
 
