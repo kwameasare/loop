@@ -163,6 +163,53 @@ def _start_live_deployment(
     return promoted.json()
 
 
+def _start_canary_deployment(
+    client: TestClient,
+    workspace_id: UUID,
+    agent_id: UUID,
+    *,
+    thresholds: dict[str, float] | None = None,
+) -> dict[str, object]:
+    _mark_channel_ready(client, workspace_id, agent_id, "web_chat")
+    package = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "from_version_id": "v1",
+            "to_version_id": "v2",
+            "summary": "Canary approved draft with rollout policy.",
+            "eval_results_ref": "eval/run/v2",
+            "replay_results_ref": "replay/run/v2",
+            "rollback_target_version_id": "v1",
+        },
+    ).json()
+    submitted = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{package['id']}/submit",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert submitted.status_code == 200, submitted.text
+    for approval_id in ("owner", "compliance"):
+        approved = client.post(
+            f"/v1/agents/{agent_id}/change-packages/{package['id']}/approvals",
+            headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+            json={"approval_id": approval_id, "decision": "approve"},
+        )
+        assert approved.status_code == 200, approved.text
+    started = client.post(
+        f"/v1/agents/{agent_id}/deployments/start",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "change_package_id": package["id"],
+            "version_id": "v2",
+            "traffic_percent": 10,
+            "channel_scope": ["web_chat"],
+            "auto_rollback_thresholds": thresholds or {"error_rate": 0.02},
+        },
+    )
+    assert started.status_code == 201, started.text
+    return started.json()["deployment"]
+
+
 def test_presence_websocket_broadcasts_selection_updates(
     client: TestClient, workspace_id: UUID
 ) -> None:
@@ -1133,6 +1180,135 @@ def test_deployment_start_blocks_only_channels_with_incomplete_readiness(
         blocked_events[0]["payload_hash"]
     )
     assert payload["channel_blockers"][0]["channel_type"] == "whatsapp"
+
+
+def test_deployment_threshold_evaluation_records_no_action_when_healthy(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    deployment = _start_canary_deployment(
+        client,
+        workspace_id,
+        agent_id,
+        thresholds={"error_rate": 0.02},
+    )
+
+    evaluated = client.post(
+        f"/v1/agents/{agent_id}/deployments/{deployment['id']}/thresholds/evaluate",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={"metric": "error_rate", "observed": 0.01, "policy": "rollback"},
+    )
+
+    assert evaluated.status_code == 200, evaluated.text
+    body = evaluated.json()
+    assert body["decision"] == "no_action"
+    assert body["breached"] is False
+    assert body["threshold"] == 0.02
+    assert body["deployment"]["status"] == "canary"
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    threshold_events = [
+        event for event in audit if event["action"] == "deployment:threshold_evaluate"
+    ]
+    assert threshold_events
+    payload = client.app.state.cp.audit_events.fetch_payload(  # type: ignore[attr-defined]
+        threshold_events[0]["payload_hash"]
+    )
+    assert payload["decision"] == "no_action"
+    assert payload["breached"] is False
+
+
+def test_deployment_threshold_breach_pauses_rollout_by_policy(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    deployment = _start_canary_deployment(
+        client,
+        workspace_id,
+        agent_id,
+        thresholds={"tool_failure_rate": 0.03},
+    )
+
+    evaluated = client.post(
+        f"/v1/agents/{agent_id}/deployments/{deployment['id']}/thresholds/evaluate",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "metric": "tool_failure_rate",
+            "observed": 0.08,
+            "policy": "pause",
+            "window": "10m",
+        },
+    )
+
+    assert evaluated.status_code == 200, evaluated.text
+    body = evaluated.json()
+    assert body["decision"] == "paused"
+    assert body["breached"] is True
+    assert body["deployment"]["status"] == "paused"
+    assert body["deployment"]["stage"] == "paused"
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "deployment:threshold_breach",
+        "deployment:pause",
+    }
+
+
+def test_deployment_threshold_breach_rolls_back_and_creates_incident(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    deployment = _start_canary_deployment(
+        client,
+        workspace_id,
+        agent_id,
+        thresholds={"error_rate": 0.02},
+    )
+    trace_id = "6" * 32
+    _add_trace(client, workspace_id, agent_id, trace_id)
+
+    evaluated = client.post(
+        f"/v1/agents/{agent_id}/deployments/{deployment['id']}/thresholds/evaluate",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "metric": "error_rate",
+            "observed": 0.04,
+            "policy": "rollback",
+            "window": "5m",
+            "reason": "Provider outage pushed the canary above the error budget.",
+        },
+    )
+
+    assert evaluated.status_code == 200, evaluated.text
+    body = evaluated.json()
+    assert body["decision"] == "rolled_back"
+    assert body["breached"] is True
+    assert body["deployment"]["status"] == "rolled_back"
+    assert body["deployment"]["trafficPercent"] == 0
+
+    listed = client.get(
+        f"/v1/agents/{agent_id}/incidents",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert listed.status_code == 200, listed.text
+    incident = listed.json()["items"][0]
+    assert incident["status"] == "contained"
+    assert incident["deployment_id"] == deployment["id"]
+    assert incident["trigger"] == "error_rate breached 0.04 > 0.02 over 5m"
+    assert incident["affected_trace_ids"] == [trace_id]
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "deployment:threshold_breach",
+        "deployment:rollback",
+        "incident:create_auto_rollback",
+    }
 
 
 def test_observed_failure_eval_case_closes_90_second_editing_loop(
