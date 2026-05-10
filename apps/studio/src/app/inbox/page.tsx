@@ -70,7 +70,7 @@ function InboxPageBody(): JSX.Element {
   }
   if (error) {
     return (
-      <p className="p-6 text-sm text-red-600" role="alert">
+      <p className="p-6 text-sm text-destructive" role="alert">
         {error}
       </p>
     );

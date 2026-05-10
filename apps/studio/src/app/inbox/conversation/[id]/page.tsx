@@ -99,7 +99,7 @@ function ConversationPageBody({
       </header>
 
       {loadError ? (
-        <p className="mb-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mb-4 rounded border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {loadError}
         </p>
       ) : null}
@@ -117,13 +117,13 @@ function ConversationPageBody({
               takeover={({ conversation_id: id }) => takeoverConversation(id)}
             />
           ) : (
-            <section className="rounded-lg border bg-white p-6 text-sm text-muted-foreground">
+            <section className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
               Loading conversation...
             </section>
           )}
           {insertedDraft ? (
             <p
-              className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900"
+              className="rounded border border-info/30 bg-info/10 px-3 py-2 text-xs text-info"
               data-testid="inserted-draft-banner"
             >
               Suggested draft inserted into composer.
@@ -152,7 +152,7 @@ function ConversationPageBody({
               />
             </>
           ) : (
-            <section className="rounded-lg border bg-white p-4 text-sm text-muted-foreground">
+            <section className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
               Loading evidence context...
             </section>
           )}

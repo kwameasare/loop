@@ -14,9 +14,9 @@ const PANES: readonly { id: Pane; label: string }[] = [
 ];
 
 const STATUS_COLOR: Record<"ok" | "warn" | "error", string> = {
-  ok: "text-emerald-700 bg-emerald-50 border-emerald-200",
-  warn: "text-amber-700 bg-amber-50 border-amber-200",
-  error: "text-red-700 bg-red-50 border-red-200",
+  ok: "border-success/30 bg-success/10 text-success",
+  warn: "border-warning/30 bg-warning/10 text-warning",
+  error: "border-destructive/30 bg-destructive/10 text-destructive",
 };
 
 export interface ConversationEvidenceProps {
@@ -36,12 +36,12 @@ export function ConversationEvidence({
 
   return (
     <section
-      className="rounded-lg border bg-white"
+      className="rounded-lg border bg-card"
       data-testid="conversation-evidence"
       aria-label="Conversation evidence"
     >
       <div
-        className="flex gap-1 border-b bg-zinc-50 p-1 text-xs"
+        className="flex gap-1 border-b bg-muted p-1 text-xs"
         role="tablist"
         data-testid="conversation-evidence-tablist"
       >
@@ -57,8 +57,8 @@ export function ConversationEvidence({
               onClick={() => setPane(p.id)}
               className={
                 active
-                  ? "rounded bg-white px-3 py-1.5 font-medium shadow-sm"
-                  : "rounded px-3 py-1.5 text-zinc-600 hover:bg-white"
+                  ? "rounded bg-background px-3 py-1.5 font-medium shadow-sm"
+                  : "rounded px-3 py-1.5 text-muted-foreground hover:bg-background"
               }
             >
               {p.label}
@@ -78,11 +78,13 @@ export function ConversationEvidence({
               <li
                 key={s.id}
                 data-testid={`evidence-trace-${s.id}`}
-                className="flex items-start justify-between gap-3 rounded border bg-white px-3 py-2 text-sm"
+                className="flex items-start justify-between gap-3 rounded border bg-background px-3 py-2 text-sm"
               >
                 <span className="flex-1">
                   <span className="font-medium">{s.step}</span>
-                  <span className="ml-2 text-xs text-zinc-500">{s.detail}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {s.detail}
+                  </span>
                 </span>
                 <span
                   className={`rounded border px-2 py-0.5 text-[11px] ${STATUS_COLOR[s.status]}`}
@@ -100,13 +102,13 @@ export function ConversationEvidence({
               <li
                 key={m.id}
                 data-testid={`evidence-memory-${m.id}`}
-                className="rounded border bg-white px-3 py-2 text-sm"
+                className="rounded border bg-background px-3 py-2 text-sm"
               >
-                <span className="mr-2 rounded bg-zinc-100 px-2 py-0.5 text-[11px] uppercase tracking-wide text-zinc-600">
+                <span className="mr-2 rounded bg-muted px-2 py-0.5 text-[11px] uppercase tracking-wide text-muted-foreground">
                   {m.scope}
                 </span>
                 <span className="font-mono text-xs">{m.key}</span>
-                <span className="mx-2 text-zinc-400">→</span>
+                <span className="mx-2 text-muted-foreground">→</span>
                 <span className="font-mono text-xs">{m.value}</span>
               </li>
             ))}
@@ -119,11 +121,13 @@ export function ConversationEvidence({
               <li
                 key={t.id}
                 data-testid={`evidence-tool-${t.id}`}
-                className="flex items-start justify-between gap-3 rounded border bg-white px-3 py-2 text-sm"
+                className="flex items-start justify-between gap-3 rounded border bg-background px-3 py-2 text-sm"
               >
                 <span className="flex-1">
                   <span className="font-medium">{t.name}</span>
-                  <p className="mt-0.5 text-xs text-zinc-500">{t.detail}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {t.detail}
+                  </p>
                 </span>
                 <span
                   className={`rounded border px-2 py-0.5 text-[11px] ${STATUS_COLOR[t.status]}`}
@@ -141,15 +145,15 @@ export function ConversationEvidence({
               <li
                 key={r.id}
                 data-testid={`evidence-retrieval-${r.id}`}
-                className="rounded border bg-white px-3 py-2 text-sm"
+                className="rounded border bg-background px-3 py-2 text-sm"
               >
-                <header className="flex items-center justify-between text-xs text-zinc-600">
+                <header className="flex items-center justify-between text-xs text-muted-foreground">
                   <span className="font-mono">{r.source}</span>
                   <span className="tabular-nums">
                     score {r.score.toFixed(2)}
                   </span>
                 </header>
-                <p className="mt-1 text-sm text-zinc-700">{r.excerpt}</p>
+                <p className="mt-1 text-sm">{r.excerpt}</p>
               </li>
             ))}
           </ul>
