@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { VariableInspector } from "@/components/flow/variable-inspector";
+import { SectionDegraded } from "@/components/section-states";
 import {
   captureFrame,
   type FlowFrame,
@@ -106,14 +107,19 @@ function InspectorBody() {
             className="text-sm text-muted-foreground"
             data-testid="inspector-no-trace"
           >
-            Pick a trace from the <a className="underline" href="/traces">Traces</a> tab to
-            replay it here. The inspector mirrors each span as a frame so you
-            can step through the turn and watch state evolve.
+            Pick a trace from the{" "}
+            <a className="underline" href="/traces">
+              Traces
+            </a>{" "}
+            tab to replay it here. The inspector mirrors each span as a frame so
+            you can step through the turn and watch state evolve.
           </p>
         ) : error ? (
-          <p className="text-sm text-destructive" role="alert">
-            {error}
-          </p>
+          <SectionDegraded
+            title="Inspector"
+            description="Trace evidence could not load for this agent inspector."
+            evidence={error}
+          />
         ) : !loaded ? (
           <p
             className="text-sm text-muted-foreground"
