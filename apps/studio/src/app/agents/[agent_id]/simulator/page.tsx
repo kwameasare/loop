@@ -21,7 +21,7 @@ export default function AgentSimulatorPage({
         voice; use Inline ChatOps to swap models, disable tools, inject context,
         replay from a turn, or diff against another version.
       </EvidenceCallout>
-      <EmulatorPanel agentId={params.agent_id} />
+      <EmulatorPanel agentId={params.agent_id} evidenceMode="empty" />
     </div>
   );
 }
