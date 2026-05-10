@@ -6,6 +6,7 @@ import {
   draftToolFromRequest,
   listAgentTools,
 } from "./agent-tools";
+import { targetUxFixtures } from "./target-ux";
 
 const ORIG_BASE = process.env.LOOP_CP_API_BASE_URL;
 
@@ -52,7 +53,7 @@ describe("listAgentTools", () => {
 
 describe("Tools Room data", () => {
   it("builds safety-rich tool data from target fixtures", () => {
-    const data = createToolsRoomData("agent_support");
+    const data = createToolsRoomData("agent_support", [], targetUxFixtures);
     expect(data.tools).toHaveLength(2);
     expect(data.tools[0].schema[0].name).toBe("order_id");
     expect(data.tools[1].productionGrant).toBe("blocked");
@@ -77,7 +78,9 @@ describe("Tools Room data", () => {
     expect(data.agentName).toBe("Agent agt_live");
     expect(data.catalogEvidence).toContain("live cp-api");
     expect(data.tools.map((tool) => tool.id)).toEqual(["tool_live_search"]);
-    expect(data.tools.map((tool) => tool.id)).not.toContain("tool_lookup_order");
+    expect(data.tools.map((tool) => tool.id)).not.toContain(
+      "tool_lookup_order",
+    );
   });
 
   it("preserves degraded evidence alongside partial live tool data", () => {

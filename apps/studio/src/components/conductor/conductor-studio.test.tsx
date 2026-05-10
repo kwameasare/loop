@@ -6,12 +6,17 @@ import {
   createConductorData,
   createEmptyConductorData,
 } from "@/lib/conductor";
+import { targetUxFixtures } from "@/lib/target-ux";
 
 import { ConductorStudio } from "./conductor-studio";
 
 describe("ConductorStudio", () => {
   it("renders sub-agent assets, contracts, ownership, and traceable delegation", () => {
-    render(<ConductorStudio data={createConductorData("agent_support")} />);
+    render(
+      <ConductorStudio
+        data={createConductorData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     expect(screen.getByTestId("conductor-studio")).toHaveTextContent(
       "Multi-agent conductor",
@@ -37,7 +42,11 @@ describe("ConductorStudio", () => {
   });
 
   it("switches inspector and shows failure paths for a degraded sub-agent", () => {
-    render(<ConductorStudio data={createConductorData("agent_support")} />);
+    render(
+      <ConductorStudio
+        data={createConductorData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     fireEvent.click(
       screen.getByTestId("conductor-agent-sub_retention_guardian"),
@@ -55,7 +64,11 @@ describe("ConductorStudio", () => {
   });
 
   it("makes handoff violations explicit with fallback and evidence", () => {
-    render(<ConductorStudio data={createConductorData("agent_support")} />);
+    render(
+      <ConductorStudio
+        data={createConductorData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     fireEvent.click(
       screen.getByTestId("conductor-contract-contract_refund_to_retention"),
@@ -74,7 +87,9 @@ describe("ConductorStudio", () => {
 
   it("renders the permission-blocked conductor state without hiding topology", () => {
     render(
-      <ConductorStudio data={createBlockedConductorData("agent_support")} />,
+      <ConductorStudio
+        data={createBlockedConductorData("agent_support", targetUxFixtures)}
+      />,
     );
 
     expect(screen.getByText("Conductor editing locked")).toBeInTheDocument();
@@ -88,7 +103,9 @@ describe("ConductorStudio", () => {
   });
 
   it("renders missing conductor data as empty evidence, not fixture topology", () => {
-    render(<ConductorStudio data={createEmptyConductorData("agent_support")} />);
+    render(
+      <ConductorStudio data={createEmptyConductorData("agent_support")} />,
+    );
 
     expect(screen.getByText("Conductor data degraded")).toBeInTheDocument();
     expect(screen.getByTestId("conductor-topology")).toHaveTextContent(
@@ -100,7 +117,9 @@ describe("ConductorStudio", () => {
     expect(screen.getByTestId("conductor-delegation")).toHaveTextContent(
       "No delegation traces",
     );
-    expect(screen.getByText("Waiting for orchestration evidence")).toBeInTheDocument();
+    expect(
+      screen.getByText("Waiting for orchestration evidence"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Refund Specialist")).not.toBeInTheDocument();
   });
 });

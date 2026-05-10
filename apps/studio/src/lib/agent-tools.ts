@@ -12,7 +12,7 @@ import type {
   ObjectState,
   TrustState,
 } from "@/lib/design-tokens";
-import { targetUxFixtures, type TargetUXFixture } from "@/lib/target-ux";
+import type { TargetUXFixture } from "@/lib/target-ux";
 import {
   localToolContracts,
   type ToolContract,
@@ -548,26 +548,32 @@ function toolFromContract(
 export function createToolsRoomData(
   agentId: string,
   liveTools: AgentTool[] = [],
-  fixture: TargetUXFixture = targetUxFixtures,
+  fixture?: TargetUXFixture | undefined,
   toolContracts: ToolContract[] = [],
   degradedReason?: string | undefined,
   toolMetrics: ToolContractMetrics[] = [],
 ): ToolsRoomData {
   const usesLiveData = liveTools.length > 0 || toolContracts.length > 0;
-  const fixtureAgent = fixture.agents.find(
-    (candidate) => candidate.id === agentId,
-  );
-  const fixtureFallback = usesLiveData ? undefined : fixture.agents[0];
+  const fixtureAgent = usesLiveData
+    ? undefined
+    : fixture?.agents.find((candidate) => candidate.id === agentId);
+  const fixtureFallback = usesLiveData ? undefined : fixture?.agents[0];
   const agentName =
     fixtureAgent?.name ?? fixtureFallback?.name ?? `Agent ${agentId}`;
-  const tools = usesLiveData
-    ? []
-    : fixture.tools.map((_, index) => toolFromFixture(agentId, fixture, index));
+  const usesFixtureData = !usesLiveData && Boolean(fixture);
+  const fixtureTools =
+    usesFixtureData && fixture
+      ? fixture.tools.map((_, index) =>
+          toolFromFixture(agentId, fixture, index),
+        )
+      : [];
   const metricsByTool = new Map(
     toolMetrics.map((metric) => [metric.tool_id, metric]),
   );
   const liveOnlyTools = liveTools
-    .filter((tool) => !tools.some((candidate) => candidate.id === tool.id))
+    .filter(
+      (tool) => !fixtureTools.some((candidate) => candidate.id === tool.id),
+    )
     .map<ToolsRoomTool>((tool) => {
       const metric = metricsByTool.get(tool.id);
       const measured = metric?.measurement_status === "measured";
@@ -639,20 +645,24 @@ export function createToolsRoomData(
   const contractOnlyTools = toolContracts
     .filter(
       (contract) =>
-        !tools.some((candidate) => candidate.id === contract.tool_id) &&
+        !fixtureTools.some((candidate) => candidate.id === contract.tool_id) &&
         !liveOnlyTools.some((candidate) => candidate.id === contract.tool_id),
     )
     .map((contract) =>
       toolFromContract(agentId, contract, metricsByTool.get(contract.tool_id)),
     );
-  const allTools = [...tools, ...liveOnlyTools, ...contractOnlyTools];
+  const allTools = [...fixtureTools, ...liveOnlyTools, ...contractOnlyTools];
 
   return {
     agentId,
     agentName,
-    branch: usesLiveData ? "cp-api tool bindings" : fixture.workspace.branch,
-    objectState: usesLiveData ? "draft" : fixture.workspace.objectState,
-    trust: usesLiveData ? "watching" : fixture.workspace.trust,
+    branch: usesLiveData
+      ? "cp-api tool bindings"
+      : (fixture?.workspace.branch ?? "No branch loaded"),
+    objectState: usesLiveData
+      ? "draft"
+      : (fixture?.workspace.objectState ?? "draft"),
+    trust: usesLiveData ? "watching" : (fixture?.workspace.trust ?? "degraded"),
     tools: allTools,
     toolContracts:
       toolContracts.length > 0
@@ -663,8 +673,14 @@ export function createToolsRoomData(
           ),
     catalogEvidence: usesLiveData
       ? "Loaded from live cp-api tool bindings."
-      : "Explicit local fixture tool catalog for tests and demos.",
-    degradedReason,
+      : usesFixtureData
+        ? "Explicit local fixture tool catalog for tests and demos."
+        : "No live tool bindings or explicit fixture catalog loaded.",
+    degradedReason:
+      degradedReason ??
+      (usesLiveData || usesFixtureData
+        ? undefined
+        : "No tools are bound yet. Paste a curl command, OpenAPI fragment, or Postman sample to draft one."),
   };
 }
 

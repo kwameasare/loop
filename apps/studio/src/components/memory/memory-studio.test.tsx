@@ -5,12 +5,17 @@ import {
   createEmptyMemoryStudioData,
   createMemoryStudioData,
 } from "@/lib/memory-studio";
+import { targetUxFixtures } from "@/lib/target-ux";
 
 import { MemoryStudio } from "./memory-studio";
 
 describe("MemoryStudio", () => {
   it("renders scopes, memory diff, source trace, retention, and safety flags", () => {
-    render(<MemoryStudio data={createMemoryStudioData("agent_support")} />);
+    render(
+      <MemoryStudio
+        data={createMemoryStudioData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     expect(screen.getByTestId("memory-studio")).toHaveTextContent(
       "Memory Studio",
@@ -58,7 +63,11 @@ describe("MemoryStudio", () => {
   });
 
   it("filters across enterprise and runtime memory scopes", () => {
-    render(<MemoryStudio data={createMemoryStudioData("agent_support")} />);
+    render(
+      <MemoryStudio
+        data={createMemoryStudioData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     expect(screen.getByTestId("memory-scope-account")).toBeInTheDocument();
     expect(screen.getByTestId("memory-scope-organization")).toBeInTheDocument();
@@ -98,7 +107,11 @@ describe("MemoryStudio", () => {
   });
 
   it("requires backend deletion wiring and explains blocked scratch deletion", () => {
-    render(<MemoryStudio data={createMemoryStudioData("agent_support")} />);
+    render(
+      <MemoryStudio
+        data={createMemoryStudioData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     fireEvent.click(screen.getByTestId("memory-delete"));
     expect(screen.getByTestId("memory-delete-notice")).toHaveTextContent(
@@ -110,7 +123,11 @@ describe("MemoryStudio", () => {
   });
 
   it("replays with and without memory", () => {
-    render(<MemoryStudio data={createMemoryStudioData("agent_support")} />);
+    render(
+      <MemoryStudio
+        data={createMemoryStudioData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     fireEvent.click(screen.getByTestId("memory-replay-without-memory"));
     expect(screen.getByTestId("memory-studio-replay")).toHaveTextContent(
@@ -122,7 +139,7 @@ describe("MemoryStudio", () => {
   });
 
   it("approves a memory policy and keeps the hash visible for preflight", async () => {
-    const data = createMemoryStudioData("agent_support");
+    const data = createMemoryStudioData("agent_support", targetUxFixtures);
     const userPolicy = data.policies.find((policy) => policy.scope === "user")!;
     const approve = vi.fn(async () => ({
       ...userPolicy,
@@ -145,7 +162,7 @@ describe("MemoryStudio", () => {
   it("focuses a policy opened from an evidence link", () => {
     render(
       <MemoryStudio
-        data={createMemoryStudioData("agent_support")}
+        data={createMemoryStudioData("agent_support", targetUxFixtures)}
         initialPolicyId="mp_local_user"
       />,
     );
@@ -160,7 +177,7 @@ describe("MemoryStudio", () => {
   });
 
   it("focuses memory write, privacy, and retention query states", () => {
-    const data = createMemoryStudioData("agent_support");
+    const data = createMemoryStudioData("agent_support", targetUxFixtures);
     const { rerender } = render(
       <MemoryStudio data={data} focusedView="writes" />,
     );
@@ -192,7 +209,7 @@ describe("MemoryStudio", () => {
   it("selects privacy-sensitive memory when opened from privacy evidence", async () => {
     render(
       <MemoryStudio
-        data={createMemoryStudioData("agent_support")}
+        data={createMemoryStudioData("agent_support", targetUxFixtures)}
         focusedFilter="privacy"
       />,
     );
@@ -205,7 +222,7 @@ describe("MemoryStudio", () => {
   });
 
   it("saves edited memory policy content before approval", async () => {
-    const data = createMemoryStudioData("agent_support");
+    const data = createMemoryStudioData("agent_support", targetUxFixtures);
     const userPolicy = data.policies.find((policy) => policy.scope === "user")!;
     const save = vi.fn(async (input) => ({
       ...userPolicy,
@@ -248,7 +265,11 @@ describe("MemoryStudio", () => {
   });
 
   it("requires backend policy editing wiring when no save action is provided", () => {
-    render(<MemoryStudio data={createMemoryStudioData("agent_support")} />);
+    render(
+      <MemoryStudio
+        data={createMemoryStudioData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     fireEvent.click(screen.getByTestId("memory-policy-save-user"));
 
@@ -258,7 +279,11 @@ describe("MemoryStudio", () => {
   });
 
   it("requires backend policy approval wiring when no action is provided", () => {
-    render(<MemoryStudio data={createMemoryStudioData("agent_support")} />);
+    render(
+      <MemoryStudio
+        data={createMemoryStudioData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     fireEvent.click(screen.getByTestId("memory-policy-approve-user"));
 

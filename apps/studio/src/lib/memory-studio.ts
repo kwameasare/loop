@@ -8,7 +8,7 @@ import {
   localMemoryPolicies,
   type MemoryPolicy,
 } from "@/lib/memory-policies";
-import { targetUxFixtures, type TargetUXFixture } from "@/lib/target-ux";
+import type { TargetUXFixture } from "@/lib/target-ux";
 
 export type MemoryScope =
   | "session"
@@ -234,7 +234,7 @@ export async function deleteMemoryStudioEntry(
 
 export function createMemoryStudioData(
   agentId: string,
-  fixture: TargetUXFixture = targetUxFixtures,
+  fixture: TargetUXFixture,
 ): MemoryStudioData {
   const agent =
     fixture.agents.find((candidate) => candidate.id === agentId) ??

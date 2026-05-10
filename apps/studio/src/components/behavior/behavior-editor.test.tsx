@@ -6,6 +6,7 @@ import {
   createBehaviorEditorDataFromVersion,
   createEmptyBehaviorEditorData,
 } from "@/lib/behavior";
+import { targetUxFixtures } from "@/lib/target-ux";
 
 import { BehaviorEditor } from "./behavior-editor";
 
@@ -18,7 +19,11 @@ describe("BehaviorEditor", () => {
   });
 
   it("renders the behavior surface with three modes, semantic diff, eval coverage, and preview", () => {
-    render(<BehaviorEditor data={createBehaviorEditorData("agent_support")} />);
+    render(
+      <BehaviorEditor
+        data={createBehaviorEditorData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     expect(screen.getByTestId("behavior-editor")).toHaveTextContent(
       "Behavior editor",
@@ -66,7 +71,11 @@ describe("BehaviorEditor", () => {
   });
 
   it("shows inline risk flags and sentence telemetry with evidence", () => {
-    render(<BehaviorEditor data={createBehaviorEditorData("agent_support")} />);
+    render(
+      <BehaviorEditor
+        data={createBehaviorEditorData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     const sentence = screen.getByTestId(
       "behavior-sentence-sentence_purpose_cancel",
@@ -144,7 +153,11 @@ describe("BehaviorEditor", () => {
       }),
     );
     vi.stubGlobal("fetch", fetcher);
-    render(<BehaviorEditor data={createBehaviorEditorData("agent_support")} />);
+    render(
+      <BehaviorEditor
+        data={createBehaviorEditorData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     fireEvent.mouseEnter(
       screen.getByTestId("behavior-sentence-sentence_purpose_cancel"),
@@ -173,7 +186,7 @@ describe("BehaviorEditor", () => {
   it("opens directly on a linked behavior sentence", () => {
     render(
       <BehaviorEditor
-        data={createBehaviorEditorData("agent_support")}
+        data={createBehaviorEditorData("agent_support", targetUxFixtures)}
         initialSelectedSentenceId="sentence_purpose_cancel"
       />,
     );
@@ -204,7 +217,11 @@ describe("BehaviorEditor", () => {
       }),
     );
     vi.stubGlobal("fetch", fetcher);
-    render(<BehaviorEditor data={createBehaviorEditorData("agent_support")} />);
+    render(
+      <BehaviorEditor
+        data={createBehaviorEditorData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     fireEvent.click(screen.getByTestId("style-transfer-run"));
 
@@ -219,18 +236,28 @@ describe("BehaviorEditor", () => {
 
   it("requires backend style-transfer before showing voice rewrites", async () => {
     process.env.LOOP_CP_API_BASE_URL = "";
-    render(<BehaviorEditor data={createBehaviorEditorData("agent_support")} />);
+    render(
+      <BehaviorEditor
+        data={createBehaviorEditorData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     fireEvent.click(screen.getByTestId("style-transfer-run"));
 
     expect(
       await screen.findByText(/LOOP_CP_API_BASE_URL is required/i),
     ).toBeInTheDocument();
-    expect(screen.queryByTestId("style-transfer-results")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("style-transfer-results"),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps apply blocked until preview policy checks pass", () => {
-    render(<BehaviorEditor data={createBehaviorEditorData("agent_support")} />);
+    render(
+      <BehaviorEditor
+        data={createBehaviorEditorData("agent_support", targetUxFixtures)}
+      />,
+    );
 
     expect(screen.getByTestId("behavior-preview-blocked")).toHaveTextContent(
       "Release Manager approval",
@@ -250,7 +277,9 @@ describe("BehaviorEditor", () => {
       "No risk flags yet",
     );
     expect(data.agentName).toBe("Agent agent_empty");
-    expect(screen.queryByText("Acme Support Concierge")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Acme Support Concierge"),
+    ).not.toBeInTheDocument();
   });
 
   it("renders behavior sourced from a live agent version spec", () => {
