@@ -65,11 +65,39 @@ describe("ChangePackagePanel", () => {
     expect(screen.getByTestId("change-package-diff")).toHaveTextContent(
       "Adds verification",
     );
+    expect(
+      screen.getByTestId("change-package-version-manifest"),
+    ).toHaveTextContent("Behavior policy changes");
+    expect(
+      screen.getByTestId("change-package-version-manifest"),
+    ).toHaveTextContent("rc_refund_v2");
+    expect(
+      screen.getByTestId("change-package-version-manifest"),
+    ).toHaveTextContent("Rollback target");
     expect(screen.getByTestId("change-package-evidence")).toHaveTextContent(
       "commit_1",
     );
     expect(screen.getByTestId("change-package-preapprovals")).toHaveTextContent(
       "No pre-approved class",
+    );
+  });
+
+  it("warns when a package is stale and approvals must be re-requested", () => {
+    render(
+      <ChangePackagePanel
+        agentId="agt_1"
+        initialPackage={makePackage({
+          stale_at: "2026-05-09T13:00:00Z",
+          status: "stale",
+        })}
+      />,
+    );
+
+    expect(screen.getByTestId("change-package-stale-warning")).toHaveTextContent(
+      "approvals must be re-requested",
+    );
+    expect(screen.getByTestId("change-package-status")).toHaveTextContent(
+      "stale",
     );
   });
 
