@@ -957,6 +957,164 @@ class DashboardBody(BaseModel):
     shared_with: list[str] = Field(default_factory=list)
 
 
+class ObservatoryAnomalyTaskBody(BaseModel):
+    title: str = Field(min_length=1, max_length=256)
+    evidence: str = Field(min_length=1, max_length=2000)
+    affected_object: str = Field(min_length=1, max_length=256)
+    next_action: str = Field(min_length=1, max_length=1000)
+    owner: str = Field(default="", max_length=160)
+    trace_query: str = Field(default="", max_length=1000)
+
+
+class ObservatoryAnomalyEvalCaseBody(BaseModel):
+    source_type: str = Field(default="incident_cluster", max_length=128)
+    source_ref: str = Field(min_length=1, max_length=256)
+    affected_object: str = Field(min_length=1, max_length=256)
+    expected_behavior: str = Field(min_length=1, max_length=2000)
+    evidence: str = Field(min_length=1, max_length=2000)
+    trace_query: str = Field(default="", max_length=1000)
+
+
+@router_workspaces.post(
+    "/{workspace_id}/observatory/anomalies/{anomaly_id}/tasks",
+    status_code=201,
+)
+async def create_observatory_anomaly_task(
+    request: Request,
+    workspace_id: UUID,
+    anomaly_id: str,
+    body: ObservatoryAnomalyTaskBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    await authorize_workspace_access(
+        workspaces=request.app.state.cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    now = datetime.now(UTC)
+    task_id = f"task_{_safe_ref(anomaly_id)}_{uuid4().hex[:8]}"
+    task = {
+        "id": task_id,
+        "workspace_id": str(workspace_id),
+        "source_type": "observatory_anomaly",
+        "source_ref": anomaly_id,
+        "title": body.title,
+        "evidence": body.evidence,
+        "affected_object": body.affected_object,
+        "next_action": body.next_action,
+        "owner": body.owner,
+        "trace_query": body.trace_query,
+        "status": "open",
+        "created_at": now.isoformat(),
+        "created_by": caller_sub,
+        "href": f"/workspaces/{workspace_id}/tasks/{task_id}",
+    }
+    _bucket(request, "observatory_tasks").setdefault(str(workspace_id), {})[
+        task_id
+    ] = task
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="observatory:anomaly_task_create",
+        resource_type="observatory_task",
+        resource_id=task_id,
+        payload={
+            "anomaly_id": anomaly_id,
+            "affected_object": body.affected_object,
+            "trace_query": body.trace_query,
+        },
+    )
+    return {"id": task_id, "href": task["href"], "evidence": body.evidence}
+
+
+@router_workspaces.post(
+    "/{workspace_id}/observatory/anomalies/{anomaly_id}/eval-cases",
+    status_code=201,
+)
+async def create_observatory_anomaly_eval_case(
+    request: Request,
+    workspace_id: UUID,
+    anomaly_id: str,
+    body: ObservatoryAnomalyEvalCaseBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    await authorize_workspace_access(
+        workspaces=request.app.state.cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    suite = await request.app.state.cp.eval_suites.get_or_create_suite(
+        workspace_id=workspace_id,
+        name="Observatory failure regressions",
+        dataset_ref="observatory-failure-regressions",
+        metrics=["failure_regression", "trace_regression", "groundedness"],
+        actor_sub=caller_sub,
+    )
+    case = await request.app.state.cp.eval_suites.add_case(
+        workspace_id=workspace_id,
+        suite_id=suite.id,
+        body=EvalCaseCreate(
+            name=f"{body.affected_object} regression",
+            input={
+                "workspace_id": str(workspace_id),
+                "anomaly_id": anomaly_id,
+                "source_type": body.source_type,
+                "source_ref": body.source_ref,
+                "affected_object": body.affected_object,
+                "trace_query": body.trace_query,
+                "evidence": body.evidence,
+            },
+            expected={"behavior": body.expected_behavior},
+            scorers=[
+                {
+                    "kind": "trace_regression",
+                    "config": {
+                        "query": body.trace_query,
+                        "source_ref": body.source_ref,
+                    },
+                },
+                {
+                    "kind": "llm_judge",
+                    "config": {"rubric": "observatory failure expected behavior"},
+                },
+            ],
+            source=body.source_type,
+            source_ref=body.source_ref,
+            attachments=[
+                anomaly_id,
+                body.source_ref,
+                *([body.trace_query] if body.trace_query else []),
+            ],
+        ),
+        actor_sub=caller_sub,
+    )
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="observatory:anomaly_eval_case_create",
+        resource_type="eval_case",
+        resource_id=str(case.id),
+        payload={
+            "anomaly_id": anomaly_id,
+            "suite_id": str(suite.id),
+            "case_id": str(case.id),
+            "source_type": body.source_type,
+            "source_ref": body.source_ref,
+            "affected_object": body.affected_object,
+        },
+    )
+    return {
+        "id": str(case.id),
+        "href": f"/evals?suite_id={suite.id}&case_id={case.id}",
+        "evidence": body.evidence,
+        "suite_id": str(suite.id),
+    }
+
+
 def _dashboard_is_visible(
     item: dict[str, Any], *, caller_sub: str, role: Role
 ) -> bool:
