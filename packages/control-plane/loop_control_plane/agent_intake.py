@@ -596,11 +596,22 @@ def _candidate_eval_cases(body: CommitmentBody) -> list[dict[str, Any]]:
 def _missing_information(
     body: CommitmentBody, artifacts: list[AgentIntakeArtifactInput]
 ) -> list[dict[str, Any]]:
+    questions = {
+        "business_responsibility": "What business outcome is this agent responsible for?",
+        "target_users": "Who will rely on this agent in production?",
+        "owner_user_id": "Who owns this agent and receives approval, incident, and handoff requests?",
+        "worst_case_failure": "What is the worst outcome this agent must prevent or escalate?",
+        "channels": "Which channels should this agent support first?",
+        "systems_touched": "Which systems, tools, or APIs can this agent touch?",
+        "regions": "Which data residency or operating regions apply?",
+        "languages": "Which customer languages must be supported at launch?",
+    }
     rows = [
         {
             "field": field,
             "severity": "high",
             "message": f"{field} is required before acceptance.",
+            "question": questions.get(field, f"What value should `{field}` use?"),
         }
         for field in missing_required_fields(body)
     ]
@@ -610,6 +621,10 @@ def _missing_information(
                 "field": "artifacts",
                 "severity": "medium",
                 "message": "Add policy, transcript, API, or legacy export evidence before production.",
+                "question": (
+                    "What policy, transcript, API sample, or legacy export should "
+                    "ground the first draft?"
+                ),
             }
         )
     if not body.escalation_policy.strip():
@@ -618,6 +633,7 @@ def _missing_information(
                 "field": "escalation_policy",
                 "severity": "medium",
                 "message": "Define where uncertain or high-risk turns go.",
+                "question": "Where should uncertain, regulated, or high-risk turns escalate?",
             }
         )
     return rows
@@ -641,11 +657,13 @@ def build_intake_analysis(
     knowledge_sources = candidate_knowledge_sources(body)
     candidate_channels = candidate_channel_specs(body)
     candidate_eval_cases = _candidate_eval_cases(body.contract)
-    ready = [
-        "Mission defined",
-        "Commitment Document drafted",
-        f"{len(candidate_eval_cases)} starter evals created",
-    ]
+    ready = []
+    if body.contract.business_responsibility.strip():
+        ready.append("Mission defined")
+    if created_object_refs.get("commitment_id"):
+        ready.append("Commitment Document drafted")
+    if created_object_refs.get("eval_cases"):
+        ready.append(f"{len(created_object_refs['eval_cases'])} starter evals created")
     if created_object_refs.get("version_id"):
         ready.append("Initial behavior generated")
     if created_object_refs.get("branch_id"):
