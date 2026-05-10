@@ -32,9 +32,7 @@ export interface IdpConnectPanelProps {
    * Called when the user submits the connect form.
    * Should call postIdpMetadata and return the updated connection.
    */
-  onConnect: (
-    source: IdpMetadataSource,
-  ) => Promise<IdpConnectionResponse>;
+  onConnect: (source: IdpMetadataSource) => Promise<IdpConnectionResponse>;
 }
 
 // ---------------------------------------------------------------------------
@@ -77,10 +75,18 @@ export function IdpConnectPanel({
   const [connection, setConnection] = useState(initialConnection);
 
   const badge = STATUS_BADGE[connection.status];
+  const degradedReason = connection.degraded_reason;
+  const isDegraded = Boolean(degradedReason);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    if (isDegraded) {
+      setError(
+        "SAML evidence is unavailable. Connect is disabled until cp-api is reachable.",
+      );
+      return;
+    }
 
     const source: IdpMetadataSource =
       mode === "url" ? { url: metadataUrl } : { xml: metadataXml };
@@ -108,10 +114,7 @@ export function IdpConnectPanel({
   }
 
   return (
-    <section
-      data-testid="idp-connect-panel"
-      className="flex flex-col gap-6"
-    >
+    <section data-testid="idp-connect-panel" className="flex flex-col gap-6">
       {/* Status card */}
       <div
         data-testid="idp-status-card"
@@ -164,6 +167,16 @@ export function IdpConnectPanel({
       {/* Connect form */}
       <div className="rounded-lg border bg-card p-5">
         <h3 className="mb-4 font-medium">Connect IdP</h3>
+        {degradedReason && (
+          <div
+            data-testid="idp-degraded"
+            role="status"
+            className="mb-4 rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning"
+          >
+            <p className="font-medium">SAML evidence unavailable.</p>
+            <p className="mt-1 text-xs">{degradedReason}</p>
+          </div>
+        )}
 
         {/* Mode toggle */}
         <div
@@ -175,12 +188,14 @@ export function IdpConnectPanel({
             type="button"
             data-testid="idp-tab-url"
             aria-selected={mode === "url"}
+            disabled={isDegraded}
             onClick={() => setMode("url")}
             className={
               "px-4 py-2 text-sm font-medium transition-colors " +
               (mode === "url"
                 ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent/50")
+                : "text-muted-foreground hover:bg-accent/50") +
+              (isDegraded ? " opacity-50" : "")
             }
           >
             Paste URL
@@ -190,12 +205,14 @@ export function IdpConnectPanel({
             type="button"
             data-testid="idp-tab-xml"
             aria-selected={mode === "xml"}
+            disabled={isDegraded}
             onClick={() => setMode("xml")}
             className={
               "px-4 py-2 text-sm font-medium transition-colors " +
               (mode === "xml"
                 ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent/50")
+                : "text-muted-foreground hover:bg-accent/50") +
+              (isDegraded ? " opacity-50" : "")
             }
           >
             Upload XML
@@ -216,6 +233,7 @@ export function IdpConnectPanel({
                 className="rounded-md border bg-background px-2 py-1"
                 placeholder="https://idp.example.com/app/saml/metadata"
                 value={metadataUrl}
+                disabled={isDegraded}
                 onChange={(e) => setMetadataUrl(e.target.value)}
               />
             </label>
@@ -228,6 +246,7 @@ export function IdpConnectPanel({
                 rows={8}
                 placeholder="Paste your IdP metadata XML here..."
                 value={metadataXml}
+                disabled={isDegraded}
                 onChange={(e) => setMetadataXml(e.target.value)}
               />
             </label>
@@ -246,10 +265,14 @@ export function IdpConnectPanel({
           <button
             data-testid="idp-connect-submit"
             type="submit"
-            disabled={submitting}
+            disabled={submitting || isDegraded}
             className="self-start rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {submitting ? "Connecting…" : "Connect"}
+            {isDegraded
+              ? "Unavailable"
+              : submitting
+                ? "Connecting…"
+                : "Connect"}
           </button>
         </form>
       </div>

@@ -99,9 +99,7 @@ describe("postIdpMetadata", () => {
     });
 
     const called = mockFetch.mock.calls[0][0] as string;
-    expect(called).toBe(
-      "https://api.example.com/v1/enterprise/idp/metadata",
-    );
+    expect(called).toBe("https://api.example.com/v1/enterprise/idp/metadata");
     expect(called).not.toContain("/v1/v1/");
   });
 
@@ -282,13 +280,14 @@ describe("fetchSamlConfig / postSamlConfig", () => {
     expect(url).toBe("https://cp.test/v1/workspaces/ws1/enterprise/saml");
   });
 
-  it("fetchSamlConfig returns not_configured on 404 (route blocked)", async () => {
+  it("fetchSamlConfig returns degraded evidence on 404 (route blocked)", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
     const cfg = await fetchSamlConfig("ws1", { fetcher });
     expect(cfg.status).toBe("not_configured");
     expect(cfg.acs_url).toBeNull();
+    expect(cfg.degraded_reason).toMatch(/enterprise SAML route returned 404/i);
   });
 
   it("postSamlConfig POSTs the body and returns the response", async () => {

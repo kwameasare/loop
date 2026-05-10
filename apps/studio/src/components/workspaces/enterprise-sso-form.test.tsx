@@ -35,7 +35,7 @@ describe("EnterpriseSsoForm (S615)", () => {
   it("submits the uploaded XML contents when a file is chosen", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(<EnterpriseSsoForm status="not_connected" onSubmit={onSubmit} />);
-    const xml = "<EntityDescriptor entityID=\"urn:idp\"></EntityDescriptor>";
+    const xml = '<EntityDescriptor entityID="urn:idp"></EntityDescriptor>';
     const file = new File([xml], "metadata.xml", { type: "application/xml" });
     fireEvent.change(screen.getByTestId("enterprise-sso-metadata-file"), {
       target: { files: [file] },
@@ -53,7 +53,9 @@ describe("EnterpriseSsoForm (S615)", () => {
     fireEvent.change(screen.getByTestId("enterprise-sso-metadata-url"), {
       target: { value: "https://idp.example.com/metadata" },
     });
-    const file = new File(["<x/>"], "metadata.xml", { type: "application/xml" });
+    const file = new File(["<x/>"], "metadata.xml", {
+      type: "application/xml",
+    });
     fireEvent.change(screen.getByTestId("enterprise-sso-metadata-file"), {
       target: { files: [file] },
     });
@@ -78,9 +80,27 @@ describe("EnterpriseSsoForm (S615)", () => {
     expect(screen.getByTestId("enterprise-sso-error").textContent).toMatch(
       /404/,
     );
-    expect(screen.getByTestId("enterprise-sso-status").getAttribute("data-status")).toBe(
-      "error",
+    expect(
+      screen.getByTestId("enterprise-sso-status").getAttribute("data-status"),
+    ).toBe("error");
+  });
+
+  it("disables SSO mutation controls when backend evidence is unavailable", () => {
+    const onSubmit = vi.fn();
+    render(
+      <EnterpriseSsoForm
+        status="error"
+        onSubmit={onSubmit}
+        errorMessage="cp-api enterprise SAML route returned 404"
+        disabled
+      />,
     );
+
+    expect(screen.getByTestId("enterprise-sso-metadata-url")).toBeDisabled();
+    expect(screen.getByTestId("enterprise-sso-metadata-file")).toBeDisabled();
+    expect(screen.getByTestId("enterprise-sso-submit")).toBeDisabled();
+    fireEvent.click(screen.getByTestId("enterprise-sso-submit"));
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it("blocks submit when neither URL nor XML provided", async () => {

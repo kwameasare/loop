@@ -41,6 +41,12 @@ export interface IdpConnectionResponse {
   acs_url: string | null;
   /** ISO 8601 timestamp of the last successful ACS round-trip; null if never. */
   connected_at: string | null;
+  /**
+   * Present when SSO evidence could not be loaded from cp-api. The visible UI
+   * must treat this as an unavailable evidence state, not as a real
+   * "not_configured" workspace.
+   */
+  degraded_reason?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -98,9 +104,8 @@ export async function postIdpMetadata(
   const url = `${base}/v1/enterprise/idp/metadata`;
 
   const fetcher = opts.fetcher ?? fetch;
-  const body: Record<string, string> = "url" in opts.source
-    ? { url: opts.source.url }
-    : { xml: opts.source.xml };
+  const body: Record<string, string> =
+    "url" in opts.source ? { url: opts.source.url } : { xml: opts.source.xml };
 
   const res = await fetcher(url, {
     method: "POST",
@@ -112,7 +117,9 @@ export async function postIdpMetadata(
   });
 
   if (!res.ok) {
-    throw new Error(`IdP metadata upload failed: ${res.status} ${res.statusText}`);
+    throw new Error(
+      `IdP metadata upload failed: ${res.status} ${res.statusText}`,
+    );
   }
   return res.json() as Promise<IdpConnectionResponse>;
 }
@@ -176,9 +183,9 @@ export interface PutGroupRulesOptions {
 // The audit doc identifies ``/v1/workspaces/{id}/enterprise/saml`` as
 // the canonical workspace-scoped SSO route. cp-api has the underlying
 // ``saml*.py`` service modules but no FastAPI shim is mounted yet, so
-// these helpers degrade on 404: GET returns ``not_configured`` so the
-// page can render the "set me up" panel, POST surfaces a clear error
-// telling the user the route hasn't shipped.
+// these helpers degrade on 404: GET returns an explicit degraded evidence
+// object, POST surfaces a clear error telling the user the route hasn't
+// shipped.
 
 export interface SamlConfigResponse {
   status: IdpConnectionStatus;
@@ -186,6 +193,7 @@ export interface SamlConfigResponse {
   /** Workspace-specific ACS URL the IdP will POST SAMLResponses to. */
   acs_url: string | null;
   connected_at: string | null;
+  degraded_reason?: string;
 }
 
 export interface PostSamlConfigBody {
@@ -209,12 +217,26 @@ function _samlBase(override?: string): string {
   return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
 }
 
+export const SAML_ROUTE_UNAVAILABLE_REASON =
+  "cp-api enterprise SAML route returned 404. Studio will not treat unavailable SSO evidence as a workspace with no SAML configuration.";
+
+export function createDegradedSamlConfig(
+  reason: string = SAML_ROUTE_UNAVAILABLE_REASON,
+): SamlConfigResponse {
+  return {
+    status: "not_configured",
+    entity_id: null,
+    acs_url: null,
+    connected_at: null,
+    degraded_reason: reason,
+  };
+}
+
 /**
  * Read the SAML config for a workspace.
  *
- * Blocked on cp-api PR. Returns ``not_configured`` on 404 so the
- * page renders cleanly today and lights up automatically when
- * cp ships ``/v1/workspaces/{id}/enterprise/saml``.
+ * Blocked on cp-api PR. Returns an explicit degraded SAML config on 404 so
+ * Studio never confuses missing backend evidence with a real no-SSO state.
  */
 export async function fetchSamlConfig(
   workspace_id: string,
@@ -229,12 +251,7 @@ export async function fetchSamlConfig(
   )}/enterprise/saml`;
   const res = await fetcher(url, { method: "GET", headers, cache: "no-store" });
   if (res.status === 404) {
-    return {
-      status: "not_configured",
-      entity_id: null,
-      acs_url: null,
-      connected_at: null,
-    };
+    return createDegradedSamlConfig();
   }
   if (!res.ok) throw new Error(`cp-api GET enterprise/saml -> ${res.status}`);
   return (await res.json()) as SamlConfigResponse;
@@ -306,8 +323,9 @@ export async function putGroupRules(
   });
 
   if (!res.ok) {
-    throw new Error(`Group rules update failed: ${res.status} ${res.statusText}`);
+    throw new Error(
+      `Group rules update failed: ${res.status} ${res.statusText}`,
+    );
   }
   return res.json() as Promise<GroupRulesResponse>;
 }
-

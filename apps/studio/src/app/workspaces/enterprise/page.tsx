@@ -46,6 +46,7 @@ function EnterpriseSsoBody() {
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined,
   );
+  const [backendUnavailable, setBackendUnavailable] = useState(false);
 
   useEffect(() => {
     if (!active) return;
@@ -53,6 +54,14 @@ function EnterpriseSsoBody() {
     void fetchSamlConfig(active.id)
       .then((c) => {
         if (cancelled) return;
+        if (c.degraded_reason) {
+          setErrorMessage(c.degraded_reason);
+          setBackendUnavailable(true);
+          setStatus("error");
+          return;
+        }
+        setBackendUnavailable(false);
+        setErrorMessage(undefined);
         setStatus(toSsoStatus(c.status));
       })
       .catch((err: unknown) => {
@@ -60,6 +69,7 @@ function EnterpriseSsoBody() {
         setErrorMessage(
           err instanceof Error ? err.message : "Could not load SSO config",
         );
+        setBackendUnavailable(true);
         setStatus("error");
       });
     return () => {
@@ -70,6 +80,7 @@ function EnterpriseSsoBody() {
   async function handleSubmit(payload: EnterpriseSsoSubmitPayload) {
     if (!active) return;
     setErrorMessage(undefined);
+    setBackendUnavailable(false);
     setStatus("pending");
     try {
       const next = await postSamlConfig(active.id, {
@@ -78,8 +89,11 @@ function EnterpriseSsoBody() {
       });
       setStatus(toSsoStatus(next.status));
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : "Failed to connect IdP.",
+      const message =
+        err instanceof Error ? err.message : "Failed to connect IdP.";
+      setErrorMessage(message);
+      setBackendUnavailable(
+        /404|route not yet shipped|LOOP_CP_API_BASE_URL/i.test(message),
       );
       setStatus("error");
     }
@@ -106,6 +120,7 @@ function EnterpriseSsoBody() {
         status={status}
         onSubmit={handleSubmit}
         {...(errorMessage ? { errorMessage } : {})}
+        {...(backendUnavailable ? { disabled: true } : {})}
       />
     </main>
   );

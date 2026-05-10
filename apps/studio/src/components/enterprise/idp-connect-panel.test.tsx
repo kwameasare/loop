@@ -24,12 +24,31 @@ describe("IdpConnectPanel", () => {
     expect(badge.textContent).toMatch(/Not configured/);
   });
 
-  it("shows 'Pending verification' badge when status is pending_verification", () => {
+  it("shows degraded SAML evidence and disables mutation controls", () => {
+    const onConnect = vi.fn();
     render(
       <IdpConnectPanel
-        connection={FIXTURE_IDP_PENDING}
-        onConnect={vi.fn()}
+        connection={{
+          ...FIXTURE_IDP_NOT_CONFIGURED,
+          degraded_reason: "cp-api enterprise SAML route returned 404",
+        }}
+        onConnect={onConnect}
       />,
+    );
+
+    expect(screen.getByTestId("idp-degraded").textContent).toMatch(
+      /SAML evidence unavailable/i,
+    );
+    expect(screen.getByTestId("idp-metadata-url-input")).toBeDisabled();
+    expect(screen.getByTestId("idp-tab-xml")).toBeDisabled();
+    expect(screen.getByTestId("idp-connect-submit")).toBeDisabled();
+    fireEvent.submit(screen.getByTestId("idp-connect-form"));
+    expect(onConnect).not.toHaveBeenCalled();
+  });
+
+  it("shows 'Pending verification' badge when status is pending_verification", () => {
+    render(
+      <IdpConnectPanel connection={FIXTURE_IDP_PENDING} onConnect={vi.fn()} />,
     );
     expect(screen.getByTestId("idp-status-badge").textContent).toMatch(
       /Pending verification/,
@@ -166,9 +185,7 @@ describe("IdpConnectPanel", () => {
   });
 
   it("shows error message when onConnect rejects", async () => {
-    const onConnect = vi
-      .fn()
-      .mockRejectedValue(new Error("Network failure"));
+    const onConnect = vi.fn().mockRejectedValue(new Error("Network failure"));
     render(
       <IdpConnectPanel
         connection={FIXTURE_IDP_NOT_CONFIGURED}
