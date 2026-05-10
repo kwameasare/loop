@@ -205,6 +205,8 @@ describe("AgentOverview", () => {
       systems_touched: ["billing"],
       regions: ["eu-west-2"],
       languages: ["en"],
+      budget_target: "$0.08 per resolved turn",
+      escalation_policy: "Escalate legal threats and refunds over $200.",
     };
     const commitment = {
       ...buildLocalCommitmentDocument("ag_1", body),
@@ -224,6 +226,12 @@ describe("AgentOverview", () => {
     );
     expect(screen.getByTestId("agent-workbench-profile")).toHaveTextContent(
       "maya@acme.test",
+    );
+    expect(screen.getByText("Budget cap").parentElement).toHaveTextContent(
+      "$0.08 per resolved turn",
+    );
+    expect(screen.getByText("Escalation").parentElement).toHaveTextContent(
+      "Escalate legal threats and refunds over $200.",
     );
   });
 
