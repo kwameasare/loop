@@ -2145,17 +2145,31 @@ async def empty_state_suggestions(
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
     workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
-    traces = await request.app.state.cp.trace_store.search(TraceQuery(workspace_id=workspace_id))
+    traces = await request.app.state.cp.trace_store.search(
+        TraceQuery(workspace_id=workspace_id, agent_id=agent_id, page_size=12)
+    )
     trace_count = len(traces)
-    suggestions = {
-        "evals": [
+    eval_suggestions = (
+        [
             {
                 "id": "starter_eval_from_traces",
-                "title": f"Save {max(1, min(12, trace_count or 12))} turns from yesterday as a starter eval suite.",
+                "title": f"Save {min(12, trace_count)} recent turn(s) as a starter eval suite.",
                 "action_label": "Create starter suite",
                 "evidence_ref": f"empty-state/{agent_id}/evals/recent-traces",
             }
-        ],
+        ]
+        if trace_count
+        else [
+            {
+                "id": "collect_first_proof_traces",
+                "title": "Run first proof or production turns before Studio can create a starter eval suite.",
+                "action_label": "Open simulator",
+                "evidence_ref": f"empty-state/{agent_id}/evals/no-traces",
+            }
+        ]
+    )
+    suggestions = {
+        "evals": eval_suggestions,
         "kb": [
             {
                 "id": "kb_gap_review",
@@ -2174,6 +2188,120 @@ async def empty_state_suggestions(
         ],
     }[surface]
     return {"surface": surface, "items": suggestions}
+
+
+class EmptyStateAcceptBody(BaseModel):
+    surface: str = Field(pattern="^(evals|kb|inbox)$")
+
+
+@router_agents.post("/{agent_id}/empty-state-suggestions/{suggestion_id}/accept")
+async def accept_empty_state_suggestion(
+    request: Request,
+    agent_id: UUID,
+    suggestion_id: str,
+    body: EmptyStateAcceptBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    agent = await _authorize_agent_record(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    cp = request.app.state.cp
+    created_refs: list[str] = []
+    if body.surface == "evals":
+        traces = await cp.trace_store.search(
+            TraceQuery(
+                workspace_id=agent.workspace_id,
+                agent_id=agent.id,
+                page_size=12,
+            )
+        )
+        if not traces:
+            raise HTTPException(
+                status_code=409,
+                detail="no traces available for starter evals",
+            )
+        suite = await cp.eval_suites.get_or_create_suite(
+            workspace_id=agent.workspace_id,
+            name="Starter evals from recent turns",
+            dataset_ref=f"agent:{agent.id}:starter-recent-turns",
+            metrics=["behavior_match", "groundedness"],
+            actor_sub=caller_sub,
+        )
+        created_refs.append(f"eval-suite/{suite.id}")
+        for trace in traces[:12]:
+            case = await cp.eval_suites.add_case(
+                workspace_id=agent.workspace_id,
+                suite_id=suite.id,
+                body=EvalCaseCreate(
+                    name=f"Starter turn {trace.trace_id[:8]}",
+                    input={
+                        "agent_id": str(agent.id),
+                        "trace_id": trace.trace_id,
+                        "turn_id": str(trace.turn_id),
+                        "conversation_id": str(trace.conversation_id),
+                        "channel_binding_id": trace.channel_binding_id,
+                    },
+                    expected={"outcome": "Preserve the accepted production behavior."},
+                    scorers=[
+                        {
+                            "kind": "trace_regression",
+                            "config": {"trace_id": trace.trace_id},
+                        }
+                    ],
+                    source="empty-state-suggestion",
+                    source_ref=f"empty-state/{agent.id}/evals/recent-traces",
+                    attachments=[trace.trace_id],
+                ),
+                actor_sub=caller_sub,
+            )
+            created_refs.append(f"eval/{case.id}")
+        next_url = f"/agents/{agent_id}/evals?suite_id={suite.id}"
+        title = f"Created starter eval suite with {len(created_refs) - 1} case(s)."
+    else:
+        task = {
+            "id": f"task_{uuid4().hex[:10]}",
+            "surface": body.surface,
+            "suggestion_id": suggestion_id,
+            "agent_id": str(agent_id),
+            "created_by": caller_sub,
+            "created_at": datetime.now(UTC).isoformat(),
+        }
+        _bucket(request, "empty_state_tasks").setdefault(
+            str(agent.workspace_id),
+            [],
+        ).append(task)
+        created_refs.append(f"task/{task['id']}")
+        next_url = (
+            f"/inbox?agent_id={agent_id}"
+            if body.surface == "inbox"
+            else f"/agents/{agent_id}/{body.surface}"
+        )
+        title = f"Created follow-up task {task['id']}."
+    _audit(
+        request,
+        workspace_id=agent.workspace_id,
+        caller_sub=caller_sub,
+        action="empty_state:suggestion_accept",
+        resource_type="empty_state_suggestion",
+        resource_id=suggestion_id,
+        payload={
+            "agent_id": str(agent_id),
+            "surface": body.surface,
+            "created_refs": created_refs,
+        },
+    )
+    return {
+        "ok": True,
+        "suggestion_id": suggestion_id,
+        "surface": body.surface,
+        "title": title,
+        "created_refs": created_refs,
+        "next_url": next_url,
+        "evidence_ref": f"empty-state/{agent_id}/{body.surface}/{suggestion_id}",
+    }
 
 
 class PairDebugAudioBody(BaseModel):
