@@ -475,6 +475,22 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§5",
   },
   {
+    route: "/share/[token]",
+    verb: "system",
+    label: "Public share",
+    purpose:
+      "Server-redacted external evidence view with expiry and audit logging (§27.4).",
+    anchor: "§27.4",
+  },
+  {
+    route: "/voice-demo/[token]",
+    verb: "system",
+    label: "Voice demo",
+    purpose:
+      "Short-lived stakeholder voice access with mic check, trace capture, and rate limits (§16.5).",
+    anchor: "§16.5",
+  },
+  {
     route: "/a11y",
     verb: "system",
     label: "Accessibility primitives",
