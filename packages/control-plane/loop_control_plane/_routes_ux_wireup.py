@@ -2403,6 +2403,22 @@ class LatencyBudgetBody(BaseModel):
     target_latency_ms: int = Field(default=900, ge=100, le=30_000)
 
 
+async def _trace_summary_for_agent(
+    request: Request,
+    *,
+    workspace_id: UUID,
+    agent_id: UUID,
+    trace_ref: str,
+) -> Any:
+    traces = await request.app.state.cp.trace_search.run(
+        TraceQuery(workspace_id=workspace_id, agent_id=agent_id, page_size=200)
+    )
+    for trace in traces.items:
+        if trace.trace_id == trace_ref or str(trace.turn_id) == trace_ref:
+            return trace
+    raise HTTPException(status_code=404, detail="trace not found for this agent")
+
+
 @router_agents.post("/{agent_id}/latency-budget")
 async def latency_budget(
     request: Request,
@@ -2411,39 +2427,21 @@ async def latency_budget(
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
     workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
+    trace = await _trace_summary_for_agent(
+        request, workspace_id=workspace_id, agent_id=agent_id, trace_ref=body.trace_id
+    )
     spans = [
-        {"id": "system", "label": "System", "ms": 70, "kind": "runtime"},
-        {"id": "llm", "label": "LLM", "ms": 430, "kind": "model"},
-        {"id": "retrieval", "label": "KB", "ms": 120, "kind": "retrieval"},
-        {"id": "tool", "label": "Tool", "ms": 180, "kind": "tool"},
-        {"id": "memory", "label": "Memory", "ms": 55, "kind": "memory"},
-        {"id": "channel", "label": "Channel", "ms": 95, "kind": "channel"},
+        {
+            "id": trace.trace_id,
+            "label": "Recorded turn summary",
+            "ms": trace.duration_ms,
+            "kind": "trace",
+            "evidence_ref": f"trace/{trace.trace_id}/summary",
+        }
     ]
-    total = sum(int(span["ms"]) for span in spans)
+    total = trace.duration_ms
     gap = max(0, total - body.target_latency_ms)
-    suggestions = [
-        {
-            "id": "swap_model",
-            "label": "Swap to fast draft model",
-            "saves_ms": 280,
-            "quality_delta": -0.02,
-            "evidence_ref": f"latency-budget/{body.trace_id}/llm",
-        },
-        {
-            "id": "cache_retrieval",
-            "label": "Cache repeated KB query",
-            "saves_ms": 90,
-            "quality_delta": 0,
-            "evidence_ref": f"latency-budget/{body.trace_id}/retrieval",
-        },
-        {
-            "id": "skip_second_pass",
-            "label": "Skip second LLM repair pass",
-            "saves_ms": 410,
-            "quality_delta": -0.04,
-            "evidence_ref": f"latency-budget/{body.trace_id}/repair-pass",
-        },
-    ]
+    suggestions: list[dict[str, Any]] = []
     _audit(
         request,
         workspace_id=workspace_id,
@@ -2460,6 +2458,10 @@ async def latency_budget(
         "gap_ms": gap,
         "spans": spans,
         "suggestions": suggestions,
+        "unavailable_reason": (
+            "Span-level latency breakdown is not mounted for this trace yet; "
+            "Studio is showing the authorized trace summary only."
+        ),
     }
 
 
@@ -2476,6 +2478,9 @@ async def context_ablation(
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
     workspace_id = await _authorize_agent(request, agent_id=agent_id, caller_sub=caller_sub)
+    trace = await _trace_summary_for_agent(
+        request, workspace_id=workspace_id, agent_id=agent_id, trace_ref=body.turn_id
+    )
     defaults = {
         "prompt_sections": True,
         "kb_chunks": True,
@@ -2486,39 +2491,39 @@ async def context_ablation(
     items = [
         {
             "id": "prompt_sections",
-            "label": "Long-tail prompt sections",
+            "label": "Prompt sections",
             "enabled": toggles["prompt_sections"],
-            "cost_delta_pct": -14 if not toggles["prompt_sections"] else 0,
-            "latency_delta_ms": -120 if not toggles["prompt_sections"] else 0,
-            "quality_delta": -0.01 if not toggles["prompt_sections"] else 0,
-            "evidence_ref": f"context-ablation/{body.turn_id}/prompt",
+            "cost_delta_pct": 0,
+            "latency_delta_ms": 0,
+            "quality_delta": 0,
+            "evidence_ref": f"trace/{trace.trace_id}/context/prompt-unavailable",
         },
         {
             "id": "kb_chunks",
             "label": "Retrieved KB chunks",
             "enabled": toggles["kb_chunks"],
-            "cost_delta_pct": -9 if not toggles["kb_chunks"] else 0,
-            "latency_delta_ms": -90 if not toggles["kb_chunks"] else 0,
-            "quality_delta": -0.08 if not toggles["kb_chunks"] else 0,
-            "evidence_ref": f"context-ablation/{body.turn_id}/kb",
+            "cost_delta_pct": 0,
+            "latency_delta_ms": 0,
+            "quality_delta": 0,
+            "evidence_ref": f"trace/{trace.trace_id}/context/kb-unavailable",
         },
         {
             "id": "memory",
             "label": "Durable memory",
             "enabled": toggles["memory"],
-            "cost_delta_pct": -3 if not toggles["memory"] else 0,
-            "latency_delta_ms": -45 if not toggles["memory"] else 0,
-            "quality_delta": -0.02 if not toggles["memory"] else 0,
-            "evidence_ref": f"context-ablation/{body.turn_id}/memory",
+            "cost_delta_pct": 0,
+            "latency_delta_ms": 0,
+            "quality_delta": 0,
+            "evidence_ref": f"trace/{trace.trace_id}/context/memory-unavailable",
         },
         {
             "id": "examples",
             "label": "Few-shot examples",
             "enabled": toggles["examples"],
-            "cost_delta_pct": -11 if not toggles["examples"] else 0,
-            "latency_delta_ms": -70 if not toggles["examples"] else 0,
-            "quality_delta": -0.03 if not toggles["examples"] else 0,
-            "evidence_ref": f"context-ablation/{body.turn_id}/examples",
+            "cost_delta_pct": 0,
+            "latency_delta_ms": 0,
+            "quality_delta": 0,
+            "evidence_ref": f"trace/{trace.trace_id}/context/examples-unavailable",
         },
     ]
     _audit(
@@ -2530,7 +2535,14 @@ async def context_ablation(
         resource_id=body.turn_id,
         payload={"toggles": toggles},
     )
-    return {"turn_id": body.turn_id, "items": items}
+    return {
+        "turn_id": body.turn_id,
+        "items": items,
+        "unavailable_reason": (
+            "Context-section attribution is not mounted for this trace yet; "
+            "Studio will not claim cost, latency, or quality deltas."
+        ),
+    }
 
 
 @router_agents.get("/{agent_id}/empty-state-suggestions")

@@ -90,6 +90,15 @@ export function LatencyBudgetVisualizer({
       ) : null}
       {model ? (
         <>
+          {model.unavailable_reason ? (
+            <p
+              className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+              data-testid="latency-budget-unavailable"
+              role="status"
+            >
+              {model.unavailable_reason}
+            </p>
+          ) : null}
           <div className="flex h-5 overflow-hidden rounded-full bg-muted">
             {model.spans.map((span) => (
               <span
@@ -111,23 +120,34 @@ export function LatencyBudgetVisualizer({
               />
             ))}
           </div>
-          <div className="grid gap-2 md:grid-cols-3">
-            {model.suggestions.map((suggestion) => (
-              <EvidenceCallout
-                key={suggestion.id}
-                title={suggestion.label}
-                source={suggestion.evidence_ref}
-                confidence={86}
-                tone={suggestion.quality_delta < -0.03 ? "warning" : "info"}
-              >
-                <span className="inline-flex items-center gap-2">
-                  <Gauge className="h-4 w-4" aria-hidden />
-                  Saves {suggestion.saves_ms} ms; quality delta{" "}
-                  {suggestion.quality_delta}
-                </span>
-              </EvidenceCallout>
-            ))}
-          </div>
+          {model.suggestions.length > 0 ? (
+            <div className="grid gap-2 md:grid-cols-3">
+              {model.suggestions.map((suggestion) => (
+                <EvidenceCallout
+                  key={suggestion.id}
+                  title={suggestion.label}
+                  source={suggestion.evidence_ref}
+                  confidence={86}
+                  tone={suggestion.quality_delta < -0.03 ? "warning" : "info"}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Gauge className="h-4 w-4" aria-hidden />
+                    Saves {suggestion.saves_ms} ms; quality delta{" "}
+                    {suggestion.quality_delta}
+                  </span>
+                </EvidenceCallout>
+              ))}
+            </div>
+          ) : (
+            <p
+              className="rounded-md border bg-background p-3 text-sm text-muted-foreground"
+              data-testid="latency-budget-no-suggestions"
+            >
+              No latency optimization suggestions are shown until span-level
+              model, retrieval, tool, memory, and channel timings are available
+              for this trace.
+            </p>
+          )}
         </>
       ) : null}
     </section>

@@ -25,6 +25,9 @@ export function CostOfContextSlider({
   const [toggles, setToggles] = useState(DEFAULT_TOGGLES);
   const [items, setItems] = useState<ContextAblationItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [unavailableReason, setUnavailableReason] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -32,6 +35,7 @@ export function CostOfContextSlider({
       .then((next) => {
         if (!cancelled) {
           setItems(next.items);
+          setUnavailableReason(next.unavailable_reason ?? null);
           setError(null);
         }
       })
@@ -42,6 +46,7 @@ export function CostOfContextSlider({
               ? err.message
               : "Could not load context ablation.",
           );
+          setUnavailableReason(null);
         }
       });
     return () => {
@@ -74,6 +79,15 @@ export function CostOfContextSlider({
           role="alert"
         >
           {error}
+        </p>
+      ) : null}
+      {unavailableReason ? (
+        <p
+          className="mt-4 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+          data-testid="context-ablation-unavailable"
+          role="status"
+        >
+          {unavailableReason}
         </p>
       ) : null}
       <div className="mt-4 grid gap-3 md:grid-cols-2">
