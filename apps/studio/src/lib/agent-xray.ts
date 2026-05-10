@@ -1,6 +1,5 @@
 import {
   fetchTraceByTurnId,
-  getTrace,
   searchTraces,
   type Span,
   type Trace,
@@ -248,8 +247,7 @@ export async function fetchAgentXrayTraces(
       err instanceof Error &&
       /LOOP_CP_API_BASE_URL is required/.test(err.message)
     ) {
-      const fallback = await getTrace("trace_refund_742");
-      return fallback ? [fallback] : [];
+      return [];
     }
     throw err;
   }
