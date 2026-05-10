@@ -6,9 +6,9 @@
  * channel-scoped bearer token that the embedded ``web-channel.js``
  * script uses when calling ``/v1/agents/{id}/invoke``.
  *
- * If no cp-api base URL is configured the helpers fall back to an
- * in-memory mock so the UX can still be reviewed end-to-end. Tests pin
- * ``baseUrl`` to exercise the live fetch path.
+ * Mutating helpers require cp-api by default. Tests and isolated demos may opt
+ * into the deterministic fixture path with ``allowFixture``; route-facing code
+ * must not mint local tokens that look deployable.
  */
 
 export type WebChannelStatus = "disabled" | "enabled";
@@ -26,6 +26,7 @@ export interface ChannelHelperOptions {
   fetcher?: typeof fetch;
   baseUrl?: string;
   token?: string;
+  allowFixture?: boolean;
 }
 
 function resolveBase(opts: ChannelHelperOptions): string | null {
@@ -97,6 +98,11 @@ export async function enableWebChannel(
 ): Promise<WebChannelBinding> {
   const base = resolveBase(opts);
   if (!base) {
+    if (opts.allowFixture !== true) {
+      throw new Error(
+        "LOOP_CP_API_BASE_URL is required to enable web channel.",
+      );
+    }
     return {
       agentId,
       status: "enabled",
@@ -124,6 +130,11 @@ export async function disableWebChannel(
 ): Promise<WebChannelBinding> {
   const base = resolveBase(opts);
   if (!base) {
+    if (opts.allowFixture !== true) {
+      throw new Error(
+        "LOOP_CP_API_BASE_URL is required to disable web channel.",
+      );
+    }
     return {
       agentId,
       status: "disabled",

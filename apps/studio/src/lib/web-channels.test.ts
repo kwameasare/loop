@@ -1,7 +1,6 @@
 /**
- * Tests for the web-channel helper. The fixture path (no baseUrl) is
- * exercised first so the UX never crashes when running studio standalone.
- * The live path verifies the cp-api request shape and parsing.
+ * Tests for the web-channel helper. Mutating helpers require cp-api by
+ * default; deterministic token minting is explicit fixture mode only.
  */
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -11,23 +10,43 @@ import {
   getWebChannel,
 } from "./web-channels";
 
-describe("web-channels (fixture mode)", () => {
+describe("web-channels (unconfigured mode)", () => {
   it("getWebChannel returns disabled when no baseUrl", async () => {
     const binding = await getWebChannel("agt_demo");
     expect(binding.status).toBe("disabled");
     expect(binding.token).toBeNull();
   });
 
-  it("enableWebChannel mints a token without baseUrl", async () => {
-    const binding = await enableWebChannel("agt_demo");
+  it("enableWebChannel refuses to mint a token without cp-api", async () => {
+    await expect(enableWebChannel("agt_demo")).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required to enable web channel.",
+    );
+  });
+
+  it("disableWebChannel refuses to pretend a revoke happened without cp-api", async () => {
+    await expect(disableWebChannel("agt_demo")).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required to disable web channel.",
+    );
+  });
+});
+
+describe("web-channels (fixture mode)", () => {
+  it("enableWebChannel mints a token only when explicitly requested", async () => {
+    const binding = await enableWebChannel("agt_demo", {
+      baseUrl: "",
+      allowFixture: true,
+    });
     expect(binding.status).toBe("enabled");
     expect(binding.token).toMatch(/^wct_/);
     expect(binding.channelId).toMatch(/^wch_/);
     expect(binding.enabledAt).not.toBeNull();
   });
 
-  it("disableWebChannel returns disabled without baseUrl", async () => {
-    const binding = await disableWebChannel("agt_demo");
+  it("disableWebChannel returns disabled in explicit fixture mode", async () => {
+    const binding = await disableWebChannel("agt_demo", {
+      baseUrl: "",
+      allowFixture: true,
+    });
     expect(binding.status).toBe("disabled");
     expect(binding.token).toBeNull();
   });
