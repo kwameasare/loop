@@ -102,6 +102,11 @@ export interface EvalsHelperOptions {
   allowFixture?: boolean;
 }
 
+export interface EvalSuiteListResponse {
+  items: EvalSuite[];
+  degraded_reason?: string | undefined;
+}
+
 export interface EvalCreationSource {
   id: string;
   source: EvalCaseSource;
@@ -477,9 +482,15 @@ function fixtureRunDetail(runId: string): EvalRunDetail | null {
 
 export async function listEvalSuites(
   opts: EvalsHelperOptions = {},
-): Promise<{ items: EvalSuite[] }> {
+): Promise<EvalSuiteListResponse> {
   const base = resolveBase(opts);
-  if (!base) return { items: opts.allowFixture ? FIXTURE_SUITES : [] };
+  if (!base) {
+    if (opts.allowFixture) return { items: FIXTURE_SUITES };
+    return {
+      items: [],
+      degraded_reason: "LOOP_CP_API_BASE_URL is required to load eval suites.",
+    };
+  }
   const fetcher = opts.fetcher ?? fetch;
   const res = await fetcher(`${base}/evals/suites`, {
     method: "GET",

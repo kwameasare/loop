@@ -69,4 +69,19 @@ describe("EvalFoundry", () => {
     expect(screen.getByText("No suite builder config")).toBeInTheDocument();
     expect(screen.getByText("No result diff yet")).toBeInTheDocument();
   });
+
+  it("shows degraded state separately from an empty eval workspace", () => {
+    render(
+      <EvalFoundry
+        createAction={<button type="button">New suite</button>}
+        degradedReason="LOOP_CP_API_BASE_URL is required to load eval suites."
+        model={{ creationSources: [], featuredResult: null, suiteBuilders: [] }}
+        suites={[]}
+      />,
+    );
+
+    expect(screen.getByText("Eval suites unavailable")).toBeInTheDocument();
+    expect(screen.getByText(/LOOP_CP_API_BASE_URL is required/)).toBeInTheDocument();
+    expect(screen.getByText("No case sources yet")).toBeInTheDocument();
+  });
 });
