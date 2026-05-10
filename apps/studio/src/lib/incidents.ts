@@ -63,6 +63,10 @@ export type IncidentTransitionAction =
   | "resolve"
   | "archive";
 
+type IncidentClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 const LOCAL_INCIDENTS: IncidentRecord[] = [
   {
     id: "inc_local_rollback",
@@ -134,12 +138,13 @@ function getLocalIncident(agentId: string, incidentId: string): IncidentRecord {
 
 export async function listWorkspaceIncidents(
   workspaceId: string,
-  opts: UxWireupClientOptions = {},
+  opts: IncidentClientOptions = {},
 ): Promise<IncidentListResponse> {
   return cpJson<IncidentListResponse>(
     `/workspaces/${encodeURIComponent(workspaceId)}/incidents`,
     {
       ...opts,
+      allowFallback: opts.allowFixture === true,
       fallback: { items: LOCAL_INCIDENTS },
     },
   );
@@ -147,12 +152,13 @@ export async function listWorkspaceIncidents(
 
 export async function listAgentIncidents(
   agentId: string,
-  opts: UxWireupClientOptions = {},
+  opts: IncidentClientOptions = {},
 ): Promise<IncidentListResponse> {
   return cpJson<IncidentListResponse>(
     `/agents/${encodeURIComponent(agentId)}/incidents`,
     {
       ...opts,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         items: LOCAL_INCIDENTS.filter(
           (incident) => incident.agent_id === agentId,
@@ -165,7 +171,7 @@ export async function listAgentIncidents(
 export async function seedIncidentEvalCases(
   agentId: string,
   incidentId: string,
-  opts: UxWireupClientOptions = {},
+  opts: IncidentClientOptions = {},
 ): Promise<IncidentEvalSeedResponse> {
   const localIncident = getLocalIncident(agentId, incidentId);
   return cpJson<IncidentEvalSeedResponse>(
@@ -175,6 +181,7 @@ export async function seedIncidentEvalCases(
     {
       ...opts,
       method: "POST",
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ok: true,
         suite_id: "suite_incident_regressions_local",
@@ -191,7 +198,7 @@ export async function seedIncidentEvalCases(
 export async function createIncidentFixChangePackage(
   agentId: string,
   incidentId: string,
-  opts: UxWireupClientOptions = {},
+  opts: IncidentClientOptions = {},
 ): Promise<IncidentFixPackageResponse> {
   const localIncident = getLocalIncident(agentId, incidentId);
   const now = new Date().toISOString();
@@ -203,6 +210,7 @@ export async function createIncidentFixChangePackage(
       ...opts,
       method: "POST",
       body: {},
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ok: true,
         change_package: {
@@ -273,7 +281,7 @@ export async function transitionIncident(
   incidentId: string,
   action: IncidentTransitionAction,
   note: string,
-  opts: UxWireupClientOptions = {},
+  opts: IncidentClientOptions = {},
 ): Promise<IncidentRecord> {
   const localIncident = getLocalIncident(agentId, incidentId);
   const statusByAction: Record<IncidentTransitionAction, IncidentStatus> = {
@@ -292,6 +300,7 @@ export async function transitionIncident(
       ...opts,
       method: "POST",
       body: { note },
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...localIncident,
         status: nextStatus,

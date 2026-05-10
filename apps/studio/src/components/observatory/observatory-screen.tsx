@@ -230,9 +230,11 @@ function IncidentResponsePanel({
     Record<string, IncidentRecord>
   >({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function seedIncident(incident: IncidentRecord) {
     setBusy(incident.id);
+    setError(null);
     try {
       const response = await seedIncidentEvalCases(
         incident.agent_id,
@@ -242,6 +244,12 @@ function IncidentResponsePanel({
         ...current,
         [incident.id]: response.suite_id,
       }));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not seed incident eval cases.",
+      );
     } finally {
       setBusy(null);
     }
@@ -249,6 +257,7 @@ function IncidentResponsePanel({
 
   async function createFixPackage(incident: IncidentRecord) {
     setBusy(`fix:${incident.id}`);
+    setError(null);
     try {
       const response = await createIncidentFixChangePackage(
         incident.agent_id,
@@ -258,6 +267,12 @@ function IncidentResponsePanel({
         ...current,
         [incident.id]: response.change_package.id,
       }));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not create incident fix package.",
+      );
     } finally {
       setBusy(null);
     }
@@ -268,6 +283,7 @@ function IncidentResponsePanel({
     action: "investigate" | "resolve" | "archive",
   ) {
     setBusy(`${action}:${incident.id}`);
+    setError(null);
     try {
       const response = await transitionIncident(
         incident.agent_id,
@@ -283,6 +299,12 @@ function IncidentResponsePanel({
         ...current,
         [incident.id]: response,
       }));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not update incident state.",
+      );
     } finally {
       setBusy(null);
     }
@@ -299,6 +321,15 @@ function IncidentResponsePanel({
           {incidents.length > 0 ? `${incidents.length} active` : "clear"}
         </LiveBadge>
       </div>
+
+      {error ? (
+        <p
+          className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+        >
+          {error}
+        </p>
+      ) : null}
 
       {incidents.length === 0 ? (
         <article className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
