@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { ChangesetApprovals } from "@/components/collaboration/changeset-approvals";
+import { PairDebugAudioControl } from "@/components/collaboration/pair-debug-audio-control";
 import { PairDebugPanel } from "@/components/collaboration/pair-debug-panel";
 import { PresenceBar } from "@/components/collaboration/presence-bar";
 import { CommentThreadView } from "@/components/comments/comment-thread";
@@ -18,6 +19,7 @@ import {
 } from "@/lib/collaboration";
 import { fetchCommentThreads, type CommentThread } from "@/lib/comments";
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
+import { usePresenceSocket } from "@/lib/use-presence-socket";
 
 const ME = { id: "u_kojo", display: "Kojo A." };
 
@@ -39,6 +41,24 @@ function CollaborateReviewPageBody(): JSX.Element {
   });
   const [threads, setThreads] = useState<readonly CommentThread[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const presence = usePresenceSocket({
+    workspaceId: activeWorkspaceId,
+    callerSub: ME.id,
+    display: ME.display,
+    focus: workspace.pairDebug.trace[0]?.evidenceRef ?? "collaborate/review",
+    initialUsers: workspace.presence,
+  });
+  const pairDebugParticipants =
+    presence.users.length > 0
+      ? presence.users
+      : workspace.pairDebug.participants;
+  const pairDebugSession = {
+    ...workspace.pairDebug,
+    participants: pairDebugParticipants,
+  };
+  const teammateCount = pairDebugParticipants.filter(
+    (user) => user.id !== ME.id,
+  ).length;
 
   useEffect(() => {
     if (!activeWorkspaceId) return;
@@ -118,7 +138,35 @@ function CollaborateReviewPageBody(): JSX.Element {
           evidence={error}
         />
       ) : null}
-      <PresenceBar users={workspace.presence} />
+      <section className="grid gap-3 lg:grid-cols-[1fr_auto]">
+        <div className="space-y-2">
+          <PresenceBar users={pairDebugParticipants} />
+          {presence.error ? (
+            <p
+              className="text-xs text-destructive"
+              data-testid="presence-socket-error"
+            >
+              {presence.error}
+            </p>
+          ) : null}
+          <p
+            className="text-xs text-muted-foreground"
+            data-testid="presence-socket-state"
+          >
+            {presence.connected
+              ? "Realtime presence connected."
+              : "Realtime presence is waiting for cp-api websocket."}
+          </p>
+        </div>
+        {workspace.pairDebug.agentId ? (
+          <PairDebugAudioControl
+            workspaceId={activeWorkspaceId}
+            agentId={workspace.pairDebug.agentId}
+            teammateCount={teammateCount}
+            participantId={ME.id}
+          />
+        ) : null}
+      </section>
       {workspace.changeset ? (
         <ChangesetApprovals changeset={workspace.changeset} />
       ) : (
@@ -148,7 +196,7 @@ function CollaborateReviewPageBody(): JSX.Element {
           No live comment threads loaded for this workspace.
         </section>
       )}
-      <PairDebugPanel session={workspace.pairDebug} />
+      <PairDebugPanel session={pairDebugSession} />
     </main>
   );
 }
