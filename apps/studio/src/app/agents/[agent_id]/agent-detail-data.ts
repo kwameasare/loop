@@ -28,6 +28,9 @@ function fallbackAgent(agentId: string): AgentSummary {
     description: "Live agent data is unavailable for this request.",
     slug: slugFromAgentId(agentId),
     active_version: null,
+    object_state: "draft",
+    state_reason: "Live agent data is unavailable.",
+    state_evidence_ref: "agent.unavailable",
     updated_at: "1970-01-01T00:00:00Z",
     workspace_id: "unavailable",
   };

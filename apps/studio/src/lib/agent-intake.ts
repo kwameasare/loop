@@ -198,6 +198,9 @@ function localAgent(
     slug: input.slug,
     description: input.contract.business_responsibility,
     active_version: null,
+    object_state: "draft",
+    state_reason: "Agent was created from local intake fallback.",
+    state_evidence_ref: "agent_intake.local",
     updated_at: new Date(0).toISOString(),
   };
 }

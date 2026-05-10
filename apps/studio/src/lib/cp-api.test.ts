@@ -33,6 +33,9 @@ describe("listAgents", () => {
           name: "Support",
           slug: "support",
           active_version: 3,
+          object_state: "canary",
+          state_reason: "Deployment dep_1 is in canary rollout.",
+          state_evidence_ref: "deployment/dep_1",
           created_at: "2026-04-29T12:00:00Z",
           workspace_id: "ws_1",
         },
@@ -46,6 +49,8 @@ describe("listAgents", () => {
       name: "Support",
       slug: "support",
       active_version: 3,
+      object_state: "canary",
+      state_evidence_ref: "deployment/dep_1",
       workspace_id: "ws_1",
     });
     expect(fetchMock).toHaveBeenCalledWith(
@@ -67,9 +72,7 @@ describe("listAgents", () => {
       .fn()
       .mockResolvedValue({ ok: false, status: 503, json: async () => ({}) });
 
-    await expect(listAgents({ fetcher: fetchMock })).rejects.toThrow(
-      /503/,
-    );
+    await expect(listAgents({ fetcher: fetchMock })).rejects.toThrow(/503/);
   });
 });
 
@@ -110,6 +113,7 @@ describe("createAgent", () => {
       id: "agt_42",
       name: "Sales",
       slug: "sales",
+      object_state: "draft",
       workspace_id: "ws_1",
     });
     const [url, init] = fetchMock.mock.calls[0];
@@ -130,10 +134,7 @@ describe("createAgent", () => {
       .mockResolvedValue({ ok: false, status: 409, json: async () => ({}) });
 
     await expect(
-      createAgent(
-        { name: "Dup", slug: "dup" },
-        { fetcher: fetchMock },
-      ),
+      createAgent({ name: "Dup", slug: "dup" }, { fetcher: fetchMock }),
     ).rejects.toThrow(/409/);
   });
 });

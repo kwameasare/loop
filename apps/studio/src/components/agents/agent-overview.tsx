@@ -76,6 +76,7 @@ export interface AgentWorkbenchData {
   branch: string;
   lastProductionVersion: string;
   stateSentence: string;
+  stateEvidenceRef: string;
   draftChanges: string;
   memoryPolicy: string;
   budgetCap: string;
@@ -111,6 +112,9 @@ export interface AgentOverviewProps {
   /** Model identifier, e.g. "gpt-4o-mini". Empty string if not yet configured. */
   model: string;
   activeVersion?: number | null | undefined;
+  objectState?: ObjectState | undefined;
+  stateReason?: string | undefined;
+  stateEvidenceRef?: string | undefined;
   updatedAt?: string | undefined;
   lastDeploy: DeploySummary;
   dataState?: AgentWorkbenchDataState;
@@ -219,7 +223,7 @@ function formatDate(iso: string | null): string {
 function liveBadgeTone(state: ObjectState) {
   if (state === "production") return "live";
   if (state === "saved") return "staged";
-  if (state === "archived") return "paused";
+  if (state === "archived" || state === "rolled_back") return "paused";
   return state;
 }
 
@@ -399,7 +403,15 @@ function buildSections(input: {
 function createDefaultWorkbenchData(
   props: Pick<
     AgentOverviewProps,
-    "id" | "name" | "description" | "model" | "activeVersion" | "updatedAt"
+    | "id"
+    | "name"
+    | "description"
+    | "model"
+    | "activeVersion"
+    | "objectState"
+    | "stateReason"
+    | "stateEvidenceRef"
+    | "updatedAt"
   > & { commitment?: CommitmentDocument | undefined },
 ): AgentWorkbenchData {
   const purpose =
@@ -408,8 +420,16 @@ function createDefaultWorkbenchData(
     "No purpose has been accepted yet.";
   const hasProduction =
     props.activeVersion !== null && props.activeVersion !== undefined;
-  const objectState: ObjectState = hasProduction ? "production" : "draft";
-  const trust: TrustState = hasProduction ? "watching" : "blocked";
+  const objectState: ObjectState =
+    props.objectState ?? (hasProduction ? "production" : "draft");
+  const trust: TrustState =
+    objectState === "production"
+      ? "watching"
+      : objectState === "rolled_back"
+        ? "degraded"
+        : objectState === "draft"
+          ? "blocked"
+          : "watching";
   const modelAliases = props.model ? [props.model] : ["No model configured"];
   const evalSuite: TargetEvalSuite = {
     id: "evals.unconfigured",
@@ -441,15 +461,32 @@ function createDefaultWorkbenchData(
   const knowledgeSummary = "No knowledge sources loaded.";
   const memoryPolicy = "No durable memory policy loaded.";
   const evalGate = `${evalSuite.name}: ${evalSuite.coverage}`;
-  const deploySummary = hasProduction
-    ? `Production is active on v${props.activeVersion}.`
-    : "No production deployment.";
+  const deploySummary =
+    objectState === "production" && hasProduction
+      ? `Production is active on v${props.activeVersion}.`
+      : objectState === "canary"
+        ? "Controlled rollout is active."
+        : objectState === "staged"
+          ? "Staged for approval or shadow rollout."
+          : objectState === "rolled_back"
+            ? "Last rollout was rolled back."
+            : "No production deployment.";
   const lastProductionVersion = hasProduction
     ? `v${props.activeVersion}`
     : "No production version";
-  const stateSentence = hasProduction
-    ? `You are viewing agent ${props.name || props.id}. Production is currently ${lastProductionVersion}; no draft branch, eval gate, or change package is loaded in this overview.`
-    : `You are drafting agent ${props.name || props.id}. Production is not live; create a commitment, channel binding, eval suite, and Change Package before deploy.`;
+  const stateSentence =
+    props.stateReason ??
+    (objectState === "production" && hasProduction
+      ? `You are viewing agent ${props.name || props.id}. Production is currently ${lastProductionVersion}; no draft branch, eval gate, or change package is loaded in this overview.`
+      : objectState === "canary"
+        ? `You are viewing agent ${props.name || props.id}. A controlled rollout is active; inspect rollout metrics before promotion.`
+        : objectState === "staged"
+          ? `You are viewing agent ${props.name || props.id}. The agent is staged; approvals, preflight evidence, or shadow results are pending.`
+          : objectState === "saved"
+            ? `You are viewing agent ${props.name || props.id}. The agent has saved commitments but is not staged for production.`
+            : objectState === "rolled_back"
+              ? `You are viewing agent ${props.name || props.id}. The last rollout was rolled back; review the incident and fix package before shipping again.`
+              : `You are drafting agent ${props.name || props.id}. Production is not live; create a commitment, channel binding, eval suite, and Change Package before deploy.`);
 
   return {
     ownerTeam: props.commitment?.owner_user_id || "Unassigned",
@@ -462,6 +499,9 @@ function createDefaultWorkbenchData(
     branch: "No branch loaded",
     lastProductionVersion,
     stateSentence,
+    stateEvidenceRef:
+      props.stateEvidenceRef ??
+      (objectState === "production" ? "agent.active_version" : "agent.state"),
     draftChanges: hasProduction
       ? "No draft change set loaded."
       : "First draft has not produced a release candidate.",
@@ -590,6 +630,9 @@ export function AgentOverview({
   description: initialDescription,
   model,
   activeVersion,
+  objectState,
+  stateReason,
+  stateEvidenceRef,
   updatedAt,
   lastDeploy,
   dataState = "live",
@@ -610,6 +653,9 @@ export function AgentOverview({
           description,
           model,
           activeVersion,
+          objectState,
+          stateReason,
+          stateEvidenceRef,
           updatedAt,
           commitment,
         }),
@@ -622,6 +668,9 @@ export function AgentOverview({
       id,
       model,
       name,
+      objectState,
+      stateEvidenceRef,
+      stateReason,
       updatedAt,
       workbench,
     ],
@@ -689,6 +738,12 @@ export function AgentOverview({
             data-testid="agent-state-sentence"
           >
             {data.stateSentence}
+          </p>
+          <p
+            className="mt-2 font-mono text-xs text-muted-foreground"
+            data-testid="agent-state-evidence"
+          >
+            {data.stateEvidenceRef}
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div>
@@ -839,6 +894,11 @@ export function AgentOverview({
                 { id: "saved", label: "Saved", state: "saved" },
                 { id: "staged", label: "Staged", state: "staged" },
                 { id: "canary", label: "Canary", state: "canary" },
+                {
+                  id: "rolled_back",
+                  label: "Rolled back",
+                  state: "rolled_back",
+                },
                 { id: "production", label: "Production", state: "production" },
               ]}
             />

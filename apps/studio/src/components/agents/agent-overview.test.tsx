@@ -77,6 +77,9 @@ describe("AgentOverview", () => {
     expect(screen.getByTestId("agent-state-sentence")).toHaveTextContent(
       "Production is currently v3",
     );
+    expect(screen.getByTestId("agent-state-evidence")).toHaveTextContent(
+      "agent.active_version",
+    );
     expect(screen.getByTestId("overview-environment")).toHaveTextContent(
       "unconfigured",
     );
@@ -141,6 +144,27 @@ describe("AgentOverview", () => {
     );
     expect(screen.getByTestId("agent-workbench-profile")).toHaveTextContent(
       "maya@acme.test",
+    );
+  });
+
+  it("uses the durable agent object state when provided by cp-api", () => {
+    render(
+      <AgentOverview
+        {...BASE_PROPS}
+        objectState="canary"
+        stateReason="Deployment dep_1 is in ramp rollout."
+        stateEvidenceRef="deployment/dep_1"
+      />,
+    );
+
+    expect(screen.getByTestId("agent-state-sentence")).toHaveTextContent(
+      "Deployment dep_1 is in ramp rollout",
+    );
+    expect(screen.getByTestId("agent-state-evidence")).toHaveTextContent(
+      "deployment/dep_1",
+    );
+    expect(screen.getByTestId("agent-workbench-profile")).toHaveTextContent(
+      "Canary",
     );
   });
 

@@ -115,6 +115,7 @@ export const OBJECT_STATES = [
   "staged",
   "canary",
   "production",
+  "rolled_back",
   "archived",
 ] as const;
 
@@ -158,6 +159,12 @@ export const OBJECT_STATE_TREATMENTS: Record<
     shape: "ring",
     className: "border-success bg-success/10 text-success",
     textClassName: "text-success",
+  },
+  rolled_back: {
+    label: "Rolled Back",
+    shape: "triangle",
+    className: "border-destructive bg-destructive/10 text-destructive",
+    textClassName: "text-destructive",
   },
   archived: {
     label: "Archived",
@@ -212,7 +219,12 @@ export const TRUST_STATE_TREATMENTS: Record<
   },
 };
 
-export const CONFIDENCE_LEVELS = ["high", "medium", "low", "unsupported"] as const;
+export const CONFIDENCE_LEVELS = [
+  "high",
+  "medium",
+  "low",
+  "unsupported",
+] as const;
 
 export type ConfidenceLevel = (typeof CONFIDENCE_LEVELS)[number];
 
