@@ -115,6 +115,66 @@ describe("NewAgentModal", () => {
     push.mockReset();
   });
 
+  it("renders the full Agent Contract Wizard with implementation-stage panels", () => {
+    render(
+      <NewAgentModal
+        existingSlugs={[]}
+        workspaceId="ws_1"
+        createAgentIntake={makeCreateIntake()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("new-agent-button"));
+
+    for (const step of [
+      "mission",
+      "boundaries",
+      "capabilities",
+      "knowledge_tools",
+      "channels",
+      "generated_tests",
+      "readiness",
+    ]) {
+      expect(screen.getByTestId(`new-agent-step-${step}`)).toBeInTheDocument();
+    }
+
+    fireEvent.click(screen.getByTestId("new-agent-step-knowledge_tools"));
+    expect(screen.getByTestId("new-agent-artifact-kind")).toHaveTextContent(
+      "botpress export",
+    );
+    expect(screen.getByTestId("new-agent-artifact-kind")).toHaveTextContent(
+      "intercom export",
+    );
+
+    fireEvent.click(screen.getByTestId("new-agent-step-generated_tests"));
+    expect(screen.getByTestId("new-agent-generated-tests")).toHaveTextContent(
+      /Happy path follows the mission/i,
+    );
+  });
+
+  it("treats voice as one channel and keeps omnichannel selection editable", () => {
+    render(
+      <NewAgentModal
+        existingSlugs={[]}
+        workspaceId="ws_1"
+        createAgentIntake={makeCreateIntake()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("new-agent-button"));
+    fireEvent.click(screen.getByTestId("new-agent-step-channels"));
+    fireEvent.click(screen.getByRole("button", { name: /WhatsApp/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Telegram/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Voice/i }));
+
+    expect(screen.getByTestId("new-agent-channels")).toHaveValue(
+      "web, whatsapp, telegram, voice",
+    );
+    expect(screen.getByTestId("new-agent-step-panel-channels")).toHaveTextContent(
+      /Voice is one channel, not the category/i,
+    );
+  });
+
   it("opens the dialog and submits governed intake, then redirects to the workbench", async () => {
     const createAgentIntake = makeCreateIntake({
       agent: {
