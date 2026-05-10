@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -31,6 +31,46 @@ function discoverRoutes(): string[] {
   return routes.sort();
 }
 
+function discoverPageFiles(): {
+  route: string;
+  path: string;
+  source: string;
+}[] {
+  const pages: { route: string; path: string; source: string }[] = [];
+  function walk(dir: string): void {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      const s = statSync(full);
+      if (s.isDirectory()) {
+        walk(full);
+      } else if (entry === "page.tsx") {
+        const rel = relative(APP_ROOT, dir).split(sep).join("/");
+        pages.push({
+          route: rel === "" ? "/" : `/${rel}`,
+          path: full,
+          source: readFileSync(full, "utf8"),
+        });
+      }
+    }
+  }
+  walk(APP_ROOT);
+  return pages.sort((a, b) => a.route.localeCompare(b.route));
+}
+
+const ROUTE_FIXTURE_PATTERNS: readonly {
+  label: string;
+  pattern: RegExp;
+}[] = [
+  { label: "targetUxFixtures", pattern: /\btargetUxFixtures\b/ },
+  { label: "explicit fixture mode", pattern: /\ballowFixture\s*:\s*true\b/ },
+  { label: "fixture constant", pattern: /\bFIXTURE_[A-Z0-9_]+\b/ },
+  { label: "voice stage fixture", pattern: /\bVOICE_STAGE_FIXTURE\b/ },
+  {
+    label: "marketplace demo catalog",
+    pattern: /\bDEFAULT_MARKETPLACE_CATALOG\b/,
+  },
+];
+
 describe("STUDIO_ROUTES", () => {
   it("registers every page under apps/studio/src/app", () => {
     const onDisk = discoverRoutes();
@@ -54,7 +94,10 @@ describe("STUDIO_ROUTES", () => {
 
   it("groups routes by verb without dropping any", () => {
     const grouped = groupByVerb();
-    const total = Object.values(grouped).reduce((n, list) => n + list.length, 0);
+    const total = Object.values(grouped).reduce(
+      (n, list) => n + list.length,
+      0,
+    );
     expect(total).toBe(STUDIO_ROUTES.length);
   });
 
@@ -62,6 +105,23 @@ describe("STUDIO_ROUTES", () => {
     for (const entry of STUDIO_ROUTES) {
       expect(entry.anchor).toMatch(/^§\d/);
     }
+  });
+
+  it("keeps route-facing pages out of fixture mode", () => {
+    const findings = discoverPageFiles().flatMap((page) =>
+      page.source.split("\n").flatMap((line, index) =>
+        ROUTE_FIXTURE_PATTERNS.filter(({ pattern }) => pattern.test(line)).map(
+          ({ label }) => ({
+            route: page.route,
+            line: index + 1,
+            label,
+            text: line.trim(),
+          }),
+        ),
+      ),
+    );
+
+    expect(findings, JSON.stringify(findings, null, 2)).toEqual([]);
   });
 });
 
