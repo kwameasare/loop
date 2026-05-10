@@ -71,6 +71,7 @@ export function PreApprovedClassesPanel({
     setError(null);
     setNotice(null);
     const allowedTypes = csv(allowed);
+    const excludedTypes = csv(excluded);
     if (!grantedTo.trim() && !teamId.trim()) {
       setError("Grant the class to a user or a team.");
       return;
@@ -79,13 +80,30 @@ export function PreApprovedClassesPanel({
       setError("Add at least one allowed change type.");
       return;
     }
+    if (excludedTypes.length === 0) {
+      setError("Name the excluded change types so the corridor stays narrow.");
+      return;
+    }
+    if (risk === "high") {
+      setError("High-risk changes require full approval, not a pre-approved class.");
+      return;
+    }
+    const expiry = Date.parse(expiresAt);
+    if (Number.isNaN(expiry)) {
+      setError("Choose a valid expiration time.");
+      return;
+    }
+    if (expiry > Date.now() + 30 * 24 * 60 * 60 * 1000) {
+      setError("Pre-approved classes cannot run longer than 30 days.");
+      return;
+    }
     setBusy(true);
     try {
       const created = await createClass(agentId, {
         granted_to_user_id: grantedTo.trim(),
         team_id: teamId.trim(),
         allowed_change_types: allowedTypes,
-        excluded_change_types: csv(excluded),
+        excluded_change_types: excludedTypes,
         risk_ceiling: risk,
         expires_at: new Date(expiresAt).toISOString(),
         reason: reason.trim(),
@@ -209,7 +227,6 @@ export function PreApprovedClassesPanel({
           >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
-            <option value="high">High</option>
           </select>
         </label>
         <label className="space-y-1">

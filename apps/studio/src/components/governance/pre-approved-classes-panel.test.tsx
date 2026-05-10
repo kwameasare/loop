@@ -107,4 +107,44 @@ describe("PreApprovedClassesPanel", () => {
     fireEvent.click(screen.getByTestId("preapproved-create"));
     expect(await screen.findByText("Add at least one allowed change type.")).toBeInTheDocument();
   });
+
+  it("requires explicit exclusions and blocks long-lived corridors", async () => {
+    const createClass = vi.fn();
+
+    render(
+      <PreApprovedClassesPanel
+        agentId="agent_1"
+        initialItems={[]}
+        createClass={createClass}
+      />,
+    );
+    expect(screen.queryByRole("option", { name: "High" })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId("preapproved-user"), {
+      target: { value: "owner@example.com" },
+    });
+    fireEvent.change(screen.getByTestId("preapproved-excluded"), {
+      target: { value: "" },
+    });
+    fireEvent.click(screen.getByTestId("preapproved-create"));
+    expect(
+      await screen.findByText("Name the excluded change types so the corridor stays narrow."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId("preapproved-excluded"), {
+      target: { value: "tool,memory,channel,budget" },
+    });
+    fireEvent.change(screen.getByTestId("preapproved-expires"), {
+      target: {
+        value: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 16),
+      },
+    });
+    fireEvent.click(screen.getByTestId("preapproved-create"));
+    expect(
+      await screen.findByText("Pre-approved classes cannot run longer than 30 days."),
+    ).toBeInTheDocument();
+    expect(createClass).not.toHaveBeenCalled();
+  });
 });

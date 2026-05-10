@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
@@ -87,10 +87,16 @@ class PreApprovedClassRegistry:
         now = datetime.now(UTC)
         if body.expires_at <= now:
             raise WorkspaceError("pre-approved class must expire in the future")
+        if body.expires_at > now + timedelta(days=30):
+            raise WorkspaceError("pre-approved class cannot exceed 30 days")
+        if body.risk_ceiling == "high":
+            raise WorkspaceError("pre-approved class cannot cover high-risk changes")
         allowed = _normalise(body.allowed_change_types)
         excluded = _normalise(body.excluded_change_types)
         if not allowed:
             raise WorkspaceError("pre-approved class requires allowed change types")
+        if not excluded:
+            raise WorkspaceError("pre-approved class requires excluded change types")
         overlap = set(allowed).intersection(excluded)
         if overlap:
             raise WorkspaceError(

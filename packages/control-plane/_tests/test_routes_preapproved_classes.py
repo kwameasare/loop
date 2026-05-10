@@ -175,3 +175,54 @@ def test_preapproved_class_does_not_cover_excluded_or_high_risk_change(
         approval["state"] == "requested" and approval["role"] == "Compliance reviewer"
         for approval in package["required_approvals"]
     )
+
+
+def test_preapproved_class_creation_requires_narrow_explicit_boundaries(
+    client: TestClient,
+    workspace_id: UUID,
+    agent_id: UUID,
+) -> None:
+    missing_exclusions = client.post(
+        f"/v1/agents/{agent_id}/pre-approved-classes",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "granted_to_user_id": "owner-1",
+            "allowed_change_types": ["instruction"],
+            "excluded_change_types": [],
+            "risk_ceiling": "low",
+            "expires_at": (datetime.now(UTC) + timedelta(days=7)).isoformat(),
+            "reason": "Instruction-only edits.",
+        },
+    )
+    assert missing_exclusions.status_code == 400, missing_exclusions.text
+    assert "excluded change types" in missing_exclusions.text
+
+    high_risk = client.post(
+        f"/v1/agents/{agent_id}/pre-approved-classes",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "granted_to_user_id": "owner-1",
+            "allowed_change_types": ["instruction"],
+            "excluded_change_types": ["tool", "memory", "channel", "budget"],
+            "risk_ceiling": "high",
+            "expires_at": (datetime.now(UTC) + timedelta(days=7)).isoformat(),
+            "reason": "Overbroad approval bypass.",
+        },
+    )
+    assert high_risk.status_code == 400, high_risk.text
+    assert "high-risk" in high_risk.text
+
+    long_lived = client.post(
+        f"/v1/agents/{agent_id}/pre-approved-classes",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "granted_to_user_id": "owner-1",
+            "allowed_change_types": ["instruction"],
+            "excluded_change_types": ["tool", "memory", "channel", "budget"],
+            "risk_ceiling": "low",
+            "expires_at": (datetime.now(UTC) + timedelta(days=31)).isoformat(),
+            "reason": "Too long to be a narrow approval corridor.",
+        },
+    )
+    assert long_lived.status_code == 400, long_lived.text
+    assert "30 days" in long_lived.text
