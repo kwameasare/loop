@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createEmptyToolsRoomData,
@@ -9,6 +9,17 @@ import {
 import { ToolsRoom } from "./tools-room";
 
 describe("ToolsRoom", () => {
+  const ORIGINAL_BASE_URL = process.env.LOOP_CP_API_BASE_URL;
+
+  afterEach(() => {
+    if (ORIGINAL_BASE_URL === undefined) {
+      delete process.env.LOOP_CP_API_BASE_URL;
+    } else {
+      process.env.LOOP_CP_API_BASE_URL = ORIGINAL_BASE_URL;
+    }
+    vi.unstubAllGlobals();
+  });
+
   it("renders catalog, detail, safety, mock/live, usage, cost, and eval coverage", () => {
     render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
 
@@ -55,12 +66,30 @@ describe("ToolsRoom", () => {
   });
 
   it("promotes the selected durable tool contract live", async () => {
-    render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const data = createToolsRoomData("agent_support");
+    const refundContract = data.toolContracts.find(
+      (contract) => contract.tool_id === "tool_issue_refund",
+    );
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        ...refundContract,
+        live_status: "approved",
+        approval_invalidated_at: null,
+      }),
+    );
+    vi.stubGlobal("fetch", fetcher);
+
+    render(<ToolsRoom data={data} />);
 
     fireEvent.click(screen.getByTestId("tools-room-catalog-tool_issue_refund"));
     fireEvent.click(screen.getByTestId("tool-contract-promote"));
 
     expect(await screen.findByText("Live approved")).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agent_support/tool-contracts/tool_issue_refund/promote",
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 
   it("drafts a typed tool from a curl request and redacts auth", async () => {

@@ -4,10 +4,26 @@ import {
   listToolContracts,
   localToolContracts,
   promoteToolContract,
+  type ToolContractInput,
   upsertToolContract,
 } from "./tool-contracts";
 
 describe("tool contracts client", () => {
+  const refundContractInput: ToolContractInput = {
+    name: "issue_refund",
+    description: "Refund safely.",
+    side_effect_level: "money_movement",
+    pii_access: false,
+    money_movement: true,
+    rate_limits: { per_minute: 20 },
+    budget_limits: { max_per_call_cents: 50_000 },
+    sandbox_status: "sandbox",
+    owner_user_id: "owner",
+    approval_policy_id: "policy",
+    failure_behavior: "Escalate.",
+    compensation_behavior: "Void pending refund.",
+  };
+
   it("builds local contracts with sandbox defaults and money caps", () => {
     const contracts = localToolContracts("agt_1", [
       "lookup_order",
@@ -55,20 +71,7 @@ describe("tool contracts client", () => {
     await upsertToolContract(
       "agt_1",
       "issue_refund",
-      {
-        name: "issue_refund",
-        description: "Refund safely.",
-        side_effect_level: "money_movement",
-        pii_access: false,
-        money_movement: true,
-        rate_limits: { per_minute: 20 },
-        budget_limits: { max_per_call_cents: 50_000 },
-        sandbox_status: "sandbox",
-        owner_user_id: "owner",
-        approval_policy_id: "policy",
-        failure_behavior: "Escalate.",
-        compensation_behavior: "Void pending refund.",
-      },
+      refundContractInput,
       { baseUrl: "https://cp.test", fetcher },
     );
     const promoted = await promoteToolContract("agt_1", "issue_refund", {
@@ -83,5 +86,40 @@ describe("tool contracts client", () => {
     expect(fetcher.mock.calls[1]?.[0]).toBe(
       "https://cp.test/v1/agents/agt_1/tool-contracts/issue_refund/promote",
     );
+  });
+
+  it("does not fabricate tool contract mutations without cp-api", async () => {
+    await expect(
+      upsertToolContract("agt_1", "issue_refund", refundContractInput, {
+        baseUrl: "",
+      }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      promoteToolContract("agt_1", "issue_refund", { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps deterministic tool contract mutations explicitly opt-in", async () => {
+    await expect(
+      upsertToolContract("agt_1", "issue_refund", refundContractInput, {
+        baseUrl: "",
+        allowFixture: true,
+      }),
+    ).resolves.toMatchObject({
+      tool_id: "issue_refund",
+      live_status: "review_required",
+      sandbox_status: "sandbox",
+    });
+
+    await expect(
+      promoteToolContract("agt_1", "issue_refund", {
+        baseUrl: "",
+        allowFixture: true,
+      }),
+    ).resolves.toMatchObject({
+      tool_id: "issue_refund",
+      live_status: "approved",
+    });
   });
 });
