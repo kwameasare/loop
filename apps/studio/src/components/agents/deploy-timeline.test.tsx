@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { DeployTimeline } from "./deploy-timeline";
 import { buildLocalChangePackage } from "@/lib/change-package";
-import type { Deployment } from "@/lib/deploys";
+import type { Deployment, EvidencePack } from "@/lib/deploys";
 
 function mkDep(overrides: Partial<Deployment>): Deployment {
   return {
@@ -18,6 +18,35 @@ function mkDep(overrides: Partial<Deployment>): Deployment {
     pausedAt: null,
     rolledBackAt: null,
     notes: null,
+    ...overrides,
+  };
+}
+
+function mkEvidencePack(overrides: Partial<EvidencePack> = {}): EvidencePack {
+  return {
+    id: "ep_1",
+    workspace_id: "ws_1",
+    agent_id: "a",
+    version_id: "v2",
+    deployment_id: "dep_new",
+    change_package_id: "cp_1",
+    version_manifest: {
+      commitment_document_id: "commit_1",
+      release_candidate_id: "rc_1",
+      content_hash: "hash_1",
+    },
+    behavior_diff_ref: "change_package.semantic_diff",
+    tool_permission_diff_ref: "change_package.tool_changes",
+    knowledge_diff_ref: "change_package.knowledge_changes",
+    memory_policy_ref: "change_package.memory_changes",
+    channel_deployment_plan_ref: "deployment.channel_scope",
+    eval_results_ref: "eval/run",
+    approval_records_ref: "change_package.required_approvals",
+    canary_results_ref: "deployment/dep_new/canary",
+    rollback_plan_ref: "v1",
+    audit_log_ref: "audit/deployment/dep_new",
+    created_at: "2026-05-09T00:00:00Z",
+    export_formats: ["pdf", "json", "csv"],
     ...overrides,
   };
 }
@@ -221,6 +250,7 @@ describe("DeployTimeline", () => {
         trafficPercent: 5,
         evidencePackId: "ep_1",
       }),
+      evidence_pack: mkEvidencePack(),
     }));
     render(
       <DeployTimeline
@@ -246,9 +276,47 @@ describe("DeployTimeline", () => {
     expect(screen.getByTestId("deploy-row-dep_new")).toHaveTextContent(
       "Evidence pack",
     );
+    expect(
+      screen.getByTestId("evidence-pack-manifest-ep_1"),
+    ).toHaveTextContent("Exportable proof bundle");
+    expect(
+      screen.getByTestId("evidence-pack-manifest-ep_1"),
+    ).toHaveTextContent("rc_1");
+    expect(
+      screen.getByTestId("evidence-pack-manifest-ep_1"),
+    ).toHaveTextContent("change_package.semantic_diff");
+    expect(
+      screen.getByTestId("evidence-pack-manifest-ep_1"),
+    ).toHaveTextContent("audit/deployment/dep_new");
     expect(screen.getByTestId("deploy-toast-success")).toHaveTextContent(
       "Started canary",
     );
+  });
+
+  it("renders existing evidence pack manifests with exact deployment evidence", () => {
+    render(
+      <DeployTimeline
+        agentId="a"
+        initialDeployments={[
+          mkDep({
+            id: "dep_new",
+            status: "live",
+            versionId: "v2",
+            evidencePackId: "ep_1",
+          }),
+        ]}
+        initialEvidencePacks={[mkEvidencePack()]}
+      />,
+    );
+
+    const manifest = screen.getByTestId("evidence-pack-manifest-ep_1");
+    expect(manifest).toHaveTextContent("Change Package");
+    expect(manifest).toHaveTextContent("cp_1");
+    expect(manifest).toHaveTextContent("Content hash");
+    expect(manifest).toHaveTextContent("hash_1");
+    expect(manifest).toHaveTextContent("Rollback plan");
+    expect(manifest).toHaveTextContent("v1");
+    expect(manifest).toHaveTextContent("pdf, json, csv");
   });
 
   it("starts shadow from an approved Change Package without routing traffic", async () => {

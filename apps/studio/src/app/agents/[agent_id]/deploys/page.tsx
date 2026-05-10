@@ -4,7 +4,7 @@ import {
   buildLocalChangePackage,
   fetchCurrentChangePackage,
 } from "@/lib/change-package";
-import { listDeployments } from "@/lib/deploys";
+import { listDeployments, listEvidencePacks } from "@/lib/deploys";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +27,21 @@ export default async function AgentDeploysPage({
       error instanceof Error
         ? error.message
         : "Could not load deployment history.";
+  }
+
+  let evidencePacks: Awaited<ReturnType<typeof listEvidencePacks>>["items"] =
+    [];
+  let evidencePacksDegradedReason: string | undefined;
+  try {
+    const result = await listEvidencePacks(params.agent_id);
+    evidencePacks = result.items;
+    evidencePacksDegradedReason = result.degraded_reason;
+  } catch (error) {
+    evidencePacks = [];
+    evidencePacksDegradedReason =
+      error instanceof Error
+        ? error.message
+        : "Could not load evidence packs.";
   }
 
   let changePackage = buildLocalChangePackage(params.agent_id);
@@ -58,7 +73,10 @@ export default async function AgentDeploysPage({
             : null
         }
         initialDeployments={deployments}
-        degradedReason={deploymentsDegradedReason}
+        initialEvidencePacks={evidencePacks}
+        degradedReason={
+          deploymentsDegradedReason ?? evidencePacksDegradedReason
+        }
       />
     </div>
   );
