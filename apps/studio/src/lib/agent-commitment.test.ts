@@ -5,6 +5,7 @@ import {
   acceptCommitment,
   buildLocalCommitmentDocument,
   fetchCurrentCommitment,
+  listCommitments,
   missingCommitmentFields,
   parseList,
   saveCommitmentDraft,
@@ -68,6 +69,41 @@ describe("agent commitment client", () => {
     await expect(
       fetchCurrentCommitment("agt_1", { baseUrl: "" }),
     ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("lists Commitment Document history from cp-api", async () => {
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({
+            items: [
+              {
+                ...buildLocalCommitmentDocument("agt_1"),
+                id: "commit_1",
+                version: 1,
+              },
+              {
+                ...buildLocalCommitmentDocument("agt_1"),
+                id: "commit_2",
+                version: 2,
+                status: "accepted",
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+    );
+
+    const result = await listCommitments("agt_1", { fetcher });
+
+    expect(result.items.map((item) => item.id)).toEqual([
+      "commit_1",
+      "commit_2",
+    ]);
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agt_1/commitments",
+      expect.objectContaining({ method: "GET" }),
+    );
   });
 
   it("keeps local current Commitment Document fallback explicitly opt-in", async () => {
