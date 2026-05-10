@@ -34,6 +34,7 @@ export interface DeployTimelineProps {
   agentId: string;
   initialDeployments: Deployment[];
   approvedChangePackage?: ChangePackage | null;
+  degradedReason?: string | undefined;
   startCanary?: StartFn;
   promote?: ActionFn;
   ramp?: RampFn;
@@ -73,6 +74,7 @@ export function DeployTimeline({
   agentId,
   initialDeployments,
   approvedChangePackage = null,
+  degradedReason,
   startCanary = defaultStartCanary,
   promote = defaultPromote,
   ramp = defaultRamp,
@@ -237,9 +239,21 @@ export function DeployTimeline({
         </p>
       </header>
 
+      {degradedReason ? (
+        <p
+          className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+          data-testid="deploy-degraded"
+          role="status"
+        >
+          Deployment history is unavailable. {degradedReason}
+        </p>
+      ) : null}
+
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground" data-testid="deploy-empty">
-          No deployments yet for this agent.
+          {degradedReason
+            ? "Deployment state cannot be confirmed until the control plane responds."
+            : "No deployments yet for this agent."}
         </p>
       ) : (
         <ol className="flex flex-col gap-2" data-testid="deploy-list">

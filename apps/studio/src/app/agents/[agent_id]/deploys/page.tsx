@@ -16,10 +16,17 @@ export default async function AgentDeploysPage({
   params,
 }: AgentDeploysPageProps) {
   let deployments: Awaited<ReturnType<typeof listDeployments>>["items"] = [];
+  let deploymentsDegradedReason: string | undefined;
   try {
-    deployments = (await listDeployments(params.agent_id)).items;
-  } catch {
+    const result = await listDeployments(params.agent_id);
+    deployments = result.items;
+    deploymentsDegradedReason = result.degraded_reason;
+  } catch (error) {
     deployments = [];
+    deploymentsDegradedReason =
+      error instanceof Error
+        ? error.message
+        : "Could not load deployment history.";
   }
 
   let changePackage = buildLocalChangePackage(params.agent_id);
@@ -51,6 +58,7 @@ export default async function AgentDeploysPage({
             : null
         }
         initialDeployments={deployments}
+        degradedReason={deploymentsDegradedReason}
       />
     </div>
   );
