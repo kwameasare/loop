@@ -118,6 +118,31 @@ describe("AgentGovernancePage", () => {
           ],
         });
       }
+      if (url.endsWith("/agents/agent_govern/pre-approved-classes")) {
+        return Response.json({
+          items: [
+            {
+              id: "pac_govern_copy",
+              workspace_id: "ws_govern",
+              agent_id: "agent_govern",
+              granted_by_user_id: "security@example.com",
+              granted_to_user_id: "builder@example.com",
+              team_id: "",
+              allowed_change_types: ["instruction"],
+              excluded_change_types: ["tool", "memory", "channel", "budget"],
+              risk_ceiling: "low",
+              expires_at: "2026-05-16T00:00:00Z",
+              status: "active",
+              reason: "Instruction-only copy fixes.",
+              created_at: "2026-05-09T00:00:00Z",
+              updated_at: "2026-05-09T00:00:00Z",
+              revoked_at: null,
+              invalidated_at: null,
+              used_by_change_packages: ["cp_govern_1"],
+            },
+          ],
+        });
+      }
       if (url.startsWith("https://cp.test/v1/audit/events?")) {
         return Response.json({
           items: [
@@ -154,6 +179,7 @@ describe("AgentGovernancePage", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("super-secret-token")).toBeNull();
     expect(screen.getByText("agent.approval.requested")).toBeInTheDocument();
+    expect(screen.getByText("pac_govern_copy - active")).toBeInTheDocument();
     expect(screen.queryByTestId("agent-section-placeholder")).toBeNull();
     expect(screen.queryByTestId("target-state")).toBeNull();
   });

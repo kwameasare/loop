@@ -13,6 +13,11 @@ import {
   type AgentSecret,
 } from "@/lib/agent-secrets";
 import { listAuditEvents } from "@/lib/audit-events";
+import { PreApprovedClassesPanel } from "@/components/governance/pre-approved-classes-panel";
+import {
+  listPreApprovedClasses,
+  type PreApprovedClass,
+} from "@/lib/pre-approved-classes";
 import { getAgentDetailData } from "../agent-detail-data";
 
 interface PageProps {
@@ -22,6 +27,7 @@ interface PageProps {
 interface GovernanceEvidence {
   commitment: CommitmentDocument;
   secrets: AgentSecret[];
+  preApprovedClasses: PreApprovedClass[];
   auditEvents: AuditEventRow[];
   auditLoaded: boolean;
   degradedReasons: string[];
@@ -81,6 +87,15 @@ async function loadGovernanceEvidence(
       return [];
     });
 
+  const preApprovedClasses = await listPreApprovedClasses(agentId)
+    .then((result) => result.items)
+    .catch((error: unknown) => {
+      degradedReasons.push(
+        messageFromError(error, "Could not load pre-approved classes."),
+      );
+      return [];
+    });
+
   let auditEvents: AuditEventRow[] = [];
   let auditLoaded = false;
   if (!workspaceId || workspaceId === "unavailable") {
@@ -104,6 +119,7 @@ async function loadGovernanceEvidence(
   return {
     commitment,
     secrets,
+    preApprovedClasses,
     auditEvents,
     auditLoaded,
     degradedReasons,
@@ -226,6 +242,12 @@ export default async function AgentGovernancePage({ params }: PageProps) {
           }`
         : "Unverified",
     },
+    {
+      label: "Pre-approved classes",
+      value: `${evidence.preApprovedClasses.filter(
+        (item) => item.status === "active",
+      ).length} active`,
+    },
   ];
   const evidenceLinks = [
     { label: "Trace evidence", href: `/agents/${params.agent_id}/traces` },
@@ -327,6 +349,16 @@ export default async function AgentGovernancePage({ params }: PageProps) {
           description="These checks summarize what Studio can prove from the loaded agent evidence. Unverified checks remain explicit."
         >
           <FieldList fields={postureFields} />
+        </EvidenceCard>
+
+        <EvidenceCard
+          title="Pre-approved classes"
+          description="Narrow, explicit, time-boxed approval corridors for low-risk changes. They must stay inspectable and revocable."
+        >
+          <PreApprovedClassesPanel
+            agentId={params.agent_id}
+            initialItems={evidence.preApprovedClasses}
+          />
         </EvidenceCard>
 
         <EvidenceCard
