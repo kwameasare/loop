@@ -795,8 +795,15 @@ export function SimulatorLab({
                     <code>{ratingResult.behavior_note_ref.id}</code>
                   </p>
                 ) : null}
+                {ratingResult.few_shot_ref ? (
+                  <p className="mt-2">
+                    Few-shot candidate:{" "}
+                    <code>{ratingResult.few_shot_ref.id}</code>
+                  </p>
+                ) : null}
                 {!ratingResult.eval_case_ref &&
-                !ratingResult.behavior_note_ref ? (
+                !ratingResult.behavior_note_ref &&
+                !ratingResult.few_shot_ref ? (
                   <p className="mt-2">
                     Saved as a candidate behavior artifact.
                   </p>

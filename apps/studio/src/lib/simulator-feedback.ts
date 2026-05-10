@@ -45,6 +45,16 @@ export interface SimulatorTurnRatingRecord {
     rating: FirstProofRating;
     evidence_ref: string;
   };
+  few_shot_ref: null | {
+    id: string;
+    status: string;
+    title: string;
+    prompt: string;
+    answer: string;
+    channel: string;
+    rating: FirstProofRating;
+    evidence_ref: string;
+  };
   cost_usd: number;
   latency_ms: number;
   created_by: string;
@@ -105,6 +115,22 @@ function localRating(
               "Convert this first-proof finding into behavior structure.",
             rating: input.rating,
             evidence_ref: input.trace_id || `simulator-turn/${input.rating}`,
+          }
+        : null,
+    few_shot_ref:
+      input.rating === "good"
+        ? {
+            id: "fshot_good",
+            status: "candidate",
+            title,
+            prompt: input.prompt,
+            answer:
+              input.final_answer ||
+              input.issue_annotation ||
+              "Accepted response pattern.",
+            channel: input.channel,
+            rating: input.rating,
+            evidence_ref: input.trace_id || "simulator-turn/good",
           }
         : null,
     created_by: "local",

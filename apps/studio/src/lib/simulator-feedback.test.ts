@@ -38,6 +38,7 @@ describe("rateSimulatorTurn", () => {
               case_id: "case_1",
             },
             behavior_note_ref: null,
+            few_shot_ref: null,
             cost_usd: 0.01,
             latency_ms: 800,
             created_by: "owner-1",
@@ -82,6 +83,32 @@ describe("rateSimulatorTurn", () => {
 
     expect(result.candidate_artifact.kind).toBe("risk_rule_candidate");
     expect(result.behavior_note_ref?.kind).toBe("risk_rule");
+    expect(result.few_shot_ref).toBeNull();
     expect(result.eval_case_ref).toBeNull();
+  });
+
+  it("creates a local few-shot candidate for good first-proof ratings", async () => {
+    const result = await rateSimulatorTurn("agt_1", {
+      rating: "good",
+      prompt: "Can I cancel?",
+      final_answer: "I will check your renewal policy first.",
+      channel: "whatsapp",
+      trace_id: "trace_good",
+      issue_annotation: "Preserve this pattern.",
+      save_as_eval: false,
+      cost_usd: 0,
+      latency_ms: 0,
+    });
+
+    expect(result.candidate_artifact.kind).toBe("positive_eval_or_few_shot");
+    expect(result.few_shot_ref).toMatchObject({
+      id: "fshot_good",
+      status: "candidate",
+      prompt: "Can I cancel?",
+      answer: "I will check your renewal policy first.",
+      channel: "whatsapp",
+      evidence_ref: "trace_good",
+    });
+    expect(result.behavior_note_ref).toBeNull();
   });
 });
