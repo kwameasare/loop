@@ -19,6 +19,14 @@ export type AgentSummary = {
   state_evidence_ref: string;
   updated_at: string; // ISO 8601
   workspace_id: string;
+  owner_user_id?: string | null;
+  backup_owner_user_id?: string | null;
+  environment?: string;
+  health_status?: string;
+  open_issue_count?: number;
+  open_issue_sources?: string[];
+  commitment_document_id?: string | null;
+  commitment_status?: string | null;
 };
 
 export type ListAgentsResponse = {
@@ -46,6 +54,14 @@ function toAgentSummary(agent: Agent): AgentSummary {
     object_state?: AgentSummary["object_state"];
     state_reason?: string;
     state_evidence_ref?: string;
+    owner_user_id?: string | null;
+    backup_owner_user_id?: string | null;
+    environment?: string;
+    health_status?: string;
+    open_issue_count?: number;
+    open_issue_sources?: string[];
+    commitment_document_id?: string | null;
+    commitment_status?: string | null;
   };
   const fallbackState: AgentSummary["object_state"] =
     agent.active_version !== null && agent.active_version !== undefined
@@ -68,6 +84,16 @@ function toAgentSummary(agent: Agent): AgentSummary {
       (fallbackState === "production" ? "agent.active_version" : "agent.draft"),
     updated_at: agent.created_at ?? "",
     workspace_id: agent.workspace_id ?? "",
+    owner_user_id: stateful.owner_user_id ?? null,
+    backup_owner_user_id: stateful.backup_owner_user_id ?? null,
+    environment: stateful.environment ?? fallbackState,
+    health_status:
+      stateful.health_status ??
+      (fallbackState === "production" ? "watching" : "drafting"),
+    open_issue_count: stateful.open_issue_count ?? 0,
+    open_issue_sources: stateful.open_issue_sources ?? [],
+    commitment_document_id: stateful.commitment_document_id ?? null,
+    commitment_status: stateful.commitment_status ?? null,
   };
 }
 

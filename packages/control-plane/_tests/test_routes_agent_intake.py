@@ -152,6 +152,21 @@ def test_agent_intake_creates_governed_draft_and_seed_objects(
     assert workflow.json()["branches"][0]["name"] == "main/draft"
     assert workflow.json()["branches"][0]["base_version_id"] == "v1"
 
+    registry = client.get(
+        "/v1/agents",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert registry.status_code == 200, registry.text
+    registry_agent = registry.json()["items"][0]
+    assert registry_agent["owner_user_id"] == "maya@acme.test"
+    assert registry_agent["backup_owner_user_id"] == "diego@acme.test"
+    assert registry_agent["environment"] == "draft"
+    assert registry_agent["health_status"] == "drafting"
+    assert registry_agent["open_issue_count"] == 0
+    assert registry_agent["open_issue_sources"] == []
+    assert registry_agent["commitment_document_id"] == body["commitment"]["id"]
+    assert registry_agent["commitment_status"] == "draft"
+
     channels = client.get(
         f"/v1/agents/{agent_id}/channel-bindings",
         headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},

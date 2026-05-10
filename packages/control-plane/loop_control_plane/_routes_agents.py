@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 
 from loop_control_plane._app_agents import AgentCreate, agent_payload
 from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
+from loop_control_plane.agent_commitments import missing_required_fields
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 
@@ -60,7 +61,9 @@ async def _agent_by_id(
 
 async def _agent_payload_with_state(request: Request, agent: Any) -> dict[str, Any]:
     payload = agent_payload(agent)
-    payload.update(await _derive_agent_state(request, agent))
+    state = await _derive_agent_state(request, agent)
+    payload.update(state)
+    payload.update(await _derive_registry_facts(request, agent, state))
     return payload
 
 
@@ -128,6 +131,56 @@ async def _derive_agent_state(request: Request, agent: Any) -> dict[str, str]:
         "object_state": "draft",
         "state_reason": "Commitment Document is still draft.",
         "state_evidence_ref": f"commitment/{commitment.id}",
+    }
+
+
+async def _derive_registry_facts(
+    request: Request, agent: Any, state: dict[str, str]
+) -> dict[str, Any]:
+    commitment = await request.app.state.cp.agent_commitments.current(agent=agent)
+    missing = missing_required_fields(commitment.body)
+    current_package = await request.app.state.cp.change_packages.current(agent=agent)
+    package_issue_sources: list[str] = []
+    if current_package is not None and current_package.status in {
+        "changes_requested",
+        "revoked",
+        "stale",
+    }:
+        package_issue_sources.append(
+            f"change_package/{current_package.id}:{current_package.status}"
+        )
+    continuity_issue_sources: list[str] = []
+    if not commitment.body.backup_owner_user_id.strip():
+        continuity_issue_sources.append(
+            f"commitment/{commitment.id}:backup_owner_missing"
+        )
+
+    open_issue_sources = [
+        *(f"commitment/{commitment.id}:missing:{field}" for field in missing),
+        *continuity_issue_sources,
+        *package_issue_sources,
+    ]
+    object_state = state["object_state"]
+    if open_issue_sources:
+        health_status = "needs_attention"
+    elif object_state in {"production", "canary"}:
+        health_status = "watching"
+    elif object_state == "staged":
+        health_status = "ready_for_review"
+    elif object_state == "rolled_back":
+        health_status = "blocked"
+    else:
+        health_status = "drafting"
+
+    return {
+        "owner_user_id": commitment.body.owner_user_id.strip() or None,
+        "backup_owner_user_id": commitment.body.backup_owner_user_id.strip() or None,
+        "environment": object_state,
+        "health_status": health_status,
+        "open_issue_count": len(open_issue_sources),
+        "open_issue_sources": open_issue_sources,
+        "commitment_document_id": commitment.id,
+        "commitment_status": commitment.status,
     }
 
 
