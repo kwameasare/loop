@@ -14,6 +14,7 @@ from loop_control_plane.adversarial_catches import AdversarialCatchRegistry
 from loop_control_plane.agent_commitments import CommitmentRegistry
 from loop_control_plane.agent_handoff import AgentHandoffRegistry
 from loop_control_plane.agent_intake import AgentIntakeRegistry
+from loop_control_plane.agent_secret_refs import AgentSecretRefRegistry
 from loop_control_plane.agent_versions import AgentVersionService
 from loop_control_plane.agent_workflow import AgentWorkflowRegistry
 from loop_control_plane.api_keys import ApiKeyService, PostgresApiKeyService
@@ -251,6 +252,9 @@ class CpApiState:
         self.simulator_feedback = SimulatorFeedbackRegistry()
         # Agent-flow implementation: adversarial probes surface calm catch questions.
         self.adversarial_catches = AdversarialCatchRegistry()
+        # Agent-flow implementation: Studio sees only agent-scoped vault/KMS
+        # references, never plaintext credential values.
+        self.agent_secret_refs = AgentSecretRefRegistry()
         # Agent-flow implementation: intake is a durable draft-generation object.
         self.agent_intakes = AgentIntakeRegistry()
         # Agent-flow implementation: migration import, parity, cutover, and
