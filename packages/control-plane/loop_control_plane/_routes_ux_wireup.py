@@ -2048,6 +2048,74 @@ class TelemetryConsentBody(BaseModel):
     admin_overrides: dict[str, bool] = Field(default_factory=dict)
 
 
+class QualityCategoryResultBody(BaseModel):
+    category: str = Field(min_length=1, max_length=80)
+    passed: list[str] = Field(default_factory=list, max_length=50)
+    failed: list[str] = Field(default_factory=list, max_length=50)
+    evidence: str = Field(min_length=1, max_length=1200)
+
+
+class QualityReportBody(BaseModel):
+    screen: str = Field(min_length=1, max_length=240)
+    area: str = Field(default="", max_length=120)
+    owner_agent: str = Field(default="", max_length=160, alias="ownerAgent")
+    reviewed_at: str = Field(min_length=1, max_length=80, alias="reviewedAt")
+    reviewer: str = Field(min_length=1, max_length=160)
+    results: list[QualityCategoryResultBody] = Field(min_length=1, max_length=12)
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+@router_workspaces.get("/{workspace_id}/quality/reports")
+async def list_quality_reports(
+    request: Request,
+    workspace_id: UUID,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    await authorize_workspace_access(
+        workspaces=request.app.state.cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    items = list(_bucket(request, "quality_reports").get(str(workspace_id), {}).values())
+    items.sort(key=lambda item: (item.get("reviewedAt", ""), item.get("screen", "")), reverse=True)
+    return {"items": items}
+
+
+@router_workspaces.post("/{workspace_id}/quality/reports", status_code=201)
+async def save_quality_report(
+    request: Request,
+    workspace_id: UUID,
+    body: QualityReportBody,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    await authorize_workspace_access(
+        workspaces=request.app.state.cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    item = body.model_dump(mode="json", by_alias=True)
+    item["workspace_id"] = str(workspace_id)
+    item["updated_at"] = datetime.now(UTC).isoformat()
+    _bucket(request, "quality_reports").setdefault(str(workspace_id), {})[body.screen] = item
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="quality_report:upsert",
+        resource_type="quality_report",
+        resource_id=body.screen,
+        payload={
+            "screen": body.screen,
+            "reviewer": body.reviewer,
+            "failing_categories": [
+                result.category for result in body.results if len(result.failed) > 0
+            ],
+        },
+    )
+    return item
+
+
 @router_workspaces.get("/{workspace_id}/telemetry-consent")
 async def get_telemetry_consent(
     request: Request,
