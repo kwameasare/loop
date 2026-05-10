@@ -22,6 +22,11 @@ import { getAgentDetailData } from "../agent-detail-data";
 
 interface PageProps {
   params: { agent_id: string };
+  searchParams?:
+    | {
+        view?: string | string[] | undefined;
+      }
+    | undefined;
 }
 
 interface GovernanceEvidence {
@@ -60,6 +65,10 @@ function isAgentAuditEvent(event: AuditEventRow, agentId: string): boolean {
     event.resourceId?.includes(agentId) === true ||
     resource.includes(agentId)
   );
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 async function loadGovernanceEvidence(
@@ -168,7 +177,10 @@ function FieldList({
   );
 }
 
-export default async function AgentGovernancePage({ params }: PageProps) {
+export default async function AgentGovernancePage({
+  params,
+  searchParams,
+}: PageProps) {
   const { agent, degradedReason: agentDegradedReason } =
     await getAgentDetailData(params.agent_id);
   const evidence = await loadGovernanceEvidence(
@@ -259,6 +271,9 @@ export default async function AgentGovernancePage({ params }: PageProps) {
       href: `/enterprise/audit?agent_id=${encodeURIComponent(params.agent_id)}`,
     },
   ];
+  const focusedView = firstParam(searchParams?.view);
+  const auditFocused = focusedView === "audit";
+  const channelsFocused = focusedView === "channels";
 
   return (
     <section className="space-y-5" data-testid="agent-governance-page">
@@ -287,6 +302,22 @@ export default async function AgentGovernancePage({ params }: PageProps) {
           </Link>
         </div>
       </header>
+
+      {focusedView ? (
+        <section
+          className="rounded-md border border-info/40 bg-info/5 p-4 text-sm text-info"
+          data-testid="governance-focused-view"
+        >
+          <p className="font-medium">Opened from an evidence link.</p>
+          <p className="mt-1 text-xs">
+            {auditFocused
+              ? "Agent-scoped audit events are highlighted below."
+              : channelsFocused
+                ? "Channel compliance readiness is highlighted below."
+                : `Requested governance view: ${focusedView}.`}
+          </p>
+        </section>
+      ) : null}
 
       {degradedEvidence ? (
         <SectionDegraded
@@ -361,6 +392,48 @@ export default async function AgentGovernancePage({ params }: PageProps) {
           />
         </EvidenceCard>
 
+        {channelsFocused ? (
+          <section
+            className="rounded-md border bg-card p-4 ring-2 ring-focus ring-offset-2 ring-offset-background"
+            data-testid="governance-channel-readiness"
+            data-focused="true"
+          >
+            <h3 className="text-base font-semibold">
+              Channel compliance readiness
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              Channel changes must prove transcript capture, regional routing,
+              consent posture, and rollback evidence before production rollout.
+            </p>
+            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <div className="rounded-md border bg-background/60 p-3">
+                <dt className="text-xs font-medium uppercase tracking-normal text-muted-foreground">
+                  Declared channels
+                </dt>
+                <dd className="mt-1 break-words font-medium">
+                  {evidence.commitment.structured_summary.channels.length > 0
+                    ? evidence.commitment.structured_summary.channels.join(", ")
+                    : "Not recorded"}
+                </dd>
+              </div>
+              <div className="rounded-md border bg-background/60 p-3">
+                <dt className="text-xs font-medium uppercase tracking-normal text-muted-foreground">
+                  Evidence route
+                </dt>
+                <dd className="mt-1 break-words font-medium">
+                  /agents/{params.agent_id}/channels
+                </dd>
+              </div>
+            </dl>
+            <Link
+              href={`/agents/${params.agent_id}/channels?view=readiness`}
+              className="mt-4 inline-flex w-fit rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              Open channel readiness
+            </Link>
+          </section>
+        ) : null}
+
         <EvidenceCard
           title="Evidence export path"
           description="Auditors need links from this agent to traces, evals, deploys, approvals, incidents, and handoffs."
@@ -379,7 +452,13 @@ export default async function AgentGovernancePage({ params }: PageProps) {
         </EvidenceCard>
       </div>
 
-      <section className="rounded-md border bg-card p-4">
+      <section
+        className={`rounded-md border bg-card p-4 ${
+          auditFocused ? "ring-2 ring-focus ring-offset-2 ring-offset-background" : ""
+        }`}
+        data-focused={auditFocused ? "true" : "false"}
+        data-testid="agent-governance-audit-section"
+      >
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 className="text-base font-semibold">Recent audit events</h3>

@@ -18,6 +18,7 @@ interface ChangePackagePanelProps {
   agentId: string;
   initialPackage?: ChangePackage | null;
   focusedChangePackageId?: string | undefined;
+  focusedPanel?: string | undefined;
   degradedReason?: string | undefined;
   generateChangePackage?: (
     agentId: string,
@@ -104,6 +105,7 @@ export function ChangePackagePanel({
   agentId,
   initialPackage,
   focusedChangePackageId,
+  focusedPanel,
   degradedReason,
   generateChangePackage = defaultGenerateChangePackage,
   submitChangePackage = defaultSubmitChangePackage,
@@ -135,6 +137,8 @@ export function ChangePackagePanel({
   const isFocused =
     Boolean(focusedChangePackageId) &&
     focusedChangePackageId === changePackage.id;
+  const releaseCandidateFocused = focusedPanel === "release-candidate";
+  const rollbackFocused = focusedPanel === "rollback";
 
   async function handleGenerate() {
     setState({ kind: "generating" });
@@ -241,6 +245,17 @@ export function ChangePackagePanel({
           focused.
         </p>
       ) : null}
+      {releaseCandidateFocused || rollbackFocused ? (
+        <p
+          className="rounded-md border border-info/40 bg-info/5 px-3 py-2 text-sm text-info"
+          data-testid="change-package-focused-panel"
+        >
+          Opened from evidence link:{" "}
+          {releaseCandidateFocused
+            ? "release candidate evidence is highlighted."
+            : "rollback target evidence is highlighted."}
+        </p>
+      ) : null}
       {degradedReason ? (
         <div
           className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning"
@@ -344,7 +359,16 @@ export function ChangePackagePanel({
             {changePackage.content_hash.slice(0, 12)}
           </p>
         </div>
-        <div className="rounded-md border bg-background p-3">
+        <div
+          className={cn(
+            "rounded-md border bg-background p-3",
+            releaseCandidateFocused
+              ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+              : "",
+          )}
+          data-focused={releaseCandidateFocused ? "true" : "false"}
+          data-testid="change-package-release-candidate-card"
+        >
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Release Candidate
           </p>
@@ -355,7 +379,16 @@ export function ChangePackagePanel({
             {changePackage.release_candidate_id}
           </p>
         </div>
-        <div className="rounded-md border bg-background p-3">
+        <div
+          className={cn(
+            "rounded-md border bg-background p-3",
+            rollbackFocused
+              ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+              : "",
+          )}
+          data-focused={rollbackFocused ? "true" : "false"}
+          data-testid="change-package-rollback-card"
+        >
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Rollback
           </p>

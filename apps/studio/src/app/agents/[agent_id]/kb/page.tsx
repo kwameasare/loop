@@ -5,9 +5,22 @@ export const dynamic = "force-dynamic";
 
 interface AgentKbPageProps {
   params: { agent_id: string };
+  searchParams?:
+    | {
+        view?: string | string[] | undefined;
+        filter?: string | string[] | undefined;
+      }
+    | undefined;
 }
 
-export default async function AgentKbPage({ params }: AgentKbPageProps) {
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function AgentKbPage({
+  params,
+  searchParams,
+}: AgentKbPageProps) {
   const { items, degraded_reason } = await listKbDocuments(
     params.agent_id,
   ).catch((error: unknown) => ({
@@ -22,6 +35,8 @@ export default async function AgentKbPage({ params }: AgentKbPageProps) {
       <KnowledgeAtelier
         agentId={params.agent_id}
         degradedReason={degraded_reason}
+        focusedFilter={firstParam(searchParams?.filter)}
+        focusedView={firstParam(searchParams?.view)}
         initialDocuments={items}
       />
     </div>

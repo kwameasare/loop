@@ -247,4 +247,38 @@ describe("KnowledgeAtelier", () => {
     );
     await waitForDiagnosticsToSettle();
   });
+
+  it("keeps evidence-link retrieval and stale-source state visible", async () => {
+    render(
+      <KnowledgeAtelier
+        agentId="agt_demo"
+        focusedFilter="stale"
+        focusedView="retrieval"
+        initialDocuments={[
+          {
+            ...readyDocs[0]!,
+            id: "doc_error",
+            name: "legal_policy.pdf",
+            status: "error",
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId("knowledge-focused-query")).toHaveTextContent(
+      "Opened from an evidence link",
+    );
+    expect(screen.getByTestId("knowledge-sources")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+    expect(screen.getByTestId("retrieval-lab")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+    expect(screen.getByTestId("knowledge-source-doc_error")).toHaveTextContent(
+      "Source needs attention",
+    );
+    await waitForDiagnosticsToSettle();
+  });
 });

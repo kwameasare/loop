@@ -45,6 +45,8 @@ export interface KnowledgeAtelierProps {
   agentId: string;
   initialDocuments: KbDocument[];
   degradedReason?: string | undefined;
+  focusedFilter?: string | undefined;
+  focusedView?: string | undefined;
   supersedeChunk?: (
     agentId: string,
     chunkId: string,
@@ -252,6 +254,8 @@ export function KnowledgeAtelier({
   agentId,
   initialDocuments,
   degradedReason,
+  focusedFilter,
+  focusedView,
   supersedeChunk = defaultMarkKnowledgeChunkSuperseded,
   saveRetrievalEval = defaultSaveRetrievalEvalCase,
 }: KnowledgeAtelierProps) {
@@ -305,6 +309,15 @@ export function KnowledgeAtelier({
     () => buildEmbeddingsExplorerModel(model),
     [model],
   );
+  const staleFocused = focusedFilter === "stale";
+  const retrievalFocused = focusedView === "retrieval";
+  const displayedSources = useMemo(() => {
+    if (!staleFocused) return model.sources;
+    return model.sources.filter(
+      (source) =>
+        source.syncStatus === "stale" || source.syncStatus === "error",
+    );
+  }, [model.sources, staleFocused]);
   const activeQuery = query.trim() || model.retrievalLab.defaultQuery;
   const topCandidate = model.retrievalLab.candidates[0];
 
@@ -408,10 +421,37 @@ export function KnowledgeAtelier({
         </LiveBadge>
       </header>
 
+      {focusedView || focusedFilter ? (
+        <section
+          className="rounded-md border border-info/40 bg-info/5 p-3 text-sm text-info"
+          data-testid="knowledge-focused-query"
+        >
+          <p className="font-medium">Opened from an evidence link.</p>
+          <p className="mt-1 text-xs">
+            {retrievalFocused
+              ? "Retrieval diagnostics are highlighted below."
+              : null}
+            {staleFocused
+              ? ` Stale-source filter is active: ${displayedSources.length} source${
+                  displayedSources.length === 1 ? "" : "s"
+                } need attention.`
+              : null}
+            {!retrievalFocused && !staleFocused
+              ? ` Requested view=${focusedView ?? "none"} filter=${
+                  focusedFilter ?? "none"
+                }.`
+              : null}
+          </p>
+        </section>
+      ) : null}
+
       <section
         aria-labelledby="knowledge-sources-heading"
-        className="space-y-3"
+        className={`space-y-3 ${
+          staleFocused ? "rounded-md ring-2 ring-focus ring-offset-2 ring-offset-background" : ""
+        }`}
         data-testid="knowledge-sources"
+        data-focused={staleFocused ? "true" : "false"}
       >
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -439,9 +479,14 @@ export function KnowledgeAtelier({
             </StatePanel>
             <PersonalizedEmptyStateSuggestions agentId={agentId} surface="kb" />
           </div>
+        ) : staleFocused && displayedSources.length === 0 ? (
+          <StatePanel state="success" title="No stale sources found">
+            The stale-document evidence link resolved to this agent, and the
+            loaded source set has no stale or failed syncs.
+          </StatePanel>
         ) : (
           <div className="grid gap-3 2xl:grid-cols-2">
-            {model.sources.map((source) => (
+            {displayedSources.map((source) => (
               <SourceHealthCard key={source.id} source={source} />
             ))}
           </div>
@@ -579,8 +624,13 @@ export function KnowledgeAtelier({
 
       <section
         aria-labelledby="retrieval-lab-heading"
-        className="space-y-3"
+        className={`space-y-3 ${
+          retrievalFocused
+            ? "rounded-md ring-2 ring-focus ring-offset-2 ring-offset-background"
+            : ""
+        }`}
         data-testid="retrieval-lab"
+        data-focused={retrievalFocused ? "true" : "false"}
       >
         <div>
           <h2 className="text-lg font-semibold" id="retrieval-lab-heading">
