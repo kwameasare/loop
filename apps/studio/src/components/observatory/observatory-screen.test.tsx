@@ -90,6 +90,48 @@ describe("ObservatoryScreen", () => {
     expect(screen.getByText("paused")).toBeInTheDocument();
   });
 
+  it("pins dashboard metrics only after backend persistence succeeds", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+      expect(String(input)).toBe("https://cp.test/v1/workspaces/ws1/dashboards");
+      expect(init?.method).toBe("POST");
+      return Response.json({
+        id: "dash_quality",
+        name: "Quality watch",
+        layout: [
+          {
+            source_type: "observatory_metric",
+            source_id: "quality",
+            title: "Quality",
+          },
+        ],
+        shared_with: [],
+      });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(<ObservatoryScreen model={OBSERVATORY_MODEL} workspaceId="ws1" />);
+
+    fireEvent.click(screen.getByTestId("observatory-pin-quality"));
+
+    expect(await screen.findByText("Pinned")).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows backend-required errors instead of locally pinning dashboards", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+    render(<ObservatoryScreen model={OBSERVATORY_MODEL} workspaceId="ws1" />);
+
+    fireEvent.click(screen.getByTestId("observatory-pin-quality"));
+
+    expect(
+      await screen.findByText(/LOOP_CP_API_BASE_URL is required/i),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("observatory-pin-quality")).toHaveTextContent(
+      "Pin chart to dashboard",
+    );
+  });
+
   it("seeds incident evals from the incident panel", async () => {
     mockIncidentBackend();
     render(<ObservatoryScreen model={OBSERVATORY_MODEL} />);

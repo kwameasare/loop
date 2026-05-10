@@ -53,10 +53,12 @@ function MetricCard({
   metric,
   onPin,
   pinned,
+  pending,
 }: {
   metric: ObservatoryMetric;
   onPin?: () => void;
   pinned?: boolean;
+  pending?: boolean;
 }) {
   return (
     <article
@@ -86,9 +88,10 @@ function MetricCard({
           size="sm"
           className="mt-3"
           onClick={onPin}
+          disabled={pending || pinned}
           data-testid={`observatory-pin-${metric.id}`}
         >
-          {pinned ? "Pinned" : "Pin chart to dashboard"}
+          {pending ? "Pinning" : pinned ? "Pinned" : "Pin chart to dashboard"}
         </Button>
       ) : null}
     </article>
@@ -518,6 +521,27 @@ export function ObservatoryScreen({
   const [paused, setPaused] = useState(false);
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
   const [pinned, setPinned] = useState<string[]>([]);
+  const [pinning, setPinning] = useState<string | null>(null);
+  const [pinError, setPinError] = useState<string | null>(null);
+
+  async function handlePin(metric: ObservatoryMetric) {
+    if (!workspaceId || pinned.includes(metric.id)) return;
+    setPinning(metric.id);
+    setPinError(null);
+    try {
+      await pinObservatoryMetric(workspaceId, metric);
+      setPinned((current) =>
+        current.includes(metric.id) ? current : [...current, metric.id],
+      );
+    } catch (err) {
+      setPinError(
+        err instanceof Error ? err.message : "Could not pin dashboard metric.",
+      );
+    } finally {
+      setPinning(null);
+    }
+  }
+
   return (
     <main
       className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6"
@@ -555,21 +579,23 @@ export function ObservatoryScreen({
         className="grid gap-3 md:grid-cols-2 xl:grid-cols-3"
         data-testid="observatory-dashboards"
       >
+        {pinError ? (
+          <p
+            className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive md:col-span-2 xl:col-span-3"
+            role="alert"
+          >
+            {pinError}
+          </p>
+        ) : null}
         {model.metrics.map((metric) => (
           <MetricCard
             key={metric.id}
             metric={metric}
             pinned={pinned.includes(metric.id)}
+            pending={pinning === metric.id}
             {...(workspaceId
               ? {
-                  onPin: () => {
-                    setPinned((current) =>
-                      current.includes(metric.id)
-                        ? current
-                        : [...current, metric.id],
-                    );
-                    void pinObservatoryMetric(workspaceId, metric);
-                  },
+                  onPin: () => void handlePin(metric),
                 }
               : {})}
           />
