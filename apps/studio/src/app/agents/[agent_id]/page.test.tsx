@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildLocalCommitmentDocument } from "@/lib/agent-commitment";
+import { buildLocalChannelBindings } from "@/lib/channel-bindings";
 
 import AgentOverviewPage from "./page";
 
@@ -75,6 +76,23 @@ describe("AgentOverviewPage", () => {
       if (url.endsWith("/agents/agent_live/commitment/current")) {
         return Response.json(buildLocalCommitmentDocument("agent_live"));
       }
+      if (url.endsWith("/agents/agent_live/channel-bindings")) {
+        return Response.json({
+          items: buildLocalChannelBindings("agent_live").map((binding) =>
+            binding.channel_type === "whatsapp"
+              ? {
+                  ...binding,
+                  status: "ready",
+                  readiness: binding.readiness.map((check) => ({
+                    ...check,
+                    status: "passed",
+                    evidence_ref: `channel/${binding.id}/${check.id}`,
+                  })),
+                }
+              : binding,
+          ),
+        });
+      }
       if (url.endsWith("/agents/agent_live")) {
         return Response.json({
           id: "agent_live",
@@ -97,6 +115,9 @@ describe("AgentOverviewPage", () => {
     );
     expect(screen.getByTestId("overview-deploy-status")).toHaveTextContent(
       "canary",
+    );
+    expect(screen.getByTestId("agent-outline-channels")).toHaveTextContent(
+      "1/9 channel binding ready",
     );
     expect(screen.queryByTestId("overview-deploy-unavailable")).toBeNull();
   });
