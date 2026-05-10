@@ -24,15 +24,16 @@ export default function ReplayPage(): JSX.Element {
 
 function ReplayPageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const activeWorkspaceId = active?.id;
   const [model, setModel] = useState<ReplayWorkbenchModel | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!activeWorkspaceId) return;
     let cancelled = false;
     setModel(null);
     setError(null);
-    void fetchReplayWorkbenchModel(active.id)
+    void fetchReplayWorkbenchModel(activeWorkspaceId)
       .then((next) => {
         if (cancelled) return;
         setModel(next);
@@ -44,7 +45,7 @@ function ReplayPageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [active]);
+  }, [activeWorkspaceId]);
 
   if (wsLoading) {
     return (
@@ -72,5 +73,5 @@ function ReplayPageBody(): JSX.Element {
       </main>
     );
   }
-  return <ReplayWorkbench model={model!} />;
+  return <ReplayWorkbench model={model!} workspaceId={active.id} />;
 }

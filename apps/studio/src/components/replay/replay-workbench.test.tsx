@@ -95,16 +95,32 @@ describe("ReplayWorkbench", () => {
           { status: 201, headers: { "content-type": "application/json" } },
         );
       }
+      if (url.endsWith("/workspaces/ws_1/scenes")) {
+        return new Response(
+          JSON.stringify({
+            id: "scene_replay",
+            name: "Cancellation with legal threat",
+            category: "escalation",
+            trace_ids: ["trace_refund_742"],
+            expected_behavior: "Preserve legal escalation.",
+            created_by: "owner-1",
+            created_at: "2026-05-09T10:00:00Z",
+          }),
+          { status: 201, headers: { "content-type": "application/json" } },
+        );
+      }
       return new Response("not found", { status: 404 });
     });
     vi.stubGlobal("fetch", fetcher);
-    render(<ReplayWorkbench model={getReplayWorkbenchModel()} />);
+    render(<ReplayWorkbench model={getReplayWorkbenchModel()} workspaceId="ws_1" />);
 
     fireEvent.click(screen.getByRole("button", { name: /fork from frame/i }));
     fireEvent.click(screen.getByRole("button", { name: /save as eval/i }));
+    fireEvent.click(screen.getByRole("button", { name: /canonicalize selected/i }));
 
     expect(await screen.findByText(/Branch br_replay/i)).toBeInTheDocument();
     expect(await screen.findByText(/Eval case case_replay/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Scene scene_replay/i)).toBeInTheDocument();
     const bodies = fetcher.mock.calls.map(([, init]) =>
       init?.body ? JSON.parse(String(init.body)) : null,
     );
@@ -120,6 +136,13 @@ describe("ReplayWorkbench", () => {
         trace_id: "trace_refund_742",
         draft_branch_ref: "draft/refund-clarity",
         risk_tags: expect.arrayContaining(["production-replay", "high", "web_chat"]),
+      }),
+    );
+    expect(bodies).toContainEqual(
+      expect.objectContaining({
+        name: "Cancellation with legal threat",
+        category: "escalation",
+        trace_ids: ["trace_refund_742"],
       }),
     );
   });
