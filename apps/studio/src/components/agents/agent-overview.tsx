@@ -39,7 +39,9 @@ export interface DeploySummary {
   /** Deployed version number (null if agent has never been deployed). */
   version: number | null;
   /** Deploy status label. */
-  status: "active" | "failed" | "pending" | null;
+  status: string | null;
+  /** Reason the deploy summary cannot be loaded from the deployment source. */
+  unavailableReason?: string | undefined;
 }
 
 export type AgentWorkbenchDataState = "live" | "degraded";
@@ -801,7 +803,10 @@ export function AgentOverview({
       {dataState === "degraded" ? (
         <div data-testid="agent-workbench-degraded">
           <StatePanel state="degraded" title="Live agent data is degraded">
-            <p>{degradedReason ?? "Showing cached agent fixture data."}</p>
+            <p>
+              {degradedReason ??
+                "Live agent data is unavailable. Studio will not substitute local fixture data."}
+            </p>
           </StatePanel>
         </div>
       ) : null}
@@ -953,9 +958,19 @@ export function AgentOverview({
               <div className="flex gap-2">
                 <dt className="text-muted-foreground">When</dt>
                 <dd data-testid="overview-deploy-time">
-                  {formatDate(lastDeploy.deployed_at)}
+                  {lastDeploy.unavailableReason
+                    ? "Unavailable"
+                    : formatDate(lastDeploy.deployed_at)}
                 </dd>
               </div>
+              {lastDeploy.unavailableReason ? (
+                <div className="flex gap-2">
+                  <dt className="text-muted-foreground">Evidence</dt>
+                  <dd data-testid="overview-deploy-unavailable">
+                    {lastDeploy.unavailableReason}
+                  </dd>
+                </div>
+              ) : null}
               {lastDeploy.version !== null && (
                 <div className="flex gap-2">
                   <dt className="text-muted-foreground">Version</dt>
