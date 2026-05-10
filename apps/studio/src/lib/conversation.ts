@@ -107,7 +107,7 @@ export async function fetchConversationDetail(
 ): Promise<ConversationDetailView> {
   const base = cpApiBaseUrl(opts.baseUrl);
   if (!base) {
-    return { messages: FIXTURE_TRANSCRIPT, ownership: "agent" };
+    throw new Error("LOOP_CP_API_BASE_URL is required to load conversations");
   }
   const fetcher = opts.fetcher ?? fetch;
   const response = await fetcher(
@@ -224,11 +224,12 @@ export function createPollingSubscriber(
   return ({ conversation_id, onMessage, onError }) => {
     const base = cpApiBaseUrl(opts.baseUrl);
     if (!base) {
-      return fixtureSubscriber({
-        conversation_id,
-        onMessage,
-        ...(onError ? { onError } : {}),
-      });
+      onError?.(
+        new Error("LOOP_CP_API_BASE_URL is required to stream conversations"),
+      );
+      return {
+        unsubscribe: () => undefined,
+      };
     }
     let cancelled = false;
     let seen = new Set<string>();
