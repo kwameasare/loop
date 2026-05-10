@@ -117,4 +117,28 @@ describe("FailureRepairLoopPanel", () => {
 
     expect(screen.getByText("Select a sentence to repair")).toBeInTheDocument();
   });
+
+  it("surfaces backend-required errors instead of generating local repairs", async () => {
+    const originalBaseUrl = process.env.LOOP_CP_API_BASE_URL;
+    process.env.LOOP_CP_API_BASE_URL = "";
+    const sentence =
+      createBehaviorEditorData("agent_support").sections[0]!.sentences[0]!;
+
+    try {
+      render(
+        <FailureRepairLoopPanel agentId="agent_support" sentence={sentence} />,
+      );
+
+      fireEvent.click(screen.getByTestId("failure-repair-generate"));
+
+      expect(
+        await screen.findByText(/LOOP_CP_API_BASE_URL is required/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("failure-repair-proposal"),
+      ).not.toBeInTheDocument();
+    } finally {
+      process.env.LOOP_CP_API_BASE_URL = originalBaseUrl;
+    }
+  });
 });
