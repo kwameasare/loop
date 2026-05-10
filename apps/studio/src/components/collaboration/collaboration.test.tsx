@@ -62,6 +62,50 @@ describe("CommentThreadView", () => {
     ).toContain("eval_refund_callback");
   });
 
+  it("persists comment resolutions through cp-api when an agent id is supplied", async () => {
+    const fresh = FIXTURE_THREADS[0];
+    const resolveComment = vi.fn(async () => ({
+      comment_id: "cm_2",
+      resolved_by: "u_kojo",
+      eval_case_created: true,
+      case_id: "eval_comment_cm_2",
+      expected_behavior: "Offer callback before transfer over $200.",
+      failure_reason: "Reviewer asked to lock the callback rule into an eval.",
+      source_trace: "audit/comments/cm_2",
+    }));
+    const onResolve = vi.fn();
+
+    render(
+      <CommentThreadView
+        agentId="agent_support"
+        thread={fresh}
+        currentUser={ME}
+        onResolveAsEval={onResolve}
+        resolveComment={resolveComment}
+      />,
+    );
+    fireEvent.change(screen.getByTestId(`thread-eval-input-${fresh.id}`), {
+      target: { value: "Offer callback before transfer over $200." },
+    });
+    fireEvent.click(screen.getByTestId(`thread-resolve-btn-${fresh.id}`));
+
+    expect(
+      await screen.findByTestId(`thread-notice-${fresh.id}`),
+    ).toHaveTextContent("eval_comment_cm_2");
+    expect(resolveComment).toHaveBeenCalledWith(
+      "agent_support",
+      "cm_2",
+      expect.objectContaining({
+        expected_behavior: "Offer callback before transfer over $200.",
+        also_create_eval_case: true,
+        source_trace: "audit/comments/cm_2",
+      }),
+    );
+    expect(onResolve).toHaveBeenCalledWith(
+      expect.objectContaining({ evalSpecId: "eval_comment_cm_2" }),
+    );
+  });
+
   it("blocks resolution when eval spec id is empty", () => {
     const fresh = FIXTURE_THREADS[0];
     const onResolve = vi.fn();

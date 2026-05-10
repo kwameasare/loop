@@ -8,44 +8,93 @@ import {
   type CommentThread,
   type ResolveAsEvalInput,
 } from "@/lib/comments";
+import {
+  resolveCommentAsEvalCase,
+  type CommentResolutionPayload,
+  type CommentResolutionResult,
+} from "@/lib/collaboration";
 
 interface CommentThreadViewProps {
   thread: CommentThread;
+  agentId?: string;
   /** Caller (e.g. cp-api adapter) that records the resolution. */
   onResolveAsEval?(input: ResolveAsEvalInput): void;
+  resolveComment?: (
+    agentId: string,
+    commentId: string,
+    payload: CommentResolutionPayload,
+  ) => Promise<CommentResolutionResult>;
   /** Identity of the current user; used as resolvedBy. */
   currentUser: { id: string; display: string };
 }
 
 export function CommentThreadView(props: CommentThreadViewProps): JSX.Element {
-  const { thread, onResolveAsEval, currentUser } = props;
+  const {
+    thread,
+    agentId,
+    onResolveAsEval,
+    resolveComment = resolveCommentAsEvalCase,
+    currentUser,
+  } = props;
   const [evalSpecId, setEvalSpecId] = useState("");
   const [alsoCreateEval, setAlsoCreateEval] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [localThread, setLocalThread] = useState<CommentThread>(thread);
+  const [resolving, setResolving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const stale = isThreadStale(localThread);
   const resolved = !!localThread.resolution;
 
-  function handleResolve(): void {
+  async function handleResolve(): Promise<void> {
     if (alsoCreateEval && !evalSpecId.trim()) {
       setError("Eval spec id is required.");
       return;
     }
     setError(null);
-    const input: ResolveAsEvalInput = {
-      threadId: localThread.id,
-      evalSpecId: alsoCreateEval ? evalSpecId.trim() : "comment-resolved",
-      resolvedBy: currentUser.id,
-      resolvedAt: new Date().toISOString(),
-      evidenceRef: `audit/comments/${localThread.id}/resolve`,
-    };
+    setNotice(null);
+    setResolving(true);
     try {
+      const targetComment = localThread.comments.at(-1);
+      const evidenceRef =
+        targetComment?.evidenceRef ?? `audit/comments/${localThread.id}/resolve`;
+      let evalId = alsoCreateEval ? evalSpecId.trim() : "comment-resolved";
+      if (agentId) {
+        const response = await resolveComment(
+          agentId,
+          targetComment?.id ?? localThread.id,
+          {
+            expected_behavior: evalSpecId.trim() || "Resolved without eval case.",
+            failure_reason:
+              targetComment?.body ?? "Reviewer comment resolved in Studio.",
+            also_create_eval_case: alsoCreateEval,
+            source_trace:
+              localThread.anchor.kind === "transcript_turn"
+                ? localThread.anchor.objectId
+                : evidenceRef,
+          },
+        );
+        evalId = response.case_id ?? "comment-resolved";
+        setNotice(
+          response.eval_case_created
+            ? `Eval ${evalId} created from comment ${response.comment_id}.`
+            : `Comment ${response.comment_id} resolved without eval creation.`,
+        );
+      }
+      const input: ResolveAsEvalInput = {
+        threadId: localThread.id,
+        evalSpecId: evalId,
+        resolvedBy: currentUser.id,
+        resolvedAt: new Date().toISOString(),
+        evidenceRef,
+      };
       const next = resolveThreadAsEval(localThread, input);
       setLocalThread(next);
       if (alsoCreateEval) onResolveAsEval?.(input);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to resolve.");
+    } finally {
+      setResolving(false);
     }
   }
 
@@ -108,6 +157,14 @@ export function CommentThreadView(props: CommentThreadViewProps): JSX.Element {
           </li>
         ))}
       </ul>
+      {notice ? (
+        <p
+          data-testid={`thread-notice-${localThread.id}`}
+          className="rounded-md border border-success/40 bg-success/5 p-2 text-xs text-success"
+        >
+          {notice}
+        </p>
+      ) : null}
       {!resolved ? (
         <div className="space-y-2 rounded-md border border-dashed p-3">
           <p className="text-xs font-medium text-foreground">
@@ -142,10 +199,15 @@ export function CommentThreadView(props: CommentThreadViewProps): JSX.Element {
           <button
             type="button"
             data-testid={`thread-resolve-btn-${localThread.id}`}
-            onClick={handleResolve}
-            className="rounded-md border bg-background px-2 py-1 text-xs font-medium hover:bg-muted"
+            onClick={() => void handleResolve()}
+            disabled={resolving}
+            className="rounded-md border bg-background px-2 py-1 text-xs font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {alsoCreateEval ? "Resolve as eval spec" : "Resolve comment"}
+            {resolving
+              ? "Resolving"
+              : alsoCreateEval
+                ? "Resolve as eval spec"
+                : "Resolve comment"}
           </button>
         </div>
       ) : null}
