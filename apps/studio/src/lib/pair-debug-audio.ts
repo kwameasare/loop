@@ -14,6 +14,7 @@ export interface PairDebugAudioSession {
 
 export interface PairDebugAudioOptions extends UxWireupClientOptions {
   participantId?: string;
+  allowFixture?: boolean;
 }
 
 export async function createPairDebugAudioSession(
@@ -31,6 +32,7 @@ export async function createPairDebugAudioSession(
         agent_id: agentId,
         participant_id: participantId,
       },
+      allowFallback: opts.allowFixture === true,
       fallback: {
         id: `pair-audio-${agentId}`,
         workspace_id: workspaceId,
