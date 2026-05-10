@@ -62,11 +62,10 @@ function _voiceBase(override?: string): string {
 /**
  * Mint a LiveKit access token for the given agent.
  *
- * Blocked on cp-api PR: ``POST /v1/voice/mint_token`` is not yet
- * mounted on cp. Until it ships the call returns null and the page
- * renders the "voice unavailable" empty state. When it lands the
- * studio's WebRTC transport can swap from the fixture to a real
- * LiveKit-room transport.
+ * Current cp-api mounts this route and returns a short-lived room
+ * token. A 404 is still treated as missing evidence so Studio remains
+ * safe against older deployments instead of falling back to a fake
+ * voice session.
  */
 export async function mintVoiceToken(
   args: { agent_id: string; identity?: string },

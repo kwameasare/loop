@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
+import json
+import os
+import re
+import secrets
+import time
 from typing import Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Request
-from pydantic import BaseModel, ConfigDict
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
@@ -14,6 +22,7 @@ from loop_control_plane.authorize import authorize_workspace_access
 from loop_control_plane.trace_search import TraceQuery
 
 router = APIRouter(prefix="/v1/workspaces", tags=["Voice"])
+router_tokens = APIRouter(prefix="/v1/voice", tags=["Voice"])
 
 AsrProvider = Literal["deepgram", "whisper", "google"]
 TtsProvider = Literal["elevenlabs", "openai", "polly"]
@@ -23,6 +32,13 @@ class VoiceConfigPatch(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     asr_provider: AsrProvider | None = None
     tts_provider: TtsProvider | None = None
+
+
+class MintVoiceTokenBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    agent_id: UUID
+    identity: str | None = Field(default=None, min_length=1, max_length=96)
 
 
 def _default_config(workspace_id: UUID) -> dict[str, Any]:
@@ -62,6 +78,56 @@ def _timestamp(seconds: float) -> str:
 async def _first_agent(cp: Any, workspace_id: UUID) -> Any | None:
     agents = await cp.agents.list_for_workspace(workspace_id)
     return agents[0] if agents else None
+
+
+async def _agent_for_caller(cp: Any, agent_id: UUID, caller_sub: str) -> Any:
+    workspaces = await cp.workspaces.list_for_user(caller_sub)
+    for workspace in workspaces:
+        for agent in await cp.agents.list_for_workspace(workspace.id):
+            if agent.id == agent_id:
+                await authorize_workspace_access(
+                    workspaces=cp.workspaces,
+                    workspace_id=agent.workspace_id,
+                    user_sub=caller_sub,
+                )
+                return agent
+    raise HTTPException(status_code=404, detail="unknown agent")
+
+
+def _base64url(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def _token_secret() -> bytes:
+    raw = (
+        os.environ.get("LOOP_LIVEKIT_TOKEN_SECRET")
+        or os.environ.get("LOOP_CP_PASETO_LOCAL_KEY")
+        or "loop-dev-voice-token-secret"
+    )
+    return raw.encode("utf-8")
+
+
+def _identity(raw: str | None, caller_sub: str) -> str:
+    base = raw.strip() if raw and raw.strip() else caller_sub
+    safe = re.sub(r"[^A-Za-z0-9_.@-]+", "-", base).strip("-")[:64]
+    if not safe:
+        safe = "builder"
+    return f"{safe}-{secrets.token_hex(4)}"
+
+
+def _jwt(payload: dict[str, Any]) -> str:
+    header = {"alg": "HS256", "typ": "JWT"}
+    encoded_header = _base64url(json.dumps(header, separators=(",", ":")).encode())
+    encoded_payload = _base64url(
+        json.dumps(payload, separators=(",", ":"), default=str).encode()
+    )
+    signing_input = f"{encoded_header}.{encoded_payload}".encode()
+    signature = hmac.new(_token_secret(), signing_input, hashlib.sha256).digest()
+    return f"{encoded_header}.{encoded_payload}.{_base64url(signature)}"
+
+
+def _livekit_url() -> str:
+    return os.environ.get("LOOP_LIVEKIT_URL", "wss://voice.loop.dev")
 
 
 @router.get("/{workspace_id}/voice/config")
@@ -112,6 +178,62 @@ async def patch_voice_config(
         },
     )
     return current
+
+
+@router_tokens.post("/mint_token")
+async def mint_voice_token(
+    request: Request,
+    body: MintVoiceTokenBody,
+    caller_sub: str = CALLER,
+) -> dict[str, str]:
+    cp = request.app.state.cp
+    agent = await _agent_for_caller(cp, body.agent_id, caller_sub)
+    room = f"agent-{agent.id.hex[:12]}"
+    identity = _identity(body.identity, caller_sub)
+    now = int(time.time())
+    expires_at = now + 5 * 60
+    token = _jwt(
+        {
+            "iss": "loop-cp",
+            "sub": identity,
+            "aud": "loop-voice",
+            "iat": now,
+            "nbf": now,
+            "exp": expires_at,
+            "room": room,
+            "agent_id": str(agent.id),
+            "workspace_id": str(agent.workspace_id),
+            "video": {"roomJoin": True, "room": room},
+        }
+    )
+    cp.voice_sessions[identity] = {
+        "agent_id": str(agent.id),
+        "workspace_id": str(agent.workspace_id),
+        "room": room,
+        "expires_at": expires_at,
+        "created_at": now,
+    }
+    record_audit_event(
+        workspace_id=agent.workspace_id,
+        actor_sub=caller_sub,
+        action="voice_token:mint",
+        resource_type="voice_session",
+        store=cp.audit_events,
+        resource_id=identity,
+        request_id=request_id(request),
+        payload={
+            "agent_id": str(agent.id),
+            "room": room,
+            "identity": identity,
+            "expires_at": expires_at,
+        },
+    )
+    return {
+        "token": token,
+        "url": _livekit_url(),
+        "room": room,
+        "identity": identity,
+    }
 
 
 @router.get("/{workspace_id}/voice/stage")
@@ -261,4 +383,4 @@ async def get_voice_stage(
     }
 
 
-__all__ = ["router"]
+__all__ = ["router", "router_tokens"]

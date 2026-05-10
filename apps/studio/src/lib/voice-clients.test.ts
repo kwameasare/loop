@@ -40,7 +40,7 @@ describe("mintVoiceToken", () => {
     expect(JSON.parse(init.body)).toEqual({ agent_id: "a1" });
   });
 
-  it("returns null on 404 (route not yet shipped)", async () => {
+  it("returns null on 404 missing voice-token evidence", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
