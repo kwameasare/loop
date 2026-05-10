@@ -20,6 +20,7 @@ export interface WebChannelBinding {
   /** Public bearer token consumed by the embed script. */
   token: string | null;
   enabledAt: string | null;
+  degradedReason?: string | undefined;
 }
 
 export interface ChannelHelperOptions {
@@ -56,12 +57,18 @@ function localToken(): string {
     .slice(2, 8)}`;
 }
 
+export const WEB_CHANNEL_CP_API_REQUIRED =
+  "LOOP_CP_API_BASE_URL is required to load web channel.";
+
 export async function getWebChannel(
   agentId: string,
   opts: ChannelHelperOptions = {},
 ): Promise<WebChannelBinding> {
   const base = resolveBase(opts);
   if (!base) {
+    if (opts.allowFixture !== true) {
+      throw new Error(WEB_CHANNEL_CP_API_REQUIRED);
+    }
     return {
       agentId,
       status: "disabled",

@@ -38,15 +38,19 @@ export default async function AgentChannelsPage({
     token: null,
     enabledAt: null,
   };
+  let webChannelDegradedReason: string | undefined;
   try {
     binding = await getWebChannel(params.agent_id);
-  } catch {
+  } catch (err) {
+    webChannelDegradedReason =
+      err instanceof Error ? err.message : "Web channel status requires cp-api.";
     binding = {
       agentId: params.agent_id,
       status: "disabled",
       channelId: null,
       token: null,
       enabledAt: null,
+      degradedReason: webChannelDegradedReason,
     };
   }
 
@@ -74,7 +78,11 @@ export default async function AgentChannelsPage({
             the same agent, eval, memory, and deploy contract.
           </p>
         </div>
-        <WebChannelCard agentId={params.agent_id} initialBinding={binding} />
+        <WebChannelCard
+          agentId={params.agent_id}
+          degradedReason={webChannelDegradedReason}
+          initialBinding={binding}
+        />
       </section>
     </div>
   );

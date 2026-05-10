@@ -16,6 +16,7 @@ type CopyFn = (text: string) => Promise<void>;
 export interface WebChannelCardProps {
   agentId: string;
   initialBinding: WebChannelBinding;
+  degradedReason?: string | undefined;
   /** Override clipboard for jsdom tests (writeText is unavailable). */
   copy?: CopyFn;
   /** Override network calls in tests. */
@@ -36,6 +37,7 @@ const SCRIPT_PLACEHOLDER =
  */
 export function WebChannelCard({
   agentId,
+  degradedReason,
   initialBinding,
   copy,
   enable = defaultEnable,
@@ -47,6 +49,8 @@ export function WebChannelCard({
   const tokenId = useId();
 
   const enabled = binding.status === "enabled" && binding.token != null;
+  const backendUnavailable =
+    degradedReason ?? binding.degradedReason ?? undefined;
   const snippet = enabled
     ? buildEmbedSnippet({
         agentId,
@@ -116,11 +120,13 @@ export function WebChannelCard({
         <button
           className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           data-testid="web-channel-toggle"
-          disabled={busy}
+          disabled={busy || Boolean(backendUnavailable)}
           onClick={handleToggle}
           type="button"
         >
-          {busy
+          {backendUnavailable
+            ? "Backend required"
+            : busy
             ? enabled
               ? "Disabling…"
               : "Enabling…"
@@ -129,6 +135,16 @@ export function WebChannelCard({
               : "Enable"}
         </button>
       </header>
+
+      {backendUnavailable ? (
+        <p
+          className="rounded-md border border-warning/40 bg-warning/10 p-3 text-xs text-warning"
+          data-testid="web-channel-degraded"
+          role="status"
+        >
+          Web channel state is unavailable. {backendUnavailable}
+        </p>
+      ) : null}
 
       <div className="flex flex-col gap-1">
         <label

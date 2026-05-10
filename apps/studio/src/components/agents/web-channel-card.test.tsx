@@ -40,6 +40,27 @@ describe("WebChannelCard", () => {
     ).toBe(true);
   });
 
+  it("shows backend-required state when web channel status is degraded", () => {
+    const enable = vi.fn(async () => enabled);
+    render(
+      <WebChannelCard
+        agentId="agt_demo"
+        degradedReason="LOOP_CP_API_BASE_URL is required to load web channel."
+        initialBinding={disabled}
+        enable={enable}
+      />,
+    );
+
+    expect(screen.getByTestId("web-channel-degraded")).toHaveTextContent(
+      "Web channel state is unavailable",
+    );
+    const toggle = screen.getByTestId("web-channel-toggle") as HTMLButtonElement;
+    expect(toggle).toBeDisabled();
+    expect(toggle).toHaveTextContent("Backend required");
+    fireEvent.click(toggle);
+    expect(enable).not.toHaveBeenCalled();
+  });
+
   it("enabling mints a snippet with the new token", async () => {
     const enable = vi.fn(async () => enabled);
     render(
