@@ -58,6 +58,20 @@ describe("listAgentSecrets", () => {
     expect(items[0]).toMatchObject({ id: "sec_live", ref: "kms://prod/openai-key" });
     expect(items[0]).not.toHaveProperty("value");
   });
+
+  it("marks a missing vault route as degraded instead of showing an empty secret list", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response("missing", { status: 404 }),
+    );
+
+    const { items, degraded_reason } = await listAgentSecrets("agt_1", {
+      baseUrl: "https://cp.example.com/v1",
+      fetcher: fetcher as unknown as typeof fetch,
+    });
+
+    expect(items).toEqual([]);
+    expect(degraded_reason).toMatch(/vault route returned 404/i);
+  });
 });
 
 describe("addAgentSecret", () => {
