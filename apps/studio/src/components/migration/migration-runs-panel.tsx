@@ -328,7 +328,7 @@ export function MigrationRunsPanel({
 
         {activeRun ? (
           <div
-            className="grid gap-3 rounded-md border bg-background p-3 md:grid-cols-5"
+            className="grid gap-3 rounded-md border bg-background p-3 md:grid-cols-6"
             data-testid="migration-run-summary"
           >
             <Stat label="Agent" value={activeRun.target_agent_name} />
@@ -345,6 +345,10 @@ export function MigrationRunsPanel({
             <Stat
               label="Parity"
               value={`${activeRun.readiness.parity_passing}/${activeRun.readiness.parity_total}`}
+            />
+            <Stat
+              label="Eval cases"
+              value={String(activeRun.eval_case_refs?.length ?? 0)}
             />
           </div>
         ) : (

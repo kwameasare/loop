@@ -143,6 +143,7 @@ class MigrationRunRecord(BaseModel):
     readiness: MigrationReadinessRecord
     cutover_stages: list[MigrationCutoverStage]
     cutover_events: list[MigrationCutoverEvent]
+    eval_case_refs: list[dict[str, str]]
     rollback_triggers: list[dict[str, Any]]
     created_by_user_id: str
     created_at: datetime
@@ -223,6 +224,7 @@ class MigrationRunRegistry:
                 readiness=readiness,
                 cutover_stages=_cutover_stages(readiness),
                 cutover_events=[],
+                eval_case_refs=[],
                 rollback_triggers=_rollback_triggers(workspace_id, body.source),
                 created_by_user_id=actor_sub,
                 created_at=now,
@@ -276,6 +278,30 @@ class MigrationRunRegistry:
                     "cutover_stages": stages,
                     "cutover_events": [event, *record.cutover_events],
                     "updated_at": event.created_at,
+                }
+            )
+            self._replace_unlocked(workspace_id=workspace_id, record=updated)
+            return updated
+
+    async def record_eval_case_ref(
+        self,
+        *,
+        workspace_id: UUID,
+        migration_id: str,
+        eval_ref: dict[str, str],
+    ) -> MigrationRunRecord:
+        async with self._lock:
+            record = self._find_unlocked(workspace_id=workspace_id, migration_id=migration_id)
+            case_id = eval_ref.get("case_id", "")
+            refs = [
+                ref
+                for ref in record.eval_case_refs
+                if not case_id or ref.get("case_id") != case_id
+            ]
+            updated = record.model_copy(
+                update={
+                    "eval_case_refs": [eval_ref, *refs],
+                    "updated_at": datetime.now(UTC),
                 }
             )
             self._replace_unlocked(workspace_id=workspace_id, record=updated)
