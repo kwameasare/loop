@@ -33,11 +33,23 @@ export interface TargetWorkspace {
   activeAgentId: string;
 }
 
+export type TargetChannel =
+  | "web"
+  | "web_chat"
+  | "whatsapp"
+  | "telegram"
+  | "slack"
+  | "teams"
+  | "sms"
+  | "email"
+  | "voice"
+  | "webhook_api";
+
 export interface TargetAgent {
   id: string;
   name: string;
   purpose: string;
-  channel: "web" | "slack" | "voice" | "whatsapp" | "sms";
+  channel: TargetChannel;
   objectState: ObjectState;
   trust: TrustState;
   evalPassRate: number;
@@ -132,7 +144,7 @@ export interface TargetCostSlice {
 export interface TargetInboxItem {
   id: string;
   customer: string;
-  channel: TargetAgent["channel"];
+  channel: TargetChannel;
   severity: "low" | "medium" | "high" | "critical";
   summary: string;
   traceId: string;
