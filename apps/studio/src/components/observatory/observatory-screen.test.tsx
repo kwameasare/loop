@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ObservatoryScreen } from "@/components/observatory/observatory-screen";
-import { OBSERVATORY_MODEL } from "@/lib/observatory";
+import { buildObservatoryModel, OBSERVATORY_MODEL } from "@/lib/observatory";
 
 describe("ObservatoryScreen", () => {
   const ORIGINAL_BASE_URL = process.env.LOOP_CP_API_BASE_URL;
@@ -130,6 +130,34 @@ describe("ObservatoryScreen", () => {
     expect(screen.getByTestId("observatory-pin-quality")).toHaveTextContent(
       "Pin chart to dashboard",
     );
+  });
+
+  it("renders unconfigured telemetry as degraded, not healthy fixture posture", () => {
+    const model = buildObservatoryModel({
+      workspaceId: "ws1",
+      traces: [],
+      usage: [],
+      inbox: [],
+      incidents: [],
+      nowMs: Date.UTC(2026, 4, 7),
+      degradedReason:
+        "LOOP_CP_API_BASE_URL is required for live Observatory telemetry.",
+    });
+
+    render(<ObservatoryScreen model={model} workspaceId="ws1" />);
+
+    expect(screen.getByTestId("observatory-degraded")).toHaveTextContent(
+      /live observatory telemetry is unavailable/i,
+    );
+    expect(screen.getByTestId("observatory-metric-quality")).toHaveTextContent(
+      "Telemetry backend not connected",
+    );
+    expect(screen.getByText(/No production tail events loaded/i))
+      .toBeInTheDocument();
+    expect(screen.queryByText(/legal synonym cluster/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/No operating recommendation is ranked/i))
+      .toBeInTheDocument();
+    expect(screen.getByText(/No agent health arcs loaded/i)).toBeInTheDocument();
   });
 
   it("seeds incident evals from the incident panel", async () => {

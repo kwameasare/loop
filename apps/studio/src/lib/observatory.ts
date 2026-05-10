@@ -67,6 +67,7 @@ export interface ObservatoryModel {
   incidents: readonly IncidentRecord[];
   tail: readonly ProductionTailEvent[];
   agents: readonly AmbientAgentHealth[];
+  degradedReason?: string | undefined;
 }
 
 export interface ObservatoryDashboardLayout {
@@ -165,6 +166,7 @@ export function buildObservatoryModel(args: {
   inbox: readonly InboxItem[];
   incidents?: readonly IncidentRecord[];
   nowMs: number;
+  degradedReason?: string | undefined;
 }): ObservatoryModel {
   const traces = [...args.traces].sort(
     (a, b) => b.started_at_ms - a.started_at_ms,
@@ -315,75 +317,86 @@ export function buildObservatoryModel(args: {
     },
   );
 
+  const metrics: ObservatoryMetric[] = [
+    {
+      id: "quality",
+      label: "Quality",
+      value: `${okRate.toFixed(1)}%`,
+      delta: `${errorCount} errored turns in ${totalTraces} live traces`,
+      tone: toneFromScore(okRate),
+      nextAction:
+        errorCount > 0
+          ? "Open the highest-cost failed trace and save it as a regression case."
+          : "Keep replaying production traces before every promotion.",
+    },
+    {
+      id: "latency",
+      label: "P95 latency",
+      value: formatLatency(p95LatencyMs),
+      delta: `${totalTraces} trace sample${totalTraces === 1 ? "" : "s"}`,
+      tone: toneFromLatency(p95LatencyMs),
+      nextAction:
+        p95LatencyMs > 1_200
+          ? "Open the latency budget visualizer for the slowest recent turn."
+          : "Hold the current latency budget as canary traffic increases.",
+    },
+    {
+      id: "cost",
+      label: "Cost per turn",
+      value: formatUSD(costPerTurnCents),
+      delta: `${formatDeltaPercent(kpis.mtd_cents, kpis.prev_month_cents)} vs prior month`,
+      tone: costPerTurnCents <= 5 ? "healthy" : "watching",
+      nextAction:
+        turns > 0
+          ? "Review the highest-cost agent line before increasing traffic."
+          : "Emit turn_count in usage events so cost per turn becomes precise.",
+    },
+    {
+      id: "knowledge",
+      label: "Retrieval signal",
+      value: `${Math.round(retrievals).toLocaleString()}`,
+      delta: `${knowledgeScore.toFixed(0)} retrievals per 100 traces`,
+      tone: toneFromScore(knowledgeScore),
+      nextAction:
+        retrievals > 0
+          ? "Open missed-retrieval traces and convert them into inverse retrieval checks."
+          : "Connect retrieval telemetry so knowledge health stops being inferred.",
+    },
+    {
+      id: "handoff",
+      label: "Escalation rate",
+      value: `${escalationRate.toFixed(1)}%`,
+      delta: `${openInbox.length} unresolved inbox item${openInbox.length === 1 ? "" : "s"}`,
+      tone: escalationRate <= 5 ? "healthy" : "watching",
+      nextAction:
+        openInbox.length > 0
+          ? "Resolve the oldest handoff and turn the resolution into an eval."
+          : "Keep the inbox clear while monitoring production tail drift.",
+    },
+    {
+      id: "deploy",
+      label: "Deploy state",
+      value: "Live window",
+      delta: `${formatUSD(kpis.projected_eom_cents)} projected month-end`,
+      tone: anomalies.some((anomaly) => anomaly.severity === "critical")
+        ? "blocked"
+        : "watching",
+      nextAction:
+        "Use this live posture as the pre-promote read before increasing canary traffic.",
+    },
+  ];
+  const visibleMetrics = args.degradedReason
+    ? metrics.map((metric) => ({
+        ...metric,
+        tone: "blocked" as const,
+        delta: "Telemetry backend not connected",
+        nextAction:
+          "Connect cp-api telemetry before treating this observatory as live.",
+      }))
+    : metrics;
+
   return {
-    metrics: [
-      {
-        id: "quality",
-        label: "Quality",
-        value: `${okRate.toFixed(1)}%`,
-        delta: `${errorCount} errored turns in ${totalTraces} live traces`,
-        tone: toneFromScore(okRate),
-        nextAction:
-          errorCount > 0
-            ? "Open the highest-cost failed trace and save it as a regression case."
-            : "Keep replaying production traces before every promotion.",
-      },
-      {
-        id: "latency",
-        label: "P95 latency",
-        value: formatLatency(p95LatencyMs),
-        delta: `${totalTraces} trace sample${totalTraces === 1 ? "" : "s"}`,
-        tone: toneFromLatency(p95LatencyMs),
-        nextAction:
-          p95LatencyMs > 1_200
-            ? "Open the latency budget visualizer for the slowest recent turn."
-            : "Hold the current latency budget as canary traffic increases.",
-      },
-      {
-        id: "cost",
-        label: "Cost per turn",
-        value: formatUSD(costPerTurnCents),
-        delta: `${formatDeltaPercent(kpis.mtd_cents, kpis.prev_month_cents)} vs prior month`,
-        tone: costPerTurnCents <= 5 ? "healthy" : "watching",
-        nextAction:
-          turns > 0
-            ? "Review the highest-cost agent line before increasing traffic."
-            : "Emit turn_count in usage events so cost per turn becomes precise.",
-      },
-      {
-        id: "knowledge",
-        label: "Retrieval signal",
-        value: `${Math.round(retrievals).toLocaleString()}`,
-        delta: `${knowledgeScore.toFixed(0)} retrievals per 100 traces`,
-        tone: toneFromScore(knowledgeScore),
-        nextAction:
-          retrievals > 0
-            ? "Open missed-retrieval traces and convert them into inverse retrieval checks."
-            : "Connect retrieval telemetry so knowledge health stops being inferred.",
-      },
-      {
-        id: "handoff",
-        label: "Escalation rate",
-        value: `${escalationRate.toFixed(1)}%`,
-        delta: `${openInbox.length} unresolved inbox item${openInbox.length === 1 ? "" : "s"}`,
-        tone: escalationRate <= 5 ? "healthy" : "watching",
-        nextAction:
-          openInbox.length > 0
-            ? "Resolve the oldest handoff and turn the resolution into an eval."
-            : "Keep the inbox clear while monitoring production tail drift.",
-      },
-      {
-        id: "deploy",
-        label: "Deploy state",
-        value: "Live window",
-        delta: `${formatUSD(kpis.projected_eom_cents)} projected month-end`,
-        tone: anomalies.some((anomaly) => anomaly.severity === "critical")
-          ? "blocked"
-          : "watching",
-        nextAction:
-          "Use this live posture as the pre-promote read before increasing canary traffic.",
-      },
-    ],
+    metrics: visibleMetrics,
     anomalies,
     incidents: activeIncidents,
     tail: traces.slice(0, 8).map((trace) => ({
@@ -398,6 +411,7 @@ export function buildObservatoryModel(args: {
       status: traceTone(trace),
     })),
     agents,
+    degradedReason: args.degradedReason,
   };
 }
 
@@ -413,6 +427,8 @@ export async function fetchObservatoryModel(
       inbox: [],
       incidents: [],
       nowMs: Date.now(),
+      degradedReason:
+        "LOOP_CP_API_BASE_URL is required for live Observatory telemetry.",
     });
   }
   const nowMs = Date.now();
