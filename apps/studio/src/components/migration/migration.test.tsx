@@ -6,7 +6,11 @@ import { MigrationEntry } from "./migration-entry";
 import { MigrationScreen } from "./migration-screen";
 import { SourceGrid } from "./source-grid";
 import { ThreePaneReview } from "./three-pane-review";
-import { MIGRATION_SOURCES, REVIEW_ITEMS } from "@/lib/migration";
+import {
+  MIGRATION_READINESS,
+  MIGRATION_SOURCES,
+  REVIEW_ITEMS,
+} from "@/lib/migration";
 
 describe("MigrationEntry", () => {
   it("renders import as the first-class entry choice", () => {
@@ -139,8 +143,26 @@ describe("ThreePaneReview", () => {
 });
 
 describe("MigrationScreen", () => {
-  it("composes entry, sources, wizard, and three-pane review", () => {
+  it("does not render fixture review decisions by default", () => {
     render(<MigrationScreen />);
+    expect(screen.getByTestId("migration-screen")).toBeInTheDocument();
+    expect(screen.getByTestId("state-panel")).toHaveAttribute(
+      "data-state",
+      "empty",
+    );
+    expect(screen.getByTestId("state-panel")).toHaveTextContent(
+      "No migration evidence loaded",
+    );
+    expect(screen.queryByTestId("review-item-review_refund_routine")).toBeNull();
+  });
+
+  it("composes entry, sources, wizard, and three-pane review", () => {
+    render(
+      <MigrationScreen
+        readiness={MIGRATION_READINESS}
+        reviewItems={REVIEW_ITEMS}
+      />,
+    );
     expect(screen.getByTestId("migration-screen")).toBeInTheDocument();
     expect(screen.getByTestId("migration-entry")).toBeInTheDocument();
     expect(screen.getByTestId("source-grid")).toBeInTheDocument();
@@ -149,7 +171,12 @@ describe("MigrationScreen", () => {
   });
 
   it("shows a degraded state panel when blocking decisions exist", () => {
-    render(<MigrationScreen />);
+    render(
+      <MigrationScreen
+        readiness={MIGRATION_READINESS}
+        reviewItems={REVIEW_ITEMS}
+      />,
+    );
     const panel = screen.getByTestId("state-panel");
     expect(panel).toHaveAttribute("data-state", "degraded");
     expect(panel.textContent).toMatch(/Promotion blocked/i);

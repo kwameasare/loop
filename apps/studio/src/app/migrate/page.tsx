@@ -9,8 +9,7 @@ import {
   type MigrationParityWorkspace,
 } from "@/lib/botpress-import";
 import {
-  MIGRATION_READINESS,
-  REVIEW_ITEMS,
+  EMPTY_MIGRATION_READINESS,
   type MigrationReadiness,
   type ReviewItem,
 } from "@/lib/migration";
@@ -100,14 +99,13 @@ function MigratePageBody() {
   }, [active]);
 
   const readiness = useMemo(
-    () => (workspace ? readinessFromParity(workspace) : MIGRATION_READINESS),
+    () =>
+      workspace ? readinessFromParity(workspace) : EMPTY_MIGRATION_READINESS,
     [workspace],
   );
   const reviewItems = useMemo(
     () =>
-      workspace
-        ? workspace.diffs.slice(0, 6).map(reviewItemFromDiff)
-        : REVIEW_ITEMS,
+      workspace ? workspace.diffs.slice(0, 6).map(reviewItemFromDiff) : [],
     [workspace],
   );
 
