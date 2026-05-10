@@ -76,6 +76,7 @@ describe("AdversarialCatchPanel", () => {
         created_at: "2026-05-09T00:00:00Z",
       },
     }));
+    const listCatches = vi.fn(async () => ({ items: [] }));
 
     render(
       <AdversarialCatchPanel
@@ -83,6 +84,7 @@ describe("AdversarialCatchPanel", () => {
         sentence={SENTENCE}
         runProbe={runProbe}
         resolveCatch={resolveCatch}
+        listCatches={listCatches}
       />,
     );
 
@@ -139,12 +141,14 @@ describe("AdversarialCatchPanel", () => {
       },
       catches: [CATCH],
     }));
+    const listCatches = vi.fn(async () => ({ items: [] }));
 
     render(
       <AdversarialCatchPanel
         agentId="agent_support"
         sentence={SENTENCE}
         runProbe={runProbe}
+        listCatches={listCatches}
       />,
     );
 
@@ -157,6 +161,63 @@ describe("AdversarialCatchPanel", () => {
     expect(runProbe).toHaveBeenCalledWith(
       "agent_support",
       expect.objectContaining({ budget_tokens: 900 }),
+    );
+  });
+
+  it("loads existing persisted catches for the selected behavior sentence", async () => {
+    const runProbe = vi.fn();
+    const resolveCatch = vi.fn(async () => ({
+      ...CATCH,
+      status: "dismissed" as const,
+      resolution: {
+        intended_interpretation: "",
+        rejected_interpretation: "",
+        dismiss_reason: "Covered by existing policy tests.",
+        created_by: "owner",
+        created_at: "2026-05-09T00:00:00Z",
+      },
+    }));
+    const listCatches = vi.fn(async () => ({
+      items: [
+        {
+          ...CATCH,
+          id: "catch_other_rule",
+          rule_id: "other_rule",
+        },
+        CATCH,
+      ],
+    }));
+
+    render(
+      <AdversarialCatchPanel
+        agentId="agent_support"
+        sentence={SENTENCE}
+        runProbe={runProbe}
+        resolveCatch={resolveCatch}
+        listCatches={listCatches}
+      />,
+    );
+
+    expect(
+      await screen.findByTestId("adversarial-catch-question"),
+    ).toHaveTextContent("cumulatively");
+    expect(screen.getByText(/Persisted catch loaded/i)).toBeInTheDocument();
+    expect(listCatches).toHaveBeenCalledWith("agent_support");
+    expect(runProbe).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByTestId("catch-dismiss-reason"), {
+      target: { value: "Covered by existing policy tests." },
+    });
+    fireEvent.click(screen.getByTestId("dismiss-adversarial-catch"));
+
+    expect(await screen.findByText("Catch dismissed")).toBeInTheDocument();
+    expect(resolveCatch).toHaveBeenCalledWith(
+      "agent_support",
+      "catch_refund_cap",
+      expect.objectContaining({
+        dismiss_reason: "Covered by existing policy tests.",
+        create_eval_cases: false,
+      }),
     );
   });
 

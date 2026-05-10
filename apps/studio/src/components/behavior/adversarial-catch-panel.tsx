@@ -10,6 +10,7 @@ import {
 
 import { LiveBadge, StatePanel } from "@/components/target";
 import {
+  listAdversarialCatches,
   resolveAdversarialCatch,
   runAdversarialProbe,
   type AdversarialCatch,
@@ -17,6 +18,7 @@ import {
   type AdversarialProbeRunResponse,
   type AdversarialRiskClass,
   type CatchResolutionInput,
+  type ListAdversarialCatchesResponse,
 } from "@/lib/adversarial-catches";
 import type { BehaviorSentence } from "@/lib/behavior";
 
@@ -32,6 +34,7 @@ export interface AdversarialCatchPanelProps {
     catchId: string,
     input: CatchResolutionInput,
   ) => Promise<AdversarialCatch>;
+  listCatches?: (agentId: string) => Promise<ListAdversarialCatchesResponse>;
 }
 
 function riskForSentence(sentence: BehaviorSentence): AdversarialRiskClass {
@@ -65,9 +68,11 @@ export function AdversarialCatchPanel({
   sentence,
   runProbe = runAdversarialProbe,
   resolveCatch = resolveAdversarialCatch,
+  listCatches = listAdversarialCatches,
 }: AdversarialCatchPanelProps) {
   const [running, setRunning] = useState(false);
   const [resolving, setResolving] = useState(false);
+  const [loadingExisting, setLoadingExisting] = useState(false);
   const [catchItem, setCatchItem] = useState<AdversarialCatch | null>(null);
   const [resolved, setResolved] = useState<AdversarialCatch | null>(null);
   const [intended, setIntended] = useState("");
@@ -76,11 +81,57 @@ export function AdversarialCatchPanel({
   const [createEvalCases, setCreateEvalCases] = useState(true);
   const [budgetTokens, setBudgetTokens] = useState(2000);
   const [error, setError] = useState<string | null>(null);
+  const sentenceId = sentence?.id ?? null;
 
   useEffect(() => {
     if (!sentence) return;
     setBudgetTokens(defaultBudgetForRisk(riskForSentence(sentence)));
-  }, [sentence?.id]);
+  }, [sentenceId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setCatchItem(null);
+    setResolved(null);
+    setIntended("");
+    setRejected("");
+    setDismissReason("");
+    setError(null);
+    if (!sentenceId) return;
+
+    setLoadingExisting(true);
+    void listCatches(agentId)
+      .then((response) => {
+        if (cancelled) return;
+        const matching =
+          response.items.find(
+            (item) => item.rule_id === sentenceId && item.status === "open",
+          ) ??
+          response.items.find((item) => item.rule_id === sentenceId) ??
+          null;
+        setCatchItem(matching);
+        setResolved(
+          matching && matching.status !== "open" ? matching : null,
+        );
+        setIntended(defaultIntended(matching));
+        setRejected(defaultRejected(matching));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Could not load existing adversarial catches.";
+        if (!message.includes("LOOP_CP_API_BASE_URL is required")) {
+          setError(message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingExisting(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [agentId, listCatches, sentenceId]);
 
   const probeInput = useMemo<AdversarialProbeRunInput | null>(() => {
     if (!sentence) return null;
@@ -186,6 +237,13 @@ export function AdversarialCatchPanel({
       <div className="mt-4 rounded-md border bg-background px-3 py-2 text-xs text-muted-foreground">
         <span className="font-medium text-foreground">Selected rule:</span>{" "}
         {sentence.text}
+        <span className="mt-2 block">
+          {loadingExisting
+            ? "Checking persisted catches for this rule..."
+            : catchItem
+              ? `Persisted catch loaded from ${catchItem.evidence_ref}.`
+              : "No persisted catch is open for this rule."}
+        </span>
       </div>
 
       <label className="mt-4 block text-xs font-medium text-muted-foreground">
