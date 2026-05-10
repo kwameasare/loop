@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -32,6 +32,124 @@ import {
 
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 
+const WIZARD_STEPS = [
+  {
+    id: "mission",
+    label: "Mission",
+    caption: "Responsibility, users, and ownership",
+  },
+  {
+    id: "boundaries",
+    label: "Boundaries",
+    caption: "Risk, escalation, and operating limits",
+  },
+  {
+    id: "capabilities",
+    label: "Capabilities",
+    caption: "What the agent may do",
+  },
+  {
+    id: "knowledge_tools",
+    label: "Knowledge & tools",
+    caption: "Sources, systems, mocks, and imports",
+  },
+  {
+    id: "channels",
+    label: "Channels",
+    caption: "Where it will run",
+  },
+  {
+    id: "generated_tests",
+    label: "Generated tests",
+    caption: "Initial proof obligations",
+  },
+  {
+    id: "readiness",
+    label: "Readiness",
+    caption: "What will be created",
+  },
+] as const;
+
+const CREATION_PATHS: Array<{
+  value: AgentIntakePath;
+  label: string;
+  detail: string;
+}> = [
+  {
+    value: "business_intent",
+    label: "Business intent",
+    detail: "Describe the job and seed a governed draft.",
+  },
+  {
+    value: "legacy_import",
+    label: "Legacy import",
+    detail: "Use Botpress, Dialogflow, Rasa, transcripts, or API artifacts.",
+  },
+  {
+    value: "enterprise_template",
+    label: "Enterprise template",
+    detail: "Clone an approved internal pattern.",
+  },
+];
+
+const CAPABILITY_OPTIONS = [
+  "Answer from knowledge",
+  "Create or update records",
+  "Search customer/account data",
+  "Trigger workflows",
+  "Handoff to human",
+  "Send notifications",
+  "Voice interaction",
+  "Channel-specific messaging",
+];
+
+const CHANNEL_OPTIONS = [
+  { id: "web", label: "Web chat", detail: "Initial sandbox channel" },
+  { id: "whatsapp", label: "WhatsApp", detail: "Template + opt-in ready" },
+  { id: "telegram", label: "Telegram", detail: "Bot token binding" },
+  { id: "slack", label: "Slack", detail: "Workspace app binding" },
+  { id: "teams", label: "Teams", detail: "Tenant app binding" },
+  { id: "sms", label: "SMS", detail: "Carrier-safe text channel" },
+  { id: "email", label: "Email", detail: "Async inbox channel" },
+  { id: "voice", label: "Voice", detail: "Telephony, ASR, and TTS" },
+  { id: "webhook", label: "Webhook/API", detail: "Programmatic channel" },
+];
+
+const ARTIFACT_KIND_OPTIONS: AgentIntakeArtifactInput["kind"][] = [
+  "pdf",
+  "faq",
+  "runbook",
+  "transcript",
+  "botpress_export",
+  "dialogflow_export",
+  "rasa_export",
+  "zendesk_export",
+  "intercom_export",
+  "openapi",
+  "postman",
+  "curl",
+  "devtools_fetch",
+  "other",
+];
+
+const INTAKE_JOBS = [
+  "parse_artifacts",
+  "extract_intents",
+  "cluster_transcripts",
+  "detect_contradictions",
+  "detect_sensitive_data",
+  "infer_tools",
+  "infer_channels",
+  "draft_commitment_document",
+  "draft_agent_plan",
+];
+
+type ContractListField =
+  | "channels"
+  | "systems_touched"
+  | "regions"
+  | "languages";
+
 export interface NewAgentModalProps {
   /** Slugs already used in this workspace; submit is blocked if name collides. */
   existingSlugs: string[];
@@ -53,11 +171,86 @@ type Status =
   | { kind: "submitting" }
   | { kind: "error"; message: string };
 
+function hasArtifact(artifact: AgentIntakeArtifactInput): boolean {
+  return Boolean(
+    artifact.name.trim() || artifact.text.trim() || artifact.source_ref.trim(),
+  );
+}
+
+function generatedTestNames(
+  contract: CommitmentBody,
+  capabilities: string[],
+): string[] {
+  const channelLabel =
+    contract.channels.length > 0
+      ? `Channel format holds for ${contract.channels.join(", ")}`
+      : "Channel format is validated once a channel is selected";
+  const toolLabel =
+    contract.systems_touched.length > 0
+      ? `Tool-use path covers ${contract.systems_touched.join(", ")}`
+      : "Tool-use path waits for the first system or mock";
+  return [
+    "Happy path follows the mission",
+    contract.escalation_policy.trim()
+      ? "Escalation path follows the policy"
+      : "Escalation path is generated after policy review",
+    contract.worst_case_failure.trim()
+      ? "Worst-case failure is refused or escalated"
+      : "Refusal path waits for worst-case failure",
+    toolLabel,
+    capabilities.includes("Answer from knowledge")
+      ? "Knowledge-grounding path requires citations"
+      : "Knowledge-grounding path waits for knowledge capability",
+    channelLabel,
+  ];
+}
+
+function readinessItems(args: {
+  name: string;
+  slug: string;
+  contract: CommitmentBody;
+  capabilities: string[];
+  artifact: AgentIntakeArtifactInput;
+  slugError: string | null;
+}) {
+  const missing = missingCommitmentFields(args.contract);
+  return [
+    {
+      label: "Agent identity named",
+      ready: args.name.trim().length > 0 && args.slug.trim().length > 0,
+    },
+    { label: "Mission and owner defined", ready: missing.length === 0 },
+    {
+      label: "At least one capability selected",
+      ready: args.capabilities.length > 0,
+    },
+    {
+      label: "At least one sandbox channel selected",
+      ready: args.contract.channels.length > 0,
+    },
+    {
+      label: "Mock or live system placeholders identified",
+      ready: args.contract.systems_touched.length > 0,
+    },
+    {
+      label: "Starter evals can be generated",
+      ready:
+        args.contract.worst_case_failure.trim().length > 0 &&
+        args.capabilities.length > 0,
+    },
+    { label: "Slug is available", ready: args.slugError === null },
+    {
+      label: "Optional artifacts attached",
+      ready: hasArtifact(args.artifact),
+      optional: true,
+    },
+  ];
+}
+
 /**
- * "New agent" modal. Creation starts with the Agent Contract, not an
- * empty shell. The modal captures the minimum enterprise commitment,
- * creates the agent, saves the first Commitment Document draft, then
- * lands the builder on the contract page to finish acceptance.
+ * Creation starts with an Agent Contract, not an empty shell. The wizard
+ * captures mission, boundaries, capabilities, knowledge, tools, channels, and
+ * generated proof obligations before the backend creates the draft agent.
  */
 export function NewAgentModal({
   existingSlugs,
@@ -105,7 +298,7 @@ export function NewAgentModal({
   const slugTaken =
     trimmedSlug.length > 0 && existingSlugs.includes(trimmedSlug);
   const slugError = slugFormatBad
-    ? "Use 1–40 lowercase letters, numbers, or hyphens."
+    ? "Use 1-40 lowercase letters, numbers, or hyphens."
     : slugTaken
       ? "An agent with this slug already exists in the workspace."
       : null;
@@ -128,6 +321,24 @@ export function NewAgentModal({
       ));
   const activeTemplate =
     templates.find((template) => template.id === templateId) ?? templates[0];
+  const activeStep = WIZARD_STEPS[step] ?? WIZARD_STEPS[0]!;
+  const generatedTests = useMemo(
+    () => generatedTestNames(contract, capabilities),
+    [contract, capabilities],
+  );
+  const readiness = readinessItems({
+    name,
+    slug,
+    contract,
+    capabilities,
+    artifact,
+    slugError,
+  });
+  const requiredReadiness = readiness.filter((item) => !item.optional);
+  const readyCount = requiredReadiness.filter((item) => item.ready).length;
+  const readinessScore = Math.round(
+    (readyCount / Math.max(requiredReadiness.length, 1)) * 100,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -193,6 +404,16 @@ export function NewAgentModal({
     setContract((current) => ({ ...current, [field]: value }));
   }
 
+  function toggleContractList(field: ContractListField, value: string) {
+    setContract((current) => {
+      const existing = current[field];
+      const next = existing.includes(value)
+        ? existing.filter((item) => item !== value)
+        : [...existing, value];
+      return { ...current, [field]: next };
+    });
+  }
+
   function toggleCapability(capability: string) {
     setCapabilities((current) =>
       current.includes(capability)
@@ -240,17 +461,16 @@ export function NewAgentModal({
     if (!canSubmit) return;
     setStatus({ kind: "submitting" });
     try {
-      const artifacts =
-        artifact.name.trim() ||
-        artifact.text.trim() ||
-        artifact.source_ref.trim()
-          ? [
-              {
-                ...artifact,
-                name: artifact.name.trim() || "intake-notes",
-              },
-            ]
-          : [];
+      const artifacts = hasArtifact(artifact)
+        ? [
+            {
+              ...artifact,
+              name: artifact.name.trim() || "intake-artifact",
+              source_ref: artifact.source_ref.trim(),
+              text: artifact.text.trim(),
+            },
+          ]
+        : [];
       const intakeInput: AgentIntakeCreateInput = {
         agent_name: trimmedName,
         slug: trimmedSlug,
@@ -290,7 +510,7 @@ export function NewAgentModal({
       <DialogTrigger asChild>
         <button
           type="button"
-          className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           data-testid="new-agent-button"
         >
           New agent
@@ -299,7 +519,7 @@ export function NewAgentModal({
       <DialogContent
         aria-label="Create agent"
         data-testid="new-agent-modal"
-        className="max-h-[90vh] max-w-3xl overflow-y-auto"
+        className="max-h-[92vh] max-w-5xl overflow-y-auto"
       >
         <form
           onSubmit={handleSubmit}
@@ -307,11 +527,10 @@ export function NewAgentModal({
           noValidate
         >
           <DialogHeader>
-            <DialogTitle>Create governed agent intake</DialogTitle>
+            <DialogTitle>Agent Contract Wizard</DialogTitle>
             <DialogDescription>
-              Start from business responsibility, artifacts, channels, and risk.
-              Studio creates the draft agent, contract, sandbox channels, mock
-              tool contracts, memory policy, and starter evals together.
+              What agent are you building, for whom, and what must it never get
+              wrong?
             </DialogDescription>
           </DialogHeader>
 
@@ -328,161 +547,183 @@ export function NewAgentModal({
           ) : null}
 
           <ol
-            className="grid gap-2 text-xs md:grid-cols-4"
+            className="grid gap-2 text-xs md:grid-cols-4 xl:grid-cols-7"
             aria-label="Agent contract wizard steps"
           >
-            {["Mission", "Boundaries", "Capabilities", "Readiness"].map(
-              (label, index) => (
-                <li key={label}>
+            {WIZARD_STEPS.map((item, index) => {
+              const current = step === index;
+              return (
+                <li key={item.id}>
                   <button
                     type="button"
                     onClick={() => setStep(index)}
-                    aria-current={step === index ? "step" : undefined}
+                    aria-current={current ? "step" : undefined}
+                    data-testid={`new-agent-step-${item.id}`}
                     className={[
-                      "w-full rounded-md border px-3 py-2 text-left transition-colors",
-                      step === index
-                        ? "border-primary bg-primary/10 text-foreground"
+                      "h-full w-full rounded-md border px-3 py-2 text-left transition-colors",
+                      current
+                        ? "border-primary bg-primary/10 text-foreground shadow-sm"
                         : "bg-background text-muted-foreground hover:bg-muted/50",
                     ].join(" ")}
                   >
-                    <span className="block font-semibold">{label}</span>
-                    <span>Step {index + 1}</span>
+                    <span className="block font-semibold">{item.label}</span>
+                    <span className="block text-[0.68rem] leading-4">
+                      {item.caption}
+                    </span>
                   </button>
                 </li>
-              ),
-            )}
+              );
+            })}
           </ol>
 
-          <fieldset className="grid gap-3 rounded-md border bg-muted/30 p-4">
-            <legend className="px-1 text-sm font-medium">Creation path</legend>
-            <div className="grid gap-2 md:grid-cols-3">
-              {[
-                {
-                  value: "business_intent",
-                  label: "Business intent",
-                  detail: "Describe the job and seed a governed draft.",
-                },
-                {
-                  value: "legacy_import",
-                  label: "Legacy import",
-                  detail:
-                    "Use Botpress, Dialogflow, Rasa, or transcript input.",
-                },
-                {
-                  value: "enterprise_template",
-                  label: "Enterprise template",
-                  detail: "Clone an approved internal pattern.",
-                },
-              ].map((option) => (
-                <label
-                  key={option.value}
-                  className="flex cursor-pointer gap-2 rounded-md border bg-background p-3 text-sm"
-                >
-                  <input
-                    type="radio"
-                    name="creation-path"
-                    value={option.value}
-                    checked={creationPath === option.value}
-                    onChange={(event) =>
-                      chooseCreationPath(event.target.value as AgentIntakePath)
-                    }
-                  />
-                  <span>
-                    <span className="block font-medium">{option.label}</span>
-                    <span className="text-muted-foreground">
-                      {option.detail}
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
-          {creationPath === "enterprise_template" ? (
-            <fieldset className="grid gap-3 rounded-md border border-info/30 bg-info/5 p-4">
-              <legend className="px-1 text-sm font-medium">
-                Approved template
-              </legend>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium">Template</span>
-                <select
-                  value={templateId}
-                  onChange={(event) => applyTemplate(event.target.value)}
-                  data-testid="new-agent-template"
-                  className="rounded-md border bg-background px-2 py-1"
-                >
-                  {templates.map((template) => (
-                    <option key={template.id} value={template.id}>
-                      {template.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <p className="text-xs text-muted-foreground">
-                {activeTemplate?.summary}
-              </p>
-              {templateCatalogState === "fallback" ? (
-                <p className="text-xs text-warning">
-                  Using the offline template catalog until workspace templates
-                  load.
+          <div className="rounded-md border bg-muted/25 p-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Step {step + 1} of {WIZARD_STEPS.length}
                 </p>
-              ) : null}
-            </fieldset>
-          ) : null}
-
-          <div className="grid gap-4 rounded-md border bg-muted/30 p-4 md:grid-cols-2">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">Name</span>
-              <input
-                autoFocus
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                data-testid="new-agent-name"
-                className="rounded-md border bg-background px-2 py-1"
+                <h3 className="text-lg font-semibold">{activeStep.label}</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Readiness {readinessScore}%
+              </p>
+            </div>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${readinessScore}%` }}
               />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">Slug</span>
-              <input
-                type="text"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                required
-                pattern="[a-z0-9][a-z0-9-]{0,39}"
-                aria-invalid={slugError ? true : undefined}
-                aria-describedby={slugError ? slugErrorId : undefined}
-                data-testid="new-agent-slug"
-                className="rounded-md border bg-background px-2 py-1 font-mono"
-              />
-              {slugError ? (
-                <span
-                  id={slugErrorId}
-                  role="alert"
-                  data-testid="new-agent-slug-error"
-                  className="text-xs text-destructive"
-                >
-                  {slugError}
-                </span>
-              ) : null}
-            </label>
+            </div>
           </div>
 
-          <div className="grid gap-4">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">Business responsibility</span>
-              <textarea
-                value={contract.business_responsibility}
-                onChange={(e) =>
-                  updateContract("business_responsibility", e.target.value)
-                }
-                rows={3}
-                data-testid="new-agent-business-responsibility"
-                className="rounded-md border bg-background px-2 py-1"
-              />
-            </label>
-            <div className="grid gap-4 md:grid-cols-2">
+          <section
+            hidden={activeStep.id !== "mission"}
+            className="grid gap-5"
+            data-testid="new-agent-step-panel-mission"
+          >
+            <fieldset className="grid gap-3 rounded-md border bg-card p-4">
+              <legend className="px-1 text-sm font-medium">
+                Creation path
+              </legend>
+              <div className="grid gap-2 md:grid-cols-3">
+                {CREATION_PATHS.map((option) => (
+                  <label
+                    key={option.value}
+                    className={[
+                      "flex cursor-pointer gap-2 rounded-md border p-3 text-sm transition-colors",
+                      creationPath === option.value
+                        ? "border-primary bg-primary/10"
+                        : "bg-background hover:bg-muted/50",
+                    ].join(" ")}
+                  >
+                    <input
+                      type="radio"
+                      name="creation-path"
+                      value={option.value}
+                      checked={creationPath === option.value}
+                      onChange={(event) =>
+                        chooseCreationPath(
+                          event.target.value as AgentIntakePath,
+                        )
+                      }
+                    />
+                    <span>
+                      <span className="block font-medium">{option.label}</span>
+                      <span className="text-muted-foreground">
+                        {option.detail}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            {creationPath === "enterprise_template" ? (
+              <fieldset className="grid gap-3 rounded-md border border-info/30 bg-info/5 p-4">
+                <legend className="px-1 text-sm font-medium">
+                  Approved template
+                </legend>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="font-medium">Template</span>
+                  <select
+                    value={templateId}
+                    onChange={(event) => applyTemplate(event.target.value)}
+                    data-testid="new-agent-template"
+                    className="rounded-md border bg-background px-2 py-1"
+                  >
+                    {templates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  {activeTemplate?.summary}
+                </p>
+                {templateCatalogState === "fallback" ? (
+                  <p className="text-xs text-warning">
+                    Using the offline template catalog until workspace
+                    templates load.
+                  </p>
+                ) : null}
+              </fieldset>
+            ) : null}
+
+            <div className="grid gap-4 rounded-md border bg-card p-4 md:grid-cols-2">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Agent name</span>
+                <input
+                  autoFocus
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  data-testid="new-agent-name"
+                  placeholder="Billing Support Agent"
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Slug</span>
+                <input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  required
+                  pattern="[a-z0-9][a-z0-9-]{0,39}"
+                  aria-invalid={slugError ? true : undefined}
+                  aria-describedby={slugError ? slugErrorId : undefined}
+                  data-testid="new-agent-slug"
+                  placeholder="billing-support"
+                  className="rounded-md border bg-background px-2 py-1 font-mono"
+                />
+                {slugError ? (
+                  <span
+                    id={slugErrorId}
+                    role="alert"
+                    data-testid="new-agent-slug-error"
+                    className="text-xs text-destructive"
+                  >
+                    {slugError}
+                  </span>
+                ) : null}
+              </label>
+              <label className="flex flex-col gap-1 text-sm md:col-span-2">
+                <span className="font-medium">
+                  Business responsibility
+                </span>
+                <textarea
+                  value={contract.business_responsibility}
+                  onChange={(e) =>
+                    updateContract("business_responsibility", e.target.value)
+                  }
+                  rows={3}
+                  data-testid="new-agent-business-responsibility"
+                  placeholder="Resolve billing cancellations safely using approved policy, CRM context, and human escalation."
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium">Target users</span>
                 <textarea
@@ -496,6 +737,28 @@ export function NewAgentModal({
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Success metric</span>
+                <textarea
+                  value={contract.success_metric}
+                  onChange={(e) =>
+                    updateContract("success_metric", e.target.value)
+                  }
+                  rows={3}
+                  data-testid="new-agent-success-metric"
+                  placeholder="95% regression pass rate before canary."
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+            </div>
+          </section>
+
+          <section
+            hidden={activeStep.id !== "boundaries"}
+            className="grid gap-5"
+            data-testid="new-agent-step-panel-boundaries"
+          >
+            <div className="grid gap-4 rounded-md border bg-card p-4 md:grid-cols-2">
+              <label className="flex flex-col gap-1 text-sm md:col-span-2">
                 <span className="font-medium">Worst-case failure</span>
                 <textarea
                   value={contract.worst_case_failure}
@@ -504,11 +767,10 @@ export function NewAgentModal({
                   }
                   rows={3}
                   data-testid="new-agent-worst-case-failure"
+                  placeholder="Promises a refund, legal position, or account action outside approved policy."
                   className="rounded-md border bg-background px-2 py-1"
                 />
               </label>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium">Owner</span>
                 <input
@@ -531,29 +793,76 @@ export function NewAgentModal({
                   className="rounded-md border bg-background px-2 py-1"
                 />
               </label>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium">Channels</span>
-                <textarea
-                  value={contract.channels.join(", ")}
+                <span className="font-medium">Compliance domain</span>
+                <input
+                  value={contract.compliance_domain}
                   onChange={(e) =>
-                    updateContract("channels", parseList(e.target.value))
+                    updateContract("compliance_domain", e.target.value)
                   }
-                  rows={2}
-                  data-testid="new-agent-channels"
+                  data-testid="new-agent-compliance-domain"
+                  placeholder="SOC2 support operations"
                   className="rounded-md border bg-background px-2 py-1"
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium">Systems touched</span>
-                <textarea
-                  value={contract.systems_touched.join(", ")}
+                <span className="font-medium">Expected volume</span>
+                <input
+                  value={contract.expected_volume}
                   onChange={(e) =>
-                    updateContract("systems_touched", parseList(e.target.value))
+                    updateContract("expected_volume", e.target.value)
+                  }
+                  data-testid="new-agent-expected-volume"
+                  placeholder="10k turns per month"
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Budget target</span>
+                <input
+                  value={contract.budget_target}
+                  onChange={(e) =>
+                    updateContract("budget_target", e.target.value)
+                  }
+                  data-testid="new-agent-budget-target"
+                  placeholder="$0.08 per resolved turn"
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium">Launch date</span>
+                <input
+                  type="date"
+                  value={contract.launch_date}
+                  onChange={(e) =>
+                    updateContract("launch_date", e.target.value)
+                  }
+                  data-testid="new-agent-launch-date"
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm md:col-span-2">
+                <span className="font-medium">Out-of-scope tasks</span>
+                <textarea
+                  value={contract.out_of_scope}
+                  onChange={(e) =>
+                    updateContract("out_of_scope", e.target.value)
                   }
                   rows={2}
-                  data-testid="new-agent-systems"
+                  data-testid="new-agent-out-of-scope"
+                  placeholder="Legal advice, high-value refunds, regulated claims without source evidence."
+                  className="rounded-md border bg-background px-2 py-1"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm md:col-span-2">
+                <span className="font-medium">Escalation policy</span>
+                <textarea
+                  value={contract.escalation_policy}
+                  onChange={(e) =>
+                    updateContract("escalation_policy", e.target.value)
+                  }
+                  rows={2}
+                  data-testid="new-agent-escalation-policy"
                   className="rounded-md border bg-background px-2 py-1"
                 />
               </label>
@@ -582,167 +891,302 @@ export function NewAgentModal({
                 />
               </label>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
+          </section>
+
+          <section
+            hidden={activeStep.id !== "capabilities"}
+            className="grid gap-5"
+            data-testid="new-agent-step-panel-capabilities"
+          >
+            <fieldset className="grid gap-3 rounded-md border bg-card p-4">
+              <legend className="px-1 text-sm font-medium">
+                Capabilities to seed
+              </legend>
+              <p className="text-sm text-muted-foreground">
+                Each selected capability creates placeholders for behavior,
+                tools, knowledge, evals, and policies. Credentials can stay in
+                mock mode during creation.
+              </p>
+              <div className="grid gap-2 md:grid-cols-2">
+                {CAPABILITY_OPTIONS.map((capability) => (
+                  <label
+                    key={capability}
+                    className={[
+                      "flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
+                      capabilities.includes(capability)
+                        ? "border-primary bg-primary/10"
+                        : "bg-background hover:bg-muted/50",
+                    ].join(" ")}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={capabilities.includes(capability)}
+                      onChange={() => toggleCapability(capability)}
+                    />
+                    <span>{capability}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </section>
+
+          <section
+            hidden={activeStep.id !== "knowledge_tools"}
+            className="grid gap-5"
+            data-testid="new-agent-step-panel-knowledge-tools"
+          >
+            <fieldset className="grid gap-3 rounded-md border bg-card p-4">
+              <legend className="px-1 text-sm font-medium">
+                Knowledge and tool artifacts
+              </legend>
+              <p className="text-sm text-muted-foreground">
+                Upload or paste source material. Intake accepts docs,
+                transcripts, legacy exports, OpenAPI/Postman artifacts, cURL,
+                and browser DevTools fetch exports.
+              </p>
+              <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_13rem]">
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="font-medium">Artifact name or URL</span>
+                  <input
+                    value={artifact.name}
+                    onChange={(e) =>
+                      setArtifact((current) => ({
+                        ...current,
+                        name: e.target.value,
+                      }))
+                    }
+                    placeholder="refund_policy.pdf, botpress-export.bpz, OpenAPI URL"
+                    data-testid="new-agent-artifact-name"
+                    className="rounded-md border bg-background px-2 py-1"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="font-medium">Kind</span>
+                  <select
+                    value={artifact.kind}
+                    onChange={(e) =>
+                      setArtifact((current) => ({
+                        ...current,
+                        kind: e.target
+                          .value as AgentIntakeArtifactInput["kind"],
+                      }))
+                    }
+                    data-testid="new-agent-artifact-kind"
+                    className="rounded-md border bg-background px-2 py-1"
+                  >
+                    {ARTIFACT_KIND_OPTIONS.map((kind) => (
+                      <option key={kind} value={kind}>
+                        {kind.replace(/_/g, " ")}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm md:col-span-2">
+                  <span className="font-medium">Source reference</span>
+                  <input
+                    value={artifact.source_ref}
+                    onChange={(e) =>
+                      setArtifact((current) => ({
+                        ...current,
+                        source_ref: e.target.value,
+                      }))
+                    }
+                    placeholder="drive://billing/refund-policy, botpress://export/v3, postman://collection"
+                    data-testid="new-agent-artifact-source-ref"
+                    className="rounded-md border bg-background px-2 py-1"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm md:col-span-2">
+                  <span className="font-medium">Paste content or notes</span>
+                  <textarea
+                    value={artifact.text}
+                    onChange={(e) =>
+                      setArtifact((current) => ({
+                        ...current,
+                        text: e.target.value,
+                      }))
+                    }
+                    rows={5}
+                    placeholder="Paste transcript excerpts, policy text, cURL, Copy as fetch, or migration notes. Secrets should remain out of pasted content."
+                    data-testid="new-agent-artifact-text"
+                    className="rounded-md border bg-background px-2 py-1"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm md:col-span-2">
+                  <span className="font-medium">Systems touched</span>
+                  <textarea
+                    value={contract.systems_touched.join(", ")}
+                    onChange={(e) =>
+                      updateContract(
+                        "systems_touched",
+                        parseList(e.target.value),
+                      )
+                    }
+                    rows={2}
+                    data-testid="new-agent-systems"
+                    placeholder="billing api, crm, ticketing"
+                    className="rounded-md border bg-background px-2 py-1"
+                  />
+                </label>
+              </div>
+              <div className="rounded-md border border-dashed bg-muted/25 p-3 text-xs text-muted-foreground">
+                If credentials are not available yet, Studio creates mock tool
+                contracts and keeps production deployment blocked until the real
+                tool test passes.
+              </div>
+            </fieldset>
+          </section>
+
+          <section
+            hidden={activeStep.id !== "channels"}
+            className="grid gap-5"
+            data-testid="new-agent-step-panel-channels"
+          >
+            <fieldset className="grid gap-3 rounded-md border bg-card p-4">
+              <legend className="px-1 text-sm font-medium">Channels</legend>
+              <p className="text-sm text-muted-foreground">
+                Voice is one channel, not the category. Select every channel
+                the agent may eventually support; only one sandbox channel is
+                required for the first draft.
+              </p>
+              <div className="grid gap-2 md:grid-cols-3">
+                {CHANNEL_OPTIONS.map((channel) => {
+                  const selected = contract.channels.includes(channel.id);
+                  return (
+                    <button
+                      key={channel.id}
+                      type="button"
+                      onClick={() => toggleContractList("channels", channel.id)}
+                      aria-pressed={selected}
+                      className={[
+                        "rounded-md border p-3 text-left text-sm transition-colors",
+                        selected
+                          ? "border-primary bg-primary/10"
+                          : "bg-background hover:bg-muted/50",
+                      ].join(" ")}
+                    >
+                      <span className="block font-medium">{channel.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {channel.detail}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium">Success metric</span>
-                <input
-                  value={contract.success_metric}
-                  onChange={(e) =>
-                    updateContract("success_metric", e.target.value)
-                  }
-                  data-testid="new-agent-success-metric"
-                  className="rounded-md border bg-background px-2 py-1"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium">Compliance domain</span>
-                <input
-                  value={contract.compliance_domain}
-                  onChange={(e) =>
-                    updateContract("compliance_domain", e.target.value)
-                  }
-                  data-testid="new-agent-compliance-domain"
-                  className="rounded-md border bg-background px-2 py-1"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium">Expected volume</span>
-                <input
-                  value={contract.expected_volume}
-                  onChange={(e) =>
-                    updateContract("expected_volume", e.target.value)
-                  }
-                  data-testid="new-agent-expected-volume"
-                  className="rounded-md border bg-background px-2 py-1"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium">Budget target</span>
-                <input
-                  value={contract.budget_target}
-                  onChange={(e) =>
-                    updateContract("budget_target", e.target.value)
-                  }
-                  data-testid="new-agent-budget-target"
-                  className="rounded-md border bg-background px-2 py-1"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm md:col-span-2">
-                <span className="font-medium">Escalation policy</span>
+                <span className="font-medium">Selected channels</span>
                 <textarea
-                  value={contract.escalation_policy}
+                  value={contract.channels.join(", ")}
                   onChange={(e) =>
-                    updateContract("escalation_policy", e.target.value)
+                    updateContract("channels", parseList(e.target.value))
                   }
                   rows={2}
-                  data-testid="new-agent-escalation-policy"
+                  data-testid="new-agent-channels"
                   className="rounded-md border bg-background px-2 py-1"
                 />
               </label>
-            </div>
-          </div>
+            </fieldset>
+          </section>
 
-          <fieldset className="grid gap-3 rounded-md border bg-muted/30 p-4">
-            <legend className="px-1 text-sm font-medium">
-              Capabilities to seed
-            </legend>
-            <div className="grid gap-2 md:grid-cols-2">
-              {[
-                "Answer from knowledge",
-                "Search customer/account data",
-                "Create or update records",
-                "Trigger workflows",
-                "Handoff to human",
-                "Send notifications",
-                "Voice interaction",
-                "Channel-specific messaging",
-              ].map((capability) => (
-                <label
-                  key={capability}
-                  className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm"
-                >
-                  <input
-                    type="checkbox"
-                    checked={capabilities.includes(capability)}
-                    onChange={() => toggleCapability(capability)}
-                  />
-                  <span>{capability}</span>
-                </label>
-              ))}
+          <section
+            hidden={activeStep.id !== "generated_tests"}
+            className="grid gap-5"
+            data-testid="new-agent-step-panel-generated-tests"
+          >
+            <div className="rounded-md border bg-card p-4">
+              <h4 className="text-sm font-semibold">Starter eval suite</h4>
+              <p className="mt-1 text-sm text-muted-foreground">
+                These tests are generated from the contract and attached to the
+                draft before any production action exists.
+              </p>
+              <div
+                className="mt-4 grid gap-2"
+                data-testid="new-agent-generated-tests"
+              >
+                {generatedTests.map((testName, index) => (
+                  <div
+                    key={testName}
+                    className="rounded-md border bg-background px-3 py-2 text-sm"
+                  >
+                    <span className="font-medium">E{index + 1}</span>
+                    <span className="ml-2">{testName}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 rounded-md border border-dashed bg-muted/25 p-3 text-xs text-muted-foreground">
+                Bad simulator turns, operator resolutions, and migration parity
+                misses can extend this suite after the draft is created.
+              </div>
             </div>
-          </fieldset>
+          </section>
 
-          <fieldset className="grid gap-3 rounded-md border bg-muted/30 p-4">
-            <legend className="px-1 text-sm font-medium">
-              Artifact intake
-            </legend>
-            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_12rem]">
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium">Artifact name or URL</span>
-                <input
-                  value={artifact.name}
-                  onChange={(e) =>
-                    setArtifact((current) => ({
-                      ...current,
-                      name: e.target.value,
-                    }))
-                  }
-                  placeholder="refund_policy.pdf, botpress-export.bpz, OpenAPI URL"
-                  data-testid="new-agent-artifact-name"
-                  className="rounded-md border bg-background px-2 py-1"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium">Kind</span>
-                <select
-                  value={artifact.kind}
-                  onChange={(e) =>
-                    setArtifact((current) => ({
-                      ...current,
-                      kind: e.target.value as AgentIntakeArtifactInput["kind"],
-                    }))
-                  }
-                  data-testid="new-agent-artifact-kind"
-                  className="rounded-md border bg-background px-2 py-1"
-                >
-                  {[
-                    "pdf",
-                    "faq",
-                    "runbook",
-                    "transcript",
-                    "botpress_export",
-                    "dialogflow_export",
-                    "rasa_export",
-                    "openapi",
-                    "postman",
-                    "curl",
-                    "devtools_fetch",
-                    "other",
-                  ].map((kind) => (
-                    <option key={kind} value={kind}>
-                      {kind.replace(/_/g, " ")}
-                    </option>
+          <section
+            hidden={activeStep.id !== "readiness"}
+            className="grid gap-5"
+            data-testid="new-agent-step-panel-readiness"
+          >
+            <div className="grid gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
+              <div className="rounded-md border bg-card p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Draft readiness
+                </p>
+                <p className="mt-2 text-3xl font-semibold">
+                  {readinessScore}%
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  The draft can be created when required contract fields are
+                  complete. Production remains blocked until proof gates pass.
+                </p>
+              </div>
+              <div className="rounded-md border bg-card p-4">
+                <h4 className="text-sm font-semibold">Readiness landing</h4>
+                <div className="mt-3 grid gap-2 text-sm md:grid-cols-2">
+                  {readiness.map((item) => (
+                    <div
+                      key={item.label}
+                      className={[
+                        "rounded-md border px-3 py-2",
+                        item.ready
+                          ? "border-success/30 bg-success/10"
+                          : "border-warning/40 bg-warning/10",
+                      ].join(" ")}
+                    >
+                      <span className="font-medium">
+                        {item.ready ? "Ready" : "Needs attention"}
+                      </span>
+                      <span className="ml-2 text-muted-foreground">
+                        {item.label}
+                      </span>
+                    </div>
                   ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm md:col-span-2">
-                <span className="font-medium">Paste content or notes</span>
-                <textarea
-                  value={artifact.text}
-                  onChange={(e) =>
-                    setArtifact((current) => ({
-                      ...current,
-                      text: e.target.value,
-                    }))
-                  }
-                  rows={4}
-                  placeholder="Paste transcript excerpts, policy text, cURL, Copy as fetch, or migration notes. Credentials can stay mocked."
-                  data-testid="new-agent-artifact-text"
-                  className="rounded-md border bg-background px-2 py-1"
-                />
-              </label>
+                </div>
+              </div>
             </div>
-          </fieldset>
+
+            <div className="grid gap-3 rounded-md border bg-card p-4 text-sm md:grid-cols-3">
+              <div>
+                <h4 className="font-semibold">Created objects</h4>
+                <p className="mt-1 text-muted-foreground">
+                  Agent, draft branch, Commitment Document, behavior config,
+                  channel bindings, tool contracts, memory policy, and starter
+                  eval suite.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold">Async jobs</h4>
+                <p className="mt-1 text-muted-foreground">
+                  {INTAKE_JOBS.join(", ")}.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold">Landing</h4>
+                <p className="mt-1 text-muted-foreground">
+                  Agent Workbench readiness view with blockers deep-linked to
+                  the right section.
+                </p>
+              </div>
+            </div>
+          </section>
 
           {missingContract.length > 0 ? (
             <p
@@ -772,10 +1216,11 @@ export function NewAgentModal({
               control plane.
             </p>
           ) : null}
+
           <div className="grid gap-2 rounded-md border bg-card p-3 text-xs text-muted-foreground md:grid-cols-3">
             <span>
-              Creates <strong className="text-foreground">Commitment</strong> v1
-              from this contract.
+              Creates <strong className="text-foreground">Commitment</strong>{" "}
+              v1 from this contract.
             </span>
             <span>
               Seeds <strong className="text-foreground">channels/tools</strong>{" "}
@@ -786,25 +1231,52 @@ export function NewAgentModal({
               before any deploy action exists.
             </span>
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <button
               type="button"
-              className="rounded-md border px-3 py-1 text-sm"
+              className="rounded-md border px-3 py-1.5 text-sm"
               data-testid="new-agent-cancel"
               onClick={() => setOpen(false)}
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={!canSubmit}
-              data-testid="new-agent-submit"
-              className="rounded-md bg-primary px-3 py-1 text-sm font-medium text-primary-foreground disabled:opacity-50"
-            >
-              {status.kind === "submitting"
-                ? "Analyzing intake…"
-                : "Create governed draft"}
-            </button>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-md border px-3 py-1.5 text-sm disabled:opacity-50"
+                data-testid="new-agent-back"
+                disabled={step === 0 || status.kind === "submitting"}
+                onClick={() => setStep((current) => Math.max(current - 1, 0))}
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                className="rounded-md border px-3 py-1.5 text-sm disabled:opacity-50"
+                data-testid="new-agent-next"
+                disabled={
+                  step === WIZARD_STEPS.length - 1 ||
+                  status.kind === "submitting"
+                }
+                onClick={() =>
+                  setStep((current) =>
+                    Math.min(current + 1, WIZARD_STEPS.length - 1),
+                  )
+                }
+              >
+                Next
+              </button>
+              <button
+                type="submit"
+                disabled={!canSubmit}
+                data-testid="new-agent-submit"
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+              >
+                {status.kind === "submitting"
+                  ? "Analyzing intake..."
+                  : "Create governed draft"}
+              </button>
+            </div>
           </div>
         </form>
       </DialogContent>
