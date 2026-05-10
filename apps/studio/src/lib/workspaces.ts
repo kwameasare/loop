@@ -1,5 +1,6 @@
 import { readSessionToken } from "@/lib/cp-auth-exchange";
 import { createAuthedCpApiFetch } from "@/lib/cp-api-fetch";
+import type { WorkspaceCreate } from "@/lib/openapi-types";
 
 export type Workspace = {
   id: string;
@@ -19,6 +20,11 @@ export interface ListWorkspacesOptions {
   baseUrl?: string;
   allowFixture?: boolean;
 }
+
+export type CreateWorkspaceOptions = Omit<
+  ListWorkspacesOptions,
+  "allowFixture"
+>;
 
 interface CpWorkspace {
   id?: string;
@@ -123,4 +129,49 @@ export async function listWorkspaces(
 
 export async function listFixtureWorkspaces(): Promise<ListWorkspacesResponse> {
   return Promise.resolve({ workspaces: [...FIXTURE] });
+}
+
+export async function createWorkspace(
+  payload: WorkspaceCreate,
+  opts: CreateWorkspaceOptions = {},
+): Promise<Workspace> {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  if (!base) {
+    throw new Error(
+      "LOOP_CP_API_BASE_URL is required to create a workspace.",
+    );
+  }
+  const explicitToken = opts.token ?? process.env.LOOP_TOKEN;
+  const hasBrowserSession =
+    typeof window !== "undefined" && readSessionToken()?.access_token;
+  if (
+    typeof window !== "undefined" &&
+    !opts.fetcher &&
+    !explicitToken &&
+    !hasBrowserSession
+  ) {
+    throw new Error("Sign in before creating a workspace.");
+  }
+  const fetcher = createAuthedCpApiFetch({
+    ...(opts.fetcher ? { fetcher: opts.fetcher } : {}),
+    refreshBaseUrl: base.replace(/\/v1$/, ""),
+  });
+  const headers: Record<string, string> = {
+    accept: "application/json",
+    "content-type": "application/json",
+  };
+  if (explicitToken) headers.authorization = `Bearer ${explicitToken}`;
+  const response = await fetcher(`${base}/workspaces`, {
+    method: "POST",
+    headers,
+    cache: "no-store",
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(
+      `cp-api POST workspaces -> ${response.status}${text ? `: ${text}` : ""}`,
+    );
+  }
+  return mapWorkspace((await response.json()) as CpWorkspace);
 }
