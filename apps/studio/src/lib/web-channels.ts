@@ -89,6 +89,8 @@ export async function getWebChannel(
       channelId: null,
       token: null,
       enabledAt: null,
+      degradedReason:
+        "cp-api web channel route returned 404. Studio will not treat an unavailable web-channel route as a deliberately disabled channel.",
     };
   }
   if (!response.ok) {
