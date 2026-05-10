@@ -73,13 +73,17 @@ describe("buildEvalCaseFromResolution", () => {
 });
 
 describe("saveResolutionEvalCase", () => {
-  it("posts operator resolution cases to the workspace eval endpoint", async () => {
-    const draft = buildEvalCaseFromResolution(FIXTURE_EVIDENCE_CONTEXT, {
+  function draftCase() {
+    return buildEvalCaseFromResolution(FIXTURE_EVIDENCE_CONTEXT, {
       outcome: "resolved",
       saveAsEval: true,
       expectedOutcome: "Refund and email receipt",
       failureReason: "Tool flakiness",
     });
+  }
+
+  it("posts operator resolution cases to the workspace eval endpoint", async () => {
+    const draft = draftCase();
     const fetcher = async (input: RequestInfo | URL, init?: RequestInit) => {
       expect(String(input)).toBe(
         "https://cp.test/v1/workspaces/ws1/eval-cases/from-resolution",
@@ -102,6 +106,30 @@ describe("saveResolutionEvalCase", () => {
         fetcher: fetcher as unknown as typeof fetch,
       }),
     ).resolves.toEqual({ ok: true, suite_id: "suite-1", case_id: "case-1" });
+  });
+
+  it("does not fabricate saved eval cases when cp-api is unconfigured", async () => {
+    await expect(
+      saveResolutionEvalCase("ws1", draftCase(), { baseUrl: "" }),
+    ).resolves.toMatchObject({
+      ok: false,
+      error: expect.stringContaining("LOOP_CP_API_BASE_URL is required"),
+    });
+  });
+
+  it("keeps deterministic resolution eval saves explicitly opt-in", async () => {
+    const draft = draftCase();
+
+    await expect(
+      saveResolutionEvalCase("ws1", draft, {
+        baseUrl: "",
+        allowFixture: true,
+      }),
+    ).resolves.toEqual({
+      ok: true,
+      suite_id: "operator-resolutions",
+      case_id: draft.id,
+    });
   });
 });
 

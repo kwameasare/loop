@@ -78,6 +78,7 @@ export interface ResolutionEvalClientOptions {
   fetcher?: typeof fetch;
   token?: string;
   baseUrl?: string;
+  allowFixture?: boolean;
 }
 
 function cpApiBaseUrl(override?: string): string | null {
@@ -285,20 +286,40 @@ export async function saveResolutionEvalCase(
 ): Promise<{ ok: boolean; error?: string; suite_id?: string; case_id?: string }> {
   const base = cpApiBaseUrl(opts.baseUrl);
   if (!base) {
-    return { ok: true, suite_id: "operator-resolutions", case_id: draft.id };
+    if (opts.allowFixture === true) {
+      return { ok: true, suite_id: "operator-resolutions", case_id: draft.id };
+    }
+    return {
+      ok: false,
+      error: "LOOP_CP_API_BASE_URL is required to save resolution eval cases.",
+    };
   }
   const fetcher = opts.fetcher ?? fetch;
-  const response = await fetcher(
-    `${base}/workspaces/${encodeURIComponent(
-      workspaceId,
-    )}/eval-cases/from-resolution`,
-    {
-      method: "POST",
-      headers: resolutionHeaders(opts),
-      body: JSON.stringify(draft),
-      cache: "no-store",
-    },
-  );
+  let response: Response;
+  try {
+    response = await fetcher(
+      `${base}/workspaces/${encodeURIComponent(
+        workspaceId,
+      )}/eval-cases/from-resolution`,
+      {
+        method: "POST",
+        headers: resolutionHeaders(opts),
+        body: JSON.stringify(draft),
+        cache: "no-store",
+      },
+    );
+  } catch (error) {
+    if (error instanceof TypeError) {
+      if (opts.allowFixture === true) {
+        return { ok: true, suite_id: "operator-resolutions", case_id: draft.id };
+      }
+      return {
+        ok: false,
+        error: "cp-api save resolution eval is unreachable.",
+      };
+    }
+    throw error;
+  }
   if (!response.ok) {
     return {
       ok: false,
