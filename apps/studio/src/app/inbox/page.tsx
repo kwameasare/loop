@@ -12,7 +12,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { InboxScreen } from "@/components/inbox/inbox-screen";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import {
   claimInboxItem,
   listInbox,
@@ -45,6 +48,7 @@ function InboxPageBody(): JSX.Element {
       .then((res) => {
         if (cancelled) return;
         setItems(res.items);
+        setError(res.degraded_reason ?? null);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -72,9 +76,13 @@ function InboxPageBody(): JSX.Element {
   }
   if (error) {
     return (
-      <p className="p-6 text-sm text-destructive" role="alert">
-        {error}
-      </p>
+      <main className="container mx-auto p-6">
+        <SectionDegraded
+          title="Inbox"
+          description="The operator inbox is unavailable. Studio will not show an empty queue unless the live queue actually loaded empty."
+          evidence={error}
+        />
+      </main>
     );
   }
   if (items === null) {

@@ -206,7 +206,7 @@ function normalizeInboxItem(item: CpInboxItem): InboxItem {
 export async function listInbox(
   workspace_id: string,
   opts: InboxClientOptions = {},
-): Promise<{ items: InboxItem[] }> {
+): Promise<{ items: InboxItem[]; degraded_reason?: string | undefined }> {
   try {
     const result = await cpFetch<{ items: CpInboxItem[] }>(
       "GET",
@@ -216,7 +216,11 @@ export async function listInbox(
     return { items: result.items.map(normalizeInboxItem) };
   } catch (err) {
     if (err instanceof Error && /-> 404/.test(err.message)) {
-      return { items: [] };
+      return {
+        items: [],
+        degraded_reason:
+          "cp-api inbox route returned 404. Studio will not treat an unavailable HITL queue as empty.",
+      };
     }
     throw err;
   }

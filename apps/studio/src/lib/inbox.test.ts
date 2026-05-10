@@ -212,12 +212,13 @@ describe("inbox cp-api client", () => {
     expect(url).toBe("https://cp.test/v1/workspaces/ws1/inbox");
   });
 
-  it("listInbox returns empty list on 404 while an older cp-api is running", async () => {
+  it("listInbox marks 404 as degraded instead of calling the HITL queue empty", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
     const res = await listInbox("ws1", { fetcher });
     expect(res.items).toEqual([]);
+    expect(res.degraded_reason).toMatch(/inbox route returned 404/i);
   });
 
   it("listInbox propagates non-404 errors", async () => {

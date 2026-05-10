@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { InboxQueue } from "@/components/inbox/inbox-queue";
-import { WorkspaceRequiredState } from "@/components/section-states";
+import {
+  SectionDegraded,
+  WorkspaceRequiredState,
+} from "@/components/section-states";
 import {
   listInbox,
   type InboxItem,
@@ -34,6 +37,7 @@ function InboxQueuePageBody(): JSX.Element {
       .then((result) => {
         if (cancelled) return;
         setItems(result.items);
+        setError(result.degraded_reason ?? null);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -62,6 +66,17 @@ function InboxQueuePageBody(): JSX.Element {
     );
   }
   if (!active) return <WorkspaceRequiredState title="Inbox Queue" />;
+  if (error) {
+    return (
+      <main className="container mx-auto p-6">
+        <SectionDegraded
+          title="Inbox Queue"
+          description="The operator queue is unavailable. Studio will not show a false empty queue when the HITL backend route is missing."
+          evidence={error}
+        />
+      </main>
+    );
+  }
 
   return (
     <main className="container mx-auto p-6">
@@ -71,11 +86,6 @@ function InboxQueuePageBody(): JSX.Element {
           Cross-team queue. Filter by team, agent, or channel and click into
           any conversation to take it over.
         </p>
-        {error ? (
-          <p className="mt-2 text-sm text-destructive" role="alert">
-            {error}
-          </p>
-        ) : null}
       </header>
       <InboxQueue
         agents={agents}
