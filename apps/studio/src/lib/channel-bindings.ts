@@ -54,6 +54,7 @@ export interface ChannelBinding {
 
 export interface ChannelBindingListResponse {
   items: ChannelBinding[];
+  degraded_reason?: string | undefined;
 }
 
 export interface ChannelPreviewFailure {
@@ -367,15 +368,32 @@ export function buildLocalPreviewMatrix(
 
 export async function listChannelBindings(
   agentId: string,
-  opts: UxWireupClientOptions = {},
+  opts: ChannelBindingClientOptions = {},
 ): Promise<ChannelBindingListResponse> {
-  return cpJson<ChannelBindingListResponse>(
-    `/agents/${encodeURIComponent(agentId)}/channel-bindings`,
-    {
-      ...opts,
-      fallback: { items: buildLocalChannelBindings(agentId) },
-    },
-  );
+  try {
+    return await cpJson<ChannelBindingListResponse>(
+      `/agents/${encodeURIComponent(agentId)}/channel-bindings`,
+      {
+        ...opts,
+        allowFallback: opts.allowFixture === true,
+        fallback: { items: buildLocalChannelBindings(agentId) },
+      },
+    );
+  } catch (err) {
+    if (opts.allowFixture === true) throw err;
+    const reason =
+      err instanceof Error
+        ? err.message
+        : "Channel binding reads require cp-api.";
+    return {
+      items: buildLocalChannelBindings(agentId),
+      degraded_reason:
+        reason.includes("LOOP_CP_API_BASE_URL") ||
+        reason.includes("Failed to fetch")
+          ? "Channel binding status requires cp-api. Studio is showing setup requirements only, not live channel state."
+          : reason,
+    };
+  }
 }
 
 export async function upsertChannelBinding(

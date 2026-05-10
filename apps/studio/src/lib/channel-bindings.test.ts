@@ -72,6 +72,15 @@ describe("channel-bindings client", () => {
     });
   });
 
+  it("marks channel binding reads as degraded instead of pretending they are live", async () => {
+    const listed = await listChannelBindings("agt_1", { baseUrl: "" });
+
+    expect(listed.items).toHaveLength(9);
+    expect(listed.degraded_reason).toMatch(/requires cp-api/i);
+    expect(listed.items.every((binding) => binding.status === "not_configured"))
+      .toBe(true);
+  });
+
   it("builds a local channel preview matrix with formatting failures", () => {
     const bindings = buildLocalChannelBindings("agt_1").map((binding) =>
       binding.channel_type === "sms"
@@ -198,6 +207,18 @@ describe("channel-bindings client", () => {
       expected_outcome: "Verify the charge and explain the refund path.",
       channel_types: ["whatsapp" as const],
     };
+
+    const fixtureList = await listChannelBindings("agt_1", {
+      baseUrl: "",
+      allowFixture: true,
+    });
+    expect(fixtureList.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ channel_type: "web_chat" }),
+        expect.objectContaining({ channel_type: "voice" }),
+      ]),
+    );
+    expect(fixtureList.degraded_reason).toBeUndefined();
 
     await expect(
       upsertChannelBinding(

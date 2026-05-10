@@ -18,10 +18,17 @@ export default async function AgentChannelsPage({
   params,
 }: AgentChannelsPageProps) {
   let bindings = buildLocalChannelBindings(params.agent_id);
+  let bindingsDegradedReason: string | undefined;
   try {
-    bindings = (await listChannelBindings(params.agent_id)).items;
-  } catch {
+    const result = await listChannelBindings(params.agent_id);
+    bindings = result.items;
+    bindingsDegradedReason = result.degraded_reason;
+  } catch (err) {
     bindings = buildLocalChannelBindings(params.agent_id);
+    bindingsDegradedReason =
+      err instanceof Error
+        ? err.message
+        : "Channel binding status requires cp-api.";
   }
 
   let binding: WebChannelBinding = {
@@ -56,6 +63,7 @@ export default async function AgentChannelsPage({
       <ChannelBindingsPanel
         agentId={params.agent_id}
         initialBindings={bindings}
+        degradedReason={bindingsDegradedReason}
       />
       <ChannelPreviewMatrix agentId={params.agent_id} bindings={bindings} />
       <section className="rounded-md border bg-card p-4">
