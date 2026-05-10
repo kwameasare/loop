@@ -43,32 +43,32 @@ const SECTIONS = [
 type SectionId = (typeof SECTIONS)[number]["id"];
 
 const STATUS_TONE: Record<string, string> = {
-  configured: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  pending: "bg-amber-50 text-amber-700 border-amber-200",
-  not_configured: "bg-slate-50 text-slate-600 border-slate-200",
-  approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  rejected: "bg-rose-50 text-rose-700 border-rose-200",
-  expired: "bg-slate-50 text-slate-500 border-slate-200",
-  active: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  rotated: "bg-sky-50 text-sky-700 border-sky-200",
-  warn: "bg-amber-50 text-amber-700 border-amber-200",
-  missing: "bg-rose-50 text-rose-700 border-rose-200",
-  ready: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  stale: "bg-amber-50 text-amber-700 border-amber-200",
-  info: "bg-slate-50 text-slate-600 border-slate-200",
-  blocking: "bg-rose-50 text-rose-700 border-rose-200",
-  low: "bg-slate-50 text-slate-600 border-slate-200",
-  medium: "bg-amber-50 text-amber-700 border-amber-200",
-  high: "bg-rose-50 text-rose-700 border-rose-200",
-  critical: "bg-red-50 text-red-700 border-red-200",
-  action_required: "bg-rose-50 text-rose-700 border-rose-200",
-  clear: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  configured: "border-success/30 bg-success/10 text-success",
+  pending: "border-warning/30 bg-warning/10 text-warning",
+  not_configured: "border-border bg-muted text-muted-foreground",
+  approved: "border-success/30 bg-success/10 text-success",
+  rejected: "border-destructive/30 bg-destructive/10 text-destructive",
+  expired: "border-border bg-muted text-muted-foreground",
+  active: "border-success/30 bg-success/10 text-success",
+  rotated: "border-info/30 bg-info/10 text-info",
+  warn: "border-warning/30 bg-warning/10 text-warning",
+  missing: "border-destructive/30 bg-destructive/10 text-destructive",
+  ready: "border-success/30 bg-success/10 text-success",
+  stale: "border-warning/30 bg-warning/10 text-warning",
+  info: "border-border bg-muted text-muted-foreground",
+  blocking: "border-destructive/30 bg-destructive/10 text-destructive",
+  low: "border-border bg-muted text-muted-foreground",
+  medium: "border-warning/30 bg-warning/10 text-warning",
+  high: "border-destructive/30 bg-destructive/10 text-destructive",
+  critical: "border-destructive/30 bg-destructive/10 text-destructive",
+  action_required: "border-destructive/30 bg-destructive/10 text-destructive",
+  clear: "border-success/30 bg-success/10 text-success",
 };
 
 function pill(status: string): string {
   return (
     "inline-flex items-center px-2 py-0.5 text-xs font-medium border rounded " +
-    (STATUS_TONE[status] ?? "bg-slate-50 text-slate-600 border-slate-200")
+    (STATUS_TONE[status] ?? "border-border bg-muted text-muted-foreground")
   );
 }
 
@@ -163,7 +163,7 @@ export function GovernOverview({
     <div data-testid="govern-overview" className="space-y-6">
       <header>
         <h1 className="text-2xl font-semibold">Enterprise governance</h1>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted-foreground">
           Identity, RBAC, approvals, audit, residency, BYOK, whitelabel,
           procurement evidence, and policy consequences in one place.
         </p>
@@ -172,7 +172,7 @@ export function GovernOverview({
       <nav
         data-testid="govern-tablist"
         role="tablist"
-        className="flex flex-wrap gap-1 border-b border-slate-200"
+        className="flex flex-wrap gap-1 border-b border-border"
       >
         {SECTIONS.map((s) => {
           const active = section === s.id;
@@ -187,8 +187,8 @@ export function GovernOverview({
               className={
                 "px-3 py-1.5 text-sm border-b-2 -mb-px " +
                 (active
-                  ? "border-slate-900 text-slate-900"
-                  : "border-transparent text-slate-500 hover:text-slate-800")
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground")
               }
             >
               {s.label}
@@ -212,7 +212,7 @@ export function GovernOverview({
                 ["Policy conflicts", compliance.summary.policy_conflicts],
               ].map(([label, value]) => (
                 <div key={label} className="rounded border p-3">
-                  <div className="text-xs text-slate-500">{label}</div>
+                  <div className="text-xs text-muted-foreground">{label}</div>
                   <div className="mt-1 text-2xl font-semibold">{value}</div>
                 </div>
               ))}
@@ -221,7 +221,7 @@ export function GovernOverview({
             <div className="flex flex-wrap items-center justify-between gap-3 rounded border p-3">
               <div>
                 <h2 className="text-sm font-semibold">Evidence export</h2>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-muted-foreground">
                   Exports Commitment, Change Package, eval/replay refs,
                   approvals, incidents, audit, tool, memory, and channel
                   evidence for review.
@@ -230,7 +230,7 @@ export function GovernOverview({
               <button
                 type="button"
                 data-testid="compliance-export"
-                className="rounded border px-3 py-1.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-60"
+                className="rounded border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-60"
                 disabled={exporting}
                 onClick={() => void handleEvidenceExport()}
               >
@@ -239,7 +239,7 @@ export function GovernOverview({
             </div>
             {exportResult ? (
               <div
-                className="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"
+                className="rounded border border-success/30 bg-success/10 p-3 text-sm text-success"
                 data-testid="compliance-export-result"
               >
                 Export {exportResult.id} is ready with{" "}
@@ -248,7 +248,7 @@ export function GovernOverview({
             ) : null}
             {exportError ? (
               <div
-                className="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+                className="rounded border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
                 role="alert"
               >
                 {exportError}
@@ -269,16 +269,16 @@ export function GovernOverview({
                         <div className="font-medium">
                           {job.id.replace(/_/g, " ")}
                         </div>
-                        <div className="mt-1 text-xs text-slate-500">
+                        <div className="mt-1 text-xs text-muted-foreground">
                           {job.output_count} output(s)
                         </div>
                       </div>
                       <span className={pill(job.status)}>{job.status}</span>
                     </div>
-                    <p className="mt-2 text-sm text-slate-700">
+                    <p className="mt-2 text-sm text-foreground">
                       {job.reviewer_action}
                     </p>
-                    <div className="mt-2 break-all text-xs text-slate-400">
+                    <div className="mt-2 break-all text-xs text-muted-foreground">
                       evidence: {job.evidence_ref}
                     </div>
                   </li>
@@ -301,7 +301,7 @@ export function GovernOverview({
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="font-medium">{item.subject}</div>
-                          <div className="text-sm text-slate-600">
+                          <div className="text-sm text-muted-foreground">
                             {item.agent_name} · {item.role} · {item.reason}
                           </div>
                         </div>
@@ -309,7 +309,7 @@ export function GovernOverview({
                           {item.risk_class}
                         </span>
                       </div>
-                      <div className="mt-1 break-all text-xs text-slate-400">
+                      <div className="mt-1 break-all text-xs text-muted-foreground">
                         evidence: {item.evidence_ref}
                       </div>
                     </li>
@@ -333,16 +333,16 @@ export function GovernOverview({
                             {item.severity}
                           </span>
                         </div>
-                        <div className="mt-1 text-sm text-slate-600">
+                        <div className="mt-1 text-sm text-muted-foreground">
                           {item.target}
                         </div>
-                        <div className="mt-1 break-all text-xs text-slate-400">
+                        <div className="mt-1 break-all text-xs text-muted-foreground">
                           evidence: {item.evidence_ref}
                         </div>
                       </li>
                     ))
                   ) : (
-                    <li className="rounded border p-3 text-sm text-slate-500">
+                    <li className="rounded border p-3 text-sm text-muted-foreground">
                       No policy violations in the current review window.
                     </li>
                   )}
@@ -364,7 +364,7 @@ export function GovernOverview({
                             <div className="font-medium">
                               {item.policy.replace(/_/g, " ")}
                             </div>
-                            <div className="mt-1 text-sm text-slate-600">
+                            <div className="mt-1 text-sm text-muted-foreground">
                               {item.summary}
                             </div>
                           </div>
@@ -372,16 +372,16 @@ export function GovernOverview({
                             {item.severity}
                           </span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-700">
+                        <p className="mt-2 text-sm text-foreground">
                           {item.reviewer_action}
                         </p>
-                        <div className="mt-1 break-all text-xs text-slate-400">
+                        <div className="mt-1 break-all text-xs text-muted-foreground">
                           evidence: {item.evidence_ref}
                         </div>
                       </li>
                     ))
                   ) : (
-                    <li className="rounded border p-3 text-sm text-slate-500">
+                    <li className="rounded border p-3 text-sm text-muted-foreground">
                       No derived policy conflicts in this review window.
                     </li>
                   )}
@@ -401,20 +401,20 @@ export function GovernOverview({
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <div className="font-medium">{item.target}</div>
-                            <div className="mt-1 text-sm text-slate-600">
+                            <div className="mt-1 text-sm text-muted-foreground">
                               {item.agent_name} · {item.surface} ·{" "}
                               {item.access.join(", ")}
                             </div>
                           </div>
                           <span className={pill(item.state)}>{item.state}</span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-700">
+                        <p className="mt-2 text-sm text-foreground">
                           {item.reviewer_action}
                         </p>
                       </li>
                     ))
                   ) : (
-                    <li className="rounded border p-3 text-sm text-slate-500">
+                    <li className="rounded border p-3 text-sm text-muted-foreground">
                       No PII, memory, or money movement access changes detected.
                     </li>
                   )}
@@ -433,7 +433,7 @@ export function GovernOverview({
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="font-medium">{item.name}</div>
-                          <div className="text-sm text-slate-600">
+                          <div className="text-sm text-muted-foreground">
                             {item.agent_name} · {item.side_effect_level}
                             {item.pii_access ? " · PII" : ""}
                             {item.money_movement ? " · money movement" : ""}
@@ -443,7 +443,7 @@ export function GovernOverview({
                           {item.live_status}
                         </span>
                       </div>
-                      <p className="mt-2 text-sm text-slate-700">
+                      <p className="mt-2 text-sm text-foreground">
                         {item.reviewer_action}
                       </p>
                     </li>
@@ -463,7 +463,7 @@ export function GovernOverview({
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="font-medium">{item.scope} memory</div>
-                          <div className="text-sm text-slate-600">
+                          <div className="text-sm text-muted-foreground">
                             {item.agent_name} · {item.retention}
                           </div>
                         </div>
@@ -471,7 +471,7 @@ export function GovernOverview({
                           {item.approval_status}
                         </span>
                       </div>
-                      <p className="mt-2 text-sm text-slate-700">
+                      <p className="mt-2 text-sm text-foreground">
                         {item.reviewer_action}
                       </p>
                     </li>
@@ -495,17 +495,17 @@ export function GovernOverview({
                           <div className="font-medium">
                             {item.channel_type.replace(/_/g, " ")}
                           </div>
-                          <div className="text-sm text-slate-600">
+                          <div className="text-sm text-muted-foreground">
                             {item.agent_name} · {item.provider}
                           </div>
                         </div>
                         <span className={pill(item.status)}>{item.status}</span>
                       </div>
-                      <p className="mt-2 text-sm text-slate-700">
+                      <p className="mt-2 text-sm text-foreground">
                         {item.reviewer_action}
                       </p>
                       {item.blocking_checks.length ? (
-                        <div className="mt-2 text-xs text-slate-500">
+                        <div className="mt-2 text-xs text-muted-foreground">
                           {item.blocking_checks.length} readiness blocker(s)
                         </div>
                       ) : null}
@@ -528,7 +528,7 @@ export function GovernOverview({
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="font-medium">{item.trigger}</div>
-                          <div className="text-sm text-slate-600">
+                          <div className="text-sm text-muted-foreground">
                             {item.agent_name} ·{" "}
                             {item.affected_conversation_count} conversations
                             affected
@@ -557,14 +557,14 @@ export function GovernOverview({
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="font-medium">{item.name}</div>
-                          <div className="mt-1 text-xs text-slate-500">
+                          <div className="mt-1 text-xs text-muted-foreground">
                             {item.case_count} required cases ·{" "}
                             {item.metrics.join(", ")}
                           </div>
                         </div>
                         <button
                           type="button"
-                          className="rounded border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:border-slate-900 hover:text-slate-950 disabled:cursor-wait disabled:opacity-50"
+                          className="rounded border border-border px-2 py-1 text-xs font-medium text-foreground hover:border-foreground hover:text-foreground disabled:cursor-wait disabled:opacity-50"
                           disabled={attachingProbeId === item.id}
                           data-testid={`attach-probe-${item.id}`}
                           onClick={() => void handleAttachProbeSuite(item.id)}
@@ -574,10 +574,10 @@ export function GovernOverview({
                             : "Attach suite"}
                         </button>
                       </div>
-                      <div className="mt-1 text-sm text-slate-600">
+                      <div className="mt-1 text-sm text-muted-foreground">
                         Required for {item.required_for.join(", ")}
                       </div>
-                      <div className="mt-1 break-all text-xs text-slate-400">
+                      <div className="mt-1 break-all text-xs text-muted-foreground">
                         evidence: {item.evidence_ref}
                       </div>
                     </li>
@@ -585,13 +585,13 @@ export function GovernOverview({
                 </ul>
                 {probeResult ? (
                   <div
-                    className="mt-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900"
+                    className="mt-3 rounded border border-success/30 bg-success/10 p-3 text-sm text-success"
                     data-testid="compliance-probe-result"
                   >
                     Attached {probeResult.library_name} to{" "}
                     {probeResult.suite_count} agent(s); added{" "}
                     {probeResult.case_count} case(s).
-                    <div className="mt-1 text-xs text-emerald-700">
+                    <div className="mt-1 text-xs text-success">
                       {probeResult.attached_agents
                         .map((agent) => agent.suite.name)
                         .join(", ") || "No high-risk agents required it."}
@@ -600,7 +600,7 @@ export function GovernOverview({
                 ) : null}
                 {probeError ? (
                   <div
-                    className="mt-3 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"
+                    className="mt-3 rounded border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
                     data-testid="compliance-probe-error"
                   >
                     {probeError}
@@ -621,8 +621,8 @@ export function GovernOverview({
               >
                 <div>
                   <div className="font-medium">{s.label}</div>
-                  <div className="text-sm text-slate-600">{s.detail}</div>
-                  <div className="text-xs text-slate-400 mt-1">
+                  <div className="text-sm text-muted-foreground">{s.detail}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
                     evidence: {s.evidenceRef}
                   </div>
                 </div>
@@ -635,7 +635,7 @@ export function GovernOverview({
         {section === "rbac" && (
           <div className="overflow-x-auto">
             <table data-testid="rbac-matrix" className="w-full text-sm border">
-              <thead className="bg-slate-50">
+              <thead className="bg-muted">
                 <tr>
                   <th className="text-left p-2 border-b">Role × resource</th>
                   {RBAC_RESOURCES.map((r) => (
@@ -663,7 +663,7 @@ export function GovernOverview({
                         <td
                           key={res}
                           data-testid={`rbac-cell-${role}-${res}`}
-                          className="p-2 border-b text-xs text-slate-600"
+                          className="p-2 border-b text-xs text-muted-foreground"
                         >
                           {verbs.length ? verbs.join(", ") : "—"}
                         </td>
@@ -686,11 +686,11 @@ export function GovernOverview({
               >
                 <div>
                   <div className="font-medium">{a.subject}</div>
-                  <div className="text-sm text-slate-600">
+                  <div className="text-sm text-muted-foreground">
                     {a.kind.replace(/_/g, " ")} · {a.requester} →{" "}
                     {a.approvers.join(", ")}
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     age: {a.ageMinutes}m · evidence: {a.evidenceRef}
                   </div>
                 </div>
@@ -730,15 +730,15 @@ export function GovernOverview({
                 >
                   <div className="flex items-center gap-2 text-sm">
                     <span className={pill(e.category)}>{e.category}</span>
-                    <span className="font-mono text-xs text-slate-500">
+                    <span className="font-mono text-xs text-muted-foreground">
                       {e.ts}
                     </span>
                   </div>
                   <div className="mt-1 text-sm">
                     <span className="font-medium">{e.actor}</span> · {e.action}{" "}
-                    · <span className="text-slate-600">{e.target}</span>
+                    · <span className="text-muted-foreground">{e.target}</span>
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     evidence: {e.evidenceRef}
                   </div>
                 </li>
@@ -746,7 +746,7 @@ export function GovernOverview({
               {auditRows.length === 0 && (
                 <li
                   data-testid="audit-empty"
-                  className="text-sm text-slate-500 border rounded p-3"
+                  className="text-sm text-muted-foreground border rounded p-3"
                 >
                   No audit events match this filter.
                 </li>
@@ -768,10 +768,10 @@ export function GovernOverview({
                   >
                     <div>
                       <div className="font-medium">{z.label}</div>
-                      <div className="text-sm text-slate-600">
+                      <div className="text-sm text-muted-foreground">
                         jurisdictions: {z.jurisdictions.join(", ")}
                       </div>
-                      <div className="text-xs text-slate-400 mt-1">
+                      <div className="text-xs text-muted-foreground mt-1">
                         evidence: {z.evidenceRef}
                       </div>
                     </div>
@@ -795,10 +795,10 @@ export function GovernOverview({
                   >
                     <div>
                       <div className="font-medium">{k.alias}</div>
-                      <div className="text-sm text-slate-600">
+                      <div className="text-sm text-muted-foreground">
                         scope: {k.scope} · rotated {k.rotatedAtDays}d ago
                       </div>
-                      <div className="text-xs text-slate-400 mt-1">
+                      <div className="text-xs text-muted-foreground mt-1">
                         evidence: {k.evidenceRef}
                       </div>
                     </div>
@@ -815,15 +815,15 @@ export function GovernOverview({
             data-testid="whitelabel-summary"
             className="border rounded p-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm"
           >
-            <dt className="text-slate-500">Brand</dt>
+            <dt className="text-muted-foreground">Brand</dt>
             <dd>{WHITELABEL_DEFAULT.brandName}</dd>
-            <dt className="text-slate-500">Domain</dt>
+            <dt className="text-muted-foreground">Domain</dt>
             <dd className="font-mono text-xs">{WHITELABEL_DEFAULT.domain}</dd>
-            <dt className="text-slate-500">Email-from</dt>
+            <dt className="text-muted-foreground">Email-from</dt>
             <dd className="font-mono text-xs">
               {WHITELABEL_DEFAULT.emailFrom}
             </dd>
-            <dt className="text-slate-500">Primary color</dt>
+            <dt className="text-muted-foreground">Primary color</dt>
             <dd>
               <span
                 aria-hidden="true"
@@ -834,7 +834,7 @@ export function GovernOverview({
                 {WHITELABEL_DEFAULT.primaryColor}
               </span>
             </dd>
-            <dt className="text-slate-500">Evidence</dt>
+            <dt className="text-muted-foreground">Evidence</dt>
             <dd className="font-mono text-xs">
               {WHITELABEL_DEFAULT.evidenceRef}
             </dd>
@@ -851,13 +851,13 @@ export function GovernOverview({
               >
                 <div>
                   <div className="font-medium">{d.title}</div>
-                  <div className="text-sm text-slate-600">
+                  <div className="text-sm text-muted-foreground">
                     updated {d.updatedAtDays}d ago ·{" "}
                     <a className="underline" href={d.url}>
                       open
                     </a>
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     evidence: {d.evidenceRef}
                   </div>
                 </div>
@@ -877,10 +877,10 @@ export function GovernOverview({
               >
                 <div>
                   <div className="font-medium">{s.name}</div>
-                  <div className="text-sm text-slate-600">
+                  <div className="text-sm text-muted-foreground">
                     owner: {s.owner} · installs: {s.installs}
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     evidence: {s.evidenceRef}
                   </div>
                 </div>
@@ -908,10 +908,10 @@ export function GovernOverview({
                   <div className="font-medium">{p.trigger}</div>
                   <span className={pill(p.severity)}>{p.severity}</span>
                 </div>
-                <div className="text-sm text-slate-600 mt-1">
+                <div className="text-sm text-muted-foreground mt-1">
                   {p.consequence}
                 </div>
-                <div className="text-xs text-slate-400 mt-1">
+                <div className="text-xs text-muted-foreground mt-1">
                   evidence: {p.evidenceRef}
                 </div>
               </li>
