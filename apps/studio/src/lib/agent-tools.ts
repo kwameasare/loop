@@ -352,6 +352,7 @@ export function createToolsRoomData(
   liveTools: AgentTool[] = [],
   fixture: TargetUXFixture = targetUxFixtures,
   toolContracts: ToolContract[] = [],
+  degradedReason?: string | undefined,
 ): ToolsRoomData {
   const usesLiveData = liveTools.length > 0 || toolContracts.length > 0;
   const fixtureAgent = fixture.agents.find(
@@ -429,11 +430,14 @@ export function createToolsRoomData(
       usesLiveData
         ? "Loaded from live cp-api tool bindings."
         : "Explicit local fixture tool catalog for tests and demos.",
+    degradedReason,
   };
 }
 
 export function createEmptyToolsRoomData(
   agentId = "agent_empty",
+  degradedReason =
+    "No tools are bound yet. Paste a curl command, OpenAPI fragment, or Postman sample to draft one.",
 ): ToolsRoomData {
   return {
     agentId,
@@ -444,8 +448,7 @@ export function createEmptyToolsRoomData(
     tools: [],
     toolContracts: [],
     catalogEvidence: "No live tool bindings loaded.",
-    degradedReason:
-      "No tools are bound yet. Paste a curl command, OpenAPI fragment, or Postman sample to draft one.",
+    degradedReason,
   };
 }
 

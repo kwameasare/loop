@@ -79,6 +79,25 @@ describe("Tools Room data", () => {
     expect(data.tools.map((tool) => tool.id)).not.toContain("tool_lookup_order");
   });
 
+  it("preserves degraded evidence alongside partial live tool data", () => {
+    const data = createToolsRoomData(
+      "agt_live",
+      [
+        {
+          id: "tool_live_search",
+          name: "live.search",
+          kind: "http",
+        },
+      ],
+      undefined,
+      [],
+      "Tool contract endpoint failed.",
+    );
+
+    expect(data.tools.map((tool) => tool.id)).toEqual(["tool_live_search"]);
+    expect(data.degradedReason).toBe("Tool contract endpoint failed.");
+  });
+
   it("builds an empty room without target fixture metadata", () => {
     const data = createEmptyToolsRoomData("agt_empty");
 
