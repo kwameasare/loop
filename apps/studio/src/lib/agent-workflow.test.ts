@@ -29,6 +29,75 @@ describe("agent workflow client", () => {
     });
   });
 
+  it("returns an empty workflow by default when cp-api is unconfigured", async () => {
+    await expect(listAgentWorkflow("agent-1", { baseUrl: "" })).resolves.toEqual(
+      {
+        branches: [],
+        change_sets: [],
+        release_candidates: [],
+      },
+    );
+  });
+
+  it("keeps the deterministic workflow fixture explicitly opt-in", async () => {
+    const workflow = await listAgentWorkflow("agent-1", {
+      baseUrl: "",
+      allowFixture: true,
+    });
+
+    expect(workflow.branches[0]?.id).toBe("br_local_refund");
+    expect(workflow.change_sets[0]?.id).toBe("cs_local_refund");
+    expect(workflow.release_candidates[0]?.id).toBe("rc_local_refund");
+  });
+
+  it("does not fabricate workflow mutations without cp-api", async () => {
+    const workflow = localAgentWorkflow("agent-1");
+    const branch = workflow.branches[0]!;
+    const changeSet = workflow.change_sets[0]!;
+    const releaseCandidate = workflow.release_candidates[0]!;
+
+    await expect(
+      createAgentBranch("agent-1", { name: "draft/refund" }, { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+    await expect(
+      createAgentChangeSet(
+        "agent-1",
+        { branch_id: branch.id, name: "Fix refund policy" },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+    await expect(
+      markChangeSetReadyForTests("agent-1", changeSet.id, {
+        baseUrl: "",
+        fallbackChangeSet: changeSet,
+      }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+    await expect(
+      markChangeSetReadyForReview(
+        "agent-1",
+        changeSet.id,
+        { eval_results_ref: "eval/run/green", passed: true },
+        { baseUrl: "", fallbackChangeSet: changeSet },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+    await expect(
+      createReleaseCandidate(
+        "agent-1",
+        changeSet.id,
+        { required_eval_suites: ["refund-core"] },
+        { baseUrl: "" },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+    await expect(
+      approveReleaseCandidate(
+        "agent-1",
+        releaseCandidate.id,
+        { approval_id: "owner" },
+        { baseUrl: "", fallbackReleaseCandidate: releaseCandidate },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
   it("calls workflow endpoints for the full release candidate path", async () => {
     const workflow = localAgentWorkflow("agent-1");
     const branch = workflow.branches[0]!;
@@ -143,5 +212,69 @@ describe("agent workflow client", () => {
       "https://cp.test/v1/agents/agent-1/change-sets/cs_local_refund/release-candidates",
       "https://cp.test/v1/agents/agent-1/release-candidates/rc_local_refund/approve",
     ]);
+  });
+
+  it("keeps deterministic workflow mutations explicitly opt-in", async () => {
+    const workflow = localAgentWorkflow("agent-1");
+    const branch = workflow.branches[0]!;
+    const changeSet = workflow.change_sets[0]!;
+    const releaseCandidate = workflow.release_candidates[0]!;
+
+    await expect(
+      createAgentBranch(
+        "agent-1",
+        { name: "draft/refund" },
+        { baseUrl: "", allowFixture: true },
+      ),
+    ).resolves.toMatchObject({ name: "draft/refund", status: "active" });
+    await expect(
+      createAgentChangeSet(
+        "agent-1",
+        { branch_id: branch.id, name: "Fix refund policy" },
+        { baseUrl: "", allowFixture: true },
+      ),
+    ).resolves.toMatchObject({ name: "Fix refund policy", status: "draft" });
+    await expect(
+      markChangeSetReadyForTests("agent-1", changeSet.id, {
+        baseUrl: "",
+        allowFixture: true,
+        fallbackChangeSet: changeSet,
+      }),
+    ).resolves.toMatchObject({ status: "ready_for_tests" });
+    await expect(
+      markChangeSetReadyForReview(
+        "agent-1",
+        changeSet.id,
+        { eval_results_ref: "eval/run/green", passed: true },
+        {
+          baseUrl: "",
+          allowFixture: true,
+          fallbackChangeSet: changeSet,
+        },
+      ),
+    ).resolves.toMatchObject({ status: "ready_for_review" });
+    await expect(
+      createReleaseCandidate(
+        "agent-1",
+        changeSet.id,
+        { required_eval_suites: ["refund-core"] },
+        { baseUrl: "", allowFixture: true },
+      ),
+    ).resolves.toMatchObject({
+      change_set_id: changeSet.id,
+      status: "ready_for_approval",
+    });
+    await expect(
+      approveReleaseCandidate(
+        "agent-1",
+        releaseCandidate.id,
+        { approval_id: "owner" },
+        {
+          baseUrl: "",
+          allowFixture: true,
+          fallbackReleaseCandidate: releaseCandidate,
+        },
+      ),
+    ).resolves.toMatchObject({ status: "approved" });
   });
 });

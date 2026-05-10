@@ -82,6 +82,18 @@ export interface AgentWorkflow {
   release_candidates: AgentReleaseCandidate[];
 }
 
+type AgentWorkflowClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
+type ChangeSetClientOptions = AgentWorkflowClientOptions & {
+  fallbackChangeSet?: AgentChangeSet;
+};
+
+type ReleaseCandidateClientOptions = AgentWorkflowClientOptions & {
+  fallbackReleaseCandidate?: AgentReleaseCandidate;
+};
+
 const LOCAL_NOW = new Date(0).toISOString();
 
 export function localAgentWorkflow(agentId: string): AgentWorkflow {
@@ -167,13 +179,16 @@ export function localAgentWorkflow(agentId: string): AgentWorkflow {
 
 export async function listAgentWorkflow(
   agentId: string,
-  opts: UxWireupClientOptions = {},
+  opts: AgentWorkflowClientOptions = {},
 ): Promise<AgentWorkflow> {
   return cpJson<AgentWorkflow>(
     `/agents/${encodeURIComponent(agentId)}/workflow`,
     {
       ...opts,
-      fallback: localAgentWorkflow(agentId),
+      fallback:
+        opts.allowFixture === true
+          ? localAgentWorkflow(agentId)
+          : { branches: [], change_sets: [], release_candidates: [] },
     },
   );
 }
@@ -181,7 +196,7 @@ export async function listAgentWorkflow(
 export async function createAgentBranch(
   agentId: string,
   input: { name: string; base_version_id?: string },
-  opts: UxWireupClientOptions = {},
+  opts: AgentWorkflowClientOptions = {},
 ): Promise<AgentBranch> {
   const fallback = {
     ...localAgentWorkflow(agentId).branches[0]!,
@@ -196,6 +211,7 @@ export async function createAgentBranch(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback,
     },
   );
@@ -211,7 +227,7 @@ export async function createAgentChangeSet(
     source_refs?: string[];
     changed_objects?: Array<Record<string, unknown>>;
   },
-  opts: UxWireupClientOptions = {},
+  opts: AgentWorkflowClientOptions = {},
 ): Promise<AgentChangeSet> {
   const fallback = {
     ...localAgentWorkflow(agentId).change_sets[0]!,
@@ -228,6 +244,7 @@ export async function createAgentChangeSet(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback,
     },
   );
@@ -236,7 +253,7 @@ export async function createAgentChangeSet(
 export async function markChangeSetReadyForTests(
   agentId: string,
   changeSetId: string,
-  opts: UxWireupClientOptions & { fallbackChangeSet?: AgentChangeSet } = {},
+  opts: ChangeSetClientOptions = {},
 ): Promise<AgentChangeSet> {
   return cpJson<AgentChangeSet>(
     `/agents/${encodeURIComponent(agentId)}/change-sets/${encodeURIComponent(
@@ -245,6 +262,7 @@ export async function markChangeSetReadyForTests(
     {
       ...opts,
       method: "POST",
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...(opts.fallbackChangeSet ??
           localAgentWorkflow(agentId).change_sets[0]!),
@@ -263,7 +281,7 @@ export async function markChangeSetReadyForReview(
     required_eval_suites?: string[];
     passed?: boolean;
   },
-  opts: UxWireupClientOptions & { fallbackChangeSet?: AgentChangeSet } = {},
+  opts: ChangeSetClientOptions = {},
 ): Promise<AgentChangeSet> {
   return cpJson<AgentChangeSet>(
     `/agents/${encodeURIComponent(agentId)}/change-sets/${encodeURIComponent(
@@ -273,6 +291,7 @@ export async function markChangeSetReadyForReview(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...(opts.fallbackChangeSet ??
           localAgentWorkflow(agentId).change_sets[0]!),
@@ -289,7 +308,7 @@ export async function createReleaseCandidate(
   agentId: string,
   changeSetId: string,
   input: { required_eval_suites?: string[]; required_approvals?: string[] },
-  opts: UxWireupClientOptions = {},
+  opts: AgentWorkflowClientOptions = {},
 ): Promise<AgentReleaseCandidate> {
   return cpJson<AgentReleaseCandidate>(
     `/agents/${encodeURIComponent(agentId)}/change-sets/${encodeURIComponent(
@@ -299,6 +318,7 @@ export async function createReleaseCandidate(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...localAgentWorkflow(agentId).release_candidates[0]!,
         id: `rc_local_${Date.now()}`,
@@ -315,9 +335,7 @@ export async function approveReleaseCandidate(
   agentId: string,
   releaseCandidateId: string,
   input: { approval_id: string; comment?: string },
-  opts: UxWireupClientOptions & {
-    fallbackReleaseCandidate?: AgentReleaseCandidate;
-  } = {},
+  opts: ReleaseCandidateClientOptions = {},
 ): Promise<AgentReleaseCandidate> {
   const base =
     opts.fallbackReleaseCandidate ??
@@ -341,6 +359,7 @@ export async function approveReleaseCandidate(
       ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...base,
         required_approvals: approvals,
