@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { ConductorStudio } from "@/components/conductor/conductor-studio";
 import {
+  createEmptyConductorData,
   fetchConductorData,
   type ConductorData,
 } from "@/lib/conductor";
@@ -25,7 +26,6 @@ export default function AgentConductorPage({
 
 function AgentConductorPageBody({ agentId }: { agentId: string }): JSX.Element {
   const [data, setData] = useState<ConductorData | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,20 +36,18 @@ function AgentConductorPageBody({ agentId }: { agentId: string }): JSX.Element {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Could not load conductor");
+        setData(
+          createEmptyConductorData(
+            agentId,
+            err instanceof Error ? err.message : "Could not load conductor",
+          ),
+        );
       });
     return () => {
       cancelled = true;
     };
   }, [agentId]);
 
-  if (error) {
-    return (
-      <p className="p-6 text-sm text-destructive" role="alert">
-        {error}
-      </p>
-    );
-  }
   if (!data) {
     return (
       <p className="p-6 text-sm text-muted-foreground" data-testid="conductor-loading">

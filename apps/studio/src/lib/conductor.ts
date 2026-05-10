@@ -129,7 +129,12 @@ export async function fetchConductorData(
       cache: "no-store",
     },
   );
-  if (response.status === 404) return createEmptyConductorData(agentId);
+  if (response.status === 404) {
+    return createEmptyConductorData(
+      agentId,
+      "cp-api conductor route returned 404. Studio will not treat an unavailable conductor route as an agent with no sub-agents.",
+    );
+  }
   if (!response.ok) {
     throw new Error(`cp-api GET agent conductor -> ${response.status}`);
   }
@@ -391,6 +396,8 @@ export function createBlockedConductorData(
 
 export function createEmptyConductorData(
   agentId = "agent_empty",
+  degradedReason =
+    "No conductor topology exists for this agent yet. Attach a reviewed sub-agent asset before creating handoff contracts.",
 ): ConductorData {
   return {
     agentId,
@@ -402,8 +409,7 @@ export function createEmptyConductorData(
     contracts: [],
     delegations: [],
     topology: [],
-    orchestrationEvidence: "No conductor topology loaded from cp-api.",
-    degradedReason:
-      "No conductor topology exists for this agent yet. Attach a reviewed sub-agent asset before creating handoff contracts.",
+    orchestrationEvidence: degradedReason,
+    degradedReason,
   };
 }

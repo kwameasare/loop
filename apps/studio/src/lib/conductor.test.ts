@@ -45,7 +45,7 @@ describe("conductor cp-api client", () => {
     expect(url).toBe("https://cp.test/v1/agents/agent-1/conductor");
   });
 
-  it("maps missing conductor topology to an empty degraded model", async () => {
+  it("marks a missing conductor route as unavailable backend evidence", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: false,
       status: 404,
@@ -56,7 +56,9 @@ describe("conductor cp-api client", () => {
 
     expect(data.subAgents).toEqual([]);
     expect(data.contracts).toEqual([]);
-    expect(data.degradedReason).toMatch(/No conductor topology exists/i);
-    expect(data.orchestrationEvidence).toMatch(/No conductor topology loaded/i);
+    expect(data.degradedReason).toMatch(/conductor route returned 404/i);
+    expect(data.orchestrationEvidence).toMatch(
+      /will not treat an unavailable conductor route/i,
+    );
   });
 });
