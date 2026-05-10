@@ -131,13 +131,13 @@ export function FlowEmulatorPanel(props: FlowEmulatorPanelProps) {
   return (
     <section
       aria-label="Flow emulator"
-      className="flex w-96 flex-col border-l bg-white"
+      className="flex w-96 flex-col border-l bg-card"
       data-testid="flow-emulator"
     >
       <header className="flex items-center justify-between border-b px-4 py-2">
         <h2 className="text-sm font-semibold">Emulator</h2>
         <span
-          className={`rounded px-2 py-0.5 text-xs ${running ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-600"}`}
+          className={`rounded px-2 py-0.5 text-xs ${running ? "border border-success/30 bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}
           data-testid="emulator-status"
         >
           {running ? "streaming" : "idle"}
@@ -149,7 +149,7 @@ export function FlowEmulatorPanel(props: FlowEmulatorPanelProps) {
       >
         {messages.length === 0 ? (
           <li
-            className="rounded border border-dashed border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-500"
+            className="rounded border border-dashed border-border bg-muted px-3 py-2 text-xs text-muted-foreground"
             data-testid="emulator-empty"
           >
             Send a message to start a turn.
@@ -157,21 +157,21 @@ export function FlowEmulatorPanel(props: FlowEmulatorPanelProps) {
         ) : null}
         {messages.map((m, idx) => (
           <li
-            className={`rounded border px-3 py-2 text-sm ${m.role === "user" ? "bg-blue-50" : "bg-white"}`}
+            className={`rounded border px-3 py-2 text-sm ${m.role === "user" ? "bg-info/10" : "bg-card"}`}
             data-testid={`emulator-msg-${idx}`}
             data-role={m.role}
             key={idx}
           >
-            <p className="text-xs uppercase text-zinc-500">{m.role}</p>
+            <p className="text-xs uppercase text-muted-foreground">{m.role}</p>
             <p className="whitespace-pre-wrap" data-testid={`emulator-text-${idx}`}>
               {m.text}
               {m.streaming ? (
-                <span className="ml-1 animate-pulse text-zinc-400">▍</span>
+                <span className="ml-1 animate-pulse text-muted-foreground">▍</span>
               ) : null}
             </p>
             {m.error ? (
               <p
-                className="mt-1 text-xs text-red-600"
+                className="mt-1 text-xs text-destructive"
                 data-testid={`emulator-error-${idx}`}
                 role="alert"
               >
@@ -184,7 +184,7 @@ export function FlowEmulatorPanel(props: FlowEmulatorPanelProps) {
       <footer className="flex items-center gap-2 border-t p-3">
         <input
           aria-label="Emulator message"
-          className="flex-1 rounded border px-2 py-1 text-sm"
+          className="flex-1 rounded border bg-background px-2 py-1 text-sm"
           data-testid="emulator-input"
           disabled={running}
           onChange={(e) => setDraft(e.target.value)}
@@ -200,7 +200,7 @@ export function FlowEmulatorPanel(props: FlowEmulatorPanelProps) {
         />
         {running ? (
           <button
-            className="rounded border border-rose-300 bg-rose-50 px-3 py-1 text-sm text-rose-800 hover:bg-rose-100"
+            className="rounded border border-destructive/40 bg-destructive/10 px-3 py-1 text-sm text-destructive hover:bg-destructive/15"
             data-testid="emulator-stop"
             onClick={stop}
             type="button"
@@ -209,7 +209,7 @@ export function FlowEmulatorPanel(props: FlowEmulatorPanelProps) {
           </button>
         ) : (
           <button
-            className="rounded bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-500 disabled:bg-zinc-300"
+            className="rounded bg-primary px-3 py-1 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground"
             data-testid="emulator-play"
             disabled={!draft.trim()}
             onClick={() => void play()}
