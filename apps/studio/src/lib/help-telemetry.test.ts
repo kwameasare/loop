@@ -102,4 +102,10 @@ describe("help and telemetry cp clients", () => {
     });
     expect(clips[0]?.clip_id).toBe("clip_canary");
   });
+
+  it("requires cp-api before loading contextual show-me clips", async () => {
+    await expect(fetchHelpClips("pipeline", { baseUrl: "" })).rejects.toThrow(
+      /LOOP_CP_API_BASE_URL is required/i,
+    );
+  });
 });

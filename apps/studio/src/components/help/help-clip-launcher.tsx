@@ -24,6 +24,7 @@ export function HelpClipLauncher(): JSX.Element {
   const surface = useMemo(() => surfaceFromPath(pathname), [pathname]);
   const [open, setOpen] = useState(false);
   const [clips, setClips] = useState<HelpClip[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -42,9 +43,19 @@ export function HelpClipLauncher(): JSX.Element {
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    void fetchHelpClips(surface).then((next) => {
-      if (!cancelled) setClips(next);
-    });
+    setError(null);
+    setClips([]);
+    void fetchHelpClips(surface)
+      .then((next) => {
+        if (!cancelled) setClips(next);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(
+            err instanceof Error ? err.message : "Could not load help clips.",
+          );
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -86,6 +97,14 @@ export function HelpClipLauncher(): JSX.Element {
             </Button>
           </div>
           <ul className="mt-3 space-y-2">
+            {error ? (
+              <li
+                className="rounded-md border border-warning/40 bg-warning/10 p-2 text-xs text-warning"
+                role="status"
+              >
+                {error}
+              </li>
+            ) : null}
             {clips.map((clip) => (
               <li key={clip.clip_id} className="rounded-md border bg-card p-2">
                 <div className="flex items-center justify-between gap-2">
