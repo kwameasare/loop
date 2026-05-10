@@ -69,6 +69,36 @@ function semanticSummary(item: Record<string, unknown>, index: number): string {
   return `${dimension}: ${summary}`;
 }
 
+function countSemanticDimension(
+  changePackage: ChangePackage,
+  dimension: string,
+): number {
+  return changePackage.semantic_diff.filter(
+    (item) => item.dimension === dimension,
+  ).length;
+}
+
+function versionManifestRows(
+  changePackage: ChangePackage,
+): Array<[string, string]> {
+  const behaviorChanges = countSemanticDimension(changePackage, "behavior");
+  const channelChanges = countSemanticDimension(changePackage, "channel");
+  return [
+    ["From version", changePackage.from_version_id],
+    ["To version", changePackage.to_version_id],
+    ["Release Candidate", changePackage.release_candidate_id],
+    ["Behavior policy changes", String(behaviorChanges)],
+    ["Tool changes", String(changePackage.tool_changes.length)],
+    ["Knowledge changes", String(changePackage.knowledge_changes.length)],
+    ["Memory rule changes", String(changePackage.memory_changes.length)],
+    ["Channel changes", String(channelChanges)],
+    ["Eval results", changePackage.eval_results_ref],
+    ["Replay results", changePackage.replay_results_ref],
+    ["Risk", changePackage.risk_summary],
+    ["Rollback target", changePackage.rollback_target_version_id],
+  ];
+}
+
 export function ChangePackagePanel({
   agentId,
   initialPackage,
@@ -202,6 +232,18 @@ export function ChangePackagePanel({
           Change Package backend unavailable. {degradedReason}
         </div>
       ) : null}
+      {changePackage.status === "stale" || changePackage.stale_at ? (
+        <div
+          className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          data-testid="change-package-stale-warning"
+          role="alert"
+        >
+          This Change Package is stale
+          {changePackage.stale_at ? ` since ${changePackage.stale_at}` : ""}.
+          The draft changed after this evidence was generated, so approvals must
+          be re-requested against a new content hash.
+        </div>
+      ) : null}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -304,6 +346,27 @@ export function ChangePackagePanel({
           </p>
         </div>
       </div>
+
+      <article
+        className="rounded-md border bg-background p-4"
+        data-testid="change-package-version-manifest"
+      >
+        <h3 className="text-sm font-semibold">Version manifest</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Immutable candidate contents for approvers. This is the short answer
+          to what the candidate includes before any production traffic moves.
+        </p>
+        <dl className="mt-3 grid gap-2 text-sm md:grid-cols-3">
+          {versionManifestRows(changePackage).map(([label, value]) => (
+            <div key={label} className="rounded-md border bg-card p-2">
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {label}
+              </dt>
+              <dd className="mt-1 break-words">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </article>
 
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <article className="rounded-md border bg-background p-4">
