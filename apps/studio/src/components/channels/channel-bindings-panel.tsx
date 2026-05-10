@@ -56,12 +56,175 @@ const STATUS_CLASS: Record<ChannelBinding["status"], string> = {
   archived: "border-border bg-muted text-muted-foreground",
 };
 
+const CHANNEL_PROFILE: Record<
+  ChannelBindingType,
+  {
+    messageFormat: string;
+    interactionStyle: string;
+    supportedActions: string;
+    constraints: string;
+    businessHours: string;
+    consent: string;
+    rateLimit: string;
+    attachments: string;
+    fallback: string;
+    policy: string;
+  }
+> = {
+  web_chat: {
+    messageFormat: "Rich web message with links and buttons",
+    interactionStyle: "Synchronous chat",
+    supportedActions: "Chat, link-out, escalation, file request",
+    constraints: "Domain, session, and embed policy",
+    businessHours: "Workspace support hours",
+    consent: "Cookie and privacy notice",
+    rateLimit: "Workspace web quota",
+    attachments: "Images and documents when enabled",
+    fallback: "Human handoff or email capture",
+    policy: "Web answer policy",
+  },
+  whatsapp: {
+    messageFormat: "Template-safe text with numbered options",
+    interactionStyle: "Mobile messaging",
+    supportedActions: "Replies, templates, media, escalation",
+    constraints: "Template approval and opt-in window",
+    businessHours: "Regional support hours",
+    consent: "Opt-in required",
+    rateLimit: "Provider template and message caps",
+    attachments: "Provider-approved media only",
+    fallback: "SMS or human queue",
+    policy: "WhatsApp formatting policy",
+  },
+  telegram: {
+    messageFormat: "Bot text with commands and quick replies",
+    interactionStyle: "Command and chat",
+    supportedActions: "Commands, replies, escalation",
+    constraints: "Bot token and command routing",
+    businessHours: "Workspace support hours",
+    consent: "User starts bot conversation",
+    rateLimit: "Telegram bot limits",
+    attachments: "Images and documents when enabled",
+    fallback: "Human queue link",
+    policy: "Telegram bot policy",
+  },
+  slack: {
+    messageFormat: "Threaded internal answer with actions",
+    interactionStyle: "Workspace collaboration",
+    supportedActions: "Mentions, threads, buttons, handoff",
+    constraints: "Workspace install and scopes",
+    businessHours: "Team hours",
+    consent: "Workspace app installation",
+    rateLimit: "Slack API method limits",
+    attachments: "Files per workspace policy",
+    fallback: "Thread escalation",
+    policy: "Internal collaboration policy",
+  },
+  teams: {
+    messageFormat: "Threaded Teams answer with action cards",
+    interactionStyle: "Tenant collaboration",
+    supportedActions: "Mentions, threads, cards, handoff",
+    constraints: "Tenant app approval and scopes",
+    businessHours: "Team hours",
+    consent: "Tenant app installation",
+    rateLimit: "Microsoft Graph and Teams limits",
+    attachments: "Files per tenant policy",
+    fallback: "Thread escalation",
+    policy: "Internal collaboration policy",
+  },
+  sms: {
+    messageFormat: "Short plain text",
+    interactionStyle: "Async mobile text",
+    supportedActions: "Replies, links, escalation",
+    constraints: "Length, opt-out, carrier compliance",
+    businessHours: "Regional support hours",
+    consent: "Opt-in and opt-out required",
+    rateLimit: "Carrier and provider caps",
+    attachments: "MMS only when enabled",
+    fallback: "Voice callback or human queue",
+    policy: "SMS brevity and compliance policy",
+  },
+  email: {
+    messageFormat: "Structured email with summary and next steps",
+    interactionStyle: "Async long-form support",
+    supportedActions: "Reply, route, summarize, escalate",
+    constraints: "Sender reputation and mailbox routing",
+    businessHours: "Mailbox SLA",
+    consent: "Existing email thread or inbound route",
+    rateLimit: "Mailbox and provider limits",
+    attachments: "Workspace attachment policy",
+    fallback: "Ticket queue",
+    policy: "Email support policy",
+  },
+  voice: {
+    messageFormat: "Short spoken answer with confirmation prompts",
+    interactionStyle: "Real-time speech",
+    supportedActions: "Speak, listen, barge-in, transfer",
+    constraints: "Phone number, ASR/TTS, recording rules",
+    businessHours: "Phone support hours",
+    consent: "Call consent and recording notice",
+    rateLimit: "Concurrent call capacity",
+    attachments: "Not applicable",
+    fallback: "Transfer or callback",
+    policy: "Voice brevity and safety policy",
+  },
+  webhook_api: {
+    messageFormat: "Signed JSON payload",
+    interactionStyle: "Programmatic request/response",
+    supportedActions: "POST, retry, status callback",
+    constraints: "Signature, timeout, retry policy",
+    businessHours: "Always on unless paused",
+    consent: "API client authorization",
+    rateLimit: "Workspace API quota",
+    attachments: "URLs or structured payload references",
+    fallback: "Retry queue and dead-letter log",
+    policy: "Webhook API contract policy",
+  },
+};
+
 function readinessCount(binding: ChannelBinding) {
   const required = binding.readiness.filter(
     (check) => check.status !== "not_required",
   );
   const passed = required.filter((check) => check.status === "passed");
   return { passed: passed.length, total: required.length };
+}
+
+function configText(
+  config: Record<string, unknown>,
+  keys: readonly string[],
+): string | null {
+  for (const key of keys) {
+    const value = config[key];
+    if (typeof value === "string" && value.trim()) return value;
+    if (typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+  }
+  return null;
+}
+
+function identityLabel(binding: ChannelBinding): string {
+  return (
+    configText(binding.identity_config, [
+      "handle",
+      "phone_number",
+      "email",
+      "domain",
+      "bot_username",
+      "workspace",
+      "tenant",
+      "endpoint_url",
+      "from_address",
+      "identity",
+    ]) ?? "Identity not configured"
+  );
+}
+
+function formatTimestamp(value: string | null): string {
+  if (!value) return "No traffic yet";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toISOString().replace("T", " ").slice(0, 16);
 }
 
 function sortedBindings(bindings: ChannelBinding[]) {
@@ -81,6 +244,23 @@ function draftButtonLabel(
   if (degradedReason) return "Backend required";
   if (busyType === binding.channel_type) return "Saving...";
   return binding.status === "not_configured" ? "Start setup" : "Update draft";
+}
+
+function ContractField({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="mt-0.5 truncate">{value}</dd>
+    </div>
+  );
 }
 
 export function ChannelBindingsPanel({
@@ -175,6 +355,7 @@ export function ChannelBindingsPanel({
         {ordered.map((binding) => {
           const Icon = ICONS[binding.channel_type];
           const readiness = readinessCount(binding);
+          const profile = CHANNEL_PROFILE[binding.channel_type];
           return (
             <article
               key={binding.channel_type}
@@ -222,6 +403,70 @@ export function ChannelBindingsPanel({
                     {binding.auth_config_ref ? "bound" : "not bound"}
                   </dd>
                 </div>
+                <div>
+                  <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+                    Last traffic
+                  </dt>
+                  <dd className="mt-1 truncate">
+                    {formatTimestamp(binding.last_traffic_at)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-medium uppercase tracking-wide text-muted-foreground">
+                    Last failure
+                  </dt>
+                  <dd className="mt-1 truncate">
+                    {binding.last_failure_at
+                      ? formatTimestamp(binding.last_failure_at)
+                      : "No recent failure"}
+                  </dd>
+                </div>
+              </dl>
+
+              <dl
+                className="mt-3 grid gap-2 rounded-md border bg-card/70 p-2 text-xs md:grid-cols-2"
+                data-testid={`channel-binding-contract-${binding.channel_type}`}
+              >
+                <ContractField label="Identity" value={identityLabel(binding)} />
+                <ContractField
+                  label="Message format"
+                  value={profile.messageFormat}
+                />
+                <ContractField
+                  label="Interaction"
+                  value={profile.interactionStyle}
+                />
+                <ContractField
+                  label="Actions"
+                  value={profile.supportedActions}
+                />
+                <ContractField
+                  label="Constraints"
+                  value={profile.constraints}
+                />
+                <ContractField
+                  label="Business hours"
+                  value={
+                    configText(binding.identity_config, [
+                      "business_hours",
+                      "hours",
+                      "sla",
+                    ]) ?? profile.businessHours
+                  }
+                />
+                <ContractField label="Consent" value={profile.consent} />
+                <ContractField label="Rate limit" value={profile.rateLimit} />
+                <ContractField label="Attachments" value={profile.attachments} />
+                <ContractField label="Fallback" value={profile.fallback} />
+                <ContractField label="Policy" value={profile.policy} />
+                <ContractField
+                  label="Eval coverage"
+                  value={`${readiness.passed}/${readiness.total} channel checks`}
+                />
+                <ContractField
+                  label="Deployment"
+                  value={binding.status.replace("_", " ")}
+                />
               </dl>
 
               <ul className="mt-3 space-y-1">

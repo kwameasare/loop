@@ -44,6 +44,18 @@ describe("ChannelBindingsPanel", () => {
     expect(screen.getByTestId("channel-bindings-panel")).toHaveTextContent(
       "Voice is a channel binding",
     );
+    expect(
+      screen.getByTestId("channel-binding-contract-whatsapp"),
+    ).toHaveTextContent("Template-safe text with numbered options");
+    expect(
+      screen.getByTestId("channel-binding-contract-whatsapp"),
+    ).toHaveTextContent("Opt-in required");
+    expect(
+      screen.getByTestId("channel-binding-contract-voice"),
+    ).toHaveTextContent("Short spoken answer with confirmation prompts");
+    expect(
+      screen.getByTestId("channel-binding-contract-webhook_api"),
+    ).toHaveTextContent("Signed JSON payload");
   });
 
   it("starts setup by upserting a draft channel binding", async () => {
