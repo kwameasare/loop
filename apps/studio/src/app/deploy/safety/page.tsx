@@ -29,6 +29,7 @@ function DeploySafetyPageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
   const activeWorkspaceId = active?.id;
   const [model, setModel] = useState<DeploySafetyModel | null>(null);
+  const [selectedChangeId, setSelectedChangeId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,6 +41,11 @@ function DeploySafetyPageBody(): JSX.Element {
       .then((next) => {
         if (cancelled) return;
         setModel(next);
+        setSelectedChangeId(
+          next.changes.find((change) => change.agentId)?.id ??
+            next.changes[0]?.id ??
+            null,
+        );
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -108,6 +114,19 @@ function DeploySafetyPageBody(): JSX.Element {
     );
   }
 
+  const selectedChange = model
+    ? model.changes.find((change) => change.id === selectedChangeId) ??
+      model.changes.find((change) => change.agentId) ??
+      model.changes[0]
+    : undefined;
+  const bisectInput = selectedChange
+    ? {
+        failing_eval_case_id: selectedChange.exemplarTranscriptId,
+        since_ref: "last-green",
+        until_ref: "current",
+      }
+    : undefined;
+
   return (
     <main
       data-testid="deploy-safety-page"
@@ -124,11 +143,17 @@ function DeploySafetyPageBody(): JSX.Element {
           snapshots for incident, demo, or audit replay.
         </p>
       </header>
-      <WhatCouldBreak changes={model!.changes} />
+      <WhatCouldBreak
+        changes={model!.changes}
+        selectedChangeId={selectedChange?.id}
+        inspectLabel="Use for bisect"
+        onInspect={(change) => setSelectedChangeId(change.id)}
+      />
       {model!.bisect ? (
         <RegressionBisect
           result={model!.bisect}
-          agentId={model!.changes.find((change) => change.agentId)?.agentId}
+          agentId={selectedChange?.agentId}
+          initialInput={bisectInput}
         />
       ) : null}
       <SnapshotsList snapshots={model!.snapshots} />

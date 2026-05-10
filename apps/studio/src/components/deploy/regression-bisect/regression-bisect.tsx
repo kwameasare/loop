@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   runRegressionBisect as defaultRunRegressionBisect,
@@ -12,6 +12,7 @@ import {
 interface RegressionBisectProps {
   result: BisectResult;
   agentId?: string | undefined;
+  initialInput?: Partial<RunRegressionBisectInput> | undefined;
   runBisect?: (
     agentId: string,
     input: RunRegressionBisectInput,
@@ -25,13 +26,30 @@ const STATUS_TONE: Record<BisectStatus, string> = {
 };
 
 export function RegressionBisect(props: RegressionBisectProps): JSX.Element {
-  const { agentId, runBisect = defaultRunRegressionBisect } = props;
+  const { agentId, initialInput, runBisect = defaultRunRegressionBisect } = props;
   const [result, setResult] = useState(props.result);
-  const [caseId, setCaseId] = useState(props.result.caseId);
-  const [sinceRef, setSinceRef] = useState("last-green");
-  const [untilRef, setUntilRef] = useState("current");
+  const [caseId, setCaseId] = useState(
+    initialInput?.failing_eval_case_id ?? props.result.caseId,
+  );
+  const [sinceRef, setSinceRef] = useState(
+    initialInput?.since_ref ?? "last-green",
+  );
+  const [untilRef, setUntilRef] = useState(initialInput?.until_ref ?? "current");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setResult(props.result);
+    setCaseId(initialInput?.failing_eval_case_id ?? props.result.caseId);
+    setSinceRef(initialInput?.since_ref ?? "last-green");
+    setUntilRef(initialInput?.until_ref ?? "current");
+    setError(null);
+  }, [
+    props.result,
+    initialInput?.failing_eval_case_id,
+    initialInput?.since_ref,
+    initialInput?.until_ref,
+  ]);
 
   async function runLiveBisect(): Promise<void> {
     if (!agentId) return;
