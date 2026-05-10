@@ -9,6 +9,7 @@ import {
   localAgentWorkflow,
   markChangeSetReadyForReview,
   markChangeSetReadyForTests,
+  updateReleaseCandidateGate,
 } from "./agent-workflow";
 
 describe("agent workflow client", () => {
@@ -92,6 +93,14 @@ describe("agent workflow client", () => {
         { baseUrl: "", fallbackReleaseCandidate: releaseCandidate },
       ),
     ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+    await expect(
+      updateReleaseCandidateGate(
+        "agent-1",
+        releaseCandidate.id,
+        { gate_id: "eval:refund-core", status: "failed" },
+        { baseUrl: "", fallbackReleaseCandidate: releaseCandidate },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
   });
 
   it("calls workflow endpoints for the full release candidate path", async () => {
@@ -137,6 +146,20 @@ describe("agent workflow client", () => {
           headers: { "content-type": "application/json" },
         });
       }
+      if (url.endsWith("/gate")) {
+        return new Response(
+          JSON.stringify({
+            ...releaseCandidate,
+            status: "blocked",
+            readiness: releaseCandidate.readiness.map((gate) => ({
+              ...gate,
+              status: "failed",
+              evidence_ref: "eval/run/regressed",
+            })),
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
       if (url.endsWith("/approve")) {
         return new Response(
           JSON.stringify({ ...releaseCandidate, status: "approved" }),
@@ -181,6 +204,21 @@ describe("agent workflow client", () => {
       { required_eval_suites: ["refund-core"] },
       { baseUrl: "https://cp.test", fetcher },
     );
+    const blocked = await updateReleaseCandidateGate(
+      "agent-1",
+      releaseCandidate.id,
+      {
+        gate_id: "eval:refund-core",
+        status: "failed",
+        evidence_ref: "eval/run/regressed",
+        message: "Regression detected.",
+      },
+      {
+        baseUrl: "https://cp.test",
+        fetcher,
+        fallbackReleaseCandidate: releaseCandidate,
+      },
+    );
     const approved = await approveReleaseCandidate(
       "agent-1",
       releaseCandidate.id,
@@ -198,6 +236,7 @@ describe("agent workflow client", () => {
     expect(readyTests.status).toBe("ready_for_tests");
     expect(readyReview.status).toBe("ready_for_review");
     expect(rc.candidate_version_id).toBe("ver_local_refund");
+    expect(blocked.status).toBe("blocked");
     expect(approved.status).toBe("approved");
     expect(fetcher.mock.calls.map(([url]) => String(url))).toEqual([
       "https://cp.test/v1/agents/agent-1/workflow",
@@ -206,6 +245,7 @@ describe("agent workflow client", () => {
       "https://cp.test/v1/agents/agent-1/change-sets/cs_local_refund/ready-for-tests",
       "https://cp.test/v1/agents/agent-1/change-sets/cs_local_refund/ready-for-review",
       "https://cp.test/v1/agents/agent-1/change-sets/cs_local_refund/release-candidates",
+      "https://cp.test/v1/agents/agent-1/release-candidates/rc_local_refund/gate",
       "https://cp.test/v1/agents/agent-1/release-candidates/rc_local_refund/approve",
     ]);
   });
@@ -272,5 +312,24 @@ describe("agent workflow client", () => {
         },
       ),
     ).resolves.toMatchObject({ status: "approved" });
+    await expect(
+      updateReleaseCandidateGate(
+        "agent-1",
+        releaseCandidate.id,
+        {
+          gate_id: "eval:refund-core",
+          status: "failed",
+          evidence_ref: "eval/run/regressed",
+        },
+        {
+          baseUrl: "",
+          allowFixture: true,
+          fallbackReleaseCandidate: releaseCandidate,
+        },
+      ),
+    ).resolves.toMatchObject({
+      status: "blocked",
+      readiness: [expect.objectContaining({ status: "failed" })],
+    });
   });
 });

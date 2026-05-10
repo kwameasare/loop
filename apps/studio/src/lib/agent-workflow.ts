@@ -76,6 +76,13 @@ export interface AgentReleaseCandidate {
   updated_at: string;
 }
 
+export interface ReleaseCandidateGateInput {
+  gate_id: string;
+  status: GateStatus;
+  evidence_ref?: string | null;
+  message?: string;
+}
+
 export interface AgentWorkflow {
   branches: AgentBranch[];
   change_sets: AgentChangeSet[];
@@ -368,6 +375,63 @@ export async function approveReleaseCandidate(
         status: approvals.every((approval) => approval.satisfied)
           ? "deployable"
           : "approved",
+        updated_at: new Date().toISOString(),
+      },
+    },
+  );
+}
+
+export async function updateReleaseCandidateGate(
+  agentId: string,
+  releaseCandidateId: string,
+  input: ReleaseCandidateGateInput,
+  opts: ReleaseCandidateClientOptions = {},
+): Promise<AgentReleaseCandidate> {
+  const base =
+    opts.fallbackReleaseCandidate ??
+    localAgentWorkflow(agentId).release_candidates[0]!;
+  const found = base.readiness.some((gate) => gate.id === input.gate_id);
+  const nextGate = {
+    id: input.gate_id,
+    label: input.gate_id,
+    status: input.status,
+    evidence_ref: input.evidence_ref ?? null,
+    message: input.message ?? "",
+  };
+  const readiness = found
+    ? base.readiness.map((gate) =>
+        gate.id === input.gate_id
+          ? {
+              ...gate,
+              status: input.status,
+              evidence_ref: input.evidence_ref ?? null,
+              message: input.message ?? "",
+            }
+          : gate,
+      )
+    : [...base.readiness, nextGate];
+  const status: ReleaseCandidateStatus = readiness.some(
+    (gate) => gate.status === "failed",
+  )
+    ? "blocked"
+    : readiness.length > 0 &&
+        readiness.every((gate) => gate.status === "passed")
+      ? "ready_for_approval"
+      : "testing";
+
+  return cpJson<AgentReleaseCandidate>(
+    `/agents/${encodeURIComponent(
+      agentId,
+    )}/release-candidates/${encodeURIComponent(releaseCandidateId)}/gate`,
+    {
+      ...opts,
+      method: "POST",
+      body: input,
+      allowFallback: opts.allowFixture === true,
+      fallback: {
+        ...base,
+        readiness,
+        status,
         updated_at: new Date().toISOString(),
       },
     },

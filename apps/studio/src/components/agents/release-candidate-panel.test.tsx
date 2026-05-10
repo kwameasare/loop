@@ -127,4 +127,78 @@ describe("ReleaseCandidatePanel", () => {
       "converted to release candidate",
     );
   });
+
+  it("lets reviewers fail and re-pass readiness gates before approval", async () => {
+    const workflow = localAgentWorkflow("agent-1");
+    const releaseCandidate = workflow.release_candidates[0]!;
+    const blocked: AgentReleaseCandidate = {
+      ...releaseCandidate,
+      status: "blocked",
+      readiness: releaseCandidate.readiness.map((gate) => ({
+        ...gate,
+        status: "failed",
+        evidence_ref: "manual/eval:refund-core/failed",
+        message: "Eval regressed and blocks approval.",
+      })),
+    };
+    const ready: AgentReleaseCandidate = {
+      ...blocked,
+      status: "ready_for_approval",
+      readiness: blocked.readiness.map((gate) => ({
+        ...gate,
+        status: "passed",
+        evidence_ref: "manual/eval:refund-core/passed",
+        message: "Eval passed again.",
+      })),
+    };
+    const updateReleaseCandidateGate = vi
+      .fn()
+      .mockResolvedValueOnce(blocked)
+      .mockResolvedValueOnce(ready);
+    const approveReleaseCandidate = vi.fn(async () => ({
+      ...ready,
+      status: "approved" as const,
+    }));
+
+    render(
+      <ReleaseCandidatePanel
+        agentId="agent-1"
+        initialWorkflow={workflow}
+        updateReleaseCandidateGate={updateReleaseCandidateGate}
+        approveReleaseCandidate={approveReleaseCandidate}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("workflow-gate-fail-eval:refund-core"));
+    await waitFor(() =>
+      expect(updateReleaseCandidateGate).toHaveBeenCalledWith(
+        "agent-1",
+        releaseCandidate.id,
+        expect.objectContaining({
+          gate_id: "eval:refund-core",
+          status: "failed",
+        }),
+        expect.objectContaining({ fallbackReleaseCandidate: releaseCandidate }),
+      ),
+    );
+    expect(screen.getByTestId("workflow-gate-blocker")).toHaveTextContent(
+      "failed readiness gate blocks approvals",
+    );
+    expect(screen.getByTestId("workflow-approve-owner")).toBeDisabled();
+
+    fireEvent.click(screen.getByTestId("workflow-gate-pass-eval:refund-core"));
+    await waitFor(() =>
+      expect(updateReleaseCandidateGate).toHaveBeenCalledWith(
+        "agent-1",
+        releaseCandidate.id,
+        expect.objectContaining({
+          gate_id: "eval:refund-core",
+          status: "passed",
+        }),
+        expect.objectContaining({ fallbackReleaseCandidate: blocked }),
+      ),
+    );
+    fireEvent.click(screen.getByTestId("workflow-approve-owner"));
+    await waitFor(() => expect(approveReleaseCandidate).toHaveBeenCalled());
+  });
 });
