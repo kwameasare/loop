@@ -1311,6 +1311,51 @@ def test_deployment_threshold_breach_rolls_back_and_creates_incident(
     }
 
 
+def test_canary_rollout_can_ramp_before_production_promotion(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    deployment = _start_canary_deployment(client, workspace_id, agent_id)
+
+    ramped = client.post(
+        f"/v1/agents/{agent_id}/deployments/{deployment['id']}/ramp",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={"traffic_percent": 50},
+    )
+    assert ramped.status_code == 200, ramped.text
+    assert ramped.json()["stage"] == "ramp"
+    assert ramped.json()["status"] == "ramp"
+    assert ramped.json()["trafficPercent"] == 50
+
+    promoted = client.post(
+        f"/v1/agents/{agent_id}/deployments/{deployment['id']}/promote",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert promoted.status_code == 200, promoted.text
+    assert promoted.json()["status"] == "live"
+    assert promoted.json()["stage"] == "production"
+    assert promoted.json()["trafficPercent"] == 100
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert "deployment:ramp" in {event["action"] for event in audit}
+
+
+def test_live_rollout_cannot_ramp_after_production_promotion(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    live = _start_live_deployment(client, workspace_id, agent_id)
+
+    ramped = client.post(
+        f"/v1/agents/{agent_id}/deployments/{live['id']}/ramp",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={"traffic_percent": 50},
+    )
+    assert ramped.status_code == 400, ramped.text
+    assert "cannot ramp from live" in ramped.json()["message"]
+
+
 def test_observed_failure_eval_case_closes_90_second_editing_loop(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:

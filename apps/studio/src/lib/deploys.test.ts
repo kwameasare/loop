@@ -6,6 +6,7 @@ import {
   listDeployments,
   pauseDeployment,
   promoteDeployment,
+  rampDeployment,
   rollbackDeployment,
   startCanaryDeployment,
   type Deployment,
@@ -36,6 +37,15 @@ describe("listDeployments fixture mode", () => {
     const paused = await pauseDeployment("agt_fix_c", canary.id);
     expect(paused.status).toBe("paused");
     expect(paused.pausedAt).not.toBeNull();
+  });
+
+  it("ramp increases an active rollout before production", async () => {
+    const { items } = await listDeployments("agt_fix_ramp");
+    const canary = findCurrentCanary(items)!;
+    const ramped = await rampDeployment("agt_fix_ramp", canary.id, 50);
+    expect(ramped.status).toBe("ramp");
+    expect(ramped.stage).toBe("ramp");
+    expect(ramped.trafficPercent).toBe(50);
   });
 
   it("rollback flips a live deployment to rolled_back and restores prior", async () => {
@@ -105,6 +115,39 @@ describe("listDeployments cp-api mode", () => {
       "https://api.loop.dev/v1/agents/a/deployments/dep_001/promote",
     );
     expect((call[1] as { method: string }).method).toBe("POST");
+  });
+
+  it("ramp POSTs the target traffic percentage", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        id: "dep_001",
+        agentId: "a",
+        versionId: "v",
+        stage: "ramp",
+        status: "ramp",
+        trafficPercent: 50,
+        createdAt: "",
+        promotedAt: null,
+        pausedAt: null,
+        rolledBackAt: null,
+        notes: null,
+      }),
+    })) as unknown as typeof fetch;
+    const result = await rampDeployment("a", "dep_001", 50, {
+      fetcher,
+      baseUrl: "https://api.loop.dev",
+    });
+    expect(result.status).toBe("ramp");
+    const call = (fetcher as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls[0];
+    expect(call[0]).toBe(
+      "https://api.loop.dev/v1/agents/a/deployments/dep_001/ramp",
+    );
+    expect(JSON.parse(String((call[1] as RequestInit).body))).toEqual({
+      traffic_percent: 50,
+    });
   });
 
   it("starts a canary deployment from an approved change package", async () => {

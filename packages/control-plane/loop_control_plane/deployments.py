@@ -16,6 +16,7 @@ DeploymentStatus = Literal[
     "pending",
     "shadow",
     "canary",
+    "ramp",
     "live",
     "paused",
     "rolled_back",
@@ -248,6 +249,33 @@ class DeploymentRegistry:
                         deployments[previous_index] = previous_live.model_copy(
                             update={"status": "live", "traffic_percent": 100}
                         )
+                deployments[index] = updated
+                return updated
+        raise WorkspaceError(f"unknown deployment: {deployment_id}")
+
+    async def ramp(
+        self,
+        *,
+        agent: AgentRecord,
+        deployment_id: str,
+        traffic_percent: int,
+    ) -> DeploymentRecord:
+        async with self._lock:
+            deployments = self._deployments.get(agent.id, [])
+            for index, deployment in enumerate(deployments):
+                if deployment.id != deployment_id:
+                    continue
+                if deployment.status not in {"canary", "ramp"}:
+                    raise WorkspaceError(
+                        f"deployment {deployment_id} cannot ramp from {deployment.status}"
+                    )
+                updated = deployment.model_copy(
+                    update={
+                        "stage": "ramp",
+                        "status": "ramp",
+                        "traffic_percent": traffic_percent,
+                    }
+                )
                 deployments[index] = updated
                 return updated
         raise WorkspaceError(f"unknown deployment: {deployment_id}")

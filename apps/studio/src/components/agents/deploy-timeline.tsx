@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   pauseDeployment as defaultPause,
   promoteDeployment as defaultPromote,
+  rampDeployment as defaultRamp,
   rollbackDeployment as defaultRollback,
   startCanaryDeployment as defaultStartCanary,
   type Deployment,
@@ -12,6 +13,11 @@ import {
 import type { ChangePackage } from "@/lib/change-package";
 
 type ActionFn = (agentId: string, depId: string) => Promise<Deployment>;
+type RampFn = (
+  agentId: string,
+  depId: string,
+  trafficPercent: number,
+) => Promise<Deployment>;
 type StartFn = (
   agentId: string,
   input: {
@@ -30,6 +36,7 @@ export interface DeployTimelineProps {
   approvedChangePackage?: ChangePackage | null;
   startCanary?: StartFn;
   promote?: ActionFn;
+  ramp?: RampFn;
   pause?: ActionFn;
   rollback?: ActionFn;
 }
@@ -42,6 +49,8 @@ function statusColor(status: Deployment["status"]): string {
       return "border-sky-300 bg-sky-50 text-sky-900";
     case "canary":
       return "border-amber-300 bg-amber-50 text-amber-900";
+    case "ramp":
+      return "border-cyan-300 bg-cyan-50 text-cyan-900";
     case "live":
       return "border-emerald-300 bg-emerald-50 text-emerald-900";
     case "paused":
@@ -66,12 +75,14 @@ export function DeployTimeline({
   approvedChangePackage = null,
   startCanary = defaultStartCanary,
   promote = defaultPromote,
+  ramp = defaultRamp,
   pause = defaultPause,
   rollback = defaultRollback,
 }: DeployTimelineProps) {
   const [items, setItems] = useState<Deployment[]>(initialDeployments);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast>(null);
+  const [rampTargets, setRampTargets] = useState<Record<string, number>>({});
 
   async function runAction(
     dep: Deployment,
@@ -143,7 +154,37 @@ export function DeployTimeline({
     }
   }
 
-  const canary = items.find((d) => d.status === "canary");
+  async function handleRamp(dep: Deployment) {
+    const target =
+      rampTargets[dep.id] ??
+      Math.min(99, Math.max(dep.trafficPercent + 25, 25));
+    setBusy(`${dep.id}:ramp`);
+    setToast(null);
+    try {
+      const updated = await ramp(agentId, dep.id, target);
+      setItems((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
+      setRampTargets((prev) => {
+        const next = { ...prev };
+        delete next[dep.id];
+        return next;
+      });
+      setToast({
+        kind: "success",
+        message: `Ramped ${dep.id} to ${updated.trafficPercent}% traffic.`,
+      });
+    } catch (err) {
+      setToast({
+        kind: "error",
+        message: (err as Error).message ?? "ramp failed.",
+      });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const canary = items.find(
+    (d) => d.status === "canary" || d.status === "ramp",
+  );
   const live = items.find((d) => d.status === "live");
 
   return (
@@ -183,7 +224,7 @@ export function DeployTimeline({
           data-testid="deploy-current-canary"
         >
           {canary
-            ? `Canary at ${canary.trafficPercent}% traffic (${canary.versionId}).`
+            ? `${canary.status === "ramp" ? "Ramp" : "Canary"} at ${canary.trafficPercent}% traffic (${canary.versionId}).`
             : "No active canary."}
         </p>
         <p
@@ -204,8 +245,12 @@ export function DeployTimeline({
         <ol className="flex flex-col gap-2" data-testid="deploy-list">
           {items.map((dep) => {
             const colors = statusColor(dep.status);
-            const isCanary = dep.status === "canary";
+            const isActiveRollout =
+              dep.status === "canary" || dep.status === "ramp";
             const isLive = dep.status === "live";
+            const target =
+              rampTargets[dep.id] ??
+              Math.min(99, Math.max(dep.trafficPercent + 25, 25));
             return (
               <li
                 key={dep.id}
@@ -232,34 +277,68 @@ export function DeployTimeline({
                       </p>
                     ) : null}
                   </div>
-                  <div className="flex gap-1">
-                    <button
-                      className="rounded border border-current text-xs px-2 py-1 disabled:opacity-50"
-                      data-testid={`deploy-promote-${dep.id}`}
-                      disabled={!isCanary || busy !== null}
-                      onClick={() => runAction(dep, "promote")}
-                      type="button"
-                    >
-                      Promote
-                    </button>
-                    <button
-                      className="rounded border border-current text-xs px-2 py-1 disabled:opacity-50"
-                      data-testid={`deploy-pause-${dep.id}`}
-                      disabled={!isCanary || busy !== null}
-                      onClick={() => runAction(dep, "pause")}
-                      type="button"
-                    >
-                      Pause
-                    </button>
-                    <button
-                      className="rounded border border-current text-xs px-2 py-1 disabled:opacity-50"
-                      data-testid={`deploy-rollback-${dep.id}`}
-                      disabled={!isLive || busy !== null}
-                      onClick={() => runAction(dep, "rollback")}
-                      type="button"
-                    >
-                      Rollback
-                    </button>
+                  <div className="flex flex-col items-end gap-2">
+                    {isActiveRollout ? (
+                      <label className="flex items-center gap-2 text-xs">
+                        <span>Ramp</span>
+                        <input
+                          aria-label={`Ramp ${dep.id} traffic target`}
+                          className="w-24"
+                          data-testid={`deploy-ramp-slider-${dep.id}`}
+                          disabled={busy !== null}
+                          max={99}
+                          min={1}
+                          onChange={(event) =>
+                            setRampTargets((prev) => ({
+                              ...prev,
+                              [dep.id]: Number(event.target.value),
+                            }))
+                          }
+                          step={1}
+                          type="range"
+                          value={target}
+                        />
+                        <span className="tabular-nums">{target}%</span>
+                      </label>
+                    ) : null}
+                    <div className="flex gap-1">
+                      <button
+                        className="rounded border border-current text-xs px-2 py-1 disabled:opacity-50"
+                        data-testid={`deploy-ramp-${dep.id}`}
+                        disabled={!isActiveRollout || busy !== null}
+                        onClick={() => void handleRamp(dep)}
+                        type="button"
+                      >
+                        Ramp
+                      </button>
+                      <button
+                        className="rounded border border-current text-xs px-2 py-1 disabled:opacity-50"
+                        data-testid={`deploy-promote-${dep.id}`}
+                        disabled={!isActiveRollout || busy !== null}
+                        onClick={() => void runAction(dep, "promote")}
+                        type="button"
+                      >
+                        Promote
+                      </button>
+                      <button
+                        className="rounded border border-current text-xs px-2 py-1 disabled:opacity-50"
+                        data-testid={`deploy-pause-${dep.id}`}
+                        disabled={!isActiveRollout || busy !== null}
+                        onClick={() => void runAction(dep, "pause")}
+                        type="button"
+                      >
+                        Pause
+                      </button>
+                      <button
+                        className="rounded border border-current text-xs px-2 py-1 disabled:opacity-50"
+                        data-testid={`deploy-rollback-${dep.id}`}
+                        disabled={!isLive || busy !== null}
+                        onClick={() => void runAction(dep, "rollback")}
+                        type="button"
+                      >
+                        Rollback
+                      </button>
+                    </div>
                   </div>
                 </div>
               </li>
