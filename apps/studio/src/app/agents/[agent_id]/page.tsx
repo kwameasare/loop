@@ -10,6 +10,10 @@ import {
   buildLocalCommitmentDocument,
   fetchCurrentCommitment,
 } from "@/lib/agent-commitment";
+import {
+  listChannelBindings,
+  type ChannelBinding,
+} from "@/lib/channel-bindings";
 import { listDeployments, type Deployment } from "@/lib/deploys";
 import { getAgentDetailData } from "./agent-detail-data";
 
@@ -87,10 +91,23 @@ export default async function AgentOverviewPage({
       "Could not load deployment history.",
     );
   }
+  let channelBindings: ChannelBinding[] = [];
+  let channelsDegradedReason: string | undefined;
+  try {
+    const result = await listChannelBindings(params.agent_id);
+    channelBindings = result.items;
+    channelsDegradedReason = result.degraded_reason;
+  } catch (error) {
+    channelsDegradedReason = errorMessage(
+      error,
+      "Could not load channel bindings.",
+    );
+  }
   const combinedDegradedReason = [
     degradedReason,
     commitmentDegradedReason,
     deploymentsDegradedReason,
+    channelsDegradedReason,
   ]
     .filter(Boolean)
     .join(" ");
@@ -114,6 +131,8 @@ export default async function AgentOverviewPage({
       lastDeploy={lastDeploy}
       dataState={combinedDegradedReason ? "degraded" : "live"}
       degradedReason={combinedDegradedReason || undefined}
+      channelBindings={channelBindings}
+      channelsDegradedReason={channelsDegradedReason}
       commitment={commitment}
     />
   );

@@ -10,6 +10,7 @@ import {
   EMPTY_COMMITMENT_BODY,
   buildLocalCommitmentDocument,
 } from "@/lib/agent-commitment";
+import { buildLocalChannelBindings } from "@/lib/channel-bindings";
 
 const BASE_PROPS: AgentOverviewProps = {
   id: "ag_1",
@@ -96,7 +97,7 @@ describe("AgentOverview", () => {
       "No versioned Commitment Document loaded",
     );
     expect(screen.getByTestId("agent-outline-channels")).toHaveTextContent(
-      "Channel readiness is not loaded",
+      "No channel binding records loaded",
     );
     expect(screen.getByTestId("agent-outline-link-channels")).toHaveAttribute(
       "href",
@@ -160,6 +161,37 @@ describe("AgentOverview", () => {
     );
     expect(screen.getByTestId("agent-workbench-profile")).toHaveTextContent(
       "maya@acme.test",
+    );
+  });
+
+  it("surfaces channel readiness from real channel bindings", () => {
+    const channelBindings = buildLocalChannelBindings("ag_1").map((binding) =>
+      binding.channel_type === "whatsapp"
+        ? {
+            ...binding,
+            status: "ready" as const,
+            display_name: "WhatsApp",
+            readiness: binding.readiness.map((check) => ({
+              ...check,
+              status: "passed" as const,
+              evidence_ref: `channel/${binding.id}/${check.id}`,
+            })),
+          }
+        : binding,
+    );
+
+    render(
+      <AgentOverview {...BASE_PROPS} channelBindings={channelBindings} />,
+    );
+
+    expect(screen.getByTestId("agent-outline-channels")).toHaveTextContent(
+      "1/9 channel binding ready: WhatsApp",
+    );
+    expect(screen.getByTestId("agent-outline-channels")).toHaveTextContent(
+      "1 ready channel can proceed",
+    );
+    expect(screen.getByTestId("overview-channels")).toHaveTextContent(
+      "WhatsApp",
     );
   });
 

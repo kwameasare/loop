@@ -25,6 +25,7 @@ import {
   type TrustState,
 } from "@/lib/design-tokens";
 import type { CommitmentDocument } from "@/lib/agent-commitment";
+import type { ChannelBinding } from "@/lib/channel-bindings";
 import type { TargetDeploy, TargetEvalSuite } from "@/lib/target-ux";
 import { cn } from "@/lib/utils";
 import {
@@ -123,6 +124,8 @@ export interface AgentOverviewProps {
   lastDeploy: DeploySummary;
   dataState?: AgentWorkbenchDataState;
   degradedReason?: string | undefined;
+  channelBindings?: ChannelBinding[] | undefined;
+  channelsDegradedReason?: string | undefined;
   workbench?: Partial<AgentWorkbenchData>;
   commitment?: CommitmentDocument | undefined;
   /** Called when the user saves a new description. Allows integration with server actions. */
@@ -142,6 +145,137 @@ const STATUS_CLASS: Record<WorkbenchSectionStatus, string> = {
   watching: "border-info/40 bg-info/5 text-info",
   blocked: "border-warning/50 bg-warning/5 text-warning",
 };
+
+interface ChannelWorkbenchSummary {
+  supportedChannels: string[];
+  current: string;
+  lastChangedBy: string;
+  diffFromProduction: string;
+  validation: string;
+  evidence: string;
+  status: WorkbenchSectionStatus;
+}
+
+function requiredReadiness(binding: ChannelBinding) {
+  return binding.readiness.filter(
+    (check) => check.status !== "not_required",
+  );
+}
+
+function bindingIsConfigured(binding: ChannelBinding): boolean {
+  return !["not_configured", "archived"].includes(binding.status);
+}
+
+function bindingIsReady(binding: ChannelBinding): boolean {
+  const required = requiredReadiness(binding);
+  return (
+    ["ready", "staged", "live"].includes(binding.status) &&
+    required.length > 0 &&
+    required.every((check) => check.status === "passed")
+  );
+}
+
+function bindingHasBlocker(binding: ChannelBinding): boolean {
+  return (
+    binding.status === "error" ||
+    requiredReadiness(binding).some((check) => check.status === "failed")
+  );
+}
+
+function summarizeChannels(
+  bindings: readonly ChannelBinding[] | undefined,
+  degradedReason?: string | undefined,
+): ChannelWorkbenchSummary {
+  const all = bindings ?? [];
+  const configured = all.filter(bindingIsConfigured);
+  const ready = configured.filter(bindingIsReady);
+  const blocked = configured.filter(bindingHasBlocker);
+  const supportedChannels = configured.map((binding) => binding.display_name);
+
+  if (degradedReason) {
+    return {
+      supportedChannels,
+      current:
+        "Channel binding state is degraded; Studio is not claiming live channel readiness.",
+      lastChangedBy: "Live channel registry unavailable",
+      diffFromProduction: "No channel-specific production diff loaded.",
+      validation: degradedReason,
+      evidence: "channel_bindings.degraded",
+      status: "watching",
+    };
+  }
+
+  if (all.length === 0) {
+    return {
+      supportedChannels: [],
+      current: "No channel binding records loaded.",
+      lastChangedBy: "No channel binding loaded",
+      diffFromProduction: "No channel-specific production diff loaded.",
+      validation:
+        "At least one ready channel binding is required before production.",
+      evidence: "channel_bindings.empty",
+      status: "blocked",
+    };
+  }
+
+  if (blocked.length > 0) {
+    return {
+      supportedChannels,
+      current: `${configured.length}/${all.length} configured; ${blocked.length} channel blocker${
+        blocked.length === 1 ? "" : "s"
+      }.`,
+      lastChangedBy: "Loaded from channel binding readiness",
+      diffFromProduction:
+        "Production must stay blocked only for the affected channel scope.",
+      validation: `Fix ${blocked
+        .map((binding) => binding.display_name)
+        .join(", ")} readiness before channel rollout.`,
+      evidence: blocked.map((binding) => binding.id).join(", "),
+      status: "blocked",
+    };
+  }
+
+  if (ready.length > 0) {
+    return {
+      supportedChannels,
+      current: `${ready.length}/${all.length} channel binding${
+        ready.length === 1 ? "" : "s"
+      } ready: ${ready.map((binding) => binding.display_name).join(", ")}.`,
+      lastChangedBy: "Loaded from channel binding readiness",
+      diffFromProduction:
+        "Channel readiness is scoped per binding; voice is one peer channel.",
+      validation: `${ready.length} ready channel${
+        ready.length === 1 ? "" : "s"
+      } can proceed through scoped deploy gates.`,
+      evidence: ready.map((binding) => binding.id).join(", "),
+      status: "healthy",
+    };
+  }
+
+  if (configured.length > 0) {
+    return {
+      supportedChannels,
+      current: `${configured.length}/${all.length} configured; readiness is still pending.`,
+      lastChangedBy: "Loaded from channel binding readiness",
+      diffFromProduction: "No channel has passed readiness yet.",
+      validation:
+        "Complete readiness checks before enabling production traffic.",
+      evidence: configured.map((binding) => binding.id).join(", "),
+      status: "watching",
+    };
+  }
+
+  return {
+    supportedChannels: [],
+    current: "No channel bindings are configured yet.",
+    lastChangedBy: "Loaded from channel binding registry",
+    diffFromProduction: "No channel-specific production diff loaded.",
+    validation:
+      "Configure web chat, WhatsApp, Telegram, Slack, SMS, email, voice, or webhook before production.",
+    evidence: "channel_bindings.none_configured",
+    status: "blocked",
+  };
+}
 
 function EditDescriptionModal({
   open,
@@ -241,6 +375,7 @@ function buildSections(input: {
   evalSuite: TargetEvalSuite;
   deploy: TargetDeploy;
   hasProduction: boolean;
+  channelSummary: ChannelWorkbenchSummary;
   commitment?: CommitmentDocument | undefined;
 }): AgentWorkbenchSection[] {
   const commitmentMissing =
@@ -306,13 +441,12 @@ function buildSections(input: {
     {
       id: "channels",
       label: "Channels",
-      current: "Channel readiness is not loaded in the overview yet.",
-      lastChangedBy: "No channel binding loaded",
-      diffFromProduction: "No channel-specific production diff loaded.",
-      validation:
-        "At least one ready channel binding is required before production.",
-      evidence: "channel_bindings.unconfigured",
-      status: "blocked",
+      current: input.channelSummary.current,
+      lastChangedBy: input.channelSummary.lastChangedBy,
+      diffFromProduction: input.channelSummary.diffFromProduction,
+      validation: input.channelSummary.validation,
+      evidence: input.channelSummary.evidence,
+      status: input.channelSummary.status,
     },
     {
       id: "tools",
@@ -416,6 +550,8 @@ function createDefaultWorkbenchData(
     | "stateReason"
     | "stateEvidenceRef"
     | "updatedAt"
+    | "channelBindings"
+    | "channelsDegradedReason"
   > & { commitment?: CommitmentDocument | undefined },
 ): AgentWorkbenchData {
   const purpose =
@@ -464,6 +600,10 @@ function createDefaultWorkbenchData(
   const toolPermissionSummary = "No tool contracts loaded.";
   const knowledgeSummary = "No knowledge sources loaded.";
   const memoryPolicy = "No durable memory policy loaded.";
+  const channelSummary = summarizeChannels(
+    props.channelBindings,
+    props.channelsDegradedReason,
+  );
   const evalGate = `${evalSuite.name}: ${evalSuite.coverage}`;
   const deploySummary =
     objectState === "production" && hasProduction
@@ -495,7 +635,10 @@ function createDefaultWorkbenchData(
   return {
     ownerTeam: props.commitment?.owner_user_id || "Unassigned",
     purpose,
-    supportedChannels: props.commitment?.body.channels ?? [],
+    supportedChannels:
+      channelSummary.supportedChannels.length > 0
+        ? channelSummary.supportedChannels
+        : (props.commitment?.body.channels ?? []),
     modelAliases,
     objectState,
     trust,
@@ -531,6 +674,7 @@ function createDefaultWorkbenchData(
       evalSuite,
       deploy,
       hasProduction,
+      channelSummary,
       commitment: props.commitment,
     }),
     diff: {
@@ -682,6 +826,8 @@ export function AgentOverview({
   lastDeploy,
   dataState = "live",
   degradedReason,
+  channelBindings,
+  channelsDegradedReason,
   workbench,
   commitment,
   onDescriptionSave,
@@ -702,6 +848,8 @@ export function AgentOverview({
           stateReason,
           stateEvidenceRef,
           updatedAt,
+          channelBindings,
+          channelsDegradedReason,
           commitment,
         }),
         workbench,
@@ -717,6 +865,8 @@ export function AgentOverview({
       stateEvidenceRef,
       stateReason,
       updatedAt,
+      channelBindings,
+      channelsDegradedReason,
       workbench,
     ],
   );
@@ -910,7 +1060,7 @@ export function AgentOverview({
               </div>
               <div>
                 <dt className="text-muted-foreground">Channels</dt>
-                <dd>
+                <dd data-testid="overview-channels">
                   {data.supportedChannels.length > 0
                     ? data.supportedChannels.join(", ")
                     : "No channel bindings loaded"}
