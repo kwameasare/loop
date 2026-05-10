@@ -49,6 +49,41 @@ def _durable_trace_id(*, body: SimulatorRunCreate, agent_id: UUID) -> str:
     return sha256(seed.encode("utf-8")).hexdigest()[:32]
 
 
+def _channel_type_for_simulator(channel: str) -> str:
+    return {
+        "web": "web_chat",
+        "web_chat": "web_chat",
+        "whatsapp": "whatsapp",
+        "telegram": "telegram",
+        "slack": "slack",
+        "teams": "teams",
+        "sms": "sms",
+        "email": "email",
+        "voice": "voice",
+        "webhook": "webhook_api",
+        "webhook_api": "webhook_api",
+    }.get(channel, channel)
+
+
+async def _channel_binding_id_for_run(
+    request: Request,
+    *,
+    agent: Any,
+    body: SimulatorRunCreate,
+) -> str:
+    if body.channel_binding_id:
+        return body.channel_binding_id
+    channel_type = _channel_type_for_simulator(body.channel)
+    bindings = await request.app.state.cp.channel_bindings.list_for_agent(agent=agent)
+    match = next(
+        (binding for binding in bindings if binding.channel_type == channel_type),
+        None,
+    )
+    if match is None or match.status == "not_configured":
+        return ""
+    return match.id
+
+
 @router.post("/{agent_id}/simulator/runs", status_code=201)
 async def create_simulator_run(
     request: Request,
@@ -65,7 +100,17 @@ async def create_simulator_run(
         caller_sub=caller_sub,
     )
     trace_id = _durable_trace_id(body=body, agent_id=agent.id)
-    body = body.model_copy(update={"trace_id": trace_id})
+    channel_binding_id = await _channel_binding_id_for_run(
+        request,
+        agent=agent,
+        body=body,
+    )
+    body = body.model_copy(
+        update={
+            "trace_id": trace_id,
+            "channel_binding_id": channel_binding_id,
+        }
+    )
     run = await cp.simulator_feedback.add_run(
         agent=agent,
         body=body,
@@ -82,6 +127,7 @@ async def create_simulator_run(
             duration_ms=body.latency_ms,
             span_count=4,
             error=body.status == "failed",
+            channel_binding_id=channel_binding_id,
         )
     )
     record_audit_event(
@@ -96,6 +142,7 @@ async def create_simulator_run(
             "agent_id": str(agent.id),
             "channel": body.channel,
             "trace_id": body.trace_id,
+            "channel_binding_id": channel_binding_id,
             "status": body.status,
         },
     )

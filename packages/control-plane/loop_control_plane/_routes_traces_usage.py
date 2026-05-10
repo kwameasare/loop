@@ -108,9 +108,7 @@ async def get_trace_detail(
         )
         result = await cp.trace_search.run(query)
         matches = [
-            item
-            for item in result.items
-            if trace_turn_id is not None or item.trace_id == trace_ref
+            item for item in result.items if trace_turn_id is not None or item.trace_id == trace_ref
         ]
         if not matches:
             continue
@@ -125,6 +123,7 @@ async def get_trace_detail(
             "duration_ms": item.duration_ms,
             "span_count": item.span_count,
             "error": item.error,
+            "channel_binding_id": item.channel_binding_id,
             "spans": [
                 {
                     "span_id": item.trace_id,
@@ -140,6 +139,7 @@ async def get_trace_detail(
                         "conversation_id": str(item.conversation_id),
                         "agent_id": str(item.agent_id),
                         "summary_span_count": item.span_count,
+                        "channel_binding_id": item.channel_binding_id,
                     },
                 }
             ],
@@ -168,9 +168,7 @@ async def list_usage(
         user_sub=caller_sub,
     )
     if start_ms >= end_ms:
-        raise HTTPException(
-            status_code=400, detail="start_ms must be < end_ms"
-        )
+        raise HTTPException(status_code=400, detail="start_ms must be < end_ms")
     events = [
         e
         for e in cp.usage_ledger.window(start_ms=start_ms, end_ms=end_ms)

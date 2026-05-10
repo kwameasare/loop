@@ -105,6 +105,20 @@ def test_simulator_run_is_durable_and_audited(
     workspace_id: UUID,
     agent_id: UUID,
 ) -> None:
+    binding = client.post(
+        f"/v1/agents/{agent_id}/channel-bindings",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "channel_type": "whatsapp",
+            "provider": "Meta Cloud API",
+            "display_name": "WhatsApp",
+            "status": "ready",
+            "identity_config": {"waba_id": "waba_123"},
+        },
+    )
+    assert binding.status_code == 201, binding.text
+    binding_id = binding.json()["id"]
+
     response = client.post(
         f"/v1/agents/{agent_id}/simulator/runs",
         headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
@@ -128,6 +142,7 @@ def test_simulator_run_is_durable_and_audited(
     body = response.json()
     assert body["id"].startswith("simrun_")
     assert body["channel"] == "whatsapp"
+    assert body["channel_binding_id"] == binding_id
     assert len(body["trace_id"]) == 32
     assert body["config"]["model_alias"] == "fast-draft"
 
@@ -142,6 +157,8 @@ def test_simulator_run_is_durable_and_audited(
     assert trace.status_code == 200, trace.text
     assert trace.json()["agent_id"] == str(agent_id)
     assert trace.json()["duration_ms"] == 1030
+    assert trace.json()["channel_binding_id"] == binding_id
+    assert trace.json()["spans"][0]["attrs"]["channel_binding_id"] == binding_id
 
     audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=_auth())
     assert "simulator_run:create" in {item["action"] for item in audit.json()["items"]}

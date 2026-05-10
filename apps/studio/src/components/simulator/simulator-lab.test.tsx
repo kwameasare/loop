@@ -354,6 +354,7 @@ describe("SimulatorLab", () => {
         agent_id: agentId,
         ...input,
         trace_id: "abc12345abc12345abc12345abc12345",
+        channel_binding_id: "cb_whatsapp",
         created_by: "owner-1",
         created_at: "2026-05-01T00:00:00Z",
       }),

@@ -43,6 +43,7 @@ class TraceSummary(BaseModel):
     duration_ms: int = Field(ge=0)
     span_count: int = Field(ge=1)
     error: bool = False
+    channel_binding_id: str = ""
 
 
 class TraceQuery(BaseModel):

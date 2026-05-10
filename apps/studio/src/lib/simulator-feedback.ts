@@ -20,6 +20,7 @@ export interface SimulatorRunInput {
   final_answer: string;
   channel: string;
   trace_id: string;
+  channel_binding_id?: string;
   config: Record<string, unknown>;
   status: "completed" | "failed";
   cost_usd: number;
@@ -30,6 +31,7 @@ export interface SimulatorRunRecord extends SimulatorRunInput {
   id: string;
   workspace_id: string;
   agent_id: string;
+  channel_binding_id: string;
   created_by: string;
   created_at: string;
 }
@@ -171,6 +173,7 @@ function localSimulatorRun(
     workspace_id: "local",
     agent_id: agentId,
     ...input,
+    channel_binding_id: input.channel_binding_id ?? "",
     created_by: "local",
     created_at: new Date(0).toISOString(),
   };
