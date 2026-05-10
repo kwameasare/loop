@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { SectionDegraded } from "@/components/section-states";
 import { getTrace } from "@/lib/traces";
 import { TraceTheater } from "@/components/trace/trace-theater";
 
@@ -10,10 +11,26 @@ export default async function TracePage({
 }: {
   params: { id: string };
 }) {
-  const trace = await getTrace(params.id);
+  const trace = await getTrace(params.id).catch((error: unknown) => {
+    const message =
+      error instanceof Error ? error.message : "Trace detail could not be loaded.";
+    return { degradedReason: message };
+  });
+  if (trace && "degradedReason" in trace) {
+    return (
+      <main className="p-6" data-testid="trace-page">
+        <SectionDegraded
+          title="Trace"
+          description="Trace evidence is unavailable. Studio will not replace missing production evidence with a fixture trace."
+          evidence={trace.degradedReason}
+          primaryAction={{ label: "Back to traces", href: "/traces" }}
+        />
+      </main>
+    );
+  }
   if (!trace) notFound();
   return (
-    <main className="p-6">
+    <main className="p-6" data-testid="trace-page">
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-3xl">
           <p className="text-xs font-medium uppercase text-muted-foreground">

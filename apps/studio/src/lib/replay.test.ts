@@ -11,6 +11,7 @@ import {
   replayTraceFromTrace,
   snapshotAt,
 } from "./replay";
+import { TRACE_DETAIL_CP_API_REQUIRED } from "./traces";
 import type { Trace } from "./traces";
 
 describe("snapshotAt", () => {
@@ -53,8 +54,10 @@ describe("replay run request", () => {
 });
 
 describe("getReplayTrace", () => {
-  it("does not serve fixture replay detail unless explicitly allowed", async () => {
-    await expect(getReplayTrace(FIXTURE_REPLAY.id)).resolves.toBeNull();
+  it("requires cp-api instead of turning missing trace evidence into not-found", async () => {
+    await expect(getReplayTrace(FIXTURE_REPLAY.id)).rejects.toThrow(
+      TRACE_DETAIL_CP_API_REQUIRED,
+    );
   });
 
   it("serves fixture replay detail for explicit local/demo callers", async () => {

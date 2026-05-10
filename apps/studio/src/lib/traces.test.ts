@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  TRACE_DETAIL_CP_API_REQUIRED,
   fetchTraceByTurnId,
   formatDurationNs,
   formatUsd,
@@ -133,8 +134,10 @@ describe("getTrace", () => {
     ).toBe(true);
   });
 
-  it("does not implicitly serve the fixture trace on production routes", async () => {
-    await expect(getTrace("trace_refund_742")).resolves.toBeNull();
+  it("requires cp-api instead of returning a false not-found trace", async () => {
+    await expect(getTrace("trace_refund_742")).rejects.toThrow(
+      TRACE_DETAIL_CP_API_REQUIRED,
+    );
   });
 });
 

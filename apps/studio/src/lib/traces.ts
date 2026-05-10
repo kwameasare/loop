@@ -706,6 +706,8 @@ function buildFixtureTrace(): Trace {
 }
 
 const FIXTURE_TRACE: Trace = buildFixtureTrace();
+export const TRACE_DETAIL_CP_API_REQUIRED =
+  "LOOP_CP_API_BASE_URL is required for trace calls";
 
 export interface GetTraceOptions extends TracesClientOptions {
   allowFixture?: boolean | undefined;
@@ -716,17 +718,7 @@ export async function getTrace(
   opts: GetTraceOptions = {},
 ): Promise<Trace | null> {
   if (opts.allowFixture && id === FIXTURE_TRACE.id) return FIXTURE_TRACE;
-  try {
-    return await fetchTraceByTurnId(id, opts);
-  } catch (err) {
-    if (
-      err instanceof Error &&
-      /LOOP_CP_API_BASE_URL is required/.test(err.message)
-    ) {
-      return null;
-    }
-    throw err;
-  }
+  return fetchTraceByTurnId(id, opts);
 }
 
 /**
@@ -739,7 +731,7 @@ export async function fetchTraceByTurnId(
 ): Promise<Trace | null> {
   const base = cpApiBaseUrl(opts.baseUrl);
   if (!base) {
-    throw new Error("LOOP_CP_API_BASE_URL is required to load trace detail.");
+    throw new Error(TRACE_DETAIL_CP_API_REQUIRED);
   }
   const fetcher = opts.fetcher ?? fetch;
   const headers: Record<string, string> = { accept: "application/json" };
@@ -806,7 +798,7 @@ function cpApiBaseUrl(override?: string): string {
     process.env.LOOP_CP_API_BASE_URL ??
     process.env.NEXT_PUBLIC_LOOP_API_URL;
   if (!raw) {
-    throw new Error("LOOP_CP_API_BASE_URL is required for trace calls");
+    throw new Error(TRACE_DETAIL_CP_API_REQUIRED);
   }
   const trimmed = raw.replace(/\/$/, "");
   return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
