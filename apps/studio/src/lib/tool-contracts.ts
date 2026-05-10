@@ -57,6 +57,10 @@ export type ToolContractInput = Pick<
   | "compensation_behavior"
 >;
 
+type ToolContractClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 function localContract(agentId: string, toolId: string): ToolContract {
   const now = new Date(0).toISOString();
   const isRefund = /refund|payment|charge/i.test(toolId);
@@ -115,7 +119,7 @@ export async function upsertToolContract(
   agentId: string,
   toolId: string,
   input: ToolContractInput,
-  opts: UxWireupClientOptions = {},
+  opts: ToolContractClientOptions = {},
 ): Promise<ToolContract> {
   return cpJson<ToolContract>(
     `/agents/${encodeURIComponent(agentId)}/tool-contracts/${encodeURIComponent(
@@ -125,6 +129,7 @@ export async function upsertToolContract(
       ...opts,
       method: "PUT",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...localContract(agentId, toolId),
         ...input,
@@ -138,7 +143,7 @@ export async function upsertToolContract(
 export async function promoteToolContract(
   agentId: string,
   toolId: string,
-  opts: UxWireupClientOptions = {},
+  opts: ToolContractClientOptions = {},
 ): Promise<ToolContract> {
   const fallback = localContract(agentId, toolId);
   return cpJson<ToolContract>(
@@ -148,6 +153,7 @@ export async function promoteToolContract(
     {
       ...opts,
       method: "POST",
+      allowFallback: opts.allowFixture === true,
       fallback: {
         ...fallback,
         live_status: "approved",
