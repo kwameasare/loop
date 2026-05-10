@@ -8,7 +8,7 @@ import {
   type AgentVersionDetail,
   type ListAgentVersionsOptions,
 } from "@/lib/agent-versions";
-import { targetUxFixtures, type TargetUXFixture } from "@/lib/target-ux";
+import type { TargetUXFixture } from "@/lib/target-ux";
 import { cpJson } from "@/lib/ux-wireup";
 
 export type BehaviorMode = "plain" | "policy" | "config";
@@ -119,7 +119,10 @@ function sentenceRole(index: number): BehaviorSentence["role"] {
   return index === 0 ? "purpose" : index === 1 ? "style" : "promise";
 }
 
-function sentencesFromPrompt(prompt: string, version: AgentVersionDetail): BehaviorSentence[] {
+function sentencesFromPrompt(
+  prompt: string,
+  version: AgentVersionDetail,
+): BehaviorSentence[] {
   const parts = prompt
     .split(/\n+|(?<=[.!?])\s+/)
     .map((part) => part.trim())
@@ -378,7 +381,7 @@ function behaviorSections(): BehaviorSection[] {
 
 export function createBehaviorEditorData(
   agentId: string,
-  fixture: TargetUXFixture = targetUxFixtures,
+  fixture: TargetUXFixture,
 ): BehaviorEditorData {
   const agent =
     fixture.agents.find((candidate) => candidate.id === agentId) ??
@@ -522,9 +525,7 @@ export function createBehaviorEditorDataFromVersion(
           evidence: `agent version ${version.version} tool declaration`,
           confidence: version.eval_status === "passed" ? "medium" : "low",
         },
-        riskIds: toolHasProductionRisk(tool)
-          ? ["risk_tool_grant"]
-          : [],
+        riskIds: toolHasProductionRisk(tool) ? ["risk_tool_grant"] : [],
       })),
     },
   ];
@@ -620,13 +621,16 @@ export async function fetchBehaviorEditorData(
       "Behavior sentence telemetry is unavailable from cp-api.",
     );
   }
-  const telemetryById = new Map(telemetry.items.map((item) => [item.sentence_id, item]));
+  const telemetryById = new Map(
+    telemetry.items.map((item) => [item.sentence_id, item]),
+  );
   return {
     ...data,
     sections: data.sections.map((section) => ({
       ...section,
       sentences: section.sentences.map((sentence, index) => {
-        const live = telemetryById.get(sentence.id) ?? telemetry.items?.[index] ?? null;
+        const live =
+          telemetryById.get(sentence.id) ?? telemetry.items?.[index] ?? null;
         if (!live) return sentence;
         return {
           ...sentence,
@@ -662,7 +666,8 @@ function markBehaviorTelemetryUnavailable(
           contradictedTraces: 0,
           neverInvokedTurns: 0,
           evalCases: 0,
-          evidence: "No evidence yet. Run replay, create evals, or sample production safely.",
+          evidence:
+            "No evidence yet. Run replay, create evals, or sample production safely.",
           confidence: "unsupported",
         },
       })),

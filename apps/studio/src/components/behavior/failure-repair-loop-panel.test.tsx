@@ -2,13 +2,14 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { createBehaviorEditorData } from "@/lib/behavior";
+import { targetUxFixtures } from "@/lib/target-ux";
 
 import { FailureRepairLoopPanel } from "./failure-repair-loop-panel";
 
 describe("FailureRepairLoopPanel", () => {
   it("turns a selected observed behavior failure into a regression eval", async () => {
-    const sentence =
-      createBehaviorEditorData("agent_support").sections[0]!.sentences[0]!;
+    const sentence = createBehaviorEditorData("agent_support", targetUxFixtures)
+      .sections[0]!.sentences[0]!;
     const saveEval = vi.fn(async () => ({
       ok: true,
       suite_id: "suite_observed",
@@ -47,8 +48,8 @@ describe("FailureRepairLoopPanel", () => {
   });
 
   it("generates a focused fix and replay summary before saving eval", async () => {
-    const sentence =
-      createBehaviorEditorData("agent_support").sections[0]!.sentences[1]!;
+    const sentence = createBehaviorEditorData("agent_support", targetUxFixtures)
+      .sections[0]!.sentences[1]!;
     const requestRepair = vi.fn(async () => ({
       id: "repair_1",
       workspace_id: "ws_1",
@@ -121,8 +122,8 @@ describe("FailureRepairLoopPanel", () => {
   it("surfaces backend-required errors instead of generating local repairs", async () => {
     const originalBaseUrl = process.env.LOOP_CP_API_BASE_URL;
     process.env.LOOP_CP_API_BASE_URL = "";
-    const sentence =
-      createBehaviorEditorData("agent_support").sections[0]!.sentences[0]!;
+    const sentence = createBehaviorEditorData("agent_support", targetUxFixtures)
+      .sections[0]!.sentences[0]!;
 
     try {
       render(

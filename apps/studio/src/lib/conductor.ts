@@ -3,7 +3,7 @@ import type {
   ObjectState,
   TrustState,
 } from "@/lib/design-tokens";
-import { targetUxFixtures, type TargetUXFixture } from "@/lib/target-ux";
+import type { TargetUXFixture } from "@/lib/target-ux";
 
 export type ConductorAgentStatus = "ready" | "active" | "degraded" | "blocked";
 
@@ -143,7 +143,7 @@ export async function fetchConductorData(
 
 export function createConductorData(
   agentId: string,
-  fixture: TargetUXFixture = targetUxFixtures,
+  fixture: TargetUXFixture,
 ): ConductorData {
   const agent =
     fixture.agents.find((candidate) => candidate.id === agentId) ??
@@ -374,9 +374,10 @@ export function createConductorData(
 }
 
 export function createBlockedConductorData(
-  agentId = "agent_blocked",
+  agentId: string,
+  fixture: TargetUXFixture,
 ): ConductorData {
-  const base = createConductorData(agentId);
+  const base = createConductorData(agentId, fixture);
   return {
     ...base,
     trust: "blocked",
@@ -396,8 +397,7 @@ export function createBlockedConductorData(
 
 export function createEmptyConductorData(
   agentId = "agent_empty",
-  degradedReason =
-    "No conductor topology exists for this agent yet. Attach a reviewed sub-agent asset before creating handoff contracts.",
+  degradedReason = "No conductor topology exists for this agent yet. Attach a reviewed sub-agent asset before creating handoff contracts.",
 ): ConductorData {
   return {
     agentId,

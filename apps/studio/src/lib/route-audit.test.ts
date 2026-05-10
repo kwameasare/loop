@@ -12,6 +12,7 @@ import {
 } from "@/lib/route-audit";
 
 const APP_ROOT = join(__dirname, "..", "app");
+const SRC_ROOT = join(__dirname, "..");
 
 function discoverRoutes(): string[] {
   const routes: string[] = [];
@@ -120,6 +121,21 @@ describe("STUDIO_ROUTES", () => {
         ),
       ),
     );
+
+    expect(findings, JSON.stringify(findings, null, 2)).toEqual([]);
+  });
+
+  it("keeps workbench data libraries from defaulting to target UX fixtures", () => {
+    const files = [
+      "lib/agent-tools.ts",
+      "lib/behavior.ts",
+      "lib/conductor.ts",
+      "lib/memory-studio.ts",
+    ];
+    const findings = files.flatMap((file) => {
+      const source = readFileSync(join(SRC_ROOT, file), "utf8");
+      return source.includes("targetUxFixtures") ? [file] : [];
+    });
 
     expect(findings, JSON.stringify(findings, null, 2)).toEqual([]);
   });

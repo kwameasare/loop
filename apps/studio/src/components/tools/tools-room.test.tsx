@@ -5,6 +5,7 @@ import {
   createEmptyToolsRoomData,
   createToolsRoomData,
 } from "@/lib/agent-tools";
+import { targetUxFixtures } from "@/lib/target-ux";
 
 import { ToolsRoom } from "./tools-room";
 
@@ -21,7 +22,11 @@ describe("ToolsRoom", () => {
   });
 
   it("renders catalog, detail, safety, mock/live, usage, cost, and eval coverage", () => {
-    render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
+    render(
+      <ToolsRoom
+        data={createToolsRoomData("agent_support", [], targetUxFixtures)}
+      />,
+    );
 
     expect(screen.getByTestId("tools-room")).toHaveTextContent("Tools Room");
     expect(screen.getByTestId("tools-room-catalog")).toHaveTextContent(
@@ -81,7 +86,11 @@ describe("ToolsRoom", () => {
   });
 
   it("shows production grant boundaries for money-moving tools", () => {
-    render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
+    render(
+      <ToolsRoom
+        data={createToolsRoomData("agent_support", [], targetUxFixtures)}
+      />,
+    );
 
     fireEvent.click(screen.getByTestId("tools-room-catalog-tool_issue_refund"));
     expect(screen.getByTestId("tools-room-detail")).toHaveTextContent(
@@ -100,7 +109,7 @@ describe("ToolsRoom", () => {
   it("opens directly on a tool selected from an evidence link", () => {
     render(
       <ToolsRoom
-        data={createToolsRoomData("agent_support")}
+        data={createToolsRoomData("agent_support", [], targetUxFixtures)}
         initialToolId="tool_issue_refund"
       />,
     );
@@ -115,7 +124,7 @@ describe("ToolsRoom", () => {
 
   it("promotes the selected durable tool contract live", async () => {
     process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
-    const data = createToolsRoomData("agent_support");
+    const data = createToolsRoomData("agent_support", [], targetUxFixtures);
     const refundContract = data.toolContracts.find(
       (contract) => contract.tool_id === "tool_issue_refund",
     );
@@ -142,7 +151,7 @@ describe("ToolsRoom", () => {
 
   it("saves the selected tool safety questionnaire before live promotion", async () => {
     process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
-    const data = createToolsRoomData("agent_support");
+    const data = createToolsRoomData("agent_support", [], targetUxFixtures);
     const lookupContract = data.toolContracts.find(
       (contract) => contract.tool_id === "tool_lookup_order",
     );
@@ -202,7 +211,11 @@ describe("ToolsRoom", () => {
       }),
     );
     vi.stubGlobal("fetch", fetcher);
-    render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
+    render(
+      <ToolsRoom
+        data={createToolsRoomData("agent_support", [], targetUxFixtures)}
+      />,
+    );
 
     expect(
       screen.getByTestId("tools-room-source-devtools"),
@@ -229,7 +242,11 @@ describe("ToolsRoom", () => {
 
   it("shows backend-required errors instead of adding a local imported tool", async () => {
     process.env.LOOP_CP_API_BASE_URL = "";
-    render(<ToolsRoom data={createToolsRoomData("agent_support")} />);
+    render(
+      <ToolsRoom
+        data={createToolsRoomData("agent_support", [], targetUxFixtures)}
+      />,
+    );
 
     fireEvent.click(screen.getByTestId("tools-room-draft-tool"));
     fireEvent.click(screen.getByTestId("tools-room-add-library"));
