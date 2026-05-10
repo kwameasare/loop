@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { MigrationRunsPanel, MigrationScreen } from "@/components/migration";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   fetchMigrationParityWorkspace,
   type MigrationParityWorkspace,
@@ -109,7 +110,7 @@ function MigratePageBody() {
     [workspace],
   );
 
-  if (wsLoading || !active) {
+  if (wsLoading) {
     return (
       <main className="mx-auto w-full max-w-7xl p-6">
         <p className="text-sm text-muted-foreground">
@@ -118,6 +119,7 @@ function MigratePageBody() {
       </main>
     );
   }
+  if (!active) return <WorkspaceRequiredState title="Migration Atelier" />;
 
   return (
     <>

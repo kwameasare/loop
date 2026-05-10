@@ -177,3 +177,19 @@ export function SectionPermissionBlocked(
 ) {
   return <SectionState {...props} state="permissionBlocked" />;
 }
+
+export function WorkspaceRequiredState({ title }: { title: string }) {
+  return (
+    <main
+      className="container mx-auto flex max-w-3xl flex-col gap-4 p-6"
+      data-testid="workspace-required"
+    >
+      <SectionPermissionBlocked
+        title={title}
+        description="No authorized workspace is loaded. Sign in or select a workspace before this surface can show production data."
+        evidence="Workspace context is required; Studio will not substitute local fixture data."
+        primaryAction={{ label: "Sign in", href: "/login" }}
+      />
+    </main>
+  );
+}

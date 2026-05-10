@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { ObservatoryScreen } from "@/components/observatory/observatory-screen";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   fetchObservatoryModel,
   type ObservatoryModel,
@@ -44,13 +45,14 @@ function ObservePageBody(): JSX.Element {
     };
   }, [active]);
 
-  if (wsLoading || !active) {
+  if (wsLoading) {
     return (
       <main className="mx-auto w-full max-w-7xl p-6">
         <p className="text-sm text-muted-foreground">Loading observatory...</p>
       </main>
     );
   }
+  if (!active) return <WorkspaceRequiredState title="Observatory" />;
   if (error) {
     return (
       <main className="mx-auto w-full max-w-7xl p-6">

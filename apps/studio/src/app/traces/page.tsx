@@ -12,6 +12,7 @@
 import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import { TraceList } from "@/components/trace/trace-list";
 import { searchTraces, type TraceSummary } from "@/lib/traces";
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
@@ -46,7 +47,7 @@ function TracesPageBody(): JSX.Element {
     };
   }, [active]);
 
-  if (wsLoading || !active) {
+  if (wsLoading) {
     return (
       <main className="container mx-auto p-6">
         <p
@@ -58,6 +59,7 @@ function TracesPageBody(): JSX.Element {
       </main>
     );
   }
+  if (!active) return <WorkspaceRequiredState title="Traces" />;
   if (error) {
     return (
       <main className="container mx-auto p-6">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import { VoiceStage } from "@/components/voice/voice-stage";
 import {
   fetchVoiceStageModel,
@@ -42,7 +43,15 @@ function VoicePageBody(): JSX.Element {
     };
   }, [active]);
 
-  if (wsLoading || !active || (!model && !error)) {
+  if (wsLoading) {
+    return (
+      <p className="p-6 text-sm text-muted-foreground" data-testid="voice-loading">
+        Loading voice stage…
+      </p>
+    );
+  }
+  if (!active) return <WorkspaceRequiredState title="Voice Stage" />;
+  if (!model && !error) {
     return (
       <p className="p-6 text-sm text-muted-foreground" data-testid="voice-loading">
         Loading voice stage…

@@ -9,6 +9,7 @@ import {
   type AuditEventRow,
   type AuditLogFilters,
 } from "@/components/workspaces/audit-log-page";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import { filterAuditRows, listAuditEvents } from "@/lib/audit-events";
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
 
@@ -62,13 +63,14 @@ function EnterpriseAuditPageBody(): JSX.Element {
     setPage(1);
   }
 
-  if (wsLoading || !active) {
+  if (wsLoading) {
     return (
       <main className="mx-auto w-full max-w-7xl p-6">
         <p className="text-sm text-muted-foreground">Loading audit log...</p>
       </main>
     );
   }
+  if (!active) return <WorkspaceRequiredState title="Audit Log" />;
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-6">

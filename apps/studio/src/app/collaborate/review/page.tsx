@@ -7,6 +7,7 @@ import { ChangesetApprovals } from "@/components/collaboration/changeset-approva
 import { PairDebugPanel } from "@/components/collaboration/pair-debug-panel";
 import { PresenceBar } from "@/components/collaboration/presence-bar";
 import { CommentThreadView } from "@/components/comments/comment-thread";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   EMPTY_PAIR_DEBUG,
   fetchCollaborationWorkspace,
@@ -55,7 +56,7 @@ function CollaborateReviewPageBody(): JSX.Element {
     };
   }, [active]);
 
-  if (wsLoading || !active) {
+  if (wsLoading) {
     return (
       <main className="mx-auto max-w-6xl p-6">
         <p className="text-sm text-muted-foreground">
@@ -64,6 +65,7 @@ function CollaborateReviewPageBody(): JSX.Element {
       </main>
     );
   }
+  if (!active) return <WorkspaceRequiredState title="Review" />;
 
   return (
     <main

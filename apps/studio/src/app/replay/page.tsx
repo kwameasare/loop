@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { ReplayWorkbench } from "@/components/replay/replay-workbench";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   fetchReplayWorkbenchModel,
   type ReplayWorkbenchModel,
@@ -42,7 +43,15 @@ function ReplayPageBody(): JSX.Element {
     };
   }, [active]);
 
-  if (wsLoading || !active || (!model && !error)) {
+  if (wsLoading) {
+    return (
+      <main className="mx-auto w-full max-w-7xl p-6">
+        <p className="text-sm text-muted-foreground">Loading replay workbench...</p>
+      </main>
+    );
+  }
+  if (!active) return <WorkspaceRequiredState title="Replay Workbench" />;
+  if (!model && !error) {
     return (
       <main className="mx-auto w-full max-w-7xl p-6">
         <p className="text-sm text-muted-foreground">Loading replay workbench...</p>

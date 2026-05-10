@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { CutoverPanel } from "@/components/migration/cutover-panel";
 import { ParityHarness } from "@/components/migration/parity-harness";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   fetchMigrationParityWorkspace,
   type MigrationParityWorkspace,
@@ -94,7 +95,17 @@ function MigrationParityPageBody(): JSX.Element {
     await refresh(run.id);
   }
 
-  if (wsLoading || !active || (!workspace && !error)) {
+  if (wsLoading) {
+    return (
+      <main className="mx-auto max-w-6xl p-6">
+        <p className="text-sm text-muted-foreground">
+          Loading migration parity...
+        </p>
+      </main>
+    );
+  }
+  if (!active) return <WorkspaceRequiredState title="Migration Parity" />;
+  if (!workspace && !error) {
     return (
       <main className="mx-auto max-w-6xl p-6">
         <p className="text-sm text-muted-foreground">

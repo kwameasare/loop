@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { RegressionBisect } from "@/components/deploy/regression-bisect/regression-bisect";
 import { WhatCouldBreak } from "@/components/deploy/what-could-break/what-could-break";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import { SnapshotsList } from "@/components/snapshots/snapshots-list";
 import {
   fetchDeploySafetyModel,
@@ -44,7 +45,7 @@ function DeploySafetyPageBody(): JSX.Element {
     };
   }, [active]);
 
-  if (wsLoading || !active) {
+  if (wsLoading) {
     return (
       <main className="mx-auto max-w-6xl p-6">
         <p className="text-sm text-muted-foreground">
@@ -53,6 +54,7 @@ function DeploySafetyPageBody(): JSX.Element {
       </main>
     );
   }
+  if (!active) return <WorkspaceRequiredState title="Pre-Promote Safety" />;
 
   return (
     <main

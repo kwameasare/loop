@@ -12,6 +12,7 @@
 import { useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import { VoiceConfigPanel } from "@/components/voice/voice-config-panel";
 import {
   fetchVoiceConfig,
@@ -57,7 +58,15 @@ function VoiceConfigBody(): JSX.Element {
     return saveVoiceConfig(active.id, next);
   }
 
-  if (wsLoading || !active || (!config && !error)) {
+  if (wsLoading) {
+    return (
+      <main className="container mx-auto p-6">
+        <p className="text-sm text-muted-foreground">Loading voice config…</p>
+      </main>
+    );
+  }
+  if (!active) return <WorkspaceRequiredState title="Voice Config" />;
+  if (!config && !error) {
     return (
       <main className="container mx-auto p-6">
         <p className="text-sm text-muted-foreground">Loading voice config…</p>

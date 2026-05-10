@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { InboxScreen } from "@/components/inbox/inbox-screen";
+import { WorkspaceRequiredState } from "@/components/section-states";
 import {
   claimInboxItem,
   listInbox,
@@ -54,13 +55,14 @@ function InboxPageBody(): JSX.Element {
     };
   }, [active]);
 
-  if (wsLoading || !active) {
+  if (wsLoading) {
     return (
       <p className="p-6 text-sm text-muted-foreground" data-testid="inbox-loading">
         Loading inbox…
       </p>
     );
   }
+  if (!active) return <WorkspaceRequiredState title="Inbox" />;
   if (!user) {
     return (
       <p className="p-6 text-sm text-muted-foreground">
