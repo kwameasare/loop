@@ -26,7 +26,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 
 from loop_control_plane._app_common import CALLER
 from loop_control_plane.authorize import authorize_workspace_access
-from loop_control_plane.trace_search import TraceQuery
+from loop_control_plane.trace_search import TraceMemoryEvent, TraceQuery
 
 router = APIRouter(prefix="/v1/workspaces", tags=["Telemetry"])
 router_traces = APIRouter(prefix="/v1/traces", tags=["Telemetry"])
@@ -105,9 +105,72 @@ def _memory_span(item: Any, index: int) -> dict[str, Any]:
             "value_preview": event.value_preview,
             "policy_ref": event.policy_ref,
             "reason": reason,
-            "source_trace": event.source_trace or item.trace_id,
+            "source_trace": event.source_trace,
+            "source_trace_missing": not bool(event.source_trace),
+            "source_turn_id": str(event.source_turn_id) if event.source_turn_id else "",
+            "user_id": event.user_id,
         },
     }
+
+
+def _preview_memory_value(value: object) -> str:
+    rendered = value if isinstance(value, str) else str(value)
+    if any(token in rendered.lower() for token in ("secret", "token", "password", "card")):
+        return "[redacted secret-like value]"
+    return rendered if len(rendered) <= 160 else f"{rendered[:157]}..."
+
+
+async def _memory_events_for_trace(cp: Any, item: Any) -> tuple[TraceMemoryEvent, ...]:
+    events = list(item.memory_events)
+    list_by_source = getattr(cp.user_memory_store, "list_by_source", None)
+    if list_by_source is None:
+        return tuple(events)
+    entries = await list_by_source(
+        workspace_id=item.workspace_id,
+        agent_id=item.agent_id,
+        source_trace=item.trace_id,
+        source_turn_id=item.turn_id,
+    )
+    seen = {
+        (
+            event.kind,
+            event.scope,
+            event.key,
+            event.source_trace,
+            str(event.source_turn_id) if event.source_turn_id else "",
+            event.source_span_id,
+        )
+        for event in events
+    }
+    for entry in sorted(
+        entries,
+        key=lambda e: (e.updated_at, e.scope.value, e.user_id or "", e.key),
+    ):
+        event = TraceMemoryEvent(
+            kind="write",
+            scope=entry.scope.value,
+            key=entry.key,
+            value_preview=_preview_memory_value(entry.value),
+            policy_ref=entry.policy_ref,
+            reason=entry.write_reason or "runtime memory write",
+            source_trace=entry.source_trace,
+            source_turn_id=entry.source_turn_id,
+            source_span_id=entry.source_span_id,
+            user_id=entry.user_id or "",
+        )
+        dedupe_key = (
+            event.kind,
+            event.scope,
+            event.key,
+            event.source_trace,
+            str(event.source_turn_id) if event.source_turn_id else "",
+            event.source_span_id,
+        )
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+        events.append(event)
+    return tuple(events)
 
 
 @router_traces.get("/{trace_ref}")
@@ -139,6 +202,8 @@ async def get_trace_detail(
         if not matches:
             continue
         item = matches[0]
+        memory_events = await _memory_events_for_trace(cp, item)
+        detail_item = item.model_copy(update={"memory_events": memory_events})
         status = "error" if item.error else "ok"
         spans = [
             {
@@ -158,7 +223,7 @@ async def get_trace_detail(
                     "channel_binding_id": item.channel_binding_id,
                 },
             },
-            *[_memory_span(item, index) for index in range(len(item.memory_events))],
+            *[_memory_span(detail_item, index) for index in range(len(memory_events))],
         ]
         return {
             "trace_id": item.trace_id,

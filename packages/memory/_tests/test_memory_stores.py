@@ -112,6 +112,55 @@ async def test_bot_memory_round_trip_and_no_user_id_required() -> None:
 
 
 @pytest.mark.asyncio
+async def test_memory_can_list_user_and_bot_entries_by_source_evidence() -> None:
+    store = InMemoryUserMemoryStore()
+    ws, ag, other_ag, turn = uuid4(), uuid4(), uuid4(), uuid4()
+    await store.set_user(
+        workspace_id=ws,
+        agent_id=ag,
+        user_id="u-1",
+        key="language",
+        value="English",
+        source_trace="trace_source_001",
+        source_turn_id=turn,
+    )
+    await store.set_bot(
+        workspace_id=ws,
+        agent_id=ag,
+        key="persona",
+        value={"tone": "plain"},
+        source_trace="trace_source_001",
+    )
+    await store.set_user(
+        workspace_id=ws,
+        agent_id=other_ag,
+        user_id="u-1",
+        key="language",
+        value="French",
+        source_trace="trace_source_001",
+    )
+
+    by_trace = await store.list_by_source(
+        workspace_id=ws,
+        agent_id=ag,
+        source_trace="trace_source_001",
+    )
+    assert [(entry.scope.value, entry.key) for entry in by_trace] == [
+        ("user", "language"),
+        ("bot", "persona"),
+    ]
+
+    by_turn = await store.list_by_source(
+        workspace_id=ws,
+        agent_id=ag,
+        source_turn_id=turn,
+    )
+    assert [(entry.scope.value, entry.key) for entry in by_turn] == [("user", "language")]
+
+    assert await store.list_by_source(workspace_id=ws, agent_id=ag) == []
+
+
+@pytest.mark.asyncio
 async def test_user_memory_set_does_not_alias_callers_value() -> None:
     """Mutating the input dict after set must not change stored state."""
 

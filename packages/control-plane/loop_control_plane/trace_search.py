@@ -51,7 +51,9 @@ class TraceMemoryEvent(BaseModel):
     reason: str = Field(default="", max_length=512)
     blocked_reason: str = Field(default="", max_length=512)
     source_trace: str = Field(default="", max_length=160)
+    source_turn_id: UUID | None = None
     source_span_id: str = Field(default="", max_length=160)
+    user_id: str = Field(default="", max_length=160)
 
 
 class TraceSummary(BaseModel):
