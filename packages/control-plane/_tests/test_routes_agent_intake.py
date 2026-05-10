@@ -126,6 +126,31 @@ def test_agent_intake_creates_governed_draft_and_seed_objects(
     assert len(body["created_object_refs"]["channel_bindings"]) == 3
     assert len(body["created_object_refs"]["tool_contracts"]) == 2
     assert len(body["created_object_refs"]["eval_cases"]) == 3
+    assert body["created_object_refs"]["version"] == "v1"
+    assert body["created_object_refs"]["branch"]["name"] == "main/draft"
+    assert "Initial behavior generated" in body["readiness"]["ready"]
+    assert "Draft branch main/draft created" in body["readiness"]["ready"]
+
+    versions = client.get(
+        f"/v1/agents/{agent_id}/versions",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert versions.status_code == 200, versions.text
+    version = versions.json()["items"][0]
+    assert version["spec"]["created_from"] == "agent_intake:business_intent"
+    assert version["spec"]["commitment_document_id"] == body["commitment"]["id"]
+    assert set(version["spec"]["channels"]) == {"web_chat", "whatsapp", "voice"}
+    assert set(version["spec"]["tool_contracts"]) == {"mock_billing_api", "mock_crm"}
+    assert version["spec"]["memory_policy_id"] == body["created_object_refs"]["memory_policy_id"]
+    assert version["spec"]["eval_suite_id"] == body["created_object_refs"]["eval_suite_id"]
+
+    workflow = client.get(
+        f"/v1/agents/{agent_id}/workflow",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert workflow.status_code == 200, workflow.text
+    assert workflow.json()["branches"][0]["name"] == "main/draft"
+    assert workflow.json()["branches"][0]["base_version_id"] == "v1"
 
     channels = client.get(
         f"/v1/agents/{agent_id}/channel-bindings",
@@ -161,7 +186,9 @@ def test_agent_intake_creates_governed_draft_and_seed_objects(
     assert listed.json()["items"][0]["id"] == body["id"]
 
     audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=_auth())
-    assert "agent_intake:create" in {item["action"] for item in audit.json()["items"]}
+    assert {"agent_intake:create", "agent_intake:draft_objects_create"} <= {
+        item["action"] for item in audit.json()["items"]
+    }
 
 
 def test_agent_intake_requires_workspace_admin(
