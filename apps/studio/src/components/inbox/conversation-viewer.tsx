@@ -40,10 +40,10 @@ const ROLE_LABEL: Record<ConversationMessage["role"], string> = {
 };
 
 const ROLE_CLASS: Record<ConversationMessage["role"], string> = {
-  user: "bg-zinc-100 text-zinc-900",
-  assistant: "bg-blue-50 text-blue-900",
-  operator: "bg-emerald-50 text-emerald-900",
-  system: "bg-amber-50 text-amber-900",
+  user: "bg-muted text-foreground",
+  assistant: "border border-info/30 bg-info/10 text-foreground",
+  operator: "border border-success/30 bg-success/10 text-foreground",
+  system: "border border-warning/30 bg-warning/10 text-foreground",
 };
 
 function formatHHMM(ms: number): string {
@@ -176,10 +176,10 @@ export function ConversationViewer(props: ConversationViewerProps) {
             aria-hidden
             className={
               status === "live"
-                ? "mr-1 inline-block size-2 rounded-full bg-emerald-500"
+                ? "mr-1 inline-block size-2 rounded-full bg-success"
                 : status === "error"
-                  ? "mr-1 inline-block size-2 rounded-full bg-red-500"
-                  : "mr-1 inline-block size-2 rounded-full bg-zinc-400"
+                  ? "mr-1 inline-block size-2 rounded-full bg-destructive"
+                  : "mr-1 inline-block size-2 rounded-full bg-muted-foreground"
             }
           />
           {status}
@@ -196,7 +196,7 @@ export function ConversationViewer(props: ConversationViewerProps) {
       </header>
 
       <div
-        className="flex items-center justify-between rounded border bg-zinc-50 px-3 py-2 text-xs"
+        className="flex items-center justify-between rounded border bg-muted/45 px-3 py-2 text-xs"
         data-testid="conversation-ownership-bar"
       >
         <span data-testid="conversation-ownership">
@@ -206,7 +206,7 @@ export function ConversationViewer(props: ConversationViewerProps) {
         </span>
         {ownership === "agent" ? (
           <button
-            className="rounded bg-blue-600 px-3 py-1 text-white hover:bg-blue-700 disabled:opacity-50"
+            className="rounded bg-primary px-3 py-1 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             data-testid="conversation-takeover"
             disabled={busy || !props.takeover}
             onClick={handleTakeover}
@@ -217,14 +217,14 @@ export function ConversationViewer(props: ConversationViewerProps) {
         ) : (
           <div className="flex items-center gap-2">
             <span
-              className="rounded bg-emerald-100 px-2 py-0.5 text-emerald-700"
+              className="rounded border border-success/30 bg-success/10 px-2 py-0.5 text-success"
               data-testid="conversation-owned-badge"
             >
               Operator
             </span>
             {props.handback ? (
               <button
-                className="rounded border border-zinc-300 bg-white px-3 py-1 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                className="rounded border bg-background px-3 py-1 text-foreground hover:bg-muted disabled:opacity-50"
                 data-testid="conversation-handback"
                 disabled={busy}
                 onClick={() => setConfirmHandback(true)}
@@ -239,7 +239,7 @@ export function ConversationViewer(props: ConversationViewerProps) {
 
       {errorMsg ? (
         <p
-          className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700"
+          className="rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
           data-testid="conversation-error"
           role="alert"
         >
@@ -248,13 +248,13 @@ export function ConversationViewer(props: ConversationViewerProps) {
       ) : null}
 
       <div
-        className="flex h-[480px] flex-col gap-2 overflow-y-auto rounded-lg border bg-white p-3"
+        className="flex h-[480px] flex-col gap-2 overflow-y-auto rounded-lg border bg-card p-3"
         data-testid="conversation-scroll"
         ref={scrollRef}
       >
         {transcript.length === 0 ? (
           <p
-            className="text-center text-sm text-zinc-500"
+            className="text-center text-sm text-muted-foreground"
             data-testid="conversation-empty"
           >
             No messages yet.
@@ -293,7 +293,7 @@ export function ConversationViewer(props: ConversationViewerProps) {
       >
         <textarea
           aria-label="Compose a reply"
-          className="rounded border px-3 py-2 text-sm disabled:bg-zinc-100"
+          className="rounded border bg-background px-3 py-2 text-sm disabled:bg-muted"
           data-testid="conversation-composer-input"
           disabled={ownership !== "operator" || busy}
           onChange={(e) => setDraft(e.target.value)}
@@ -307,7 +307,7 @@ export function ConversationViewer(props: ConversationViewerProps) {
         />
         <div className="flex justify-end">
           <button
-            className="rounded bg-emerald-600 px-3 py-1 text-sm text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             data-testid="conversation-composer-send"
             disabled={
               ownership !== "operator" ||
@@ -325,19 +325,19 @@ export function ConversationViewer(props: ConversationViewerProps) {
       {confirmHandback ? (
         <div
           aria-modal
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-40 flex items-center justify-center bg-foreground/40 p-4"
           data-testid="conversation-handback-modal"
           role="dialog"
         >
-          <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-lg">
+          <div className="w-full max-w-sm rounded-lg border bg-card p-4 shadow-lg">
             <h2 className="text-base font-semibold">Hand back to agent?</h2>
-            <p className="mt-1 text-sm text-zinc-600">
+            <p className="mt-1 text-sm text-muted-foreground">
               The agent will resume control of this conversation. Any
               pending operator drafts will be discarded.
             </p>
             <div className="mt-4 flex justify-end gap-2">
               <button
-                className="rounded border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-50"
+                className="rounded border bg-background px-3 py-1 text-sm hover:bg-muted"
                 data-testid="conversation-handback-cancel"
                 disabled={busy}
                 onClick={() => setConfirmHandback(false)}
@@ -346,7 +346,7 @@ export function ConversationViewer(props: ConversationViewerProps) {
                 Cancel
               </button>
               <button
-                className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+                className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 data-testid="conversation-handback-confirm"
                 disabled={busy}
                 onClick={handleHandback}
@@ -362,7 +362,7 @@ export function ConversationViewer(props: ConversationViewerProps) {
       {toast ? (
         <div
           aria-live="polite"
-          className="fixed bottom-4 right-4 z-50 rounded-lg bg-zinc-900 px-3 py-2 text-sm text-white shadow-lg"
+          className="fixed bottom-4 right-4 z-50 rounded-lg bg-foreground px-3 py-2 text-sm text-background shadow-lg"
           data-testid="conversation-toast"
           role="status"
         >

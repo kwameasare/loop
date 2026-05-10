@@ -21,7 +21,7 @@ export function SuggestedDraft({ draft, onInsert, onDismiss }: SuggestedDraftPro
   if (dismissed) {
     return (
       <p
-        className="text-xs text-zinc-500"
+        className="text-xs text-muted-foreground"
         data-testid="suggested-draft-dismissed"
       >
         Suggested draft dismissed. Compose your own reply below.
@@ -31,18 +31,18 @@ export function SuggestedDraft({ draft, onInsert, onDismiss }: SuggestedDraftPro
 
   return (
     <section
-      className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm"
+      className="rounded-lg border border-info/40 bg-info/10 p-3 text-sm"
       data-testid="suggested-draft"
       aria-label="Suggested operator draft"
     >
       <header className="mb-2 flex items-center justify-between text-xs">
-        <span className="font-medium text-blue-900">Suggested draft</span>
-        <span className="rounded bg-white px-2 py-0.5 text-[11px] text-blue-700">
+        <span className="font-medium text-foreground">Suggested draft</span>
+        <span className="rounded bg-background px-2 py-0.5 text-[11px] text-info">
           source: agent · review before sending
         </span>
       </header>
       <textarea
-        className="w-full rounded border border-blue-200 bg-white p-2 text-sm"
+        className="w-full rounded border bg-background p-2 text-sm"
         data-testid="suggested-draft-text"
         rows={3}
         value={edited}
@@ -52,7 +52,7 @@ export function SuggestedDraft({ draft, onInsert, onDismiss }: SuggestedDraftPro
         {onDismiss ? (
           <button
             type="button"
-            className="rounded border border-zinc-300 bg-white px-3 py-1 text-xs text-zinc-700 hover:bg-zinc-50"
+            className="rounded border bg-background px-3 py-1 text-xs text-foreground hover:bg-muted"
             data-testid="suggested-draft-dismiss"
             onClick={() => {
               onDismiss(edited);
@@ -64,7 +64,7 @@ export function SuggestedDraft({ draft, onInsert, onDismiss }: SuggestedDraftPro
         ) : null}
         <button
           type="button"
-          className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+          className="rounded bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
           data-testid="suggested-draft-insert"
           onClick={() => onInsert(edited)}
         >
