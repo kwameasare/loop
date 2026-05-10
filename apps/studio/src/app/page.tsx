@@ -10,8 +10,9 @@ import {
 import { NewAgentModal } from "@/components/agents/new-agent-modal";
 import { EstateOverview } from "@/components/estate/estate-overview";
 import { buttonVariants } from "@/components/ui/button";
-import { listAgents } from "@/lib/cp-api";
+import { listAgents, type AgentSummary } from "@/lib/cp-api";
 import { fetchEstateHealth } from "@/lib/estate-health";
+import { listWorkspaces, type Workspace } from "@/lib/workspaces";
 
 export const dynamic = "force-dynamic";
 
@@ -38,11 +39,21 @@ function QuickLink({
   );
 }
 
+export function resolveHomeWorkspaceId(
+  agents: readonly AgentSummary[],
+  workspaces: readonly Workspace[],
+  fallback: string | undefined = process.env.LOOP_DEFAULT_WORKSPACE_ID,
+): string | null {
+  return agents[0]?.workspace_id || workspaces[0]?.id || fallback || null;
+}
+
 export default async function HomePage() {
   const { agents } = await listAgents().catch(() => ({ agents: [] }));
+  const { workspaces } = await listWorkspaces().catch(() => ({
+    workspaces: [],
+  }));
   const existingSlugs = agents.map((agent) => agent.slug).filter(Boolean);
-  const workspaceId =
-    agents[0]?.workspace_id || process.env.LOOP_DEFAULT_WORKSPACE_ID || null;
+  const workspaceId = resolveHomeWorkspaceId(agents, workspaces);
   const estateHealth = await fetchEstateHealth(workspaceId, {
     fallbackAgents: agents,
   });
