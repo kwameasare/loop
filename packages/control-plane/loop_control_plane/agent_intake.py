@@ -417,6 +417,10 @@ def build_intake_analysis(
         "Commitment Document drafted",
         f"{len(candidate_eval_cases)} starter evals created",
     ]
+    if created_object_refs.get("version_id"):
+        ready.append("Initial behavior generated")
+    if created_object_refs.get("branch_id"):
+        ready.append("Draft branch main/draft created")
     if candidate_channels:
         ready.append(f"{len(candidate_channels)} sandbox channel binding(s) created")
     if candidate_tools:

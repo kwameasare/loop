@@ -14,6 +14,8 @@ from loop_control_plane.agent_intake import (
     build_intake_analysis,
     template_payloads,
 )
+from loop_control_plane.agent_versions import AgentVersionCreate
+from loop_control_plane.agent_workflow import BranchCreate, branch_payload
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.channel_bindings import SUPPORTED_CHANNELS, ChannelBindingUpsert
@@ -54,6 +56,55 @@ def _channel_type(value: str) -> str | None:
 def _tool_id(value: str) -> str:
     slug = "".join(ch if ch.isalnum() else "_" for ch in value.lower()).strip("_")
     return f"mock_{slug or 'system'}"
+
+
+def _initial_behavior_spec(
+    *,
+    body: AgentIntakeCreate,
+    commitment_id: str,
+    channel_refs: list[dict[str, str]],
+    tool_refs: list[dict[str, str]],
+    memory_policy_id: str,
+    eval_suite_id: str,
+) -> dict[str, Any]:
+    contract = body.contract
+    channel_types = [item["channel_type"] for item in channel_refs]
+    tool_ids = [item["tool_id"] for item in tool_refs]
+    return {
+        "created_from": f"agent_intake:{body.creation_path}",
+        "commitment_document_id": commitment_id,
+        "system_prompt": (
+            f"You are responsible for: {contract.business_responsibility}. "
+            f"Serve: {contract.target_users}. "
+            f"Never do this failure mode: {contract.worst_case_failure}. "
+            f"Escalation policy: {contract.escalation_policy or 'Escalate uncertainty to the owner.'}"
+        ),
+        "behavior": {
+            "goals": [
+                contract.business_responsibility,
+                contract.success_metric or "Meet the accepted Commitment Document.",
+            ],
+            "constraints": [
+                contract.out_of_scope or "Stay within the accepted Commitment Document.",
+                contract.worst_case_failure,
+            ],
+            "escalation_policy": contract.escalation_policy,
+            "owner_user_id": contract.owner_user_id,
+            "backup_owner_user_id": contract.backup_owner_user_id,
+            "compliance_domain": contract.compliance_domain,
+        },
+        "channels": channel_types,
+        "tool_contracts": tool_ids,
+        "memory_policy_id": memory_policy_id,
+        "eval_suite_id": eval_suite_id,
+        "artifact_refs": [artifact.source_ref or artifact.name for artifact in body.artifacts],
+        "risk_notes": [
+            {
+                "kind": "worst_case_failure",
+                "message": contract.worst_case_failure,
+            }
+        ],
+    }
 
 
 def _audit(
@@ -197,9 +248,35 @@ async def create_agent_intake(
         )
         eval_refs.append({"id": str(created_case.id), "suite_id": str(suite.id)})
 
+    initial_version = await cp.agent_versions.create(
+        workspace_id=workspace_id,
+        agent_id=agent.id,
+        body=AgentVersionCreate(
+            spec=_initial_behavior_spec(
+                body=body,
+                commitment_id=commitment.id,
+                channel_refs=channel_refs,
+                tool_refs=tool_refs,
+                memory_policy_id=memory_policy.id,
+                eval_suite_id=str(suite.id),
+            ),
+            notes="Initial governed draft from agent intake.",
+        ),
+        actor_sub=caller_sub,
+    )
+    branch = await cp.agent_workflows.create_branch(
+        agent=agent,
+        body=BranchCreate(name="main/draft", base_version_id=f"v{initial_version.version}"),
+        actor_sub=caller_sub,
+    )
+
     refs = {
         "agent_id": str(agent.id),
         "commitment_id": commitment.id,
+        "version_id": str(initial_version.id),
+        "version": f"v{initial_version.version}",
+        "branch_id": branch.id,
+        "branch": branch_payload(branch),
         "channel_bindings": channel_refs,
         "tool_contracts": tool_refs,
         "memory_policy_id": memory_policy.id,
@@ -232,6 +309,15 @@ async def create_agent_intake(
             "readiness_score": intake.readiness["score"],
             "artifacts": len(body.artifacts),
         },
+    )
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="agent_intake:draft_objects_create",
+        resource_type="agent",
+        resource_id=str(agent.id),
+        payload=refs,
     )
     return {
         **agent_intake_payload(intake),
