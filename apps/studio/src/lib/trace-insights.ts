@@ -23,6 +23,7 @@ export interface LatencyBudgetModel {
   gap_ms: number;
   spans: LatencyBudgetSpan[];
   suggestions: LatencyBudgetSuggestion[];
+  unavailable_reason?: string | null;
 }
 
 export interface ContextAblationItem {
@@ -38,6 +39,7 @@ export interface ContextAblationItem {
 export interface ContextAblationModel {
   turn_id: string;
   items: ContextAblationItem[];
+  unavailable_reason?: string | null;
 }
 
 type TraceInsightsClientOptions = UxWireupClientOptions & {

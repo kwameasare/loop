@@ -402,6 +402,66 @@ def test_replay_frame_fork_and_eval_case_preserve_trace_provenance(
     }
 
 
+def test_trace_insight_endpoints_use_authorized_trace_summary_not_fixed_spans(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    trace_id = "c" * 32
+    _add_trace(client, workspace_id, agent_id, trace_id)
+
+    latency = client.post(
+        f"/v1/agents/{agent_id}/latency-budget",
+        headers=_auth(),
+        json={"trace_id": trace_id, "target_latency_ms": 100},
+    )
+    assert latency.status_code == 200, latency.text
+    latency_body = latency.json()
+    assert latency_body["total_latency_ms"] == 180
+    assert latency_body["gap_ms"] == 80
+    assert latency_body["spans"] == [
+        {
+            "id": trace_id,
+            "label": "Recorded turn summary",
+            "ms": 180,
+            "kind": "trace",
+            "evidence_ref": f"trace/{trace_id}/summary",
+        }
+    ]
+    assert latency_body["suggestions"] == []
+    assert "Span-level latency breakdown" in latency_body["unavailable_reason"]
+
+    context = client.post(
+        f"/v1/agents/{agent_id}/context-ablation",
+        headers=_auth(),
+        json={"turn_id": trace_id, "toggles": {"prompt_sections": False}},
+    )
+    assert context.status_code == 200, context.text
+    context_body = context.json()
+    assert "will not claim cost" in context_body["unavailable_reason"]
+    prompt = context_body["items"][0]
+    assert prompt["id"] == "prompt_sections"
+    assert prompt["enabled"] is False
+    assert prompt["cost_delta_pct"] == 0
+    assert prompt["latency_delta_ms"] == 0
+    assert prompt["quality_delta"] == 0
+    assert prompt["evidence_ref"] == f"trace/{trace_id}/context/prompt-unavailable"
+
+    missing = client.post(
+        f"/v1/agents/{agent_id}/latency-budget",
+        headers=_auth(),
+        json={"trace_id": "missing-trace", "target_latency_ms": 100},
+    )
+    assert missing.status_code == 404
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    assert {event["action"] for event in audit} >= {
+        "latency_budget:analyze",
+        "context_ablation:run",
+    }
+
+
 def test_empty_state_suggestion_acceptance_creates_real_artifacts(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:
@@ -2799,22 +2859,27 @@ def test_tool_import_persona_semantic_diff_style_bisect_and_shares(
     assert persona_eval.json()["case"]["source"] == "persona-test"
     assert persona_eval.json()["case"]["source_ref"] == persona_item["evidence_ref"]
 
+    trace_id = "d" * 32
+    _add_trace(client, workspace_id, agent_id, trace_id)
+
     latency = client.post(
         f"/v1/agents/{agent_id}/latency-budget",
         headers=_auth(),
-        json={"trace_id": "trace-prod-1", "target_latency_ms": 900},
+        json={"trace_id": trace_id, "target_latency_ms": 900},
     )
     assert latency.status_code == 200, latency.text
-    assert latency.json()["suggestions"][0]["saves_ms"] > 0
+    assert latency.json()["total_latency_ms"] == 180
+    assert latency.json()["suggestions"] == []
 
     ablation = client.post(
         f"/v1/agents/{agent_id}/context-ablation",
         headers=_auth(),
-        json={"turn_id": "turn-1", "toggles": {"prompt_sections": False}},
+        json={"turn_id": trace_id, "toggles": {"prompt_sections": False}},
     )
     assert ablation.status_code == 200, ablation.text
     assert ablation.json()["items"][0]["id"] == "prompt_sections"
-    assert ablation.json()["items"][0]["cost_delta_pct"] < 0
+    assert ablation.json()["items"][0]["cost_delta_pct"] == 0
+    assert "will not claim cost" in ablation.json()["unavailable_reason"]
 
     empty = client.get(
         f"/v1/agents/{agent_id}/empty-state-suggestions?surface=evals",
