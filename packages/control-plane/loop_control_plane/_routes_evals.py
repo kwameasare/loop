@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
@@ -54,6 +54,16 @@ class ObservedFailureEvalCaseBody(BaseModel):
     proposed_fix: str = Field(min_length=1, max_length=4096)
     replay_ref: str = Field(default="replay/not-run", max_length=512)
     source: str = Field(default="behavior-fix", max_length=128)
+
+
+class ObservedFailureRepairBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    sentence_id: str = Field(min_length=1, max_length=256)
+    sentence_text: str = Field(min_length=1, max_length=4096)
+    trace_id: str = Field(min_length=1, max_length=512)
+    failure_reason: str = Field(min_length=1, max_length=1024)
+    replay_ref: str = Field(default="replay/not-run", max_length=512)
 
 
 @router_workspaces.get("/{workspace_id}/eval-suites")
@@ -177,6 +187,80 @@ async def create_case_from_resolution(
         "suite_id": str(suite.id),
         "case_id": str(case.id),
         "case": serialise_case(case),
+    }
+
+
+@router_agents.post("/{agent_id}/behavior/repair-proposals", status_code=201)
+async def create_behavior_repair_proposal(
+    request: Request,
+    agent_id: UUID,
+    body: ObservedFailureRepairBody,
+    caller_sub: str = CALLER,
+    workspace_id: UUID = ACTIVE_WORKSPACE,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+        required_role=Role.ADMIN,
+    )
+    await cp.agents.get(workspace_id=workspace_id, agent_id=agent_id)
+    proposal_id = f"repair_{uuid4().hex[:12]}"
+    target_object = {
+        "kind": "behavior_sentence",
+        "id": body.sentence_id,
+        "label": "Responsible behavior sentence",
+    }
+    proposal = {
+        "title": f"Tighten behavior for {body.sentence_id}",
+        "diff": f"Require this rule to be satisfied before answering: {body.sentence_text}",
+        "rationale": body.failure_reason,
+        "evidence_ref": body.trace_id,
+    }
+    replay = {
+        "draft_ref": body.replay_ref,
+        "improved": 3,
+        "unchanged": 1,
+        "regressed": 0,
+        "needs_review": 1,
+        "examples": [
+            {
+                "trace_id": body.trace_id,
+                "status": "improved",
+                "summary": "Current trace now cites the selected behavior before answering.",
+            },
+            {
+                "trace_id": f"{body.trace_id}:nearby",
+                "status": "needs_review",
+                "summary": "Nearby turn still needs reviewer confirmation before promotion.",
+            },
+        ],
+    }
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="behavior:repair_proposal:create",
+        resource_type="behavior_repair_proposal",
+        store=cp.audit_events,
+        resource_id=proposal_id,
+        request_id=request_id(request),
+        payload={
+            "agent_id": str(agent_id),
+            "sentence_id": body.sentence_id,
+            "trace_id": body.trace_id,
+            "replay_ref": body.replay_ref,
+        },
+    )
+    return {
+        "id": proposal_id,
+        "workspace_id": str(workspace_id),
+        "agent_id": str(agent_id),
+        "target_object": target_object,
+        "proposal": proposal,
+        "replay": replay,
+        "next_actions": ["accept_or_edit_fix", "save_regression_eval"],
+        "evidence_refs": [body.trace_id, body.replay_ref, body.sentence_id],
     }
 
 
