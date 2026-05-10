@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Request
@@ -74,6 +74,20 @@ class ObservedFailureRepairBody(BaseModel):
     failure_reason: str = Field(min_length=1, max_length=1024)
     replay_ref: str = Field(default="replay/not-run", max_length=512)
     risk_tags: list[str] = Field(default_factory=list, max_length=32)
+    target_object_kind: str | None = Field(default=None, max_length=128)
+
+
+class ObservedFailureRepairDecisionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    decision: Literal["accepted", "edited", "rejected"]
+    sentence_id: str = Field(min_length=1, max_length=256)
+    trace_id: str = Field(min_length=1, max_length=512)
+    proposal_diff: str = Field(min_length=1, max_length=4096)
+    edited_diff: str | None = Field(default=None, max_length=4096)
+    reason: str | None = Field(default=None, max_length=1024)
+    replay_ref: str = Field(default="replay/not-run", max_length=512)
+    evidence_refs: list[str] = Field(default_factory=list, max_length=32)
     target_object_kind: str | None = Field(default=None, max_length=128)
 
 
@@ -386,6 +400,73 @@ async def create_behavior_repair_proposal(
         "replay": replay,
         "next_actions": ["accept_or_edit_fix", "save_regression_eval"],
         "evidence_refs": [body.trace_id, body.replay_ref, body.sentence_id],
+    }
+
+
+@router_agents.post("/{agent_id}/behavior/repair-proposals/{proposal_id}/decision")
+async def decide_behavior_repair_proposal(
+    request: Request,
+    agent_id: UUID,
+    proposal_id: str,
+    body: ObservedFailureRepairDecisionBody,
+    caller_sub: str = CALLER,
+    workspace_id: UUID | None = None,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    agent = await _agent(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
+        workspace_id=workspace_id,
+        required_role=Role.ADMIN,
+    )
+    workspace_id = agent.workspace_id
+    if body.decision == "edited" and not (body.edited_diff or "").strip():
+        raise HTTPException(status_code=400, detail="edited_diff is required for edited repairs")
+    accepted_diff = (
+        body.edited_diff.strip()
+        if body.decision == "edited" and body.edited_diff
+        else body.proposal_diff
+    )
+    if body.decision == "rejected":
+        accepted_diff = ""
+    decision_id = f"repair_decision_{uuid4().hex[:12]}"
+    evidence_refs = list(dict.fromkeys([body.trace_id, body.replay_ref, *body.evidence_refs]))
+    record_audit_event(
+        workspace_id=workspace_id,
+        actor_sub=caller_sub,
+        action="behavior:repair_proposal:decision",
+        resource_type="behavior_repair_proposal",
+        store=cp.audit_events,
+        resource_id=proposal_id,
+        request_id=request_id(request),
+        payload={
+            "agent_id": str(agent_id),
+            "proposal_id": proposal_id,
+            "decision_id": decision_id,
+            "decision": body.decision,
+            "sentence_id": body.sentence_id,
+            "trace_id": body.trace_id,
+            "replay_ref": body.replay_ref,
+            "target_object_kind": body.target_object_kind,
+            "reason": body.reason,
+            "evidence_refs": evidence_refs,
+        },
+    )
+    return {
+        "ok": True,
+        "id": decision_id,
+        "proposal_id": proposal_id,
+        "status": body.decision,
+        "accepted_diff": accepted_diff or None,
+        "draft_ref": body.replay_ref,
+        "audit_ref": f"audit/{workspace_id}/behavior-repair/{proposal_id}/{decision_id}",
+        "next_actions": (
+            ["save_regression_eval", "open_change_set"]
+            if body.decision in {"accepted", "edited"}
+            else ["dismiss_repair", "keep_original_failure_eval"]
+        ),
+        "evidence_refs": evidence_refs,
     }
 
 

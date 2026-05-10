@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  decideObservedFailureRepair,
   requestObservedFailureRepair,
   saveObservedFailureEval,
 } from "./behavior-repair";
@@ -29,6 +30,21 @@ describe("behavior repair client", () => {
 
     await expect(
       saveObservedFailureEval("agt_1", INPUT, { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      decideObservedFailureRepair(
+        "agt_1",
+        "repair_1",
+        {
+          decision: "accepted",
+          sentence_id: INPUT.sentence_id,
+          trace_id: INPUT.trace_id,
+          proposal_diff: INPUT.proposed_fix,
+          replay_ref: INPUT.replay_ref,
+        },
+        { baseUrl: "" },
+      ),
     ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
   });
 
@@ -59,6 +75,30 @@ describe("behavior repair client", () => {
     expect(response.case?.expected).toMatchObject({
       proposed_fix: INPUT.proposed_fix,
     });
+  });
+
+  it("keeps deterministic repair decisions explicitly opt-in", async () => {
+    const response = await decideObservedFailureRepair(
+      "agt_1",
+      "repair_1",
+      {
+        decision: "edited",
+        sentence_id: INPUT.sentence_id,
+        trace_id: INPUT.trace_id,
+        proposal_diff: INPUT.proposed_fix,
+        edited_diff: "Use the current policy before answering.",
+        replay_ref: INPUT.replay_ref,
+        evidence_refs: [INPUT.sentence_id],
+      },
+      { baseUrl: "", allowFixture: true },
+    );
+
+    expect(response.status).toBe("edited");
+    expect(response.accepted_diff).toBe(
+      "Use the current policy before answering.",
+    );
+    expect(response.next_actions).toContain("save_regression_eval");
+    expect(response.evidence_refs).toContain(INPUT.trace_id);
   });
 
   it("posts observed failures to the agent-scoped eval endpoint", async () => {
@@ -148,6 +188,59 @@ describe("behavior repair client", () => {
       trace_id: INPUT.trace_id,
       replay_ref: INPUT.replay_ref,
       risk_tags: INPUT.risk_tags,
+      target_object_kind: INPUT.target_object_kind,
+    });
+  });
+
+  it("posts repair proposal decisions before eval creation", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        ok: true,
+        id: "decision_1",
+        proposal_id: "repair_1",
+        status: "accepted",
+        accepted_diff: INPUT.proposed_fix,
+        draft_ref: INPUT.replay_ref,
+        audit_ref: "audit/repair_1",
+        next_actions: ["save_regression_eval"],
+        evidence_refs: [INPUT.trace_id, INPUT.replay_ref],
+      }),
+    );
+
+    const response = await decideObservedFailureRepair(
+      "agt_1",
+      "repair_1",
+      {
+        decision: "accepted",
+        sentence_id: INPUT.sentence_id,
+        trace_id: INPUT.trace_id,
+        proposal_diff: INPUT.proposed_fix,
+        replay_ref: INPUT.replay_ref,
+        evidence_refs: [INPUT.sentence_id],
+        target_object_kind: INPUT.target_object_kind,
+      },
+      {
+        baseUrl: "https://cp.test",
+        fetcher,
+        token: "tok",
+      },
+    );
+
+    expect(response.id).toBe("decision_1");
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/agents/agt_1/behavior/repair-proposals/repair_1/decision",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ authorization: "Bearer tok" }),
+      }),
+    );
+    const [, init] = fetcher.mock.calls[0]!;
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      decision: "accepted",
+      sentence_id: INPUT.sentence_id,
+      trace_id: INPUT.trace_id,
+      proposal_diff: INPUT.proposed_fix,
+      replay_ref: INPUT.replay_ref,
       target_object_kind: INPUT.target_object_kind,
     });
   });
