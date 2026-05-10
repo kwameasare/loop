@@ -15,7 +15,7 @@ export default function ScenariosDemoPage(): JSX.Element {
   return (
     <main
       className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6"
-      aria-label="North-star scenarios"
+      aria-label="Scenario and journey harness"
     >
       <header>
         <h1 className="text-xl font-semibold">Scenario and journey harness</h1>

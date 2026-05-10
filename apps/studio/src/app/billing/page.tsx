@@ -5,7 +5,7 @@
  *
  * Wires the panels to cp-api. When older cp-api deployments return
  * 404, the page renders missing evidence instead of replacing the
- * workspace's billing state with fixture spend.
+ * workspace's billing state with local sample spend.
  */
 
 import { useEffect, useState } from "react";
@@ -118,7 +118,7 @@ function BillingPageBody(): JSX.Element {
           <p className="text-muted-foreground mt-1 text-sm">
             Studio could not confirm the workspace plan, usage, payment method,
             or invoice state from cp-api. It will not replace missing billing
-            evidence with fixture spend or a guessed provisioning state.
+            evidence with local sample spend or a guessed provisioning state.
           </p>
         </div>
       </main>
