@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  createEmptyToolsRoomData,
   createToolsRoomData,
   draftToolFromRequest,
   listAgentTools,
@@ -59,6 +60,32 @@ describe("Tools Room data", () => {
     );
     expect(data.toolContracts[1]?.tool_id).toBe("tool_issue_refund");
     expect(data.toolContracts[1]?.sandbox_status).toBe("sandbox");
+  });
+
+  it("builds live tool data without adding target fixture tools", () => {
+    const data = createToolsRoomData("agt_live", [
+      {
+        id: "tool_live_search",
+        name: "live.search",
+        kind: "http",
+        description: "Searches the live catalog.",
+        source: "cp-api",
+      },
+    ]);
+
+    expect(data.agentName).toBe("Agent agt_live");
+    expect(data.catalogEvidence).toContain("live cp-api");
+    expect(data.tools.map((tool) => tool.id)).toEqual(["tool_live_search"]);
+    expect(data.tools.map((tool) => tool.id)).not.toContain("tool_lookup_order");
+  });
+
+  it("builds an empty room without target fixture metadata", () => {
+    const data = createEmptyToolsRoomData("agt_empty");
+
+    expect(data.agentName).toBe("Agent agt_empty");
+    expect(data.tools).toEqual([]);
+    expect(data.catalogEvidence).toBe("No live tool bindings loaded.");
+    expect(data.degradedReason).toContain("No tools are bound yet");
   });
 
   it("drafts a tool from curl without retaining auth values", () => {

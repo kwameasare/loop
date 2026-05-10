@@ -572,9 +572,12 @@ export async function fetchBehaviorEditorData(
 export function createEmptyBehaviorEditorData(
   agentId = "agent_empty",
 ): BehaviorEditorData {
-  const base = createBehaviorEditorData(agentId);
   return {
-    ...base,
+    agentId,
+    agentName: `Agent ${agentId}`,
+    branch: "No branch loaded",
+    objectState: "draft",
+    trust: "degraded",
     sections: [],
     semanticDiffs: [],
     riskFlags: [],
@@ -588,9 +591,11 @@ export function createEmptyBehaviorEditorData(
       costDelta: "No token delta yet.",
       risk: "low",
       rollback: "No draft behavior has been saved.",
-      evidence: "empty_behavior_fixture",
+      evidence: "No behavior object loaded from cp-api.",
       canApply: false,
       blockedReason: "Create a behavior section before preview can apply.",
     },
+    degradedReason:
+      "No behavior object is loaded yet. Import instructions or create the first policy section.",
   };
 }

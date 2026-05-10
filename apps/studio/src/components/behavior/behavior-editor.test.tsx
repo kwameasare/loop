@@ -118,9 +118,8 @@ describe("BehaviorEditor", () => {
   });
 
   it("renders a useful empty state when no behavior sections exist", () => {
-    render(
-      <BehaviorEditor data={createEmptyBehaviorEditorData("agent_empty")} />,
-    );
+    const data = createEmptyBehaviorEditorData("agent_empty");
+    render(<BehaviorEditor data={data} />);
 
     expect(screen.getByText("No behavior sections yet")).toBeInTheDocument();
     expect(screen.getByText("No semantic diff yet")).toBeInTheDocument();
@@ -128,6 +127,8 @@ describe("BehaviorEditor", () => {
     expect(screen.getByTestId("behavior-risk-flags")).toHaveTextContent(
       "No risk flags yet",
     );
+    expect(data.agentName).toBe("Agent agent_empty");
+    expect(screen.queryByText("Acme Support Concierge")).not.toBeInTheDocument();
   });
 
   it("renders behavior sourced from a live agent version spec", () => {

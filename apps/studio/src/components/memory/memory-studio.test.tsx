@@ -101,10 +101,13 @@ describe("MemoryStudio", () => {
   });
 
   it("renders an empty degraded state with replay controls still visible", () => {
-    render(<MemoryStudio data={createEmptyMemoryStudioData("agent_empty")} />);
+    const data = createEmptyMemoryStudioData("agent_empty");
+    render(<MemoryStudio data={data} />);
 
     expect(screen.getByText("Memory data is empty")).toBeInTheDocument();
     expect(screen.getByText("No memory in this scope")).toBeInTheDocument();
     expect(screen.getByTestId("memory-studio-replay")).toBeInTheDocument();
+    expect(data.agentName).toBe("Agent agent_empty");
+    expect(screen.queryByText("Acme Support Concierge")).not.toBeInTheDocument();
   });
 });

@@ -132,11 +132,19 @@ export function createMemoryStudioDataFromEntries(
   entries: MemoryStudioEntry[],
   policies = localMemoryPolicies(agentId),
 ): MemoryStudioData {
-  const base = createMemoryStudioData(agentId);
   return {
-    ...base,
+    agentId,
+    agentName: `Agent ${agentId}`,
+    branch: "Memory store",
+    objectState: "saved",
+    trust: entries.length > 0 ? "watching" : "degraded",
     entries,
     policies,
+    replayResults: [],
+    retentionEvidence:
+      policies.length > 0
+        ? "Loaded from cp-api memory policy records."
+        : "No retention policy records loaded from cp-api.",
     degradedReason:
       entries.length === 0
         ? "No memory writes have been captured yet. Replay a turn or run a simulator scenario to inspect memory."
@@ -149,15 +157,7 @@ export async function fetchMemoryStudioData(
   userId: string,
   opts: MemoryStudioClientOptions = {},
 ): Promise<MemoryStudioData> {
-  let base: string;
-  try {
-    base = cpApiBaseUrl(opts.baseUrl);
-  } catch (err) {
-    if (err instanceof Error && /LOOP_CP_API_BASE_URL/.test(err.message)) {
-      return createMemoryStudioData(agentId);
-    }
-    throw err;
-  }
+  const base = cpApiBaseUrl(opts.baseUrl);
   const fetcher = opts.fetcher ?? fetch;
   const params = new URLSearchParams({ user_id: userId });
   const memoryRequest = fetcher(
@@ -356,10 +356,16 @@ export function createMemoryStudioData(
 export function createEmptyMemoryStudioData(
   agentId = "agent_empty",
 ): MemoryStudioData {
-  const base = createMemoryStudioData(agentId);
   return {
-    ...base,
+    agentId,
+    agentName: `Agent ${agentId}`,
+    branch: "No branch loaded",
+    objectState: "draft",
+    trust: "degraded",
     entries: [],
+    policies: localMemoryPolicies(agentId),
+    replayResults: [],
+    retentionEvidence: "No memory store records loaded from cp-api.",
     degradedReason:
       "No memory writes have been captured yet. Replay a turn or run a simulator scenario to inspect memory.",
   };

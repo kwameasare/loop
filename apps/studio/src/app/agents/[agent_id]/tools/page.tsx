@@ -1,5 +1,6 @@
 import { ToolsRoom } from "@/components/tools/tools-room";
 import {
+  createEmptyToolsRoomData,
   createToolsRoomData,
   listAgentTools,
   type AgentTool,
@@ -24,11 +25,14 @@ export default async function AgentToolsPage({ params }: AgentToolsPageProps) {
     liveTools = [];
     toolContracts = [];
   }
-  const data = createToolsRoomData(
-    params.agent_id,
-    liveTools,
-    undefined,
-    toolContracts,
-  );
+  const data =
+    liveTools.length > 0
+      ? createToolsRoomData(
+          params.agent_id,
+          liveTools,
+          undefined,
+          toolContracts,
+        )
+      : createEmptyToolsRoomData(params.agent_id);
   return <ToolsRoom data={data} />;
 }
