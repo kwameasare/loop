@@ -14,6 +14,7 @@ export interface EvalFoundryProps {
   model: EvalFoundryModel;
   createAction: ReactNode;
   suggestionsAgentId?: string | undefined;
+  degradedReason?: string | undefined;
 }
 
 function formatLatencyDelta(ms: number): string {
@@ -26,6 +27,7 @@ export function EvalFoundry({
   model,
   createAction,
   suggestionsAgentId,
+  degradedReason,
 }: EvalFoundryProps) {
   return (
     <main className="flex flex-col gap-6 p-6" data-testid="eval-foundry">
@@ -43,6 +45,12 @@ export function EvalFoundry({
         </div>
         {createAction}
       </header>
+
+      {degradedReason ? (
+        <StatePanel state="degraded" title="Eval suites unavailable">
+          {degradedReason}
+        </StatePanel>
+      ) : null}
 
       <section
         aria-labelledby="eval-creation-heading"

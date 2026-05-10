@@ -15,9 +15,10 @@ import {
 } from "./evals";
 
 describe("listEvalSuites", () => {
-  it("returns an empty list when no baseUrl is configured", async () => {
-    const { items } = await listEvalSuites();
+  it("returns degraded state when no baseUrl is configured", async () => {
+    const { items, degraded_reason } = await listEvalSuites();
     expect(items).toEqual([]);
+    expect(degraded_reason).toMatch(/LOOP_CP_API_BASE_URL is required/);
   });
 
   it("returns fixture suites only when explicitly allowed", async () => {
