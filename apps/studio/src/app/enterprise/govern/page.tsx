@@ -10,7 +10,9 @@ import {
 } from "@/components/section-states";
 import {
   fetchComplianceReview,
+  fetchEnterpriseSecurity,
   type ComplianceReviewModel,
+  type EnterpriseSecurityModel,
 } from "@/lib/enterprise-govern";
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
 
@@ -26,24 +28,44 @@ function EnterpriseGovernPageBody(): JSX.Element {
   const { active, isLoading } = useActiveWorkspace();
   const activeWorkspaceId = active?.id;
   const [model, setModel] = useState<ComplianceReviewModel | null>(null);
+  const [security, setSecurity] = useState<EnterpriseSecurityModel | null>(
+    null,
+  );
+  const [securityError, setSecurityError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!activeWorkspaceId) return;
     let cancelled = false;
-    void fetchComplianceReview(activeWorkspaceId)
-      .then((next) => {
-        if (!cancelled) setModel(next);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
+    void Promise.allSettled([
+      fetchComplianceReview(activeWorkspaceId),
+      fetchEnterpriseSecurity(activeWorkspaceId),
+    ])
+      .then(([complianceResult, securityResult]) => {
+        if (cancelled) return;
+        if (complianceResult.status === "fulfilled") {
+          setModel(complianceResult.value);
+        } else {
+          const reason = complianceResult.reason;
           setError(
-            err instanceof Error
-              ? err.message
+            reason instanceof Error
+              ? reason.message
               : "Could not load compliance review.",
           );
         }
-      });
+        if (securityResult.status === "fulfilled") {
+          setSecurity(securityResult.value);
+          setSecurityError(null);
+        } else {
+          const reason = securityResult.reason;
+          setSecurity(null);
+          setSecurityError(
+            reason instanceof Error
+              ? reason.message
+              : "Could not load enterprise security evidence.",
+          );
+        }
+      })
     return () => {
       cancelled = true;
     };
@@ -88,7 +110,20 @@ function EnterpriseGovernPageBody(): JSX.Element {
       data-testid="enterprise-govern-page"
       className="mx-auto max-w-6xl p-6"
     >
-      <GovernOverview compliance={model!} />
+      <GovernOverview
+        compliance={model!}
+        byokKeys={security?.byokKeys ?? []}
+        residencyZones={security?.residencyZones ?? []}
+        {...(securityError ?? security?.degradedReason
+          ? {
+              securityDegradedReason:
+                securityError ?? security?.degradedReason ?? "",
+            }
+          : {})}
+        {...(security?.evidenceRef
+          ? { securityEvidenceRef: security.evidenceRef }
+          : {})}
+      />
     </main>
   );
 }

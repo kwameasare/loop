@@ -1355,6 +1355,72 @@ class EncryptionKeyBody(BaseModel):
     role_binding: str = Field(min_length=1, max_length=512)
 
 
+def _residency_zone_for_region(region: str) -> dict[str, Any]:
+    labels = {
+        "us-east": ("US East", ["US"]),
+        "us-west": ("US West", ["US"]),
+        "eu-west": ("EU West", ["EU", "UK"]),
+        "ap-south": ("AP South", ["IN"]),
+    }
+    label, jurisdictions = labels.get(region, (region, [region.upper()]))
+    return {
+        "region": region,
+        "label": label,
+        "active": True,
+        "jurisdictions": jurisdictions,
+        "evidence_ref": f"workspace/residency/{region}",
+    }
+
+
+def _byok_row_for_encryption(workspace_id: UUID, item: dict[str, Any] | None) -> dict[str, Any]:
+    if item is None:
+        return {
+            "id": "workspace_key_missing",
+            "alias": "No customer-managed key bound",
+            "scope": "storage",
+            "status": "missing",
+            "rotated_at_days": 0,
+            "evidence_ref": f"audit/byok/{workspace_id}/missing",
+        }
+    if item.get("status") == "revoked":
+        status = "missing"
+    elif item.get("rotated_at"):
+        status = "rotated"
+    else:
+        status = "active"
+    return {
+        "id": f"workspace_key_v{item.get('version', 1)}",
+        "alias": str(item.get("key_uri") or "workspace encryption key"),
+        "scope": "storage",
+        "status": status,
+        "rotated_at_days": 0 if item.get("rotated_at") else 1,
+        "evidence_ref": f"audit/byok/{workspace_id}/v{item.get('version', 1)}",
+    }
+
+
+@router_workspaces.get("/{workspace_id}/enterprise/security")
+async def get_enterprise_security(
+    request: Request,
+    workspace_id: UUID,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    cp = request.app.state.cp
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    workspace = await cp.workspaces.get(workspace_id)
+    encryption = _bucket(request, "encryption").get(str(workspace_id))
+    return {
+        "workspace_id": str(workspace_id),
+        "residency_zones": [_residency_zone_for_region(workspace.region)],
+        "byok_keys": [_byok_row_for_encryption(workspace_id, encryption)],
+        "evidence_ref": f"enterprise/security/{workspace_id}",
+        "degraded_reason": None,
+    }
+
+
 @router_workspaces.post("/{workspace_id}/encryption/key")
 async def bind_encryption_key(
     request: Request,

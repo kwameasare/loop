@@ -2274,6 +2274,13 @@ def test_approval_edit_invalidates_content_hash_bound_approval(
 def test_byok_rotation_revocation_and_residency_block_are_audited(
     client: TestClient, workspace_id: UUID
 ) -> None:
+    initial_security = client.get(
+        f"/v1/workspaces/{workspace_id}/enterprise/security",
+        headers=_auth(),
+    )
+    assert initial_security.status_code == 200, initial_security.text
+    assert initial_security.json()["byok_keys"][0]["status"] == "missing"
+
     bind = client.post(
         f"/v1/workspaces/{workspace_id}/encryption/key",
         headers=_auth(),
@@ -2289,12 +2296,26 @@ def test_byok_rotation_revocation_and_residency_block_are_audited(
         headers=_auth(),
     ).json()
     assert rotate["version"] == 2
+
+    rotated_security = client.get(
+        f"/v1/workspaces/{workspace_id}/enterprise/security",
+        headers=_auth(),
+    ).json()
+    assert rotated_security["byok_keys"][0]["status"] == "rotated"
+    assert rotated_security["residency_zones"][0]["active"] is True
+
     revoke = client.post(
         f"/v1/workspaces/{workspace_id}/encryption/key/revoke",
         headers=_auth(),
     ).json()
     assert revoke["workspace_disabled"] is True
     assert revoke["status"] == "revoked"
+
+    revoked_security = client.get(
+        f"/v1/workspaces/{workspace_id}/enterprise/security",
+        headers=_auth(),
+    ).json()
+    assert revoked_security["byok_keys"][0]["status"] == "missing"
 
     residency = client.post(
         f"/v1/workspaces/{workspace_id}/residency/check",

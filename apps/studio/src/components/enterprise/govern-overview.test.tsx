@@ -213,6 +213,59 @@ describe("GovernOverview", () => {
     );
   });
 
+  it("residency tab can render source-backed security evidence", () => {
+    render(
+      <GovernOverview
+        residencyZones={[
+          {
+            region: "eu-west",
+            label: "EU West",
+            active: true,
+            jurisdictions: ["EU", "UK"],
+            evidenceRef: "workspace/residency/eu-west",
+          },
+        ]}
+        byokKeys={[
+          {
+            id: "workspace_key_v2",
+            alias: "arn:aws:kms:eu-west-2:111:key/abc",
+            scope: "storage",
+            status: "rotated",
+            rotatedAtDays: 0,
+            evidenceRef: "audit/byok/workspace/v2",
+          },
+        ]}
+        securityEvidenceRef="enterprise/security/workspace_1"
+      />,
+    );
+    fireEvent.click(screen.getByTestId("govern-tab-residency"));
+    expect(screen.getByTestId("enterprise-security-evidence")).toHaveTextContent(
+      "enterprise/security/workspace_1",
+    );
+    expect(screen.getByTestId("residency-row-eu-west")).toHaveTextContent(
+      "EU West",
+    );
+    expect(screen.getByTestId("byok-row-workspace_key_v2")).toHaveTextContent(
+      "rotated",
+    );
+  });
+
+  it("residency tab marks missing source evidence as degraded", () => {
+    render(
+      <GovernOverview
+        residencyZones={[]}
+        byokKeys={[]}
+        securityDegradedReason="cp-api enterprise security returned 503"
+      />,
+    );
+    fireEvent.click(screen.getByTestId("govern-tab-residency"));
+    expect(screen.getByTestId("enterprise-security-degraded")).toHaveTextContent(
+      "503",
+    );
+    expect(screen.getByTestId("residency-empty")).toBeInTheDocument();
+    expect(screen.getByTestId("byok-empty")).toBeInTheDocument();
+  });
+
   it("procurement tab flags stale documents", () => {
     render(<GovernOverview />);
     fireEvent.click(screen.getByTestId("govern-tab-procurement"));
