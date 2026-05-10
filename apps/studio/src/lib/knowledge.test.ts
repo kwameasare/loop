@@ -22,6 +22,7 @@ describe("knowledge atelier model", () => {
   it("builds source, chunk, retrieval, Why, and readiness views", () => {
     const model = getKnowledgeAtelierModel("agt_demo", [readyDoc]);
 
+    expect(model.agentName).toBe("Agent agt_demo");
     expect(model.sources[0]).toMatchObject({
       documentId: "doc_ready",
       owner: "Support Ops",
