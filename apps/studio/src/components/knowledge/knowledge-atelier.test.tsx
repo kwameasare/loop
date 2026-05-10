@@ -96,6 +96,23 @@ describe("KnowledgeAtelier", () => {
     await waitForDiagnosticsToSettle();
   });
 
+  it("separates backend-unavailable state from a true empty knowledge base", async () => {
+    render(
+      <KnowledgeAtelier
+        agentId="agt_demo"
+        degradedReason="Knowledge documents require cp-api."
+        initialDocuments={[]}
+      />,
+    );
+
+    expect(screen.getByText("Knowledge service unavailable")).toBeInTheDocument();
+    expect(screen.queryByText("No knowledge sources indexed")).not.toBeInTheDocument();
+    expect(screen.getByTestId("kb-degraded")).toHaveTextContent(
+      /knowledge service unavailable/i,
+    );
+    await waitForDiagnosticsToSettle();
+  });
+
   it("does not show fixture inverse-retrieval misses when cp-api is unavailable", async () => {
     process.env.LOOP_CP_API_BASE_URL = "";
 

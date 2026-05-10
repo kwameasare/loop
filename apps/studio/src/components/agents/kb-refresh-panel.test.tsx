@@ -48,8 +48,16 @@ const opts: KbHelperOptions = {
 // ---------------------------------------------------------------------------
 
 describe("getDocRefreshStatus", () => {
-  it("returns fixture when no baseUrl", async () => {
-    const result = await getDocRefreshStatus("agent-1", "doc-fixture");
+  it("requires cp-api unless fixture mode is explicit", async () => {
+    await expect(
+      getDocRefreshStatus("agent-1", "doc-fixture"),
+    ).rejects.toThrow(/required to read KB refresh status/);
+  });
+
+  it("returns fixture when fixture mode is explicit", async () => {
+    const result = await getDocRefreshStatus("agent-1", "doc-fixture", {
+      allowFixture: true,
+    });
     expect(result.documentId).toBe("doc-fixture");
     expect(result.cadence).toBe("daily");
     expect(["pending", "running", "ok", "error"]).toContain(result.status);
@@ -89,12 +97,32 @@ describe("setDocRefreshCadence", () => {
     expect((init as RequestInit).method).toBe("PATCH");
   });
 
-  it("updates fixture in-memory cadence without baseUrl", async () => {
-    const first = await getDocRefreshStatus("agent-1", "doc-cadence-test");
+  it("requires cp-api before updating cadence unless fixture mode is explicit", async () => {
+    await expect(
+      setDocRefreshCadence("agent-1", "doc-cadence-test", "hourly"),
+    ).rejects.toThrow(/required to update KB refresh cadence/);
+  });
+
+  it("updates fixture in-memory cadence in explicit fixture mode", async () => {
+    const fixtureOpts = { allowFixture: true };
+    const first = await getDocRefreshStatus(
+      "agent-1",
+      "doc-cadence-test",
+      fixtureOpts,
+    );
     expect(first.cadence).toBe("daily");
-    const updated = await setDocRefreshCadence("agent-1", "doc-cadence-test", "hourly");
+    const updated = await setDocRefreshCadence(
+      "agent-1",
+      "doc-cadence-test",
+      "hourly",
+      fixtureOpts,
+    );
     expect(updated.cadence).toBe("hourly");
-    const refetch = await getDocRefreshStatus("agent-1", "doc-cadence-test");
+    const refetch = await getDocRefreshStatus(
+      "agent-1",
+      "doc-cadence-test",
+      fixtureOpts,
+    );
     expect(refetch.cadence).toBe("hourly");
   });
 });
@@ -115,10 +143,25 @@ describe("triggerDocRefresh", () => {
     expect((init as RequestInit).method).toBe("POST");
   });
 
-  it("fixture trigger increments runCount", async () => {
-    const before = await getDocRefreshStatus("agent-1", "doc-trigger-test");
+  it("requires cp-api before refreshing unless fixture mode is explicit", async () => {
+    await expect(
+      triggerDocRefresh("agent-1", "doc-trigger-test"),
+    ).rejects.toThrow(/required to refresh a KB document/);
+  });
+
+  it("fixture trigger increments runCount in explicit fixture mode", async () => {
+    const fixtureOpts = { allowFixture: true };
+    const before = await getDocRefreshStatus(
+      "agent-1",
+      "doc-trigger-test",
+      fixtureOpts,
+    );
     const before_count = before.runCount;
-    const result = await triggerDocRefresh("agent-1", "doc-trigger-test");
+    const result = await triggerDocRefresh(
+      "agent-1",
+      "doc-trigger-test",
+      fixtureOpts,
+    );
     expect(result.runCount).toBe(before_count + 1);
     expect(result.status).toBe("running");
   });

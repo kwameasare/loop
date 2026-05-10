@@ -38,6 +38,7 @@ import {
 export interface KnowledgeAtelierProps {
   agentId: string;
   initialDocuments: KbDocument[];
+  degradedReason?: string | undefined;
 }
 
 function statusTone(
@@ -235,6 +236,7 @@ function ReadinessList({ title, items }: { title: string; items: string[] }) {
 export function KnowledgeAtelier({
   agentId,
   initialDocuments,
+  degradedReason,
 }: KnowledgeAtelierProps) {
   const [documents, setDocuments] = useState(initialDocuments);
   const [query, setQuery] = useState("");
@@ -344,7 +346,11 @@ export function KnowledgeAtelier({
             </p>
           </div>
         </div>
-        {model.sources.length === 0 ? (
+        {degradedReason ? (
+          <StatePanel state="degraded" title="Knowledge service unavailable">
+            {degradedReason}
+          </StatePanel>
+        ) : model.sources.length === 0 ? (
           <div>
             <StatePanel state="empty" title="No knowledge sources indexed">
               Upload a file or connect a source before retrieval, chunking, and
@@ -362,6 +368,7 @@ export function KnowledgeAtelier({
         <div className="rounded-md border bg-card p-4">
           <KbList
             agentId={agentId}
+            degradedReason={degradedReason}
             initialDocuments={documents}
             remove={remove}
             triggerRefresh={refresh}
