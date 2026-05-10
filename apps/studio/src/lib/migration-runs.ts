@@ -132,6 +132,8 @@ export interface MigrationInventoryItem {
   confidence: number;
   severity: MigrationInventorySeverity;
   evidence_ref: string;
+  resolved_by_repair_id?: string;
+  resolved_at?: string | null;
 }
 
 export interface MigrationLineageStep {
@@ -392,6 +394,73 @@ export async function advanceMigrationCutover(
             : "cutover_active",
         cutover_stages: nextStages as MigrationCutoverStage[],
         updated_at: new Date().toISOString(),
+      },
+    },
+  );
+}
+
+export async function acceptMigrationRepair(
+  workspaceId: string,
+  migrationId: string,
+  input: { repair_id: string; evidence_ref?: string; patch_summary?: string },
+  opts: MigrationCutoverClientOptions = {},
+): Promise<MigrationRun> {
+  const fallback = opts.fallbackRun ?? localMigrationRun(workspaceId);
+  const itemId = input.repair_id.replace(/^rep_/, "");
+  const now = new Date().toISOString();
+  const inventory = fallback.inventory.map((item) =>
+    item.id === itemId
+      ? {
+          ...item,
+          confidence: Math.max(item.confidence, 88),
+          severity: "ok" as const,
+          evidence_ref:
+            input.evidence_ref ??
+            `audit/migration/${workspaceId}/${fallback.source}/repair/${input.repair_id}`,
+          resolved_by_repair_id: input.repair_id,
+          resolved_at: now,
+        }
+      : item,
+  );
+  const blocking_count = inventory.filter((item) => item.severity === "blocking").length;
+  const advisory_count = inventory.filter((item) => item.severity === "advisory").length;
+  const cutover_stages =
+    blocking_count === 0 &&
+    fallback.readiness.parity_total > 0 &&
+    !fallback.cutover_stages.some((stage) => stage.status === "in_progress")
+      ? fallback.cutover_stages.map((stage, index) =>
+          index === 0 ? { ...stage, status: "in_progress" as const } : stage,
+        )
+      : fallback.cutover_stages;
+  return cpJson<MigrationRun>(
+    `/workspaces/${encodeURIComponent(
+      workspaceId,
+    )}/migrations/imports/${encodeURIComponent(
+      migrationId,
+    )}/repairs/${encodeURIComponent(input.repair_id)}/accept`,
+    {
+      ...opts,
+      method: "POST",
+      body: input,
+      allowFallback: opts.allowFixture === true,
+      fallback: {
+        ...fallback,
+        status:
+          fallback.status === "mapped" && blocking_count === 0
+            ? "parity_ready"
+            : fallback.status,
+        inventory,
+        readiness: {
+          ...fallback.readiness,
+          blocking_count,
+          advisory_count,
+          parity_passing: Math.max(
+            0,
+            fallback.readiness.parity_total - blocking_count * 3 - advisory_count,
+          ),
+        },
+        cutover_stages,
+        updated_at: now,
       },
     },
   );

@@ -15,6 +15,7 @@ from loop_control_plane.migration_runs import (
     CutoverAdvance,
     CutoverRollback,
     MigrationImportCreate,
+    MigrationRepairAccept,
     migration_run_payload,
     migration_run_summary,
     slugify_agent_name,
@@ -259,6 +260,48 @@ async def advance_migration_cutover(
         resource_type="migration_run",
         resource_id=run.id,
         payload={"stage_id": body.stage_id, "status": run.status},
+    )
+    return migration_run_payload(run)
+
+
+@router.post("/{workspace_id}/migrations/imports/{migration_id}/repairs/{repair_id}/accept")
+async def accept_migration_repair(
+    request: Request,
+    workspace_id: UUID,
+    migration_id: str,
+    repair_id: str,
+    body: MigrationRepairAccept,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    await _authorise(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        admin=True,
+    )
+    payload = body.model_copy(update={"repair_id": repair_id})
+    try:
+        run = await request.app.state.cp.migration_runs.accept_repair(
+            workspace_id=workspace_id,
+            migration_id=migration_id,
+            body=payload,
+            actor_sub=caller_sub,
+        )
+    except WorkspaceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    _audit(
+        request,
+        workspace_id=workspace_id,
+        caller_sub=caller_sub,
+        action="migration:repair_accept",
+        resource_type="migration_run",
+        resource_id=run.id,
+        payload={
+            "repair_id": repair_id,
+            "status": run.status,
+            "blocking_count": run.readiness.blocking_count,
+            "evidence_ref": payload.evidence_ref,
+        },
     )
     return migration_run_payload(run)
 

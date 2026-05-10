@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  acceptMigrationRepair,
   advanceMigrationCutover,
   createMigrationImport,
   listMigrationImports,
@@ -32,12 +33,43 @@ describe("migration-runs client", () => {
     );
   });
 
-  it("posts import, advance, and rollback requests to the durable migration endpoints", async () => {
-    const run = localMigrationRun("ws_1");
+  it("posts import, repair acceptance, advance, and rollback requests to durable endpoints", async () => {
+    const baseRun = localMigrationRun("ws_1");
+    const run = {
+      ...baseRun,
+      status: "mapped" as const,
+      inventory: [
+        ...baseRun.inventory,
+        {
+          id: "inv_integrations",
+          kind: "integrations",
+          label: "Integrations",
+          count: 2,
+          loop_target: "tool contracts",
+          confidence: 58,
+          severity: "blocking" as const,
+          evidence_ref: "audit/migration/local/inventory/integrations",
+        },
+      ],
+      readiness: {
+        ...baseRun.readiness,
+        blocking_count: 1,
+      },
+    };
     const fetcher = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.endsWith("/migrations/imports")) {
         return Response.json(run, { status: 201 });
+      }
+      if (url.includes("/repairs/rep_inv_integrations/accept")) {
+        return Response.json({
+          ...run,
+          inventory: run.inventory.map((item) =>
+            item.id === "inv_integrations"
+              ? { ...item, severity: "ok", resolved_by_repair_id: "rep_inv_integrations" }
+              : item,
+          ),
+        });
       }
       if (url.includes("/cutover/advance")) {
         return Response.json({ ...run, status: "cutover_active" });
@@ -60,6 +92,14 @@ describe("migration-runs client", () => {
       ),
     ).resolves.toMatchObject({ id: run.id });
     await expect(
+      acceptMigrationRepair(
+        "ws_1",
+        run.id,
+        { repair_id: "rep_inv_integrations" },
+        { baseUrl: "https://cp.example.test", fetcher },
+      ),
+    ).resolves.toMatchObject({ id: run.id });
+    await expect(
       advanceMigrationCutover(
         "ws_1",
         run.id,
@@ -75,6 +115,13 @@ describe("migration-runs client", () => {
         { baseUrl: "https://cp.example.test", fetcher },
       ),
     ).resolves.toMatchObject({ status: "rolled_back" });
+    const repairCall = fetcher.mock.calls.find(([input]) =>
+      String(input).includes("/repairs/rep_inv_integrations/accept"),
+    );
+    expect(repairCall?.[1]).toMatchObject({ method: "POST" });
+    expect(JSON.parse(String((repairCall?.[1] as RequestInit).body))).toMatchObject({
+      repair_id: "rep_inv_integrations",
+    });
   });
 
   it("does not fabricate migration mutations when cp-api is not configured", async () => {
@@ -86,6 +133,15 @@ describe("migration-runs client", () => {
         target_agent_name: "Acme Import",
         source: "botpress",
       }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      acceptMigrationRepair(
+        "ws_1",
+        run.id,
+        { repair_id: "rep_inv_integrations" },
+        { fallbackRun: run },
+      ),
     ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
 
     await expect(
@@ -124,6 +180,22 @@ describe("migration-runs client", () => {
       archive_name: "rasa-project.zip",
       source: "rasa",
       target_agent_name: "Rasa Import",
+    });
+
+    await expect(
+      acceptMigrationRepair(
+        "ws_1",
+        run.id,
+        { repair_id: "rep_inv_intents" },
+        { fallbackRun: run, allowFixture: true },
+      ),
+    ).resolves.toMatchObject({
+      inventory: expect.arrayContaining([
+        expect.objectContaining({
+          id: "inv_intents",
+          severity: "ok",
+        }),
+      ]),
     });
 
     await expect(
