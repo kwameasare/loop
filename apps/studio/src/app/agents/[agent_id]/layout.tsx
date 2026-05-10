@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import {
   agentProductionLabel,
+  agentWorkbenchTopbarFacts,
   agentStateLabel,
   agentStateSentence,
   getAgentDetailData,
@@ -10,6 +11,7 @@ import { AgentEvidenceRail } from "@/components/agents/agent-evidence-rail";
 import { AgentTestDrawer } from "@/components/agents/agent-test-drawer";
 import { AgentTabs } from "@/components/agents/agent-tabs";
 import { AgentWorkbenchControls } from "@/components/agents/agent-workbench-controls";
+import { listAgentWorkflow } from "@/lib/agent-workflow";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +32,12 @@ export default async function AgentDetailLayout({
   params,
 }: AgentDetailLayoutProps) {
   const { agent } = await getAgentDetailData(params.agent_id);
+  const workflow = await listAgentWorkflow(params.agent_id).catch(
+    () => undefined,
+  );
   const productionLabel = agentProductionLabel(agent);
   const stateLabel = agentStateLabel(agent);
+  const topbarFacts = agentWorkbenchTopbarFacts(agent, workflow);
   return (
     <main
       className="container mx-auto grid max-w-7xl gap-6 py-8 lg:grid-cols-[15rem_minmax(0,1fr)_22rem]"
@@ -68,6 +74,26 @@ export default async function AgentDetailLayout({
               Evidence {agent.state_evidence_ref}
             </span>
           </div>
+          <dl
+            className="mt-3 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr))]"
+            data-testid="agent-local-topbar-facts"
+          >
+            {topbarFacts.map((fact) => (
+              <div
+                key={fact.id}
+                className="rounded-md border bg-background/70 px-2.5 py-2"
+                data-testid={`agent-topbar-fact-${fact.id}`}
+                title={`Evidence: ${fact.evidence}`}
+              >
+                <dt className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {fact.label}
+                </dt>
+                <dd className="mt-1 truncate text-xs font-medium text-foreground">
+                  {fact.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
           <div className="mt-3 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
             <p
               className="max-w-3xl text-sm text-foreground"
