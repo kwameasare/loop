@@ -9,10 +9,14 @@ export interface EmptyStateSuggestion {
   evidence_ref: string;
 }
 
+type EmptyStateSuggestionOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 export async function fetchEmptyStateSuggestions(
   agentId: string,
   surface: EmptyStateSurface,
-  opts: UxWireupClientOptions = {},
+  opts: EmptyStateSuggestionOptions = {},
 ): Promise<EmptyStateSuggestion[]> {
   const result = await cpJson<{ items: EmptyStateSuggestion[] }>(
     `/agents/${encodeURIComponent(
@@ -20,6 +24,7 @@ export async function fetchEmptyStateSuggestions(
     )}/empty-state-suggestions?surface=${encodeURIComponent(surface)}`,
     {
       ...opts,
+      allowFallback: opts.allowFixture === true,
       fallback: {
         items: [
           {
