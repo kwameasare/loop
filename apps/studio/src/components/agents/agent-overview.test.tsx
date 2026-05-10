@@ -10,6 +10,7 @@ import {
   EMPTY_COMMITMENT_BODY,
   buildLocalCommitmentDocument,
 } from "@/lib/agent-commitment";
+import { buildLocalChangePackage } from "@/lib/change-package";
 import { buildLocalChannelBindings } from "@/lib/channel-bindings";
 import type { EvalSuite } from "@/lib/evals";
 import type { KbDocument } from "@/lib/kb";
@@ -358,6 +359,53 @@ describe("AgentOverview", () => {
     );
   });
 
+  it("surfaces Change Package approval and content-hash evidence", () => {
+    const changePackage = {
+      ...buildLocalChangePackage("ag_1"),
+      id: "cp_refund_42",
+      status: "submitted" as const,
+      summary: "Refund behavior tightens escalation and replay gates.",
+      content_hash: "hash_refund_package_123456789",
+      rollback_target_version_id: "ver_3",
+      updated_at: "2026-05-09T14:00:00Z",
+      required_approvals: [
+        {
+          id: "owner",
+          role: "Agent owner",
+          required: true,
+          satisfied: true,
+          reason: "Owner approved.",
+          state: "approved",
+          content_hash: "hash_refund_package_123456789",
+        },
+        {
+          id: "risk",
+          role: "Risk reviewer",
+          required: true,
+          satisfied: false,
+          reason: "Money movement approval required.",
+          state: "pending",
+        },
+      ],
+    };
+
+    render(<AgentOverview {...BASE_PROPS} changePackage={changePackage} />);
+
+    expect(screen.getByTestId("agent-outline-governance")).toHaveTextContent(
+      "submitted Change Package cp_refund_42; approvals 1/2",
+    );
+    expect(screen.getByTestId("agent-outline-governance")).toHaveTextContent(
+      "1 required approval still pending",
+    );
+    expect(screen.getByTestId("agent-outline-deployments")).toHaveTextContent(
+      "Refund behavior tightens escalation and replay gates",
+    );
+    expect(screen.getByTestId("safe-action-approval")).toBeDisabled();
+    expect(screen.getByTestId("safe-action-approval")).toHaveTextContent(
+      "1 required approval pending",
+    );
+  });
+
   it("uses the durable agent object state when provided by cp-api", () => {
     render(
       <AgentOverview
@@ -424,7 +472,7 @@ describe("AgentOverview", () => {
     );
     expect(screen.getByTestId("safe-action-approval")).toBeDisabled();
     expect(screen.getByTestId("safe-action-approval")).toHaveTextContent(
-      "Blocked until commitment",
+      "No Change Package or approval is loaded",
     );
   });
 

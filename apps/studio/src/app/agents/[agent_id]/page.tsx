@@ -11,6 +11,10 @@ import {
   fetchCurrentCommitment,
 } from "@/lib/agent-commitment";
 import {
+  fetchCurrentChangePackage,
+  type ChangePackage,
+} from "@/lib/change-package";
+import {
   listChannelBindings,
   type ChannelBinding,
 } from "@/lib/channel-bindings";
@@ -153,6 +157,17 @@ export default async function AgentOverviewPage({
       "Could not load knowledge documents.",
     );
   }
+  let changePackage: ChangePackage | undefined;
+  let changePackageDegradedReason: string | undefined;
+  try {
+    changePackage =
+      (await fetchCurrentChangePackage(params.agent_id)).item ?? undefined;
+  } catch (error) {
+    changePackageDegradedReason = errorMessage(
+      error,
+      "Could not load the current Change Package.",
+    );
+  }
   let traceSummaries: TraceSummary[] = [];
   let tracesDegradedReason: string | undefined;
   if (!agent.workspace_id || agent.workspace_id === "unavailable") {
@@ -181,6 +196,7 @@ export default async function AgentOverviewPage({
     memoryDegradedReason,
     evalsDegradedReason,
     knowledgeDegradedReason,
+    changePackageDegradedReason,
     tracesDegradedReason,
   ]
     .filter(Boolean)
@@ -215,6 +231,8 @@ export default async function AgentOverviewPage({
       evalsDegradedReason={evalsDegradedReason}
       knowledgeDocuments={knowledgeDocuments}
       knowledgeDegradedReason={knowledgeDegradedReason}
+      changePackage={changePackage}
+      changePackageDegradedReason={changePackageDegradedReason}
       traceSummaries={traceSummaries}
       tracesDegradedReason={tracesDegradedReason}
       commitment={commitment}

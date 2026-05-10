@@ -78,6 +78,55 @@ describe("AgentOverviewPage", () => {
       if (url.endsWith("/agents/agent_live/commitment/current")) {
         return Response.json(buildLocalCommitmentDocument("agent_live"));
       }
+      if (url.endsWith("/agents/agent_live/change-packages/current")) {
+        return Response.json({
+          item: {
+            id: "cp_live",
+            workspace_id: "ws_1",
+            agent_id: "agent_live",
+            branch_id: "branch_live",
+            change_set_id: "change_live",
+            release_candidate_id: "rc_live",
+            from_version_id: "ver_4",
+            to_version_id: "ver_12",
+            commitment_document_id: "commitment_live",
+            commitment_document_version: 2,
+            summary: "Live support canary with trace-backed refund fixes.",
+            semantic_diff: [],
+            eval_results_ref: "eval/live",
+            replay_results_ref: "replay/live",
+            risk_summary: "Medium; one approval pending.",
+            cost_summary: "Neutral.",
+            latency_summary: "Improves p95.",
+            channel_readiness_summary: "WhatsApp ready.",
+            tool_changes: [],
+            memory_changes: [],
+            knowledge_changes: [],
+            required_approvals: [
+              {
+                id: "owner",
+                role: "Agent owner",
+                required: true,
+                satisfied: true,
+                reason: "Owner approved.",
+                state: "approved",
+                content_hash: "hash_live_change_package",
+              },
+            ],
+            pre_approved_classes: [],
+            approval_status: "approved",
+            rollback_target_version_id: "ver_4",
+            evidence_pack_id: "evidence_live",
+            evidence: {},
+            content_hash: "hash_live_change_package",
+            status: "approved",
+            created_at: "2026-05-09T11:00:00Z",
+            updated_at: "2026-05-09T11:30:00Z",
+            submitted_at: "2026-05-09T11:15:00Z",
+            stale_at: null,
+          },
+        });
+      }
       if (url.endsWith("/agents/agent_live/channel-bindings")) {
         return Response.json({
           items: buildLocalChannelBindings("agent_live").map((binding) =>
@@ -203,6 +252,12 @@ describe("AgentOverviewPage", () => {
     );
     expect(screen.getByTestId("agent-outline-traces")).toHaveTextContent(
       "1 persisted trace loaded",
+    );
+    expect(screen.getByTestId("agent-outline-governance")).toHaveTextContent(
+      "approved Change Package cp_live",
+    );
+    expect(screen.getByTestId("safe-action-approval")).toHaveTextContent(
+      "Generate Change Package",
     );
     expect(screen.getByTestId("agent-live-preview")).toHaveTextContent(
       "trc_live_latest",
