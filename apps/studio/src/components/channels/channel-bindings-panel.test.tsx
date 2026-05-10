@@ -60,6 +60,9 @@ describe("ChannelBindingsPanel", () => {
       screen.getByTestId("channel-required-config-web_chat"),
     ).toHaveTextContent("Embed snippet");
     expect(
+      screen.getByTestId("channel-required-config-web_chat"),
+    ).toHaveTextContent("pending verification");
+    expect(
       screen.getByTestId("channel-required-config-whatsapp"),
     ).toHaveTextContent("Template approvals");
     expect(
@@ -236,24 +239,22 @@ describe("ChannelBindingsPanel", () => {
     );
 
     fireEvent.click(
-      screen.getByTestId(
-        "channel-readiness-passed-whatsapp-business_identity_verified",
-      ),
+      screen.getByTestId("channel-readiness-passed-whatsapp-business_verified"),
     );
 
     await waitFor(() => {
       expect(updateChannelReadiness).toHaveBeenCalledWith(
         "agt_1",
         whatsapp!.id,
-        "business_identity_verified",
+        "business_verified",
         expect.objectContaining({
           status: "passed",
-          evidence_ref: "manual/whatsapp/business_identity_verified",
+          evidence_ref: "manual/whatsapp/business_verified",
         }),
       );
     });
     expect(screen.getByTestId("channel-binding-whatsapp")).toHaveTextContent(
-      "Evidence: manual/whatsapp/business_identity_verified",
+      "Evidence: manual/whatsapp/business_verified",
     );
   });
 

@@ -32,6 +32,12 @@ ChannelStatus = Literal[
     "archived",
 ]
 ReadinessStatus = Literal["pending", "passed", "failed", "not_required"]
+RequiredConfigStatus = Literal[
+    "configured",
+    "missing",
+    "pending_verification",
+    "blocked",
+]
 
 SUPPORTED_CHANNELS: tuple[ChannelType, ...] = (
     "web_chat",
@@ -177,7 +183,7 @@ def _readiness_template(channel_type: ChannelType) -> list[dict[str, Any]]:
             ("permissions_approved", "Permissions approved"),
         ],
         "teams": [
-            ("tenant_installed", "Tenant installed"),
+            ("workspace_installed", "Workspace installed"),
             ("test_mention", "Test mention passed"),
             ("thread_reply", "Thread reply passed"),
             ("permissions_approved", "Permissions approved"),
@@ -199,9 +205,9 @@ def _readiness_template(channel_type: ChannelType) -> list[dict[str, Any]]:
             ("transfer_route", "Transfer route tested"),
         ],
         "webhook_api": [
-            ("endpoint_verified", "Endpoint verified"),
-            ("signature_verified", "Signature verification configured"),
-            ("retry_policy", "Retry policy tested"),
+            ("signed_request", "Signed request verified"),
+            ("retry_behavior", "Retry behavior tested"),
+            ("trace_capture", "Trace capture enabled"),
         ],
     }
     return [
@@ -214,6 +220,416 @@ def _readiness_template(channel_type: ChannelType) -> list[dict[str, Any]]:
         }
         for check_id, label in checks[channel_type]
     ]
+
+
+def _required_config_template(channel_type: ChannelType) -> list[dict[str, Any]]:
+    templates: dict[ChannelType, list[dict[str, Any]]] = {
+        "web_chat": [
+            {
+                "id": "embed_snippet",
+                "label": "Embed snippet",
+                "source": "readiness",
+                "readiness_id": "snippet_minted",
+            },
+            {
+                "id": "domain_allowlist",
+                "label": "Domain allowlist",
+                "source": "identity_config",
+                "keys": ["domain_allowlist", "domain"],
+            },
+            {
+                "id": "theme",
+                "label": "Theme",
+                "source": "identity_config",
+                "keys": ["theme", "theme_id"],
+            },
+            {
+                "id": "session_identity",
+                "label": "Session identity",
+                "source": "identity_config",
+                "keys": ["session_identity", "identity"],
+            },
+            {
+                "id": "handoff_route",
+                "label": "Handoff route",
+                "source": "identity_config",
+                "keys": ["handoff_route", "handoff_queue"],
+            },
+            {
+                "id": "transcript_capture",
+                "label": "Transcript capture",
+                "source": "readiness",
+                "readiness_id": "trace_capture",
+            },
+        ],
+        "whatsapp": [
+            {
+                "id": "business_account",
+                "label": "Business account",
+                "source": "identity_config",
+                "keys": ["business_account_id", "business_account", "handle"],
+            },
+            {
+                "id": "provider_connection",
+                "label": "Provider connection",
+                "source": "auth_config_ref",
+            },
+            {
+                "id": "template_approvals",
+                "label": "Template approvals",
+                "source": "readiness",
+                "readiness_id": "template_approved",
+            },
+            {
+                "id": "session_window_policy",
+                "label": "Session window policy",
+                "source": "identity_config",
+                "keys": ["session_window_policy"],
+            },
+            {
+                "id": "media_policy",
+                "label": "Media policy",
+                "source": "identity_config",
+                "keys": ["media_policy"],
+            },
+            {
+                "id": "opt_in_out_policy",
+                "label": "Opt-in/out policy",
+                "source": "identity_config",
+                "keys": ["opt_in_out_policy", "opt_policy"],
+            },
+        ],
+        "telegram": [
+            {
+                "id": "bot_token",
+                "label": "Bot token",
+                "source": "auth_config_ref",
+            },
+            {
+                "id": "command_policy",
+                "label": "Command policy",
+                "source": "identity_config",
+                "keys": ["command_policy"],
+            },
+            {
+                "id": "group_direct_policy",
+                "label": "Group/direct policy",
+                "source": "identity_config",
+                "keys": ["group_direct_policy"],
+            },
+            {
+                "id": "attachment_policy",
+                "label": "Attachment policy",
+                "source": "identity_config",
+                "keys": ["attachment_policy"],
+            },
+            {
+                "id": "abuse_controls",
+                "label": "Abuse controls",
+                "source": "identity_config",
+                "keys": ["abuse_controls"],
+            },
+        ],
+        "slack": [
+            {
+                "id": "workspace_installation",
+                "label": "Workspace installation",
+                "source": "readiness",
+                "readiness_id": "workspace_installed",
+            },
+            {
+                "id": "mention_policy",
+                "label": "Mention policy",
+                "source": "identity_config",
+                "keys": ["mention_policy"],
+            },
+            {
+                "id": "thread_policy",
+                "label": "Thread policy",
+                "source": "identity_config",
+                "keys": ["thread_policy"],
+            },
+            {
+                "id": "slash_commands",
+                "label": "Slash commands",
+                "source": "identity_config",
+                "keys": ["slash_commands"],
+            },
+            {
+                "id": "internal_identity_mapping",
+                "label": "Internal identity mapping",
+                "source": "identity_config",
+                "keys": ["identity_mapping", "internal_identity_mapping"],
+            },
+            {
+                "id": "private_channel_policy",
+                "label": "Private channel policy",
+                "source": "identity_config",
+                "keys": ["private_channel_policy"],
+            },
+        ],
+        "teams": [
+            {
+                "id": "workspace_installation",
+                "label": "Workspace installation",
+                "source": "readiness",
+                "readiness_id": "workspace_installed",
+            },
+            {
+                "id": "mention_policy",
+                "label": "Mention policy",
+                "source": "identity_config",
+                "keys": ["mention_policy"],
+            },
+            {
+                "id": "thread_policy",
+                "label": "Thread policy",
+                "source": "identity_config",
+                "keys": ["thread_policy"],
+            },
+            {
+                "id": "slash_commands",
+                "label": "Slash commands",
+                "source": "identity_config",
+                "keys": ["slash_commands"],
+            },
+            {
+                "id": "internal_identity_mapping",
+                "label": "Internal identity mapping",
+                "source": "identity_config",
+                "keys": ["identity_mapping", "internal_identity_mapping"],
+            },
+            {
+                "id": "private_channel_policy",
+                "label": "Private channel policy",
+                "source": "identity_config",
+                "keys": ["private_channel_policy"],
+            },
+        ],
+        "sms": [
+            {
+                "id": "number",
+                "label": "Number",
+                "source": "identity_config",
+                "keys": ["phone_number", "number"],
+            },
+            {
+                "id": "provider",
+                "label": "Provider",
+                "source": "provider",
+            },
+            {
+                "id": "opt_out_policy",
+                "label": "Opt-out policy",
+                "source": "readiness",
+                "readiness_id": "opt_out_verified",
+            },
+            {
+                "id": "carrier_compliance",
+                "label": "Carrier compliance",
+                "source": "identity_config",
+                "keys": ["carrier_compliance"],
+            },
+            {
+                "id": "message_length_policy",
+                "label": "Message length policy",
+                "source": "identity_config",
+                "keys": ["message_length_policy"],
+            },
+        ],
+        "email": [
+            {
+                "id": "inbox",
+                "label": "Inbox",
+                "source": "identity_config",
+                "keys": ["inbox", "inbound_address"],
+            },
+            {
+                "id": "sender_identity",
+                "label": "Sender identity",
+                "source": "readiness",
+                "readiness_id": "sender_verified",
+            },
+            {
+                "id": "routing_rules",
+                "label": "Routing rules",
+                "source": "identity_config",
+                "keys": ["routing_rules"],
+            },
+            {
+                "id": "attachment_policy",
+                "label": "Attachment policy",
+                "source": "identity_config",
+                "keys": ["attachment_policy"],
+            },
+            {
+                "id": "sla_policy",
+                "label": "SLA policy",
+                "source": "identity_config",
+                "keys": ["sla_policy", "sla"],
+            },
+            {
+                "id": "signature_policy",
+                "label": "Signature policy",
+                "source": "identity_config",
+                "keys": ["signature_policy"],
+            },
+        ],
+        "voice": [
+            {
+                "id": "phone_number",
+                "label": "Phone number",
+                "source": "readiness",
+                "readiness_id": "number_provisioned",
+            },
+            {
+                "id": "asr_provider",
+                "label": "ASR provider",
+                "source": "identity_config",
+                "keys": ["asr_provider"],
+            },
+            {
+                "id": "tts_provider",
+                "label": "TTS provider",
+                "source": "identity_config",
+                "keys": ["tts_provider"],
+            },
+            {
+                "id": "barge_in_policy",
+                "label": "Barge-in policy",
+                "source": "identity_config",
+                "keys": ["barge_in_policy"],
+            },
+            {
+                "id": "transfer_policy",
+                "label": "Transfer policy",
+                "source": "identity_config",
+                "keys": ["transfer_policy"],
+            },
+            {
+                "id": "recording_policy",
+                "label": "Recording policy",
+                "source": "identity_config",
+                "keys": ["recording_policy"],
+            },
+            {
+                "id": "latency_budget",
+                "label": "Latency budget",
+                "source": "identity_config",
+                "keys": ["latency_budget"],
+            },
+        ],
+        "webhook_api": [
+            {
+                "id": "endpoint",
+                "label": "Endpoint",
+                "source": "identity_config",
+                "keys": ["endpoint_url", "endpoint"],
+            },
+            {
+                "id": "auth",
+                "label": "Auth",
+                "source": "auth_config_ref",
+            },
+            {
+                "id": "signature_verification",
+                "label": "Signature verification",
+                "source": "readiness",
+                "readiness_id": "signed_request",
+            },
+            {
+                "id": "retry_policy",
+                "label": "Retry policy",
+                "source": "readiness",
+                "readiness_id": "retry_behavior",
+            },
+            {
+                "id": "idempotency_key",
+                "label": "Idempotency key",
+                "source": "identity_config",
+                "keys": ["idempotency_key"],
+            },
+            {
+                "id": "rate_limits",
+                "label": "Rate limits",
+                "source": "identity_config",
+                "keys": ["rate_limits", "rate_limit"],
+            },
+        ],
+    }
+    return templates[channel_type]
+
+
+def _configured_identity_value(
+    identity_config: dict[str, Any],
+    keys: list[str],
+) -> tuple[str | None, str | None]:
+    for key in keys:
+        value = identity_config.get(key)
+        if isinstance(value, str) and value.strip():
+            return key, value.strip()
+        if value is not None and not isinstance(value, (dict, list)):
+            return key, str(value)
+        if isinstance(value, (dict, list)) and value:
+            return key, "configured"
+    return None, None
+
+
+def _readiness_by_id(record: ChannelBindingRecord) -> dict[str, dict[str, Any]]:
+    return {str(check.get("id", "")): check for check in record.readiness}
+
+
+def _required_config(record: ChannelBindingRecord) -> list[dict[str, Any]]:
+    readiness = _readiness_by_id(record)
+    required: list[dict[str, Any]] = []
+    for item in _required_config_template(record.channel_type):
+        source = str(item["source"])
+        status: RequiredConfigStatus = "missing"
+        evidence_ref: str | None = None
+        key: str | None = None
+        value_summary = ""
+        if source == "provider":
+            status = "configured" if record.provider else "missing"
+            value_summary = record.provider or ""
+        elif source == "auth_config_ref":
+            status = "configured" if record.auth_config_ref else "missing"
+            evidence_ref = record.auth_config_ref
+            value_summary = "Secret reference bound" if record.auth_config_ref else ""
+        elif source == "identity_config":
+            key, value_summary = _configured_identity_value(
+                record.identity_config,
+                list(item.get("keys", [])),
+            )
+            status = "configured" if key else "missing"
+            value_summary = value_summary or ""
+        elif source == "readiness":
+            check = readiness.get(str(item["readiness_id"]))
+            check_status = str(check.get("status", "pending")) if check else "pending"
+            evidence_ref = str(check.get("evidence_ref") or "") if check else None
+            if check_status == "passed":
+                status = "configured"
+            elif check_status == "failed":
+                status = "blocked"
+            else:
+                status = "pending_verification"
+            value_summary = str(check.get("message") or "") if check else ""
+        required.append(
+            {
+                "id": item["id"],
+                "label": item["label"],
+                "status": status,
+                "source": source,
+                "key": (
+                    key
+                    or item.get("readiness_id")
+                    or item.get("key")
+                    or next(iter(item.get("keys", [])), source)
+                ),
+                "evidence_ref": evidence_ref or None,
+                "value_summary": value_summary,
+            }
+        )
+    return required
 
 
 def _binding_id(agent: AgentRecord, channel_type: ChannelType) -> str:
@@ -251,8 +667,34 @@ def channel_readiness_state(binding: ChannelBindingRecord) -> str:
     return "needs_readiness"
 
 
+def _readiness_summary(record: ChannelBindingRecord) -> dict[str, Any]:
+    required = [item for item in record.readiness if item.get("status") != "not_required"]
+    passed = [item for item in required if item.get("status") == "passed"]
+    failed = [item for item in required if item.get("status") == "failed"]
+    pending = [item for item in required if item.get("status") == "pending"]
+    return {
+        "state": channel_readiness_state(record),
+        "passed": len(passed),
+        "failed": len(failed),
+        "pending": len(pending),
+        "total": len(required),
+        "blocking_check_ids": [
+            str(item.get("id", ""))
+            for item in required
+            if item.get("status") in {"failed", "pending"}
+        ],
+    }
+
+
 def _payload(record: ChannelBindingRecord) -> dict[str, Any]:
-    return record.model_dump(mode="json")
+    payload = record.model_dump(mode="json")
+    payload["required_config"] = _required_config(record)
+    payload["readiness_summary"] = _readiness_summary(record)
+    return payload
+
+
+def channel_required_config(record: ChannelBindingRecord) -> list[dict[str, Any]]:
+    return _required_config(record)
 
 
 class ChannelBindingRegistry:

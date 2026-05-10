@@ -35,6 +35,31 @@ export interface ChannelReadinessCheck {
   message: string;
 }
 
+export type ChannelRequiredConfigStatus =
+  | "configured"
+  | "missing"
+  | "pending_verification"
+  | "blocked";
+
+export interface ChannelRequiredConfigItem {
+  id: string;
+  label: string;
+  status: ChannelRequiredConfigStatus;
+  source: "identity_config" | "auth_config_ref" | "readiness" | "provider";
+  key: string;
+  evidence_ref: string | null;
+  value_summary: string;
+}
+
+export interface ChannelReadinessSummary {
+  state: "not_configured" | "needs_readiness" | "blocked" | "ready";
+  passed: number;
+  failed: number;
+  pending: number;
+  total: number;
+  blocking_check_ids: string[];
+}
+
 export interface ChannelBinding {
   id: string;
   workspace_id: string;
@@ -46,6 +71,8 @@ export interface ChannelBinding {
   identity_config: Record<string, unknown>;
   auth_config_ref: string | null;
   readiness: ChannelReadinessCheck[];
+  required_config: ChannelRequiredConfigItem[];
+  readiness_summary: ChannelReadinessSummary;
   last_traffic_at: string | null;
   last_failure_at: string | null;
   created_at: string;
@@ -182,56 +209,65 @@ function defaultProvider(channelType: ChannelBindingType): string {
   }[channelType];
 }
 
+const READINESS_CHECKS: Record<
+  ChannelBindingType,
+  ReadonlyArray<Pick<ChannelReadinessCheck, "id" | "label">>
+> = {
+  web_chat: [
+    { id: "domain_verified", label: "Domain verified" },
+    { id: "snippet_minted", label: "Snippet minted" },
+    { id: "test_conversation", label: "Test conversation passed" },
+    { id: "trace_capture", label: "Trace capture enabled" },
+  ],
+  whatsapp: [
+    { id: "business_verified", label: "Business identity verified" },
+    { id: "template_approved", label: "Template approved" },
+    { id: "test_inbound", label: "Test inbound message passed" },
+    { id: "handoff_route", label: "Handoff route configured" },
+  ],
+  telegram: [
+    { id: "token_verified", label: "Bot token verified" },
+    { id: "test_command", label: "Test command passed" },
+    { id: "trace_capture", label: "Trace capture enabled" },
+  ],
+  slack: [
+    { id: "workspace_installed", label: "Workspace installed" },
+    { id: "test_mention", label: "Test mention passed" },
+    { id: "thread_reply", label: "Thread reply passed" },
+    { id: "permissions_approved", label: "Permissions approved" },
+  ],
+  teams: [
+    { id: "workspace_installed", label: "Workspace installed" },
+    { id: "test_mention", label: "Test mention passed" },
+    { id: "thread_reply", label: "Thread reply passed" },
+    { id: "permissions_approved", label: "Permissions approved" },
+  ],
+  sms: [
+    { id: "number_active", label: "Number active" },
+    { id: "opt_out_verified", label: "Opt-out verified" },
+    { id: "test_message", label: "Test message passed" },
+  ],
+  email: [
+    { id: "sender_verified", label: "Sender verified" },
+    { id: "inbound_tested", label: "Inbound route tested" },
+    { id: "reply_tested", label: "Reply route tested" },
+  ],
+  voice: [
+    { id: "number_provisioned", label: "Number provisioned" },
+    { id: "test_call", label: "Test call passed" },
+    { id: "asr_tts_spans", label: "ASR/TTS spans captured" },
+    { id: "transfer_route", label: "Transfer route tested" },
+  ],
+  webhook_api: [
+    { id: "signed_request", label: "Signed request verified" },
+    { id: "retry_behavior", label: "Retry behavior tested" },
+    { id: "trace_capture", label: "Trace capture enabled" },
+  ],
+};
+
 function readiness(channelType: ChannelBindingType): ChannelReadinessCheck[] {
-  const labels: Record<ChannelBindingType, string[]> = {
-    web_chat: [
-      "Domain verified",
-      "Snippet minted",
-      "Test conversation passed",
-      "Trace capture enabled",
-    ],
-    whatsapp: [
-      "Business identity verified",
-      "Template approved",
-      "Test inbound message passed",
-      "Handoff route configured",
-    ],
-    telegram: [
-      "Bot token verified",
-      "Test command passed",
-      "Trace capture enabled",
-    ],
-    slack: [
-      "Workspace installed",
-      "Test mention passed",
-      "Thread reply passed",
-      "Permissions approved",
-    ],
-    teams: [
-      "Tenant installed",
-      "Test mention passed",
-      "Thread reply passed",
-      "Permissions approved",
-    ],
-    sms: ["Number active", "Opt-out verified", "Test message passed"],
-    email: ["Sender verified", "Inbound route tested", "Reply route tested"],
-    voice: [
-      "Number provisioned",
-      "Test call passed",
-      "ASR/TTS spans captured",
-      "Transfer route tested",
-    ],
-    webhook_api: [
-      "Endpoint verified",
-      "Signature verification configured",
-      "Retry policy tested",
-    ],
-  };
-  return labels[channelType].map((label) => ({
-    id: label
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "_")
-      .replace(/_$/, ""),
+  return READINESS_CHECKS[channelType].map(({ id, label }) => ({
+    id,
     label,
     status: "pending",
     evidence_ref: null,
@@ -239,24 +275,488 @@ function readiness(channelType: ChannelBindingType): ChannelReadinessCheck[] {
   }));
 }
 
+function channelTypeForReadinessCheck(
+  checkId: string,
+): ChannelBindingType | null {
+  for (const channelType of CHANNEL_ORDER) {
+    if (READINESS_CHECKS[channelType].some((check) => check.id === checkId)) {
+      return channelType;
+    }
+  }
+  return null;
+}
+
+type RequiredConfigTemplate = {
+  id: string;
+  label: string;
+  source: ChannelRequiredConfigItem["source"];
+  key: string;
+  keys?: string[];
+};
+
+const REQUIRED_CONFIG: Record<ChannelBindingType, RequiredConfigTemplate[]> = {
+  web_chat: [
+    {
+      id: "embed_snippet",
+      label: "Embed snippet",
+      source: "readiness",
+      key: "snippet_minted",
+    },
+    {
+      id: "domain_allowlist",
+      label: "Domain allowlist",
+      source: "identity_config",
+      key: "domain",
+      keys: ["domain_allowlist", "domain"],
+    },
+    {
+      id: "theme",
+      label: "Theme",
+      source: "identity_config",
+      key: "theme",
+      keys: ["theme", "theme_id"],
+    },
+    {
+      id: "session_identity",
+      label: "Session identity",
+      source: "identity_config",
+      key: "session_identity",
+      keys: ["session_identity", "identity"],
+    },
+    {
+      id: "handoff_route",
+      label: "Handoff route",
+      source: "identity_config",
+      key: "handoff_route",
+      keys: ["handoff_route", "handoff_queue"],
+    },
+    {
+      id: "transcript_capture",
+      label: "Transcript capture",
+      source: "readiness",
+      key: "trace_capture",
+    },
+  ],
+  whatsapp: [
+    {
+      id: "business_account",
+      label: "Business account",
+      source: "identity_config",
+      key: "business_account_id",
+      keys: ["business_account_id", "business_account", "handle"],
+    },
+    {
+      id: "provider_connection",
+      label: "Provider connection",
+      source: "auth_config_ref",
+      key: "auth_config_ref",
+    },
+    {
+      id: "template_approvals",
+      label: "Template approvals",
+      source: "readiness",
+      key: "template_approved",
+    },
+    {
+      id: "session_window_policy",
+      label: "Session window policy",
+      source: "identity_config",
+      key: "session_window_policy",
+    },
+    {
+      id: "media_policy",
+      label: "Media policy",
+      source: "identity_config",
+      key: "media_policy",
+    },
+    {
+      id: "opt_in_out_policy",
+      label: "Opt-in/out policy",
+      source: "identity_config",
+      key: "opt_in_out_policy",
+      keys: ["opt_in_out_policy", "opt_policy"],
+    },
+  ],
+  telegram: [
+    {
+      id: "bot_token",
+      label: "Bot token",
+      source: "auth_config_ref",
+      key: "auth_config_ref",
+    },
+    {
+      id: "command_policy",
+      label: "Command policy",
+      source: "identity_config",
+      key: "command_policy",
+    },
+    {
+      id: "group_direct_policy",
+      label: "Group/direct policy",
+      source: "identity_config",
+      key: "group_direct_policy",
+    },
+    {
+      id: "attachment_policy",
+      label: "Attachment policy",
+      source: "identity_config",
+      key: "attachment_policy",
+    },
+    {
+      id: "abuse_controls",
+      label: "Abuse controls",
+      source: "identity_config",
+      key: "abuse_controls",
+    },
+  ],
+  slack: [
+    {
+      id: "workspace_installation",
+      label: "Workspace installation",
+      source: "readiness",
+      key: "workspace_installed",
+    },
+    {
+      id: "mention_policy",
+      label: "Mention policy",
+      source: "identity_config",
+      key: "mention_policy",
+    },
+    {
+      id: "thread_policy",
+      label: "Thread policy",
+      source: "identity_config",
+      key: "thread_policy",
+    },
+    {
+      id: "slash_commands",
+      label: "Slash commands",
+      source: "identity_config",
+      key: "slash_commands",
+    },
+    {
+      id: "internal_identity_mapping",
+      label: "Internal identity mapping",
+      source: "identity_config",
+      key: "identity_mapping",
+      keys: ["identity_mapping", "internal_identity_mapping"],
+    },
+    {
+      id: "private_channel_policy",
+      label: "Private channel policy",
+      source: "identity_config",
+      key: "private_channel_policy",
+    },
+  ],
+  teams: [
+    {
+      id: "workspace_installation",
+      label: "Workspace installation",
+      source: "readiness",
+      key: "workspace_installed",
+    },
+    {
+      id: "mention_policy",
+      label: "Mention policy",
+      source: "identity_config",
+      key: "mention_policy",
+    },
+    {
+      id: "thread_policy",
+      label: "Thread policy",
+      source: "identity_config",
+      key: "thread_policy",
+    },
+    {
+      id: "slash_commands",
+      label: "Slash commands",
+      source: "identity_config",
+      key: "slash_commands",
+    },
+    {
+      id: "internal_identity_mapping",
+      label: "Internal identity mapping",
+      source: "identity_config",
+      key: "identity_mapping",
+      keys: ["identity_mapping", "internal_identity_mapping"],
+    },
+    {
+      id: "private_channel_policy",
+      label: "Private channel policy",
+      source: "identity_config",
+      key: "private_channel_policy",
+    },
+  ],
+  sms: [
+    {
+      id: "number",
+      label: "Number",
+      source: "identity_config",
+      key: "phone_number",
+      keys: ["phone_number", "number"],
+    },
+    { id: "provider", label: "Provider", source: "provider", key: "provider" },
+    {
+      id: "opt_out_policy",
+      label: "Opt-out policy",
+      source: "readiness",
+      key: "opt_out_verified",
+    },
+    {
+      id: "carrier_compliance",
+      label: "Carrier compliance",
+      source: "identity_config",
+      key: "carrier_compliance",
+    },
+    {
+      id: "message_length_policy",
+      label: "Message length policy",
+      source: "identity_config",
+      key: "message_length_policy",
+    },
+  ],
+  email: [
+    {
+      id: "inbox",
+      label: "Inbox",
+      source: "identity_config",
+      key: "inbox",
+      keys: ["inbox", "inbound_address"],
+    },
+    {
+      id: "sender_identity",
+      label: "Sender identity",
+      source: "readiness",
+      key: "sender_verified",
+    },
+    {
+      id: "routing_rules",
+      label: "Routing rules",
+      source: "identity_config",
+      key: "routing_rules",
+    },
+    {
+      id: "attachment_policy",
+      label: "Attachment policy",
+      source: "identity_config",
+      key: "attachment_policy",
+    },
+    {
+      id: "sla_policy",
+      label: "SLA policy",
+      source: "identity_config",
+      key: "sla_policy",
+      keys: ["sla_policy", "sla"],
+    },
+    {
+      id: "signature_policy",
+      label: "Signature policy",
+      source: "identity_config",
+      key: "signature_policy",
+    },
+  ],
+  voice: [
+    {
+      id: "phone_number",
+      label: "Phone number",
+      source: "readiness",
+      key: "number_provisioned",
+    },
+    {
+      id: "asr_provider",
+      label: "ASR provider",
+      source: "identity_config",
+      key: "asr_provider",
+    },
+    {
+      id: "tts_provider",
+      label: "TTS provider",
+      source: "identity_config",
+      key: "tts_provider",
+    },
+    {
+      id: "barge_in_policy",
+      label: "Barge-in policy",
+      source: "identity_config",
+      key: "barge_in_policy",
+    },
+    {
+      id: "transfer_policy",
+      label: "Transfer policy",
+      source: "identity_config",
+      key: "transfer_policy",
+    },
+    {
+      id: "recording_policy",
+      label: "Recording policy",
+      source: "identity_config",
+      key: "recording_policy",
+    },
+    {
+      id: "latency_budget",
+      label: "Latency budget",
+      source: "identity_config",
+      key: "latency_budget",
+    },
+  ],
+  webhook_api: [
+    {
+      id: "endpoint",
+      label: "Endpoint",
+      source: "identity_config",
+      key: "endpoint_url",
+      keys: ["endpoint_url", "endpoint"],
+    },
+    {
+      id: "auth",
+      label: "Auth",
+      source: "auth_config_ref",
+      key: "auth_config_ref",
+    },
+    {
+      id: "signature_verification",
+      label: "Signature verification",
+      source: "readiness",
+      key: "signed_request",
+    },
+    {
+      id: "retry_policy",
+      label: "Retry policy",
+      source: "readiness",
+      key: "retry_behavior",
+    },
+    {
+      id: "idempotency_key",
+      label: "Idempotency key",
+      source: "identity_config",
+      key: "idempotency_key",
+    },
+    {
+      id: "rate_limits",
+      label: "Rate limits",
+      source: "identity_config",
+      key: "rate_limits",
+      keys: ["rate_limits", "rate_limit"],
+    },
+  ],
+};
+
+function configuredIdentityValue(
+  identityConfig: Record<string, unknown>,
+  keys: readonly string[],
+): string {
+  for (const key of keys) {
+    const value = identityConfig[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+    if (value && typeof value === "object") return "configured";
+  }
+  return "";
+}
+
+function readinessSummary(
+  status: ChannelBindingStatus,
+  checks: ChannelReadinessCheck[],
+): ChannelReadinessSummary {
+  const required = checks.filter((check) => check.status !== "not_required");
+  const passed = required.filter((check) => check.status === "passed");
+  const failed = required.filter((check) => check.status === "failed");
+  const pending = required.filter((check) => check.status === "pending");
+  return {
+    state:
+      status === "not_configured"
+        ? "not_configured"
+        : failed.length > 0
+          ? "blocked"
+          : required.length > 0 && passed.length === required.length
+            ? "ready"
+            : "needs_readiness",
+    passed: passed.length,
+    failed: failed.length,
+    pending: pending.length,
+    total: required.length,
+    blocking_check_ids: required
+      .filter(
+        (check) => check.status === "failed" || check.status === "pending",
+      )
+      .map((check) => check.id),
+  };
+}
+
+function requiredConfig(
+  channelType: ChannelBindingType,
+  identityConfig: Record<string, unknown>,
+  authConfigRef: string | null,
+  provider: string,
+  checks: ChannelReadinessCheck[],
+): ChannelRequiredConfigItem[] {
+  const readinessById = new Map(checks.map((check) => [check.id, check]));
+  return REQUIRED_CONFIG[channelType].map((item) => {
+    let status: ChannelRequiredConfigStatus = "missing";
+    let evidenceRef: string | null = null;
+    let valueSummary = "";
+    if (item.source === "provider") {
+      status = provider ? "configured" : "missing";
+      valueSummary = provider;
+    } else if (item.source === "auth_config_ref") {
+      status = authConfigRef ? "configured" : "missing";
+      evidenceRef = authConfigRef;
+      valueSummary = authConfigRef ? "Secret reference bound" : "";
+    } else if (item.source === "identity_config") {
+      valueSummary = configuredIdentityValue(
+        identityConfig,
+        item.keys ?? [item.key],
+      );
+      status = valueSummary ? "configured" : "missing";
+    } else {
+      const check = readinessById.get(item.key);
+      evidenceRef = check?.evidence_ref ?? null;
+      valueSummary = check?.message ?? "";
+      status =
+        check?.status === "passed"
+          ? "configured"
+          : check?.status === "failed"
+            ? "blocked"
+            : "pending_verification";
+    }
+    return {
+      id: item.id,
+      label: item.label,
+      status,
+      source: item.source,
+      key: item.key,
+      evidence_ref: evidenceRef,
+      value_summary: valueSummary,
+    };
+  });
+}
+
 export function buildLocalChannelBindings(agentId: string): ChannelBinding[] {
   const now = new Date().toISOString();
-  return CHANNEL_ORDER.map((channelType) => ({
-    id: `cb_local_${channelType}`,
-    workspace_id: "",
-    agent_id: agentId,
-    channel_type: channelType,
-    provider: defaultProvider(channelType),
-    display_name: channelLabel(channelType),
-    status: "not_configured",
-    identity_config: {},
-    auth_config_ref: null,
-    readiness: readiness(channelType),
-    last_traffic_at: null,
-    last_failure_at: null,
-    created_at: now,
-    updated_at: now,
-  }));
+  return CHANNEL_ORDER.map((channelType) => {
+    const checks = readiness(channelType);
+    const provider = defaultProvider(channelType);
+    return {
+      id: `cb_local_${channelType}`,
+      workspace_id: "",
+      agent_id: agentId,
+      channel_type: channelType,
+      provider,
+      display_name: channelLabel(channelType),
+      status: "not_configured",
+      identity_config: {},
+      auth_config_ref: null,
+      readiness: checks,
+      required_config: requiredConfig(channelType, {}, null, provider, checks),
+      readiness_summary: readinessSummary("not_configured", checks),
+      last_traffic_at: null,
+      last_failure_at: null,
+      created_at: now,
+      updated_at: now,
+    };
+  });
 }
 
 function previewText(
@@ -414,6 +914,17 @@ export async function upsertChannelBinding(
   input: ChannelBindingInput,
   opts: ChannelBindingClientOptions = {},
 ): Promise<ChannelBinding> {
+  const localBinding = buildLocalChannelBindings(agentId).find(
+    (item) => item.channel_type === input.channel_type,
+  )!;
+  const nextProvider = input.provider ?? defaultProvider(input.channel_type);
+  const nextStatus = input.status ?? "draft";
+  const nextIdentityConfig =
+    input.identity_config ?? localBinding.identity_config;
+  const nextAuthConfigRef =
+    input.auth_config_ref === undefined
+      ? localBinding.auth_config_ref
+      : input.auth_config_ref;
   return cpJson<ChannelBinding>(
     `/agents/${encodeURIComponent(agentId)}/channel-bindings`,
     {
@@ -422,13 +933,21 @@ export async function upsertChannelBinding(
       body: input,
       allowFallback: opts.allowFixture === true,
       fallback: {
-        ...buildLocalChannelBindings(agentId).find(
-          (item) => item.channel_type === input.channel_type,
-        )!,
+        ...localBinding,
         ...input,
-        provider: input.provider ?? defaultProvider(input.channel_type),
+        provider: nextProvider,
         display_name: input.display_name ?? channelLabel(input.channel_type),
-        status: input.status ?? "draft",
+        status: nextStatus,
+        identity_config: nextIdentityConfig,
+        auth_config_ref: nextAuthConfigRef,
+        required_config: requiredConfig(
+          input.channel_type,
+          nextIdentityConfig,
+          nextAuthConfigRef,
+          nextProvider,
+          localBinding.readiness,
+        ),
+        readiness_summary: readinessSummary(nextStatus, localBinding.readiness),
         updated_at: new Date().toISOString(),
       },
     },
@@ -442,6 +961,21 @@ export async function updateChannelReadiness(
   input: ChannelReadinessInput,
   opts: ChannelBindingClientOptions = {},
 ): Promise<ChannelBinding> {
+  const localBinding =
+    buildLocalChannelBindings(agentId).find((item) => item.id === bindingId) ??
+    buildLocalChannelBindings(agentId).find(
+      (item) => item.channel_type === channelTypeForReadinessCheck(checkId),
+    ) ??
+    buildLocalChannelBindings(agentId)[0]!;
+  const nextReadiness = [
+    {
+      id: checkId,
+      label: checkId.replace(/_/g, " "),
+      status: input.status,
+      evidence_ref: input.evidence_ref ?? null,
+      message: input.message ?? "",
+    },
+  ];
   return cpJson<ChannelBinding>(
     `/agents/${encodeURIComponent(agentId)}/channel-bindings/${encodeURIComponent(bindingId)}/readiness/${encodeURIComponent(checkId)}`,
     {
@@ -450,17 +984,17 @@ export async function updateChannelReadiness(
       body: input,
       allowFallback: opts.allowFixture === true,
       fallback: {
-        ...buildLocalChannelBindings(agentId)[0]!,
+        ...localBinding,
         id: bindingId,
-        readiness: [
-          {
-            id: checkId,
-            label: checkId.replace(/_/g, " "),
-            status: input.status,
-            evidence_ref: input.evidence_ref ?? null,
-            message: input.message ?? "",
-          },
-        ],
+        readiness: nextReadiness,
+        required_config: requiredConfig(
+          localBinding.channel_type,
+          localBinding.identity_config,
+          localBinding.auth_config_ref,
+          localBinding.provider,
+          nextReadiness,
+        ),
+        readiness_summary: readinessSummary(localBinding.status, nextReadiness),
         updated_at: new Date().toISOString(),
       },
     },
@@ -489,7 +1023,9 @@ export async function recordChannelActivity(
         id: bindingId,
         last_traffic_at: occurredAt,
         last_failure_at:
-          input.status === "failure" ? occurredAt : localBinding.last_failure_at,
+          input.status === "failure"
+            ? occurredAt
+            : localBinding.last_failure_at,
         updated_at: new Date().toISOString(),
       },
     },
