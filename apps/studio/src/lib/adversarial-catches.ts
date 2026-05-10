@@ -42,6 +42,7 @@ export interface AdversarialCatchEvalRef {
 export interface AdversarialCatchResolution {
   intended_interpretation: string;
   rejected_interpretation: string;
+  proposed_patch: string;
   dismiss_reason: string;
   created_by: string;
   created_at: string;
@@ -73,6 +74,7 @@ export interface AdversarialProbeRunResponse {
 export interface CatchResolutionInput {
   intended_interpretation?: string;
   rejected_interpretation?: string;
+  proposed_patch?: string;
   dismiss_reason?: string;
   create_eval_cases?: boolean;
 }
@@ -192,6 +194,7 @@ function localResolvedCatch(
     resolution: {
       intended_interpretation: input.intended_interpretation ?? "",
       rejected_interpretation: input.rejected_interpretation ?? "",
+      proposed_patch: input.proposed_patch ?? "",
       dismiss_reason: input.dismiss_reason ?? "",
       created_by: "local-studio",
       created_at: now,

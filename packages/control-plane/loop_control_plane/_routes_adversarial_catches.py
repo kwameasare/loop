@@ -235,7 +235,10 @@ async def resolve_catch(
                         "scenario": current.generated_scenario,
                         "question": current.question,
                     },
-                    expected={"outcome": expected},
+                    expected={
+                        "outcome": expected,
+                        "proposed_patch": body.proposed_patch,
+                    },
                     scorers=[
                         {
                             "kind": "llm_judge",
@@ -267,6 +270,7 @@ async def resolve_catch(
             "agent_id": str(agent.id),
             "status": resolved.status,
             "eval_cases": eval_refs,
+            "proposed_patch": body.proposed_patch,
         },
     )
     return catch_payload(resolved)
