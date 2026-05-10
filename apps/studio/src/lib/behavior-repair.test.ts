@@ -17,9 +17,20 @@ const INPUT = {
 };
 
 describe("behavior repair client", () => {
-  it("returns a local repair proposal with replay summary", async () => {
+  it("does not fabricate repair proposals or eval cases without cp-api", async () => {
+    await expect(
+      requestObservedFailureRepair("agt_1", INPUT, { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      saveObservedFailureEval("agt_1", INPUT, { baseUrl: "" }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps deterministic repair proposals explicitly opt-in", async () => {
     const response = await requestObservedFailureRepair("agt_1", INPUT, {
       baseUrl: "",
+      allowFixture: true,
     });
 
     expect(response.target_object.kind).toBe("behavior_sentence");
@@ -31,9 +42,10 @@ describe("behavior repair client", () => {
     expect(response.next_actions).toContain("save_regression_eval");
   });
 
-  it("returns a local observed-failure eval case without a cp-api base URL", async () => {
+  it("keeps deterministic observed-failure eval cases explicitly opt-in", async () => {
     const response = await saveObservedFailureEval("agt_1", INPUT, {
       baseUrl: "",
+      allowFixture: true,
     });
 
     expect(response.ok).toBe(true);

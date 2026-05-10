@@ -72,6 +72,10 @@ export interface ObservedFailureEvalResponse {
   case?: ObservedFailureEvalCase;
 }
 
+type BehaviorRepairClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 function localObservedFailureEval(
   agentId: string,
   input: ObservedFailureEvalInput,
@@ -162,15 +166,16 @@ function localObservedFailureRepair(
 export async function requestObservedFailureRepair(
   agentId: string,
   input: ObservedFailureRepairInput,
-  opts: UxWireupClientOptions = {},
+  opts: BehaviorRepairClientOptions = {},
 ): Promise<ObservedFailureRepairResponse> {
   return cpJson<ObservedFailureRepairResponse>(
     `/agents/${encodeURIComponent(agentId)}/behavior/repair-proposals`,
     {
+      ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: localObservedFailureRepair(agentId, input),
-      ...opts,
     },
   );
 }
@@ -178,15 +183,16 @@ export async function requestObservedFailureRepair(
 export async function saveObservedFailureEval(
   agentId: string,
   input: ObservedFailureEvalInput,
-  opts: UxWireupClientOptions = {},
+  opts: BehaviorRepairClientOptions = {},
 ): Promise<ObservedFailureEvalResponse> {
   return cpJson<ObservedFailureEvalResponse>(
     `/agents/${encodeURIComponent(agentId)}/eval-cases/from-observed-failure`,
     {
+      ...opts,
       method: "POST",
       body: input,
+      allowFallback: opts.allowFixture === true,
       fallback: localObservedFailureEval(agentId, input),
-      ...opts,
     },
   );
 }
