@@ -285,6 +285,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§15.4",
   },
   {
+    route: "/scenes",
+    verb: "test",
+    label: "Scenes",
+    purpose:
+      "Workspace library of canonical production conversations for replay and builder handoff.",
+    anchor: "§15.4",
+  },
+  {
     route: "/scenarios",
     verb: "test",
     label: "North-star scenarios",
