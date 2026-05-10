@@ -7,14 +7,56 @@ import {
 } from "./agent-secrets";
 
 describe("listAgentSecrets", () => {
-  it("returns the fixture rows with name + ref + rotated_at", async () => {
-    const { items } = await listAgentSecrets("agt_1");
+  it("returns an explicit degraded response instead of fixture secret refs without cp-api", async () => {
+    const result = await listAgentSecrets("agt_1");
+    expect(result.items).toEqual([]);
+    expect(result.degraded_reason).toMatch(/control-plane vault endpoint/i);
+  });
+
+  it("returns fixture rows only when explicitly requested", async () => {
+    const { items, degraded_reason } = await listAgentSecrets("agt_1", {
+      allowFixture: true,
+    });
+    expect(degraded_reason).toBeUndefined();
     expect(items.length).toBeGreaterThan(0);
     for (const s of items) {
       expect(s.name).toMatch(/^[A-Z][A-Z0-9_]*$/);
       expect(s.ref).toMatch(/^kms:\/\//);
       expect(s).not.toHaveProperty("value");
     }
+  });
+
+  it("loads live secret refs from cp-api when configured", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      Response.json({
+        items: [
+          {
+            id: "sec_live",
+            agent_id: "agt_1",
+            name: "OPENAI_API_KEY",
+            ref: "kms://prod/openai-key",
+            created_at: "2026-05-01T00:00:00Z",
+            rotated_at: null,
+          },
+        ],
+      }),
+    );
+
+    const { items } = await listAgentSecrets("agt_1", {
+      baseUrl: "https://cp.example.com/v1",
+      fetcher: fetcher as unknown as typeof fetch,
+      token: "tok-123",
+    });
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.example.com/v1/agents/agt_1/secrets",
+      expect.objectContaining({
+        method: "GET",
+        headers: expect.objectContaining({ authorization: "Bearer tok-123" }),
+      }),
+    );
+    expect(items[0]).toMatchObject({ id: "sec_live", ref: "kms://prod/openai-key" });
+    expect(items[0]).not.toHaveProperty("value");
   });
 });
 
@@ -23,6 +65,16 @@ describe("addAgentSecret", () => {
     await expect(
       addAgentSecret({ agentId: "agt_1", name: "lowercase", ref: "kms://x" }),
     ).rejects.toThrow(/SCREAMING_SNAKE_CASE/);
+  });
+
+  it("requires cp-api before claiming a secret was added", async () => {
+    await expect(
+      addAgentSecret({
+        agentId: "agt_1",
+        name: "STRIPE_KEY",
+        ref: "kms://prod/stripe",
+      }),
+    ).rejects.toThrow(/required to add a secret/);
   });
 
   it("POSTs to /v1/agents/{id}/secrets with name + ref", async () => {
@@ -58,6 +110,12 @@ describe("addAgentSecret", () => {
 });
 
 describe("rotateAgentSecret", () => {
+  it("requires cp-api before claiming a secret was rotated", async () => {
+    await expect(
+      rotateAgentSecret({ secretId: "sec_1" }),
+    ).rejects.toThrow(/required to rotate a secret/);
+  });
+
   it("POSTs to /v1/secrets/{id}/rotate and returns the new rotated_at", async () => {
     const fetcher = vi.fn().mockResolvedValue(
       new Response(

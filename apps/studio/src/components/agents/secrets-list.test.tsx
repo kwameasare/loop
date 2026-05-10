@@ -31,6 +31,24 @@ describe("SecretsList", () => {
     expect(document.body.textContent ?? "").not.toMatch(/sk-/);
   });
 
+  it("shows a degraded state and disables mutation controls when the vault service is unavailable", () => {
+    render(
+      <SecretsList
+        agentId="agt_1"
+        initialSecrets={[]}
+        degradedReason="Secrets require the control-plane vault endpoint."
+      />,
+    );
+
+    expect(screen.getByTestId("secrets-degraded")).toHaveTextContent(
+      /secrets service unavailable/i,
+    );
+    expect(
+      (screen.getByTestId("add-secret-button") as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(screen.queryByTestId("secrets-empty")).not.toBeInTheDocument();
+  });
+
   it("rotates a secret and updates rotated_at + toasts success", async () => {
     const rotateSecret = vi.fn().mockResolvedValue({
       secretId: "sec_1",
