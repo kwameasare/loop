@@ -57,6 +57,10 @@ export interface CommitmentDraftInput {
   created_from?: string;
 }
 
+type CommitmentClientOptions = UxWireupClientOptions & {
+  allowFixture?: boolean;
+};
+
 export const EMPTY_COMMITMENT_BODY: CommitmentBody = {
   business_responsibility: "",
   target_users: "",
@@ -174,7 +178,7 @@ export async function fetchCurrentCommitment(
 export async function saveCommitmentDraft(
   agentId: string,
   input: CommitmentDraftInput,
-  opts: UxWireupClientOptions = {},
+  opts: CommitmentClientOptions = {},
 ): Promise<CommitmentDocument> {
   const fallback = buildLocalCommitmentDocument(agentId, input.body);
   return cpJson<CommitmentDocument>(
@@ -186,6 +190,7 @@ export async function saveCommitmentDraft(
         body: input.body,
         created_from: input.created_from ?? "studio:agent_contract",
       },
+      allowFallback: opts.allowFixture === true,
       fallback,
     },
   );
@@ -193,13 +198,14 @@ export async function saveCommitmentDraft(
 
 export async function acceptCommitment(
   agentId: string,
-  opts: UxWireupClientOptions = {},
+  opts: CommitmentClientOptions = {},
 ): Promise<CommitmentDocument> {
   return cpJson<CommitmentDocument>(
     `/agents/${encodeURIComponent(agentId)}/commitment/accept`,
     {
       ...opts,
       method: "POST",
+      allowFallback: opts.allowFixture === true,
       fallback: buildLocalCommitmentDocument(agentId),
     },
   );
