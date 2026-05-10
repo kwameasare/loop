@@ -5,6 +5,7 @@ import { formatCents, paginateInvoices, type Invoice } from "@/lib/billing";
 
 export interface InvoiceListProps {
   invoices: Invoice[];
+  degradedReason?: string | undefined;
   /** Number of invoices per page. Default 10. */
   page_size?: number;
 }
@@ -24,7 +25,11 @@ function formatDate(ms: number): string {
   });
 }
 
-export function InvoiceList({ invoices, page_size = 10 }: InvoiceListProps) {
+export function InvoiceList({
+  degradedReason,
+  invoices,
+  page_size = 10,
+}: InvoiceListProps) {
   const [page, setPage] = useState(1);
   const { items, total, pages } = paginateInvoices(invoices, page, page_size);
 
@@ -40,7 +45,16 @@ export function InvoiceList({ invoices, page_size = 10 }: InvoiceListProps) {
         </p>
       </header>
 
-      {items.length === 0 ? (
+      {degradedReason ? (
+        <div
+          className="rounded-md border border-warning/40 bg-warning/10 p-4 text-sm text-warning"
+          data-testid="invoice-list-degraded"
+          role="status"
+        >
+          <p className="font-medium">Invoice evidence unavailable.</p>
+          <p className="mt-1 text-warning/85">{degradedReason}</p>
+        </div>
+      ) : items.length === 0 ? (
         <p
           className="text-sm text-muted-foreground"
           data-testid="invoice-empty"
@@ -66,9 +80,7 @@ export function InvoiceList({ invoices, page_size = 10 }: InvoiceListProps) {
                   data-testid={`invoice-row-${inv.id}`}
                   className="border-b last:border-0"
                 >
-                  <td className="px-4 py-2 font-mono text-xs">
-                    {inv.number}
-                  </td>
+                  <td className="px-4 py-2 font-mono text-xs">{inv.number}</td>
                   <td className="px-4 py-2">{formatDate(inv.date_ms)}</td>
                   <td
                     className="px-4 py-2 tabular-nums"
