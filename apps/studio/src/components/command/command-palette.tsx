@@ -15,7 +15,6 @@ import {
   type CommandPrefix,
   filterCommands,
 } from "@/lib/command";
-import { targetUxFixtures } from "@/lib/target-ux";
 import { cn } from "@/lib/utils";
 
 export interface CommandPaletteProps {
@@ -53,7 +52,6 @@ export function CommandPalette({
     () =>
       filterCommands(query, {
         ...(commands ? { commands } : {}),
-        extra: targetUxFixtures.commands,
       }),
     [query, commands],
   );
