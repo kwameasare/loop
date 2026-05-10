@@ -15,7 +15,12 @@ describe("ReplayWorkbench", () => {
     }
   });
 
-  it("renders replay, persona, property, and scene surfaces", () => {
+  async function waitForContextSliderToSettle() {
+    await screen.findByText(/LOOP_CP_API_BASE_URL is required/i);
+  }
+
+  it("renders replay, persona, property, and scene surfaces", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
     render(<ReplayWorkbench model={getReplayWorkbenchModel()} />);
 
     expect(screen.getByTestId("replay-workbench")).toBeInTheDocument();
@@ -32,14 +37,17 @@ describe("ReplayWorkbench", () => {
       "Canonical production conversations",
     );
     expect(screen.getByTestId("cost-of-context-slider")).toBeInTheDocument();
+    await waitForContextSliderToSettle();
   });
 
-  it("lets a builder promote replay evidence into evals", () => {
+  it("lets a builder promote replay evidence into evals", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
     render(<ReplayWorkbench model={getReplayWorkbenchModel()} />);
 
     fireEvent.click(screen.getByRole("button", { name: /save as eval/i }));
 
     expect(screen.getByText(/queued as a regression eval/i)).toBeInTheDocument();
+    await waitForContextSliderToSettle();
   });
 
   it("shows backend-required errors instead of local replay-against-draft diffs", async () => {

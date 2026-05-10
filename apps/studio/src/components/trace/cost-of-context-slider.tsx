@@ -64,7 +64,9 @@ export function CostOfContextSlider({
             Toggle context and compare the delta
           </h2>
         </div>
-        <LiveBadge tone="staged">{items.length || 4} ablations</LiveBadge>
+        <LiveBadge tone={items.length > 0 ? "staged" : error ? "paused" : "draft"}>
+          {items.length} ablations
+        </LiveBadge>
       </div>
       {error ? (
         <p
