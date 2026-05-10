@@ -9,8 +9,7 @@ import { MigrationEntry } from "./migration-entry";
 import { SourceGrid } from "./source-grid";
 import { ThreePaneReview } from "./three-pane-review";
 import {
-  MIGRATION_READINESS,
-  REVIEW_ITEMS,
+  EMPTY_MIGRATION_READINESS,
   countReviewItemsBySeverity,
   type MigrationReadiness,
   type ReviewItem,
@@ -19,9 +18,8 @@ import type { ReactNode } from "react";
 
 export interface MigrationScreenProps {
   /**
-   * Optional override used by tests and stories. Production renders the
-   * canonical fixture so the migrate route is interactive without backend
-   * connectivity.
+   * Optional override used by routes, tests, and stories. The component's
+   * default is intentionally empty so it never implies an import happened.
    */
   className?: string;
   readiness?: MigrationReadiness;
@@ -37,13 +35,17 @@ export interface MigrationScreenProps {
  */
 export function MigrationScreen({
   className,
-  readiness = MIGRATION_READINESS,
-  reviewItems = REVIEW_ITEMS,
+  readiness = EMPTY_MIGRATION_READINESS,
+  reviewItems = [],
   migrationRunsSlot,
 }: MigrationScreenProps) {
   const severityCounts = countReviewItemsBySeverity(reviewItems);
+  const hasMigrationEvidence =
+    reviewItems.length > 0 || readiness.parityTotal > 0;
   const blockingPath =
-    severityCounts.blocking > 0
+    !hasMigrationEvidence
+      ? "Start or select an import to load lineage, parity, and review evidence."
+      : severityCounts.blocking > 0
       ? "Resolve blocking decisions before staging cutover."
       : "No blocking decisions outstanding. Cutover preflight unlocked.";
 
@@ -92,9 +94,17 @@ export function MigrationScreen({
       </section>
 
       <StatePanel
-        state={severityCounts.blocking > 0 ? "degraded" : "success"}
+        state={
+          !hasMigrationEvidence
+            ? "empty"
+            : severityCounts.blocking > 0
+              ? "degraded"
+              : "success"
+        }
         title={
-          severityCounts.blocking > 0
+          !hasMigrationEvidence
+            ? "No migration evidence loaded"
+            : severityCounts.blocking > 0
             ? `Promotion blocked by ${severityCounts.blocking} decision${
                 severityCounts.blocking === 1 ? "" : "s"
               }`

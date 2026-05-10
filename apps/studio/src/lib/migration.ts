@@ -433,6 +433,16 @@ export const MIGRATION_READINESS: MigrationReadiness = {
   parityTotal: 100,
 };
 
+export const EMPTY_MIGRATION_READINESS: MigrationReadiness = {
+  overallScore: 0,
+  cleanlyImported: 0,
+  needsReview: 0,
+  secretsToReconnect: 0,
+  unsupported: 0,
+  parityPassing: 0,
+  parityTotal: 0,
+};
+
 export function countReviewItemsBySeverity(
   items: readonly ReviewItem[],
 ): Record<ReviewDecisionSeverity, number> {
