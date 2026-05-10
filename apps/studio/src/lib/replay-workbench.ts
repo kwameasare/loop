@@ -386,10 +386,23 @@ function replaySummaryForTrace(trace: TraceSummary): FutureReplaySummary {
 }
 
 function modelFromTraces(traces: readonly TraceSummary[]): ReplayWorkbenchModel {
+  const emptySelectedReplay: FutureReplaySummary = {
+    conversationId: "no_trace_loaded",
+    behavioralDistance: 0,
+    changedFrames: 0,
+    latencyDeltaMs: 0,
+    costDeltaPct: 0,
+    mostLikelyBreak: "No production traces loaded.",
+    diffRows: [],
+  };
   if (traces.length === 0) {
     return {
-      ...getReplayWorkbenchModel(),
       conversations: [],
+      selectedReplay: emptySelectedReplay,
+      personas: [],
+      properties: [],
+      clusters: [],
+      scenes: [],
     };
   }
   const ordered = [...traces].sort((a, b) => {
@@ -398,17 +411,12 @@ function modelFromTraces(traces: readonly TraceSummary[]): ReplayWorkbenchModel 
   });
   const [first] = ordered;
   return {
-    ...getReplayWorkbenchModel(),
     conversations: ordered.map(liveConversation),
     selectedReplay: replaySummaryForTrace(first!),
-    scenes: scenes.map((scene, index) => {
-      const trace = ordered[index % ordered.length]!;
-      return {
-        ...scene,
-        provenance: `Saved from live trace ${trace.id}; replay evidence remains workspace-scoped.`,
-        linkedTraceId: trace.id,
-      };
-    }),
+    personas: [],
+    properties: [],
+    clusters: [],
+    scenes: [],
   };
 }
 

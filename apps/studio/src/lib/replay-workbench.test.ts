@@ -7,6 +7,13 @@ describe("fetchReplayWorkbenchModel", () => {
     const model = await fetchReplayWorkbenchModel("ws-1");
 
     expect(model.conversations).toEqual([]);
+    expect(model.personas).toEqual([]);
+    expect(model.properties).toEqual([]);
+    expect(model.clusters).toEqual([]);
+    expect(model.scenes).toEqual([]);
+    expect(model.selectedReplay.mostLikelyBreak).toBe(
+      "No production traces loaded.",
+    );
   });
 
   it("builds risky replay candidates from live traces", async () => {
@@ -53,7 +60,8 @@ describe("fetchReplayWorkbenchModel", () => {
       risk: "high",
     });
     expect(model.selectedReplay.diffRows[1].status).toBe("regressed");
-    expect(model.scenes[0].linkedTraceId).toBe("e".repeat(32));
+    expect(model.scenes).toEqual([]);
+    expect(model.personas).toEqual([]);
   });
 
   it("runs replay-against-draft through the live cp-api contract", async () => {
