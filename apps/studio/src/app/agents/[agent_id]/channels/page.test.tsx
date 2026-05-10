@@ -52,9 +52,7 @@ describe("AgentChannelsPage", () => {
     delete process.env.NEXT_PUBLIC_LOOP_API_URL;
     vi.stubGlobal(
       "fetch",
-      vi.fn<typeof fetch>(async () =>
-        new Response("missing", { status: 404 }),
-      ),
+      vi.fn<typeof fetch>(async () => new Response("missing", { status: 404 })),
     );
 
     render(await AgentChannelsPage({ params: { agent_id: "agt_404" } }));
@@ -86,6 +84,25 @@ describe("AgentChannelsPage", () => {
     expect(screen.getByTestId("channel-binding-voice")).toHaveAttribute(
       "data-focused",
       "false",
+    );
+  });
+
+  it("focuses the readiness panel from Workbench evidence links", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+    process.env.NEXT_PUBLIC_LOOP_API_URL = "";
+
+    render(
+      await AgentChannelsPage({
+        params: { agent_id: "agt_1" },
+        searchParams: { view: "readiness" },
+      }),
+    );
+
+    expect(
+      screen.getByTestId("channel-readiness-focused-workbench-panel"),
+    ).toHaveTextContent("Channel readiness");
+    expect(screen.getByTestId("channel-bindings-panel")).toHaveClass(
+      "ring-focus",
     );
   });
 });

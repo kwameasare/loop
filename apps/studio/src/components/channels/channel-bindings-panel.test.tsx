@@ -68,9 +68,9 @@ describe("ChannelBindingsPanel", () => {
     expect(
       screen.getByTestId("channel-required-config-slack"),
     ).toHaveTextContent("Slash commands");
-    expect(
-      screen.getByTestId("channel-required-config-sms"),
-    ).toHaveTextContent("Carrier compliance");
+    expect(screen.getByTestId("channel-required-config-sms")).toHaveTextContent(
+      "Carrier compliance",
+    );
     expect(
       screen.getByTestId("channel-required-config-email"),
     ).toHaveTextContent("Signature policy");
@@ -98,6 +98,23 @@ describe("ChannelBindingsPanel", () => {
     expect(screen.getByTestId("channel-binding-voice")).toHaveAttribute(
       "data-focused",
       "false",
+    );
+  });
+
+  it("focuses channel readiness when opened from Workbench evidence", () => {
+    render(
+      <ChannelBindingsPanel
+        agentId="agt_1"
+        initialBindings={buildLocalChannelBindings("agt_1")}
+        focusReadiness={true}
+      />,
+    );
+
+    expect(
+      screen.getByTestId("channel-readiness-focused-workbench-panel"),
+    ).toHaveTextContent("identity, auth, consent");
+    expect(screen.getByTestId("channel-bindings-panel")).toHaveClass(
+      "ring-focus",
     );
   });
 

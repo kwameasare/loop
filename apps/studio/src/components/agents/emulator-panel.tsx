@@ -14,6 +14,7 @@ export interface EmulatorPanelProps {
   /** Override the default LoopClient (used in production). */
   client?: LoopClient;
   evidenceMode?: "fixture" | "empty";
+  focusChannels?: boolean | undefined;
 }
 
 function defaultInvoke(client: LoopClient): SimulatorInvoke {
@@ -67,6 +68,7 @@ export function EmulatorPanel({
   invoke,
   client,
   evidenceMode = "empty",
+  focusChannels = false,
 }: EmulatorPanelProps) {
   const submit =
     invoke ??
@@ -83,6 +85,7 @@ export function EmulatorPanel({
       agentId={agentId}
       invoke={submit}
       evidenceMode={evidenceMode}
+      focusChannels={focusChannels}
       {...(evidenceMode === "empty"
         ? { initialConfig: EMPTY_SIMULATOR_CONFIG }
         : {})}

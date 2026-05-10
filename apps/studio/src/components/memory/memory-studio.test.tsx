@@ -51,9 +51,7 @@ describe("MemoryStudio", () => {
     render(<MemoryStudio data={createMemoryStudioData("agent_support")} />);
 
     expect(screen.getByTestId("memory-scope-account")).toBeInTheDocument();
-    expect(
-      screen.getByTestId("memory-scope-organization"),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("memory-scope-organization")).toBeInTheDocument();
     expect(screen.getByTestId("memory-scope-task")).toBeInTheDocument();
     expect(screen.getByTestId("memory-scope-agent")).toBeInTheDocument();
 
@@ -151,6 +149,51 @@ describe("MemoryStudio", () => {
     );
   });
 
+  it("focuses memory write, privacy, and retention query states", () => {
+    const data = createMemoryStudioData("agent_support");
+    const { rerender } = render(
+      <MemoryStudio data={data} focusedView="writes" />,
+    );
+
+    expect(screen.getByTestId("memory-focused-query")).toHaveTextContent(
+      "Memory writes",
+    );
+    expect(screen.getByTestId("memory-writes-summary")).toHaveClass(
+      "ring-focus",
+    );
+
+    rerender(<MemoryStudio data={data} focusedFilter="privacy" />);
+    expect(screen.getByTestId("memory-focused-query")).toHaveTextContent(
+      "Privacy-sensitive memory",
+    );
+    expect(screen.getByTestId("memory-privacy-summary")).toHaveClass(
+      "ring-focus",
+    );
+
+    rerender(<MemoryStudio data={data} focusedView="retention" />);
+    expect(screen.getByTestId("memory-focused-query")).toHaveTextContent(
+      "Retention evidence",
+    );
+    expect(screen.getByTestId("memory-retention-summary")).toHaveClass(
+      "ring-focus",
+    );
+  });
+
+  it("selects privacy-sensitive memory when opened from privacy evidence", async () => {
+    render(
+      <MemoryStudio
+        data={createMemoryStudioData("agent_support")}
+        focusedFilter="privacy"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("memory-studio-detail")).toHaveTextContent(
+        /pii|secret/i,
+      );
+    });
+  });
+
   it("saves edited memory policy content before approval", async () => {
     const data = createMemoryStudioData("agent_support");
     const userPolicy = data.policies.find((policy) => policy.scope === "user")!;
@@ -222,6 +265,8 @@ describe("MemoryStudio", () => {
     expect(screen.getByText("No memory in this scope")).toBeInTheDocument();
     expect(screen.getByTestId("memory-studio-replay")).toBeInTheDocument();
     expect(data.agentName).toBe("Agent agent_empty");
-    expect(screen.queryByText("Acme Support Concierge")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Acme Support Concierge"),
+    ).not.toBeInTheDocument();
   });
 });

@@ -79,6 +79,7 @@ export interface SimulatorLabProps {
     agentId: string,
     input: SimulatorRunInput,
   ) => Promise<SimulatorRunRecord>;
+  focusChannels?: boolean | undefined;
 }
 
 const INITIAL_STATE: PanelState = {
@@ -204,6 +205,7 @@ export function SimulatorLab({
   evidenceMode = "fixture",
   rateTurn = defaultRateSimulatorTurn,
   createRun = defaultCreateSimulatorRun,
+  focusChannels = false,
 }: SimulatorLabProps) {
   const [config, setConfig] = useState<SimulatorConfig>(initialConfig);
   const [prompt, setPrompt] = useState("");
@@ -449,7 +451,12 @@ export function SimulatorLab({
           </LiveBadge>
         </div>
         <div
-          className="grid grid-cols-3 gap-2"
+          className={cn(
+            "grid grid-cols-3 gap-2 rounded-md",
+            focusChannels
+              ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+              : "",
+          )}
           role="group"
           aria-label="Channel shell"
           data-testid="sim-channel-tabs"
@@ -477,6 +484,15 @@ export function SimulatorLab({
             </button>
           ))}
         </div>
+        {focusChannels ? (
+          <p
+            className="rounded-md border border-info/40 bg-info/5 px-3 py-2 text-xs text-info"
+            data-testid="simulator-focused-channels"
+          >
+            Opened from Workbench evidence. Use the channel tabs or keys 1-4 to
+            compare channel-specific behavior without leaving the agent context.
+          </p>
+        ) : null}
       </header>
 
       <PersonaSimulatorPanel agentId={agentId} />

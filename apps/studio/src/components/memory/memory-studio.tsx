@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Database,
   GitCompare,
@@ -39,6 +39,8 @@ import { cn } from "@/lib/utils";
 export interface MemoryStudioProps {
   data: MemoryStudioData;
   initialPolicyId?: string | undefined;
+  focusedView?: string | undefined;
+  focusedFilter?: string | undefined;
   onDeleteEntry?: (entry: MemoryStudioEntry) => Promise<void>;
   onSavePolicy?: (policy: MemoryPolicyInput) => Promise<MemoryPolicy>;
   onApprovePolicy?: (scope: MemoryPolicyScope) => Promise<MemoryPolicy>;
@@ -677,6 +679,8 @@ function MemoryPolicyCard({
 export function MemoryStudio({
   data,
   initialPolicyId,
+  focusedView,
+  focusedFilter,
   onDeleteEntry,
   onSavePolicy,
   onApprovePolicy,
@@ -711,6 +715,20 @@ export function MemoryStudio({
   const focusedPolicy = initialPolicyId
     ? policies.find((policy) => policy.id === initialPolicyId)
     : undefined;
+  const focusedMemoryQuery =
+    focusedView === "writes" ||
+    focusedView === "retention" ||
+    focusedFilter === "privacy";
+
+  useEffect(() => {
+    if (focusedFilter !== "privacy") return;
+    const privacyEntry = entries.find((entry) =>
+      entry.safetyFlags.some(
+        (flag) => flag === "pii" || flag === "secret-like",
+      ),
+    );
+    if (privacyEntry) setSelectedId(privacyEntry.id);
+  }, [entries, focusedFilter]);
 
   async function handleDelete(entry: MemoryStudioEntry): Promise<void> {
     if (!onDeleteEntry) {
@@ -851,16 +869,62 @@ export function MemoryStudio({
         </p>
       ) : null}
 
+      {focusedMemoryQuery ? (
+        <section
+          className="rounded-md border border-info/40 bg-info/5 p-4 text-sm text-info"
+          data-testid="memory-focused-query"
+        >
+          <p className="font-medium">
+            {focusedFilter === "privacy"
+              ? "Privacy-sensitive memory"
+              : focusedView === "retention"
+                ? "Retention evidence"
+                : "Memory writes"}
+          </p>
+          <p className="mt-1">
+            {focusedFilter === "privacy"
+              ? "Opened from Workbench evidence. Review PII, secret-like values, consent, deletion behavior, and source traces before activation."
+              : focusedView === "retention"
+                ? "Opened from Workbench evidence. Confirm retention rules and deletion behavior are visible before this memory policy can ship."
+                : "Opened from Workbench evidence. Inspect source-trace-backed writes and replay impact before changing policy or production behavior."}
+          </p>
+        </section>
+      ) : null}
+
       <section className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))]">
-        <div className="rounded-md border bg-card p-3">
+        <div
+          className={cn(
+            "rounded-md border bg-card p-3",
+            focusedView === "writes"
+              ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+              : "",
+          )}
+          data-testid="memory-writes-summary"
+        >
           <p className="text-xs text-muted-foreground">Memory entries</p>
           <p className="mt-1 text-xl font-semibold">{entries.length}</p>
         </div>
-        <div className="rounded-md border bg-card p-3">
+        <div
+          className={cn(
+            "rounded-md border bg-card p-3",
+            focusedFilter === "privacy"
+              ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+              : "",
+          )}
+          data-testid="memory-privacy-summary"
+        >
           <p className="text-xs text-muted-foreground">Flagged writes</p>
           <p className="mt-1 text-xl font-semibold">{flagged}</p>
         </div>
-        <div className="rounded-md border bg-card p-3">
+        <div
+          className={cn(
+            "rounded-md border bg-card p-3",
+            focusedView === "retention"
+              ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
+              : "",
+          )}
+          data-testid="memory-retention-summary"
+        >
           <p className="text-xs text-muted-foreground">Retention evidence</p>
           <p className="mt-1 text-sm">{data.retentionEvidence}</p>
         </div>

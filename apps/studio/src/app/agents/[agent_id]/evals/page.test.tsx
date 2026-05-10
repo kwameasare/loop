@@ -141,4 +141,87 @@ describe("AgentEvalsPage", () => {
       "/evals?agent_id=agent_eval&case_id=case_refund_regression",
     );
   });
+
+  it("focuses affected evals from Workbench evidence links", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test/v1";
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.endsWith("/agents/agent_eval")) {
+        return Response.json({
+          id: "agent_eval",
+          name: "Eval Agent",
+          description: "Evaluated support agent.",
+          slug: "eval-agent",
+          active_version: 3,
+          created_at: "2026-05-09T10:00:00Z",
+          workspace_id: "ws_eval",
+        });
+      }
+      if (url === "https://cp.test/v1/workspaces/ws_eval/eval-suites") {
+        return Response.json({ items: [] });
+      }
+      return new Response("missing", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(
+      await AgentEvalsPage({
+        params: { agent_id: "agent_eval" },
+        searchParams: { filter: "affected" },
+      }),
+    );
+
+    expect(
+      screen.getByTestId("agent-evals-focused-affected"),
+    ).toHaveTextContent("Affected evals");
+    expect(
+      screen.getByRole("link", { name: /open in eval foundry/i }),
+    ).toHaveAttribute("href", "/evals?agent_id=agent_eval");
+  });
+
+  it("focuses knowledge-sourced eval and deploy gate views", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test/v1";
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.endsWith("/agents/agent_eval")) {
+        return Response.json({
+          id: "agent_eval",
+          name: "Eval Agent",
+          description: "Evaluated support agent.",
+          slug: "eval-agent",
+          active_version: 3,
+          created_at: "2026-05-09T10:00:00Z",
+          workspace_id: "ws_eval",
+        });
+      }
+      if (url === "https://cp.test/v1/workspaces/ws_eval/eval-suites") {
+        return Response.json({ items: [] });
+      }
+      return new Response("missing", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    const { unmount } = render(
+      await AgentEvalsPage({
+        params: { agent_id: "agent_eval" },
+        searchParams: { source: "knowledge" },
+      }),
+    );
+    expect(
+      screen.getByTestId("agent-evals-focused-knowledge"),
+    ).toHaveTextContent("Knowledge-sourced evals");
+    unmount();
+
+    render(
+      await AgentEvalsPage({
+        params: { agent_id: "agent_eval" },
+        searchParams: { view: "gates" },
+      }),
+    );
+    expect(screen.getByTestId("agent-evals-focused-gates")).toHaveTextContent(
+      "Deploy gates",
+    );
+  });
 });
