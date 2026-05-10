@@ -128,6 +128,20 @@ export function evaluateConsent(
 export interface ApplyResult {
   appliedAt: string;
   evidenceRef: string;
+  branch?: {
+    id: string;
+    name: string;
+    base_version_id: string;
+    status: string;
+  };
+  changeSet?: {
+    id: string;
+    branch_id: string;
+    name: string;
+    status: string;
+    source_type: string;
+  };
+  nextUrl?: string;
 }
 
 export function applyAction(
@@ -199,6 +213,11 @@ export interface CoBuilderClientOptions {
   token?: string;
   baseUrl?: string;
   agentId?: string;
+}
+
+export interface CoBuilderApplyOptions extends CoBuilderClientOptions {
+  selectionContext?: string;
+  baseVersionId?: string;
 }
 
 export class ReviewShapeError extends Error {
@@ -284,6 +303,42 @@ export async function fetchCoBuilderWorkspace(
     throw new Error(`cp-api GET cobuilder -> ${response.status}`);
   }
   return (await response.json()) as CoBuilderWorkspace;
+}
+
+export async function applyCoBuilderAction(
+  workspaceId: string,
+  actionId: string,
+  opts: CoBuilderApplyOptions = {},
+): Promise<ApplyResult> {
+  const base = cpApiBaseUrl(opts.baseUrl);
+  const body: Record<string, string> = {};
+  if (opts.agentId) body.agent_id = opts.agentId;
+  if (opts.selectionContext) body.selection_context = opts.selectionContext;
+  if (opts.baseVersionId) body.base_version_id = opts.baseVersionId;
+  const response = await (opts.fetcher ?? fetch)(
+    `${base}/workspaces/${encodeURIComponent(
+      workspaceId,
+    )}/cobuilder/actions/${encodeURIComponent(actionId)}/apply`,
+    {
+      method: "POST",
+      headers: {
+        ...headers(opts),
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) {
+    let detail = "";
+    try {
+      detail = JSON.stringify(await response.json());
+    } catch {
+      detail = await response.text();
+    }
+    throw new Error(`cp-api POST cobuilder apply -> ${response.status} ${detail}`);
+  }
+  return (await response.json()) as ApplyResult;
 }
 
 // ---------------------------------------------------------------------------

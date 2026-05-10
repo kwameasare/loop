@@ -7,6 +7,7 @@ import {
   FIXTURE_OPERATOR,
   FIXTURE_REVIEW,
   ReviewShapeError,
+  applyCoBuilderAction,
   applyAction,
   blockingBullets,
   createFixtureCoBuilderWorkspace,
@@ -129,5 +130,51 @@ describe("fetchCoBuilderWorkspace", () => {
 
     expect(workspace.workspaceId).toBe("ws-1");
     expect(workspace.actions).toHaveLength(2);
+  });
+});
+
+describe("applyCoBuilderAction", () => {
+  it("posts consented apply requests to cp-api and returns workflow evidence", async () => {
+    const fetcher = async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(input)).toBe(
+        "https://cp.example/v1/workspaces/ws-1/cobuilder/actions/act_offer_callback/apply",
+      );
+      expect(init?.method).toBe("POST");
+      expect(JSON.parse(String(init?.body))).toEqual({
+        agent_id: "agent-1",
+        selection_context: "agents/refunds-bot/flow/escalate.ts",
+      });
+      return new Response(
+        JSON.stringify({
+          appliedAt: "2026-01-01T00:00:00Z",
+          evidenceRef: "audit/cobuilder/act_offer_callback/applied",
+          branch: {
+            id: "br_1",
+            name: "cobuilder/act-offer-callback",
+            base_version_id: "v1",
+            status: "active",
+          },
+          changeSet: {
+            id: "cs_1",
+            branch_id: "br_1",
+            name: "Offer callback",
+            status: "draft",
+            source_type: "ai_cobuilder",
+          },
+          nextUrl: "/agents/agent-1/deploys?change_set=cs_1",
+        }),
+        { status: 201, headers: { "content-type": "application/json" } },
+      );
+    };
+
+    const out = await applyCoBuilderAction("ws-1", "act_offer_callback", {
+      baseUrl: "https://cp.example",
+      agentId: "agent-1",
+      selectionContext: "agents/refunds-bot/flow/escalate.ts",
+      fetcher: fetcher as typeof fetch,
+    });
+
+    expect(out.changeSet?.id).toBe("cs_1");
+    expect(out.nextUrl).toContain("change_set=cs_1");
   });
 });

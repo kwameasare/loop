@@ -112,3 +112,91 @@ def test_cobuilder_downgrades_viewer_consent(
     assert body["operator"]["maxMode"] == "suggest"
     assert body["operator"]["scopes"] == ["agent:read"]
     assert body["actions"][0]["id"] == "act_create_first_agent"
+
+
+def test_cobuilder_apply_creates_branch_changeset_and_audit(
+    client: TestClient,
+) -> None:
+    workspace_id = _workspace(client)
+    agent_id = _agent(client, workspace_id)
+    headers = {"authorization": _bearer_for("owner-1")}
+    client.post(
+        f"/v1/agents/{agent_id}/versions",
+        headers=headers,
+        json={
+            "spec": {
+                "system_prompt": "Answer refunds with evidence.",
+                "tools": ["lookup_order", "issue_refund"],
+            }
+        },
+    )
+
+    response = client.post(
+        f"/v1/workspaces/{workspace_id}/cobuilder/actions/act_gate_side_effect_tool/apply",
+        headers=headers,
+        json={
+            "agent_id": str(agent_id),
+            "selection_context": f"agents/{agent_id}/tools/issue_refund.yaml",
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["evidenceRef"].endswith("/act_gate_side_effect_tool/applied")
+    assert body["branch"]["name"] == "cobuilder/act-gate-side-effect-tool"
+    assert body["changeSet"]["source_type"] == "ai_cobuilder"
+    changed = body["changeSet"]["changed_objects"][0]
+    assert changed["action_id"] == "act_gate_side_effect_tool"
+    assert changed["mode"] == "edit"
+    assert changed["selection_context"].endswith("/tools/issue_refund.yaml")
+    assert body["nextUrl"].endswith(f"/deploys?change_set={body['changeSet']['id']}")
+
+    workflow = client.get(
+        f"/v1/agents/{agent_id}/workflow",
+        headers=headers,
+    )
+    assert workflow.status_code == 200, workflow.text
+    workflow_body = workflow.json()
+    assert any(item["id"] == body["branch"]["id"] for item in workflow_body["branches"])
+    assert any(
+        item["id"] == body["changeSet"]["id"]
+        for item in workflow_body["change_sets"]
+    )
+
+    audit = client.get(f"/v1/audit-events?workspace_id={workspace_id}", headers=headers)
+    assert audit.status_code == 200, audit.text
+    assert "cobuilder:action_apply" in {item["action"] for item in audit.json()["items"]}
+
+
+def test_cobuilder_apply_blocks_without_matching_consent(
+    client: TestClient,
+) -> None:
+    workspace_id = _workspace(client)
+    agent_id = _agent(client, workspace_id)
+    owner_headers = {"authorization": _bearer_for("owner-1")}
+    client.post(
+        f"/v1/agents/{agent_id}/versions",
+        headers=owner_headers,
+        json={
+            "spec": {
+                "system_prompt": "Answer refunds with evidence.",
+                "tools": ["issue_refund"],
+            }
+        },
+    )
+    client.post(
+        f"/v1/workspaces/{workspace_id}/members",
+        headers=owner_headers,
+        json={"user_sub": "viewer-1", "role": "viewer"},
+    )
+
+    response = client.post(
+        f"/v1/workspaces/{workspace_id}/cobuilder/actions/act_gate_side_effect_tool/apply",
+        headers={"authorization": _bearer_for("viewer-1")},
+        json={"agent_id": str(agent_id)},
+    )
+
+    assert response.status_code == 403, response.text
+    detail = response.json()["detail"]
+    assert detail["message"] == "Action is blocked by the Co-Builder consent policy."
+    assert {item["code"] for item in detail["reasons"]} == {"mode", "scope"}

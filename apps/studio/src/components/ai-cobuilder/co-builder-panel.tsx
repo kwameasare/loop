@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import {
+  type ApplyResult,
   type CoBuilderAction,
   type ConsentEvaluation,
   type OperatorContext,
@@ -14,6 +15,7 @@ interface CoBuilderPanelProps {
   action: CoBuilderAction;
   operator: OperatorContext;
   selectionContext: string;
+  onApplyAction?: (action: CoBuilderAction) => Promise<ApplyResult> | ApplyResult;
   onApply?: (actionId: string, appliedAt: string) => void;
 }
 
@@ -27,6 +29,7 @@ export function CoBuilderPanel({
   action,
   operator,
   selectionContext,
+  onApplyAction,
   onApply,
 }: CoBuilderPanelProps): JSX.Element {
   const evaluation: ConsentEvaluation = useMemo(
@@ -35,15 +38,27 @@ export function CoBuilderPanel({
   );
   const [error, setError] = useState<string | null>(null);
   const [appliedAt, setAppliedAt] = useState<string | null>(null);
+  const [appliedEvidenceRef, setAppliedEvidenceRef] = useState<string | null>(null);
+  const [changeSetId, setChangeSetId] = useState<string | null>(null);
+  const [nextUrl, setNextUrl] = useState<string | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
 
-  function handleApply(): void {
+  async function handleApply(): Promise<void> {
     setError(null);
+    setIsApplying(true);
     try {
-      const result = applyAction(action, operator);
+      const result = onApplyAction
+        ? await onApplyAction(action)
+        : applyAction(action, operator);
       setAppliedAt(result.appliedAt);
+      setAppliedEvidenceRef(result.evidenceRef);
+      setChangeSetId(result.changeSet?.id ?? null);
+      setNextUrl(result.nextUrl ?? null);
       onApply?.(action.id, result.appliedAt);
     } catch (e) {
       setError(e instanceof Error ? e.message : "apply failed");
+    } finally {
+      setIsApplying(false);
     }
   }
 
@@ -144,17 +159,32 @@ export function CoBuilderPanel({
           data-testid={`cobuilder-applied-${action.id}`}
           className="rounded border border-success/40 bg-success/10 px-2 py-1 text-xs text-success"
         >
-          Applied at {appliedAt}.
+          Applied at {appliedAt}.{" "}
+          {changeSetId ? (
+            <span data-testid={`cobuilder-changeset-${action.id}`}>
+              Change set {changeSetId}.
+            </span>
+          ) : null}{" "}
+          {appliedEvidenceRef ? (
+            <span data-testid={`cobuilder-evidence-${action.id}`}>
+              Evidence {appliedEvidenceRef}.
+            </span>
+          ) : null}{" "}
+          {nextUrl ? (
+            <a className="font-medium underline" href={nextUrl}>
+              Open workflow
+            </a>
+          ) : null}
         </p>
       ) : (
         <button
           type="button"
           data-testid={`cobuilder-apply-${action.id}`}
           onClick={handleApply}
-          disabled={!evaluation.ok}
+          disabled={!evaluation.ok || isApplying}
           className="rounded bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Apply ({MODE_LABEL[action.mode] ?? action.mode})
+          {isApplying ? "Applying..." : `Apply (${MODE_LABEL[action.mode] ?? action.mode})`}
         </button>
       )}
     </section>
