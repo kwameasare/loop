@@ -118,6 +118,49 @@ describe("ObservatoryScreen", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
+  it("turns production anomalies into tasks and eval cases", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+      const url = String(input);
+      expect(init?.method).toBe("POST");
+      if (url.endsWith("/tasks")) {
+        return Response.json({
+          id: "task_anom_tool_wait",
+          evidence: "task created",
+        });
+      }
+      if (url.endsWith("/eval-cases")) {
+        return Response.json({
+          id: "eval_anom_tool_wait",
+          evidence: "eval created",
+        });
+      }
+      return Response.json({});
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(<ObservatoryScreen model={OBSERVATORY_MODEL} workspaceId="ws1" />);
+
+    fireEvent.click(screen.getByTestId("anomaly-task-anom_tool_wait"));
+    expect(
+      await screen.findByTestId("anomaly-action-refs-anom_tool_wait"),
+    ).toHaveTextContent("task_anom_tool_wait");
+
+    fireEvent.click(screen.getByTestId("anomaly-eval-anom_tool_wait"));
+    expect(
+      await screen.findByTestId("anomaly-action-refs-anom_tool_wait"),
+    ).toHaveTextContent("eval_anom_tool_wait");
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/workspaces/ws1/observatory/anomalies/anom_tool_wait/tasks",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://cp.test/v1/workspaces/ws1/observatory/anomalies/anom_tool_wait/eval-cases",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
   it("shows backend-required errors instead of locally pinning dashboards", async () => {
     process.env.LOOP_CP_API_BASE_URL = "";
     render(<ObservatoryScreen model={OBSERVATORY_MODEL} workspaceId="ws1" />);
