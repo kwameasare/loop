@@ -201,6 +201,21 @@ describe("marketplace cp-api adapter", () => {
     expect(catalog.map((item) => item.id)).toEqual(["first-party.salesforce"]);
   });
 
+  it("passes workspace context when loading private marketplace items", async () => {
+    const fetcher = async (input: RequestInfo | URL) => {
+      expect(String(input)).toBe(
+        "https://cp.test/v1/marketplace?workspace_id=ws_marketplace",
+      );
+      return response({ items: [] });
+    };
+
+    await fetchMarketplaceCatalog({
+      baseUrl: "https://cp.test/v1",
+      workspaceId: "ws_marketplace",
+      fetcher: fetcher as unknown as typeof fetch,
+    });
+  });
+
   it("publishes and installs a private item against cp-api", async () => {
     const fetcher = async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
@@ -251,7 +266,7 @@ describe("marketplace cp-api adapter", () => {
       baseUrl: "https://cp.test/v1",
       fetcher: fetcher as unknown as typeof fetch,
     });
-    expect(installed.install_id).toBe("inst_1");
+    expect(installed.installId).toBe("inst_1");
   });
 
   it("requires cp-api for publish and install mutations", async () => {

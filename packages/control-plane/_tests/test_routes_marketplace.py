@@ -120,3 +120,147 @@ def test_private_marketplace_publish_version_install_and_deprecate(
     )
     assert deprecated.status_code == 200, deprecated.text
     assert deprecated.json()["lifecycle"] == "deprecated"
+
+
+def test_private_marketplace_items_are_workspace_scoped(
+    client: TestClient,
+) -> None:
+    workspace_one = client.post(
+        "/v1/workspaces",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={"name": "Acme", "slug": f"acme-{uuid4().hex[:8]}"},
+    )
+    assert workspace_one.status_code == 201, workspace_one.text
+    workspace_one_id = UUID(workspace_one.json()["id"])
+
+    workspace_two = client.post(
+        "/v1/workspaces",
+        headers={"authorization": _bearer_for("owner-2")},
+        json={"name": "Beta", "slug": f"beta-{uuid4().hex[:8]}"},
+    )
+    assert workspace_two.status_code == 201, workspace_two.text
+    workspace_two_id = UUID(workspace_two.json()["id"])
+
+    published = client.post(
+        "/v1/marketplace/items",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={
+            "workspace_id": str(workspace_one_id),
+            "name": "Private refund skill",
+            "slug": f"private-refunds-{uuid4().hex[:8]}",
+            "description": "Internal refund policy helper",
+            "version": "1.0.0",
+            "permissions": ["read-traces"],
+            "reviewers": ["lead@example.com"],
+        },
+    )
+    assert published.status_code == 201, published.text
+    item_id = published.json()["id"]
+
+    global_browse = client.get(
+        "/v1/marketplace",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert global_browse.status_code == 200, global_browse.text
+    global_ids = {
+        item.get("id") or item.get("server_id")
+        for item in global_browse.json()["items"]
+    }
+    assert item_id not in global_ids
+
+    workspace_one_browse = client.get(
+        f"/v1/marketplace?workspace_id={workspace_one_id}",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert workspace_one_browse.status_code == 200, workspace_one_browse.text
+    workspace_one_ids = {
+        item.get("id") or item.get("server_id")
+        for item in workspace_one_browse.json()["items"]
+    }
+    assert item_id in workspace_one_ids
+
+    workspace_two_browse = client.get(
+        f"/v1/marketplace?workspace_id={workspace_two_id}",
+        headers={"authorization": _bearer_for("owner-2")},
+    )
+    assert workspace_two_browse.status_code == 200, workspace_two_browse.text
+    workspace_two_ids = {
+        item.get("id") or item.get("server_id")
+        for item in workspace_two_browse.json()["items"]
+    }
+    assert item_id not in workspace_two_ids
+
+    cross_workspace_version = client.post(
+        f"/v1/marketplace/items/{item_id}/versions",
+        headers={"authorization": _bearer_for("owner-2")},
+        json={
+            "workspace_id": str(workspace_two_id),
+            "version": "1.1.0",
+            "changelog": "Attempted cross-workspace update.",
+        },
+    )
+    assert cross_workspace_version.status_code == 404, cross_workspace_version.text
+
+    cross_workspace_install = client.post(
+        f"/v1/marketplace/items/{item_id}/install",
+        headers={"authorization": _bearer_for("owner-2")},
+        json={"workspace_id": str(workspace_two_id)},
+    )
+    assert cross_workspace_install.status_code == 404, cross_workspace_install.text
+
+
+def test_marketplace_installs_are_admin_and_workspace_scoped(
+    client: TestClient,
+) -> None:
+    workspace_one = client.post(
+        "/v1/workspaces",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={"name": "Acme", "slug": f"acme-{uuid4().hex[:8]}"},
+    )
+    assert workspace_one.status_code == 201, workspace_one.text
+    workspace_one_id = UUID(workspace_one.json()["id"])
+
+    workspace_two = client.post(
+        "/v1/workspaces",
+        headers={"authorization": _bearer_for("owner-2")},
+        json={"name": "Beta", "slug": f"beta-{uuid4().hex[:8]}"},
+    )
+    assert workspace_two.status_code == 201, workspace_two.text
+    workspace_two_id = UUID(workspace_two.json()["id"])
+
+    member = client.post(
+        f"/v1/workspaces/{workspace_one_id}/members",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={"user_sub": "alice", "role": "member"},
+    )
+    assert member.status_code == 201, member.text
+
+    member_install = client.post(
+        "/v1/marketplace/items/first-party.salesforce/install",
+        headers={"authorization": _bearer_for("alice")},
+        json={"workspace_id": str(workspace_one_id)},
+    )
+    assert member_install.status_code == 403, member_install.text
+
+    install_one = client.post(
+        "/v1/marketplace/items/first-party.salesforce/install",
+        headers={"authorization": _bearer_for("owner-1")},
+        json={"workspace_id": str(workspace_one_id)},
+    )
+    assert install_one.status_code == 201, install_one.text
+
+    install_two = client.post(
+        "/v1/marketplace/items/first-party.salesforce/install",
+        headers={"authorization": _bearer_for("owner-2")},
+        json={"workspace_id": str(workspace_two_id)},
+    )
+    assert install_two.status_code == 201, install_two.text
+
+    installs_one = client.get(
+        f"/v1/marketplace/items/first-party.salesforce/installs?workspace_id={workspace_one_id}",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert installs_one.status_code == 200, installs_one.text
+    assert [item["workspace_id"] for item in installs_one.json()["items"]] == [
+        str(workspace_one_id)
+    ]

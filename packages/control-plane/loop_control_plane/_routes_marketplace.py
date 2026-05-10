@@ -22,6 +22,7 @@ async def browse_marketplace(
     request: Request,
     q: str = Query(default=""),
     category: str | None = Query(default=None),
+    workspace_id: UUID | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=100),
     caller_sub: str = CALLER,
 ) -> dict[str, Any]:
@@ -30,7 +31,20 @@ async def browse_marketplace(
     _ = caller_sub
     browser = MarketplaceBrowser(store=request.app.state.cp.marketplace_store)
     items = browser.browse(query=q, category=category, limit=limit)
-    private_items = list(request.app.state.cp.ux_wireup.setdefault("marketplace_items", {}).values())
+    private_items: list[dict[str, Any]] = []
+    if workspace_id is not None:
+        await authorize_workspace_access(
+            workspaces=request.app.state.cp.workspaces,
+            workspace_id=workspace_id,
+            user_sub=caller_sub,
+        )
+        private_items = [
+            item
+            for item in request.app.state.cp.ux_wireup.setdefault(
+                "marketplace_items", {}
+            ).values()
+            if item.get("workspace_id") == str(workspace_id)
+        ]
     rows = [item.model_dump(mode="json") for item in items]
     if q:
         q_lower = q.lower()
@@ -73,6 +87,17 @@ def _cp_item(item: dict[str, Any]) -> dict[str, Any]:
         "versions": item["versions"],
         "deprecation_notice": item.get("deprecation_notice"),
     }
+
+
+def _private_item_for_workspace(
+    request: Request, *, item_id: str, workspace_id: UUID
+) -> dict[str, Any]:
+    item = request.app.state.cp.ux_wireup.setdefault("marketplace_items", {}).get(
+        item_id
+    )
+    if item is None or item.get("workspace_id") != str(workspace_id):
+        raise HTTPException(status_code=404, detail="marketplace item not found")
+    return item
 
 
 @router.post("/items", status_code=201)
@@ -149,9 +174,11 @@ async def publish_marketplace_version(
         user_sub=caller_sub,
         required_role=Role.ADMIN,
     )
-    item = request.app.state.cp.ux_wireup.setdefault("marketplace_items", {}).get(item_id)
-    if item is None:
-        raise HTTPException(status_code=404, detail="marketplace item not found")
+    item = _private_item_for_workspace(
+        request,
+        item_id=item_id,
+        workspace_id=body.workspace_id,
+    )
     version = {
         "version": body.version,
         "released_at": datetime.now(UTC).isoformat(),
@@ -191,9 +218,11 @@ async def deprecate_marketplace_item(
         user_sub=caller_sub,
         required_role=Role.ADMIN,
     )
-    item = request.app.state.cp.ux_wireup.setdefault("marketplace_items", {}).get(item_id)
-    if item is None:
-        raise HTTPException(status_code=404, detail="marketplace item not found")
+    item = _private_item_for_workspace(
+        request,
+        item_id=item_id,
+        workspace_id=body.workspace_id,
+    )
     item["lifecycle"] = "deprecated"
     item["deprecation_notice"] = body.reason or "Deprecated by workspace administrator."
     record_audit_event(
@@ -220,8 +249,11 @@ async def install_marketplace_item(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=body.workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     item = request.app.state.cp.ux_wireup.setdefault("marketplace_items", {}).get(item_id)
+    if item is not None and item.get("workspace_id") != str(body.workspace_id):
+        raise HTTPException(status_code=404, detail="marketplace item not found")
     if item is None:
         # First-party MCP catalog item IDs are accepted too; install audit is
         # the important enterprise trail even when the item lives in the
@@ -265,7 +297,13 @@ async def list_marketplace_installs(
         user_sub=caller_sub,
         required_role=Role.ADMIN,
     )
-    installs = list(request.app.state.cp.ux_wireup.setdefault("marketplace_installs", {}).get(item_id, []))
+    installs = [
+        install
+        for install in request.app.state.cp.ux_wireup.setdefault(
+            "marketplace_installs", {}
+        ).get(item_id, [])
+        if install.get("workspace_id") == str(workspace_id)
+    ]
     return {"items": installs}
 
 

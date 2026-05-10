@@ -58,7 +58,7 @@ describe("MarketplacePage", () => {
     delete process.env.NEXT_PUBLIC_LOOP_API_URL;
     const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
-      if (url === "https://cp.test/v1/marketplace") {
+      if (url === "https://cp.test/v1/marketplace?workspace_id=ws_marketplace") {
         return Response.json({
           items: [
             {
