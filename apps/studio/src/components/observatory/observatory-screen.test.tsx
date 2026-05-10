@@ -78,6 +78,15 @@ describe("ObservatoryScreen", () => {
     expect(
       screen.getByTestId("incident-notifications-inc_rollback_schema"),
     ).toHaveTextContent("maya@acme.test");
+    expect(
+      screen.getByTestId("incident-report-inc_rollback_schema"),
+    ).toHaveTextContent("Generated incident report");
+    expect(
+      screen.getByTestId("incident-report-inc_rollback_schema"),
+    ).toHaveTextContent("17 conversations require review");
+    expect(
+      screen.getByTestId("incident-report-inc_rollback_schema"),
+    ).toHaveTextContent("deployment/dep_v24/rollback");
     expect(screen.getByTestId("ambient-health-arcs")).toHaveTextContent(
       "Ambient agent health",
     );

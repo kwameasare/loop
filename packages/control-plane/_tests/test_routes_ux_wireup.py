@@ -1991,6 +1991,8 @@ def test_deployment_threshold_breach_pauses_rollout_by_policy(
         agent_id,
         thresholds={"tool_failure_rate": 0.03},
     )
+    trace_id = "8" * 32
+    _add_trace(client, workspace_id, agent_id, trace_id)
 
     evaluated = client.post(
         f"/v1/agents/{agent_id}/deployments/{deployment['id']}/thresholds/evaluate",
@@ -2009,6 +2011,14 @@ def test_deployment_threshold_breach_pauses_rollout_by_policy(
     assert body["breached"] is True
     assert body["deployment"]["status"] == "paused"
     assert body["deployment"]["stage"] == "paused"
+    assert body["incident"]["status"] == "contained"
+    assert body["incident"]["deployment_id"] == deployment["id"]
+    assert body["incident"]["affected_trace_ids"] == [trace_id]
+    assert body["incident"]["report"]["rollback_status"] == "paused"
+    assert body["incident"]["report"]["affected_channels"] == ["web_chat"]
+    assert body["incident"]["report"]["actions_taken"] == [
+        f"deployment/{deployment['id']}/pause"
+    ]
 
     audit = client.get(
         f"/v1/audit-events?workspace_id={workspace_id}",
@@ -2017,6 +2027,7 @@ def test_deployment_threshold_breach_pauses_rollout_by_policy(
     assert {event["action"] for event in audit} >= {
         "deployment:threshold_breach",
         "deployment:pause",
+        "incident:create_auto_pause",
     }
 
 
@@ -2050,6 +2061,8 @@ def test_deployment_threshold_breach_rolls_back_and_creates_incident(
     assert body["breached"] is True
     assert body["deployment"]["status"] == "rolled_back"
     assert body["deployment"]["trafficPercent"] == 0
+    assert body["incident"]["deployment_id"] == deployment["id"]
+    assert body["incident"]["report"]["rollback_status"] == "executed"
 
     listed = client.get(
         f"/v1/agents/{agent_id}/incidents",
@@ -2061,6 +2074,8 @@ def test_deployment_threshold_breach_rolls_back_and_creates_incident(
     assert incident["deployment_id"] == deployment["id"]
     assert incident["trigger"] == "error_rate breached 0.04 > 0.02 over 5m"
     assert incident["affected_trace_ids"] == [trace_id]
+    assert incident["report"]["affected_channels"] == ["web_chat"]
+    assert incident["report"]["timeline"]
 
     audit = client.get(
         f"/v1/audit-events?workspace_id={workspace_id}",
@@ -2237,6 +2252,10 @@ def test_incident_response_links_auto_rollback_and_seeds_eval_cases(
     assert incident["report"]["suspected_cause"].startswith("Tool schema")
     assert incident["report"]["candidate_regression_tests"] == [trace_id]
     assert incident["report"]["rollback_status"] == "executed"
+    assert incident["report"]["timeline"]
+    assert incident["report"]["affected_trace_ids"] == [trace_id]
+    assert incident["report"]["affected_channels"] == ["web_chat"]
+    assert incident["report"]["actions_taken"] == [f"deployment/{live['id']}/rollback"]
     assert [item["recipient"] for item in incident["notifications"]] == ["owner-1"]
     assert incident["report"]["notifications"][0]["summary"].startswith("high incident")
     assert "affected_traces_collected" in {event["kind"] for event in incident["timeline"]}

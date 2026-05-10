@@ -90,9 +90,24 @@ def _notifications_for(body: IncidentCreate, now: datetime) -> list[dict[str, st
     ]
 
 
-def _report_for(body: IncidentCreate, notifications: list[dict[str, Any]]) -> dict[str, Any]:
+def _rollback_status(action_ref: str, created_from: str) -> str:
+    if action_ref.endswith("/rollback"):
+        return "executed"
+    if action_ref.endswith("/pause") or "pause" in created_from:
+        return "paused"
+    return "not_started"
+
+
+def _report_for(
+    body: IncidentCreate,
+    notifications: list[dict[str, Any]],
+    timeline: list[dict[str, Any]],
+) -> dict[str, Any]:
+    actions_taken = [body.rollback_action_ref] if body.rollback_action_ref else []
     return {
+        "timeline": timeline,
         "trigger": body.trigger,
+        "affected_trace_ids": body.affected_trace_ids,
         "affected_conversations": body.affected_conversation_count,
         "affected_channels": body.channel_scope,
         "customer_impact": (
@@ -100,15 +115,14 @@ def _report_for(body: IncidentCreate, notifications: list[dict[str, Any]]) -> di
             if body.affected_conversation_count == 0
             else f"{body.affected_conversation_count} conversations require review."
         ),
-        "actions_taken": [body.rollback_action_ref] if body.rollback_action_ref else [],
+        "actions_taken": actions_taken,
         "suspected_cause": body.root_cause_hypothesis
         or "Pending trace and deployment-event review.",
         "proposed_fix": body.proposed_fix or "Generate candidate evals before fix.",
         "candidate_regression_tests": body.affected_trace_ids,
-        "rollback_status": "executed" if body.rollback_action_ref else "not_started",
+        "rollback_status": _rollback_status(body.rollback_action_ref, body.created_from),
         "notifications": notifications,
     }
-
 
 def incident_payload(record: IncidentRecord) -> dict[str, Any]:
     return record.model_dump(mode="json")
@@ -141,6 +155,13 @@ class IncidentRegistry:
         async with self._lock:
             now = datetime.now(UTC)
             notifications = _notifications_for(body, now)
+            timeline = [
+                _timeline_event(
+                    "incident_created",
+                    now,
+                    f"Incident created from {body.created_from}.",
+                )
+            ]
             record = IncidentRecord(
                 id=f"inc_{uuid4().hex[:12]}",
                 workspace_id=agent.workspace_id,
@@ -158,14 +179,8 @@ class IncidentRegistry:
                 fix_change_package_id=None,
                 channel_scope=body.channel_scope,
                 notifications=notifications,
-                timeline=[
-                    _timeline_event(
-                        "incident_created",
-                        now,
-                        f"Incident created from {body.created_from}.",
-                    )
-                ],
-                report=_report_for(body, notifications),
+                timeline=timeline,
+                report=_report_for(body, notifications, timeline),
                 created_at=now,
                 created_by=actor_sub,
             )
@@ -184,6 +199,7 @@ class IncidentRegistry:
         reason: str = "",
         affected_trace_ids: list[str] | None = None,
         notification_targets: list[str] | None = None,
+        channel_scope: list[str] | None = None,
     ) -> IncidentRecord:
         label = "auto-rollback" if mode == "auto" else "manual rollback"
         trace_ids = affected_trace_ids or []
@@ -200,32 +216,98 @@ class IncidentRegistry:
                 f"evals, then create a Change Package against {version_id}."
             ),
             status="contained",
+            channel_scope=channel_scope or [],
             notification_targets=notification_targets or [],
             created_from=label.replace(" ", "_"),
         )
         record = await self.create(agent=agent, body=body, actor_sub=actor_sub)
         now = datetime.now(UTC)
+        timeline = [
+            *record.timeline,
+            *(
+                [
+                    _timeline_event(
+                        "affected_traces_collected",
+                        now,
+                        f"{len(trace_ids)} affected trace(s) attached to the incident report.",
+                    )
+                ]
+                if trace_ids
+                else []
+            ),
+            _timeline_event(
+                "containment",
+                now,
+                f"{label.capitalize()} moved traffic away from {version_id}.",
+            ),
+        ]
         contained = record.model_copy(
             update={
-                "timeline": [
-                    *record.timeline,
-                    *(
-                        [
-                            _timeline_event(
-                                "affected_traces_collected",
-                                now,
-                                f"{len(trace_ids)} affected trace(s) attached to the incident report.",
-                            )
-                        ]
-                        if trace_ids
-                        else []
-                    ),
+                "timeline": timeline,
+                "report": {**record.report, "timeline": timeline},
+            }
+        )
+        await self._replace(contained)
+        return contained
+
+    async def create_for_pause(
+        self,
+        *,
+        agent: AgentRecord,
+        deployment_id: str,
+        version_id: str,
+        actor_sub: str,
+        mode: Literal["manual", "auto"] = "auto",
+        trigger: str = "",
+        reason: str = "",
+        affected_trace_ids: list[str] | None = None,
+        notification_targets: list[str] | None = None,
+        channel_scope: list[str] | None = None,
+    ) -> IncidentRecord:
+        label = "auto-pause" if mode == "auto" else "manual pause"
+        trace_ids = affected_trace_ids or []
+        body = IncidentCreate(
+            deployment_id=deployment_id,
+            severity="high" if mode == "auto" else "medium",
+            trigger=trigger or f"{label} executed for deployment {deployment_id}",
+            affected_trace_ids=trace_ids,
+            affected_conversation_count=len(trace_ids),
+            root_cause_hypothesis=reason or "Rollout paused before root cause was confirmed.",
+            rollback_action_ref=f"deployment/{deployment_id}/pause",
+            proposed_fix=(
+                f"Review traces around deployment {deployment_id}, seed incident "
+                f"evals, then resume or create a Change Package against {version_id}."
+            ),
+            status="contained",
+            channel_scope=channel_scope or [],
+            notification_targets=notification_targets or [],
+            created_from=label.replace("-", "_").replace(" ", "_"),
+        )
+        record = await self.create(agent=agent, body=body, actor_sub=actor_sub)
+        now = datetime.now(UTC)
+        timeline = [
+            *record.timeline,
+            *(
+                [
                     _timeline_event(
-                        "containment",
+                        "affected_traces_collected",
                         now,
-                        f"{label.capitalize()} moved traffic away from {version_id}.",
-                    ),
+                        f"{len(trace_ids)} affected trace(s) attached to the incident report.",
+                    )
                 ]
+                if trace_ids
+                else []
+            ),
+            _timeline_event(
+                "containment",
+                now,
+                f"{label.capitalize()} paused traffic for {version_id}.",
+            ),
+        ]
+        contained = record.model_copy(
+            update={
+                "timeline": timeline,
+                "report": {**record.report, "timeline": timeline},
             }
         )
         await self._replace(contained)
@@ -248,18 +330,20 @@ class IncidentRegistry:
     ) -> IncidentRecord:
         record = await self.get(agent=agent, incident_id=incident_id)
         now = datetime.now(UTC)
+        timeline = [
+            *record.timeline,
+            _timeline_event(
+                status,
+                now,
+                note or f"Incident moved to {status}.",
+            ),
+        ]
         updated = record.model_copy(
             update={
                 "status": status,
                 "resolved_at": now if status == "resolved" else record.resolved_at,
-                "timeline": [
-                    *record.timeline,
-                    _timeline_event(
-                        status,
-                        now,
-                        note or f"Incident moved to {status}.",
-                    ),
-                ],
+                "timeline": timeline,
+                "report": {**record.report, "timeline": timeline},
             }
         )
         await self._replace(updated)
@@ -288,6 +372,14 @@ class IncidentRegistry:
                 "report": {
                     **record.report,
                     "candidate_eval_suite_id": suite_id,
+                    "timeline": [
+                        *record.timeline,
+                        _timeline_event(
+                            "evals_seeded",
+                            now,
+                            f"Candidate regression evals added to suite {suite_id}.",
+                        ),
+                    ],
                 },
             }
         )
@@ -321,6 +413,14 @@ class IncidentRegistry:
                     "actions_taken": [
                         *record.report.get("actions_taken", []),
                         f"change_package/{package_id}",
+                    ],
+                    "timeline": [
+                        *record.timeline,
+                        _timeline_event(
+                            "fix_change_package_created",
+                            now,
+                            f"Fix Change Package {package_id} created from incident.",
+                        ),
                     ],
                 },
             }

@@ -21,6 +21,7 @@ from loop_control_plane.deployments import (
     deployment_payload,
     evidence_pack_payload,
 )
+from loop_control_plane.incidents import incident_payload
 from loop_control_plane.trace_search import TraceQuery
 from loop_control_plane.workspaces import WorkspaceError
 
@@ -135,6 +136,13 @@ async def _notification_targets(request: Request, *, agent: Any, fallback: str) 
             if target
         )
     )
+
+
+async def _affected_trace_ids(request: Request, *, workspace_id: UUID, agent: Any) -> list[str]:
+    traces = await request.app.state.cp.trace_search.run(
+        TraceQuery(workspace_id=workspace_id, agent_id=agent.id, page_size=25)
+    )
+    return [trace.trace_id for trace in traces.items]
 
 
 def _audit(
@@ -345,6 +353,7 @@ async def _deployment_action(
     body: DeploymentActionBody | None,
     caller_sub: str,
     workspace_id: UUID | None = None,
+    include_incident: bool = False,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
@@ -367,18 +376,20 @@ async def _deployment_action(
         resource_id=deployment.id,
         payload={"agent_id": str(agent_id), "status": deployment.status},
     )
+    created_incident = None
     if action == "rollback":
         details = body or DeploymentActionBody()
-        traces = await request.app.state.cp.trace_search.run(
-            TraceQuery(workspace_id=workspace_id, agent_id=agent.id, page_size=25)
+        affected_trace_ids = await _affected_trace_ids(
+            request,
+            workspace_id=workspace_id,
+            agent=agent,
         )
-        affected_trace_ids = [trace.trace_id for trace in traces.items]
         notification_targets = await _notification_targets(
             request,
             agent=agent,
             fallback=caller_sub,
         )
-        incident = await request.app.state.cp.incidents.create_for_rollback(
+        created_incident = await request.app.state.cp.incidents.create_for_rollback(
             agent=agent,
             deployment_id=deployment.id,
             version_id=deployment.version_id,
@@ -388,6 +399,7 @@ async def _deployment_action(
             reason=details.reason,
             affected_trace_ids=affected_trace_ids,
             notification_targets=notification_targets,
+            channel_scope=list(deployment.channel_scope),
         )
         record_audit_event(
             workspace_id=workspace_id,
@@ -396,19 +408,23 @@ async def _deployment_action(
             if details.mode == "auto"
             else "incident:create_from_rollback",
             resource_type="incident",
-            resource_id=incident.id,
+            resource_id=created_incident.id,
             store=request.app.state.cp.audit_events,
             request_id=request_id(request),
             payload={
                 "agent_id": str(agent_id),
                 "deployment_id": deployment.id,
-                "rollback_action_ref": incident.rollback_action_ref,
+                "rollback_action_ref": created_incident.rollback_action_ref,
                 "affected_trace_count": len(affected_trace_ids),
                 "notification_targets": notification_targets,
-                "trigger": incident.trigger,
+                "trigger": created_incident.trigger,
+                "channel_scope": deployment.channel_scope,
             },
         )
-    return deployment_payload(deployment)
+    payload = deployment_payload(deployment)
+    if include_incident and created_incident is not None:
+        payload["incident"] = incident_payload(created_incident)
+    return payload
 
 
 @router.post("/{agent_id}/deployments/{deployment_id}/thresholds/evaluate")
@@ -474,6 +490,11 @@ async def evaluate_deployment_threshold(
         payload={**audit_payload, "decision": body.policy, "breached": True},
     )
     if body.policy == "pause":
+        affected_trace_ids = await _affected_trace_ids(
+            request,
+            workspace_id=workspace_id,
+            agent=agent,
+        )
         updated = await _deployment_action(
             request,
             agent_id=agent_id,
@@ -483,6 +504,41 @@ async def evaluate_deployment_threshold(
             caller_sub=caller_sub,
             workspace_id=workspace_id,
         )
+        notification_targets = await _notification_targets(
+            request,
+            agent=agent,
+            fallback=caller_sub,
+        )
+        incident = await request.app.state.cp.incidents.create_for_pause(
+            agent=agent,
+            deployment_id=deployment.id,
+            version_id=deployment.version_id,
+            actor_sub=caller_sub,
+            mode="auto",
+            trigger=trigger,
+            reason=body.reason or f"{body.metric} exceeded the configured rollout threshold.",
+            affected_trace_ids=affected_trace_ids,
+            notification_targets=notification_targets,
+            channel_scope=list(deployment.channel_scope),
+        )
+        record_audit_event(
+            workspace_id=workspace_id,
+            actor_sub=caller_sub,
+            action="incident:create_auto_pause",
+            resource_type="incident",
+            resource_id=incident.id,
+            store=request.app.state.cp.audit_events,
+            request_id=request_id(request),
+            payload={
+                "agent_id": str(agent_id),
+                "deployment_id": deployment.id,
+                "pause_action_ref": incident.rollback_action_ref,
+                "affected_trace_count": len(affected_trace_ids),
+                "notification_targets": notification_targets,
+                "trigger": incident.trigger,
+                "channel_scope": deployment.channel_scope,
+            },
+        )
         return {
             "decision": "paused",
             "breached": True,
@@ -491,6 +547,7 @@ async def evaluate_deployment_threshold(
             "threshold": threshold,
             "policy": body.policy,
             "deployment": updated,
+            "incident": incident_payload(incident),
         }
 
     updated = await _deployment_action(
@@ -505,7 +562,9 @@ async def evaluate_deployment_threshold(
         ),
         caller_sub=caller_sub,
         workspace_id=workspace_id,
+        include_incident=True,
     )
+    incident = updated.pop("incident", None)
     return {
         "decision": "rolled_back",
         "breached": True,
@@ -514,6 +573,7 @@ async def evaluate_deployment_threshold(
         "threshold": threshold,
         "policy": body.policy,
         "deployment": updated,
+        "incident": incident,
     }
 
 
