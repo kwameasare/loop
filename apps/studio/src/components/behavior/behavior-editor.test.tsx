@@ -66,6 +66,18 @@ describe("BehaviorEditor", () => {
     );
     expect(sentence).toHaveTextContent("Missing eval coverage");
     fireEvent.mouseEnter(sentence);
+    expect(
+      screen.getByTestId("behavior-context-actions-sentence_purpose_cancel"),
+    ).toHaveTextContent("Explain");
+    expect(
+      screen.getByTestId("behavior-context-actions-sentence_purpose_cancel"),
+    ).toHaveTextContent("Show source");
+    expect(
+      screen.getByTestId("behavior-context-actions-sentence_purpose_cancel"),
+    ).toHaveTextContent("Fix this");
+    expect(
+      screen.getByTestId("behavior-context-actions-sentence_purpose_cancel"),
+    ).toHaveTextContent("Save as eval");
 
     const telemetry = screen.getByTestId("behavior-sentence-telemetry");
     expect(telemetry).toHaveTextContent("Cited");
