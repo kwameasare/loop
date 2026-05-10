@@ -101,7 +101,7 @@ export function WebChannelCard({
 
   return (
     <section
-      className="rounded border border-gray-200 p-4 flex flex-col gap-3"
+      className="flex flex-col gap-3 rounded border bg-card p-4"
       data-testid="web-channel-card"
       data-status={binding.status}
     >
@@ -114,7 +114,7 @@ export function WebChannelCard({
           </p>
         </div>
         <button
-          className="rounded bg-gray-900 text-white text-sm px-3 py-1 disabled:opacity-50"
+          className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           data-testid="web-channel-toggle"
           disabled={busy}
           onClick={handleToggle}
@@ -132,13 +132,13 @@ export function WebChannelCard({
 
       <div className="flex flex-col gap-1">
         <label
-          className="text-xs font-medium text-gray-700"
+          className="text-xs font-medium text-muted-foreground"
           htmlFor={tokenId}
         >
           Embed snippet
         </label>
         <textarea
-          className="font-mono text-xs rounded border border-gray-200 p-2 bg-gray-50 min-h-[110px]"
+          className="min-h-[110px] rounded border bg-muted p-2 font-mono text-xs"
           data-testid="web-channel-snippet"
           id={tokenId}
           readOnly
@@ -146,7 +146,7 @@ export function WebChannelCard({
         />
         <div className="flex gap-2">
           <button
-            className="rounded border border-gray-200 text-xs px-2 py-1 disabled:opacity-50"
+            className="rounded border bg-background px-2 py-1 text-xs hover:bg-muted disabled:opacity-50"
             data-testid="web-channel-copy"
             disabled={!enabled}
             onClick={handleCopy}
@@ -156,7 +156,7 @@ export function WebChannelCard({
           </button>
           {binding.channelId ? (
             <span
-              className="text-xs text-gray-500"
+              className="text-xs text-muted-foreground"
               data-testid="web-channel-id"
             >
               Channel id: {binding.channelId}
@@ -169,8 +169,8 @@ export function WebChannelCard({
         <p
           className={
             toast.kind === "success"
-              ? "text-xs text-emerald-700"
-              : "text-xs text-red-600"
+              ? "text-xs text-success"
+              : "text-xs text-destructive"
           }
           data-testid={`web-channel-toast-${toast.kind}`}
           role="status"
