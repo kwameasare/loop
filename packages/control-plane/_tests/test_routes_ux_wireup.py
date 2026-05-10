@@ -78,11 +78,47 @@ def _add_trace(client: TestClient, workspace_id: UUID, agent_id: UUID, trace_id:
     )
 
 
+def _mark_channel_ready(
+    client: TestClient,
+    workspace_id: UUID,
+    agent_id: UUID,
+    channel_type: str,
+) -> dict[str, object]:
+    created = client.post(
+        f"/v1/agents/{agent_id}/channel-bindings",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "channel_type": channel_type,
+            "provider": f"{channel_type} provider",
+            "display_name": f"Acme {channel_type}",
+            "identity_config": {"external_ref": f"{channel_type}_acct"},
+            "auth_config_ref": f"secret://channels/{channel_type}/acme",
+        },
+    )
+    assert created.status_code == 201, created.text
+    binding = created.json()
+    for check in binding["readiness"]:
+        updated = client.post(
+            f"/v1/agents/{agent_id}/channel-bindings/{binding['id']}/readiness/{check['id']}",
+            headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+            json={
+                "status": "passed",
+                "evidence_ref": f"provider/{channel_type}/{check['id']}",
+                "message": f"{check['label']} passed.",
+            },
+        )
+        assert updated.status_code == 200, updated.text
+        binding = updated.json()
+    assert binding["status"] == "ready"
+    return binding
+
+
 def _start_live_deployment(
     client: TestClient,
     workspace_id: UUID,
     agent_id: UUID,
 ) -> dict[str, object]:
+    _mark_channel_ready(client, workspace_id, agent_id, "web_chat")
     package = client.post(
         f"/v1/agents/{agent_id}/change-packages/preflight",
         headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
@@ -908,6 +944,8 @@ def test_memory_policies_require_trace_backed_privacy_and_invalidate_approval(
 def test_deployment_start_creates_evidence_pack_from_approved_change_package(
     client: TestClient, workspace_id: UUID, agent_id: UUID
 ) -> None:
+    _mark_channel_ready(client, workspace_id, agent_id, "web_chat")
+    _mark_channel_ready(client, workspace_id, agent_id, "whatsapp")
     package = client.post(
         f"/v1/agents/{agent_id}/change-packages/preflight",
         headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
@@ -977,6 +1015,73 @@ def test_deployment_start_creates_evidence_pack_from_approved_change_package(
         "deployment:start",
         "deployment:promote",
     }
+
+
+def test_deployment_start_blocks_only_channels_with_incomplete_readiness(
+    client: TestClient, workspace_id: UUID, agent_id: UUID
+) -> None:
+    _mark_channel_ready(client, workspace_id, agent_id, "web_chat")
+    package = client.post(
+        f"/v1/agents/{agent_id}/change-packages/preflight",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "from_version_id": "v1",
+            "to_version_id": "v2",
+            "summary": "Promote only the channels that are ready.",
+            "eval_results_ref": "eval/run/v2",
+            "replay_results_ref": "replay/run/v2",
+            "rollback_target_version_id": "v1",
+        },
+    ).json()
+    submitted = client.post(
+        f"/v1/agents/{agent_id}/change-packages/{package['id']}/submit",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+    )
+    assert submitted.status_code == 200, submitted.text
+    for approval_id in ("owner", "compliance"):
+        approved = client.post(
+            f"/v1/agents/{agent_id}/change-packages/{package['id']}/approvals",
+            headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+            json={"approval_id": approval_id, "decision": "approve"},
+        )
+        assert approved.status_code == 200, approved.text
+
+    web_only = client.post(
+        f"/v1/agents/{agent_id}/deployments/start",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "change_package_id": package["id"],
+            "version_id": "v2",
+            "traffic_percent": 5,
+            "channel_scope": ["web_chat"],
+        },
+    )
+    assert web_only.status_code == 201, web_only.text
+    assert web_only.json()["deployment"]["channelScope"] == ["web_chat"]
+
+    blocked = client.post(
+        f"/v1/agents/{agent_id}/deployments/start",
+        headers={**_auth(), "x-loop-workspace-id": str(workspace_id)},
+        json={
+            "change_package_id": package["id"],
+            "version_id": "v2",
+            "traffic_percent": 5,
+            "channel_scope": ["whatsapp"],
+        },
+    )
+    assert blocked.status_code == 400, blocked.text
+    assert "channel readiness blocks rollout: whatsapp not_configured" in blocked.json()["message"]
+
+    audit = client.get(
+        f"/v1/audit-events?workspace_id={workspace_id}",
+        headers=_auth(),
+    ).json()["items"]
+    blocked_events = [event for event in audit if event["action"] == "deployment:start_blocked"]
+    assert blocked_events
+    payload = client.app.state.cp.audit_events.fetch_payload(  # type: ignore[attr-defined]
+        blocked_events[0]["payload_hash"]
+    )
+    assert payload["channel_blockers"][0]["channel_type"] == "whatsapp"
 
 
 def test_observed_failure_eval_case_closes_90_second_editing_loop(

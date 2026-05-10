@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_agents import AgentRecord
 from loop_control_plane.change_packages import ChangePackageRecord
+from loop_control_plane.channel_bindings import ChannelType
 from loop_control_plane.workspaces import WorkspaceError
 
 DeploymentStatus = Literal[
@@ -27,7 +28,7 @@ class DeploymentStart(BaseModel):
     change_package_id: str = Field(max_length=160)
     version_id: str = Field(default="", max_length=160)
     traffic_percent: int = Field(default=5, ge=0, le=100)
-    channel_scope: list[str] = Field(default_factory=list, max_length=20)
+    channel_scope: list[ChannelType] = Field(default_factory=list, max_length=20)
     region_scope: list[str] = Field(default_factory=list, max_length=20)
     segment_scope: list[str] = Field(default_factory=list, max_length=20)
     hold_time_minutes: int = Field(default=30, ge=0, le=1440)
@@ -46,7 +47,7 @@ class DeploymentRecord(BaseModel):
     evidence_pack_id: str
     status: DeploymentStatus
     traffic_percent: int
-    channel_scope: list[str]
+    channel_scope: list[ChannelType]
     region_scope: list[str]
     segment_scope: list[str]
     hold_time_minutes: int
