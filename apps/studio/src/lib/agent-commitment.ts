@@ -57,6 +57,10 @@ export interface CommitmentDraftInput {
   created_from?: string;
 }
 
+export interface CommitmentHistoryResponse {
+  items: CommitmentDocument[];
+}
+
 type CommitmentClientOptions = UxWireupClientOptions & {
   allowFixture?: boolean;
 };
@@ -172,6 +176,21 @@ export async function fetchCurrentCommitment(
       ...opts,
       allowFallback: opts.allowFixture === true,
       fallback: buildLocalCommitmentDocument(agentId),
+    },
+  );
+}
+
+export async function listCommitments(
+  agentId: string,
+  opts: CommitmentClientOptions = {},
+): Promise<CommitmentHistoryResponse> {
+  const fallbackDocument = buildLocalCommitmentDocument(agentId);
+  return cpJson<CommitmentHistoryResponse>(
+    `/agents/${encodeURIComponent(agentId)}/commitments`,
+    {
+      ...opts,
+      allowFallback: opts.allowFixture === true,
+      fallback: { items: [fallbackDocument] },
     },
   );
 }

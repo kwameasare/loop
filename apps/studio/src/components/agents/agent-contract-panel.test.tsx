@@ -106,6 +106,64 @@ describe("AgentContractPanel", () => {
     );
   });
 
+  it("renders Commitment Document version history and focused older versions", () => {
+    const v1 = makeDocument(COMPLETE_BODY, {
+      id: "commit_v1",
+      version: 1,
+      status: "accepted",
+      accepted_at: "2026-05-08T12:00:00Z",
+      content_hash: "hash_version_one",
+    });
+    const v2 = makeDocument(COMPLETE_BODY, {
+      id: "commit_v2",
+      version: 2,
+      status: "draft",
+      content_hash: "hash_version_two",
+    });
+
+    render(
+      <AgentContractPanel
+        agentId="agt_1"
+        focusedCommitmentId="commit_v1"
+        initialDocument={v2}
+        initialHistory={[v1, v2]}
+        saveDraft={vi.fn()}
+        acceptCommitment={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("contract-version-history")).toHaveTextContent(
+      "2 versions",
+    );
+    expect(screen.getByTestId("contract-history-commit_v1")).toHaveTextContent(
+      "accepted",
+    );
+    expect(screen.getByTestId("contract-history-commit_v1")).toHaveAttribute(
+      "data-focused",
+      "true",
+    );
+    expect(screen.getByTestId("contract-focused")).toHaveTextContent(
+      "Commitment Document commit_v1 is focused",
+    );
+  });
+
+  it("surfaces Commitment history degradation without hiding the current document", () => {
+    render(
+      <AgentContractPanel
+        agentId="agt_1"
+        initialDocument={makeDocument(COMPLETE_BODY)}
+        historyDegradedReason="cp-api GET commitments returned 503"
+        saveDraft={vi.fn()}
+        acceptCommitment={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("contract-history-degraded")).toHaveTextContent(
+      "cp-api GET commitments returned 503",
+    );
+    expect(screen.getByTestId("contract-version")).toHaveTextContent("v1");
+  });
+
   it("saves a detailed contract draft", async () => {
     const saveDraft = vi.fn(async (_agentId: string, input) =>
       makeDocument(input.body, {
@@ -149,6 +207,9 @@ describe("AgentContractPanel", () => {
     });
     expect(await screen.findByTestId("contract-success")).toHaveTextContent(
       "Draft v2 saved",
+    );
+    expect(screen.getByTestId("contract-history-commit_saved")).toHaveTextContent(
+      "Commitment v2",
     );
   });
 

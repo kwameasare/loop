@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { CheckCircle2, FileText, ShieldAlert } from "lucide-react";
+import { CheckCircle2, FileText, History, ShieldAlert } from "lucide-react";
 
 import { SectionDegraded } from "@/components/section-states";
 import {
@@ -19,8 +19,10 @@ import { cn } from "@/lib/utils";
 interface AgentContractPanelProps {
   agentId: string;
   initialDocument: CommitmentDocument;
+  initialHistory?: CommitmentDocument[] | undefined;
   focusedCommitmentId?: string | undefined;
   degradedReason?: string | undefined;
+  historyDegradedReason?: string | undefined;
   saveDraft?: (
     agentId: string,
     input: CommitmentDraftInput,
@@ -67,23 +69,48 @@ function summaryLine(
   }.`;
 }
 
+function sortHistory(
+  history: readonly CommitmentDocument[],
+): CommitmentDocument[] {
+  return [...history].sort((left, right) => right.version - left.version);
+}
+
+function upsertHistory(
+  history: readonly CommitmentDocument[],
+  next: CommitmentDocument,
+): CommitmentDocument[] {
+  const withoutCurrent = history.filter((item) => item.id !== next.id);
+  return sortHistory([...withoutCurrent, next]);
+}
+
 export function AgentContractPanel({
   agentId,
   initialDocument,
+  initialHistory,
   focusedCommitmentId,
   degradedReason,
+  historyDegradedReason,
   saveDraft = defaultSaveCommitmentDraft,
   acceptCommitment = defaultAcceptCommitment,
 }: AgentContractPanelProps) {
   const [document, setDocument] = useState(initialDocument);
+  const [history, setHistory] = useState<CommitmentDocument[]>(
+    sortHistory(
+      initialHistory && initialHistory.length > 0
+        ? initialHistory
+        : [initialDocument],
+    ),
+  );
   const [body, setBody] = useState<CommitmentBody>(initialDocument.body);
   const [state, setState] = useState<FormState>({ kind: "idle" });
   const missing = useMemo(() => missingCommitmentFields(body), [body]);
   const completeness = Math.round(((8 - missing.length) / 8) * 100);
   const busy = state.kind === "saving" || state.kind === "accepting";
   const backendUnavailable = Boolean(degradedReason);
-  const isFocused =
-    Boolean(focusedCommitmentId) && focusedCommitmentId === document.id;
+  const focusedHistoryItem = history.find(
+    (item) => focusedCommitmentId && item.id === focusedCommitmentId,
+  );
+  const isFocused = Boolean(focusedHistoryItem);
 
   async function handleSave(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
@@ -98,6 +125,7 @@ export function AgentContractPanel({
         kind: "saved",
         message: `Draft v${updated.version || 1} saved.`,
       });
+      setHistory((current) => upsertHistory(current, updated));
       return updated;
     } catch (error) {
       setState({
@@ -130,6 +158,7 @@ export function AgentContractPanel({
           : accepted;
       setDocument(acceptedDocument);
       setBody(acceptedDocument.body);
+      setHistory((current) => upsertHistory(current, acceptedDocument));
       setState({
         kind: "saved",
         message: `Contract v${acceptedDocument.version || 1} accepted.`,
@@ -175,8 +204,8 @@ export function AgentContractPanel({
           className="rounded-md border border-info/40 bg-info/5 px-3 py-2 text-sm text-info"
           data-testid="contract-focused"
         >
-          Opened from evidence link: Commitment Document {document.id} is
-          focused.
+          Opened from evidence link: Commitment Document{" "}
+          {focusedHistoryItem?.id} is focused.
         </p>
       ) : null}
       <div className="rounded-md border bg-card p-5">
@@ -264,6 +293,94 @@ export function AgentContractPanel({
           </div>
         </div>
       )}
+
+      <section
+        className="rounded-md border bg-card"
+        data-testid="contract-version-history"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-4">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <History className="h-4 w-4" aria-hidden />
+              Version history
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Every saved or accepted Commitment Document version remains
+              inspectable because preflight and production deploys cite the
+              exact version they reviewed.
+            </p>
+          </div>
+          <span className="rounded-md border bg-background px-2 py-1 text-xs text-muted-foreground">
+            {history.length} version{history.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        {historyDegradedReason ? (
+          <p
+            className="m-4 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning"
+            data-testid="contract-history-degraded"
+          >
+            {historyDegradedReason}
+          </p>
+        ) : null}
+        {history.length > 0 ? (
+          <ol className="divide-y">
+            {history.map((item) => (
+              <li
+                key={item.id}
+                className={cn(
+                  "grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_auto]",
+                  focusedCommitmentId === item.id
+                    ? "bg-info/5 ring-1 ring-inset ring-info/30"
+                    : "",
+                )}
+                data-testid={`contract-history-${item.id}`}
+                data-focused={focusedCommitmentId === item.id ? "true" : "false"}
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold">
+                      Commitment v{item.version || 1}
+                    </span>
+                    <span
+                      className={cn(
+                        "rounded-full border px-2 py-0.5 text-xs font-medium",
+                        item.status === "accepted"
+                          ? "border-success/40 bg-success/10 text-success"
+                          : item.status === "draft"
+                            ? "border-warning/50 bg-warning/10 text-warning"
+                            : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="mt-1 truncate text-sm text-muted-foreground">
+                    {item.structured_summary.responsibility ||
+                      item.body.business_responsibility ||
+                      "Responsibility not described"}
+                  </p>
+                  <p className="mt-2 font-mono text-xs text-muted-foreground">
+                    {item.id} · hash {item.content_hash.slice(0, 12)} ·{" "}
+                    {item.created_from}
+                  </p>
+                </div>
+                <div className="text-left text-xs text-muted-foreground md:text-right">
+                  <p>Updated {item.updated_at || "unknown"}</p>
+                  <p>
+                    {item.accepted_at
+                      ? `Accepted ${item.accepted_at}`
+                      : "Not accepted"}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="p-4 text-sm text-muted-foreground">
+            No Commitment Document version history loaded.
+          </p>
+        )}
+      </section>
 
       <form onSubmit={handleSave} className="grid gap-5" noValidate>
         <div className="grid gap-4 rounded-md border bg-card p-5">
