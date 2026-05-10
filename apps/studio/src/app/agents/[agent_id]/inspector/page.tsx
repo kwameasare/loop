@@ -103,7 +103,7 @@ function InspectorBody() {
         </header>
         {!turnId ? (
           <p
-            className="text-sm text-zinc-600"
+            className="text-sm text-muted-foreground"
             data-testid="inspector-no-trace"
           >
             Pick a trace from the <a className="underline" href="/traces">Traces</a> tab to
@@ -111,26 +111,26 @@ function InspectorBody() {
             can step through the turn and watch state evolve.
           </p>
         ) : error ? (
-          <p className="text-sm text-red-600" role="alert">
+          <p className="text-sm text-destructive" role="alert">
             {error}
           </p>
         ) : !loaded ? (
           <p
-            className="text-sm text-zinc-600"
+            className="text-sm text-muted-foreground"
             data-testid="inspector-loading"
           >
             Loading trace…
           </p>
         ) : frames.length === 0 ? (
           <p
-            className="text-sm text-zinc-600"
+            className="text-sm text-muted-foreground"
             data-testid="inspector-empty"
           >
             Trace not found, or the runtime hasn&apos;t emitted spans for this
             turn yet.
           </p>
         ) : (
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-muted-foreground">
             Replaying {frames.length} span{frames.length === 1 ? "" : "s"} from
             turn <span className="font-mono">{turnId}</span>.
           </p>

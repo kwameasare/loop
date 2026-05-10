@@ -445,7 +445,7 @@ export function NewAgentModal({
                   id={slugErrorId}
                   role="alert"
                   data-testid="new-agent-slug-error"
-                  className="text-xs text-red-600"
+                  className="text-xs text-destructive"
                 >
                   {slugError}
                 </span>
@@ -742,7 +742,7 @@ export function NewAgentModal({
               id={formErrorId}
               role="alert"
               data-testid="new-agent-error"
-              className="text-sm text-red-600"
+              className="text-sm text-destructive"
             >
               {status.message}
             </p>

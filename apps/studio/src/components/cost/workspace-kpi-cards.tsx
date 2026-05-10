@@ -72,9 +72,9 @@ export function WorkspaceKpiCards({ kpis }: WorkspaceKpiCardsProps) {
         const isUp = card.delta_value.startsWith("+");
         const isDown = card.delta_value.startsWith("−");
         const tone = isUp
-          ? "text-red-700"
+          ? "text-destructive"
           : isDown
-            ? "text-emerald-700"
+            ? "text-success"
             : "text-muted-foreground";
         return (
           <article
