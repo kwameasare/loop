@@ -353,12 +353,18 @@ export function createToolsRoomData(
   fixture: TargetUXFixture = targetUxFixtures,
   toolContracts: ToolContract[] = [],
 ): ToolsRoomData {
-  const agent =
-    fixture.agents.find((candidate) => candidate.id === agentId) ??
-    fixture.agents[0]!;
-  const tools = fixture.tools.map((_, index) =>
-    toolFromFixture(agentId, fixture, index),
+  const usesLiveData = liveTools.length > 0 || toolContracts.length > 0;
+  const fixtureAgent = fixture.agents.find(
+    (candidate) => candidate.id === agentId,
   );
+  const fixtureFallback = usesLiveData ? undefined : fixture.agents[0];
+  const agentName =
+    fixtureAgent?.name ?? fixtureFallback?.name ?? `Agent ${agentId}`;
+  const tools = usesLiveData
+    ? []
+    : fixture.tools.map((_, index) =>
+        toolFromFixture(agentId, fixture, index),
+      );
   const liveOnlyTools = liveTools
     .filter((tool) => !tools.some((candidate) => candidate.id === tool.id))
     .map<ToolsRoomTool>((tool) => ({
@@ -407,10 +413,10 @@ export function createToolsRoomData(
 
   return {
     agentId,
-    agentName: agent.name,
-    branch: fixture.workspace.branch,
-    objectState: fixture.workspace.objectState,
-    trust: fixture.workspace.trust,
+    agentName,
+    branch: usesLiveData ? "cp-api tool bindings" : fixture.workspace.branch,
+    objectState: usesLiveData ? "draft" : fixture.workspace.objectState,
+    trust: usesLiveData ? "watching" : fixture.workspace.trust,
     tools: [...tools, ...liveOnlyTools],
     toolContracts:
       toolContracts.length > 0
@@ -420,17 +426,24 @@ export function createToolsRoomData(
             [...tools, ...liveOnlyTools].map((tool) => tool.id),
           ),
     catalogEvidence:
-      "targetUxFixtures.tools plus live cp-api bindings when /agents/{id}/tools is available",
+      usesLiveData
+        ? "Loaded from live cp-api tool bindings."
+        : "Explicit local fixture tool catalog for tests and demos.",
   };
 }
 
 export function createEmptyToolsRoomData(
   agentId = "agent_empty",
 ): ToolsRoomData {
-  const base = createToolsRoomData(agentId, []);
   return {
-    ...base,
+    agentId,
+    agentName: `Agent ${agentId}`,
+    branch: "No branch loaded",
+    objectState: "draft",
+    trust: "degraded",
     tools: [],
+    toolContracts: [],
+    catalogEvidence: "No live tool bindings loaded.",
     degradedReason:
       "No tools are bound yet. Paste a curl command, OpenAPI fragment, or Postman sample to draft one.",
   };

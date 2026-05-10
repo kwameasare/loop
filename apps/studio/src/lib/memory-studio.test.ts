@@ -15,6 +15,14 @@ describe("memory studio cp-api client", () => {
     vi.restoreAllMocks();
   });
 
+  it("requires cp-api configuration instead of returning fixture memory", async () => {
+    delete process.env.LOOP_CP_API_BASE_URL;
+
+    await expect(fetchMemoryStudioData("agent-1", "alice")).rejects.toThrow(
+      "LOOP_CP_API_BASE_URL is required for memory calls",
+    );
+  });
+
   it("fetches and normalizes live memory entries", async () => {
     const fetcher = vi.fn<typeof fetch>(async (input) => {
       const url = String(input);
