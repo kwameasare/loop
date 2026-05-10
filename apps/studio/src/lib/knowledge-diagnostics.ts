@@ -56,6 +56,10 @@ function fallbackChunk(model: KnowledgeAtelierModel): KnowledgeChunk {
       versionHistory: "No versions yet",
       citedUsage: "No citations yet",
       evidence: "Unsupported: no chunk evidence is available",
+      lifecycle: "current",
+      affectedPolicies: [],
+      affectedEvals: [],
+      capabilityCoverage: [],
     }
   );
 }

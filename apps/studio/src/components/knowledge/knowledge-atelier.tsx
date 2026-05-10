@@ -28,17 +28,25 @@ import {
 import {
   formatScore,
   getKnowledgeAtelierModel,
+  markKnowledgeChunkSuperseded as defaultMarkKnowledgeChunkSuperseded,
   sourceKindLabel,
   type KnowledgeAtelierModel,
   type KnowledgeSource,
   type KnowledgeSyncStatus,
   type RetrievalCandidate,
+  type SupersedeKnowledgeChunkInput,
+  type SupersedeKnowledgeChunkResult,
 } from "@/lib/knowledge";
 
 export interface KnowledgeAtelierProps {
   agentId: string;
   initialDocuments: KbDocument[];
   degradedReason?: string | undefined;
+  supersedeChunk?: (
+    agentId: string,
+    chunkId: string,
+    input: SupersedeKnowledgeChunkInput,
+  ) => Promise<SupersedeKnowledgeChunkResult>;
 }
 
 function statusTone(
@@ -237,10 +245,16 @@ export function KnowledgeAtelier({
   agentId,
   initialDocuments,
   degradedReason,
+  supersedeChunk = defaultMarkKnowledgeChunkSuperseded,
 }: KnowledgeAtelierProps) {
   const [documents, setDocuments] = useState(initialDocuments);
   const [query, setQuery] = useState("");
   const [savedEval, setSavedEval] = useState<string | null>(null);
+  const [supersededChunkIds, setSupersededChunkIds] = useState<string[]>([]);
+  const [supersedingChunkId, setSupersedingChunkId] = useState<string | null>(
+    null,
+  );
+  const [supersedeError, setSupersedeError] = useState<string | null>(null);
   const [liveInverseModel, setLiveInverseModel] = useState<ReturnType<
     typeof buildInverseRetrievalModel
   > | null>(null);
@@ -307,6 +321,29 @@ export function KnowledgeAtelier({
       ),
     );
     return status;
+  }
+
+  async function markSuperseded(chunkId: string) {
+    setSupersedingChunkId(chunkId);
+    setSupersedeError(null);
+    try {
+      await supersedeChunk(agentId, chunkId, {
+        reason:
+          "Builder marked this chunk superseded from Knowledge Atelier review.",
+        replacement_hint: "Review newer source version before retrieval use.",
+      });
+      setSupersededChunkIds((current) =>
+        current.includes(chunkId) ? current : [...current, chunkId],
+      );
+    } catch (err) {
+      setSupersedeError(
+        err instanceof Error
+          ? err.message
+          : "Could not mark the chunk superseded.",
+      );
+    } finally {
+      setSupersedingChunkId(null);
+    }
   }
 
   return (
@@ -398,50 +435,102 @@ export function KnowledgeAtelier({
           </StatePanel>
         ) : (
           <div className="grid gap-3 2xl:grid-cols-3">
-            {model.chunks.slice(0, 6).map((chunk) => (
-              <article
-                className="rounded-md border bg-card p-4"
-                data-testid={`knowledge-chunk-${chunk.id}`}
-                key={chunk.id}
-              >
-                <p className="text-xs font-medium uppercase text-muted-foreground">
-                  {chunk.originalDocument} / {chunk.chunkRange}
-                </p>
-                <p className="mt-2 text-sm">{chunk.text}</p>
-                <dl className="mt-3 grid gap-2 text-xs text-muted-foreground">
-                  <div>
-                    <dt className="font-semibold uppercase">Overlap</dt>
-                    <dd>{chunk.overlapTokens} tokens</dd>
+            {model.chunks.slice(0, 6).map((chunk) => {
+              const locallySuperseded = supersededChunkIds.includes(chunk.id);
+              const lifecycle = locallySuperseded
+                ? "superseded"
+                : chunk.lifecycle;
+              return (
+                <article
+                  className="rounded-md border bg-card p-4"
+                  data-testid={`knowledge-chunk-${chunk.id}`}
+                  key={chunk.id}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-xs font-medium uppercase text-muted-foreground">
+                      {chunk.originalDocument} / {chunk.chunkRange}
+                    </p>
+                    <span
+                      className="rounded-md border bg-background px-2 py-0.5 text-[0.7rem] font-medium"
+                      data-testid={`knowledge-chunk-lifecycle-${chunk.id}`}
+                    >
+                      {lifecycle}
+                    </span>
                   </div>
-                  <div>
-                    <dt className="font-semibold uppercase">Metadata</dt>
-                    <dd>{chunk.metadata.join(", ")}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold uppercase">Embeddings</dt>
-                    <dd>
-                      {chunk.embeddingPreview.length > 0
-                        ? chunk.embeddingPreview.join(", ")
-                        : "Unavailable"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold uppercase">Permissions</dt>
-                    <dd>{chunk.permissions}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold uppercase">Version history</dt>
-                    <dd>{chunk.versionHistory}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold uppercase">Cited usage</dt>
-                    <dd>{chunk.citedUsage}</dd>
-                  </div>
-                </dl>
-              </article>
-            ))}
+                  <p className="mt-2 text-sm">{chunk.text}</p>
+                  <dl className="mt-3 grid gap-2 text-xs text-muted-foreground">
+                    <div>
+                      <dt className="font-semibold uppercase">Overlap</dt>
+                      <dd>{chunk.overlapTokens} tokens</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase">Metadata</dt>
+                      <dd>{chunk.metadata.join(", ")}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase">Embeddings</dt>
+                      <dd>
+                        {chunk.embeddingPreview.length > 0
+                          ? chunk.embeddingPreview.join(", ")
+                          : "Unavailable"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase">Permissions</dt>
+                      <dd>{chunk.permissions}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase">
+                        Version history
+                      </dt>
+                      <dd>{chunk.versionHistory}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase">Cited usage</dt>
+                      <dd>{chunk.citedUsage}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase">
+                        Affected policies
+                      </dt>
+                      <dd>{chunk.affectedPolicies.join(", ")}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase">
+                        Affected evals
+                      </dt>
+                      <dd>{chunk.affectedEvals.join(", ")}</dd>
+                    </div>
+                  </dl>
+                  <button
+                    type="button"
+                    className="mt-3 rounded-md border bg-background px-3 py-2 text-xs font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                    data-testid={`knowledge-supersede-${chunk.id}`}
+                    disabled={
+                      lifecycle === "superseded" ||
+                      supersedingChunkId === chunk.id
+                    }
+                    onClick={() => void markSuperseded(chunk.id)}
+                  >
+                    {supersedingChunkId === chunk.id
+                      ? "Marking..."
+                      : lifecycle === "superseded"
+                        ? "Superseded"
+                        : "Mark superseded"}
+                  </button>
+                </article>
+              );
+            })}
           </div>
         )}
+        {supersedeError ? (
+          <p
+            className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+            role="alert"
+          >
+            {supersedeError}
+          </p>
+        ) : null}
       </section>
 
       <section
@@ -645,6 +734,20 @@ export function KnowledgeAtelier({
             <ReadinessList
               items={model.readiness.generatedEvalCases}
               title="Generated eval cases"
+            />
+            <ReadinessList
+              items={model.readiness.capabilityCoverage.map(
+                (item) =>
+                  `${item.capability}: ${item.coverage}% (${item.evidence})`,
+              )}
+              title="Capability coverage"
+            />
+            <ReadinessList
+              items={model.readiness.contradictions.map(
+                (item) =>
+                  `${item.severity}: ${item.summary} Policies ${item.affectedPolicies.join(", ")}; evals ${item.affectedEvals.join(", ")}`,
+              )}
+              title="Contradiction impact"
             />
             <ReadinessList
               items={model.readiness.sensitiveDataWarnings}

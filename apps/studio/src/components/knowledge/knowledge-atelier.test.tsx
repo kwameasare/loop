@@ -55,6 +55,77 @@ describe("KnowledgeAtelier", () => {
     expect(screen.getByTestId("knowledge-readiness")).toHaveTextContent(
       "Generated eval cases",
     );
+    expect(screen.getByTestId("knowledge-readiness")).toHaveTextContent(
+      "Capability coverage",
+    );
+    expect(screen.getByTestId("knowledge-chunk-ks_doc_ready_chunk_1")).toHaveTextContent(
+      "Affected policies",
+    );
+    await waitForDiagnosticsToSettle();
+  });
+
+  it("marks a chunk superseded through the backend-bound review action", async () => {
+    const supersedeChunk = vi.fn(async () => ({
+      chunk_id: "ks_doc_ready_chunk_1",
+      lifecycle: "superseded" as const,
+      superseded_at: "2026-05-06T12:00:00Z",
+      reason: "Outdated policy source.",
+      evidence_ref: "knowledge/superseded/1",
+    }));
+    render(
+      <KnowledgeAtelier
+        agentId="agt_demo"
+        initialDocuments={readyDocs}
+        supersedeChunk={supersedeChunk}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("knowledge-supersede-ks_doc_ready_chunk_1"));
+
+    expect(supersedeChunk).toHaveBeenCalledWith(
+      "agt_demo",
+      "ks_doc_ready_chunk_1",
+      expect.objectContaining({
+        reason: expect.stringContaining("Builder marked this chunk"),
+      }),
+    );
+    expect(
+      await screen.findByTestId(
+        "knowledge-chunk-lifecycle-ks_doc_ready_chunk_1",
+      ),
+    ).toHaveTextContent("superseded");
+    await waitForDiagnosticsToSettle();
+  });
+
+  it("maps knowledge contradictions to affected behavior policies and evals", async () => {
+    render(
+      <KnowledgeAtelier
+        agentId="agt_demo"
+        initialDocuments={[
+          ...readyDocs,
+          {
+            id: "doc_policy",
+            agentId: "agt_demo",
+            name: "legal_refund_policy.pdf",
+            contentType: "application/pdf",
+            bytes: 8_192,
+            status: "ready",
+            uploadedAt: "2026-04-15T12:00:00Z",
+            lastRefreshedAt: "2026-05-02T08:00:00Z",
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId("knowledge-readiness")).toHaveTextContent(
+      "Contradiction impact",
+    );
+    expect(screen.getByTestId("knowledge-readiness")).toHaveTextContent(
+      "behavior.refund_policy",
+    );
+    expect(screen.getByTestId("knowledge-readiness")).toHaveTextContent(
+      "eval.refund_exception_escalates",
+    );
     await waitForDiagnosticsToSettle();
   });
 
