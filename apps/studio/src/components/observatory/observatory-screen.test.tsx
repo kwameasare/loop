@@ -21,6 +21,9 @@ describe("ObservatoryScreen", () => {
     expect(screen.getByTestId("observatory-incidents")).toHaveTextContent(
       "error_rate breached",
     );
+    expect(
+      screen.getByTestId("incident-notifications-inc_rollback_schema"),
+    ).toHaveTextContent("maya@acme.test");
     expect(screen.getByTestId("ambient-health-arcs")).toHaveTextContent(
       "Ambient agent health",
     );

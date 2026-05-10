@@ -54,6 +54,21 @@ async def _change_package(request: Request, *, agent: Any, package_id: str) -> A
     raise WorkspaceError(f"unknown change package: {package_id}")
 
 
+async def _notification_targets(request: Request, *, agent: Any, fallback: str) -> list[str]:
+    commitment = await request.app.state.cp.agent_commitments.current(agent=agent)
+    return list(
+        dict.fromkeys(
+            target
+            for target in (
+                commitment.body.owner_user_id.strip(),
+                commitment.body.backup_owner_user_id.strip(),
+                fallback,
+            )
+            if target
+        )
+    )
+
+
 def _audit(
     request: Request,
     *,
@@ -171,6 +186,11 @@ async def _deployment_action(
             TraceQuery(workspace_id=workspace_id, agent_id=agent.id, page_size=25)
         )
         affected_trace_ids = [trace.trace_id for trace in traces.items]
+        notification_targets = await _notification_targets(
+            request,
+            agent=agent,
+            fallback=caller_sub,
+        )
         incident = await request.app.state.cp.incidents.create_for_rollback(
             agent=agent,
             deployment_id=deployment.id,
@@ -180,6 +200,7 @@ async def _deployment_action(
             trigger=details.trigger,
             reason=details.reason,
             affected_trace_ids=affected_trace_ids,
+            notification_targets=notification_targets,
         )
         record_audit_event(
             workspace_id=workspace_id,
@@ -196,6 +217,7 @@ async def _deployment_action(
                 "deployment_id": deployment.id,
                 "rollback_action_ref": incident.rollback_action_ref,
                 "affected_trace_count": len(affected_trace_ids),
+                "notification_targets": notification_targets,
                 "trigger": incident.trigger,
             },
         )

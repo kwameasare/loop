@@ -559,6 +559,22 @@ export const OBSERVATORY_MODEL: ObservatoryModel = {
         "Pin the tool schema, replay affected traces, and create a Change Package with regression coverage.",
       candidate_eval_suite_id: null,
       channel_scope: ["web_chat"],
+      notifications: [
+        {
+          recipient: "maya@acme.test",
+          channel: "in_app",
+          status: "queued",
+          sent_at: "2026-05-09T03:12:00.000Z",
+          summary: "high incident: error_rate breached 4% for web_chat canary",
+        },
+        {
+          recipient: "diego@acme.test",
+          channel: "in_app",
+          status: "queued",
+          sent_at: "2026-05-09T03:12:00.000Z",
+          summary: "high incident: error_rate breached 4% for web_chat canary",
+        },
+      ],
       timeline: [
         {
           kind: "incident_created",
