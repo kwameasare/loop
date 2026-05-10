@@ -14,6 +14,8 @@ import {
   type AgentChangeSet,
   type AgentReleaseCandidate,
   type AgentWorkflow,
+  type GateStatus,
+  updateReleaseCandidateGate as defaultUpdateReleaseCandidateGate,
 } from "@/lib/agent-workflow";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +28,7 @@ interface ReleaseCandidatePanelProps {
   markReadyForReview?: typeof defaultMarkChangeSetReadyForReview;
   createReleaseCandidate?: typeof defaultCreateReleaseCandidate;
   approveReleaseCandidate?: typeof defaultApproveReleaseCandidate;
+  updateReleaseCandidateGate?: typeof defaultUpdateReleaseCandidateGate;
 }
 
 type BusyState =
@@ -35,6 +38,7 @@ type BusyState =
   | "tests"
   | "review"
   | "release-candidate"
+  | "gate"
   | "approval";
 
 const STATUS_CLASS: Record<string, string> = {
@@ -79,6 +83,7 @@ export function ReleaseCandidatePanel({
   markReadyForReview = defaultMarkChangeSetReadyForReview,
   createReleaseCandidate = defaultCreateReleaseCandidate,
   approveReleaseCandidate = defaultApproveReleaseCandidate,
+  updateReleaseCandidateGate = defaultUpdateReleaseCandidateGate,
 }: ReleaseCandidatePanelProps) {
   const [workflow, setWorkflow] = useState(initialWorkflow);
   const [busy, setBusy] = useState<BusyState>("idle");
@@ -99,6 +104,13 @@ export function ReleaseCandidatePanel({
   const canMarkReadyForTests = changeSet?.status === "draft";
   const canMarkReadyForReview = changeSet?.status === "ready_for_tests";
   const canCreateReleaseCandidate = changeSet?.status === "ready_for_review";
+  const requiredGatesSatisfied = Boolean(
+    releaseCandidate?.readiness.length &&
+      releaseCandidate.readiness.every((gate) => gate.status === "passed"),
+  );
+  const hasFailedGate = Boolean(
+    releaseCandidate?.readiness.some((gate) => gate.status === "failed"),
+  );
 
   function upsertBranch(next: AgentBranch) {
     setWorkflow((current) => ({
@@ -247,6 +259,46 @@ export function ReleaseCandidatePanel({
         error instanceof Error
           ? error.message
           : "Could not create release candidate.",
+      );
+    } finally {
+      setBusy("idle");
+    }
+  }
+
+  async function handleGateUpdate(gateId: string, status: GateStatus) {
+    if (!releaseCandidate) return;
+    setBusy("gate");
+    setNotice(null);
+    try {
+      const gate = releaseCandidate.readiness.find((item) => item.id === gateId);
+      const next = await updateReleaseCandidateGate(
+        agentId,
+        releaseCandidate.id,
+        {
+          gate_id: gateId,
+          status,
+          evidence_ref:
+            status === "passed"
+              ? `manual/${gateId}/passed`
+              : `manual/${gateId}/failed`,
+          message:
+            status === "passed"
+              ? `${gate?.label ?? gateId} passed with reviewer evidence.`
+              : `${gate?.label ?? gateId} failed and blocks approval.`,
+        },
+        { fallbackReleaseCandidate: releaseCandidate },
+      );
+      upsertReleaseCandidate(next);
+      setNotice(
+        status === "passed"
+          ? `Gate passed. Release candidate is ${next.status}.`
+          : "Gate failed. Approval is blocked until this is fixed.",
+      );
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Could not update readiness gate.",
       );
     } finally {
       setBusy("idle");
@@ -443,6 +495,21 @@ export function ReleaseCandidatePanel({
                 <p className="mt-3 font-mono text-xs text-muted-foreground">
                   candidate version {releaseCandidate.candidate_version_id}
                 </p>
+                {!requiredGatesSatisfied ? (
+                  <p
+                    className={cn(
+                      "mt-3 rounded-md border p-2 text-xs",
+                      hasFailedGate
+                        ? "border-destructive/40 bg-destructive/5 text-destructive"
+                        : "border-warning/40 bg-warning/5 text-warning",
+                    )}
+                    data-testid="workflow-gate-blocker"
+                  >
+                    {hasFailedGate
+                      ? "A failed readiness gate blocks approvals until the gate passes again."
+                      : "All required readiness gates must pass before approvals can be recorded."}
+                  </p>
+                ) : null}
                 <ul className="mt-3 space-y-2 text-sm">
                   {releaseCandidate.readiness.map((gate) => (
                     <li key={gate.id} className="rounded-md border bg-card p-2">
@@ -453,6 +520,34 @@ export function ReleaseCandidatePanel({
                       <p className="mt-1 text-xs text-muted-foreground">
                         {gate.evidence_ref || gate.message}
                       </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className="rounded-md border border-success/40 px-2 py-1 text-xs font-medium text-success hover:bg-success/10 disabled:opacity-50"
+                          disabled={
+                            workflowUnavailable ||
+                            busy !== "idle" ||
+                            gate.status === "passed"
+                          }
+                          onClick={() => handleGateUpdate(gate.id, "passed")}
+                          data-testid={`workflow-gate-pass-${gate.id}`}
+                        >
+                          Mark pass
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-md border border-destructive/40 px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                          disabled={
+                            workflowUnavailable ||
+                            busy !== "idle" ||
+                            gate.status === "failed"
+                          }
+                          onClick={() => handleGateUpdate(gate.id, "failed")}
+                          data-testid={`workflow-gate-fail-${gate.id}`}
+                        >
+                          Mark fail
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -470,7 +565,10 @@ export function ReleaseCandidatePanel({
                         type="button"
                         className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted/50 disabled:opacity-50"
                         disabled={
-                          workflowUnavailable || approval.satisfied || busy !== "idle"
+                          workflowUnavailable ||
+                          !requiredGatesSatisfied ||
+                          approval.satisfied ||
+                          busy !== "idle"
                         }
                         onClick={() => handleApprove(approval.id)}
                         data-testid={`workflow-approve-${approval.id}`}
