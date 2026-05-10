@@ -90,4 +90,60 @@ describe("AgentTracesPage", () => {
     );
     expect(screen.queryByTestId("target-state")).toBeNull();
   });
+
+  it("applies Workbench trace filter params to the visible trace list", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test/v1";
+    delete process.env.NEXT_PUBLIC_LOOP_API_URL;
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.endsWith("/agents/agent_trace")) {
+        return Response.json({
+          id: "agent_trace",
+          name: "Trace Agent",
+          description: "Traceable support agent.",
+          slug: "trace-agent",
+          active_version: 8,
+          created_at: "2026-05-09T10:00:00Z",
+          workspace_id: "ws_trace",
+        });
+      }
+      if (
+        url ===
+        "https://cp.test/v1/workspaces/ws_trace/traces?agent_id=agent_trace&page_size=100"
+      ) {
+        return Response.json({
+          items: [
+            {
+              workspace_id: "ws_trace",
+              trace_id: "trc_agent_error",
+              turn_id: "turn_agent_error",
+              conversation_id: "cnv_agent_error",
+              agent_id: "agent_trace",
+              root_name: "tool.lookup",
+              started_at: "2026-05-09T10:05:00Z",
+              duration_ms: 840,
+              span_count: 6,
+              error: true,
+            },
+          ],
+          next_cursor: null,
+        });
+      }
+      return new Response("missing", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(
+      await AgentTracesPage({
+        params: { agent_id: "agent_trace" },
+        searchParams: { filter: "failed", span: "tool" },
+      }),
+    );
+
+    expect(screen.getByTestId("trace-list-focused-query")).toHaveTextContent(
+      "filtering traces by tool spans",
+    );
+    expect(screen.getByTestId("trace-filter-status")).toHaveValue("error");
+    expect(screen.getByTestId("trace-search")).toHaveValue("tool");
+  });
 });

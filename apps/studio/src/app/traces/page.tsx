@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import {
@@ -30,6 +31,11 @@ export default function TracesPage(): JSX.Element {
 
 function TracesPageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
+  const searchParams = useSearchParams();
+  const initialAgentId = searchParams.get("agent_id") ?? undefined;
+  const initialStatus = traceStatusFromParams(searchParams);
+  const initialQuery = traceQueryFromParams(searchParams);
+  const focusMessage = traceFocusMessage(searchParams);
   const activeWorkspaceId = active?.id;
   const [traces, setTraces] = useState<TraceSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +43,10 @@ function TracesPageBody(): JSX.Element {
   useEffect(() => {
     if (!activeWorkspaceId) return;
     let cancelled = false;
-    void searchTraces(activeWorkspaceId, { page_size: 100 })
+    void searchTraces(activeWorkspaceId, {
+      ...(initialAgentId ? { agent_id: initialAgentId } : {}),
+      page_size: 100,
+    })
       .then((res) => {
         if (cancelled) return;
         setTraces(res.traces);
@@ -49,7 +58,7 @@ function TracesPageBody(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [activeWorkspaceId]);
+  }, [activeWorkspaceId, initialAgentId]);
 
   if (wsLoading) {
     return (
@@ -96,7 +105,49 @@ function TracesPageBody(): JSX.Element {
           trace to see its waterfall.
         </p>
       </header>
-      <TraceList traces={traces} initialPageSize={20} />
+      <TraceList
+        traces={traces}
+        focusMessage={focusMessage}
+        initialAgentId={initialAgentId}
+        initialPageSize={20}
+        initialQuery={initialQuery}
+        initialStatus={initialStatus}
+      />
     </main>
   );
+}
+
+function traceStatusFromParams(
+  searchParams: URLSearchParams,
+): "all" | "ok" | "error" {
+  if (searchParams.get("only_errors") === "true") return "error";
+  if (searchParams.get("filter") === "failed") return "error";
+  return "all";
+}
+
+function traceQueryFromParams(searchParams: URLSearchParams): string | undefined {
+  const span = searchParams.get("span");
+  if (span) return span;
+  const filter = searchParams.get("filter");
+  if (filter && filter !== "failed") return filter;
+  return undefined;
+}
+
+function traceFocusMessage(searchParams: URLSearchParams): string | undefined {
+  if (searchParams.get("only_errors") === "true") {
+    return "Opened from evidence link: showing error traces.";
+  }
+  const mode = searchParams.get("mode");
+  if (mode === "replay") {
+    return "Opened in replay mode: select a trace to replay or compare.";
+  }
+  const span = searchParams.get("span");
+  if (span) {
+    return `Opened from evidence link: filtering traces by ${span} spans.`;
+  }
+  const filter = searchParams.get("filter");
+  if (filter) {
+    return `Opened from evidence link: filtering traces by ${filter}.`;
+  }
+  return undefined;
 }

@@ -7,13 +7,61 @@ import { getAgentDetailData } from "../agent-detail-data";
 
 interface PageProps {
   params: { agent_id: string };
+  searchParams?:
+    | {
+        filter?: string | string[] | undefined;
+        mode?: string | string[] | undefined;
+        span?: string | string[] | undefined;
+      }
+    | undefined;
 }
 
 function messageFromError(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-export default async function AgentTracesPage({ params }: PageProps) {
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function traceStatusFromParams(
+  searchParams: PageProps["searchParams"],
+): "all" | "ok" | "error" {
+  return firstParam(searchParams?.filter) === "failed" ? "error" : "all";
+}
+
+function traceQueryFromParams(
+  searchParams: PageProps["searchParams"],
+): string | undefined {
+  const span = firstParam(searchParams?.span);
+  if (span) return span;
+  const filter = firstParam(searchParams?.filter);
+  if (filter && filter !== "failed") return filter;
+  return undefined;
+}
+
+function traceFocusMessage(
+  searchParams: PageProps["searchParams"],
+): string | undefined {
+  const mode = firstParam(searchParams?.mode);
+  if (mode === "replay") {
+    return "Opened in replay mode: select a trace to replay or compare.";
+  }
+  const span = firstParam(searchParams?.span);
+  if (span) {
+    return `Opened from Workbench evidence: filtering traces by ${span} spans.`;
+  }
+  const filter = firstParam(searchParams?.filter);
+  if (filter) {
+    return `Opened from Workbench evidence: filtering traces by ${filter}.`;
+  }
+  return undefined;
+}
+
+export default async function AgentTracesPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { agent, degradedReason: agentDegradedReason } =
     await getAgentDetailData(params.agent_id);
   let traces: TraceSummary[] = [];
@@ -78,7 +126,14 @@ export default async function AgentTracesPage({ params }: PageProps) {
       ) : null}
 
       {traces.length > 0 ? (
-        <TraceList traces={traces} initialPageSize={10} />
+        <TraceList
+          traces={traces}
+          focusMessage={traceFocusMessage(searchParams)}
+          initialAgentId={params.agent_id}
+          initialPageSize={10}
+          initialQuery={traceQueryFromParams(searchParams)}
+          initialStatus={traceStatusFromParams(searchParams)}
+        />
       ) : !degradedEvidence ? (
         <SectionEmpty
           title="Agent traces"

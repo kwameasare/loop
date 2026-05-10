@@ -69,6 +69,27 @@ describe("TraceList", () => {
     expect(screen.queryByTestId("trace-row-trc_001")).toBeNull();
   });
 
+  it("starts from query-driven status, agent, and text filters", () => {
+    render(
+      <TraceList
+        traces={rows()}
+        focusMessage="Opened from evidence link: showing error traces."
+        initialAgentId="agt_b"
+        initialQuery="messages"
+        initialStatus="error"
+      />,
+    );
+
+    expect(screen.getByTestId("trace-list-focused-query")).toHaveTextContent(
+      "showing error traces",
+    );
+    expect(screen.getByTestId("trace-filter-status")).toHaveValue("error");
+    expect(screen.getByTestId("trace-filter-agent")).toHaveValue("agt_b");
+    expect(screen.getByTestId("trace-search")).toHaveValue("messages");
+    expect(screen.getByTestId("trace-count")).toHaveTextContent("1 trace");
+    expect(screen.getByTestId("trace-row-trc_002")).toBeInTheDocument();
+  });
+
   it("paginates and disables prev on first page", () => {
     const many: TraceSummary[] = Array.from({ length: 15 }, (_, i) => ({
       ...rows()[0],
