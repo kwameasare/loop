@@ -227,6 +227,14 @@ export function CostCapacityPanel({ model, latency }: CostCapacityPanelProps) {
               {latency.scenario}. Current total is {formatMs(latency.totalMs)};
               target marker is {formatMs(targetMs)}.
             </p>
+            <p
+              className="mt-1 text-xs text-muted-foreground"
+              data-testid="latency-budget-provenance"
+            >
+              {latency.dataSource === "trace"
+                ? `Trace-backed: ${latency.provenance}`
+                : `Planning model, not live traffic: ${latency.provenance}`}
+            </p>
           </div>
           <LiveBadge tone={overBudgetMs > 0 ? "canary" : "live"}>
             {overBudgetMs > 0

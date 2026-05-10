@@ -11,6 +11,8 @@ describe("latency budget model", () => {
   it("builds the canonical stacked latency segments and suggestions", () => {
     const model = buildLatencyBudgetModel(800);
 
+    expect(model.dataSource).toBe("deterministic");
+    expect(model.provenance).toContain("planning model");
     expect(model.totalMs).toBeGreaterThan(800);
     expect(model.segments.map((segment) => segment.id)).toEqual([
       "channel_ingress",

@@ -74,6 +74,9 @@ describe("CostCapacityPanel", () => {
     expect(screen.getByTestId("latency-budget-visualizer")).toHaveTextContent(
       "Latency budget visualizer",
     );
+    expect(screen.getByTestId("latency-budget-provenance")).toHaveTextContent(
+      "Planning model, not live traffic",
+    );
     expect(
       screen.getByTestId("latency-suggestion-cache_pricing_policy"),
     ).toHaveTextContent("retrieval.final_sale_refund");
