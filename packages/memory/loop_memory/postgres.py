@@ -335,6 +335,132 @@ class PostgresUserMemoryStore:
             )
         return out
 
+    async def list_by_source(
+        self,
+        *,
+        workspace_id: UUID,
+        agent_id: UUID,
+        source_trace: str | None = None,
+        source_turn_id: UUID | None = None,
+    ) -> list[MemoryEntry]:
+        if not source_trace and source_turn_id is None:
+            return []
+        user_sql = text(
+            """
+            SELECT user_id, key, value_ciphertext, nonce, algorithm, updated_at,
+                   source_trace, source_turn_id, source_span_id, write_reason, policy_ref
+            FROM memory_user
+            WHERE workspace_id = :ws AND agent_id = :ag
+              AND (
+                    (:source_trace IS NOT NULL AND source_trace = :source_trace)
+                 OR (:source_turn_id IS NOT NULL AND source_turn_id = :source_turn_id)
+              )
+            ORDER BY user_id, key
+            """
+        )
+        bot_sql = text(
+            """
+            SELECT key, value_ciphertext, nonce, algorithm, updated_at,
+                   source_trace, source_turn_id, source_span_id, write_reason, policy_ref
+            FROM memory_bot
+            WHERE workspace_id = :ws AND agent_id = :ag
+              AND (
+                    (:source_trace IS NOT NULL AND source_trace = :source_trace)
+                 OR (:source_turn_id IS NOT NULL AND source_turn_id = :source_turn_id)
+              )
+            ORDER BY key
+            """
+        )
+        params = {
+            "ws": workspace_id,
+            "ag": agent_id,
+            "source_trace": source_trace,
+            "source_turn_id": source_turn_id,
+        }
+        async with self._engine.begin() as conn:
+            await _enter_workspace(conn, workspace_id)
+            user_rows = (await conn.execute(user_sql, params)).all()
+            bot_rows = (await conn.execute(bot_sql, params)).all()
+
+        out: list[MemoryEntry] = []
+        for (
+            user_id,
+            key,
+            ciphertext,
+            nonce,
+            algorithm,
+            updated,
+            row_source_trace,
+            row_source_turn_id,
+            source_span_id,
+            write_reason,
+            policy_ref,
+        ) in user_rows:
+            value = self._decrypt_value(
+                ciphertext,
+                nonce,
+                algorithm,
+                workspace_id=workspace_id,
+                agent_id=agent_id,
+                scope=MemoryScope.USER,
+                user_id=user_id,
+                key=key,
+            )
+            out.append(
+                MemoryEntry(
+                    workspace_id=workspace_id,
+                    agent_id=agent_id,
+                    scope=MemoryScope.USER,
+                    user_id=user_id,
+                    key=key,
+                    value=value,
+                    updated_at=_coerce_dt(updated),
+                    source_trace=row_source_trace or "",
+                    source_turn_id=row_source_turn_id,
+                    source_span_id=source_span_id or "",
+                    write_reason=write_reason or "",
+                    policy_ref=policy_ref or "",
+                )
+            )
+        for (
+            key,
+            ciphertext,
+            nonce,
+            algorithm,
+            updated,
+            row_source_trace,
+            row_source_turn_id,
+            source_span_id,
+            write_reason,
+            policy_ref,
+        ) in bot_rows:
+            value = self._decrypt_value(
+                ciphertext,
+                nonce,
+                algorithm,
+                workspace_id=workspace_id,
+                agent_id=agent_id,
+                scope=MemoryScope.BOT,
+                user_id=None,
+                key=key,
+            )
+            out.append(
+                MemoryEntry(
+                    workspace_id=workspace_id,
+                    agent_id=agent_id,
+                    scope=MemoryScope.BOT,
+                    key=key,
+                    value=value,
+                    updated_at=_coerce_dt(updated),
+                    source_trace=row_source_trace or "",
+                    source_turn_id=row_source_turn_id,
+                    source_span_id=source_span_id or "",
+                    write_reason=write_reason or "",
+                    policy_ref=policy_ref or "",
+                )
+            )
+        return out
+
     # -- bot ----------------------------------------------------------------
 
     async def get_bot(self, *, workspace_id: UUID, agent_id: UUID, key: str) -> MemoryEntry:

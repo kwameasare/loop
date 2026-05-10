@@ -80,6 +80,15 @@ class UserMemoryStore(Protocol):
         user_id: str,
     ) -> list[MemoryEntry]: ...
 
+    async def list_by_source(
+        self,
+        *,
+        workspace_id: UUID,
+        agent_id: UUID,
+        source_trace: str | None = None,
+        source_turn_id: UUID | None = None,
+    ) -> list[MemoryEntry]: ...
+
     async def get_bot(
         self,
         *,

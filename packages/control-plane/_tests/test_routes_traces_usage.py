@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+import anyio
 import pytest
 from fastapi.testclient import TestClient
 from loop_control_plane.app import create_app
@@ -221,9 +222,64 @@ def test_get_trace_detail_includes_memory_evidence_spans(
     assert memory_spans[0]["status"] == "ok"
     assert memory_spans[0]["attrs"]["policy_ref"] == "memory_policy/user:v1"
     assert memory_spans[0]["attrs"]["reason"] == 'User said "English is fine".'
+    assert memory_spans[0]["attrs"]["source_trace"] == trace_id
+    assert memory_spans[0]["attrs"]["source_trace_missing"] is False
     assert memory_spans[1]["status"] == "error"
     assert memory_spans[1]["attrs"]["reason"] == "PII policy blocked payment data storage."
-    assert memory_spans[1]["attrs"]["source_trace"] == trace_id
+    assert memory_spans[1]["attrs"]["source_trace"] == ""
+    assert memory_spans[1]["attrs"]["source_trace_missing"] is True
+
+
+def test_get_trace_detail_derives_memory_write_spans_from_memory_store(
+    client: TestClient, workspace_id: UUID
+) -> None:
+    cp = client.app.state.cp  # type: ignore[attr-defined]
+    agent_id = uuid4()
+    turn_id = uuid4()
+    trace_id = "f" * 32
+    cp.trace_store.add(
+        TraceSummary(
+            workspace_id=workspace_id,
+            trace_id=trace_id,
+            turn_id=turn_id,
+            conversation_id=uuid4(),
+            agent_id=agent_id,
+            started_at=datetime(2026, 5, 4, 12, 0, tzinfo=UTC),
+            duration_ms=240,
+            span_count=2,
+        )
+    )
+
+    async def write_memory() -> None:
+        await cp.user_memory_store.set_user(
+            workspace_id=workspace_id,
+            agent_id=agent_id,
+            user_id="customer-1",
+            key="preferred_language",
+            value="English",
+            source_trace=trace_id,
+            source_turn_id=turn_id,
+            source_span_id="span_runtime_memory",
+            write_reason='User said "English is fine".',
+            policy_ref="memory_policy/user:v1",
+        )
+
+    anyio.run(write_memory)
+
+    response = client.get(
+        f"/v1/traces/{trace_id}",
+        headers={"authorization": _bearer_for("owner-1")},
+    )
+    assert response.status_code == 200, response.text
+    memory_spans = [span for span in response.json()["spans"] if span["kind"] == "memory"]
+    assert len(memory_spans) == 1
+    span = memory_spans[0]
+    assert span["span_id"] == "span_runtime_memory"
+    assert span["name"] == "memory.write.user.preferred_language"
+    assert span["attrs"]["value_preview"] == "English"
+    assert span["attrs"]["source_trace"] == trace_id
+    assert span["attrs"]["source_turn_id"] == str(turn_id)
+    assert span["attrs"]["user_id"] == "customer-1"
 
 
 def test_get_trace_detail_requires_membership(client: TestClient, workspace_id: UUID) -> None:

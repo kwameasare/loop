@@ -109,9 +109,73 @@ class _Conn:
                 and row["user_id"] == params["uid"]
             ]
             return _Result(rows=rows)
+        if "FROM memory_user" in statement and "source_trace = :source_trace" in statement:
+            rows = [
+                (
+                    row["user_id"],
+                    row["key"],
+                    row["value_ciphertext"],
+                    row["nonce"],
+                    row["algorithm"],
+                    row["updated_at"],
+                    row["source_trace"],
+                    row["source_turn_id"],
+                    row["source_span_id"],
+                    row["write_reason"],
+                    row["policy_ref"],
+                )
+                for row in sorted(
+                    self._engine.user_rows.values(),
+                    key=lambda candidate: (candidate["user_id"], candidate["key"]),
+                )
+                if row["workspace_id"] == params["ws"]
+                and row["agent_id"] == params["ag"]
+                and (
+                    (
+                        params["source_trace"] is not None
+                        and row["source_trace"] == params["source_trace"]
+                    )
+                    or (
+                        params["source_turn_id"] is not None
+                        and row["source_turn_id"] == params["source_turn_id"]
+                    )
+                )
+            ]
+            return _Result(rows=rows)
         if "FROM memory_bot" in statement and "key = :k" in statement:
             row = self._engine.bot_rows.get((params["ws"], params["ag"], params["k"]))
             return _Result(rows=[self._value_row(row)] if row else [])
+        if "FROM memory_bot" in statement and "source_trace = :source_trace" in statement:
+            rows = [
+                (
+                    row["key"],
+                    row["value_ciphertext"],
+                    row["nonce"],
+                    row["algorithm"],
+                    row["updated_at"],
+                    row["source_trace"],
+                    row["source_turn_id"],
+                    row["source_span_id"],
+                    row["write_reason"],
+                    row["policy_ref"],
+                )
+                for row in sorted(
+                    self._engine.bot_rows.values(), key=lambda candidate: candidate["key"]
+                )
+                if row["workspace_id"] == params["ws"]
+                and row["agent_id"] == params["ag"]
+                and (
+                    (
+                        params["source_trace"] is not None
+                        and row["source_trace"] == params["source_trace"]
+                    )
+                    or (
+                        params["source_turn_id"] is not None
+                        and row["source_turn_id"] == params["source_turn_id"]
+                    )
+                )
+            ]
+            return _Result(rows=rows)
         if "DELETE FROM memory_user" in statement:
             return self._delete_user(statement, params)
         if "DELETE FROM memory_bot" in statement:
@@ -276,6 +340,27 @@ async def test_postgres_memory_preserves_source_trace_metadata() -> None:
     bot = await store.get_bot(workspace_id=ws, agent_id=ag, key="persona")
     assert bot.source_trace == "trace_bot_001"
     assert bot.write_reason == "Builder approved persona."
+
+    by_trace = await store.list_by_source(
+        workspace_id=ws,
+        agent_id=ag,
+        source_trace="trace_lang_001",
+    )
+    assert [(entry.scope.value, entry.key) for entry in by_trace] == [("user", "lang")]
+
+    by_bot_trace = await store.list_by_source(
+        workspace_id=ws,
+        agent_id=ag,
+        source_trace="trace_bot_001",
+    )
+    assert [(entry.scope.value, entry.key) for entry in by_bot_trace] == [("bot", "persona")]
+
+    by_turn = await store.list_by_source(
+        workspace_id=ws,
+        agent_id=ag,
+        source_turn_id=turn,
+    )
+    assert [(entry.scope.value, entry.key) for entry in by_turn] == [("user", "lang")]
 
 
 @pytest.mark.asyncio

@@ -124,6 +124,32 @@ class InMemoryUserMemoryStore:
                 if ws == workspace_id and ag == agent_id and uid == user_id
             ]
 
+    async def list_by_source(
+        self,
+        *,
+        workspace_id: UUID,
+        agent_id: UUID,
+        source_trace: str | None = None,
+        source_turn_id: UUID | None = None,
+    ) -> list[MemoryEntry]:
+        if not source_trace and source_turn_id is None:
+            return []
+        async with self._lock:
+            entries = [
+                e
+                for (ws, ag, _, _), e in self._user.items()
+                if ws == workspace_id and ag == agent_id
+            ]
+            entries.extend(
+                e for (ws, ag, _), e in self._bot.items() if ws == workspace_id and ag == agent_id
+            )
+        return [
+            e
+            for e in entries
+            if (source_trace and e.source_trace == source_trace)
+            or (source_turn_id is not None and e.source_turn_id == source_turn_id)
+        ]
+
     # -- bot -----------------------------------------------------------------
 
     async def get_bot(
