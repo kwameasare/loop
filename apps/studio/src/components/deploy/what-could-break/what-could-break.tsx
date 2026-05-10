@@ -12,6 +12,8 @@ interface WhatCouldBreakProps {
   changes: readonly BehaviorChange[];
   /** Maximum rows to show. Defaults to 5. */
   topK?: number;
+  selectedChangeId?: string | undefined;
+  inspectLabel?: string | undefined;
   onInspect?(change: BehaviorChange): void;
 }
 
@@ -28,7 +30,13 @@ const TIER_TONE: Record<LikelihoodTier, string> = {
 };
 
 export function WhatCouldBreak(props: WhatCouldBreakProps): JSX.Element {
-  const { changes, topK = 5, onInspect } = props;
+  const {
+    changes,
+    topK = 5,
+    selectedChangeId,
+    inspectLabel = "Open replay diff",
+    onInspect,
+  } = props;
   const [openId, setOpenId] = useState<string | null>(null);
   const top = useMemo(() => topLikelyChanges(changes, topK), [changes, topK]);
 
@@ -61,11 +69,13 @@ export function WhatCouldBreak(props: WhatCouldBreakProps): JSX.Element {
       <ul className="divide-y divide-border" data-testid="wcb-list">
         {top.map((change) => {
           const isOpen = openId === change.id;
+          const isSelected = selectedChangeId === change.id;
           return (
             <li
               key={change.id}
               data-testid={`wcb-row-${change.id}`}
-              className="py-2"
+              data-selected={isSelected ? "true" : "false"}
+              className={`py-2 ${isSelected ? "rounded-md bg-primary/5 px-2" : ""}`}
             >
               <button
                 type="button"
@@ -125,7 +135,7 @@ export function WhatCouldBreak(props: WhatCouldBreakProps): JSX.Element {
                       onClick={() => onInspect(change)}
                       className="rounded-md border bg-background px-2 py-1 text-xs font-medium hover:bg-muted"
                     >
-                      Open replay diff
+                      {inspectLabel}
                     </button>
                   ) : null}
                 </div>
