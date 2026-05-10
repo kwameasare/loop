@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 
-from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
+from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import authorize_workspace_access
 from loop_control_plane.change_packages import (
@@ -25,15 +25,21 @@ async def _agent(
     request: Request,
     *,
     agent_id: UUID,
-    workspace_id: UUID,
     caller_sub: str,
+    workspace_id: UUID | None = None,
 ) -> Any:
+    cp = request.app.state.cp
+    if workspace_id is None:
+        agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
+        if agent is None:
+            raise HTTPException(status_code=404, detail="unknown agent")
+        workspace_id = agent.workspace_id
     await authorize_workspace_access(
-        workspaces=request.app.state.cp.workspaces,
+        workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
     )
-    return await request.app.state.cp.agents.get(
+    return await cp.agents.get(
         workspace_id=workspace_id,
         agent_id=agent_id,
     )
@@ -89,13 +95,13 @@ async def list_change_packages(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
         agent_id=agent_id,
-        workspace_id=workspace_id,
         caller_sub=caller_sub,
+        workspace_id=workspace_id,
     )
     items = await request.app.state.cp.change_packages.list_for_agent(agent=agent)
     return {"items": [change_package_payload(item) for item in items]}
@@ -106,13 +112,13 @@ async def get_current_change_package(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
         agent_id=agent_id,
-        workspace_id=workspace_id,
         caller_sub=caller_sub,
+        workspace_id=workspace_id,
     )
     current = await request.app.state.cp.change_packages.current(agent=agent)
     return {"item": change_package_payload(current) if current is not None else None}
@@ -124,13 +130,13 @@ async def generate_change_package(
     agent_id: UUID,
     body: ChangePackageGenerate,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
         agent_id=agent_id,
-        workspace_id=workspace_id,
         caller_sub=caller_sub,
+        workspace_id=workspace_id,
     )
     commitment = await request.app.state.cp.agent_commitments.current(agent=agent)
     release_candidate = await _release_candidate_for_preflight(
@@ -176,7 +182,7 @@ async def generate_change_package(
     )
     _audit(
         request,
-        workspace_id=workspace_id,
+        workspace_id=agent.workspace_id,
         caller_sub=caller_sub,
         action="change_package:generate",
         resource_id=package.id,
@@ -203,13 +209,13 @@ async def submit_change_package(
     agent_id: UUID,
     package_id: str,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
         agent_id=agent_id,
-        workspace_id=workspace_id,
         caller_sub=caller_sub,
+        workspace_id=workspace_id,
     )
     package = await request.app.state.cp.change_packages.submit(
         agent=agent,
@@ -217,7 +223,7 @@ async def submit_change_package(
     )
     _audit(
         request,
-        workspace_id=workspace_id,
+        workspace_id=agent.workspace_id,
         caller_sub=caller_sub,
         action="change_package:submit",
         resource_id=package.id,
@@ -237,13 +243,13 @@ async def record_change_package_approval(
     package_id: str,
     body: ChangePackageApprovalAction,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
         agent_id=agent_id,
-        workspace_id=workspace_id,
         caller_sub=caller_sub,
+        workspace_id=workspace_id,
     )
     package = await request.app.state.cp.change_packages.record_approval(
         agent=agent,
@@ -253,7 +259,7 @@ async def record_change_package_approval(
     )
     _audit(
         request,
-        workspace_id=workspace_id,
+        workspace_id=agent.workspace_id,
         caller_sub=caller_sub,
         action="change_package:approval",
         resource_id=package.id,

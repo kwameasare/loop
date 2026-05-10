@@ -3,10 +3,10 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
+from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.agent_commitments import (
     CommitmentBody,
     commitment_payload,
@@ -27,15 +27,21 @@ async def _agent(
     request: Request,
     *,
     agent_id: UUID,
-    workspace_id: UUID,
     caller_sub: str,
+    workspace_id: UUID | None = None,
 ) -> Any:
+    cp = request.app.state.cp
+    if workspace_id is None:
+        agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
+        if agent is None:
+            raise HTTPException(status_code=404, detail="unknown agent")
+        workspace_id = agent.workspace_id
     await authorize_workspace_access(
-        workspaces=request.app.state.cp.workspaces,
+        workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
     )
-    return await request.app.state.cp.agents.get(
+    return await cp.agents.get(
         workspace_id=workspace_id,
         agent_id=agent_id,
     )
@@ -67,13 +73,13 @@ async def get_current_commitment(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
         agent_id=agent_id,
-        workspace_id=workspace_id,
         caller_sub=caller_sub,
+        workspace_id=workspace_id,
     )
     record = await request.app.state.cp.agent_commitments.current(agent=agent)
     return commitment_payload(record)
@@ -84,13 +90,13 @@ async def list_commitments(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
         agent_id=agent_id,
-        workspace_id=workspace_id,
         caller_sub=caller_sub,
+        workspace_id=workspace_id,
     )
     history = await request.app.state.cp.agent_commitments.history(agent=agent)
     return {"items": [commitment_payload(record) for record in history]}
@@ -102,13 +108,13 @@ async def save_commitment_draft(
     agent_id: UUID,
     body: CommitmentDraftBody,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
         agent_id=agent_id,
-        workspace_id=workspace_id,
         caller_sub=caller_sub,
+        workspace_id=workspace_id,
     )
     record = await request.app.state.cp.agent_commitments.save_draft(
         agent=agent,
@@ -118,7 +124,7 @@ async def save_commitment_draft(
     payload = commitment_payload(record)
     _audit(
         request,
-        workspace_id=workspace_id,
+        workspace_id=agent.workspace_id,
         caller_sub=caller_sub,
         action="commitment:draft_save",
         resource_id=record.id,
@@ -137,18 +143,18 @@ async def accept_commitment(
     request: Request,
     agent_id: UUID,
     caller_sub: str = CALLER,
-    workspace_id: UUID = ACTIVE_WORKSPACE,
+    workspace_id: UUID | None = None,
 ) -> dict[str, Any]:
     agent = await _agent(
         request,
         agent_id=agent_id,
-        workspace_id=workspace_id,
         caller_sub=caller_sub,
+        workspace_id=workspace_id,
     )
     record = await request.app.state.cp.agent_commitments.accept_current(agent=agent)
     _audit(
         request,
-        workspace_id=workspace_id,
+        workspace_id=agent.workspace_id,
         caller_sub=caller_sub,
         action="commitment:accept",
         resource_id=record.id,
