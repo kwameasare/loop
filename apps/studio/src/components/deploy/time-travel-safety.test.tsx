@@ -69,6 +69,60 @@ describe("RegressionBisect", () => {
       "regress",
     );
   });
+
+  it("runs live bisect for the selected agent and replaces the displayed result", async () => {
+    const runBisect = vi.fn(async () => ({
+      ...FIXTURE_BISECT,
+      caseId: "case_live_refund",
+      culpritCommit: "v24",
+      confidence: 88,
+      expected: "Behavior last known good at v22.",
+      observed: "behavior section changed at v24.",
+      steps: [
+        {
+          commit: "v22",
+          ts: "2026-05-10T12:00:00Z",
+          status: "pass" as const,
+          summary: "Last known green reference.",
+          evidenceRef: "bisect/agent_1/case_live_refund/since",
+        },
+        {
+          commit: "v24",
+          ts: "2026-05-10T12:01:00Z",
+          status: "regress" as const,
+          summary: "behavior section: removed Spanish branch.",
+          evidenceRef: "bisect/agent_1/case_live_refund/culprit",
+        },
+      ],
+    }));
+    render(
+      <RegressionBisect
+        result={FIXTURE_BISECT}
+        agentId="agent_1"
+        runBisect={runBisect}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("bisect-case"), {
+      target: { value: "case_live_refund" },
+    });
+    fireEvent.change(screen.getByTestId("bisect-since"), {
+      target: { value: "v22" },
+    });
+    fireEvent.change(screen.getByTestId("bisect-until"), {
+      target: { value: "v25" },
+    });
+    fireEvent.click(screen.getByTestId("bisect-run"));
+
+    expect(await screen.findByText(/Regression bisect · case_live_refund/i))
+      .toBeInTheDocument();
+    expect(screen.getByTestId("bisect-culprit")).toHaveTextContent("v24");
+    expect(runBisect).toHaveBeenCalledWith("agent_1", {
+      failing_eval_case_id: "case_live_refund",
+      since_ref: "v22",
+      until_ref: "v25",
+    });
+  });
 });
 
 describe("SnapshotsList", () => {

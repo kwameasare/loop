@@ -125,7 +125,12 @@ function DeploySafetyPageBody(): JSX.Element {
         </p>
       </header>
       <WhatCouldBreak changes={model!.changes} />
-      {model!.bisect ? <RegressionBisect result={model!.bisect} /> : null}
+      {model!.bisect ? (
+        <RegressionBisect
+          result={model!.bisect}
+          agentId={model!.changes.find((change) => change.agentId)?.agentId}
+        />
+      ) : null}
       <SnapshotsList snapshots={model!.snapshots} />
     </main>
   );
