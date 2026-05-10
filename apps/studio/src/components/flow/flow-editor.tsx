@@ -252,7 +252,7 @@ export function FlowEditor(props: FlowEditorProps) {
           </div>
         </header>
         <div
-          aria-label="Flow canvas viewport"
+          aria-label="Agent map viewport"
           className="relative flex-1 cursor-grab overflow-hidden active:cursor-grabbing"
           data-testid="flow-viewport"
           onClick={() => {
@@ -374,9 +374,9 @@ export function FlowEditor(props: FlowEditorProps) {
               data-testid="flow-placeholder"
             >
               <div className="rounded-lg border border-dashed border-border bg-card/80 px-6 py-4 text-center text-sm text-muted-foreground">
-                <p className="font-medium">Flow canvas is empty.</p>
+                <p className="font-medium">Agent map is empty.</p>
                 <p className="text-xs">
-                  Drag a node from the palette to get started.
+                  Drag an agent step from the palette to get started.
                 </p>
               </div>
             </div>
