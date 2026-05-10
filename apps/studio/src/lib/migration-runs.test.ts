@@ -68,4 +68,72 @@ describe("migration-runs client", () => {
       ),
     ).resolves.toMatchObject({ status: "rolled_back" });
   });
+
+  it("does not fabricate migration mutations when cp-api is not configured", async () => {
+    const run = localMigrationRun("ws_1");
+
+    await expect(
+      createMigrationImport("ws_1", {
+        archive_name: "acme.bpz",
+        target_agent_name: "Acme Import",
+        source: "botpress",
+      }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      advanceMigrationCutover(
+        "ws_1",
+        run.id,
+        { stage_id: "canary_1pct" },
+        { fallbackRun: run },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+
+    await expect(
+      rollbackMigrationCutover(
+        "ws_1",
+        run.id,
+        { trigger_id: "manual" },
+        { fallbackRun: run },
+      ),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
+  it("keeps deterministic migration fixtures explicitly opt-in", async () => {
+    const run = localMigrationRun("ws_1");
+
+    await expect(
+      createMigrationImport(
+        "ws_1",
+        {
+          archive_name: "rasa-project.zip",
+          target_agent_name: "Rasa Import",
+          source: "rasa",
+        },
+        { allowFixture: true },
+      ),
+    ).resolves.toMatchObject({
+      archive_name: "rasa-project.zip",
+      source: "rasa",
+      target_agent_name: "Rasa Import",
+    });
+
+    await expect(
+      advanceMigrationCutover(
+        "ws_1",
+        run.id,
+        { stage_id: "canary_1pct" },
+        { fallbackRun: run, allowFixture: true },
+      ),
+    ).resolves.toMatchObject({ status: "cutover_active" });
+
+    await expect(
+      rollbackMigrationCutover(
+        "ws_1",
+        run.id,
+        { trigger_id: "manual" },
+        { fallbackRun: run, allowFixture: true },
+      ),
+    ).resolves.toMatchObject({ status: "rolled_back" });
+  });
 });

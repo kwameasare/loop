@@ -37,6 +37,19 @@ describe("ux wireup cp helpers", () => {
     expect(JSON.parse(String(init?.body))).toEqual({ trace_ids: ["t1"] });
   });
 
+  it("can require a configured cp-api instead of falling back", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "";
+
+    await expect(
+      cpJson("/agents/agt/replay/against-draft", {
+        method: "POST",
+        body: { trace_ids: ["t1"] },
+        fallback: { ok: false },
+        allowFallback: false,
+      }),
+    ).rejects.toThrow("LOOP_CP_API_BASE_URL is required");
+  });
+
   it("preserves /v1 when building WebSocket URLs", () => {
     expect(
       cpWebSocketUrl("/workspaces/ws1/presence", {
