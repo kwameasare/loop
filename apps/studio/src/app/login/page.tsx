@@ -154,7 +154,7 @@ function LocalPilotLogin({ returnTo }: { returnTo: string }) {
 
 function LoginInner() {
   const params = useSearchParams();
-  const returnTo = params.get("returnTo") || "/";
+  const returnTo = params.get("returnTo") || "/home";
   const auth0Configured = useAuth0Configured();
   if (!auth0Configured) {
     return <LocalPilotLogin returnTo={returnTo} />;

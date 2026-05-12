@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { deriveEstateHealthFromAgents } from "@/lib/estate-health";
 
-import HomePage from "./page";
+import HomePage from "./home/page";
 
 const ORIGINAL_BASE = process.env.LOOP_CP_API_BASE_URL;
 const ORIGINAL_PUBLIC_BASE = process.env.NEXT_PUBLIC_LOOP_API_URL;

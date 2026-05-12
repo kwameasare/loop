@@ -118,6 +118,11 @@ class WorkspaceService:
             ids = [ws_id for (ws_id, sub) in self._memberships if sub == user_sub]
             return [self._workspaces[i] for i in ids]
 
+    async def list_all(self) -> list[Workspace]:
+        """Return every active workspace for system-admin surfaces."""
+        async with self._lock:
+            return sorted(self._workspaces.values(), key=lambda w: w.created_at)
+
     async def add_member(self, *, workspace_id: UUID, user_sub: str, role: Role) -> Membership:
         async with self._lock:
             if workspace_id not in self._workspaces:
@@ -434,6 +439,26 @@ class PostgresWorkspaceService:
                         """
                     ),
                     {"user_sub": user_sub},
+                )
+            ).all()
+        return [_row_to_workspace(r) for r in rows]
+
+    async def list_all(self) -> list[Workspace]:
+        """Return every active workspace for system-admin surfaces."""
+        from sqlalchemy import text
+
+        async with self._engine.connect() as conn:
+            rows = (
+                await conn.execute(
+                    text(
+                        """
+                        SELECT id, name, slug, region, tenant_kms_key_id,
+                               created_at, created_by
+                          FROM workspaces
+                         WHERE deleted_at IS NULL
+                         ORDER BY created_at ASC
+                        """
+                    )
                 )
             ).all()
         return [_row_to_workspace(r) for r in rows]

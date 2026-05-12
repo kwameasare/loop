@@ -43,6 +43,8 @@ function routeContext(pathname: string | null): {
     enterprise: "Governance",
     costs: "Costs",
     billing: "Billing",
+    home: "Workspace",
+    system: "System admin",
   };
   return { agentId: null, section: labels[segment] ?? "Workspace" };
 }
@@ -131,7 +133,7 @@ export function Topbar() {
       <ActivityRibbon />
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <Link
-          href="/"
+          href="/home"
           className="group inline-flex items-center gap-2 text-sm font-semibold tracking-tight"
         >
           <span className="grid h-8 w-8 place-items-center rounded-md border bg-primary text-primary-foreground shadow-sm transition-transform duration-swift ease-standard group-hover:-rotate-3">

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { homeContextWarnings, resolveHomeWorkspaceId } from "./page";
+import { homeContextWarnings, resolveHomeWorkspaceId } from "./home/page";
 
 const ORIGINAL_WORKSPACE = process.env.LOOP_DEFAULT_WORKSPACE_ID;
 

@@ -39,6 +39,30 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
   {
     route: "/",
     verb: "onboard",
+    label: "Welcome",
+    purpose:
+      "Public enterprise welcome page with signup and sign-in entry points.",
+    anchor: "§7",
+  },
+  {
+    route: "/welcome",
+    verb: "onboard",
+    label: "Welcome",
+    purpose:
+      "Public enterprise welcome page with signup and sign-in entry points.",
+    anchor: "§7",
+  },
+  {
+    route: "/signup",
+    verb: "onboard",
+    label: "Enterprise signup",
+    purpose:
+      "Public tenant request that enters system-admin review before workspace provisioning.",
+    anchor: "§7",
+  },
+  {
+    route: "/home",
+    verb: "onboard",
     label: "Studio home",
     purpose:
       "Lifecycle entry — pick Build, Test, Ship, Observe, Migrate, or Govern.",
@@ -426,6 +450,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     anchor: "§5",
   },
   {
+    route: "/enterprise/admin",
+    verb: "govern",
+    label: "Enterprise admin",
+    purpose:
+      "Workspace admin for inviting people, reviewing roles, SSO, and evidence.",
+    anchor: "§24",
+  },
+  {
     route: "/enterprise/govern",
     verb: "govern",
     label: "Governance",
@@ -475,6 +507,14 @@ export const STUDIO_ROUTES: readonly IARouteEntry[] = [
     label: "Sign in",
     purpose: "Auth.",
     anchor: "§5",
+  },
+  {
+    route: "/system/admin",
+    verb: "system",
+    label: "System admin",
+    purpose:
+      "Installation-level enterprise signup review, tenant provisioning, and onboarding oversight.",
+    anchor: "§24",
   },
   {
     route: "/auth/callback",
