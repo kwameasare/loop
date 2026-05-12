@@ -24,7 +24,6 @@ import {
   Sparkles,
   Store,
   TestTube2,
-  Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -220,17 +219,10 @@ export function buildNavSections(
       items: [
         {
           id: "enterprise",
-          href: "/enterprise",
-          label: "Enterprise",
-          summary: "SSO, SCIM, residency, evidence packs",
+          href: "/enterprise/admin",
+          label: "Enterprise Admin",
+          summary: "Onboard people, roles, SSO, invites, evidence",
           icon: Building2,
-        },
-        {
-          id: "members",
-          href: "/workspaces/enterprise/members",
-          label: "Members",
-          summary: "Roles, groups, approvals",
-          icon: Users,
         },
         {
           id: "policies",
@@ -245,6 +237,13 @@ export function buildNavSections(
           label: "Audit",
           summary: "Append-only evidence and filters",
           icon: FileSearch,
+        },
+        {
+          id: "system-admin",
+          href: "/system/admin",
+          label: "System Admin",
+          summary: "Tenant signup review and provisioning",
+          icon: ShieldCheck,
         },
       ],
     },

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from loop_control_plane._app_common import domain_error, package_version
 from loop_control_plane._app_state import CpApiState
@@ -43,6 +46,15 @@ from loop_control_plane._routes_conversations import (
 from loop_control_plane._routes_deployments import router as deployments_router
 from loop_control_plane._routes_dsr import router as dsr_router
 from loop_control_plane._routes_enterprise_saml import router as enterprise_saml_router
+from loop_control_plane._routes_enterprise_admin import (
+    router_public as enterprise_signup_router,
+)
+from loop_control_plane._routes_enterprise_admin import (
+    router_system as system_admin_router,
+)
+from loop_control_plane._routes_enterprise_admin import (
+    router_workspaces as enterprise_admin_workspaces_router,
+)
 from loop_control_plane._routes_evals import (
     router_agents as agent_evals_router,
 )
@@ -107,9 +119,34 @@ from loop_control_plane.tracing import install_tracing
 from loop_control_plane.workspaces import WorkspaceError
 
 
+def _cors_origins() -> list[str]:
+    raw = os.environ.get("LOOP_CP_CORS_ORIGINS", "").strip()
+    if raw:
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
+    return [
+        "http://localhost:13001",
+        "http://127.0.0.1:13001",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+    ]
+
+
 def create_app(state: CpApiState | None = None) -> FastAPI:
     app = FastAPI(title="Loop Control Plane", version=package_version())
     app.state.cp = state or CpApiState()
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_origins(),
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "X-Loop-Workspace-Id",
+            "X-Loop-Region",
+            "X-Request-Id",
+        ],
+    )
     # `errors.map_to_loop_api_error` already maps every domain error
     # below to a clean LOOP-API-* envelope; we just wire up the
     # exception handlers. Adding `AuthorisationError` here closes a
@@ -173,6 +210,11 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         compliance_review_router,
         # Agent-flow implementation: enterprise SSO is a workspace-scoped contract.
         enterprise_saml_router,
+        # Enterprise onboarding/admin: signup intake, workspace invites,
+        # and system-admin provisioning are real cp-api state.
+        enterprise_signup_router,
+        enterprise_admin_workspaces_router,
+        system_admin_router,
         # Agent-flow implementation: workspace billing evidence is live cp-api state.
         billing_router,
         # UX wire-up: Studio Tools Room reads active version tool bindings.

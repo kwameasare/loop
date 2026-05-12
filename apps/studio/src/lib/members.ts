@@ -9,6 +9,9 @@
  * call sites.
  */
 
+import { readSessionToken } from "@/lib/cp-auth-exchange";
+import { createAuthedCpApiFetch } from "@/lib/cp-api-fetch";
+
 export type WorkspaceRole = "owner" | "admin" | "member" | "viewer";
 
 export const WORKSPACE_ROLES: ReadonlyArray<WorkspaceRole> = [
@@ -52,16 +55,25 @@ async function cpFetch<T>(
   opts: MembersClientOptions,
   body?: unknown,
 ): Promise<T> {
-  const fetcher = opts.fetcher ?? fetch;
+  const base = cpApiBaseUrl(opts.baseUrl);
+  const fetcher = createAuthedCpApiFetch({
+    ...(opts.fetcher ? { fetcher: opts.fetcher } : {}),
+    refreshBaseUrl: base.replace(/\/v1$/, ""),
+  });
+  const explicitToken = opts.token ?? process.env.LOOP_TOKEN;
+  const sessionToken =
+    typeof window !== "undefined" ? readSessionToken()?.access_token : null;
+  if (!explicitToken && !sessionToken && typeof window !== "undefined") {
+    throw new Error("Sign in before managing workspace members.");
+  }
   const headers: Record<string, string> = { accept: "application/json" };
-  const token = opts.token ?? process.env.LOOP_TOKEN;
-  if (token) headers.authorization = `Bearer ${token}`;
+  if (explicitToken) headers.authorization = `Bearer ${explicitToken}`;
   const init: RequestInit = { method, headers, cache: "no-store" };
   if (body !== undefined) {
     headers["content-type"] = "application/json";
     init.body = JSON.stringify(body);
   }
-  const url = `${cpApiBaseUrl(opts.baseUrl)}${path}`;
+  const url = `${base}${path}`;
   const res = await fetcher(url, init);
   if (!res.ok) {
     throw new Error(`cp-api ${method} ${path} -> ${res.status}`);

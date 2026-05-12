@@ -1,4 +1,7 @@
+"use client";
+
 import { Suspense, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { TelemetryConsentGate } from "@/components/help";
 import { PointerDelight } from "@/components/shell/pointer-delight";
 import { SidebarNav } from "@/components/shell/sidebar-nav";
@@ -8,7 +11,35 @@ interface AppShellProps {
   children: ReactNode;
 }
 
+const PUBLIC_ROUTE_PREFIXES = [
+  "/welcome",
+  "/signup",
+  "/login",
+  "/auth/callback",
+  "/share/",
+  "/voice-demo/",
+] as const;
+
+function isPublicRoute(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return (
+    pathname === "/" ||
+    PUBLIC_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+  );
+}
+
 export function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
+
+  if (isPublicRoute(pathname)) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <PointerDelight />
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div
       className="grid min-h-screen grid-cols-1 bg-background/88 text-foreground lg:grid-cols-[max-content_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)]"
