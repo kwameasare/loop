@@ -14,36 +14,51 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { AgentGlassOrb } from "@/components/agents/agent-glass-orb";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const proofPoints = [
   {
     label: "Governed from intake",
-    detail: "Every agent begins as a commitment with owner, channels, limits, and proof gates.",
+    detail:
+      "Every agent begins as a commitment with owner, channels, limits, and proof gates.",
     icon: FileText,
   },
   {
     label: "Omnichannel by design",
-    detail: "Web, WhatsApp, Telegram, Slack, Teams, SMS, email, voice, and webhooks are peer bindings.",
+    detail:
+      "Web, WhatsApp, Telegram, Slack, Teams, SMS, email, voice, and webhooks are peer bindings.",
     icon: MessagesSquare,
   },
   {
     label: "Production evidence",
-    detail: "Traces, evals, approvals, costs, and incidents stay linked to each release.",
+    detail:
+      "Traces, evals, approvals, costs, and incidents stay linked to each release.",
     icon: Radar,
   },
   {
     label: "Enterprise control",
-    detail: "SSO, invitations, roles, audit, residency, and system-admin review are first-class.",
+    detail:
+      "SSO, invitations, roles, audit, residency, and system-admin review are first-class.",
     icon: ShieldCheck,
   },
 ];
 
 const sceneRows = [
   ["Intake contract", "Owner set", "Channels selected", "Evidence required"],
-  ["Replay against draft", "Eval gate green", "Approval hash bound", "Canary ready"],
-  ["Trace scrubber", "HITL saved as eval", "Rollback prepared", "Audit exported"],
+  [
+    "Replay against draft",
+    "Eval gate green",
+    "Approval hash bound",
+    "Canary ready",
+  ],
+  [
+    "Trace scrubber",
+    "HITL saved as eval",
+    "Rollback prepared",
+    "Audit exported",
+  ],
 ] as const;
 
 const sceneMetrics = [
@@ -53,26 +68,51 @@ const sceneMetrics = [
   { label: "Access", value: "SAML enforced", icon: LockKeyhole },
 ] as const;
 
+const channelBadges = [
+  ["Web", "left-[10%] top-[31%]"],
+  ["WhatsApp", "left-[22%] top-[58%]"],
+  ["Slack", "left-[30%] top-[20%]"],
+  ["Telegram", "right-[21%] top-[24%]"],
+  ["SMS", "right-[10%] top-[45%]"],
+  ["Voice", "right-[23%] top-[64%]"],
+] as const;
+
 function HeroScene() {
   return (
     <div
       className="pointer-events-none absolute inset-0 overflow-hidden"
       aria-hidden="true"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_20%,hsl(var(--primary)/0.22),transparent_28%),radial-gradient(circle_at_78%_18%,hsl(var(--info)/0.20),transparent_26%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--surface)/0.82))]" />
-      <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--foreground)/0.06)_1px,transparent_1px),linear-gradient(90deg,hsl(var(--foreground)/0.055)_1px,transparent_1px)] bg-[size:44px_44px] opacity-70" />
-      <div className="absolute left-[6%] top-[18%] hidden w-80 rotate-[-3deg] rounded-md border bg-card/82 p-4 shadow-2xl backdrop-blur-md md:block">
+      <div className="absolute inset-4 rounded-[2rem] border border-border/55 bg-card/34 shadow-[0_30px_90px_hsl(var(--glass-shadow)/0.18)] backdrop-blur-2xl sm:inset-8" />
+      <div className="orbital-lattice absolute inset-4 rounded-[2rem] sm:inset-8" />
+      <div className="absolute inset-4 rounded-[2rem] bg-[linear-gradient(115deg,hsl(var(--background)/0.88),hsl(var(--surface)/0.58)_48%,hsl(var(--background)/0.82)),linear-gradient(40deg,hsl(var(--aurora-a)/0.16),transparent_42%,hsl(var(--aurora-c)/0.14))] sm:inset-8" />
+      {channelBadges.map(([label, position], index) => (
+        <div
+          key={label}
+          className={cn(
+            "floating-glass-badge absolute hidden items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold 2xl:flex",
+            position,
+          )}
+        >
+          <AgentGlassOrb agentId={label} label={label} size="sm" />
+          <span>{label}</span>
+          <span className="text-muted-foreground tabular-nums">
+            {index + 1}
+          </span>
+        </div>
+      ))}
+      <div className="floating-glass-badge absolute left-[6%] top-[18%] hidden w-80 rotate-[-3deg] rounded-2xl p-4 2xl:block">
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs font-semibold uppercase text-muted-foreground">
             Estate health
           </span>
           <span className="rounded-full bg-primary/15 px-2 py-1 text-xs font-medium text-primary">
-            live
+            measured
           </span>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2">
           {["96", "4", "0"].map((value, index) => (
-            <div key={value} className="rounded-md border bg-background/70 p-3">
+            <div key={value} className="rounded-xl border bg-background/62 p-3">
               <p className="text-xl font-semibold">{value}</p>
               <p className="mt-1 text-[0.65rem] uppercase text-muted-foreground">
                 {["health", "agents", "blocked"][index]}
@@ -81,7 +121,7 @@ function HeroScene() {
           ))}
         </div>
       </div>
-      <div className="absolute right-[5%] top-[14%] hidden w-[26rem] rotate-[2deg] rounded-md border bg-card/86 p-4 shadow-2xl backdrop-blur-md lg:block">
+      <div className="floating-glass-badge absolute right-[5%] top-[14%] hidden w-[26rem] rotate-[2deg] rounded-2xl p-4 2xl:block">
         <div className="flex items-center gap-2 text-sm font-semibold">
           <Bot className="h-4 w-4 text-primary" />
           Agent release package
@@ -93,7 +133,7 @@ function HeroScene() {
                 <span
                   key={item}
                   className={cn(
-                    "rounded-md border px-2 py-1.5 text-[0.68rem] font-medium text-muted-foreground",
+                    "rounded-xl border px-2 py-1.5 text-[0.68rem] font-medium text-muted-foreground",
                     rowIndex === 1 && index === 2
                       ? "border-primary/50 bg-primary/12 text-primary"
                       : "bg-background/72",
@@ -106,10 +146,10 @@ function HeroScene() {
           ))}
         </div>
       </div>
-      <div className="absolute bottom-[8%] left-1/2 hidden w-[44rem] -translate-x-1/2 rounded-md border bg-card/80 p-3 shadow-2xl backdrop-blur-md md:block">
+      <div className="floating-glass-badge absolute bottom-[8%] left-1/2 hidden w-[44rem] -translate-x-1/2 rounded-2xl p-3 2xl:block">
         <div className="grid grid-cols-4 gap-2 text-xs">
           {sceneMetrics.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="rounded-md bg-background/72 p-3">
+            <div key={label} className="rounded-xl bg-background/72 p-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Icon className="h-3.5 w-3.5" />
                 <span>{label}</span>
@@ -130,11 +170,12 @@ export function WelcomeLanding() {
         <HeroScene />
         <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-10 pt-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(28rem,0.8fr)] lg:items-center">
           <div className="max-w-3xl">
-            <nav className="mb-12 flex items-center justify-between gap-4 text-sm">
-              <Link href="/" className="inline-flex items-center gap-2 font-semibold">
-                <span className="grid h-9 w-9 place-items-center rounded-md border bg-primary text-primary-foreground shadow-sm">
-                  L
-                </span>
+            <nav className="floating-glass-badge mb-12 flex items-center justify-between gap-4 rounded-full px-3 py-2 text-sm">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 font-semibold"
+              >
+                <AgentGlassOrb label="Loop Studio" size="md" decorative />
                 <span>Loop Studio</span>
               </Link>
               <div className="flex items-center gap-2">
@@ -157,7 +198,8 @@ export function WelcomeLanding() {
               Loop Studio
             </h1>
             <p className="mt-6 max-w-2xl text-xl leading-8 text-muted-foreground">
-              The enterprise control plane for creating, governing, testing,
+              Build agents with light around every decision. This is the
+              glass-box control plane for creating, governing, testing,
               deploying, and operating AI agents across every customer channel.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -173,24 +215,34 @@ export function WelcomeLanding() {
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-3 text-sm text-muted-foreground">
-              {["Botpress import", "SSO and roles", "Trace replay", "HITL to eval"].map(
-                (item) => (
-                  <span
-                    key={item}
-                    className="inline-flex items-center gap-1.5 rounded-full border bg-card/72 px-3 py-1"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                    {item}
-                  </span>
-                ),
-              )}
+              {[
+                "Botpress import",
+                "SSO and roles",
+                "Trace replay",
+                "HITL to eval",
+              ].map((item) => (
+                <span
+                  key={item}
+                  className="floating-glass-badge inline-flex items-center gap-1.5 rounded-full px-3 py-1"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                  {item}
+                </span>
+              ))}
             </div>
           </div>
 
           <div className="relative hidden lg:block">
-            <div className="instrument-panel breathing-well rounded-md p-5">
+            <div className="instrument-panel breathing-well relative rounded-2xl p-5">
+              <AgentGlassOrb
+                agentId="enterprise-launch-agent"
+                label="Enterprise launch agent"
+                size="xl"
+                state="watching"
+                className="absolute -right-3 -top-3 opacity-90"
+              />
               <div className="flex items-center justify-between gap-3">
-                <div>
+                <div className="max-w-[72%]">
                   <p className="text-xs font-semibold uppercase text-muted-foreground">
                     Enterprise launch path
                   </p>
@@ -202,10 +254,26 @@ export function WelcomeLanding() {
               </div>
               <div className="mt-5 space-y-3">
                 {[
-                  ["1", "Create enterprise tenant", "Workspace, region, SSO intent, admin invite."],
-                  ["2", "Onboard builders", "Owners invite admins, builders, reviewers, and operators."],
-                  ["3", "Create or import agents", "Commitment document first; channels are bound explicitly."],
-                  ["4", "Ship with proof", "Replay, eval gates, approvals, canary, rollback evidence."],
+                  [
+                    "1",
+                    "Create enterprise tenant",
+                    "Workspace, region, SSO intent, admin invite.",
+                  ],
+                  [
+                    "2",
+                    "Onboard builders",
+                    "Owners invite admins, builders, reviewers, and operators.",
+                  ],
+                  [
+                    "3",
+                    "Create or import agents",
+                    "Commitment document first; channels are bound explicitly.",
+                  ],
+                  [
+                    "4",
+                    "Ship with proof",
+                    "Replay, eval gates, approvals, canary, rollback evidence.",
+                  ],
                 ].map(([step, title, detail]) => (
                   <div
                     key={step}
@@ -217,7 +285,9 @@ export function WelcomeLanding() {
                       </span>
                       <div>
                         <p className="font-semibold">{title}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {detail}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -237,7 +307,9 @@ export function WelcomeLanding() {
             >
               <Icon className="h-5 w-5 text-primary" aria-hidden />
               <h2 className="mt-4 text-base font-semibold">{label}</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail}</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {detail}
+              </p>
             </article>
           ))}
         </div>
@@ -245,7 +317,9 @@ export function WelcomeLanding() {
           <div className="flex items-start gap-3">
             <Building2 className="mt-1 h-5 w-5 text-primary" aria-hidden />
             <div>
-              <p className="font-semibold">Enterprise tenant review is wired.</p>
+              <p className="font-semibold">
+                Enterprise tenant review is wired.
+              </p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Signups enter the system-admin queue; approval provisions a
                 workspace and first-owner invite.

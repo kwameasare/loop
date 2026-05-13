@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 
+import { AgentGlassOrb } from "@/components/agents/agent-glass-orb";
 import { CommandPaletteLauncher } from "@/components/command";
 import { PairDebugAudioControl } from "@/components/collaboration/pair-debug-audio-control";
 import { HelpClipLauncher } from "@/components/help";
@@ -72,14 +73,14 @@ function ContextChip({
     return (
       <Link
         href={href}
-        className="interactive-lift hidden h-8 items-center gap-1 rounded-md border bg-card/70 px-2 text-xs shadow-sm backdrop-blur transition-colors hover:bg-muted/70 md:inline-flex"
+        className="interactive-lift floating-glass-badge hidden h-8 items-center gap-1 rounded-full px-2.5 text-xs transition-colors hover:bg-muted/70 md:inline-flex"
       >
         {body}
       </Link>
     );
   }
   return (
-    <span className="interactive-lift hidden h-8 items-center gap-1 rounded-md border bg-card/70 px-2 text-xs shadow-sm backdrop-blur md:inline-flex">
+    <span className="interactive-lift floating-glass-badge hidden h-8 items-center gap-1 rounded-full px-2.5 text-xs md:inline-flex">
       {body}
     </span>
   );
@@ -127,18 +128,16 @@ export function Topbar() {
   const context = routeContext(pathname);
   return (
     <header
-      className="sticky top-0 z-20 flex min-h-14 items-center justify-between gap-3 border-b bg-background/84 px-4 py-2 shadow-sm backdrop-blur-xl"
+      className="glass-panel sticky top-0 z-20 flex min-h-14 items-center justify-between gap-3 border-x-0 border-t-0 px-4 py-2"
       data-testid="topbar"
     >
       <ActivityRibbon />
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <Link
           href="/home"
-          className="group inline-flex items-center gap-2 text-sm font-semibold tracking-tight"
+          className="group inline-flex items-center gap-2 text-sm font-semibold"
         >
-          <span className="grid h-8 w-8 place-items-center rounded-md border bg-primary text-primary-foreground shadow-sm transition-transform duration-swift ease-standard group-hover:-rotate-3">
-            L
-          </span>
+          <AgentGlassOrb label="Loop Studio" size="md" decorative />
           <span>Studio</span>
         </Link>
         <Suspense

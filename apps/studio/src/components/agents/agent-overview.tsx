@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { AgentGlassOrb } from "@/components/agents/agent-glass-orb";
 import {
   ConfidenceMeter,
   DiffRibbon,
@@ -265,9 +266,7 @@ interface WorkflowWorkbenchSummary {
 }
 
 function requiredReadiness(binding: ChannelBinding) {
-  return binding.readiness.filter(
-    (check) => check.status !== "not_required",
-  );
+  return binding.readiness.filter((check) => check.status !== "not_required");
 }
 
 function bindingIsConfigured(binding: ChannelBinding): boolean {
@@ -403,7 +402,9 @@ function summarizeToolContracts(
     (contract) => contract.live_status === "review_required",
   );
   const blocked = all.filter((contract) => contract.live_status === "blocked");
-  const missingCaps = moneyMoving.filter((contract) => !hasBudgetCaps(contract));
+  const missingCaps = moneyMoving.filter(
+    (contract) => !hasBudgetCaps(contract),
+  );
 
   if (degradedReason) {
     return {
@@ -727,7 +728,8 @@ function summarizeKnowledgeDocuments(
     lastChangedBy: "Loaded from KB document registry",
     diffFromProduction:
       "Retrieval changes must be covered by source and chunk evidence.",
-    validation: "Knowledge sources are indexed; run retrieval evals before deploy.",
+    validation:
+      "Knowledge sources are indexed; run retrieval evals before deploy.",
     evidence: ready.map((document) => document.id).join(", "),
     status: "healthy",
   };
@@ -784,7 +786,8 @@ function summarizeTraces(
       current: "No persisted traces loaded for this agent.",
       lastChangedBy: "No trace loaded",
       diffFromProduction: "Trace diff unavailable until a run exists.",
-      validation: "Run the simulator or a channel turn to create trace evidence.",
+      validation:
+        "Run the simulator or a channel turn to create trace evidence.",
       evidence: "traces.empty",
       status: "watching",
     };
@@ -1032,9 +1035,9 @@ function summarizeWorkflow(
   degradedReason?: string | undefined,
 ): WorkflowWorkbenchSummary {
   const branch = workflow
-    ? latestByUpdatedAt<AgentBranch>(
+    ? (latestByUpdatedAt<AgentBranch>(
         workflow.branches.filter((item) => item.status === "active"),
-      ) ?? latestByUpdatedAt<AgentBranch>(workflow.branches)
+      ) ?? latestByUpdatedAt<AgentBranch>(workflow.branches))
     : undefined;
   const changeSet = workflow
     ? latestByUpdatedAt<AgentChangeSet>(workflow.change_sets)
@@ -1078,7 +1081,8 @@ function summarizeWorkflow(
       branchLabel: "No active branch",
       draftChanges: "No open Change Set is present for this agent.",
       diffAfter: "No draft diff loaded",
-      current: "Release workflow returned no branch, Change Set, or release candidate.",
+      current:
+        "Release workflow returned no branch, Change Set, or release candidate.",
       lastChangedBy: "Workflow endpoint returned an empty set",
       diffFromProduction: "No branch diff loaded.",
       validation: "Start a branch from the current production version.",
@@ -1088,7 +1092,8 @@ function summarizeWorkflow(
   }
 
   const failedGates =
-    releaseCandidate?.readiness.filter((gate) => gate.status === "failed") ?? [];
+    releaseCandidate?.readiness.filter((gate) => gate.status === "failed") ??
+    [];
   const pendingGates =
     releaseCandidate?.readiness.filter((gate) => gate.status === "pending") ??
     [];
@@ -1609,8 +1614,7 @@ function createDefaultWorkbenchData(
       props.changePackage?.cost_summary ||
       "No budget cap loaded.",
     escalationRule:
-      props.commitment?.body.escalation_policy ||
-      "No escalation rule loaded.",
+      props.commitment?.body.escalation_policy || "No escalation rule loaded.",
     evalGate,
     toolPermissionSummary: toolSummary.current,
     knowledgeSummary: knowledgeSummary.current,
@@ -1696,8 +1700,8 @@ function createDefaultWorkbenchData(
         disabledReason:
           !deploy.blockedReason && deploy.requiredApprovals === deploy.approvals
             ? undefined
-            : deploy.blockedReason ??
-              "Blocked until commitment, channel readiness, eval coverage, and preflight exist.",
+            : (deploy.blockedReason ??
+              "Blocked until commitment, channel readiness, eval coverage, and preflight exist."),
       },
       {
         id: "rollback",
@@ -1885,7 +1889,8 @@ function buildIntakeReadinessChecklist({
     intakeRecord.sensitive_data_findings.length;
   const candidateChannelCount = intakeRecord.candidate_channels.length;
   const candidateToolCount = intakeRecord.candidate_tools.length;
-  const candidateKnowledgeCount = intakeRecord.candidate_knowledge_sources.length;
+  const candidateKnowledgeCount =
+    intakeRecord.candidate_knowledge_sources.length;
   const candidateEvalCount = intakeRecord.candidate_eval_cases.length;
   const memoryPolicyCount = objectCount(intakeRecord.candidate_memory_policy);
 
@@ -1897,8 +1902,8 @@ function buildIntakeReadinessChecklist({
       detail:
         commitment?.status === "healthy"
           ? "Accepted Commitment Document can be cited by preflight."
-          : commitment?.validation ??
-            "Accept the Commitment Document before production actions unlock.",
+          : (commitment?.validation ??
+            "Accept the Commitment Document before production actions unlock."),
       evidence: commitment?.evidence ?? "commitment.unloaded",
       href: agentSectionHref(agentId, "commitment"),
     },
@@ -1908,7 +1913,7 @@ function buildIntakeReadinessChecklist({
       status:
         behavior?.status === "healthy"
           ? "healthy"
-          : behavior?.status ?? "watching",
+          : (behavior?.status ?? "watching"),
       detail:
         behavior?.validation ??
         "Open the behavior editor and review the generated outline.",
@@ -1972,7 +1977,8 @@ function buildIntakeReadinessChecklist({
                 candidateKnowledgeCount === 1 ? "" : "s"
               } captured; review ingestion before relying on retrieval.`
             : "Add at least one policy, FAQ, transcript, or runbook source.",
-      evidence: knowledge?.evidence ?? "agent_intake.candidate_knowledge_sources",
+      evidence:
+        knowledge?.evidence ?? "agent_intake.candidate_knowledge_sources",
       href: agentSectionHref(agentId, "knowledge"),
     },
     {
@@ -2063,9 +2069,8 @@ function IntakeLandingPanel({
       <section data-testid="agent-intake-landing">
         <StatePanel state="degraded" title="Creation intake unavailable">
           <p>
-            Studio opened this agent from intake{" "}
-            <code>{focusedIntakeId}</code>, but the intake record could not be
-            loaded. {degradedReason}
+            Studio opened this agent from intake <code>{focusedIntakeId}</code>,
+            but the intake record could not be loaded. {degradedReason}
           </p>
         </StatePanel>
       </section>
@@ -2100,7 +2105,10 @@ function IntakeLandingPanel({
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Readiness
           </p>
-          <p className="text-lg font-semibold" data-testid="intake-readiness-score">
+          <p
+            className="text-lg font-semibold"
+            data-testid="intake-readiness-score"
+          >
             {intakeRecord.readiness.score}%
           </p>
         </div>
@@ -2205,7 +2213,10 @@ function IntakeLandingPanel({
           Computed from the loaded agent objects and intake analysis. Each item
           links to the workbench section that resolves it.
         </p>
-        <ul className="mt-3 grid gap-2" data-testid="intake-readiness-checklist">
+        <ul
+          className="mt-3 grid gap-2"
+          data-testid="intake-readiness-checklist"
+        >
           {readinessChecklist.map((item) => (
             <li
               key={item.id}
@@ -2241,8 +2252,8 @@ function IntakeLandingPanel({
                 const recovery = intakeArtifactRecoveryLabel(artifact);
                 return (
                   <li key={idx}>
-                    {recordLabel(artifact, ["name", "source_ref"], "artifact")} -{" "}
-                    {recordLabel(artifact, ["status", "kind"], "review")}
+                    {recordLabel(artifact, ["name", "source_ref"], "artifact")}{" "}
+                    - {recordLabel(artifact, ["status", "kind"], "review")}
                     {recovery ? (
                       <span className="text-warning"> - {recovery}</span>
                     ) : null}
@@ -2431,37 +2442,47 @@ export function AgentOverview({
         aria-labelledby="agent-workbench-heading"
         data-testid="agent-workbench-profile"
       >
-        <div className="min-w-0 rounded-md border bg-card p-4">
+        <div className="instrument-panel min-w-0 rounded-md p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Agent workbench
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <h2
-              id="agent-workbench-heading"
-              className="text-2xl font-semibold tracking-tight"
-            >
-              {name || "Untitled agent"}
-            </h2>
-            <LiveBadge tone={liveBadgeTone(data.objectState)}>
-              {objectTreatment.label}
-            </LiveBadge>
-            <span
-              className={cn(
-                "inline-flex h-7 items-center rounded-md border px-2.5 text-xs font-medium",
-                trustTreatment.className,
-              )}
-            >
-              {trustTreatment.label}
-            </span>
+          <div className="mt-2 flex items-start gap-4">
+            <AgentGlassOrb
+              agentId={id}
+              label={name || "Untitled agent"}
+              size="xl"
+              state={data.trust}
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2
+                  id="agent-workbench-heading"
+                  className="text-2xl font-semibold"
+                >
+                  {name || "Untitled agent"}
+                </h2>
+                <LiveBadge tone={liveBadgeTone(data.objectState)}>
+                  {objectTreatment.label}
+                </LiveBadge>
+                <span
+                  className={cn(
+                    "inline-flex h-7 items-center rounded-md border px-2.5 text-xs font-medium",
+                    trustTreatment.className,
+                  )}
+                >
+                  {trustTreatment.label}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {slug ? (
+                  <code className="break-all">{slug}</code>
+                ) : (
+                  <code className="break-all">{id}</code>
+                )}{" "}
+                - owned by {data.ownerTeam}
+              </p>
+            </div>
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {slug ? (
-              <code className="break-all">{slug}</code>
-            ) : (
-              <code className="break-all">{id}</code>
-            )}{" "}
-            - owned by {data.ownerTeam}
-          </p>
           <p
             className="mt-3 rounded-md border bg-muted/40 p-3 text-sm"
             data-testid="agent-state-sentence"

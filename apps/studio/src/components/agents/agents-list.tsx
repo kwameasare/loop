@@ -1,5 +1,9 @@
 import Link from "next/link";
 
+import {
+  AgentGlassOrb,
+  type AgentGlassOrbState,
+} from "@/components/agents/agent-glass-orb";
 import type { AgentSummary } from "@/lib/cp-api";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +58,14 @@ function healthClass(agent: AgentSummary): string {
   return "border-border bg-muted text-muted-foreground";
 }
 
+function orbState(agent: AgentSummary): AgentGlassOrbState {
+  const status = agent.health_status ?? "";
+  if (status === "needs_attention") return "drifting";
+  if (status === "blocked") return "blocked";
+  if (status === "watching" || status === "ready_for_review") return "watching";
+  return "healthy";
+}
+
 /**
  * Pure presentational list. Splitting the rendering away from the page's
  * data fetch keeps Vitest tests simple -- the test mounts AgentsList
@@ -97,35 +109,45 @@ export function AgentsList({
             className="grid gap-4 p-4 transition-colors hover:bg-muted/50 lg:grid-cols-[minmax(0,1.4fr)_minmax(13rem,0.8fr)_minmax(15rem,1fr)]"
           >
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="min-w-0 truncate text-base font-medium">
-                  {agent.name}
-                </h3>
-                <span className="inline-flex items-center rounded-md border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  {versionLabel(agent)}
-                </span>
-                <span
-                  className="inline-flex items-center rounded-md border bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                  data-testid={`agent-state-${agent.id}`}
-                >
-                  {stateLabel(agent)}
-                </span>
-                <span
-                  className={cn(
-                    "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium",
-                    healthClass(agent),
-                  )}
-                  data-testid={`agent-health-${agent.id}`}
-                >
-                  {healthLabel(agent)}
-                </span>
+              <div className="flex items-start gap-3">
+                <AgentGlassOrb
+                  agentId={agent.id}
+                  label={agent.name}
+                  size="lg"
+                  state={orbState(agent)}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="min-w-0 truncate text-base font-medium">
+                      {agent.name}
+                    </h3>
+                    <span className="inline-flex items-center rounded-md border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      {versionLabel(agent)}
+                    </span>
+                    <span
+                      className="inline-flex items-center rounded-md border bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                      data-testid={`agent-state-${agent.id}`}
+                    >
+                      {stateLabel(agent)}
+                    </span>
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium",
+                        healthClass(agent),
+                      )}
+                      data-testid={`agent-health-${agent.id}`}
+                    >
+                      {healthLabel(agent)}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {agent.description || "No description yet."}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    slug: {agent.slug}
+                  </p>
+                </div>
               </div>
-              <p className="text-muted-foreground mt-1 text-sm">
-                {agent.description || "No description yet."}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                slug: {agent.slug}
-              </p>
             </div>
 
             <div

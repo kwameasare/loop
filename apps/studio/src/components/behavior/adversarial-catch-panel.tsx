@@ -104,7 +104,7 @@ export function AdversarialCatchPanel({
   useEffect(() => {
     if (!sentence) return;
     setBudgetTokens(defaultBudgetForRisk(riskForSentence(sentence)));
-  }, [sentenceId]);
+  }, [sentence]);
 
   useEffect(() => {
     let cancelled = false;

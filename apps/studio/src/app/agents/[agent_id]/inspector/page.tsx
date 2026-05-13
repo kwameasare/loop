@@ -16,7 +16,7 @@
  */
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { RequireAuth } from "@/components/auth/require-auth";
 import { VariableInspector } from "@/components/flow/variable-inspector";
@@ -60,7 +60,22 @@ function spansToFrames(trace: Trace): FlowFrame[] {
 export default function InspectorPage() {
   return (
     <RequireAuth>
-      <InspectorBody />
+      <Suspense
+        fallback={
+          <main className="flex min-h-screen">
+            <section className="flex flex-1 flex-col gap-4 p-8">
+              <p
+                className="text-sm text-muted-foreground"
+                data-testid="inspector-loading"
+              >
+                Loading trace…
+              </p>
+            </section>
+          </main>
+        }
+      >
+        <InspectorBody />
+      </Suspense>
     </RequireAuth>
   );
 }

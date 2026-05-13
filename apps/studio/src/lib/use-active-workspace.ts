@@ -13,7 +13,7 @@
  * sharing workspace-scoped URLs.
  */
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { listWorkspaces, type Workspace } from "@/lib/workspaces";
 
@@ -30,10 +30,10 @@ export interface UseActiveWorkspaceResult {
 export function useActiveWorkspace(): UseActiveWorkspaceResult {
   const router = useRouter();
   const pathname = usePathname();
-  const params = useSearchParams();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [storedSlug, setStoredSlug] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [degradedReason, setDegradedReason] = useState<string | undefined>();
 
   useEffect(() => {
@@ -60,18 +60,26 @@ export function useActiveWorkspace(): UseActiveWorkspaceResult {
   useEffect(() => {
     if (typeof window === "undefined") return;
     setStoredSlug(window.localStorage.getItem(STORAGE_KEY));
+    setSearch(window.location.search);
 
     function onStorage(event: StorageEvent) {
       if (event.key !== STORAGE_KEY) return;
       setStoredSlug(event.newValue);
     }
 
+    function onPopState() {
+      setSearch(window.location.search);
+    }
+
     window.addEventListener("storage", onStorage);
+    window.addEventListener("popstate", onPopState);
     return () => {
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener("popstate", onPopState);
     };
   }, []);
 
+  const params = new URLSearchParams(search);
   const urlSlug = params.get("ws");
   const targetSlug = urlSlug || storedSlug;
   const active =
@@ -83,11 +91,13 @@ export function useActiveWorkspace(): UseActiveWorkspaceResult {
         window.localStorage.setItem(STORAGE_KEY, workspace.slug);
         setStoredSlug(workspace.slug);
       }
-      const next = new URLSearchParams(params.toString());
+      const next = new URLSearchParams(search);
       next.set("ws", workspace.slug);
-      router.replace(`${pathname}?${next.toString()}`);
+      const nextSearch = `?${next.toString()}`;
+      setSearch(nextSearch);
+      router.replace(`${pathname}${nextSearch}`);
     },
-    [params, pathname, router],
+    [pathname, router, search],
   );
 
   return { workspaces, active, isLoading, degradedReason, setActive };

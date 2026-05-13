@@ -33,7 +33,7 @@ export function AppShell({ children }: AppShellProps) {
 
   if (isPublicRoute(pathname)) {
     return (
-      <div className="min-h-screen bg-background text-foreground">
+      <div className="aurora-shell min-h-screen text-foreground">
         <PointerDelight />
         {children}
       </div>
@@ -42,12 +42,12 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div
-      className="grid min-h-screen grid-cols-1 bg-background/88 text-foreground lg:grid-cols-[max-content_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)]"
+      className="aurora-shell grid min-h-screen grid-cols-1 text-foreground lg:grid-cols-[max-content_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)]"
       data-testid="app-shell"
     >
       <PointerDelight />
       <aside
-        className="quiet-scrollbar border-b bg-surface/86 shadow-[inset_-1px_0_0_hsl(var(--foreground)/0.03)] backdrop-blur-xl lg:row-span-2 lg:w-72 lg:min-w-64 lg:max-w-80 lg:resize-x lg:overflow-auto lg:border-b-0 lg:border-r"
+        className="glass-panel quiet-scrollbar border-b shadow-[inset_-1px_0_0_hsl(var(--foreground)/0.03)] lg:row-span-2 lg:w-72 lg:min-w-64 lg:max-w-80 lg:resize-x lg:overflow-auto lg:border-b-0 lg:border-r"
         aria-label="Workspace navigation"
         data-testid="asset-rail"
       >
@@ -57,7 +57,7 @@ export function AppShell({ children }: AppShellProps) {
         <Topbar />
       </div>
       <section
-        className="page-enter quiet-scrollbar min-w-0 overflow-auto bg-background/72"
+        className="page-enter quiet-scrollbar min-w-0 overflow-auto bg-background/48"
         aria-label="Studio work surface"
         data-testid="work-surface"
       >

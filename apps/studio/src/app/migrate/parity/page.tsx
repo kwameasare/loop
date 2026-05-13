@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { RequireAuth } from "@/components/auth/require-auth";
@@ -25,7 +25,17 @@ import { useActiveWorkspace } from "@/lib/use-active-workspace";
 export default function MigrationParityPage(): JSX.Element {
   return (
     <RequireAuth>
-      <MigrationParityPageBody />
+      <Suspense
+        fallback={
+          <main className="mx-auto max-w-6xl p-6">
+            <p className="text-sm text-muted-foreground">
+              Loading migration parity...
+            </p>
+          </main>
+        }
+      >
+        <MigrationParityPageBody />
+      </Suspense>
     </RequireAuth>
   );
 }
