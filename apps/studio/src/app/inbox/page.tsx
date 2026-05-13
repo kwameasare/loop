@@ -8,7 +8,7 @@
  * feedback, then reconciles each action against the server response.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { RequireAuth } from "@/components/auth/require-auth";
@@ -31,7 +31,18 @@ import { useActiveWorkspace } from "@/lib/use-active-workspace";
 export default function InboxPage(): JSX.Element {
   return (
     <RequireAuth>
-      <InboxPageBody />
+      <Suspense
+        fallback={
+          <p
+            className="p-6 text-sm text-muted-foreground"
+            data-testid="inbox-loading"
+          >
+            Loading inbox…
+          </p>
+        }
+      >
+        <InboxPageBody />
+      </Suspense>
     </RequireAuth>
   );
 }

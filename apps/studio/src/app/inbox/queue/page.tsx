@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { RequireAuth } from "@/components/auth/require-auth";
@@ -9,16 +9,23 @@ import {
   SectionDegraded,
   WorkspaceRequiredState,
 } from "@/components/section-states";
-import {
-  listInbox,
-  type InboxItem,
-} from "@/lib/inbox";
+import { listInbox, type InboxItem } from "@/lib/inbox";
 import { useActiveWorkspace } from "@/lib/use-active-workspace";
 
 export default function InboxQueuePage(): JSX.Element {
   return (
     <RequireAuth>
-      <InboxQueuePageBody />
+      <Suspense
+        fallback={
+          <main className="container mx-auto p-6">
+            <p className="text-sm text-muted-foreground">
+              Loading inbox queue...
+            </p>
+          </main>
+        }
+      >
+        <InboxQueuePageBody />
+      </Suspense>
     </RequireAuth>
   );
 }
@@ -58,7 +65,9 @@ function InboxQueuePageBody(): JSX.Element {
     return ids.map((id) => ({ id, name: id.replace(/^team-/, "") }));
   }, [items]);
   const agents = useMemo(() => {
-    const ids = [...new Set(items.map((item) => item.agent_id))].filter(Boolean);
+    const ids = [...new Set(items.map((item) => item.agent_id))].filter(
+      Boolean,
+    );
     return ids.map((id) => ({ id, name: id.slice(0, 8) }));
   }, [items]);
 
@@ -87,8 +96,8 @@ function InboxQueuePageBody(): JSX.Element {
       <header className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">Inbox queue</h1>
         <p className="text-muted-foreground text-sm">
-          Cross-team queue. Filter by team, agent, or channel and click into
-          any conversation to take it over.
+          Cross-team queue. Filter by team, agent, or channel and click into any
+          conversation to take it over.
         </p>
       </header>
       <InboxQueue

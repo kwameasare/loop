@@ -107,9 +107,7 @@ export function AgentContractPanel({
     () => buildLocalCommitmentDocument(agentId),
     [agentId],
   );
-  const [document, setDocument] = useState(
-    initialDocument ?? fallbackDocument,
-  );
+  const [document, setDocument] = useState(initialDocument ?? fallbackDocument);
   const [history, setHistory] = useState<CommitmentDocument[]>(
     sortHistory(
       initialHistory && initialHistory.length > 0
@@ -206,7 +204,9 @@ export function AgentContractPanel({
     <section
       className={cn(
         "space-y-5",
-        isFocused ? "rounded-md ring-2 ring-focus ring-offset-2 ring-offset-background" : "",
+        isFocused
+          ? "rounded-md ring-2 ring-focus ring-offset-2 ring-offset-background"
+          : "",
       )}
       data-testid="agent-contract-panel"
       data-focused={isFocused ? "true" : "false"}
@@ -357,7 +357,9 @@ export function AgentContractPanel({
                     : "",
                 )}
                 data-testid={`contract-history-${item.id}`}
-                data-focused={focusedCommitmentId === item.id ? "true" : "false"}
+                data-focused={
+                  focusedCommitmentId === item.id ? "true" : "false"
+                }
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -410,7 +412,7 @@ export function AgentContractPanel({
           <div>
             <h3 className="text-base font-semibold">Mission and risk</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              The contract must make the agent's job, user set, and failure
+              The contract must make the agent&apos;s job, user set, and failure
               boundary readable without opening behavior config.
             </p>
           </div>

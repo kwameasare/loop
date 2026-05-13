@@ -28,6 +28,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { AgentGlassOrb } from "@/components/agents/agent-glass-orb";
 import { AgentMoodRing } from "@/components/shell/agent-mood-ring";
 import { LiveBadge } from "@/components/target";
 import { cn } from "@/lib/utils";
@@ -317,15 +318,16 @@ export function SidebarNav() {
     >
       <div className="instrument-panel rounded-md p-3">
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Loop
-            </p>
-            <p className="mt-1 text-base font-semibold tracking-tight">
-              Studio
-            </p>
+          <div className="flex items-center gap-3">
+            <AgentGlassOrb label="Loop Studio" size="md" decorative />
+            <div>
+              <p className="text-xs font-semibold uppercase text-muted-foreground">
+                Loop
+              </p>
+              <p className="mt-1 text-base font-semibold">Studio</p>
+            </div>
           </div>
-          <span className="rounded-md border bg-background/70 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="floating-glass-badge rounded-full px-2 py-1 text-[0.65rem] font-semibold uppercase text-muted-foreground">
             agent ops
           </span>
         </div>
@@ -341,10 +343,7 @@ export function SidebarNav() {
           ))}
         </div>
       </div>
-      <div
-        className="rounded-md border bg-card/70 p-2"
-        data-testid="nav-attention"
-      >
+      <div className="glass-panel rounded-md p-2" data-testid="nav-attention">
         <NavLink
           item={{
             id: "inbox",
@@ -358,12 +357,20 @@ export function SidebarNav() {
       </div>
       {activeAgentId ? (
         <div
-          className="rounded-md border bg-card/70 p-2"
+          className="glass-panel rounded-md p-2"
           data-testid="nav-active-agent"
         >
-          <p className="px-2 pb-1 text-[0.68rem] font-semibold uppercase tracking-wider text-muted-foreground">
-            Active Agent
-          </p>
+          <div className="flex items-center gap-2 px-2 pb-2">
+            <AgentGlassOrb
+              agentId={activeAgentId}
+              label={activeAgentId}
+              size="sm"
+              state="watching"
+            />
+            <p className="text-[0.68rem] font-semibold uppercase text-muted-foreground">
+              Active Agent
+            </p>
+          </div>
           <NavLink
             item={{
               id: "active-agent",
@@ -386,7 +393,7 @@ export function SidebarNav() {
           <button
             type="button"
             id={`nav-section-${section.id}`}
-            className="group flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[0.68rem] font-semibold uppercase tracking-wider text-muted-foreground transition-all duration-swift ease-standard hover:bg-muted/70 hover:text-foreground"
+            className="group flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[0.68rem] font-semibold uppercase text-muted-foreground transition-all duration-swift ease-standard hover:bg-muted/70 hover:text-foreground"
             aria-expanded={openSections[section.id]}
             onClick={() =>
               setOpenSections((current) => ({
@@ -447,7 +454,7 @@ function NavLink({
           "interactive-lift pressable group flex min-h-10 items-center gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm",
           depth > 0 && "ml-5 min-h-9 border-l border-border/70 pl-3",
           active || childActive
-            ? "border-border bg-accent/88 text-accent-foreground shadow-sm"
+            ? "border-primary/30 bg-accent/82 text-accent-foreground shadow-sm shadow-primary/10"
             : "text-muted-foreground hover:border-border/70 hover:bg-accent/50 hover:text-foreground",
         )}
       >

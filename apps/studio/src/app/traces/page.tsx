@@ -9,7 +9,7 @@
  * label until cp emits display strings.
  */
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { RequireAuth } from "@/components/auth/require-auth";
@@ -24,7 +24,20 @@ import { useActiveWorkspace } from "@/lib/use-active-workspace";
 export default function TracesPage(): JSX.Element {
   return (
     <RequireAuth>
-      <TracesPageBody />
+      <Suspense
+        fallback={
+          <main className="container mx-auto p-6">
+            <p
+              className="text-sm text-muted-foreground"
+              data-testid="traces-loading"
+            >
+              Loading traces…
+            </p>
+          </main>
+        }
+      >
+        <TracesPageBody />
+      </Suspense>
     </RequireAuth>
   );
 }
@@ -125,7 +138,9 @@ function traceStatusFromParams(
   return "all";
 }
 
-function traceQueryFromParams(searchParams: URLSearchParams): string | undefined {
+function traceQueryFromParams(
+  searchParams: URLSearchParams,
+): string | undefined {
   const span = searchParams.get("span");
   if (span) return span;
   const filter = searchParams.get("filter");

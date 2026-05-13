@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { RequireAuth } from "@/components/auth/require-auth";
@@ -18,7 +18,17 @@ import { useActiveWorkspace } from "@/lib/use-active-workspace";
 export default function ObservePage(): JSX.Element {
   return (
     <RequireAuth>
-      <ObservePageBody />
+      <Suspense
+        fallback={
+          <main className="mx-auto w-full max-w-7xl p-6">
+            <p className="text-sm text-muted-foreground">
+              Loading observatory...
+            </p>
+          </main>
+        }
+      >
+        <ObservePageBody />
+      </Suspense>
     </RequireAuth>
   );
 }
@@ -27,7 +37,9 @@ function ObservePageBody(): JSX.Element {
   const { active, isLoading: wsLoading } = useActiveWorkspace();
   const searchParams = useSearchParams();
   const focusedIncidentId =
-    searchParams.get("incident_id") ?? searchParams.get("incident") ?? undefined;
+    searchParams.get("incident_id") ??
+    searchParams.get("incident") ??
+    undefined;
   const activeWorkspaceId = active?.id;
   const [model, setModel] = useState<ObservatoryModel | null>(null);
   const [error, setError] = useState<string | null>(null);
