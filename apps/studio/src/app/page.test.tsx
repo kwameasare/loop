@@ -101,9 +101,7 @@ describe("HomePage", () => {
 
     render(await HomePage());
 
-    expect(screen.getByTestId("homepage-pins")).toHaveTextContent(
-      "Pinned work",
-    );
+    expect(screen.getByTestId("homepage-pins")).toHaveTextContent("Pinned");
     expect(screen.getByRole("link", { name: /worst renewal trace/i }))
       .toHaveAttribute("href", "/traces/trace_1");
   });

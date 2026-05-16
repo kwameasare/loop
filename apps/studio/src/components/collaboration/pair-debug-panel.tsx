@@ -33,7 +33,7 @@ export function PairDebugPanel(props: PairDebugPanelProps): JSX.Element {
     <section
       data-testid="pair-debug"
       aria-labelledby="pair-debug-title"
-      className="space-y-3 rounded-md border bg-card p-4"
+      className="space-y-3 instrument-panel rounded-2xl p-4"
     >
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 id="pair-debug-title" className="text-sm font-semibold">

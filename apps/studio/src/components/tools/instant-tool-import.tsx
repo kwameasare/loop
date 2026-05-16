@@ -122,7 +122,7 @@ export function InstantToolImport({ agentId }: { agentId: string }) {
 
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       data-testid="tools-room-import"
       aria-labelledby="tools-import-heading"
     >

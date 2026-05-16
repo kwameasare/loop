@@ -29,7 +29,6 @@ import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AgentGlassOrb } from "@/components/agents/agent-glass-orb";
-import { AgentMoodRing } from "@/components/shell/agent-mood-ring";
 import { LiveBadge } from "@/components/target";
 import { cn } from "@/lib/utils";
 
@@ -316,32 +315,29 @@ export function SidebarNav() {
       className="quiet-scrollbar flex h-full flex-col gap-3 overflow-y-auto p-3"
       data-testid="sidebar-nav"
     >
-      <div className="instrument-panel rounded-md p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <AgentGlassOrb label="Loop Studio" size="md" decorative />
-            <div>
-              <p className="text-xs font-semibold uppercase text-muted-foreground">
-                Loop
-              </p>
-              <p className="mt-1 text-base font-semibold">Studio</p>
-            </div>
-          </div>
-          <span className="floating-glass-badge rounded-full px-2 py-1 text-[0.65rem] font-semibold uppercase text-muted-foreground">
-            agent ops
-          </span>
-        </div>
-        <div className="mt-3 grid grid-cols-6 gap-1" aria-hidden="true">
-          {navSections.map((section) => (
-            <span
-              key={section.id}
-              className={cn(
-                "h-1 rounded-full transition-colors duration-swift",
-                sectionIsActive(pathname, section) ? "bg-primary" : "bg-muted",
-              )}
-            />
-          ))}
-        </div>
+      <div className="flex items-center justify-between gap-3 px-1.5 pb-1 pt-2">
+        <span className="text-[1.02rem] font-semibold leading-none tracking-tight">
+          Loop Studio
+        </span>
+        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          agent ops
+        </span>
+      </div>
+      <div
+        className="grid grid-cols-6 gap-1 px-1.5 pb-1"
+        aria-hidden="true"
+      >
+        {navSections.map((section) => (
+          <span
+            key={section.id}
+            className={cn(
+              "h-0.5 rounded-full transition-colors duration-swift",
+              sectionIsActive(pathname, section)
+                ? "bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.5)]"
+                : "bg-border/70",
+            )}
+          />
+        ))}
       </div>
       <div className="glass-panel rounded-md p-2" data-testid="nav-attention">
         <NavLink
@@ -393,7 +389,7 @@ export function SidebarNav() {
           <button
             type="button"
             id={`nav-section-${section.id}`}
-            className="group flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[0.68rem] font-semibold uppercase text-muted-foreground transition-all duration-swift ease-standard hover:bg-muted/70 hover:text-foreground"
+            className="group flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground transition-all duration-swift ease-standard hover:bg-muted/70 hover:text-foreground"
             aria-expanded={openSections[section.id]}
             onClick={() =>
               setOpenSections((current) => ({
@@ -451,18 +447,14 @@ function NavLink({
         data-testid={`nav-${item.id}`}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "interactive-lift pressable group flex min-h-10 items-center gap-2 rounded-md border border-transparent px-2.5 py-2 text-sm",
+          "interactive-lift pressable group flex min-h-10 items-center gap-2 rounded-xl border border-transparent px-2.5 py-2 text-sm",
           depth > 0 && "ml-5 min-h-9 border-l border-border/70 pl-3",
           active || childActive
-            ? "border-primary/30 bg-accent/82 text-accent-foreground shadow-sm shadow-primary/10"
+            ? "border-primary/35 bg-primary/10 text-foreground shadow-[inset_0_1px_0_hsl(var(--glass-hi)/0.4),0_10px_24px_-12px_hsl(var(--primary)/0.5)]"
             : "text-muted-foreground hover:border-border/70 hover:bg-accent/50 hover:text-foreground",
         )}
       >
-        {item.id === "agents" && depth === 0 ? (
-          <AgentMoodRing label={item.label} mood="healthy" />
-        ) : (
-          <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden={true} />
-        )}
+        <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden={true} />
         <span className="min-w-0 flex-1">
           <span className="flex items-center justify-between gap-2">
             <span className="font-medium leading-5">{item.label}</span>

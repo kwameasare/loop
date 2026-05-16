@@ -83,7 +83,7 @@ export function RollbackPanel({
         </header>
 
         <article
-          className="rounded-md border bg-card p-3"
+          className="instrument-panel rounded-2xl p-3"
           data-testid="rollback-target"
         >
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

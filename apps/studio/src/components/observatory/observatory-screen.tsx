@@ -192,7 +192,7 @@ function MetricCard({
 }) {
   return (
     <article
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid={`observatory-metric-${metric.id}`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -305,7 +305,7 @@ function AnomalyCard({
   }
 
   return (
-    <article className="rounded-md border bg-card p-4">
+    <article className="instrument-panel rounded-2xl p-4">
       <div className="flex items-start gap-3">
         <AlertTriangle
           className="mt-0.5 h-5 w-5 text-warning"
@@ -446,7 +446,7 @@ function AnomalyCard({
 function AgentHealthArc({ agent }: { agent: AmbientAgentHealth }) {
   return (
     <article
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid={`ambient-health-${agent.id}`}
     >
       <div className="flex items-center gap-3">
@@ -660,7 +660,7 @@ function IncidentResponsePanel({
       ) : null}
 
       {incidents.length === 0 ? (
-        <article className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
+        <article className="instrument-panel rounded-2xl p-4 text-sm text-muted-foreground">
           No active incidents. Rollback, pause, anomaly, and seeded eval records
           will appear here when production needs containment.
         </article>
@@ -698,7 +698,7 @@ function IncidentResponsePanel({
               <article
                 key={incident.id}
                 className={cn(
-                  "rounded-md border bg-card p-4",
+                  "instrument-panel rounded-2xl p-4",
                   incident.id === focusedIncidentId
                     ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
                     : "",
@@ -807,7 +807,7 @@ function IncidentResponsePanel({
                       {timeline.slice(0, 4).map((event, index) => (
                         <li
                           key={`${event.kind}-${event.at}-${index}`}
-                          className="grid gap-2 rounded-md border bg-card px-2 py-1.5 sm:grid-cols-[7rem_minmax(0,1fr)]"
+                          className="instrument-panel grid gap-2 rounded-xl px-2 py-1.5 sm:grid-cols-[7rem_minmax(0,1fr)]"
                         >
                           <span className="font-mono text-muted-foreground">
                             {event.kind}
@@ -1108,7 +1108,7 @@ export function ObservatoryScreen({
           </div>
           <div
             className={cn(
-              "overflow-hidden rounded-md border bg-card",
+              "overflow-hidden instrument-panel overflow-hidden rounded-2xl",
               paused && "opacity-70",
             )}
           >
@@ -1163,7 +1163,7 @@ export function ObservatoryScreen({
               <AgentHealthArc key={agent.id} agent={agent} />
             ))
           ) : (
-            <p className="rounded-md border bg-card p-4 text-sm text-muted-foreground lg:col-span-2">
+            <p className="instrument-panel rounded-2xl p-4 text-sm text-muted-foreground lg:col-span-2">
               No agent health arcs loaded. The rail stays empty until live
               traces and cost records identify actual agents.
             </p>
@@ -1172,7 +1172,7 @@ export function ObservatoryScreen({
       </section>
 
       <section
-        className="rounded-md border bg-card p-4"
+        className="instrument-panel rounded-2xl p-4"
         data-testid="observatory-second-monitor"
       >
         <div className="flex items-start gap-3">

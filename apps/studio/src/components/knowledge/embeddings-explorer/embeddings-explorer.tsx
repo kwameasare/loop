@@ -50,7 +50,7 @@ export function EmbeddingsExplorer({
 
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <div
-          className="relative min-h-[28rem] overflow-hidden rounded-md border bg-card p-4"
+          className="relative min-h-[28rem] overflow-hidden instrument-panel rounded-2xl p-4"
           role="img"
           aria-label="Embedding cluster map"
         >
@@ -102,7 +102,7 @@ export function EmbeddingsExplorer({
 
         <div className="space-y-3">
           {model.clusters.map((cluster) => (
-            <article key={cluster.id} className="rounded-md border bg-card p-4">
+            <article key={cluster.id} className="instrument-panel rounded-2xl p-4">
               <div className="flex items-start gap-3">
                 <Map className="mt-0.5 h-5 w-5 text-info" aria-hidden={true} />
                 <div className="min-w-0 flex-1">

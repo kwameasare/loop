@@ -64,7 +64,7 @@ function LatencyBudget({ spans }: { spans: readonly VoiceLatencySpan[] }) {
   const total = spans.reduce((sum, span) => sum + span.ms, 0);
   const budget = spans.reduce((sum, span) => sum + span.budgetMs, 0);
   return (
-    <section className="rounded-md border bg-card p-4" data-testid="voice-latency-budget">
+    <section className="instrument-panel rounded-2xl p-4" data-testid="voice-latency-budget">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold">Latency budget</h2>
@@ -190,7 +190,7 @@ export function VoiceStage({
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-4">
           <Waveform levels={model.waveform} paused={paused} />
-          <div className="rounded-md border bg-card p-4">
+          <div className="instrument-panel rounded-2xl p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-sm font-semibold">Live transcript</h2>
@@ -269,7 +269,7 @@ export function VoiceStage({
         </div>
 
         <div className="space-y-4">
-          <section className="rounded-md border bg-card p-4" data-testid="voice-config-summary">
+          <section className="instrument-panel rounded-2xl p-4" data-testid="voice-config-summary">
             <div className="flex items-center gap-3">
               <Mic className="h-5 w-5 text-info" aria-hidden={true} />
               <div>
@@ -321,7 +321,7 @@ export function VoiceStage({
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]" data-testid="voice-evals-and-links">
-        <div className="rounded-md border bg-card p-4">
+        <div className="instrument-panel rounded-2xl p-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-sm font-semibold">Voice evals</h2>
             <LiveBadge tone="live">{score}% avg</LiveBadge>
@@ -344,7 +344,7 @@ export function VoiceStage({
           </div>
         </div>
 
-        <div className="rounded-md border bg-card p-4">
+        <div className="instrument-panel rounded-2xl p-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-sm font-semibold">Audited demo links</h2>
             <Volume2 className="h-5 w-5 text-info" aria-hidden={true} />

@@ -113,7 +113,7 @@ export function AgentHistoryWalkthrough({
       data-testid="agent-history-walkthrough"
       aria-labelledby="agent-history-heading"
     >
-      <header className="rounded-md border bg-card p-4">
+      <header className="instrument-panel rounded-2xl p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Handoff and continuity
         </p>
@@ -153,7 +153,7 @@ export function AgentHistoryWalkthrough({
       ) : null}
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <section className="rounded-md border bg-card p-4">
+        <section className="instrument-panel rounded-2xl p-4">
           <div className="flex items-center gap-2">
             <ShieldAlert className="h-4 w-4" aria-hidden />
             <h3 className="text-sm font-semibold">
@@ -201,7 +201,7 @@ export function AgentHistoryWalkthrough({
           )}
         </section>
 
-        <section className="rounded-md border bg-card p-4">
+        <section className="instrument-panel rounded-2xl p-4">
           <div className="flex items-center gap-2">
             <UserRoundCheck className="h-4 w-4" aria-hidden />
             <h3 className="text-sm font-semibold">Transfer ownership</h3>
@@ -256,7 +256,7 @@ export function AgentHistoryWalkthrough({
         </section>
       </div>
 
-      <section className="rounded-md border bg-card p-4">
+      <section className="instrument-panel rounded-2xl p-4">
         <div className="flex items-center gap-2">
           <History className="h-4 w-4" aria-hidden />
           <h3 className="text-sm font-semibold">History walkthrough</h3>
@@ -311,7 +311,7 @@ export function AgentHistoryWalkthrough({
       </section>
 
       {model.transfers.length ? (
-        <section className="rounded-md border bg-card p-4">
+        <section className="instrument-panel rounded-2xl p-4">
           <h3 className="text-sm font-semibold">Transfer record</h3>
           <ul className="mt-3 space-y-2" data-testid="handoff-transfers">
             {model.transfers.map((transfer) => (

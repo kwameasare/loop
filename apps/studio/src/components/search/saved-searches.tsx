@@ -32,7 +32,7 @@ export function SavedSearches({ store, onOpen }: SavedSearchesProps) {
   return (
     <section
       aria-labelledby="saved-searches-title"
-      className="space-y-2 rounded-md border bg-card p-3"
+      className="space-y-2 instrument-panel rounded-2xl p-3"
       data-testid="saved-searches"
     >
       <header className="flex items-center justify-between">

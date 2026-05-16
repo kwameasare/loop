@@ -79,7 +79,7 @@ export function InverseRetrievalLab({
         {model.misses.map((miss) => {
           const repaired = repairs.includes(miss.id);
           return (
-            <article key={miss.id} className="rounded-md border bg-card p-4">
+            <article key={miss.id} className="instrument-panel rounded-2xl p-4">
               <div className="flex items-start justify-between gap-3">
                 <SearchCheck className="mt-0.5 h-5 w-5 text-info" aria-hidden={true} />
                 <LiveBadge tone={miss.closeness >= 85 ? "canary" : "staged"}>

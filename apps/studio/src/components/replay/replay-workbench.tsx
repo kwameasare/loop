@@ -65,7 +65,7 @@ function ConversationCard({
       type="button"
       onClick={onSelect}
       className={cn(
-        "group rounded-md border bg-card p-4 text-left transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm",
+        "group instrument-panel rounded-2xl p-4 text-left transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm",
         active ? "border-primary/60 ring-2 ring-focus/30" : "border-border",
       )}
       data-testid={`replay-conversation-${conversation.id}`}
@@ -475,7 +475,7 @@ function PersonaSimulator({
           const savedCaseId = savedCases[persona.id];
           const isSaving = saving === persona.id;
           return (
-            <article key={persona.id} className="rounded-md border bg-card p-4">
+            <article key={persona.id} className="instrument-panel rounded-2xl p-4">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="min-w-0 flex-1 text-sm font-semibold">{persona.persona}</h3>
                 <span className="shrink-0 text-xs font-semibold tabular-nums">
@@ -525,7 +525,7 @@ function PropertyTester({ model }: { model: ReplayWorkbenchModel }) {
       <div className="grid gap-3 lg:grid-cols-[1fr_0.8fr]">
         <div className="space-y-3">
           {model.properties.map((result) => (
-            <article key={result.id} className="rounded-md border bg-card p-4">
+            <article key={result.id} className="instrument-panel rounded-2xl p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold">{result.axis}</h3>
                 <LiveBadge tone={result.robustness >= 90 ? "live" : "canary"}>
@@ -545,7 +545,7 @@ function PropertyTester({ model }: { model: ReplayWorkbenchModel }) {
             </article>
           ))}
         </div>
-        <div className="rounded-md border bg-card p-4">
+        <div className="instrument-panel rounded-2xl p-4">
           <h3 className="text-sm font-semibold">Failure clusters</h3>
           <div className="mt-3 space-y-3">
             {model.clusters.map((cluster) => (
@@ -647,7 +647,7 @@ function SceneLibrary({
       ) : null}
       <div className="grid gap-3 lg:grid-cols-3">
         {created ? (
-          <article className="rounded-md border bg-card p-4">
+          <article className="instrument-panel rounded-2xl p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold">{created.name}</h3>
@@ -667,7 +667,7 @@ function SceneLibrary({
           </article>
         ) : null}
         {scenes.map((scene) => (
-          <article key={scene.id} className="rounded-md border bg-card p-4">
+          <article key={scene.id} className="instrument-panel rounded-2xl p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold">{scene.name}</h3>
@@ -778,7 +778,7 @@ export function ReplayWorkbench({
         scenes={model.scenes}
       />
 
-      <section className="rounded-md border bg-card p-4" data-testid="comments-as-spec">
+      <section className="instrument-panel rounded-2xl p-4" data-testid="comments-as-spec">
         <div className="flex items-start gap-3">
           <Radar className="mt-0.5 h-5 w-5 text-info" aria-hidden={true} />
           <div>

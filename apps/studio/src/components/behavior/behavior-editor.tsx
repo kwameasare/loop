@@ -325,7 +325,7 @@ function PlainLanguageMode({
       {sections.map((section) => (
         <section
           key={section.id}
-          className="rounded-md border bg-card p-4"
+          className="instrument-panel rounded-2xl p-4"
           aria-labelledby={`behavior-section-${section.id}`}
         >
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -372,7 +372,7 @@ function StructuredPolicyMode({ sections }: { sections: BehaviorSection[] }) {
   return (
     <div className="space-y-4" data-testid="behavior-policy-mode">
       {sections.map((section) => (
-        <section key={section.id} className="rounded-md border bg-card p-4">
+        <section key={section.id} className="instrument-panel rounded-2xl p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h3 className="text-sm font-semibold">{section.label}</h3>
@@ -404,7 +404,7 @@ function CodeConfigMode({ sections }: { sections: BehaviorSection[] }) {
   return (
     <div className="space-y-4" data-testid="behavior-config-mode">
       {sections.map((section) => (
-        <section key={section.id} className="rounded-md border bg-card p-4">
+        <section key={section.id} className="instrument-panel rounded-2xl p-4">
           <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-sm font-semibold">{section.label}</h3>
             <span className="text-xs text-muted-foreground">
@@ -435,7 +435,7 @@ function SentenceTelemetryPanel({
   const telemetry = sentence.telemetry;
   return (
     <section
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid="behavior-sentence-telemetry"
       aria-live="polite"
     >
@@ -515,7 +515,7 @@ function SelectionActionPanel({
 function RiskPanel({ flags }: { flags: BehaviorRiskFlag[] }) {
   return (
     <section
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid="behavior-risk-flags"
     >
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -558,7 +558,7 @@ function PreviewPanel({ data }: { data: BehaviorEditorData }) {
   const preview = data.preview;
   return (
     <section
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid="behavior-preview"
       aria-labelledby="behavior-preview-heading"
     >
@@ -673,7 +673,7 @@ function SemanticDiffPanel({ data }: { data: BehaviorEditorData }) {
       />
       <ul className="space-y-2">
         {data.semanticDiffs.map((diff) => (
-          <li key={diff.id} className="rounded-md border bg-card p-3 text-sm">
+          <li key={diff.id} className="instrument-panel rounded-2xl p-3 text-sm">
             <p className="font-medium">{diff.summary}</p>
             <p className="mt-1 text-xs text-muted-foreground">
               Evidence: {diff.evidence}
@@ -746,7 +746,7 @@ export function BehaviorEditor({
   return (
     <div className="flex flex-col gap-6" data-testid="behavior-editor">
       <section className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))]">
-        <div className="rounded-md border bg-card p-4">
+        <div className="instrument-panel rounded-2xl p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Behavior editor
           </p>

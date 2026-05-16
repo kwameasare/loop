@@ -72,7 +72,7 @@ export function PersonaSimulatorPanel({ agentId }: { agentId: string }) {
 
   return (
     <section
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid="persona-simulator-panel"
       aria-labelledby="persona-simulator-heading"
     >

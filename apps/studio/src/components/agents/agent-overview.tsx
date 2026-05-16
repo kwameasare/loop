@@ -2220,7 +2220,7 @@ function IntakeLandingPanel({
           {readinessChecklist.map((item) => (
             <li
               key={item.id}
-              className="grid gap-2 rounded-md border bg-card p-3 text-sm [grid-template-columns:minmax(0,1fr)_auto]"
+              className="instrument-panel grid gap-2 rounded-2xl p-3.5 text-sm [grid-template-columns:minmax(0,1fr)_auto]"
               data-testid={`intake-readiness-${item.id}`}
             >
               <div className="min-w-0">
@@ -2442,22 +2442,23 @@ export function AgentOverview({
         aria-labelledby="agent-workbench-heading"
         data-testid="agent-workbench-profile"
       >
-        <div className="instrument-panel min-w-0 rounded-md p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="glass-deep min-w-0 rounded-2xl p-5">
+          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Agent workbench
           </p>
-          <div className="mt-2 flex items-start gap-4">
+          <div className="mt-3 flex items-start gap-4">
             <AgentGlassOrb
               agentId={id}
               label={name || "Untitled agent"}
               size="xl"
               state={data.trust}
+              halo
             />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h2
                   id="agent-workbench-heading"
-                  className="text-2xl font-semibold"
+                  className="text-2xl font-semibold tracking-tight"
                 >
                   {name || "Untitled agent"}
                 </h2>
@@ -2484,7 +2485,7 @@ export function AgentOverview({
             </div>
           </div>
           <p
-            className="mt-3 rounded-md border bg-muted/40 p-3 text-sm"
+            className="mt-4 rounded-xl border border-border/50 bg-muted/40 p-3 text-sm leading-6"
             data-testid="agent-state-sentence"
           >
             {data.stateSentence}
@@ -2531,8 +2532,8 @@ export function AgentOverview({
             </div>
           </div>
         </div>
-        <div className="rounded-md border bg-background p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <div className="instrument-panel rounded-2xl p-5">
+          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Safe next action
           </p>
           <p
@@ -2588,7 +2589,7 @@ export function AgentOverview({
       >
         <div className="space-y-4">
           <section
-            className="rounded-md border bg-card p-4"
+            className="instrument-panel rounded-2xl p-4"
             aria-labelledby="overview-desc-heading"
           >
             <div className="mb-2 flex items-center gap-2">
@@ -2641,7 +2642,7 @@ export function AgentOverview({
           </section>
 
           <section
-            className="rounded-md border bg-card p-4"
+            className="instrument-panel rounded-2xl p-4"
             aria-labelledby="agent-state-heading"
           >
             <h3 className="text-sm font-semibold" id="agent-state-heading">
@@ -2675,7 +2676,7 @@ export function AgentOverview({
           data-testid="agent-live-preview"
         >
           <RiskHalo level={approvalBlocked ? "medium" : "low"}>
-            <div className="rounded-md border bg-card p-4">
+            <div className="instrument-panel rounded-2xl p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Evidence panel
               </p>
@@ -2701,7 +2702,7 @@ export function AgentOverview({
           />
 
           <section
-            className="rounded-md border bg-card p-4"
+            className="instrument-panel rounded-2xl p-4"
             aria-labelledby="overview-deploy-heading"
           >
             <h3 className="text-sm font-semibold" id="overview-deploy-heading">
@@ -2779,7 +2780,7 @@ export function AgentOverview({
           {data.sections.map((section) => (
             <article
               key={section.id}
-              className="grid gap-3 rounded-md border bg-card p-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr))]"
+              className="instrument-panel interactive-lift grid gap-3 rounded-2xl p-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr))]"
               data-testid={`agent-outline-${section.id}`}
             >
               <div>
@@ -2851,7 +2852,7 @@ export function AgentOverview({
             </>
           );
           const className =
-            "flex min-h-24 items-start gap-3 rounded-md border bg-card p-4 text-left transition-colors duration-swift ease-standard hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-65";
+            "instrument-panel interactive-lift flex min-h-24 items-start gap-3 rounded-2xl p-4 text-left transition-all duration-swift ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-65";
           if (action.disabledReason) {
             return (
               <button

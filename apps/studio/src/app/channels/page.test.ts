@@ -98,9 +98,7 @@ describe("resolveChannelsWorkspaceId", () => {
       screen.getByRole("link", { name: /open voice channel stage/i }),
     ).toHaveAttribute("href", "/voice");
     expect(
-      screen.getByText(
-        /Text, chat, email, webhooks, and telephony remain peers/i,
-      ),
+      screen.getByText(/Nine ways your agents can talk/i),
     ).toBeInTheDocument();
   });
 });

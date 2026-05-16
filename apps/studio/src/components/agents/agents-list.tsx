@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowUpRight, Clock3, GitBranch, ShieldCheck } from "lucide-react";
 
 import {
   AgentGlassOrb,
@@ -47,15 +48,13 @@ function issueLabel(agent: AgentSummary): string {
   return `${count} open issues`;
 }
 
-function healthClass(agent: AgentSummary): string {
+function healthChipClass(agent: AgentSummary): string {
   const status = agent.health_status ?? "";
-  if (status === "needs_attention" || status === "blocked") {
-    return "border-warning/40 bg-warning/10 text-warning";
-  }
-  if (status === "watching" || status === "ready_for_review") {
-    return "border-info/40 bg-info/10 text-info";
-  }
-  return "border-border bg-muted text-muted-foreground";
+  if (status === "needs_attention") return "status-chip--warning";
+  if (status === "blocked") return "status-chip--danger";
+  if (status === "watching" || status === "ready_for_review")
+    return "status-chip--info";
+  return "status-chip--success";
 }
 
 function orbState(agent: AgentSummary): AgentGlassOrbState {
@@ -67,9 +66,8 @@ function orbState(agent: AgentSummary): AgentGlassOrbState {
 }
 
 /**
- * Pure presentational list. Splitting the rendering away from the page's
- * data fetch keeps Vitest tests simple -- the test mounts AgentsList
- * directly with a fixture; the App Router page does the IO.
+ * Constellation-style agent grid. Each card showcases the agent's hue orb
+ * as the protagonist; meta is layered as light glass chips.
  */
 export function AgentsList({
   agents,
@@ -82,111 +80,118 @@ export function AgentsList({
     if (degradedReason) {
       return (
         <div
-          className="rounded-md border border-warning/40 bg-warning/10 p-4 text-sm text-warning"
+          className="notice notice--warning"
           data-testid="agents-degraded"
           role="status"
         >
-          <p className="font-semibold">Agent registry is unavailable.</p>
-          <p className="mt-1">{degradedReason}</p>
+          <div className="notice__body">
+            <p className="notice__title">Agent registry is unavailable.</p>
+            <p className="notice__detail">{degradedReason}</p>
+          </div>
         </div>
       );
     }
     return (
-      <p className="text-muted-foreground text-sm" data-testid="agents-empty">
+      <div
+        className="instrument-panel rounded-2xl p-6 text-sm text-muted-foreground"
+        data-testid="agents-empty"
+      >
         No agents yet. Create one in the studio to get started.
-      </p>
+      </div>
     );
   }
   return (
     <ul
-      className="divide-y divide-border rounded-md border"
+      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
       data-testid="agents-list"
     >
       {agents.map((agent) => (
-        <li key={agent.id} className="p-0" data-testid="agents-item">
+        <li key={agent.id} data-testid="agents-item">
           <Link
             href={`/agents/${agent.id}`}
-            className="grid gap-4 p-4 transition-colors hover:bg-muted/50 lg:grid-cols-[minmax(0,1.4fr)_minmax(13rem,0.8fr)_minmax(15rem,1fr)]"
+            className="instrument-panel interactive-lift group relative block overflow-hidden rounded-2xl p-5"
           >
-            <div className="min-w-0">
-              <div className="flex items-start gap-3">
-                <AgentGlassOrb
-                  agentId={agent.id}
-                  label={agent.name}
-                  size="lg"
-                  state={orbState(agent)}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="min-w-0 truncate text-base font-medium">
-                      {agent.name}
-                    </h3>
-                    <span className="inline-flex items-center rounded-md border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                      {versionLabel(agent)}
-                    </span>
-                    <span
-                      className="inline-flex items-center rounded-md border bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                      data-testid={`agent-state-${agent.id}`}
-                    >
-                      {stateLabel(agent)}
-                    </span>
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium",
-                        healthClass(agent),
-                      )}
-                      data-testid={`agent-health-${agent.id}`}
-                    >
-                      {healthLabel(agent)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {agent.description || "No description yet."}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    slug: {agent.slug}
-                  </p>
-                </div>
+            <div className="flex items-start justify-between gap-3">
+              <AgentGlassOrb
+                agentId={agent.id}
+                label={agent.name}
+                size="lg"
+                state={orbState(agent)}
+              />
+              <ArrowUpRight
+                className="h-4 w-4 text-muted-foreground transition-transform duration-swift group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground"
+                aria-hidden
+              />
+            </div>
+            <h3 className="relative z-10 mt-4 truncate text-lg font-semibold leading-tight">
+              {agent.name}
+            </h3>
+            <p className="relative z-10 mt-0.5 font-mono text-[0.7rem] text-muted-foreground/80">
+              slug: {agent.slug}
+            </p>
+            <p className="relative z-10 mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
+              {agent.description || "No description yet."}
+            </p>
+            <div className="relative z-10 mt-4 flex flex-wrap gap-1.5">
+              <span
+                className={cn("status-chip", healthChipClass(agent))}
+                data-testid={`agent-health-${agent.id}`}
+              >
+                <span className="status-chip__dot" />
+                {healthLabel(agent)}
+              </span>
+              <span
+                className="status-chip status-chip--neutral"
+                data-testid={`agent-state-${agent.id}`}
+              >
+                {stateLabel(agent)}
+              </span>
+              <span className="status-chip status-chip--neutral">
+                <GitBranch className="h-3 w-3" aria-hidden />
+                {versionLabel(agent)}
+              </span>
+            </div>
+            <dl className="relative z-10 mt-4 grid grid-cols-2 gap-3 text-xs">
+              <div
+                className="rounded-xl bg-muted/60 p-2.5 backdrop-blur-sm"
+                data-testid={`agent-ownership-${agent.id}`}
+              >
+                <dt className="flex items-center gap-1.5 text-muted-foreground">
+                  <ShieldCheck className="h-3 w-3" aria-hidden />
+                  Owner
+                </dt>
+                <dd className="mt-1 truncate font-medium text-foreground">
+                  {ownerLabel(agent)}
+                </dd>
+                <dd className="mt-0.5 truncate text-muted-foreground">
+                  Backup · {backupOwnerLabel(agent)}
+                </dd>
               </div>
-            </div>
-
-            <div
-              className="min-w-0 rounded-md border bg-background p-3 text-xs text-muted-foreground"
-              data-testid={`agent-ownership-${agent.id}`}
-            >
-              <p className="font-medium text-foreground">Ownership</p>
-              <p className="mt-1 truncate">{ownerLabel(agent)}</p>
-              <p className="mt-1 truncate">{backupOwnerLabel(agent)}</p>
-              <p className="mt-2 break-all font-mono">
-                {agent.commitment_document_id ?? "commitment unavailable"}
-              </p>
-              <p className="mt-2">
-                Contract {agent.commitment_status ?? "unknown"}
-              </p>
-            </div>
-
-            <div
-              className="min-w-0 rounded-md border bg-background p-3 text-xs text-muted-foreground"
-              data-testid={`agent-operational-state-${agent.id}`}
-            >
-              <p className="font-medium text-foreground">Current state</p>
-              <p className="mt-1 line-clamp-2">{agent.state_reason}</p>
-              <p className="mt-2 break-all font-mono">
-                {agent.state_evidence_ref}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1">
-                <span className="rounded-md bg-muted px-1.5 py-0.5">
-                  env {agent.environment ?? stateLabel(agent)}
-                </span>
-                <span
-                  className="rounded-md bg-muted px-1.5 py-0.5"
+              <div className="rounded-xl bg-muted/60 p-2.5 backdrop-blur-sm">
+                <dt className="flex items-center gap-1.5 text-muted-foreground">
+                  <Clock3 className="h-3 w-3" aria-hidden />
+                  Updated
+                </dt>
+                <dd className="mt-1 font-medium text-foreground">
+                  {updatedLabel(agent)}
+                </dd>
+                <dd
+                  className="mt-0.5 truncate text-muted-foreground"
                   data-testid={`agent-open-issues-${agent.id}`}
                   title={(agent.open_issue_sources ?? []).join(", ")}
                 >
                   {issueLabel(agent)}
-                </span>
+                </dd>
               </div>
-              <p className="mt-2">Updated {updatedLabel(agent)}</p>
+            </dl>
+            <div
+              className="relative z-10 mt-3 rounded-xl border border-border/60 bg-background/60 p-3 text-xs text-muted-foreground"
+              data-testid={`agent-operational-state-${agent.id}`}
+            >
+              <p className="line-clamp-2 leading-5">{agent.state_reason}</p>
+              <p className="mt-1.5 truncate font-mono text-[0.65rem] opacity-70">
+                {agent.state_evidence_ref}
+              </p>
             </div>
           </Link>
         </li>

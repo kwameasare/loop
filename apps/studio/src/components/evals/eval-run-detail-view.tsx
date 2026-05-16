@@ -113,7 +113,7 @@ export function EvalRunDetailView({ run, baseline }: EvalRunDetailViewProps) {
               {resultDiff.recommendedFix}
             </EvidenceCallout>
           </div>
-          <dl className="grid gap-2 rounded-md border bg-card p-3 text-sm md:grid-cols-2">
+          <dl className="grid gap-2 instrument-panel rounded-2xl p-3 text-sm md:grid-cols-2">
             <div>
               <dt className="text-xs font-semibold uppercase text-muted-foreground">
                 Trace diff

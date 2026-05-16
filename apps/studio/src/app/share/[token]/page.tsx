@@ -31,7 +31,7 @@ export default async function PublicSharePage({
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-5 p-6" data-testid="share-page">
-      <header className="rounded-md border bg-card p-5">
+      <header className="instrument-panel rounded-2xl p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase text-muted-foreground">
@@ -50,7 +50,7 @@ export default async function PublicSharePage({
       </header>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <article className="rounded-md border bg-card p-4">
+        <article className="instrument-panel rounded-2xl p-4">
           <div className="flex items-center gap-3">
             <EyeOff className="h-5 w-5 text-info" aria-hidden={true} />
             <div>
@@ -78,7 +78,7 @@ export default async function PublicSharePage({
           </ul>
         </article>
 
-        <article className="rounded-md border bg-card p-4">
+        <article className="instrument-panel rounded-2xl p-4">
           <div className="flex items-center gap-3">
             <ShieldCheck className="h-5 w-5 text-success" aria-hidden={true} />
             <div>

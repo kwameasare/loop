@@ -139,7 +139,7 @@ export function TraceScrubber({ trace }: { trace: Trace }) {
   return (
     <section
       aria-labelledby="trace-scrubber-heading"
-      className="space-y-4 rounded-md border bg-card p-4"
+      className="space-y-4 instrument-panel rounded-2xl p-4"
       data-testid="trace-scrubber"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">

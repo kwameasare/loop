@@ -98,7 +98,7 @@ export default async function AgentEvalsPage({
 
   return (
     <section className="space-y-5" data-testid="agent-evals-page">
-      <header className="rounded-md border bg-card p-5">
+      <header className="instrument-panel rounded-2xl p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Agent Workbench · Evals
         </p>
@@ -165,7 +165,7 @@ export default async function AgentEvalsPage({
       ) : null}
 
       {suites.length > 0 ? (
-        <div className="rounded-md border bg-card p-4">
+        <div className="instrument-panel rounded-2xl p-4">
           <EvalSuiteList suites={suites} focusedSuiteId={focusedSuiteId} />
         </div>
       ) : !degradedEvidence ? (

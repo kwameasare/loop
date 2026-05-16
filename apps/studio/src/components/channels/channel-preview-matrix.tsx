@@ -117,7 +117,7 @@ export function ChannelPreviewMatrix({
 
   return (
     <section
-      className="space-y-4 rounded-md border bg-card p-4"
+      className="space-y-4 instrument-panel rounded-2xl p-4"
       data-testid="channel-preview-matrix"
       aria-labelledby="channel-preview-matrix-heading"
     >

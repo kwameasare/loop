@@ -67,7 +67,7 @@ export function QuickBranchLink({
   return (
     <section
       aria-labelledby="quick-branch-title"
-      className="space-y-3 rounded-md border bg-card p-3"
+      className="space-y-3 instrument-panel rounded-2xl p-3"
       data-testid="quick-branch-link"
     >
       <header>

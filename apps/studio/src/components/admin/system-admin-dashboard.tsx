@@ -29,7 +29,7 @@ function MetricCard({
   icon: typeof Building2;
 }) {
   return (
-    <div className="rounded-md border bg-card p-4">
+    <div className="instrument-panel rounded-2xl p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">{label}</p>
         <Icon className="h-4 w-4 text-primary" aria-hidden />
@@ -147,7 +147,7 @@ function SystemAdminBody() {
             />
           </section>
 
-          <section className="rounded-md border bg-card p-4">
+          <section className="instrument-panel rounded-2xl p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 className="font-semibold">Enterprise signup queue</h2>
@@ -234,7 +234,7 @@ function SystemAdminBody() {
             </div>
           </section>
 
-          <section className="rounded-md border bg-card p-4">
+          <section className="instrument-panel rounded-2xl p-4">
             <h2 className="font-semibold">Recent invites</h2>
             <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
               {overview.recent_invites.length === 0 ? (

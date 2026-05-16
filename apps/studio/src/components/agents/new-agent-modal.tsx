@@ -698,7 +698,7 @@ export function NewAgentModal({
             className="grid gap-5"
             data-testid="new-agent-step-panel-mission"
           >
-            <fieldset className="grid gap-3 rounded-md border bg-card p-4">
+            <fieldset className="grid gap-3 instrument-panel rounded-2xl p-4">
               <legend className="px-1 text-sm font-medium">
                 Creation path
               </legend>
@@ -773,7 +773,7 @@ export function NewAgentModal({
               </fieldset>
             ) : null}
 
-            <div className="grid gap-4 rounded-md border bg-card p-4 md:grid-cols-2">
+            <div className="grid gap-4 instrument-panel rounded-2xl p-4 md:grid-cols-2">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium">Agent name</span>
                 <input
@@ -860,7 +860,7 @@ export function NewAgentModal({
             className="grid gap-5"
             data-testid="new-agent-step-panel-boundaries"
           >
-            <div className="grid gap-4 rounded-md border bg-card p-4 md:grid-cols-2">
+            <div className="grid gap-4 instrument-panel rounded-2xl p-4 md:grid-cols-2">
               <label className="flex flex-col gap-1 text-sm md:col-span-2">
                 <span className="font-medium">Worst-case failure</span>
                 <textarea
@@ -1001,7 +1001,7 @@ export function NewAgentModal({
             className="grid gap-5"
             data-testid="new-agent-step-panel-capabilities"
           >
-            <fieldset className="grid gap-3 rounded-md border bg-card p-4">
+            <fieldset className="grid gap-3 instrument-panel rounded-2xl p-4">
               <legend className="px-1 text-sm font-medium">
                 Capabilities to seed
               </legend>
@@ -1038,7 +1038,7 @@ export function NewAgentModal({
             className="grid gap-5"
             data-testid="new-agent-step-panel-knowledge-tools"
           >
-            <fieldset className="grid gap-3 rounded-md border bg-card p-4">
+            <fieldset className="grid gap-3 instrument-panel rounded-2xl p-4">
               <legend className="px-1 text-sm font-medium">
                 Knowledge and tool artifacts
               </legend>
@@ -1145,7 +1145,7 @@ export function NewAgentModal({
             className="grid gap-5"
             data-testid="new-agent-step-panel-channels"
           >
-            <fieldset className="grid gap-3 rounded-md border bg-card p-4">
+            <fieldset className="grid gap-3 instrument-panel rounded-2xl p-4">
               <legend className="px-1 text-sm font-medium">Channels</legend>
               <p className="text-sm text-muted-foreground">
                 Voice is one channel, not the category. Select every channel
@@ -1196,7 +1196,7 @@ export function NewAgentModal({
             className="grid gap-5"
             data-testid="new-agent-step-panel-generated-tests"
           >
-            <div className="rounded-md border bg-card p-4">
+            <div className="instrument-panel rounded-2xl p-4">
               <h4 className="text-sm font-semibold">Starter eval suite</h4>
               <p className="mt-1 text-sm text-muted-foreground">
                 These tests are generated from the contract and attached to the
@@ -1229,7 +1229,7 @@ export function NewAgentModal({
             data-testid="new-agent-step-panel-readiness"
           >
             <div className="grid gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
-              <div className="rounded-md border bg-card p-4">
+              <div className="instrument-panel rounded-2xl p-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Draft readiness
                 </p>
@@ -1241,7 +1241,7 @@ export function NewAgentModal({
                   complete. Production remains blocked until proof gates pass.
                 </p>
               </div>
-              <div className="rounded-md border bg-card p-4">
+              <div className="instrument-panel rounded-2xl p-4">
                 <h4 className="text-sm font-semibold">Readiness landing</h4>
                 <div className="mt-3 grid gap-2 text-sm md:grid-cols-2">
                   {readiness.map((item) => (
@@ -1266,7 +1266,7 @@ export function NewAgentModal({
               </div>
             </div>
 
-            <div className="grid gap-3 rounded-md border bg-card p-4 text-sm md:grid-cols-3">
+            <div className="grid gap-3 instrument-panel rounded-2xl p-4 text-sm md:grid-cols-3">
               <div>
                 <h4 className="font-semibold">Created objects</h4>
                 <p className="mt-1 text-muted-foreground">
@@ -1378,7 +1378,7 @@ export function NewAgentModal({
             </p>
           ) : null}
 
-          <div className="grid gap-2 rounded-md border bg-card p-3 text-xs text-muted-foreground md:grid-cols-3">
+          <div className="grid gap-2 instrument-panel rounded-2xl p-3 text-xs text-muted-foreground md:grid-cols-3">
             <span>
               Creates <strong className="text-foreground">Commitment</strong>{" "}
               v1 from this contract.

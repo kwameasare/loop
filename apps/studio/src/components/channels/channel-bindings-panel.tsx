@@ -543,7 +543,7 @@ export function ChannelBindingsPanel({
   return (
     <section
       className={cn(
-        "space-y-4 rounded-md border bg-card p-4",
+        "space-y-4 instrument-panel rounded-2xl p-4",
         focusReadiness
           ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
           : "",

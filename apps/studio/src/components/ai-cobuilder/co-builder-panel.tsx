@@ -65,7 +65,7 @@ export function CoBuilderPanel({
   return (
     <section
       data-testid={`cobuilder-${action.id}`}
-      className="space-y-3 rounded-md border bg-card p-4 shadow-sm"
+      className="space-y-3 instrument-panel rounded-2xl p-4 shadow-sm"
     >
       <header className="flex items-start justify-between gap-3">
         <div>

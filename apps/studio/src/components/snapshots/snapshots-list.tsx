@@ -36,7 +36,7 @@ export function SnapshotsList(props: SnapshotsListProps): JSX.Element {
     return (
       <section
         data-testid="snapshots-empty"
-        className="rounded-md border bg-card p-4 text-sm text-muted-foreground"
+        className="instrument-panel rounded-2xl p-4 text-sm text-muted-foreground"
       >
         No snapshots yet. Pre-promote and post-promote snapshots will appear
         here once available.
@@ -48,7 +48,7 @@ export function SnapshotsList(props: SnapshotsListProps): JSX.Element {
     <section
       data-testid="snapshots-list"
       aria-labelledby="snapshots-title"
-      className="space-y-3 rounded-md border bg-card p-4"
+      className="space-y-3 instrument-panel rounded-2xl p-4"
     >
       <header className="flex items-baseline justify-between">
         <h3 id="snapshots-title" className="text-sm font-semibold">

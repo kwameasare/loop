@@ -173,7 +173,7 @@ export function TraceWaterfall({ trace }: { trace: Trace }) {
         <section
           aria-describedby="trace-waterfall-summary"
           aria-label="Trace waterfall"
-          className="rounded-md border bg-card p-3"
+          className="instrument-panel rounded-2xl p-3"
         >
           <p className="sr-only" id="trace-waterfall-summary">
             Trace {trace.id} has {layout.laidOut.length} spans over{" "}
@@ -301,7 +301,7 @@ export function TraceWaterfall({ trace }: { trace: Trace }) {
 
         <section
           aria-label="Sortable span table alternative"
-          className="overflow-x-auto rounded-md border bg-card"
+          className="overflow-x-auto instrument-panel overflow-hidden rounded-2xl"
           data-testid="span-table"
         >
           <table className="w-full min-w-[48rem] text-sm">

@@ -8,15 +8,17 @@ describe("WelcomeLanding", () => {
     render(<WelcomeLanding />);
 
     expect(
-      screen.getByRole("heading", { name: "Loop Studio", level: 1 }),
+      screen.getByRole("heading", { name: /agents you can see through/i, level: 1 }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /start enterprise signup/i }),
+      screen.getAllByRole("link", { name: /get started/i })[0],
     ).toHaveAttribute("href", "/signup");
     expect(screen.getByRole("link", { name: /open studio/i })).toHaveAttribute(
       "href",
       "/login?returnTo=/home",
     );
-    expect(screen.getByText(/Omnichannel by design/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Talks where your people are/i),
+    ).toBeInTheDocument();
   });
 });

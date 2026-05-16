@@ -229,7 +229,7 @@ export function AgentContractPanel({
           {focusedHistoryItem?.id} is focused.
         </p>
       ) : null}
-      <div className="rounded-md border bg-card p-5">
+      <div className="instrument-panel rounded-2xl p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -408,7 +408,7 @@ export function AgentContractPanel({
       </section>
 
       <form onSubmit={handleSave} className="grid gap-5" noValidate>
-        <div className="grid gap-4 rounded-md border bg-card p-5">
+        <div className="grid gap-4 instrument-panel rounded-2xl p-5">
           <div>
             <h3 className="text-base font-semibold">Mission and risk</h3>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -453,7 +453,7 @@ export function AgentContractPanel({
           </div>
         </div>
 
-        <div className="grid gap-4 rounded-md border bg-card p-5">
+        <div className="grid gap-4 instrument-panel rounded-2xl p-5">
           <div>
             <h3 className="text-base font-semibold">Ownership and rollout</h3>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -509,7 +509,7 @@ export function AgentContractPanel({
           </div>
         </div>
 
-        <div className="grid gap-4 rounded-md border bg-card p-5">
+        <div className="grid gap-4 instrument-panel rounded-2xl p-5">
           <div>
             <h3 className="text-base font-semibold">Channels and systems</h3>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -565,7 +565,7 @@ export function AgentContractPanel({
           </div>
         </div>
 
-        <div className="grid gap-4 rounded-md border bg-card p-5">
+        <div className="grid gap-4 instrument-panel rounded-2xl p-5">
           <div>
             <h3 className="text-base font-semibold">Boundaries</h3>
             <p className="mt-1 text-sm text-muted-foreground">

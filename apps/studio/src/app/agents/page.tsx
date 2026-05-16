@@ -58,13 +58,13 @@ export default async function AgentsPage() {
         </p>
       </header>
       {workspacesDegradedReason ? (
-        <p
-          className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+        <div
+          className="notice notice--warning"
           data-testid="agents-workspace-degraded"
           role="status"
         >
-          {workspacesDegradedReason}
-        </p>
+          <div className="notice__body">{workspacesDegradedReason}</div>
+        </div>
       ) : null}
       <AgentsList agents={agents} degradedReason={agentsDegradedReason} />
     </main>

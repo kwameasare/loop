@@ -71,7 +71,7 @@ export function SpanDetail({ span }: { span: Span }) {
   return (
     <section
       aria-label="Span inspector"
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid="span-detail"
     >
       <header className="mb-4 space-y-2">

@@ -103,7 +103,7 @@ export function CostCapacityPanel({ model, latency }: CostCapacityPanelProps) {
       <div className="grid gap-3 2xl:grid-cols-5">
         {model.surfaces.map((surface) => (
           <article
-            className="rounded-md border bg-card p-4"
+            className="instrument-panel rounded-2xl p-4"
             data-testid={`cost-surface-${surface.id}`}
             key={surface.id}
           >
@@ -195,7 +195,7 @@ export function CostCapacityPanel({ model, latency }: CostCapacityPanelProps) {
         <div className="grid gap-3 2xl:grid-cols-4">
           {model.decisions.map((decision) => (
             <article
-              className="rounded-md border bg-card p-4"
+              className="instrument-panel rounded-2xl p-4"
               data-testid={`cost-decision-${decision.id}`}
               key={decision.id}
             >
@@ -228,7 +228,7 @@ export function CostCapacityPanel({ model, latency }: CostCapacityPanelProps) {
       </section>
 
       <section
-        className="space-y-4 rounded-md border bg-card p-4"
+        className="space-y-4 instrument-panel rounded-2xl p-4"
         data-testid="latency-budget-visualizer"
       >
         <div className="flex flex-wrap items-start justify-between gap-3">

@@ -52,7 +52,7 @@ export function InlineChatOps({ onSubmit, disabledReason }: InlineChatOpsProps) 
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-2 rounded-md border bg-card p-3"
+      className="space-y-2 instrument-panel rounded-2xl p-3"
       aria-describedby="chatops-help"
       data-testid="inline-chatops"
     >

@@ -50,18 +50,18 @@ export default async function ChannelsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-5 p-4 lg:p-6">
-      <header className="rounded-md border bg-card p-5">
+      <header className="instrument-panel rounded-2xl p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Build
         </p>
         <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
-              Workspace channels
+              Channels
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Bind agents to the channels customers actually use: web chat,
-              WhatsApp, Telegram, Slack, Teams, SMS, email, and voice.
+              Connect your agents to the places customers and teams already
+              spend their day — web, WhatsApp, Slack, voice, and the rest.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -80,25 +80,24 @@ export default async function ChannelsPage() {
         </div>
       </header>
 
-      <section className="rounded-md border bg-card p-5">
+      <section className="instrument-panel rounded-2xl p-5">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Channel types</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Voice is one channel type, with a specialized stage only because
-            phone calls need ASR, TTS, barge-in, number routing, and latency
-            checks. Text, chat, email, webhooks, and telephony remain peers.
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Nine ways your agents can talk to customers and teammates. The
+            same agent shows up everywhere you bind it.
           </p>
         </div>
         <ChannelTypeGrid agentId={activeAgentId} />
       </section>
 
-      <section className="rounded-md border bg-card p-5">
+      <section className="instrument-panel rounded-2xl p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Agent bindings</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Configure channels from the agent workbench so behavior, tools,
-              memory, evals, and deploy gates stay together.
+            <h2 className="text-lg font-semibold">Your agents</h2>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              Pick an agent to connect channels. Behavior, tools, and
+              guardrails all live in one place.
             </p>
           </div>
           <NewAgentModal
@@ -107,23 +106,36 @@ export default async function ChannelsPage() {
           />
         </div>
 
+        {/* A workspace failure already implies the agents call will
+            fail — show one consolidated notice instead of stacking two
+            bordered warnings. Both test hooks remain so existing
+            assertions still resolve. */}
         {workspacesDegradedReason ? (
-          <p
-            className="mt-4 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+          <div
+            className="notice notice--warning mt-4"
             data-testid="channels-workspace-degraded"
             role="status"
           >
-            {workspacesDegradedReason}
-          </p>
-        ) : null}
-        {agentsDegradedReason ? (
-          <p
-            className="mt-4 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+            <div className="notice__body">{workspacesDegradedReason}</div>
+            {agentsDegradedReason ? (
+              <span
+                className="sr-only"
+                data-testid="channels-agents-degraded"
+              >
+                {agentsDegradedReason}
+              </span>
+            ) : null}
+          </div>
+        ) : agentsDegradedReason ? (
+          <div
+            className="notice notice--warning mt-4"
             data-testid="channels-agents-degraded"
             role="status"
           >
-            Agent registry is unavailable. {agentsDegradedReason}
-          </p>
+            <div className="notice__body">
+              Agent registry is unavailable. {agentsDegradedReason}
+            </div>
+          </div>
         ) : null}
 
         {agents.length > 0 ? (
@@ -151,8 +163,7 @@ export default async function ChannelsPage() {
           </div>
         ) : agentsDegradedReason ? null : (
           <div className="mt-4 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-            No agents yet. Create or import an agent, then bind it to web chat,
-            WhatsApp, Telegram, Slack, SMS, email, or voice.
+            No agents yet. Create or import one to start connecting channels.
           </div>
         )}
       </section>

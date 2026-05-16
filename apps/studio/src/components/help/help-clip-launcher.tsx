@@ -108,7 +108,7 @@ export function HelpClipLauncher(): JSX.Element {
               </li>
             ) : null}
             {clips.map((clip) => (
-              <li key={clip.clip_id} className="rounded-md border bg-card p-2">
+              <li key={clip.clip_id} className="instrument-panel rounded-xl p-2">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium">
                     {clip.title ?? clip.surface}

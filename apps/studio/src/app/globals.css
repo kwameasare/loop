@@ -2,141 +2,200 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ----------------------------------------------------------------------------
+   Loop Studio — frosted snow design system.
+
+   The page is a snow-white sheet (or deep ink in dark). Far behind it sit a
+   couple of slow-drifting color blobs. We only see them as soft smears
+   through the sheet — never as discrete circles on the page. Cards hover
+   above the sheet on quiet shadows; nothing is outlined heavily.
+   ---------------------------------------------------------------------------- */
+
 @layer base {
     :root {
-        --background: 214 64% 98%;
-        --foreground: 225 34% 10%;
+        /* Pure snow-white base. The lavender lives behind it, not in it. */
+        --background: 0 0% 100%;
+        --foreground: 230 30% 12%;
         --card: 0 0% 100%;
-        --card-foreground: 225 34% 10%;
-        --surface: 218 55% 96%;
+        --card-foreground: 230 30% 12%;
+        --surface: 220 30% 99%;
         --surface-elevated: 0 0% 100%;
-        --muted: 218 40% 94%;
-        --muted-foreground: 224 18% 42%;
-        --accent: 229 72% 96%;
-        --accent-foreground: 225 34% 10%;
-        --primary: 174 63% 42%;
-        --primary-foreground: 0 0% 98%;
-        --secondary: 226 44% 94%;
-        --secondary-foreground: 225 34% 10%;
-        --destructive: 0 72.2% 50.6%;
-        --destructive-foreground: 0 0% 98%;
-        --success: 160 84% 39%;
-        --success-foreground: 0 0% 98%;
-        --warning: 38 92% 50%;
-        --warning-foreground: 240 10% 3.9%;
-        --info: 211 100% 68%;
-        --info-foreground: 0 0% 98%;
-        --border: 224 32% 86%;
-        --input: 224 32% 86%;
-        --ring: 174 63% 42%;
-        --focus: 211 100% 68%;
-        --state-draft: 60 13% 93%;
-        --state-saved: 214 32% 91%;
-        --state-staged: 199 89% 48%;
-        --state-canary: 38 92% 50%;
-        --state-production: 161 45% 34%;
-        --state-archived: 240 3.8% 46.1%;
-        --radius: 0.5rem;
+        --muted: 224 22% 96%;
+        --muted-foreground: 228 12% 46%;
+        --accent: 228 50% 97%;
+        --accent-foreground: 230 30% 12%;
+
+        --primary: 246 60% 52%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 224 22% 96%;
+        --secondary-foreground: 230 30% 12%;
+
+        --destructive: 350 76% 50%;
+        --destructive-foreground: 0 0% 100%;
+        --success: 168 64% 36%;
+        --success-foreground: 0 0% 100%;
+        --warning: 30 92% 48%;
+        --warning-foreground: 230 30% 12%;
+        --info: 215 88% 54%;
+        --info-foreground: 0 0% 100%;
+
+        --border: 224 22% 90%;
+        --input: 224 22% 90%;
+        --ring: 246 60% 52%;
+        --focus: 215 88% 54%;
+
+        --state-draft: 224 28% 90%;
+        --state-saved: 215 24% 90%;
+        --state-staged: 215 88% 54%;
+        --state-canary: 30 92% 48%;
+        --state-production: 168 50% 36%;
+        --state-archived: 228 8% 60%;
+
+        --radius: 0.85rem;
+
         --glass-bg: 0 0% 100%;
-        --glass-border: 224 42% 86%;
-        --glass-shadow: 225 50% 20%;
-        --aurora-a: 174 80% 54%;
-        --aurora-b: 222 100% 72%;
-        --aurora-c: 286 85% 76%;
-        --aurora-warm: 38 100% 64%;
+        --glass-tint: 0 0% 100%;
+        --glass-border: 224 22% 92%;
+        --glass-shadow: 230 36% 24%;
+        --glass-hi: 0 0% 100%;
+
+        /* Ink colors drifting behind the snow. Used as discrete fixed blobs. */
+        --ink-lavender: 250 95% 70%;
+        --ink-sky: 215 96% 70%;
+        --ink-lilac: 282 88% 72%;
+        --ink-peach: 18 92% 76%;
+        --ink-ice: 195 90% 76%;
+
+        /* How much of the ink the snow lets through. */
+        --ink-strength: 0.16;
+
+        --pointer-light: 246 80% 64%;
+
         --duration-flash: 80ms;
         --duration-swift: 160ms;
         --duration-standard: 240ms;
-        --duration-gentle: 400ms;
-        --duration-ambient: 1600ms;
+        --duration-gentle: 480ms;
+        --duration-ambient: 3200ms;
+        --duration-drift: 56s;
         --ease-standard: cubic-bezier(0.2, 0, 0, 1);
         --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+        --ease-glass: cubic-bezier(0.32, 0.72, 0, 1);
     }
 
     .dark {
-        --background: 230 55% 5%;
-        --foreground: 210 40% 96%;
-        --card: 226 48% 9%;
-        --card-foreground: 210 40% 96%;
-        --surface: 226 48% 8%;
-        --surface-elevated: 225 42% 13%;
-        --muted: 224 38% 15%;
-        --muted-foreground: 218 24% 68%;
-        --accent: 225 42% 18%;
-        --accent-foreground: 210 40% 96%;
-        --primary: 174 84% 40%;
-        --primary-foreground: 226 49% 8%;
-        --secondary: 223 42% 18%;
-        --secondary-foreground: 210 40% 96%;
-        --destructive: 0 62.8% 42%;
-        --destructive-foreground: 0 0% 98%;
-        --success: 160 60% 45%;
-        --success-foreground: 240 10% 3.9%;
-        --warning: 43 96% 56%;
-        --warning-foreground: 240 10% 3.9%;
-        --info: 199 89% 55%;
-        --info-foreground: 240 10% 3.9%;
-        --border: 224 36% 21%;
-        --input: 223 38% 27%;
-        --ring: 174 84% 40%;
-        --focus: 211 100% 68%;
-        --state-draft: 223 42% 18%;
-        --state-saved: 215 20% 30%;
-        --state-staged: 199 89% 55%;
-        --state-canary: 43 96% 56%;
-        --state-production: 160 60% 45%;
-        --state-archived: 240 5% 64.9%;
-        --glass-bg: 226 48% 10%;
-        --glass-border: 219 52% 26%;
-        --glass-shadow: 225 88% 3%;
-        --aurora-a: 174 87% 46%;
-        --aurora-b: 225 96% 62%;
-        --aurora-c: 280 82% 66%;
-        --aurora-warm: 32 100% 60%;
+        /* Deep inky neutral. Same idea: ink drifts behind, surface stays calm. */
+        --background: 224 14% 5%;
+        --foreground: 220 22% 96%;
+        --card: 224 12% 10%;
+        --card-foreground: 220 22% 96%;
+        --surface: 224 12% 7%;
+        --surface-elevated: 224 12% 12%;
+        --muted: 224 10% 14%;
+        --muted-foreground: 224 10% 68%;
+        --accent: 224 10% 18%;
+        --accent-foreground: 220 22% 96%;
+
+        --primary: 246 86% 74%;
+        --primary-foreground: 224 14% 6%;
+        --secondary: 224 10% 18%;
+        --secondary-foreground: 220 22% 96%;
+
+        --destructive: 350 80% 60%;
+        --destructive-foreground: 0 0% 100%;
+        --success: 168 68% 48%;
+        --success-foreground: 224 14% 6%;
+        --warning: 38 92% 60%;
+        --warning-foreground: 224 14% 6%;
+        --info: 210 96% 68%;
+        --info-foreground: 224 14% 6%;
+
+        --border: 224 10% 18%;
+        --input: 224 10% 22%;
+        --ring: 246 86% 74%;
+        --focus: 210 96% 68%;
+
+        --state-draft: 224 10% 22%;
+        --state-saved: 220 12% 36%;
+        --state-staged: 210 96% 68%;
+        --state-canary: 38 92% 60%;
+        --state-production: 168 68% 48%;
+        --state-archived: 220 8% 58%;
+
+        --glass-bg: 224 12% 10%;
+        --glass-tint: 224 12% 12%;
+        --glass-border: 224 10% 20%;
+        --glass-shadow: 224 60% 0%;
+        --glass-hi: 220 60% 80%;
+
+        --ink-lavender: 250 96% 70%;
+        --ink-sky: 210 100% 70%;
+        --ink-lilac: 282 92% 72%;
+        --ink-peach: 22 96% 70%;
+        --ink-ice: 190 100% 74%;
+
+        --ink-strength: 0.22;
+
+        --pointer-light: 246 96% 74%;
     }
 
     body {
         @apply bg-background text-foreground;
         min-height: 100vh;
-        background-image: linear-gradient(
-                128deg,
-                hsl(var(--aurora-b) / 0.16),
-                transparent 38%
-            ),
-            linear-gradient(
-                238deg,
-                hsl(var(--aurora-c) / 0.14),
-                transparent 42%
-            ),
-            conic-gradient(
-                from 210deg at 50% 38%,
-                hsl(var(--aurora-a) / 0.08),
-                transparent 24%,
-                hsl(var(--aurora-warm) / 0.08),
-                transparent 54%
-            ),
-            linear-gradient(hsl(var(--foreground) / 0.034) 1px, transparent 1px),
-            linear-gradient(
-                90deg,
-                hsl(var(--foreground) / 0.028) 1px,
-                transparent 1px
-            ),
-            linear-gradient(
-                180deg,
-                hsl(var(--background)),
-                hsl(var(--surface) / 0.78)
-            );
-        background-size:
-            100% 100%,
-            100% 100%,
-            100% 100%,
-            42px 42px,
-            42px 42px,
-            100% 100%;
-        background-attachment: fixed;
+        background-color: hsl(var(--background));
         font-feature-settings:
             "rlig" 1,
-            "calt" 1;
+            "calt" 1,
+            "ss01" 1;
+    }
+
+    /* The ink layer — soft blobs sitting behind the snow. Drift very slowly. */
+    body::before {
+        content: "";
+        position: fixed;
+        inset: -20vmax;
+        z-index: -2;
+        pointer-events: none;
+        background:
+            radial-gradient(
+                circle 38vmax at 18% 20%,
+                hsl(var(--ink-lavender) / var(--ink-strength)),
+                transparent 60%
+            ),
+            radial-gradient(
+                circle 34vmax at 84% 28%,
+                hsl(var(--ink-lilac) / calc(var(--ink-strength) * 0.85)),
+                transparent 60%
+            ),
+            radial-gradient(
+                circle 40vmax at 50% 96%,
+                hsl(var(--ink-sky) / calc(var(--ink-strength) * 0.78)),
+                transparent 65%
+            ),
+            radial-gradient(
+                circle 22vmax at 78% 78%,
+                hsl(var(--ink-peach) / calc(var(--ink-strength) * 0.4)),
+                transparent 65%
+            );
+        filter: blur(40px) saturate(140%);
+        animation: ink-drift var(--duration-drift) ease-in-out infinite alternate;
+        will-change: transform;
+        transform: translate3d(0, 0, 0);
+    }
+
+    /* The snow / glass sheet. Sits on top of the ink and diffuses it. */
+    body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background: hsl(var(--background) / 0.78);
+        backdrop-filter: blur(40px) saturate(120%);
+        -webkit-backdrop-filter: blur(40px) saturate(120%);
+    }
+
+    .dark body::after {
+        background: hsl(var(--background) / 0.7);
     }
 
     * {
@@ -149,52 +208,29 @@
     }
 
     ::selection {
-        background: hsl(var(--primary) / 0.28);
+        background: hsl(var(--primary) / 0.22);
+        color: hsl(var(--primary-foreground));
     }
 }
+
+/* ----------------------------------------------------------------------------
+   Utilities
+   ---------------------------------------------------------------------------- */
 
 @layer utilities {
     .aurora-shell {
         position: relative;
-        isolation: isolate;
-        overflow: hidden;
-        background: linear-gradient(
-                128deg,
-                hsl(var(--aurora-b) / 0.15),
-                transparent 38%
-            ),
-            linear-gradient(
-                238deg,
-                hsl(var(--aurora-c) / 0.13),
-                transparent 42%
-            ),
-            conic-gradient(
-                from 210deg at 50% 38%,
-                hsl(var(--aurora-a) / 0.08),
-                transparent 24%,
-                hsl(var(--aurora-warm) / 0.08),
-                transparent 54%
-            ),
-            hsl(var(--background) / 0.92);
     }
 
-    .aurora-shell::before {
-        content: "";
-        pointer-events: none;
-        position: absolute;
-        inset: 0;
-        z-index: -1;
-        background: linear-gradient(
-                hsl(var(--foreground) / 0.038) 1px,
-                transparent 1px
-            ),
-            linear-gradient(
-                90deg,
-                hsl(var(--foreground) / 0.03) 1px,
-                transparent 1px
-            );
-        background-size: 42px 42px;
-        mask-image: linear-gradient(180deg, black, transparent 92%);
+    /* The pointer light — gentle radial that follows the cursor. */
+    .pointer-light {
+        background: radial-gradient(
+            circle at 50% 50%,
+            hsl(var(--pointer-light) / 0.16),
+            hsl(var(--pointer-light) / 0.05) 22%,
+            transparent 52%
+        );
+        filter: blur(48px);
     }
 
     .target-transition {
@@ -204,7 +240,9 @@
 
     .target-elevated {
         background: hsl(var(--surface-elevated));
-        box-shadow: 0 1px 2px hsl(var(--foreground) / 0.05);
+        box-shadow:
+            0 1px 1px hsl(var(--foreground) / 0.04),
+            0 12px 32px -16px hsl(var(--glass-shadow) / 0.14);
     }
 
     .line-clamp-2 {
@@ -214,312 +252,716 @@
         overflow: hidden;
     }
 
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
+    }
+
+    /* A floating snow-glass surface. No heavy outline. Quiet lift shadow. */
     .glass-panel {
-        border: 1px solid hsl(var(--glass-border) / 0.72);
-        background: linear-gradient(
-                135deg,
-                hsl(var(--glass-bg) / 0.76),
-                hsl(var(--glass-bg) / 0.46)
-            ),
-            linear-gradient(
-                180deg,
-                hsl(var(--card) / 0.78),
-                hsl(var(--surface-elevated) / 0.62)
-            );
+        position: relative;
+        border: 1px solid hsl(var(--border) / 0.5);
+        background: hsl(var(--card));
         box-shadow:
-            inset 0 1px 0 hsl(0 0% 100% / 0.18),
-            0 24px 70px hsl(var(--glass-shadow) / 0.16);
-        backdrop-filter: blur(22px) saturate(150%);
+            0 1px 1px hsl(var(--foreground) / 0.03),
+            0 14px 30px -18px hsl(var(--glass-shadow) / 0.18),
+            0 30px 60px -32px hsl(var(--glass-shadow) / 0.12);
+    }
+
+    .dark .glass-panel {
+        border-color: hsl(var(--border) / 0.65);
+        background: hsl(var(--card));
+        box-shadow:
+            0 1px 1px hsl(0 0% 0% / 0.3),
+            0 18px 40px -18px hsl(0 0% 0% / 0.55),
+            0 32px 64px -28px hsl(0 0% 0% / 0.45);
+    }
+
+    .glass-deep {
+        position: relative;
+        border: 1px solid hsl(var(--border) / 0.5);
+        background: hsl(var(--card));
+        box-shadow:
+            0 1px 1px hsl(var(--foreground) / 0.03),
+            0 20px 40px -20px hsl(var(--glass-shadow) / 0.18),
+            0 40px 80px -36px hsl(var(--glass-shadow) / 0.14);
+    }
+
+    .dark .glass-deep {
+        border-color: hsl(var(--border) / 0.7);
+        background: hsl(var(--card));
+        box-shadow:
+            0 1px 1px hsl(0 0% 0% / 0.3),
+            0 24px 48px -20px hsl(0 0% 0% / 0.6),
+            0 40px 80px -32px hsl(0 0% 0% / 0.5);
+    }
+
+    .glass-bar {
+        border: 1px solid hsl(var(--border) / 0.5);
+        background: hsl(var(--card) / 0.85);
+        box-shadow:
+            0 1px 1px hsl(var(--foreground) / 0.03),
+            0 10px 24px -16px hsl(var(--glass-shadow) / 0.18);
+        backdrop-filter: blur(18px) saturate(140%);
+    }
+
+    .dark .glass-bar {
+        background: hsl(var(--card) / 0.78);
+        box-shadow:
+            0 1px 1px hsl(0 0% 0% / 0.3),
+            0 14px 32px -18px hsl(0 0% 0% / 0.55);
+    }
+
+    .prism-seam {
+        background: linear-gradient(
+            90deg,
+            hsl(var(--ink-peach) / 0.55),
+            hsl(var(--ink-lavender) / 0.7) 25%,
+            hsl(var(--ink-sky) / 0.7) 55%,
+            hsl(var(--ink-lilac) / 0.7) 75%,
+            hsl(var(--ink-ice) / 0.55)
+        );
+        filter: saturate(140%);
+    }
+
+    .prism-seam--vertical {
+        background: linear-gradient(
+            180deg,
+            hsl(var(--ink-peach) / 0.55),
+            hsl(var(--ink-lavender) / 0.7) 25%,
+            hsl(var(--ink-sky) / 0.7) 55%,
+            hsl(var(--ink-lilac) / 0.7) 75%,
+            hsl(var(--ink-ice) / 0.55)
+        );
+    }
+
+    .text-pearl {
+        background: linear-gradient(
+            120deg,
+            hsl(var(--foreground)),
+            hsl(var(--foreground) / 0.74) 40%,
+            hsl(246 70% 50%) 65%,
+            hsl(215 80% 50%)
+        );
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+    }
+
+    .dark .text-pearl {
+        background: linear-gradient(
+            120deg,
+            hsl(var(--foreground)),
+            hsl(246 86% 80%) 50%,
+            hsl(200 90% 82%)
+        );
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+    }
+
+    .quiet-scrollbar {
+        scrollbar-color: hsl(var(--border)) transparent;
+        scrollbar-width: thin;
+    }
+
+    .quiet-scrollbar::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    .quiet-scrollbar::-webkit-scrollbar-thumb {
+        background: hsl(var(--border));
+        border-radius: 999px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+    }
+
+    .quiet-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .tabular-nums {
+        font-variant-numeric: tabular-nums;
     }
 }
 
+/* ----------------------------------------------------------------------------
+   Components
+   ---------------------------------------------------------------------------- */
+
 @layer components {
+    /* Default card. Floats on a lift shadow; very faint hairline. */
     .instrument-panel {
         position: relative;
         overflow: hidden;
-        border: 1px solid hsl(var(--glass-border) / 0.76);
-        background: radial-gradient(
-                circle at 12% 0%,
-                hsl(var(--aurora-b) / 0.12),
-                transparent 34%
-            ),
-            linear-gradient(
-                180deg,
-                hsl(var(--card) / 0.86),
-                hsl(var(--surface-elevated) / 0.72)
-            ),
-            hsl(var(--card));
+        border-radius: calc(var(--radius) + 2px);
+        border: 1px solid hsl(var(--border) / 0.45);
+        background: hsl(var(--card));
         box-shadow:
-            inset 0 1px 0 hsl(0 0% 100% / 0.16),
-            0 1px 0 hsl(var(--foreground) / 0.05),
-            0 18px 54px hsl(var(--glass-shadow) / 0.2);
-        backdrop-filter: blur(18px) saturate(145%);
+            0 1px 1px hsl(var(--foreground) / 0.03),
+            0 14px 28px -18px hsl(var(--glass-shadow) / 0.18),
+            0 32px 64px -32px hsl(var(--glass-shadow) / 0.1);
     }
 
-    .instrument-panel::before {
-        content: "";
-        pointer-events: none;
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        background: linear-gradient(
-            120deg,
-            hsl(var(--info) / 0.16),
-            transparent 28%,
-            transparent 72%,
-            hsl(var(--aurora-c) / 0.12)
-        );
-        opacity: 0;
-        transition: opacity var(--duration-standard) var(--ease-standard);
-    }
-
-    .instrument-panel:hover::before,
-    .instrument-panel:focus-within::before {
-        opacity: 1;
+    .dark .instrument-panel {
+        border-color: hsl(var(--border) / 0.65);
+        background: hsl(var(--card));
+        box-shadow:
+            0 1px 1px hsl(0 0% 0% / 0.3),
+            0 18px 40px -18px hsl(0 0% 0% / 0.55),
+            0 36px 72px -32px hsl(0 0% 0% / 0.4);
     }
 
     .interactive-lift {
         transform: translateY(0);
         transition:
             transform var(--duration-swift) var(--ease-standard),
-            border-color var(--duration-swift) var(--ease-standard),
-            background-color var(--duration-swift) var(--ease-standard),
             box-shadow var(--duration-swift) var(--ease-standard),
-            color var(--duration-swift) var(--ease-standard);
+            background-color var(--duration-swift) var(--ease-standard);
     }
 
     .interactive-lift:hover {
         transform: translateY(-1px);
         box-shadow:
-            0 1px 0 hsl(var(--foreground) / 0.04),
-            0 14px 34px hsl(var(--glass-shadow) / 0.16);
+            0 1px 1px hsl(var(--foreground) / 0.04),
+            0 22px 38px -18px hsl(var(--glass-shadow) / 0.22),
+            0 40px 80px -36px hsl(var(--glass-shadow) / 0.14);
+    }
+
+    .dark .interactive-lift:hover {
+        box-shadow:
+            0 1px 1px hsl(0 0% 0% / 0.3),
+            0 28px 56px -18px hsl(0 0% 0% / 0.65),
+            0 48px 96px -36px hsl(0 0% 0% / 0.45);
     }
 
     .pressable:active {
         transform: translateY(0) scale(0.99);
     }
 
-    .sheen-hover {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .sheen-hover::after {
-        content: "";
-        pointer-events: none;
-        position: absolute;
-        inset: -40% -60%;
-        background: linear-gradient(
-            110deg,
-            transparent 35%,
-            hsl(var(--foreground) / 0.1) 50%,
-            transparent 65%
-        );
-        transform: translateX(-45%);
-        opacity: 0;
-    }
-
-    .sheen-hover:hover::after {
-        animation: sheen-sweep var(--duration-ambient) var(--ease-emphasized);
-    }
-
-    .breathing-well {
-        animation: breathing-well var(--duration-ambient) var(--ease-standard)
-            infinite alternate;
-    }
-
-    .activity-ribbon-flow {
-        background-size: 180% 100%;
-        animation: activity-flow calc(var(--duration-ambient) * 1.8) linear
-            infinite;
-    }
-
-    .page-enter {
-        animation: page-enter var(--duration-standard) var(--ease-emphasized)
-            both;
-    }
-
-    .quiet-scrollbar {
-        scrollbar-color: hsl(var(--border)) transparent;
-    }
-
-    .orbital-lattice {
-        position: absolute;
-        inset: 0;
-        overflow: hidden;
-        border-radius: inherit;
-    }
-
-    .orbital-lattice::before {
-        content: "";
-        position: absolute;
-        inset: -18% -14%;
-        border-radius: 999px;
-        background: repeating-radial-gradient(
-                ellipse at 50% 50%,
-                transparent 0 5.2rem,
-                hsl(var(--foreground) / 0.075) 5.24rem 5.3rem,
-                transparent 5.36rem 9.2rem
-            ),
-            conic-gradient(
-                from 18deg,
-                transparent,
-                transparent 28%,
-                hsl(var(--aurora-b) / 0.38) 34%,
-                transparent 41%,
-                transparent 63%,
-                hsl(var(--aurora-a) / 0.3) 70%,
-                transparent 78%,
-                transparent
-            );
-        mask-image: radial-gradient(
-            ellipse at center,
-            black 34%,
-            transparent 76%
-        );
-        animation: orbital-drift 24s linear infinite;
-    }
-
     .floating-glass-badge {
-        border: 1px solid hsl(var(--glass-border) / 0.72);
-        background: hsl(var(--glass-bg) / 0.72);
+        border: 1px solid hsl(var(--border) / 0.5);
+        background: hsl(var(--card) / 0.92);
         box-shadow:
-            inset 0 1px 0 hsl(0 0% 100% / 0.18),
-            0 16px 42px hsl(var(--glass-shadow) / 0.14);
-        backdrop-filter: blur(18px) saturate(150%);
+            0 1px 1px hsl(var(--foreground) / 0.03),
+            0 8px 20px -12px hsl(var(--glass-shadow) / 0.18);
+        backdrop-filter: blur(14px) saturate(140%);
     }
+
+    .dark .floating-glass-badge {
+        background: hsl(var(--card) / 0.78);
+        box-shadow:
+            0 1px 1px hsl(0 0% 0% / 0.3),
+            0 12px 24px -12px hsl(0 0% 0% / 0.55);
+    }
+
+    .glass-pill {
+        border: 1px solid hsl(var(--border) / 0.4);
+        background: hsl(var(--card) / 0.85);
+        box-shadow:
+            0 1px 1px hsl(var(--foreground) / 0.03),
+            0 6px 14px -8px hsl(var(--glass-shadow) / 0.16);
+        backdrop-filter: blur(14px) saturate(140%);
+    }
+
+    .dark .glass-pill {
+        background: hsl(var(--card) / 0.72);
+        box-shadow:
+            0 1px 1px hsl(0 0% 0% / 0.3),
+            0 8px 18px -10px hsl(0 0% 0% / 0.45);
+    }
+
+    /* ------------------------------------------------------------------
+       AgentGlassOrb — a thick squircle of glass. Light refracts at each
+       corner into a different prism color. The agent's hue settles inside
+       like ink suspended in water, drifting slowly. There's a top sheen,
+       a pinpoint specular, and a soft caustic glow underneath where light
+       exits the bottom edge.
+       ------------------------------------------------------------------ */
 
     .agent-glass-orb {
-        --agent-hue: 174;
-        --agent-hue-2: 232;
-        --agent-hue-3: 296;
+        --agent-hue: 246;
+        --agent-hue-2: 214;
+        --agent-hue-3: 286;
+        --orb-glow: 0.5;
         position: relative;
         display: inline-flex;
         flex-shrink: 0;
         align-items: center;
         justify-content: center;
-        overflow: hidden;
-        border-radius: 999px;
-        border: 1px solid hsl(var(--glass-border) / 0.82);
-        background: radial-gradient(
-                circle at 26% 20%,
-                hsl(0 0% 100% / 0.76),
-                transparent 22%
-            ),
-            linear-gradient(
-                145deg,
-                hsl(var(--glass-bg) / 0.68),
-                hsl(var(--glass-bg) / 0.24)
-            );
-        box-shadow:
-            inset 0 1px 1px hsl(0 0% 100% / 0.32),
-            inset 0 -10px 22px hsl(var(--agent-hue-2) 72% 50% / 0.12),
-            0 0 0 1px hsl(var(--agent-hue) 82% 64% / 0.12),
-            0 16px 34px hsl(var(--agent-hue) 76% 36% / 0.2);
+        border-radius: 32%;
         isolation: isolate;
+        contain: paint;
+
+        /* Clear glass. The body is fully transparent. A bright iridescent
+           refraction ring sits at the perimeter; the center is empty. */
+        background:
+            /* perimeter chromatic ring — narrow, intense */
+            conic-gradient(
+                from 200deg,
+                hsl(var(--agent-hue-3) 100% 78%) 0%,
+                hsl(var(--agent-hue) 100% 72%) 12%,
+                hsl(var(--agent-hue-2) 100% 76%) 26%,
+                hsl(195 100% 78%) 40%,
+                hsl(18 100% 76%) 54%,
+                hsl(322 100% 78%) 68%,
+                hsl(var(--agent-hue-3) 100% 78%) 84%,
+                hsl(var(--agent-hue-3) 100% 78%) 100%
+            );
+
+        /* Chromatic dispersion drop shadow. */
+        box-shadow:
+            0 4px 8px -2px hsl(var(--agent-hue-3) 92% 70% / 0.22),
+            0 10px 20px -4px hsl(var(--agent-hue) 90% 68% / 0.24),
+            0 20px 38px -10px hsl(var(--agent-hue-2) 92% 60% / 0.26),
+            0 30px 60px -20px hsl(var(--glass-shadow) / 0.32);
+    }
+
+    .dark .agent-glass-orb {
+        box-shadow:
+            0 4px 8px -2px hsl(var(--agent-hue-3) 96% 70% / 0.26),
+            0 12px 22px -4px hsl(var(--agent-hue) 96% 68% / 0.3),
+            0 22px 40px -10px hsl(var(--agent-hue-2) 96% 60% / 0.32),
+            0 32px 64px -18px hsl(0 0% 0% / 0.7);
+    }
+
+    /* The clear body. Solid page-color fill so only a 2px chromatic
+       ring is left visible at the perimeter. Reads as clear glass on
+       a white (or inky) page because the body itself matches the page
+       — what defines the object is the rainbow rim and the highlights. */
+    .agent-glass-orb::before {
+        content: "";
+        position: absolute;
+        inset: 2px;
+        border-radius: inherit;
+        pointer-events: none;
+        background: hsl(var(--background));
+        box-shadow:
+            inset 0 1.5px 0 hsl(0 0% 100% / 0.9),
+            inset 0 -2px 2px hsl(var(--foreground) / 0.08),
+            inset 0 0 0 1px hsl(0 0% 100% / 0.55);
+        z-index: 0;
+    }
+
+    .dark .agent-glass-orb::before {
+        background: hsl(var(--background));
+        box-shadow:
+            inset 0 1.5px 0 hsl(0 0% 100% / 0.5),
+            inset 0 -2px 3px hsl(0 0% 0% / 0.55),
+            inset 0 0 0 1px hsl(0 0% 100% / 0.18);
     }
 
     .agent-glass-orb__flow,
+    .agent-glass-orb__caustic,
     .agent-glass-orb__glass,
     .agent-glass-orb__spark,
-    .agent-glass-orb__status {
+    .agent-glass-orb__status,
+    .agent-glass-orb__symbol,
+    .agent-glass-orb__mascot {
         position: absolute;
         pointer-events: none;
     }
 
+    /* The agent mascot — SVG rendered inside the clear glass. The SVG's
+       white canvas rect was stripped, so it's transparent and reads
+       cleanly on both light and dark pages. A linear bottom-fade mask
+       hides the SVG's built-in floor shadow because we render a static
+       rainbow floor separately (so it stays put when the mascot hovers). */
+    .agent-glass-orb__mascot {
+        inset: 4%;
+        width: 92%;
+        height: 92%;
+        object-fit: contain;
+        object-position: center top;
+        mask-image: linear-gradient(
+            180deg,
+            black 0%,
+            black 76%,
+            transparent 92%
+        );
+        -webkit-mask-image: linear-gradient(
+            180deg,
+            black 0%,
+            black 76%,
+            transparent 92%
+        );
+        z-index: 5;
+        user-select: none;
+        -webkit-user-drag: none;
+        animation: mascot-hover 4.6s ease-in-out infinite;
+        will-change: transform;
+        transform-origin: center 65%;
+    }
+
+    /* Static rainbow floor shadow beneath the mascot — does NOT move with
+       the hover, so the bob reads as actual lift off the floor. Only
+       applied to decorative orbs (where the mascot is shown). */
+    .agent-glass-orb--decorative::after {
+        content: "";
+        position: absolute;
+        left: 24%;
+        right: 24%;
+        bottom: 14%;
+        height: 5%;
+        border-radius: 50%;
+        background: conic-gradient(
+            from 90deg,
+            hsl(322 100% 70% / 0.65),
+            hsl(28 100% 64% / 0.6),
+            hsl(195 100% 62% / 0.6),
+            hsl(264 100% 70% / 0.65),
+            hsl(322 100% 70% / 0.65)
+        );
+        filter: blur(6px) saturate(160%);
+        opacity: 0.7;
+        z-index: 4;
+        pointer-events: none;
+        animation: floor-pulse 4.6s ease-in-out infinite;
+    }
+
+    .dark .agent-glass-orb--decorative::after {
+        opacity: 0.85;
+        filter: blur(7px) saturate(180%);
+    }
+
+    /* The agent's hue — a small soft tint deep inside the glass. Reads
+       like a hint of stained glass, not a fog. */
     .agent-glass-orb__flow {
-        inset: -35%;
-        border-radius: 999px;
+        inset: 30%;
+        border-radius: 50%;
         background: radial-gradient(
-                circle at 30% 26%,
-                hsl(var(--agent-hue) 86% 64% / 0.84),
-                transparent 20%
-            ),
-            radial-gradient(
-                circle at 68% 68%,
-                hsl(var(--agent-hue-2) 88% 65% / 0.76),
-                transparent 24%
-            ),
-            radial-gradient(
-                circle at 42% 82%,
-                hsl(var(--agent-hue-3) 86% 70% / 0.64),
-                transparent 28%
-            ),
-            conic-gradient(
-                from 120deg,
-                hsl(var(--agent-hue) 86% 58% / 0.82),
-                hsl(var(--agent-hue-2) 86% 64% / 0.66),
-                hsl(var(--agent-hue-3) 86% 68% / 0.74),
-                hsl(var(--agent-hue) 86% 58% / 0.82)
-            );
-        filter: blur(1px) saturate(130%);
-        opacity: 0.82;
-        animation: agent-hue-flow 8s linear infinite;
-        z-index: -2;
+            circle at 50% 50%,
+            hsl(var(--agent-hue) 96% 60% / 0.32),
+            hsl(var(--agent-hue-3) 92% 64% / 0.16) 60%,
+            transparent 85%
+        );
+        filter: blur(8px) saturate(160%);
+        opacity: 0.7;
+        animation: orb-drift 34s ease-in-out infinite alternate;
+        z-index: 1;
     }
 
+    /* Top highlight — a clean curve, not blurry. */
+    .agent-glass-orb__caustic {
+        top: 5%;
+        left: 14%;
+        right: 14%;
+        height: 28%;
+        border-radius: 50% / 100% 100% 0 0;
+        background: linear-gradient(
+            180deg,
+            hsl(0 0% 100% / 0.85),
+            hsl(0 0% 100% / 0.4) 35%,
+            hsl(0 0% 100% / 0.08) 70%,
+            transparent
+        );
+        opacity: 0.85;
+        z-index: 3;
+    }
+
+    .dark .agent-glass-orb__caustic {
+        background: linear-gradient(
+            180deg,
+            hsl(0 0% 100% / 0.5),
+            hsl(0 0% 100% / 0.2) 40%,
+            transparent 80%
+        );
+        opacity: 0.65;
+    }
+
+    /* Bottom caustic — bright arc at the lower edge, sharper. */
     .agent-glass-orb__glass {
-        inset: 15%;
-        border-radius: 999px;
-        background: radial-gradient(
-                circle at 34% 22%,
-                hsl(0 0% 100% / 0.76),
-                transparent 20%
-            ),
-            radial-gradient(
-                circle at 62% 80%,
-                hsl(0 0% 100% / 0.22),
-                transparent 28%
-            ),
-            linear-gradient(
-                150deg,
-                hsl(0 0% 100% / 0.18),
-                hsl(0 0% 100% / 0.04)
-            );
-        box-shadow:
-            inset 0 1px 1px hsl(0 0% 100% / 0.42),
-            inset 0 -5px 12px hsl(var(--foreground) / 0.1);
-        z-index: -1;
+        bottom: 6%;
+        left: 20%;
+        right: 20%;
+        height: 14%;
+        border-radius: 50% / 0 0 100% 100%;
+        background: linear-gradient(
+            0deg,
+            hsl(0 0% 100% / 0.7),
+            hsl(0 0% 100% / 0.2) 50%,
+            transparent
+        );
+        opacity: 0.7;
+        z-index: 2;
     }
 
+    .dark .agent-glass-orb__glass {
+        background: linear-gradient(
+            0deg,
+            hsl(var(--agent-hue) 100% 78% / 0.45),
+            hsl(0 0% 100% / 0.16) 55%,
+            transparent
+        );
+        opacity: 0.75;
+    }
+
+    /* Pinpoint specular — small soft kiss along the upper-left rim. Reads
+       as a reflection of light, not a paint dot. */
     .agent-glass-orb__spark {
-        left: 26%;
-        top: 20%;
-        height: 14%;
-        width: 14%;
-        border-radius: 999px;
-        background: hsl(0 0% 100% / 0.88);
-        filter: blur(0.4px);
-        box-shadow: 0 0 18px hsl(0 0% 100% / 0.72);
+        left: 14%;
+        top: 8%;
+        height: 18%;
+        width: 26%;
+        border-radius: 50%;
+        background: radial-gradient(
+            ellipse at 40% 40%,
+            hsl(0 0% 100% / 0.85) 0%,
+            hsl(0 0% 100% / 0.35) 35%,
+            transparent 70%
+        );
+        filter: blur(1px);
+        opacity: 0.85;
+        z-index: 4;
+    }
+
+    .dark .agent-glass-orb__spark {
+        background: radial-gradient(
+            ellipse at 40% 40%,
+            hsl(0 0% 100% / 0.32) 0%,
+            hsl(var(--agent-hue) 100% 80% / 0.18) 35%,
+            transparent 75%
+        );
+        opacity: 0.7;
     }
 
     .agent-glass-orb__status {
-        bottom: 11%;
-        right: 12%;
-        height: 18%;
-        width: 18%;
+        bottom: 6%;
+        right: 6%;
+        height: 22%;
+        width: 22%;
         border-radius: 999px;
-        border: 1px solid hsl(var(--background) / 0.86);
+        border: 2px solid hsl(var(--card));
         background: hsl(var(--success));
-        box-shadow: 0 0 0 2px hsl(var(--success) / 0.18);
+        box-shadow:
+            0 0 0 1px hsl(var(--success) / 0.32),
+            0 2px 4px hsl(0 0% 0% / 0.18);
+        z-index: 5;
+    }
+
+    .agent-glass-orb--watching {
+        --orb-glow: 0.55;
     }
 
     .agent-glass-orb--watching .agent-glass-orb__status {
         background: hsl(var(--info));
-        box-shadow: 0 0 0 2px hsl(var(--info) / 0.18);
+        box-shadow: 0 0 0 1px hsl(var(--info) / 0.32);
+    }
+
+    .agent-glass-orb--drifting,
+    .agent-glass-orb--degraded {
+        --orb-glow: 0.72;
     }
 
     .agent-glass-orb--drifting .agent-glass-orb__status,
     .agent-glass-orb--degraded .agent-glass-orb__status {
         background: hsl(var(--warning));
-        box-shadow: 0 0 0 2px hsl(var(--warning) / 0.2);
+        box-shadow: 0 0 0 1px hsl(var(--warning) / 0.32);
+    }
+
+    .agent-glass-orb--blocked {
+        --orb-glow: 0.9;
     }
 
     .agent-glass-orb--blocked .agent-glass-orb__status {
         background: hsl(var(--destructive));
-        box-shadow: 0 0 0 2px hsl(var(--destructive) / 0.18);
+        box-shadow: 0 0 0 1px hsl(var(--destructive) / 0.32);
+    }
+
+    .agent-glass-orb--quiet .agent-glass-orb__flow,
+    .agent-glass-orb--quiet .agent-glass-orb__caustic {
+        animation-duration: 60s;
+    }
+
+    /* Decorative orbs (brand visuals — hero, logos) have no operational
+       state to communicate, so we strip the internal smudge and the soft
+       caustics. Only the chromatic rim, the top edge highlight, and the
+       pinpoint specular remain — a piece of pure clear glass. */
+    .agent-glass-orb--decorative .agent-glass-orb__flow,
+    .agent-glass-orb--decorative .agent-glass-orb__caustic,
+    .agent-glass-orb--decorative .agent-glass-orb__glass {
+        display: none;
+    }
+
+    .agent-glass-halo {
+        position: relative;
+        isolation: isolate;
+    }
+
+    .agent-glass-halo::before {
+        content: "";
+        position: absolute;
+        inset: -34%;
+        border-radius: 999px;
+        background: radial-gradient(
+            circle at 50% 50%,
+            hsl(var(--agent-hue, 246) 96% 70% / 0.24),
+            hsl(var(--agent-hue-2, 214) 90% 70% / 0.08) 50%,
+            transparent 72%
+        );
+        filter: blur(56px) saturate(160%);
+        z-index: -1;
+        opacity: 0.7;
+        animation: halo-breathe 11s ease-in-out infinite alternate;
+    }
+
+    /* ------------------------------------------------------------------
+       Status chips and notices
+       ------------------------------------------------------------------ */
+
+    .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.22rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        line-height: 1;
+        border: 1px solid hsl(var(--border) / 0.5);
+        background: hsl(var(--card) / 0.7);
+        backdrop-filter: blur(10px) saturate(140%);
+        color: hsl(var(--muted-foreground));
+    }
+
+    .status-chip__dot {
+        height: 0.45rem;
+        width: 0.45rem;
+        border-radius: 999px;
+        background: currentColor;
+        box-shadow: 0 0 6px currentColor;
+    }
+
+    .status-chip--success {
+        color: hsl(var(--success));
+        border-color: hsl(var(--success) / 0.32);
+        background: hsl(var(--success) / 0.08);
+    }
+
+    .status-chip--info {
+        color: hsl(var(--info));
+        border-color: hsl(var(--info) / 0.32);
+        background: hsl(var(--info) / 0.08);
+    }
+
+    .status-chip--warning {
+        color: hsl(var(--warning));
+        border-color: hsl(var(--warning) / 0.32);
+        background: hsl(var(--warning) / 0.08);
+    }
+
+    .status-chip--danger {
+        color: hsl(var(--destructive));
+        border-color: hsl(var(--destructive) / 0.32);
+        background: hsl(var(--destructive) / 0.08);
+    }
+
+    .status-chip--neutral {
+        color: hsl(var(--muted-foreground));
+    }
+
+    /* Notice — inline notification surface used for warnings and errors.
+       Soft, no harsh bordered box: just a colored left rail and a tinted
+       background that blends into the card it lives on. */
+    .notice {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65rem;
+        border-radius: calc(var(--radius) - 2px);
+        padding: 0.75rem 0.9rem 0.75rem 1rem;
+        font-size: 0.78rem;
+        line-height: 1.45;
+        background: hsl(var(--muted) / 0.6);
+        color: hsl(var(--foreground));
+    }
+
+    .notice::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.55rem;
+        bottom: 0.55rem;
+        width: 2px;
+        border-radius: 2px;
+        background: hsl(var(--muted-foreground));
+    }
+
+    .notice__icon {
+        margin-top: 0.1rem;
+        flex-shrink: 0;
+        color: hsl(var(--muted-foreground));
+    }
+
+    .notice__body {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .notice__title {
+        font-weight: 600;
+        color: hsl(var(--foreground));
+    }
+
+    .notice__detail {
+        margin-top: 0.15rem;
+        color: hsl(var(--muted-foreground));
+    }
+
+    .notice--info {
+        background: hsl(var(--info) / 0.07);
+        color: hsl(var(--info));
+    }
+
+    .notice--info::before {
+        background: hsl(var(--info));
+    }
+
+    .notice--info .notice__icon,
+    .notice--info .notice__title {
+        color: hsl(var(--info));
+    }
+
+    .notice--warning {
+        background: hsl(var(--warning) / 0.08);
+        color: hsl(var(--warning-foreground));
+    }
+
+    .notice--warning::before {
+        background: hsl(var(--warning));
+    }
+
+    .notice--warning .notice__icon,
+    .notice--warning .notice__title {
+        color: hsl(var(--warning));
+    }
+
+    .notice--danger {
+        background: hsl(var(--destructive) / 0.08);
+        color: hsl(var(--destructive));
+    }
+
+    .notice--danger::before {
+        background: hsl(var(--destructive));
+    }
+
+    .notice--danger .notice__icon,
+    .notice--danger .notice__title {
+        color: hsl(var(--destructive));
+    }
+
+    .page-enter {
+        animation: page-enter var(--duration-gentle) var(--ease-emphasized) both;
     }
 }
+
+/* ----------------------------------------------------------------------------
+   Keyframes — only the ink drifts; nothing else dances.
+   ---------------------------------------------------------------------------- */
 
 @keyframes page-enter {
     from {
@@ -532,56 +974,73 @@
     }
 }
 
-@keyframes sheen-sweep {
+@keyframes ink-drift {
     0% {
-        opacity: 0;
-        transform: translateX(-45%);
-    }
-    18% {
-        opacity: 0.6;
-    }
-    100% {
-        opacity: 0;
-        transform: translateX(45%);
-    }
-}
-
-@keyframes breathing-well {
-    from {
-        box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.1);
-    }
-    to {
-        box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.34);
-    }
-}
-
-@keyframes activity-flow {
-    from {
-        background-position: 0% 50%;
-    }
-    to {
-        background-position: 180% 50%;
-    }
-}
-
-@keyframes orbital-drift {
-    from {
-        transform: rotate(0deg) scale(1);
-    }
-    to {
-        transform: rotate(360deg) scale(1.02);
-    }
-}
-
-@keyframes agent-hue-flow {
-    0% {
-        transform: rotate(0deg) scale(1);
+        transform: translate3d(-3%, -2%, 0) scale(1);
     }
     50% {
-        transform: rotate(180deg) scale(1.08);
+        transform: translate3d(2%, 1%, 0) scale(1.05);
     }
     100% {
-        transform: rotate(360deg) scale(1);
+        transform: translate3d(-1%, 3%, 0) scale(1.02);
+    }
+}
+
+@keyframes orb-drift {
+    from {
+        transform: translate(-2%, -1%) scale(1);
+    }
+    to {
+        transform: translate(2%, 2%) scale(1.05);
+    }
+}
+
+@keyframes orb-caustic {
+    from {
+        transform: translate(0%, 0%) scale(1);
+    }
+    to {
+        transform: translate(-3%, 2%) scale(1.04);
+    }
+}
+
+@keyframes mascot-hover {
+    0% {
+        transform: translate3d(0, 0, 0) rotate(-1.2deg);
+    }
+    50% {
+        transform: translate3d(0, -7%, 0) rotate(1.2deg);
+    }
+    100% {
+        transform: translate3d(0, 0, 0) rotate(-1.2deg);
+    }
+}
+
+/* The floor stays put but tightens / dims slightly as the mascot lifts
+   off — sells the height shift. */
+@keyframes floor-pulse {
+    0% {
+        transform: scaleX(1);
+        opacity: 0.72;
+    }
+    50% {
+        transform: scaleX(0.82);
+        opacity: 0.52;
+    }
+    100% {
+        transform: scaleX(1);
+        opacity: 0.72;
+    }
+}
+
+@keyframes halo-breathe {
+    from {
+        opacity: 0.5;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 0.78;
+        transform: scale(1.04);
     }
 }
 

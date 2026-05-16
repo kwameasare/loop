@@ -267,7 +267,7 @@ export function ChangePackagePanel({
   return (
     <section
       className={cn(
-        "space-y-4 rounded-md border bg-card p-5",
+        "space-y-4 instrument-panel rounded-2xl p-5",
         isFocused || changePackagePanelFocused
           ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
           : "",
@@ -470,7 +470,7 @@ export function ChangePackagePanel({
         </p>
         <dl className="mt-3 grid gap-2 text-sm md:grid-cols-3">
           {versionRows.map(([label, value]) => (
-            <div key={label} className="rounded-md border bg-card p-2">
+            <div key={label} className="instrument-panel rounded-xl p-2">
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {label}
               </dt>
@@ -560,7 +560,7 @@ export function ChangePackagePanel({
               changePackage.required_approvals.map((approval) => (
                 <li
                   key={approval.id}
-                  className="rounded-md border bg-card p-2 text-sm"
+                  className="instrument-panel rounded-xl p-2 text-sm"
                   data-testid={`change-package-approval-${approval.id}`}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -656,7 +656,7 @@ export function ChangePackagePanel({
         {loadedChangePackage && changePackage.pre_approved_classes.length ? (
           <ul className="mt-3 grid gap-2 text-sm md:grid-cols-2">
             {changePackage.pre_approved_classes.map((item) => (
-              <li key={item.id} className="rounded-md border bg-card p-3">
+              <li key={item.id} className="instrument-panel rounded-2xl p-3">
                 <div className="flex items-center justify-between gap-3">
                   <code className="text-xs">{item.id}</code>
                   <span className="rounded-md border px-2 py-0.5 text-xs text-muted-foreground">
@@ -695,7 +695,7 @@ export function ChangePackagePanel({
           >
             {loadedChangePackage && changePackage.semantic_diff.length ? (
               changePackage.semantic_diff.map((item, index) => (
-                <li key={index} className="rounded-md border bg-card p-2">
+                <li key={index} className="instrument-panel rounded-xl p-2">
                   {semanticSummary(item, index)}
                 </li>
               ))

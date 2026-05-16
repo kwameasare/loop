@@ -85,7 +85,7 @@ export function CanarySlider({
 
       <div className="grid gap-3 lg:grid-cols-2">
         <article
-          className="rounded-md border bg-card p-3"
+          className="instrument-panel rounded-2xl p-3"
           data-testid="canary-metrics"
         >
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -118,7 +118,7 @@ export function CanarySlider({
         </article>
 
         <article
-          className="rounded-md border bg-card p-3"
+          className="instrument-panel rounded-2xl p-3"
           data-testid="auto-rollback-triggers"
         >
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

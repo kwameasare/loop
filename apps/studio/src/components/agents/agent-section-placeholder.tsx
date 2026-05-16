@@ -17,7 +17,7 @@ export function AgentSectionPlaceholder({
 }: AgentSectionPlaceholderProps) {
   return (
     <section
-      className="rounded-md border bg-card p-5"
+      className="instrument-panel rounded-2xl p-5"
       data-testid="agent-section-placeholder"
       aria-labelledby="agent-section-placeholder-heading"
     >

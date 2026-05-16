@@ -144,7 +144,7 @@ function EvidenceCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-md border bg-card p-4">
+    <section className="instrument-panel rounded-2xl p-4">
       <h3 className="text-base font-semibold">{title}</h3>
       <p className="mt-1 text-sm leading-6 text-muted-foreground">
         {description}
@@ -284,7 +284,7 @@ export default async function AgentGovernancePage({
 
   return (
     <section className="space-y-5" data-testid="agent-governance-page">
-      <header className="rounded-md border bg-card p-5">
+      <header className="instrument-panel rounded-2xl p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Agent Workbench / Governance
         </p>
@@ -397,7 +397,7 @@ export default async function AgentGovernancePage({
 
         {channelsFocused ? (
           <section
-            className="rounded-md border bg-card p-4 ring-2 ring-focus ring-offset-2 ring-offset-background"
+            className="instrument-panel rounded-2xl p-4 ring-2 ring-focus ring-offset-2 ring-offset-background"
             data-testid="governance-channel-readiness"
             data-focused="true"
           >
@@ -456,7 +456,7 @@ export default async function AgentGovernancePage({
       </div>
 
       <section
-        className={`rounded-md border bg-card p-4 ${
+        className={`instrument-panel rounded-2xl p-4 ${
           auditFocused ? "ring-2 ring-focus ring-offset-2 ring-offset-background" : ""
         }`}
         data-focused={auditFocused ? "true" : "false"}

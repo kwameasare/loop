@@ -101,7 +101,7 @@ export function CommentThreadView(props: CommentThreadViewProps): JSX.Element {
   return (
     <section
       data-testid={`comment-thread-${localThread.id}`}
-      className="space-y-3 rounded-md border bg-card p-4"
+      className="space-y-3 instrument-panel rounded-2xl p-4"
       aria-labelledby={`thread-title-${localThread.id}`}
     >
       <header className="flex flex-wrap items-baseline justify-between gap-2">

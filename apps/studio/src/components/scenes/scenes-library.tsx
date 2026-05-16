@@ -42,7 +42,7 @@ export function ScenesLibrary({
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-5 p-6">
-      <header className="rounded-md border bg-card p-5">
+      <header className="instrument-panel rounded-2xl p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Test / Scenes
         </p>
@@ -78,7 +78,7 @@ export function ScenesLibrary({
 
       {scenes.length === 0 ? (
         <section
-          className="rounded-md border bg-card p-6"
+          className="instrument-panel rounded-2xl p-6"
           data-testid="scenes-empty"
         >
           <BookOpenCheck
@@ -108,7 +108,7 @@ export function ScenesLibrary({
           {scenes.map((scene) => {
             const result = replayResults[scene.id];
             return (
-              <article key={scene.id} className="rounded-md border bg-card p-4">
+              <article key={scene.id} className="instrument-panel rounded-2xl p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="truncate text-sm font-semibold">

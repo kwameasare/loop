@@ -105,7 +105,7 @@ export function EvalFoundry({
           <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
             {model.creationSources.map((source) => (
               <article
-                className="rounded-md border bg-card p-4"
+                className="instrument-panel rounded-2xl p-4"
                 data-testid={`eval-source-${source.source}`}
                 key={source.id}
               >
@@ -168,7 +168,7 @@ export function EvalFoundry({
           <div className="grid gap-3 xl:grid-cols-2">
             {model.provenanceCases.map((item) => (
               <article
-                className="rounded-md border bg-card p-4"
+                className="instrument-panel rounded-2xl p-4"
                 data-testid={`eval-provenance-${item.id}`}
                 key={item.id}
               >
@@ -259,7 +259,7 @@ export function EvalFoundry({
           <div className="grid gap-3 lg:grid-cols-2">
             {model.changePackageLinks.map((link) => (
               <article
-                className="rounded-md border bg-card p-4"
+                className="instrument-panel rounded-2xl p-4"
                 data-testid={`eval-change-package-${link.id}`}
                 key={link.id}
               >
@@ -327,7 +327,7 @@ export function EvalFoundry({
             <div className="grid gap-3" data-testid="suite-builder-cards">
               {model.suiteBuilders.map((suite) => (
                 <article
-                  className="rounded-md border bg-card p-4"
+                  className="instrument-panel rounded-2xl p-4"
                   data-testid={`suite-builder-${suite.suiteId}`}
                   key={suite.suiteId}
                 >
@@ -428,7 +428,7 @@ export function EvalFoundry({
         </div>
         {model.featuredResult ? (
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-            <article className="rounded-md border bg-card p-4">
+            <article className="instrument-panel rounded-2xl p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h3 className="font-semibold">
@@ -477,7 +477,7 @@ export function EvalFoundry({
             >
               {model.featuredResult.recommendedFix}
             </EvidenceCallout>
-            <dl className="grid gap-2 rounded-md border bg-card p-4 text-sm xl:col-span-2 md:grid-cols-2">
+            <dl className="grid gap-2 instrument-panel rounded-2xl p-4 text-sm xl:col-span-2 md:grid-cols-2">
               <div>
                 <dt className="text-xs font-semibold uppercase text-muted-foreground">
                   Trace diff

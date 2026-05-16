@@ -78,7 +78,7 @@ export function RegressionBisect(props: RegressionBisectProps): JSX.Element {
     <section
       data-testid="regression-bisect"
       aria-labelledby="bisect-title"
-      className="space-y-3 rounded-md border bg-card p-4"
+      className="space-y-3 instrument-panel rounded-2xl p-4"
     >
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 id="bisect-title" className="text-sm font-semibold">

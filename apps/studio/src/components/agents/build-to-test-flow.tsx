@@ -94,7 +94,7 @@ export function BuildToTestFlow({ data }: BuildToTestFlowProps) {
 
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       aria-labelledby={`build-flow-heading-${data.origin}`}
       data-testid={`build-to-test-flow-${data.origin}`}
     >

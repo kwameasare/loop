@@ -241,7 +241,7 @@ export function ShareDialog({
         {link ? (
           <section
             aria-label="Share link"
-            className="space-y-2 rounded-md border bg-card p-3"
+            className="space-y-2 instrument-panel rounded-2xl p-3"
             data-testid="share-link-result"
           >
             <header className="flex items-center justify-between">

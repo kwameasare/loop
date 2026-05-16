@@ -21,7 +21,7 @@ function Metric({
   detail?: string;
 }) {
   return (
-    <div className="rounded-md border bg-card p-3" data-testid="trace-metric">
+    <div className="instrument-panel rounded-2xl p-3" data-testid="trace-metric">
       <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
       <dd className="mt-1 text-lg font-semibold">{value}</dd>
       {detail ? (

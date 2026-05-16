@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "studio",
+      "runtimeExecutable": "./node_modules/.bin/next",
+      "runtimeArgs": ["dev", "-p", "13001"],
+      "cwd": "apps/studio",
+      "port": 13001
+    }
+  ]
+}

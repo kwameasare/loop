@@ -90,7 +90,7 @@ export default async function AgentChannelsPage({
         focusReadiness={focusReadiness}
       />
       <ChannelPreviewMatrix agentId={params.agent_id} bindings={bindings} />
-      <section className="rounded-md border bg-card p-4">
+      <section className="instrument-panel rounded-2xl p-4">
         <div className="mb-3">
           <h3 className="text-sm font-semibold">Web chat embed</h3>
           <p className="mt-1 text-sm text-muted-foreground">

@@ -107,7 +107,7 @@ function CoBuilderPageBody(): JSX.Element {
       ) : null}
 
       {workspace ? (
-        <section className="rounded-md border bg-card p-3 text-sm text-muted-foreground">
+        <section className="instrument-panel rounded-2xl p-3 text-sm text-muted-foreground">
           Reviewing{" "}
           <span className="font-medium text-foreground">
             {workspace.agentName}

@@ -242,7 +242,7 @@ export function AdversarialCatchPanel({
 
   return (
     <section
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid="adversarial-catch-panel"
       aria-labelledby="adversarial-catch-heading"
     >

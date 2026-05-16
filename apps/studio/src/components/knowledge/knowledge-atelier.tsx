@@ -84,7 +84,7 @@ function signedScore(score: number): string {
 function SourceHealthCard({ source }: { source: KnowledgeSource }) {
   return (
     <article
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid={`knowledge-source-${source.documentId}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -491,7 +491,7 @@ export function KnowledgeAtelier({
             ))}
           </div>
         )}
-        <div className="rounded-md border bg-card p-4">
+        <div className="instrument-panel rounded-2xl p-4">
           <KbList
             agentId={agentId}
             degradedReason={degradedReason}
@@ -531,7 +531,7 @@ export function KnowledgeAtelier({
                 : chunk.lifecycle;
               return (
                 <article
-                  className="rounded-md border bg-card p-4"
+                  className="instrument-panel rounded-2xl p-4"
                   data-testid={`knowledge-chunk-${chunk.id}`}
                   key={chunk.id}
                 >
@@ -641,7 +641,7 @@ export function KnowledgeAtelier({
             and save the query as a retrieval eval.
           </p>
         </div>
-        <div className="rounded-md border bg-card p-4">
+        <div className="instrument-panel rounded-2xl p-4">
           <label
             className="text-xs font-semibold uppercase text-muted-foreground"
             htmlFor="retrieval-query"
@@ -692,7 +692,7 @@ export function KnowledgeAtelier({
           candidates={model.retrievalLab.candidates}
           emptyTitle="No scored retrieval candidates"
         />
-        <div className="rounded-md border bg-card p-4">
+        <div className="instrument-panel rounded-2xl p-4">
           <h3 className="text-sm font-semibold">Answer preview</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             {model.retrievalLab.answerPreview}
@@ -743,7 +743,7 @@ export function KnowledgeAtelier({
           </StatePanel>
         )}
         {model.whyPanel ? (
-          <dl className="grid gap-3 rounded-md border bg-card p-4 text-sm 2xl:col-span-2 2xl:grid-cols-2">
+          <dl className="grid gap-3 instrument-panel rounded-2xl p-4 text-sm 2xl:col-span-2 2xl:grid-cols-2">
             <div>
               <dt className="text-xs font-semibold uppercase text-muted-foreground">
                 Sent query

@@ -60,7 +60,7 @@ export function EditHistoryScrubber({ agentId }: { agentId: string }): JSX.Eleme
 
   if (items.length === 0) {
     return (
-      <section className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
+      <section className="instrument-panel rounded-2xl p-4 text-sm text-muted-foreground">
         No edit history has been recorded for this agent yet.
       </section>
     );
@@ -68,7 +68,7 @@ export function EditHistoryScrubber({ agentId }: { agentId: string }): JSX.Eleme
 
   const current = items[Math.min(index, items.length - 1)]!;
   return (
-    <section className="rounded-md border bg-card p-4" data-testid="edit-history-scrubber">
+    <section className="instrument-panel rounded-2xl p-4" data-testid="edit-history-scrubber">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold">Edit-history scrubber</h3>

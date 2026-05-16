@@ -50,7 +50,7 @@ export function VoiceDemoLanding({
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 p-6">
-      <header className="rounded-md border bg-card p-5">
+      <header className="instrument-panel rounded-2xl p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase text-muted-foreground">
@@ -71,22 +71,22 @@ export function VoiceDemoLanding({
       </header>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <article className="rounded-md border bg-card p-4">
+        <article className="instrument-panel rounded-2xl p-4">
           <p className="text-xs uppercase text-muted-foreground">Snapshot</p>
           <p className="mt-2 font-mono text-sm">{demo.snapshot_id}</p>
         </article>
-        <article className="rounded-md border bg-card p-4">
+        <article className="instrument-panel rounded-2xl p-4">
           <p className="text-xs uppercase text-muted-foreground">Expires</p>
           <p className="mt-2 text-sm">{new Date(demo.expires_at).toLocaleString()}</p>
         </article>
-        <article className="rounded-md border bg-card p-4">
+        <article className="instrument-panel rounded-2xl p-4">
           <p className="text-xs uppercase text-muted-foreground">Rate limit</p>
           <p className="mt-2 text-sm">{demo.rate_limit}</p>
         </article>
       </section>
 
       <section className="grid gap-4 md:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-md border bg-card p-4">
+        <div className="instrument-panel rounded-2xl p-4">
           <div className="flex items-center gap-3">
             <Mic className="h-5 w-5 text-info" aria-hidden={true} />
             <div>
@@ -144,7 +144,7 @@ export function VoiceDemoLanding({
       </section>
 
       {session ? (
-        <section className="rounded-md border bg-card p-4" data-testid="voice-demo-session">
+        <section className="instrument-panel rounded-2xl p-4" data-testid="voice-demo-session">
           <div className="flex items-center gap-3">
             <ShieldCheck className="h-5 w-5 text-success" aria-hidden={true} />
             <div>

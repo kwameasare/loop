@@ -44,7 +44,7 @@ export function WhatCouldBreak(props: WhatCouldBreakProps): JSX.Element {
     return (
       <section
         data-testid="what-could-break-empty"
-        className="rounded-md border bg-card p-4 text-sm text-muted-foreground"
+        className="instrument-panel rounded-2xl p-4 text-sm text-muted-foreground"
       >
         No behavior changes detected vs. production. Pre-promote replay still
         recommended.
@@ -56,7 +56,7 @@ export function WhatCouldBreak(props: WhatCouldBreakProps): JSX.Element {
     <section
       data-testid="what-could-break"
       aria-labelledby="wcb-title"
-      className="space-y-3 rounded-md border bg-card p-4"
+      className="space-y-3 instrument-panel rounded-2xl p-4"
     >
       <header className="flex items-baseline justify-between">
         <h3 id="wcb-title" className="text-sm font-semibold">

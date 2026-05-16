@@ -334,7 +334,7 @@ export function ReleaseCandidatePanel({
 
   return (
     <section
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid="release-candidate-panel"
       aria-labelledby="release-candidate-heading"
     >
@@ -512,7 +512,7 @@ export function ReleaseCandidatePanel({
                 ) : null}
                 <ul className="mt-3 space-y-2 text-sm">
                   {releaseCandidate.readiness.map((gate) => (
-                    <li key={gate.id} className="rounded-md border bg-card p-2">
+                    <li key={gate.id} className="instrument-panel rounded-xl p-2">
                       <div className="flex items-center justify-between gap-2">
                         <span>{gate.label}</span>
                         <StatusBadge status={gate.status} />
@@ -555,7 +555,7 @@ export function ReleaseCandidatePanel({
                   {releaseCandidate.required_approvals.map((approval) => (
                     <div
                       key={approval.id}
-                      className="flex items-center justify-between gap-2 rounded-md border bg-card p-2 text-sm"
+                      className="flex items-center justify-between gap-2 instrument-panel rounded-xl p-2 text-sm"
                     >
                       <span className="flex items-center gap-2">
                         <ShieldCheck className="h-4 w-4" aria-hidden />

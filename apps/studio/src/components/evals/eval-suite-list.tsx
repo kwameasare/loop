@@ -26,7 +26,7 @@ export function EvalSuiteList({ suites, focusedSuiteId }: EvalSuiteListProps) {
           data-focused={suite.id === focusedSuiteId ? "true" : "false"}
         >
           <Link
-            className={`block rounded-md border bg-card p-3 target-transition hover:bg-muted ${
+            className={`block instrument-panel rounded-2xl p-3 target-transition hover:bg-muted ${
               suite.id === focusedSuiteId
                 ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
                 : ""

@@ -1,9 +1,8 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Bot,
-  Building2,
   CheckCircle2,
+  Compass,
   FileText,
   Gauge,
   GitBranch,
@@ -15,320 +14,314 @@ import {
 } from "lucide-react";
 
 import { AgentGlassOrb } from "@/components/agents/agent-glass-orb";
+import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const proofPoints = [
   {
-    label: "Governed from intake",
+    label: "Governed from day one",
     detail:
-      "Every agent begins as a commitment with owner, channels, limits, and proof gates.",
+      "Every agent starts with an owner, a scope, and the proofs it needs to ship.",
     icon: FileText,
   },
   {
-    label: "Omnichannel by design",
+    label: "Talks where your people are",
     detail:
-      "Web, WhatsApp, Telegram, Slack, Teams, SMS, email, voice, and webhooks are peer bindings.",
+      "Web, WhatsApp, Slack, voice, email, and the rest — one agent, every channel.",
     icon: MessagesSquare,
   },
   {
-    label: "Production evidence",
+    label: "Proof in production",
     detail:
-      "Traces, evals, approvals, costs, and incidents stay linked to each release.",
+      "Traces, tests, approvals, costs, and incidents stay attached to every release.",
     icon: Radar,
   },
   {
-    label: "Enterprise control",
+    label: "Enterprise from the start",
     detail:
-      "SSO, invitations, roles, audit, residency, and system-admin review are first-class.",
+      "SSO, roles, audit, region pinning, and admin review come built in.",
     icon: ShieldCheck,
   },
 ];
 
-const sceneRows = [
-  ["Intake contract", "Owner set", "Channels selected", "Evidence required"],
-  [
-    "Replay against draft",
-    "Eval gate green",
-    "Approval hash bound",
-    "Canary ready",
-  ],
-  [
-    "Trace scrubber",
-    "HITL saved as eval",
-    "Rollback prepared",
-    "Audit exported",
-  ],
+const channelOrbits = [
+  { label: "Web", style: "left-[10%] top-[14%]" },
+  { label: "Slack", style: "right-[6%] top-[10%]" },
+  { label: "WhatsApp", style: "left-[2%] top-[56%]" },
+  { label: "Voice", style: "right-[2%] top-[58%]" },
+  { label: "Webhook", style: "left-[44%] top-[88%]" },
 ] as const;
 
-const sceneMetrics = [
-  { label: "Trace", value: "t_9b23", icon: Radar },
-  { label: "Version", value: "v23.1.4", icon: GitBranch },
-  { label: "Latency", value: "842ms", icon: Gauge },
-  { label: "Access", value: "SAML enforced", icon: LockKeyhole },
+const launchSteps = [
+  {
+    n: "01",
+    title: "Create your workspace",
+    detail: "Workspace, region, SSO, and your first admin — set up in minutes.",
+  },
+  {
+    n: "02",
+    title: "Bring in the team",
+    detail: "Invite admins, builders, reviewers, and operators with scoped roles.",
+  },
+  {
+    n: "03",
+    title: "Build or migrate",
+    detail: "Define what an agent should do, or bring over what you already have.",
+  },
+  {
+    n: "04",
+    title: "Ship with proof",
+    detail: "Replays, tests, approvals, canary, and rollback for every release.",
+  },
 ] as const;
 
-const channelBadges = [
-  ["Web", "left-[10%] top-[31%]"],
-  ["WhatsApp", "left-[22%] top-[58%]"],
-  ["Slack", "left-[30%] top-[20%]"],
-  ["Telegram", "right-[21%] top-[24%]"],
-  ["SMS", "right-[10%] top-[45%]"],
-  ["Voice", "right-[23%] top-[64%]"],
-] as const;
-
-function HeroScene() {
+function HeroOrb() {
   return (
-    <div
-      className="pointer-events-none absolute inset-0 overflow-hidden"
-      aria-hidden="true"
-    >
-      <div className="absolute inset-4 rounded-[2rem] border border-border/55 bg-card/34 shadow-[0_30px_90px_hsl(var(--glass-shadow)/0.18)] backdrop-blur-2xl sm:inset-8" />
-      <div className="orbital-lattice absolute inset-4 rounded-[2rem] sm:inset-8" />
-      <div className="absolute inset-4 rounded-[2rem] bg-[linear-gradient(115deg,hsl(var(--background)/0.88),hsl(var(--surface)/0.58)_48%,hsl(var(--background)/0.82)),linear-gradient(40deg,hsl(var(--aurora-a)/0.16),transparent_42%,hsl(var(--aurora-c)/0.14))] sm:inset-8" />
-      {channelBadges.map(([label, position], index) => (
-        <div
+    <div className="relative mx-auto flex h-[26rem] w-[26rem] items-center justify-center sm:h-[30rem] sm:w-[30rem]">
+      {channelOrbits.map(({ label, style }) => (
+        <span
           key={label}
           className={cn(
-            "floating-glass-badge absolute hidden items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold 2xl:flex",
-            position,
+            "floating-glass-badge absolute inline-flex items-center rounded-full px-3 py-1 text-[0.7rem] font-medium tracking-wide text-muted-foreground",
+            style,
           )}
         >
-          <AgentGlassOrb agentId={label} label={label} size="sm" />
-          <span>{label}</span>
-          <span className="text-muted-foreground tabular-nums">
-            {index + 1}
-          </span>
-        </div>
+          {label}
+        </span>
       ))}
-      <div className="floating-glass-badge absolute left-[6%] top-[18%] hidden w-80 rotate-[-3deg] rounded-2xl p-4 2xl:block">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-xs font-semibold uppercase text-muted-foreground">
-            Estate health
-          </span>
-          <span className="rounded-full bg-primary/15 px-2 py-1 text-xs font-medium text-primary">
-            measured
-          </span>
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          {["96", "4", "0"].map((value, index) => (
-            <div key={value} className="rounded-xl border bg-background/62 p-3">
-              <p className="text-xl font-semibold">{value}</p>
-              <p className="mt-1 text-[0.65rem] uppercase text-muted-foreground">
-                {["health", "agents", "blocked"][index]}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="floating-glass-badge absolute right-[5%] top-[14%] hidden w-[26rem] rotate-[2deg] rounded-2xl p-4 2xl:block">
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <Bot className="h-4 w-4 text-primary" />
-          Agent release package
-        </div>
-        <div className="mt-4 space-y-2">
-          {sceneRows.map((row, rowIndex) => (
-            <div key={row.join("-")} className="grid grid-cols-4 gap-2">
-              {row.map((item, index) => (
-                <span
-                  key={item}
-                  className={cn(
-                    "rounded-xl border px-2 py-1.5 text-[0.68rem] font-medium text-muted-foreground",
-                    rowIndex === 1 && index === 2
-                      ? "border-primary/50 bg-primary/12 text-primary"
-                      : "bg-background/72",
-                  )}
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="floating-glass-badge absolute bottom-[8%] left-1/2 hidden w-[44rem] -translate-x-1/2 rounded-2xl p-3 2xl:block">
-        <div className="grid grid-cols-4 gap-2 text-xs">
-          {sceneMetrics.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="rounded-xl bg-background/72 p-3">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Icon className="h-3.5 w-3.5" />
-                <span>{label}</span>
-              </div>
-              <p className="mt-2 font-semibold">{value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      <AgentGlassOrb
+        agentId="loop_studio_hero"
+        label="Loop hero agent"
+        size="hero"
+        decorative
+        quiet
+      />
     </div>
   );
 }
 
 export function WelcomeLanding() {
   return (
-    <main className="min-h-screen overflow-hidden">
-      <section className="relative flex min-h-[92vh] items-center px-5 py-8 sm:px-8 lg:px-12">
-        <HeroScene />
-        <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-10 pt-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(28rem,0.8fr)] lg:items-center">
-          <div className="max-w-3xl">
-            <nav className="floating-glass-badge mb-12 flex items-center justify-between gap-4 rounded-full px-3 py-2 text-sm">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 font-semibold"
-              >
-                <AgentGlassOrb label="Loop Studio" size="md" decorative />
-                <span>Loop Studio</span>
-              </Link>
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/login"
-                  className={buttonVariants({ variant: "ghost", size: "sm" })}
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/signup"
-                  className={buttonVariants({ variant: "default", size: "sm" })}
-                >
-                  Get started
-                </Link>
-              </div>
-            </nav>
+    <main className="relative min-h-screen overflow-hidden">
+      <header className="relative z-20 mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 pt-6 sm:px-8 lg:px-12">
+        <Link
+          href="/"
+          className="glass-pill inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold tracking-tight"
+        >
+          Loop Studio
+        </Link>
+        <nav className="glass-pill hidden items-center gap-1 rounded-full px-1 py-1 text-sm md:flex">
+          {[
+            { href: "/welcome", label: "Product" },
+            { href: "/welcome", label: "Governance" },
+            { href: "/welcome", label: "Pricing" },
+            { href: "/welcome", label: "Docs" },
+          ].map(({ href, label }) => (
+            <Link
+              key={label}
+              href={href}
+              className="rounded-full px-3 py-1.5 text-muted-foreground hover:text-foreground"
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Link
+            href="/login"
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/signup"
+            className={cn(
+              buttonVariants({ variant: "default", size: "sm" }),
+              "shadow-[0_18px_42px_-18px_hsl(var(--primary)/0.6)]",
+            )}
+          >
+            Get started
+          </Link>
+        </div>
+      </header>
 
-            <h1 className="max-w-4xl text-5xl font-semibold leading-[0.96] text-foreground sm:text-6xl lg:text-7xl">
-              Loop Studio
-            </h1>
-            <p className="mt-6 max-w-2xl text-xl leading-8 text-muted-foreground">
-              Build agents with light around every decision. This is the
-              glass-box control plane for creating, governing, testing,
-              deploying, and operating AI agents across every customer channel.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/signup" className={buttonVariants({ size: "lg" })}>
-                Start enterprise signup
-                <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
-              </Link>
-              <Link
-                href="/login?returnTo=/home"
-                className={buttonVariants({ variant: "outline", size: "lg" })}
+      <section className="relative z-10 mx-auto grid w-full max-w-7xl gap-12 px-5 pt-16 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:px-12 lg:pt-24">
+        <div className="max-w-xl">
+          <span className="glass-pill inline-flex items-center gap-2 rounded-full px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <Sparkles className="h-3 w-3 text-primary" aria-hidden />
+            Glass-box control plane
+          </span>
+          <h1 className="mt-7 text-5xl font-semibold leading-[0.96] tracking-tight sm:text-6xl lg:text-[4.5rem]">
+            <span className="text-pearl">Agents you can</span>
+            <br />
+            <span className="text-pearl">see through.</span>
+          </h1>
+          <p className="mt-7 max-w-md text-lg leading-[1.65] text-muted-foreground">
+            The control room for production agents. Define what they
+            should do, connect them to your channels, and ship every
+            release with proof your audit team can sign.
+          </p>
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/signup"
+              className={cn(
+                buttonVariants({ size: "lg" }),
+                "shadow-[0_24px_60px_-22px_hsl(var(--primary)/0.7)]",
+              )}
+            >
+              Get started
+              <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+            </Link>
+            <Link
+              href="/login?returnTo=/home"
+              className={buttonVariants({ variant: "outline", size: "lg" })}
+            >
+              Open Studio
+            </Link>
+          </div>
+          <div className="mt-10 grid grid-cols-2 gap-3 text-xs sm:max-w-md sm:grid-cols-4">
+            {[
+              "Import from Botpress",
+              "SSO and roles",
+              "Replay a real conversation",
+              "Turn handoffs into tests",
+            ].map((label) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1.5 text-muted-foreground"
               >
-                Open Studio
-              </Link>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-3 text-sm text-muted-foreground">
-              {[
-                "Botpress import",
-                "SSO and roles",
-                "Trace replay",
-                "HITL to eval",
-              ].map((item) => (
-                <span
-                  key={item}
-                  className="floating-glass-badge inline-flex items-center gap-1.5 rounded-full px-3 py-1"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                  {item}
-                </span>
-              ))}
-            </div>
+                <CheckCircle2 className="h-3 w-3 text-primary" aria-hidden />
+                {label}
+              </span>
+            ))}
           </div>
+        </div>
 
-          <div className="relative hidden lg:block">
-            <div className="instrument-panel breathing-well relative rounded-2xl p-5">
-              <AgentGlassOrb
-                agentId="enterprise-launch-agent"
-                label="Enterprise launch agent"
-                size="xl"
-                state="watching"
-                className="absolute -right-3 -top-3 opacity-90"
-              />
-              <div className="flex items-center justify-between gap-3">
-                <div className="max-w-[72%]">
-                  <p className="text-xs font-semibold uppercase text-muted-foreground">
-                    Enterprise launch path
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold">
-                    From signup to governed agent estate
-                  </h2>
-                </div>
-                <Sparkles className="h-5 w-5 text-primary" aria-hidden />
-              </div>
-              <div className="mt-5 space-y-3">
-                {[
-                  [
-                    "1",
-                    "Create enterprise tenant",
-                    "Workspace, region, SSO intent, admin invite.",
-                  ],
-                  [
-                    "2",
-                    "Onboard builders",
-                    "Owners invite admins, builders, reviewers, and operators.",
-                  ],
-                  [
-                    "3",
-                    "Create or import agents",
-                    "Commitment document first; channels are bound explicitly.",
-                  ],
-                  [
-                    "4",
-                    "Ship with proof",
-                    "Replay, eval gates, approvals, canary, rollback evidence.",
-                  ],
-                ].map(([step, title, detail]) => (
-                  <div
-                    key={step}
-                    className="interactive-lift rounded-md border bg-background/72 p-4"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
-                        {step}
-                      </span>
-                      <div>
-                        <p className="font-semibold">{title}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {detail}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        <div className="relative">
+          <HeroOrb />
         </div>
       </section>
 
-      <section className="relative z-10 border-t bg-background/82 px-5 py-12 backdrop-blur sm:px-8 lg:px-12">
-        <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="relative z-10 mx-auto mt-24 h-px max-w-5xl px-5 sm:px-8 lg:px-12">
+        <div className="prism-seam h-px w-full opacity-50" aria-hidden />
+      </div>
+
+      <section className="relative z-10 mx-auto mt-20 max-w-7xl px-5 sm:px-8 lg:px-12">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] lg:items-start">
+          <div>
+            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              How you get there
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+              From sign-up to live agents in four steps.
+            </h2>
+            <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground">
+              Every change is owned, reviewed, and reversible before it
+              reaches customers.
+            </p>
+          </div>
+          <ol className="grid gap-2.5">
+            {launchSteps.map(({ n, title, detail }) => (
+              <li
+                key={n}
+                className="instrument-panel interactive-lift flex items-start gap-4 rounded-2xl p-5"
+              >
+                <span className="font-mono text-xs font-semibold tabular-nums text-primary/70">
+                  {n}
+                </span>
+                <div>
+                  <p className="font-semibold text-foreground">{title}</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    {detail}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="relative z-10 mx-auto mt-24 max-w-7xl px-5 pb-12 sm:px-8 lg:px-12">
+        <div className="mb-10 max-w-2xl">
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            What you ship with
+          </p>
+          <h3 className="mt-3 text-3xl font-semibold leading-tight tracking-tight">
+            Four proof marks come standard.
+          </h3>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {proofPoints.map(({ label, detail, icon: Icon }) => (
             <article
               key={label}
-              className="instrument-panel interactive-lift rounded-md p-5"
+              className="instrument-panel interactive-lift rounded-2xl p-6"
             >
-              <Icon className="h-5 w-5 text-primary" aria-hidden />
-              <h2 className="mt-4 text-base font-semibold">{label}</h2>
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                <Icon className="h-4 w-4" aria-hidden />
+              </span>
+              <h2 className="mt-5 text-base font-semibold">{label}</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {detail}
               </p>
             </article>
           ))}
         </div>
-        <div className="mx-auto mt-8 flex max-w-7xl flex-col items-start justify-between gap-4 rounded-md border bg-card/78 p-5 sm:flex-row sm:items-center">
-          <div className="flex items-start gap-3">
-            <Building2 className="mt-1 h-5 w-5 text-primary" aria-hidden />
-            <div>
-              <p className="font-semibold">
-                Enterprise tenant review is wired.
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Signups enter the system-admin queue; approval provisions a
-                workspace and first-owner invite.
-              </p>
-            </div>
+      </section>
+
+      <section className="relative z-10 mx-auto mb-20 max-w-7xl px-5 sm:px-8 lg:px-12">
+        <div className="glass-deep relative flex flex-col items-start gap-6 overflow-hidden rounded-3xl p-8 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative max-w-xl">
+            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Ready when you are
+            </p>
+            <p className="mt-3 text-2xl font-semibold leading-tight tracking-tight">
+              Bring your team into the same glass box.
+            </p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Invite owners, builders, reviewers, and operators with scoped
+              roles. Region, SSO, and audit are configured before you ship.
+            </p>
           </div>
-          <Link href="/signup" className={buttonVariants()}>
-            Create tenant request
-          </Link>
+          <div className="relative flex flex-col items-stretch gap-2 sm:items-end">
+            <Link
+              href="/signup"
+              className={cn(
+                buttonVariants({ size: "lg" }),
+                "shadow-[0_24px_60px_-22px_hsl(var(--primary)/0.7)]",
+              )}
+            >
+              Create your workspace
+            </Link>
+            <Link
+              href="/login"
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Have an invite? Sign in →
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <Compass className="h-3 w-3" aria-hidden />
+            <span>Region pinning · BYOK · audit forwarding · SCIM</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5 tabular-nums">
+              <GitBranch className="h-3 w-3" aria-hidden />
+              v23.1.4
+            </span>
+            <span className="flex items-center gap-1.5 tabular-nums">
+              <Gauge className="h-3 w-3" aria-hidden />
+              842ms p95
+            </span>
+            <span className="flex items-center gap-1.5">
+              <LockKeyhole className="h-3 w-3" aria-hidden />
+              SAML enforced
+            </span>
+          </div>
         </div>
       </section>
     </main>

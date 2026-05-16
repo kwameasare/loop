@@ -2,6 +2,7 @@
 
 import { Suspense, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import { RequireAuth } from "@/components/auth/require-auth";
 import { TelemetryConsentGate } from "@/components/help";
 import { PointerDelight } from "@/components/shell/pointer-delight";
 import { SidebarNav } from "@/components/shell/sidebar-nav";
@@ -61,7 +62,7 @@ export function AppShell({ children }: AppShellProps) {
         aria-label="Studio work surface"
         data-testid="work-surface"
       >
-        {children}
+        <RequireAuth>{children}</RequireAuth>
       </section>
       <Suspense fallback={null}>
         <TelemetryConsentGate />

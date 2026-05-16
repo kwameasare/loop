@@ -126,7 +126,7 @@ function MetricCard({
   evidence: string;
 }) {
   return (
-    <div className="rounded-md border bg-card p-3">
+    <div className="instrument-panel rounded-2xl p-3">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <p className="mt-1 text-xl font-semibold tabular-nums">{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{evidence}</p>
@@ -251,7 +251,7 @@ function AgentMapCanvas({
 
   return (
     <section
-      className="rounded-md border bg-card p-3"
+      className="instrument-panel rounded-2xl p-3"
       aria-labelledby="agent-map-canvas-heading"
       data-testid="agent-map-canvas"
     >
@@ -305,7 +305,7 @@ function AgentMapListView({
 
   return (
     <section
-      className="rounded-md border bg-card p-3"
+      className="instrument-panel rounded-2xl p-3"
       aria-labelledby="agent-map-list-heading"
       data-testid="agent-map-list-view"
     >
@@ -562,7 +562,7 @@ function InspectorPanel({
 
   return (
     <aside
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       aria-labelledby="agent-map-inspector-heading"
       data-testid="agent-map-inspector"
     >
@@ -669,7 +669,7 @@ function HazardPanel({
 }) {
   return (
     <section
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       aria-labelledby="agent-map-hazards-heading"
       data-testid="agent-map-hazards"
     >
@@ -785,7 +785,7 @@ export function AgentMap({ data }: AgentMapProps) {
   return (
     <div className="flex flex-col gap-6" data-testid="agent-map">
       <section className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))]">
-        <div className="rounded-md border bg-card p-4">
+        <div className="instrument-panel rounded-2xl p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Agent map
           </p>

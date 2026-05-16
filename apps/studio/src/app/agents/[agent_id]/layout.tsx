@@ -47,7 +47,7 @@ export default async function AgentDetailLayout({
         className="min-w-0 space-y-4 lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)] lg:overflow-auto"
         data-testid="agent-local-nav"
       >
-        <div className="rounded-md border bg-card p-3">
+        <div className="instrument-panel rounded-2xl p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Agent Workbench
           </p>
@@ -62,7 +62,7 @@ export default async function AgentDetailLayout({
       </aside>
       <div className="flex min-w-0 flex-col gap-6">
         <header
-          className="rounded-md border bg-card p-4"
+          className="instrument-panel rounded-2xl p-4"
           data-testid="agent-local-topbar"
         >
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">

@@ -37,7 +37,7 @@ export function ChangesetApprovals(
     <section
       data-testid={`changeset-${changeset.id}`}
       aria-labelledby={`changeset-title-${changeset.id}`}
-      className="space-y-3 rounded-md border bg-card p-4"
+      className="space-y-3 instrument-panel rounded-2xl p-4"
     >
       <header className="space-y-1">
         <h3

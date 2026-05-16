@@ -87,7 +87,7 @@ function Metric({
   measured?: boolean;
 }) {
   return (
-    <div className="rounded-md border bg-card p-3">
+    <div className="instrument-panel rounded-2xl p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-xl font-semibold tabular-nums">
         {measured ? value : "Not measured"}
@@ -119,7 +119,7 @@ function Catalog({
 
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-3"
+      className="min-w-0 instrument-panel rounded-2xl p-3"
       aria-labelledby="tools-catalog-heading"
       data-testid="tools-room-catalog"
     >
@@ -224,7 +224,7 @@ function DetailPanel({ tool }: { tool: ToolsRoomTool | null }) {
 
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       aria-labelledby="tool-detail-heading"
       data-testid="tools-room-detail"
     >
@@ -498,7 +498,7 @@ function SafetyContract({ tool }: { tool: ToolsRoomTool | null }) {
   if (!tool) return null;
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       data-testid="tools-room-safety"
     >
       <p className="flex items-center gap-2 text-sm font-semibold">
@@ -587,7 +587,7 @@ function ToolEnablementChecks({
 
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       data-testid="tool-enablement-checks"
     >
       <p className="flex items-center gap-2 text-sm font-semibold">
@@ -790,7 +790,7 @@ function ToolContractQuestionnaire({
 
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       data-testid="tool-contract-panel"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1053,7 +1053,7 @@ function MockLivePanel({ tool }: { tool: ToolsRoomTool | null }) {
   if (!tool) return null;
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       data-testid="tools-room-mock-live"
     >
       <p className="text-sm font-semibold">Mock and live status</p>
@@ -1105,7 +1105,7 @@ export function ToolsRoom({ data, initialToolId }: ToolsRoomProps) {
 
   return (
     <div className="flex flex-col gap-6" data-testid="tools-room">
-      <section className="rounded-md border bg-card p-4">
+      <section className="instrument-panel rounded-2xl p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Tools Room
         </p>

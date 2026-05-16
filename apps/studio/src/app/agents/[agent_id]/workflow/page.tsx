@@ -37,7 +37,7 @@ export default async function AgentWorkflowPage({
 
   return (
     <div className="flex flex-col gap-4" data-testid="agent-workflow-tab">
-      <header className="rounded-md border bg-card p-4">
+      <header className="instrument-panel rounded-2xl p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Agent workflow
         </p>

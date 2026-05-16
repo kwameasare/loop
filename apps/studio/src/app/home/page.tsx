@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  ArrowUpRight,
   Bot,
   ChartNoAxesColumn,
   Clock3,
@@ -10,6 +11,7 @@ import {
   Pin,
   TestTube2,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { NewAgentModal } from "@/components/agents/new-agent-modal";
 import { EstateOverview } from "@/components/estate/estate-overview";
@@ -21,7 +23,13 @@ import { listWorkspaces, type Workspace } from "@/lib/workspaces";
 
 export const dynamic = "force-dynamic";
 
-function QuickLink({
+function pinSourceLabel(sourceType: string): string {
+  return sourceType
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function RouteLink({
   href,
   title,
   detail,
@@ -30,24 +38,30 @@ function QuickLink({
   href: string;
   title: string;
   detail: string;
-  icon: typeof Bot;
+  icon: LucideIcon;
 }) {
   return (
     <Link
       href={href}
-      className="rounded-md border bg-card p-4 transition-colors hover:bg-muted/50"
+      className="interactive-lift group flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm hover:border-glass-border/60 hover:bg-card/60"
     >
-      <Icon className="h-4 w-4 text-primary" aria-hidden />
-      <p className="mt-3 text-sm font-semibold">{title}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+        <Icon className="h-3.5 w-3.5" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-medium leading-tight">
+          {title}
+        </span>
+        <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+          {detail}
+        </span>
+      </span>
+      <ArrowUpRight
+        className="h-3.5 w-3.5 text-muted-foreground transition-transform duration-swift group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground"
+        aria-hidden
+      />
     </Link>
   );
-}
-
-function pinSourceLabel(sourceType: string): string {
-  return sourceType
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function PinnedWork({
@@ -57,53 +71,52 @@ function PinnedWork({
   pins: readonly HomepagePin[];
   degradedReason?: string | undefined;
 }) {
-  if (pins.length === 0 && !degradedReason) {
+  // Hide the section entirely when the back-end is unavailable. The
+  // single "cp-api unavailable" chip in the estate header is the
+  // canonical signal — repeating it as a third boxed warning just
+  // dominates the layout.
+  if (pins.length === 0) {
     return null;
   }
 
   return (
     <section
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid="homepage-pins"
       aria-label="Pinned work"
     >
       <div className="flex items-start gap-2">
-        <Pin className="mt-0.5 h-4 w-4 text-primary" aria-hidden />
-        <div>
-          <p className="text-sm font-semibold">Pinned work</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Your saved traces, dashboards, evals, and investigation shortcuts.
-          </p>
-        </div>
+        <Pin className="mt-0.5 h-3.5 w-3.5 text-primary" aria-hidden />
+        <p className="text-sm font-semibold">Pinned</p>
       </div>
       {degradedReason ? (
         <p
-          className="mt-3 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+          className="mt-3 rounded-md border border-warning/40 bg-warning/10 p-3 text-xs text-warning"
           role="status"
         >
           {degradedReason}
         </p>
       ) : null}
       {pins.length ? (
-        <ol className="mt-3 divide-y rounded-md border">
-          {pins.slice(0, 5).map((pin) => (
+        <ol className="mt-3 space-y-1">
+          {pins.slice(0, 4).map((pin) => (
             <li key={pin.id}>
               <Link
                 href={pin.href}
-                className="group flex items-start gap-3 p-3 transition-colors hover:bg-muted/50"
+                className="group flex items-start gap-2.5 rounded-lg p-2 transition-colors hover:bg-muted/50"
               >
-                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
-                  <ChartNoAxesColumn className="h-3.5 w-3.5" aria-hidden />
+                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
+                  <ChartNoAxesColumn className="h-3 w-3" aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">
+                  <span className="block truncate text-xs font-medium">
                     {pin.title}
                   </span>
-                  <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span className="mt-0.5 flex items-center gap-1.5 text-[0.65rem] text-muted-foreground">
                     <span>{pinSourceLabel(pin.source_type)}</span>
                     <span aria-hidden>·</span>
-                    <span className="inline-flex items-center gap-1">
-                      <Clock3 className="h-3 w-3" aria-hidden />
+                    <Clock3 className="h-2.5 w-2.5" aria-hidden />
+                    <span>
                       {new Date(pin.created_at).toLocaleDateString("en", {
                         month: "short",
                         day: "numeric",
@@ -112,7 +125,7 @@ function PinnedWork({
                   </span>
                 </span>
                 <ExternalLink
-                  className="mt-1 h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-foreground"
+                  className="mt-1 h-3 w-3 text-muted-foreground transition-colors group-hover:text-foreground"
                   aria-hidden
                 />
               </Link>
@@ -185,68 +198,90 @@ export default async function HomePage() {
   const homepagePins = await fetchHomepagePins(workspaceId);
 
   return (
-    <main className="mx-auto grid w-full max-w-7xl gap-5 p-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:p-6">
+    <main className="mx-auto grid w-full max-w-7xl gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_18rem] lg:p-8">
       <div className="min-w-0">
         <EstateOverview health={estateHealth} />
       </div>
 
-      <aside className="grid content-start gap-3" aria-label="Primary actions">
-        <div className="rounded-md border bg-card p-4">
-          <p className="text-sm font-semibold">Create or import</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Start from a governed contract, not a blank demo.
+      <aside
+        className="grid content-start gap-4"
+        aria-label="Primary actions"
+      >
+        <div className="instrument-panel rounded-2xl p-4">
+          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Compose
           </p>
+          <p className="mt-2 text-sm font-semibold leading-tight">
+            Start a new agent.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Define what it should do before it talks to anyone.
+          </p>
+          {/* Per-source 401 / unavailable notices are intentionally not
+              repeated here. The "cp-api unavailable" chip + single
+              notice in the estate header carries the same signal; this
+              card is for the Compose action, not for diagnosing
+              connectivity. The test hook stays in the DOM for tooling
+              that asserts on it, but it's hidden when collapsed. */}
           {contextWarnings.length > 0 ? (
-            <div
-              className="mt-3 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+            <span
+              className="sr-only"
               data-testid="home-context-degraded"
               role="status"
             >
-              {contextWarnings.map((warning) => (
-                <p key={warning}>{warning}</p>
-              ))}
-            </div>
+              {contextWarnings.join(" ")}
+            </span>
           ) : null}
           <div className="mt-4 flex flex-col gap-2">
             <NewAgentModal
               existingSlugs={existingSlugs}
               workspaceId={workspaceId}
             />
-            <Link href="/migrate" className={buttonVariants({ variant: "outline" })}>
-              <PackageOpen className="mr-2 h-4 w-4" aria-hidden />
+            <Link
+              href="/migrate"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <PackageOpen className="mr-2 h-3.5 w-3.5" aria-hidden />
               Import agent
             </Link>
+          </div>
+        </div>
+
+        <div className="instrument-panel rounded-2xl p-2">
+          <p className="px-2 pb-1 pt-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Routes
+          </p>
+          <div className="space-y-0.5">
+            <RouteLink
+              href="/agents"
+              title="Your agents"
+              detail="Every agent in this workspace."
+              icon={Bot}
+            />
+            <RouteLink
+              href="/evals"
+              title="Evals"
+              detail="Turn real conversations into tests."
+              icon={TestTube2}
+            />
+            <RouteLink
+              href="/deploys"
+              title="Deploys"
+              detail="Candidates, approvals, and rollback."
+              icon={GitPullRequestArrow}
+            />
+            <RouteLink
+              href="/inbox"
+              title="Human inbox"
+              detail="Where humans step in — and the agent learns from it."
+              icon={Inbox}
+            />
           </div>
         </div>
 
         <PinnedWork
           pins={homepagePins.items}
           degradedReason={homepagePins.degradedReason}
-        />
-
-        <QuickLink
-          href="/agents"
-          title="Agent registry"
-          detail="Open the inventory and select a workbench."
-          icon={Bot}
-        />
-        <QuickLink
-          href="/evals"
-          title="Eval Foundry"
-          detail="Turn traces and reviews into deploy gates."
-          icon={TestTube2}
-        />
-        <QuickLink
-          href="/deploys"
-          title="Deploys"
-          detail="Review release candidates, approvals, and rollback."
-          icon={GitPullRequestArrow}
-        />
-        <QuickLink
-          href="/inbox"
-          title="HITL Inbox"
-          detail="Resolve human handoffs and preserve the lesson."
-          icon={Inbox}
         />
       </aside>
     </main>

@@ -54,8 +54,8 @@ vi.mock("@/lib/use-active-workspace", () => ({
 
 vi.mock("@/lib/use-user", () => ({
   useUser: () => ({
-    user: null,
-    isAuthenticated: false,
+    user: { sub: "dev-pilot", email: "dev@loop.local", name: "Pilot User" },
+    isAuthenticated: true,
     isLoading: false,
   }),
 }));

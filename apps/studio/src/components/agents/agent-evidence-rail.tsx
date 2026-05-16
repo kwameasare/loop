@@ -236,7 +236,7 @@ export function AgentEvidenceRail({
   return (
     <div className="space-y-4" data-testid="agent-evidence-rail">
       <section
-        className="rounded-md border bg-card p-4"
+        className="instrument-panel rounded-2xl p-4"
         data-testid="agent-evidence-context"
       >
         <div className="flex items-center gap-2">

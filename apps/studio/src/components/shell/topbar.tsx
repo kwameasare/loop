@@ -4,11 +4,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 
-import { AgentGlassOrb } from "@/components/agents/agent-glass-orb";
 import { CommandPaletteLauncher } from "@/components/command";
 import { PairDebugAudioControl } from "@/components/collaboration/pair-debug-audio-control";
 import { HelpClipLauncher } from "@/components/help";
-import { ActivityRibbon } from "@/components/shell/activity-ribbon";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { UserMenu } from "@/components/shell/user-menu";
 import { WorkspaceSwitcher } from "@/components/shell/workspace-switcher";
@@ -128,17 +126,15 @@ export function Topbar() {
   const context = routeContext(pathname);
   return (
     <header
-      className="glass-panel sticky top-0 z-20 flex min-h-14 items-center justify-between gap-3 border-x-0 border-t-0 px-4 py-2"
+      className="glass-bar sticky top-0 z-20 flex min-h-14 items-center justify-between gap-3 border-x-0 border-t-0 px-4 py-2"
       data-testid="topbar"
     >
-      <ActivityRibbon />
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <Link
           href="/home"
-          className="group inline-flex items-center gap-2 text-sm font-semibold"
+          className="group inline-flex items-center text-sm font-semibold tracking-tight"
         >
-          <AgentGlassOrb label="Loop Studio" size="md" decorative />
-          <span>Studio</span>
+          Studio
         </Link>
         <Suspense
           fallback={

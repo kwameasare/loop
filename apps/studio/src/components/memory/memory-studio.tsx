@@ -199,7 +199,7 @@ function MemoryExplorer({
       : entries.filter((entry) => entry.scope === scope);
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       data-testid="memory-studio-explorer"
     >
       <div className="flex flex-col gap-3">
@@ -301,7 +301,7 @@ function MemoryDetail({
   const blockedDelete = entry.deletionState === "blocked";
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       data-testid="memory-studio-detail"
     >
       <div className="flex flex-col gap-4">
@@ -466,7 +466,7 @@ function ReplayControls({ data }: { data: MemoryStudioData }) {
   );
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       data-testid="memory-studio-replay"
     >
       <p className="flex items-center gap-2 text-sm font-semibold">
@@ -523,7 +523,7 @@ function MemoryPolicyPanel({
 }) {
   return (
     <section
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid="memory-policy-panel"
       aria-labelledby="memory-policy-heading"
     >
@@ -922,7 +922,7 @@ export function MemoryStudio({
 
   return (
     <div className="flex flex-col gap-6" data-testid="memory-studio">
-      <section className="rounded-md border bg-card p-4">
+      <section className="instrument-panel rounded-2xl p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Memory Studio
         </p>
@@ -990,7 +990,7 @@ export function MemoryStudio({
       <section className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))]">
         <div
           className={cn(
-            "rounded-md border bg-card p-3",
+            "instrument-panel rounded-2xl p-3",
             focusedView === "writes"
               ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
               : "",
@@ -1002,7 +1002,7 @@ export function MemoryStudio({
         </div>
         <div
           className={cn(
-            "rounded-md border bg-card p-3",
+            "instrument-panel rounded-2xl p-3",
             focusedFilter === "privacy"
               ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
               : "",
@@ -1014,7 +1014,7 @@ export function MemoryStudio({
         </div>
         <div
           className={cn(
-            "rounded-md border bg-card p-3",
+            "instrument-panel rounded-2xl p-3",
             focusedView === "retention"
               ? "ring-2 ring-focus ring-offset-2 ring-offset-background"
               : "",
@@ -1024,7 +1024,7 @@ export function MemoryStudio({
           <p className="text-xs text-muted-foreground">Retention evidence</p>
           <p className="mt-1 text-sm">{data.retentionEvidence}</p>
         </div>
-        <div className="rounded-md border bg-card p-3">
+        <div className="instrument-panel rounded-2xl p-3">
           <p className="text-xs text-muted-foreground">
             Policies needing review
           </p>

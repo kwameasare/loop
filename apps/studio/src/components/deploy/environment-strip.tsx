@@ -55,7 +55,7 @@ export function EnvironmentStrip({
                 aria-pressed={active}
                 data-testid={`environment-card-${env.id}`}
                 className={cn(
-                  "w-full rounded-md border bg-card p-4 text-left transition",
+                  "w-full instrument-panel rounded-2xl p-4 text-left transition",
                   active
                     ? "border-primary ring-1 ring-primary"
                     : "hover:border-foreground/40",

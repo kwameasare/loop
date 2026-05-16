@@ -263,7 +263,7 @@ export function FailureRepairLoopPanel({
 
   return (
     <section
-      className="rounded-md border bg-card p-4"
+      className="instrument-panel rounded-2xl p-4"
       data-testid="failure-repair-loop"
       aria-labelledby="failure-repair-heading"
     >

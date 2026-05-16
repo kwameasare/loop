@@ -88,7 +88,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
   return (
     <div className="space-y-4" data-testid="replay-player">
       <div
-        className="flex flex-wrap items-center gap-3 rounded-md border bg-card p-3"
+        className="flex flex-wrap items-center gap-3 instrument-panel rounded-2xl p-3"
         data-testid="replay-toolbar"
       >
         <label className="text-muted-foreground text-xs" htmlFor="target-version">
@@ -165,7 +165,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
               role="listitem"
               data-testid="replay-bubble"
               data-role={b.role}
-              className="rounded-md border bg-card p-3 shadow-sm"
+              className="instrument-panel rounded-2xl p-3 shadow-sm"
             >
               <div className="mb-1 flex items-center gap-2">
                 <span
@@ -239,7 +239,7 @@ export function ReplayPlayer({ trace }: { trace: ReplayTrace }) {
       </div>
 
       <aside
-        className="space-y-2 rounded-md border bg-card p-4 text-sm shadow-sm"
+        className="space-y-2 instrument-panel rounded-2xl p-4 text-sm shadow-sm"
         data-testid="replay-event-detail"
       >
         {snapshot.current === null ? (

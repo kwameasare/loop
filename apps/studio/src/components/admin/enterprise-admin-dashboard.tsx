@@ -233,7 +233,7 @@ function EnterpriseAdminBody() {
       <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="grid gap-5">
           <InviteMemberForm onInvite={handleInvite} />
-          <section className="rounded-md border bg-card p-4">
+          <section className="instrument-panel rounded-2xl p-4">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="font-semibold">Current members</h2>
@@ -257,7 +257,7 @@ function EnterpriseAdminBody() {
           </section>
         </div>
 
-        <section className="rounded-md border bg-card p-4">
+        <section className="instrument-panel rounded-2xl p-4">
           <h2 className="font-semibold">Pending invites</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Invitations are audit-backed records. Email delivery can attach to

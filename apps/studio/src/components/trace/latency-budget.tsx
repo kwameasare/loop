@@ -50,7 +50,7 @@ export function LatencyBudgetVisualizer({
 
   return (
     <section
-      className="space-y-4 rounded-md border bg-card p-4"
+      className="space-y-4 instrument-panel rounded-2xl p-4"
       data-testid="latency-budget-visualizer"
       aria-labelledby="latency-budget-heading"
     >

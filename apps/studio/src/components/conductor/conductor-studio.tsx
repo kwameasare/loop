@@ -97,7 +97,7 @@ function Metric({
   icon: ReactNode;
 }) {
   return (
-    <div className="rounded-md border bg-card p-3">
+    <div className="instrument-panel rounded-2xl p-3">
       <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
         {icon}
         <span>{label}</span>
@@ -127,7 +127,7 @@ function SubAgentAssets({
 
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       aria-labelledby="conductor-assets-heading"
       data-testid="conductor-assets"
     >
@@ -191,7 +191,7 @@ function Topology({
   const emptyTopology = data.subAgents.length === 0 && data.topology.length === 0;
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       aria-labelledby="conductor-topology-heading"
       data-testid="conductor-topology"
     >
@@ -270,7 +270,7 @@ function HandoffContracts({
 }) {
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       aria-labelledby="conductor-contracts-heading"
       data-testid="conductor-contracts"
     >
@@ -347,7 +347,7 @@ function ContractDetail({ contract }: { contract: HandoffContract | null }) {
 
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       data-testid="conductor-contract-detail"
     >
       <div className="flex flex-col gap-4">
@@ -429,7 +429,7 @@ function AgentInspector({ agent }: { agent: ConductorSubAgent | null }) {
   const trustTreatment = TRUST_STATE_TREATMENTS[agent.trust];
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       aria-labelledby="conductor-inspector-heading"
       data-testid="conductor-inspector"
     >
@@ -532,7 +532,7 @@ function AgentInspector({ agent }: { agent: ConductorSubAgent | null }) {
 function DelegationTrace({ data }: { data: ConductorData }) {
   return (
     <section
-      className="min-w-0 rounded-md border bg-card p-4"
+      className="min-w-0 instrument-panel rounded-2xl p-4"
       aria-labelledby="conductor-delegation-heading"
       data-testid="conductor-delegation"
     >
@@ -630,7 +630,7 @@ export function ConductorStudio({ data }: ConductorStudioProps) {
       className="flex min-w-0 flex-col gap-6"
       data-testid="conductor-studio"
     >
-      <section className="rounded-md border bg-card p-4">
+      <section className="instrument-panel rounded-2xl p-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

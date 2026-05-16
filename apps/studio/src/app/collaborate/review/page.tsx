@@ -171,7 +171,7 @@ function CollaborateReviewPageBody(): JSX.Element {
         <ChangesetApprovals changeset={workspace.changeset} />
       ) : (
         <section
-          className="rounded-md border bg-card p-4 text-sm text-muted-foreground"
+          className="instrument-panel rounded-2xl p-4 text-sm text-muted-foreground"
           data-testid="changeset-empty"
         >
           No pending changeset in the live audit window.
@@ -190,7 +190,7 @@ function CollaborateReviewPageBody(): JSX.Element {
         </div>
       ) : (
         <section
-          className="rounded-md border bg-card p-4 text-sm text-muted-foreground"
+          className="instrument-panel rounded-2xl p-4 text-sm text-muted-foreground"
           data-testid="comments-empty"
         >
           No live comment threads loaded for this workspace.

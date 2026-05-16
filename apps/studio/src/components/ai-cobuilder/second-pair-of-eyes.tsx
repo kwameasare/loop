@@ -39,7 +39,7 @@ export function SecondPairOfEyes({
   return (
     <section
       data-testid={`second-pair-${review.actionId}`}
-      className="space-y-3 rounded-md border bg-card p-4"
+      className="space-y-3 instrument-panel rounded-2xl p-4"
     >
       <header className="flex items-center justify-between">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

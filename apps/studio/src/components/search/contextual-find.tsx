@@ -43,7 +43,7 @@ export function ContextualFind({
   return (
     <section
       aria-label="Contextual find"
-      className="space-y-3 rounded-md border bg-card p-3"
+      className="space-y-3 instrument-panel rounded-2xl p-3"
       data-testid="contextual-find"
     >
       <div className="flex items-center gap-2">

@@ -1,19 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
-interface PointerState {
-  x: number;
-  y: number;
-  visible: boolean;
-}
-
+/**
+ * A soft aurora glow that lazily follows the pointer at distance — no
+ * crosshair, no box, no animated cursor cosplay. Just a slow radial bloom
+ * that warms the area near where the user is reading. Disabled under
+ * prefers-reduced-motion, coarse pointers, and touch devices.
+ */
 export function PointerDelight() {
-  const [pointer, setPointer] = useState<PointerState>({
-    x: 0,
-    y: 0,
-    visible: false,
-  });
+  const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (
@@ -25,38 +21,54 @@ export function PointerDelight() {
       return;
     }
 
-    let frame = 0;
-    const show = (event: PointerEvent) => {
-      window.cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(() => {
-        setPointer({ x: event.clientX, y: event.clientY, visible: true });
-      });
-    };
-    const hide = () => setPointer((current) => ({ ...current, visible: false }));
+    const el = ref.current;
+    if (!el) return;
 
-    window.addEventListener("pointermove", show, { passive: true });
-    window.addEventListener("pointerleave", hide);
+    const size = 640;
+    const half = size / 2;
+    let frame = 0;
+    let targetX = window.innerWidth / 2;
+    let targetY = window.innerHeight / 3;
+    let currentX = targetX;
+    let currentY = targetY;
+    let visible = false;
+
+    const tick = () => {
+      currentX += (targetX - currentX) * 0.06;
+      currentY += (targetY - currentY) * 0.06;
+      el.style.transform = `translate3d(${currentX - half}px, ${currentY - half}px, 0)`;
+      frame = window.requestAnimationFrame(tick);
+    };
+    tick();
+
+    const onMove = (event: PointerEvent) => {
+      targetX = event.clientX;
+      targetY = event.clientY;
+      if (!visible) {
+        visible = true;
+        el.style.opacity = "1";
+      }
+    };
+    const onLeave = () => {
+      visible = false;
+      el.style.opacity = "0";
+    };
+
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerleave", onLeave);
     return () => {
       window.cancelAnimationFrame(frame);
-      window.removeEventListener("pointermove", show);
-      window.removeEventListener("pointerleave", hide);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerleave", onLeave);
     };
   }, []);
 
   return (
     <div
+      ref={ref}
       aria-hidden="true"
-      className="pointer-events-none fixed z-50 hidden h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-[5px] border border-primary/45 opacity-0 shadow-[0_0_24px_hsl(var(--primary)/0.18)] transition-opacity duration-swift ease-standard md:block"
-      data-visible={pointer.visible}
       data-testid="pointer-delight"
-      style={{
-        left: pointer.x,
-        top: pointer.y,
-        opacity: pointer.visible ? 1 : 0,
-      }}
-    >
-      <span className="absolute left-1/2 top-1/2 h-px w-10 -translate-x-1/2 bg-primary/35" />
-      <span className="absolute left-1/2 top-1/2 h-10 w-px -translate-y-1/2 bg-primary/35" />
-    </div>
+      className="pointer-light pointer-events-none fixed left-0 top-0 z-0 h-[640px] w-[640px] opacity-0 transition-opacity duration-gentle ease-standard"
+    />
   );
 }

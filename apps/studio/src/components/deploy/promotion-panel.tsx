@@ -72,7 +72,7 @@ export function PromotionPanel({
         </header>
         <div className="grid gap-3 lg:grid-cols-3">
           <article
-            className="rounded-md border bg-card p-3"
+            className="instrument-panel rounded-2xl p-3"
             data-pane="changes"
             data-testid="promotion-pane-changes"
           >
@@ -91,7 +91,7 @@ export function PromotionPanel({
             </ul>
           </article>
           <article
-            className="rounded-md border bg-card p-3"
+            className="instrument-panel rounded-2xl p-3"
             data-pane="gates"
             data-testid="promotion-pane-gates"
           >
@@ -124,7 +124,7 @@ export function PromotionPanel({
             </ul>
           </article>
           <article
-            className="rounded-md border bg-card p-3"
+            className="instrument-panel rounded-2xl p-3"
             data-pane="approvals"
             data-testid="promotion-pane-approvals"
           >

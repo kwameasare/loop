@@ -93,7 +93,7 @@ export default async function AgentTracesPage({
 
   return (
     <section className="space-y-5" data-testid="agent-traces-page">
-      <header className="rounded-md border bg-card p-5">
+      <header className="instrument-panel rounded-2xl p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Agent Workbench · Traces
         </p>

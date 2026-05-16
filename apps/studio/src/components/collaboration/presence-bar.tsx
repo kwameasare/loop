@@ -18,7 +18,7 @@ export function PresenceBar(props: PresenceBarProps): JSX.Element {
     <section
       data-testid="presence-bar"
       aria-label="Active collaborators"
-      className="flex flex-wrap items-center gap-2 rounded-md border bg-card p-2 text-xs"
+      className="flex flex-wrap items-center gap-2 instrument-panel rounded-xl p-2 text-xs"
     >
       <span className="text-[11px] font-medium text-muted-foreground">
         Live · {users.length}
