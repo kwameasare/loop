@@ -46,7 +46,7 @@ def test_turn_latency_workflow_runs_nightly_k6_and_pages_on_failure() -> None:
     assert job["timeout-minutes"] == 14
     assert job["env"]["LOOP_TURN_LATENCY_BASE_URL"] == "http://127.0.0.1:18081"
     assert any(step.get("uses") == "grafana/setup-k6-action@v1" for step in steps)
-    assert any(step.get("uses") == "helm/kind-action@v1.10.0" for step in steps)
+    assert any(step.get("uses") == "helm/kind-action@v1.14.0" for step in steps)
     assert "helm upgrade --install" in runs
     assert 'kubectl -n "$LOOP_NAMESPACE" port-forward svc/loop-loop-runtime 18081:8081' in runs
     assert (

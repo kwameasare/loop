@@ -51,7 +51,7 @@ def test_runtime_baseline_workflow_runs_nightly_and_asserts_budget() -> None:
 
     assert triggers["schedule"][0]["cron"] == "23 6 * * *"
     assert "workflow_dispatch" in triggers
-    assert "helm/kind-action@v1.10.0" in WORKFLOW.read_text()
+    assert "helm/kind-action@v1.14.0" in WORKFLOW.read_text()
     assert "scripts/Dockerfile.smoke" in runs
     assert "scripts/k6_runtime_baseline_100rpm.js" in runs
     assert "bench/results/runtime_baseline_100rpm.json" in runs

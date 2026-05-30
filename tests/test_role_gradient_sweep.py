@@ -58,6 +58,11 @@ _ALLOWLIST_FUNCS: dict[str, str] = {
     # against. The caller's identity is verified by the auth layer.
     "create_agent": "uses workspace from auth principal",
     "create_workspace": "creates the workspace; no prior membership",
+    # Public, unauthenticated lead capture — no workspace exists yet.
+    "create_enterprise_signup": "public pre-workspace enterprise signup; no workspace context",
+    # Public share link authenticated by an opaque demo token, not a
+    # workspace role (the caller is an external stakeholder, no principal).
+    "start_voice_demo_session": "public voice-demo share link; token-authed, no workspace role",
     # Pre-existing drift baseline (vega #13 ratchet). These routes
     # mutate state but rely on the agent_id / api_key / conversation_id
     # path param to resolve the workspace_id at the service layer
@@ -102,31 +107,104 @@ def _route_path(node: ast.AsyncFunctionDef | ast.FunctionDef) -> str:
     return ""
 
 
-def _calls_authorize_workspace_access_with_role(
-    node: ast.AsyncFunctionDef | ast.FunctionDef,
-) -> bool:
-    """True iff the function body contains a call to
-    ``authorize_workspace_access(..., required_role=<truthy>)``.
-    """
+def _module_index(
+    tree: ast.Module,
+) -> dict[str, ast.AsyncFunctionDef | ast.FunctionDef]:
+    """Map every def/async-def name in the module to its node, so the
+    sweep can follow the intra-module call graph."""
+    index: dict[str, ast.AsyncFunctionDef | ast.FunctionDef] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.AsyncFunctionDef | ast.FunctionDef):
+            index.setdefault(node.name, node)
+    return index
+
+
+def _called_names(node: ast.AST) -> set[str]:
+    """Names of every function/helper called in ``node`` (bare
+    ``foo(...)`` and attribute ``x.foo(...)`` forms)."""
+    names: set[str] = set()
+    for child in ast.walk(node):
+        if isinstance(child, ast.Call):
+            callee = child.func
+            if isinstance(callee, ast.Name):
+                names.add(callee.id)
+            elif isinstance(callee, ast.Attribute):
+                names.add(callee.attr)
+    return names
+
+
+def _reachable(
+    route: ast.AsyncFunctionDef | ast.FunctionDef,
+    index: dict[str, ast.AsyncFunctionDef | ast.FunctionDef],
+) -> list[ast.AsyncFunctionDef | ast.FunctionDef]:
+    """The route plus every in-module helper transitively reachable
+    from it. Role + audit enforcement frequently lives in a shared
+    ``_agent`` / ``_deployment_action`` helper one or more calls away,
+    so a body-only scan reports false positives. We follow the call
+    graph within the module instead (cross-module helpers are out of
+    scope — a route that delegates enforcement across a module boundary
+    must use the explicit allow-list)."""
+    seen: set[str] = set()
+    out: list[ast.AsyncFunctionDef | ast.FunctionDef] = []
+    stack: list[ast.AsyncFunctionDef | ast.FunctionDef] = [route]
+    while stack:
+        fn = stack.pop()
+        out.append(fn)
+        for name in _called_names(fn):
+            if name in seen:
+                continue
+            seen.add(name)
+            target = index.get(name)
+            if target is not None:
+                stack.append(target)
+    return out
+
+
+def _body_calls(node: ast.AST, name: str) -> bool:
+    """True iff ``node``'s body contains a call to ``name`` (bare or
+    attribute form)."""
     for child in ast.walk(node):
         if not isinstance(child, ast.Call):
             continue
-        # Resolve the called name: bare ``authorize_workspace_access(...)``
-        # or ``module.authorize_workspace_access(...)``.
         callee = child.func
-        if (isinstance(callee, ast.Name) and callee.id == "authorize_workspace_access") or (
-            isinstance(callee, ast.Attribute)
-            and callee.attr == "authorize_workspace_access"
-        ):
-            pass
-        else:
+        if isinstance(callee, ast.Name) and callee.id == name:
+            return True
+        if isinstance(callee, ast.Attribute) and callee.attr == name:
+            return True
+    return False
+
+
+def _body_passes_required_role(node: ast.AST) -> bool:
+    """True iff ``node``'s body contains any call passing a non-None
+    ``required_role=`` keyword — a ``Role.X`` literal or a forwarded
+    value. ``required_role=None`` (or its absence) does not count."""
+    for child in ast.walk(node):
+        if not isinstance(child, ast.Call):
             continue
-        # We found the call; check ``required_role`` is set + non-None.
         for kw in child.keywords:
             if kw.arg != "required_role":
                 continue
-            return not (isinstance(kw.value, ast.Constant) and kw.value.value is None)
+            if isinstance(kw.value, ast.Constant) and kw.value.value is None:
+                continue
+            return True
     return False
+
+
+def _enforces_role(
+    route: ast.AsyncFunctionDef | ast.FunctionDef,
+    index: dict[str, ast.AsyncFunctionDef | ast.FunctionDef],
+) -> bool:
+    """A route enforces a role gradient iff, anywhere in its reachable
+    in-module call graph, it both (a) calls ``authorize_workspace_access``
+    and (b) passes a non-None ``required_role=``. (a) without (b) is mere
+    authentication; (b) is what pins the OWNER>ADMIN>MEMBER>VIEWER
+    gradient. This credits ``/{agent_id}/...`` routes that resolve the
+    workspace from the agent and authorise inline or via a helper -- the
+    old ``{workspace_id}``-in-path heuristic missed every one of them."""
+    reachable = _reachable(route, index)
+    has_authorize = any(_body_calls(fn, "authorize_workspace_access") for fn in reachable)
+    has_role = any(_body_passes_required_role(fn) for fn in reachable)
+    return has_authorize and has_role
 
 
 def _iter_route_modules() -> list[Path]:
@@ -135,29 +213,23 @@ def _iter_route_modules() -> list[Path]:
 
 def _collect_violations() -> list[tuple[Path, str, str, str]]:
     """For every mutating route, return ``(file, func_name, verb, path)``
-    if it does NOT enforce a role and is not in the allow-list."""
+    if it does NOT enforce a role (inline or via an in-module helper)
+    and is not in the allow-list."""
     violations: list[tuple[Path, str, str, str]] = []
     for module in _iter_route_modules():
         tree = ast.parse(module.read_text(), filename=str(module))
+        index = _module_index(tree)
         for node in ast.walk(tree):
             if not isinstance(node, ast.AsyncFunctionDef | ast.FunctionDef):
                 continue
             verb = _route_decorator(node)
             if verb is None:
                 continue
-            path = _route_path(node)
-            if "{workspace_id}" not in path:
-                # Workspace-agnostic. Either auth-scoped (handled by
-                # the allow-list) or workspace-creating; either way
-                # there's no workspace to apply role policy against.
-                if node.name not in _ALLOWLIST_FUNCS:
-                    violations.append((module, node.name, verb, path))
-                continue
-            if _calls_authorize_workspace_access_with_role(node):
+            if _enforces_role(node, index):
                 continue
             if node.name in _ALLOWLIST_FUNCS:
                 continue
-            violations.append((module, node.name, verb, path))
+            violations.append((module, node.name, verb, _route_path(node)))
     return violations
 
 
@@ -206,10 +278,11 @@ def test_at_least_one_route_actually_enforces_a_role() -> None:
     found = False
     for module in _iter_route_modules():
         tree = ast.parse(module.read_text(), filename=str(module))
+        index = _module_index(tree)
         for node in ast.walk(tree):
             if not isinstance(node, ast.AsyncFunctionDef | ast.FunctionDef):
                 continue
-            if _calls_authorize_workspace_access_with_role(node):
+            if _route_decorator(node) is not None and _enforces_role(node, index):
                 found = True
                 break
         if found:

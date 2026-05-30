@@ -53,6 +53,19 @@ _AUDIT_EXEMPT: dict[str, str] = {
     # workspace-scoped (no log to write the patch to before it lands).
     # Tracked as follow-up: add a workspaces_audit topic.
     "patch_workspace": "no workspace-meta audit topic yet (follow-up)",
+    # Read-only POST/PATCH endpoints: they take a request body but compute
+    # a response without mutating any persisted state, so there is nothing
+    # to record in the audit log. (Verified by reading each handler.)
+    "preview_channel_matrix": "read-only channel readiness preview; no state change",
+    "inverse_retrieval": "read-only retrieval-miss analysis; no state change",
+    "replay_scene": "read-only scene replay; returns a draft, persists nothing",
+    "semantic_diff": "read-only behavior diff; pure computation",
+    "style_transfer": "read-only style rewrite preview; pure computation",
+    "regression_bisect": "read-only bisect over version history; no state change",
+    "patch_kb_document_refresh": "read-only refresh-status preview; cadence not persisted",
+    # Public pre-workspace signup: no workspace audit log to write to yet
+    # (mirrors the auth_exchange / auth_refresh exemption above).
+    "create_enterprise_signup": "public pre-workspace signup; no workspace audit log",
 }
 
 
@@ -74,8 +87,8 @@ def _route_path(node: ast.AsyncFunctionDef | ast.FunctionDef) -> str:
     return ""
 
 
-def _emits_audit_event(node: ast.AsyncFunctionDef | ast.FunctionDef) -> bool:
-    """True iff the function body contains a call to
+def _body_emits_audit_event(node: ast.AST) -> bool:
+    """True iff ``node``'s own body contains a call to
     ``record_audit_event(...)`` (bare or attribute form)."""
     for child in ast.walk(node):
         if not isinstance(child, ast.Call):
@@ -91,6 +104,55 @@ def _emits_audit_event(node: ast.AsyncFunctionDef | ast.FunctionDef) -> bool:
     return False
 
 
+def _module_index(
+    tree: ast.Module,
+) -> dict[str, ast.AsyncFunctionDef | ast.FunctionDef]:
+    """Map every def/async-def name in the module to its node."""
+    index: dict[str, ast.AsyncFunctionDef | ast.FunctionDef] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.AsyncFunctionDef | ast.FunctionDef):
+            index.setdefault(node.name, node)
+    return index
+
+
+def _called_names(node: ast.AST) -> set[str]:
+    """Names of every function/helper called in ``node``."""
+    names: set[str] = set()
+    for child in ast.walk(node):
+        if isinstance(child, ast.Call):
+            callee = child.func
+            if isinstance(callee, ast.Name):
+                names.add(callee.id)
+            elif isinstance(callee, ast.Attribute):
+                names.add(callee.attr)
+    return names
+
+
+def _emits_audit_event(
+    route: ast.AsyncFunctionDef | ast.FunctionDef,
+    index: dict[str, ast.AsyncFunctionDef | ast.FunctionDef],
+) -> bool:
+    """True iff the route, or any in-module helper transitively reachable
+    from it, emits an audit event. Many routes delegate the write to a
+    shared ``_audit`` / ``_deployment_action`` helper, so a body-only
+    scan over the route reports false positives; we follow the call
+    graph within the module instead."""
+    seen: set[str] = set()
+    stack: list[ast.AsyncFunctionDef | ast.FunctionDef] = [route]
+    while stack:
+        fn = stack.pop()
+        if _body_emits_audit_event(fn):
+            return True
+        for name in _called_names(fn):
+            if name in seen:
+                continue
+            seen.add(name)
+            target = index.get(name)
+            if target is not None:
+                stack.append(target)
+    return False
+
+
 def _iter_route_modules() -> list[Path]:
     return sorted(ROUTES_DIR.glob("_routes_*.py"))
 
@@ -99,13 +161,14 @@ def _collect_violations() -> list[tuple[Path, str, str, str]]:
     violations: list[tuple[Path, str, str, str]] = []
     for module in _iter_route_modules():
         tree = ast.parse(module.read_text(), filename=str(module))
+        index = _module_index(tree)
         for node in ast.walk(tree):
             if not isinstance(node, ast.AsyncFunctionDef | ast.FunctionDef):
                 continue
             verb = _route_decorator(node)
             if verb is None:
                 continue
-            if _emits_audit_event(node):
+            if _emits_audit_event(node, index):
                 continue
             if node.name in _AUDIT_EXEMPT:
                 continue
@@ -156,10 +219,11 @@ def test_at_least_one_route_actually_emits_audit() -> None:
     found = False
     for module in _iter_route_modules():
         tree = ast.parse(module.read_text(), filename=str(module))
+        index = _module_index(tree)
         for node in ast.walk(tree):
             if not isinstance(node, ast.AsyncFunctionDef | ast.FunctionDef):
                 continue
-            if _emits_audit_event(node):
+            if _body_emits_audit_event(node):
                 found = True
                 break
         if found:

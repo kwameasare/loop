@@ -26,7 +26,7 @@ def test_eu_smoke_workflow_runs_nightly_and_manually() -> None:
     steps = cast(list[dict[str, Any]], job["steps"])
     triggers = cast(dict[str, Any], data.get(True, data.get("on", {})))
     assert job["timeout-minutes"] == 14
-    assert any(step.get("uses") == "helm/kind-action@v1.10.0" for step in steps)
+    assert any(step.get("uses") == "helm/kind-action@v1.14.0" for step in steps)
     assert any(step.get("uses") == "azure/setup-helm@v4" for step in steps)
     assert "workflow_dispatch" in triggers
     assert triggers["schedule"][0]["cron"] == "31 4 * * *"

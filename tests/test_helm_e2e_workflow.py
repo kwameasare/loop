@@ -32,7 +32,7 @@ def test_helm_e2e_workflow_uses_kind_and_timeout_budget() -> None:
     steps = cast(list[dict[str, Any]], job["steps"])
     triggers = cast(dict[str, Any], data.get(True, data.get("on", {})))
     assert job["timeout-minutes"] == 12
-    assert any(step.get("uses") == "helm/kind-action@v1.10.0" for step in steps)
+    assert any(step.get("uses") == "helm/kind-action@v1.14.0" for step in steps)
     assert any(step.get("uses") == "azure/setup-helm@v4" for step in steps)
     assert "workflow_dispatch" in triggers
     assert "schedule" in triggers

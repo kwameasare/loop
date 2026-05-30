@@ -17,6 +17,11 @@ evaluate AI agents that talk to real users on real channels.
 - [Channels](./concepts/channels.md) — web widget, Slack, WhatsApp, voice.
 - [Eval](./concepts/eval.md) — scorers, replay, eval-gated deploys.
 
+## Scenarios
+
+- [North-star scenarios](./ux-scenarios/README.md) — the eight canonical
+  end-to-end stories and the proof artifacts each run produces.
+
 ## Operations
 
 - [Branch protection](./branch-protection.md) — required CI checks for `main`.

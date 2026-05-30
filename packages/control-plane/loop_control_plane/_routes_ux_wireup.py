@@ -1184,6 +1184,7 @@ async def create_dashboard(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.MEMBER,
     )
     item = {
         "id": f"dash_{uuid4().hex[:10]}",
@@ -1221,6 +1222,7 @@ async def update_dashboard(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.MEMBER,
     )
     items = _bucket(request, "dashboards").setdefault(str(workspace_id), [])
     for index, item in enumerate(items):
@@ -1263,6 +1265,7 @@ async def delete_dashboard(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.MEMBER,
     )
     items = _bucket(request, "dashboards").setdefault(str(workspace_id), [])
     target = next((item for item in items if item["id"] == dashboard_id), None)
@@ -1320,6 +1323,7 @@ async def create_homepage_pin(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.MEMBER,
     )
     item = {
         "id": f"pin_{uuid4().hex[:10]}",
@@ -1817,6 +1821,7 @@ async def check_residency_callout(
         workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.VIEWER,
     )
     ws = await cp.workspaces.get(workspace_id)
     allowed = ws.region == body.target_region
@@ -2151,6 +2156,7 @@ async def run_onboarding_concierge(
         workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.VIEWER,
     )
     invalid_scopes = sorted(set(body.scopes) - _CONCIERGE_SCOPES)
     if invalid_scopes:
@@ -2328,6 +2334,7 @@ async def save_telemetry_consent(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.MEMBER,
     )
     item = {
         "workspace_id": str(workspace_id),
@@ -3361,6 +3368,7 @@ async def replay_scene(
         workspaces=request.app.state.cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.VIEWER,
     )
     scene = next(
         (
