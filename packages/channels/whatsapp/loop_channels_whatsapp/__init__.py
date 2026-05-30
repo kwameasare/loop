@@ -6,6 +6,12 @@ messages), Block Kit-equivalent serialisation, and a thread-aware
 ``WhatsAppChannel`` that bridges into a ``ChannelDispatcher``.
 """
 
+from loop_channels_whatsapp.byoc import (
+    ByocWhatsAppSender,
+    WhatsAppMessageSender,
+    WhatsAppTransportBuilder,
+    build_byoc_whatsapp_sender,
+)
 from loop_channels_whatsapp.channel import ConversationIndex, WhatsAppChannel
 from loop_channels_whatsapp.connect import (
     CLOUD_API_VERSION,
@@ -24,6 +30,7 @@ from loop_channels_whatsapp.verify import (
 
 __all__ = [
     "CLOUD_API_VERSION",
+    "ByocWhatsAppSender",
     "ConversationIndex",
     "SignatureError",
     "WhatsAppBusinessAccount",
@@ -31,6 +38,9 @@ __all__ = [
     "WhatsAppConnectFlow",
     "WhatsAppConnectRequest",
     "WhatsAppConnectResult",
+    "WhatsAppMessageSender",
+    "WhatsAppTransportBuilder",
+    "build_byoc_whatsapp_sender",
     "parse_event",
     "to_messages",
     "verify_challenge",

@@ -10,6 +10,11 @@ Concrete channels live in sibling packages
 (`loop_channels_web`, `loop_channels_slack`, `loop_channels_whatsapp`).
 """
 
+from loop_channels_core.byoc import (
+    ByocCredentialsError,
+    ByocCredentialsResolver,
+    validate_required_credentials,
+)
 from loop_channels_core.conversation_index_postgres import PostgresConversationIndex
 from loop_channels_core.feature_matrix import (
     AgentChannelMatrix,
@@ -51,6 +56,8 @@ from loop_channels_core.translate import from_turn_event
 __all__ = [
     "DEFAULT_TTL_SECONDS",
     "AgentChannelMatrix",
+    "ByocCredentialsError",
+    "ByocCredentialsResolver",
     "Channel",
     "ChannelCapability",
     "ChannelDispatcher",
@@ -78,4 +85,5 @@ __all__ = [
     "provider_event_id_for_web",
     "provider_event_id_for_whatsapp",
     "to_dispatcher",
+    "validate_required_credentials",
 ]

@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 import secrets
-import uuid
 from hashlib import sha256
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_common import env, now_ms, paseto_key
-from loop_control_plane.auth import HS256Verifier
+from loop_control_plane.auth import AuthError, build_token_verifier
 from loop_control_plane.auth_exchange import (
     ACCESS_TTL_MS,
     REFRESH_TTL_MS,
     AuthExchange,
+    map_idp_sub_to_internal_user_id,
 )
 from loop_control_plane.jwks import JwtClaims
 from loop_control_plane.paseto import encode_local
@@ -41,14 +41,38 @@ async def auth_exchange(request: Request, body: AuthExchangeRequest) -> dict[str
     runtime = request.app.state.cp
     issuer = env("LOOP_CP_AUTH_ISSUER", "https://loop.local/")
     audience = env("LOOP_CP_AUTH_AUDIENCE", "loop-cp")
-    claims = HS256Verifier(
-        secret=env("LOOP_CP_LOCAL_JWT_SECRET", ""),
-        issuer=issuer,
-        audience=audience,
-    ).verify(body.id_token)
+    # Prod path: Auth0 (or any RS256/JWKS IdP) — env-driven so the dev
+    # HS256 secret is never required when a real tenant is wired.
+    #
+    # The studio POSTs an Auth0 **id_token** (OIDC). Per OIDC, the
+    # id_token's ``aud`` claim is the OAuth **client_id** of the SPA
+    # (``LOOP_AUTH0_CLIENT_ID``), NOT the API identifier
+    # (``LOOP_AUTH0_AUDIENCE``, which audiences the *access_token*).
+    # Validate against the client_id here; the access PASETO we mint
+    # downstream still carries the API identifier so internal services
+    # can keep their audience checks against ``LOOP_AUTH0_AUDIENCE``.
+    auth0_domain = env("LOOP_AUTH0_DOMAIN", "")
+    auth0_client_id = env("LOOP_AUTH0_CLIENT_ID", "")
+    auth0_api_audience = env("LOOP_AUTH0_AUDIENCE", "")
+    try:
+        verifier = build_token_verifier(
+            auth0_domain=auth0_domain or None,
+            auth0_audience=auth0_client_id or None,
+            hs256_secret=env("LOOP_CP_LOCAL_JWT_SECRET", ""),
+            hs256_issuer=issuer,
+            hs256_audience=audience,
+        )
+        claims = verifier.verify(body.id_token)
+    except AuthError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    # The cp-minted PASETO carries the API audience (downstream services
+    # validate against ``LOOP_AUTH0_AUDIENCE``). Fall back to the dev
+    # audience for the HS256 path.
+    if auth0_domain and auth0_api_audience:
+        audience = auth0_api_audience
 
     async def mapper(sub: str) -> str | None:
-        return str(uuid.uuid5(uuid.NAMESPACE_URL, f"loop:idp:{sub}"))
+        return map_idp_sub_to_internal_user_id(sub)
 
     exchange = AuthExchange(
         paseto_key=paseto_key(),
@@ -64,7 +88,16 @@ async def auth_exchange(request: Request, body: AuthExchangeRequest) -> dict[str
         iat_ms=claims.iat * 1000,
         raw=claims.model_dump(mode="json"),
     )
-    result = await exchange.exchange(claims=jwt_claims, now_ms=now_ms())
+    # Pass the client_id as the inbound audience when Auth0 is wired so
+    # the AuthExchange's defense-in-depth check accepts an id_token
+    # whose ``aud`` is the SPA client_id rather than the API identifier.
+    result = await exchange.exchange(
+        claims=jwt_claims,
+        now_ms=now_ms(),
+        id_token_audience=(
+            auth0_client_id if (auth0_domain and auth0_client_id) else None
+        ),
+    )
     return {
         "access_token": result.access_token,
         "refresh_token": result.refresh_token,

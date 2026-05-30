@@ -75,7 +75,7 @@ describe("resolveChannelsWorkspaceId", () => {
   });
 
   it("does not invent a local workspace id", () => {
-    expect(resolveChannelsWorkspaceId([], [], undefined)).toBeNull();
+    expect(resolveChannelsWorkspaceId([], [])).toBeNull();
   });
 
   it("renders control-plane context failures without hiding non-voice channels", async () => {

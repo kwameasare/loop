@@ -69,10 +69,11 @@ def test_cp_migrations_have_single_head() -> None:
     script = ScriptDirectory.from_config(_config("loop_control_plane.migrations"))
     heads = script.get_heads()
     assert len(heads) == 1, f"expected single head, got {heads}"
-    # The current head is the latest migration. When a new migration
-    # lands on top of cp_0012, this assertion will fail and the
-    # author should bump it.
-    assert heads == ["cp_0012_api_keys_align"], (
+    # The current head is the latest migration. cp_0012 was followed by
+    # cp_0013 (channel-binding secrets) → cp_0014 (enterprise-admin
+    # tables) → cp_0015 (agent intakes). When a new migration lands on
+    # top, this assertion will fail and the author should bump it.
+    assert heads == ["cp_0015_agent_intakes"], (
         f"head changed; bump this assertion when adding a migration: {heads}"
     )
 

@@ -1,6 +1,7 @@
 import { AgentsList } from "@/components/agents/agents-list";
 import { NewAgentModal } from "@/components/agents/new-agent-modal";
 import { listAgents } from "@/lib/cp-api";
+import { getCpAccessToken } from "@/lib/server/session";
 import { listWorkspaces } from "@/lib/workspaces";
 
 export const dynamic = "force-dynamic";
@@ -14,18 +15,23 @@ export const dynamic = "force-dynamic";
  * validate uniqueness before round-tripping POST /v1/agents.
  */
 export default async function AgentsPage() {
+  // Forward the studio session cookie as the cp bearer for this SSR
+  // request. Server Components can't read sessionStorage; the cookie
+  // is set by /api/session on sign-in. Conditional spread because
+  // ``exactOptionalPropertyTypes`` rejects an explicit ``undefined``.
+  const token = getCpAccessToken();
+  const auth = token ? { token } : {};
   const { workspaces, degraded_reason: workspacesDegradedReason } =
-    await listWorkspaces().catch((error: unknown) => ({
+    await listWorkspaces(auth).catch((error: unknown) => ({
       workspaces: [],
       degraded_reason:
         error instanceof Error
           ? error.message
           : "Could not load workspace context.",
     }));
-  const initialWorkspaceId =
-    workspaces[0]?.id || process.env.LOOP_DEFAULT_WORKSPACE_ID || null;
+  const initialWorkspaceId = workspaces[0]?.id ?? null;
   const agentsResult = initialWorkspaceId
-    ? await listAgents({ workspaceId: initialWorkspaceId })
+    ? await listAgents({ ...auth, workspaceId: initialWorkspaceId })
         .then((result) => ({ ...result, degradedReason: undefined }))
         .catch((error) => ({
           agents: [],
@@ -38,10 +44,11 @@ export default async function AgentsPage() {
       };
   const { agents, degradedReason: agentsDegradedReason } = agentsResult;
   const existingSlugs = agents.map((a) => a.slug).filter(Boolean);
-  const workspaceId =
-    agents[0]?.workspace_id ||
-    workspaces[0]?.id ||
-    initialWorkspaceId;
+  const workspaceId = agents[0]?.workspace_id || workspaces[0]?.id || null;
+  const activeWorkspace =
+    workspaces.find((workspace) => workspace.id === workspaceId) ??
+    workspaces[0] ??
+    null;
   return (
     <main className="container mx-auto flex max-w-5xl flex-col gap-6 py-10">
       <header className="flex flex-col gap-2">
@@ -50,6 +57,8 @@ export default async function AgentsPage() {
           <NewAgentModal
             existingSlugs={existingSlugs}
             workspaceId={workspaceId}
+            workspaceName={activeWorkspace?.name}
+            workspaceRole={activeWorkspace?.role}
           />
         </div>
         <p className="text-muted-foreground">

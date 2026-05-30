@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
-from loop_control_plane.authorize import authorize_workspace_access
+from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.trace_search import TraceQuery
 
 router = APIRouter(prefix="/v1/workspaces", tags=["Voice"])
@@ -89,6 +89,7 @@ async def _agent_for_caller(cp: Any, agent_id: UUID, caller_sub: str) -> Any:
                     workspaces=cp.workspaces,
                     workspace_id=agent.workspace_id,
                     user_sub=caller_sub,
+                    required_role=Role.MEMBER,
                 )
                 return agent
     raise HTTPException(status_code=404, detail="unknown agent")
@@ -157,6 +158,7 @@ async def patch_voice_config(
         workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.ADMIN,
     )
     current = dict(cp.voice_configs.get(workspace_id, _default_config(workspace_id)))
     if body.asr_provider is not None:

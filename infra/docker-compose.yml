@@ -143,7 +143,11 @@ services:
         soft: 262144
         hard: 262144
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8123/ping || exit 1"]
+      # Use 127.0.0.1 explicitly — inside this Alpine container ``localhost``
+      # resolves to IPv6 ``::1`` first, but ClickHouse only binds IPv4 here
+      # (Docker Desktop on macOS doesn't expose IPv6 by default), so a
+      # ``localhost`` probe loops forever even though the server is healthy.
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8123/ping || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -163,7 +167,8 @@ services:
       clickhouse:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:13133/ || exit 1"]
+      # Same IPv4-only loopback rule as the ClickHouse healthcheck above.
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:13133/ || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 10

@@ -18,6 +18,11 @@
 import { NextResponse } from "next/server";
 import crypto from "node:crypto";
 
+import {
+  setCpSessionCookies,
+  type CpSessionExchangeResponse,
+} from "@/lib/cp-session-cookies";
+
 export const runtime = "nodejs";
 
 interface DevLoginBody {
@@ -137,5 +142,13 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  return NextResponse.json(parsed);
+  // Dev-login follows the same cookie contract as /api/session so SSR
+  // pages (e.g. /home, /agents) authenticate identically whether the
+  // user came in via Auth0 or via the HS256 dev path.
+  const response = NextResponse.json(parsed);
+  setCpSessionCookies(
+    response.cookies,
+    parsed as unknown as CpSessionExchangeResponse,
+  );
+  return response;
 }

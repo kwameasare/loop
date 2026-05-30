@@ -4,16 +4,27 @@ import { createAgent, listAgents } from "./cp-api";
 
 const ORIGINAL = process.env.LOOP_CP_API_BASE_URL;
 const ORIGINAL_TOKEN = process.env.LOOP_TOKEN;
+const ORIGINAL_WORKSPACE = process.env.LOOP_DEFAULT_WORKSPACE_ID;
+
+function restoreEnv(key: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[key];
+  } else {
+    process.env[key] = value;
+  }
+}
 
 describe("listAgents", () => {
   beforeEach(() => {
     delete process.env.LOOP_CP_API_BASE_URL;
     delete process.env.LOOP_TOKEN;
+    delete process.env.LOOP_DEFAULT_WORKSPACE_ID;
   });
 
   afterEach(() => {
-    process.env.LOOP_CP_API_BASE_URL = ORIGINAL;
-    process.env.LOOP_TOKEN = ORIGINAL_TOKEN;
+    restoreEnv("LOOP_CP_API_BASE_URL", ORIGINAL);
+    restoreEnv("LOOP_TOKEN", ORIGINAL_TOKEN);
+    restoreEnv("LOOP_DEFAULT_WORKSPACE_ID", ORIGINAL_WORKSPACE);
     vi.restoreAllMocks();
   });
 
@@ -42,7 +53,10 @@ describe("listAgents", () => {
       ],
     });
 
-    const result = await listAgents({ fetcher: fetchMock, workspaceId: "ws_1" });
+    const result = await listAgents({
+      fetcher: fetchMock,
+      workspaceId: "ws_1",
+    });
 
     expect(result.agents[0]).toMatchObject({
       id: "agt_support",
@@ -70,17 +84,36 @@ describe("listAgents", () => {
 
     await expect(listAgents({ fetcher: fetchMock })).rejects.toThrow(/503/);
   });
+
+  it("does not invent workspace scope from LOOP_DEFAULT_WORKSPACE_ID", async () => {
+    process.env.LOOP_CP_API_BASE_URL = "https://cp.test";
+    process.env.LOOP_TOKEN = "test-token";
+    process.env.LOOP_DEFAULT_WORKSPACE_ID = "stale-workspace";
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [],
+    });
+
+    await listAgents({ fetcher: fetchMock });
+
+    const [, init] = fetchMock.mock.calls[0];
+    const headers = new Headers(init.headers);
+    expect(headers.get("x-loop-workspace-id")).toBeNull();
+  });
 });
 
 describe("createAgent", () => {
   beforeEach(() => {
     delete process.env.LOOP_CP_API_BASE_URL;
     delete process.env.LOOP_TOKEN;
+    delete process.env.LOOP_DEFAULT_WORKSPACE_ID;
   });
 
   afterEach(() => {
-    process.env.LOOP_CP_API_BASE_URL = ORIGINAL;
-    process.env.LOOP_TOKEN = ORIGINAL_TOKEN;
+    restoreEnv("LOOP_CP_API_BASE_URL", ORIGINAL);
+    restoreEnv("LOOP_TOKEN", ORIGINAL_TOKEN);
+    restoreEnv("LOOP_DEFAULT_WORKSPACE_ID", ORIGINAL_WORKSPACE);
     vi.restoreAllMocks();
   });
 

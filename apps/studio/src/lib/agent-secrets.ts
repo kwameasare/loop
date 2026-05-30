@@ -9,6 +9,9 @@
  * secret was added/rotated without the control plane.
  */
 
+import { getCpBaseUrl } from "@/lib/cp-url";
+
+
 export interface AgentSecret {
   id: string;
   agent_id: string;
@@ -161,13 +164,16 @@ export async function rotateAgentSecret(
 }
 
 function cpApiBaseUrl(override?: string): string | null {
-  const raw =
-    override ??
-    process.env.LOOP_CP_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_LOOP_API_URL;
-  if (!raw) return null;
-  const trimmed = raw.replace(/\/$/, "");
-  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+  if (override !== undefined) {
+    if (!override) return null;
+    const trimmed = override.replace(/\/$/, "");
+    return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+  }
+  try {
+    return getCpBaseUrl({ withV1: true });
+  } catch {
+    return null;
+  }
 }
 
 function secretHeaders(

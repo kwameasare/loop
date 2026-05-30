@@ -4,7 +4,7 @@ import asyncio
 import json
 import re
 from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 from urllib.parse import urlparse
 from uuid import UUID, uuid4
 
@@ -12,6 +12,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_agents import AgentRecord
 from loop_control_plane.agent_commitments import CommitmentBody, missing_required_fields
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncEngine
 
 AgentIntakePath = Literal["business_intent", "legacy_import", "enterprise_template"]
 AgentIntakeState = Literal[
@@ -981,3 +984,135 @@ class AgentIntakeRegistry:
             if record is None or record.workspace_id != workspace_id:
                 raise KeyError(intake_id)
             return record
+
+
+def _intake_from_payload(payload: Any) -> AgentIntakeRecord:
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    return AgentIntakeRecord.model_validate(payload)
+
+
+class PostgresAgentIntakeRegistry:
+    """Postgres-backed agent-intake registry.
+
+    The in-memory registry is fine for unit tests, but the creation flow's
+    post-submit evidence panel depends on these records surviving a cp-api
+    restart. Store the full typed payload as JSONB while indexing the fields
+    the API needs for workspace lists and direct lookup.
+    """
+
+    def __init__(self, engine: AsyncEngine) -> None:
+        self._engine = engine
+
+    @classmethod
+    def from_url(cls, database_url: str, *, echo: bool = False) -> "PostgresAgentIntakeRegistry":
+        from sqlalchemy.ext.asyncio import create_async_engine
+
+        engine = create_async_engine(
+            database_url,
+            echo=echo,
+            future=True,
+            pool_pre_ping=True,
+        )
+        return cls(engine)
+
+    async def add(self, record: AgentIntakeRecord) -> AgentIntakeRecord:
+        from sqlalchemy import text
+
+        payload = json.dumps(agent_intake_payload(record))
+        async with self._engine.begin() as conn:
+            await conn.execute(
+                text(
+                    """
+                    INSERT INTO agent_intakes (
+                        id, workspace_id, agent_id, state, payload,
+                        created_at, updated_at
+                    ) VALUES (
+                        :id, :workspace_id, :agent_id, :state,
+                        CAST(:payload AS JSONB), :created_at, :updated_at
+                    )
+                    ON CONFLICT (id) DO UPDATE SET
+                        state = EXCLUDED.state,
+                        payload = EXCLUDED.payload,
+                        updated_at = EXCLUDED.updated_at
+                    """
+                ),
+                {
+                    "id": record.id,
+                    "workspace_id": record.workspace_id,
+                    "agent_id": record.agent_id,
+                    "state": record.state,
+                    "payload": payload,
+                    "created_at": record.created_at,
+                    "updated_at": record.updated_at,
+                },
+            )
+        return record
+
+    async def replace(self, record: AgentIntakeRecord) -> AgentIntakeRecord:
+        from sqlalchemy import text
+
+        payload = json.dumps(agent_intake_payload(record))
+        async with self._engine.begin() as conn:
+            result = await conn.execute(
+                text(
+                    """
+                    UPDATE agent_intakes
+                       SET state = :state,
+                           payload = CAST(:payload AS JSONB),
+                           updated_at = :updated_at
+                     WHERE id = :id
+                       AND workspace_id = :workspace_id
+                    """
+                ),
+                {
+                    "id": record.id,
+                    "workspace_id": record.workspace_id,
+                    "state": record.state,
+                    "payload": payload,
+                    "updated_at": record.updated_at,
+                },
+            )
+        if result.rowcount == 0:
+            raise KeyError(record.id)
+        return record
+
+    async def list_for_workspace(self, workspace_id: UUID) -> list[AgentIntakeRecord]:
+        from sqlalchemy import text
+
+        async with self._engine.begin() as conn:
+            rows = (
+                await conn.execute(
+                    text(
+                        """
+                        SELECT payload
+                          FROM agent_intakes
+                         WHERE workspace_id = :workspace_id
+                         ORDER BY updated_at DESC, created_at DESC
+                        """
+                    ),
+                    {"workspace_id": workspace_id},
+                )
+            ).all()
+        return [_intake_from_payload(row.payload) for row in rows]
+
+    async def get(self, *, workspace_id: UUID, intake_id: str) -> AgentIntakeRecord:
+        from sqlalchemy import text
+
+        async with self._engine.begin() as conn:
+            row = (
+                await conn.execute(
+                    text(
+                        """
+                        SELECT payload
+                          FROM agent_intakes
+                         WHERE id = :id
+                           AND workspace_id = :workspace_id
+                        """
+                    ),
+                    {"id": intake_id, "workspace_id": workspace_id},
+                )
+            ).first()
+        if row is None:
+            raise KeyError(intake_id)
+        return _intake_from_payload(row.payload)

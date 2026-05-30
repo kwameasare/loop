@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
-from loop_control_plane.authorize import authorize_workspace_access
+from loop_control_plane.authorize import Role, authorize_workspace_access
 from loop_control_plane.inbox import InboxChannel, InboxError
 
 router_workspaces = APIRouter(prefix="/v1/workspaces", tags=["Inbox"])
@@ -89,6 +89,7 @@ async def escalate_to_inbox(
         workspaces=cp.workspaces,
         workspace_id=workspace_id,
         user_sub=caller_sub,
+        required_role=Role.MEMBER,
     )
     try:
         item = cp.inbox_api.escalate(
@@ -139,6 +140,7 @@ async def claim_inbox_item(
         workspaces=cp.workspaces,
         workspace_id=existing.workspace_id,
         user_sub=caller_sub,
+        required_role=Role.MEMBER,
     )
     claim_body = body or ClaimBody()
     try:
@@ -178,6 +180,7 @@ async def release_inbox_item(
         workspaces=cp.workspaces,
         workspace_id=existing.workspace_id,
         user_sub=caller_sub,
+        required_role=Role.MEMBER,
     )
     try:
         item = cp.inbox_api.release(item_id=item_id)
@@ -211,6 +214,7 @@ async def resolve_inbox_item(
         workspaces=cp.workspaces,
         workspace_id=existing.workspace_id,
         user_sub=caller_sub,
+        required_role=Role.MEMBER,
     )
     resolve_body = body or ResolveBody()
     try:

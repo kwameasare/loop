@@ -1,16 +1,24 @@
 "use client";
 
 /**
- * S150 + S912: Auth0 callback page.
+ * Auth0 callback page.
  *
- * `@auth0/auth0-react` handles the PKCE code exchange transparently
- * when the SDK initialises on a URL containing `?code=` & `?state=`.
+ * ``@auth0/auth0-react`` handles the PKCE code exchange transparently
+ * when the SDK initialises on a URL containing ``?code=`` &
+ * ``?state=``. Once the SDK reports an authenticated user we POST
+ * the Auth0 ID token to ``/api/session`` (a Next.js Route Handler
+ * that calls cp's ``/v1/auth/exchange`` server-side). The handler
+ * sets HttpOnly ``loop.cp.access`` + ``loop.cp.refresh`` cookies so
+ * Server Components can authenticate against cp, and returns the
+ * tokens in the body so client-side code can also cache them in
+ * ``sessionStorage`` for direct browser→cp fetches.
  *
- * Once the SDK reports an authenticated user (S912) we hand the Auth0
- * ID token to cp-api ``/v1/auth/exchange`` which mints a short-lived
- * Loop session token. The session token is stored in
- * ``sessionStorage`` so subsequent fetches against cp-api can carry
- * ``Authorization: Bearer <session>``.
+ * Why we don't call cp directly any more: the previous
+ * sessionStorage-only flow left Server Components (e.g. ``/home``,
+ * ``/agents``) unable to authenticate — they ran on the Next.js
+ * server with no access to the browser's storage and ended up
+ * rendering "Agent registry unavailable". The cookie path closes
+ * that gap without putting long-lived service tokens in env vars.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -19,8 +27,8 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useUser } from "@/lib/use-user";
 import {
   AuthExchangeError,
-  exchangeAuth0Token,
   storeSessionToken,
+  type AuthExchangeResponse,
 } from "@/lib/cp-auth-exchange";
 
 export default function AuthCallbackPage() {
@@ -46,7 +54,24 @@ export default function AuthCallbackPage() {
             ""
           );
         }
-        const session = await exchangeAuth0Token(idToken);
+        // POST to the BFF Route Handler — it talks to cp server-side
+        // and writes the HttpOnly cookies that SSR auth needs.
+        const response = await fetch("/api/session", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ id_token: idToken }),
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new AuthExchangeError(
+            `/api/session returned HTTP ${response.status}`,
+            response.status,
+            text,
+          );
+        }
+        const session = (await response.json()) as AuthExchangeResponse;
+        // Mirror to sessionStorage for client-side fetches that still
+        // read it directly (channel forms, test-turn widget, etc.).
         storeSessionToken(session);
         if (!cancelled) router.replace("/");
       } catch (err) {

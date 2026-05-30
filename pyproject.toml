@@ -219,8 +219,10 @@ source = ["packages", "tools"]
 omit = ["**/_tests/**"]
 
 [tool.coverage.report]
-# Sprint 0: coverage gate is informational only — most packages are still
-# scaffolded. Raise to 85 once S007/S008/S011 land. Tracked by S031
-# ("Eval-gated deploy") and CI hardening.
-fail_under = 0
+# Enforced floor. Measured total is ~83% across packages+tools; the gate
+# sits a few points below so a normal run can't trip it on noise, while a
+# real coverage regression still fails. Ratchet upward as coverage climbs.
+# NOTE: this only bites on runs that pass --cov; the main CI `unit` job
+# does not yet measure coverage — add --cov there to make the floor bind.
+fail_under = 80
 show_missing = true

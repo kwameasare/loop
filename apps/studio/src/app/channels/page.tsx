@@ -5,6 +5,7 @@ import { ChannelTypeGrid } from "@/components/channels/channel-type-grid";
 import { NewAgentModal } from "@/components/agents/new-agent-modal";
 import { buttonVariants } from "@/components/ui/button";
 import { listAgents, type AgentSummary } from "@/lib/cp-api";
+import { getCpAccessToken } from "@/lib/server/session";
 import { listWorkspaces, type Workspace } from "@/lib/workspaces";
 
 export const dynamic = "force-dynamic";
@@ -12,14 +13,15 @@ export const dynamic = "force-dynamic";
 export function resolveChannelsWorkspaceId(
   agents: AgentSummary[],
   workspaces: Workspace[],
-  fallback: string | undefined = process.env.LOOP_DEFAULT_WORKSPACE_ID,
 ): string | null {
-  return agents[0]?.workspace_id || workspaces[0]?.id || fallback || null;
+  return agents[0]?.workspace_id || workspaces[0]?.id || null;
 }
 
 export default async function ChannelsPage() {
+  const token = getCpAccessToken();
+  const auth = token ? { token } : {};
   const { workspaces, degraded_reason: workspacesDegradedReason } =
-    await listWorkspaces().catch((error: unknown) => ({
+    await listWorkspaces(auth).catch((error: unknown) => ({
       workspaces: [],
       degraded_reason:
         error instanceof Error
@@ -28,7 +30,7 @@ export default async function ChannelsPage() {
     }));
   const initialWorkspaceId = resolveChannelsWorkspaceId([], workspaces);
   const agentsResult = initialWorkspaceId
-    ? await listAgents({ workspaceId: initialWorkspaceId })
+    ? await listAgents({ ...auth, workspaceId: initialWorkspaceId })
         .then((result) => ({ ...result, degradedReason: undefined }))
         .catch((error: unknown) => ({
           agents: [],
@@ -42,11 +44,11 @@ export default async function ChannelsPage() {
   const { agents, degradedReason: agentsDegradedReason } = agentsResult;
   const existingSlugs = agents.map((agent) => agent.slug).filter(Boolean);
   const activeAgentId = agents[0]?.id ?? null;
-  const workspaceId = resolveChannelsWorkspaceId(
-    agents,
-    workspaces,
-    initialWorkspaceId ?? undefined,
-  );
+  const workspaceId = resolveChannelsWorkspaceId(agents, workspaces);
+  const activeWorkspace =
+    workspaces.find((workspace) => workspace.id === workspaceId) ??
+    workspaces[0] ??
+    null;
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-5 p-4 lg:p-6">
@@ -56,9 +58,7 @@ export default async function ChannelsPage() {
         </p>
         <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Channels
-            </h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Channels</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
               Connect your agents to the places customers and teams already
               spend their day — web, WhatsApp, Slack, voice, and the rest.
@@ -84,8 +84,8 @@ export default async function ChannelsPage() {
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Channel types</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Nine ways your agents can talk to customers and teammates. The
-            same agent shows up everywhere you bind it.
+            Nine ways your agents can talk to customers and teammates. The same
+            agent shows up everywhere you bind it.
           </p>
         </div>
         <ChannelTypeGrid agentId={activeAgentId} />
@@ -96,13 +96,15 @@ export default async function ChannelsPage() {
           <div>
             <h2 className="text-lg font-semibold">Your agents</h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Pick an agent to connect channels. Behavior, tools, and
-              guardrails all live in one place.
+              Pick an agent to connect channels. Behavior, tools, and guardrails
+              all live in one place.
             </p>
           </div>
           <NewAgentModal
             existingSlugs={existingSlugs}
             workspaceId={workspaceId}
+            workspaceName={activeWorkspace?.name}
+            workspaceRole={activeWorkspace?.role}
           />
         </div>
 
@@ -118,10 +120,7 @@ export default async function ChannelsPage() {
           >
             <div className="notice__body">{workspacesDegradedReason}</div>
             {agentsDegradedReason ? (
-              <span
-                className="sr-only"
-                data-testid="channels-agents-degraded"
-              >
+              <span className="sr-only" data-testid="channels-agents-degraded">
                 {agentsDegradedReason}
               </span>
             ) : null}

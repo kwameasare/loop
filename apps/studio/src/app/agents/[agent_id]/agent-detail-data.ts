@@ -1,4 +1,5 @@
 import { getAgent, type AgentSummary } from "@/lib/cp-api";
+import { getCpAccessToken } from "@/lib/server/session";
 import type {
   AgentBranch,
   AgentChangeSet,
@@ -197,8 +198,10 @@ function fallbackAgent(agentId: string): AgentSummary {
 export async function getAgentDetailData(
   agentId: string,
 ): Promise<AgentDetailData> {
+  const token = getCpAccessToken();
+  const auth = token ? { token } : {};
   try {
-    return { agent: await getAgent(agentId) };
+    return { agent: await getAgent(agentId, auth) };
   } catch (error) {
     const message =
       error instanceof Error

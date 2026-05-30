@@ -73,6 +73,44 @@ class AgentVersionService:
             rows.sort(key=lambda v: v.version)
             return rows
 
+    async def get_by_number(
+        self, *, workspace_id: UUID, agent_id: UUID, version: int
+    ) -> AgentVersion:
+        """Fetch one immutable version by its monotonic ``version`` int.
+        dp-runtime calls this to resolve an agent's executable spec
+        (system prompt, model, tools) when serving a turn.
+
+        Raises ``AgentVersionError`` if no version with this number
+        exists for the agent."""
+        await self._agents.get(workspace_id=workspace_id, agent_id=agent_id)
+        async with self._lock:
+            for row in self._versions.get((workspace_id, agent_id), []):
+                if row.version == version:
+                    return row
+        raise AgentVersionError(
+            f"agent {agent_id} has no version {version}"
+        )
+
+    async def get_active(
+        self, *, workspace_id: UUID, agent_id: UUID
+    ) -> AgentVersion:
+        """Fetch the version pinned as ``agent.active_version``.
+
+        Raises ``AgentVersionError`` if the agent has no active version
+        promoted yet (draft state)."""
+        agent = await self._agents.get(
+            workspace_id=workspace_id, agent_id=agent_id
+        )
+        if agent.active_version is None:
+            raise AgentVersionError(
+                f"agent {agent_id} has no active version (still draft)"
+            )
+        return await self.get_by_number(
+            workspace_id=workspace_id,
+            agent_id=agent_id,
+            version=agent.active_version,
+        )
+
     async def create(
         self,
         *,

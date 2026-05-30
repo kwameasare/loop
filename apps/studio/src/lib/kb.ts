@@ -13,6 +13,8 @@
  * pluggable ``uploader`` keeps the unit tests deterministic.
  */
 
+import { getCpBaseUrl } from "@/lib/cp-url";
+
 export interface KbDocument {
   id: string;
   agentId: string;
@@ -36,15 +38,17 @@ export interface KbHelperOptions {
 }
 
 function resolveBase(opts: KbHelperOptions): string | null {
-  const raw =
-    opts.baseUrl ??
-    (typeof process !== "undefined"
-      ? process.env.LOOP_CP_API_BASE_URL ??
-        process.env.NEXT_PUBLIC_LOOP_API_URL
-      : undefined);
-  if (!raw) return null;
-  const trimmed = raw.replace(/\/$/, "");
-  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+  if (opts.baseUrl !== undefined) {
+    if (!opts.baseUrl) return null;
+    const trimmed = opts.baseUrl.replace(/\/$/, "");
+    return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+  }
+  // Browser → /api/cp/v1 (same-origin proxy). Server → real cp URL.
+  try {
+    return getCpBaseUrl({ withV1: true });
+  } catch {
+    return null;
+  }
 }
 
 function authHeaders(opts: KbHelperOptions): Record<string, string> {

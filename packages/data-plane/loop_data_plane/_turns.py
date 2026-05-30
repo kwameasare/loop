@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 
 from loop.types import AgentEvent, ChannelType, ContentPart, TurnEvent
 from loop_runtime import AgentConfig, TurnBudget, TurnExecutor
+from loop_runtime.cp_client import CpApiClient, CpApiLookupError
 from loop_runtime.sse import SseEncoder, encode_done, encode_error, encode_turn_event
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -30,6 +31,7 @@ class _DisconnectProbe(Protocol):
 __all__ = [
     "CrossRegionCalloutError",
     "RuntimeTurnRequest",
+    "TurnAgentResolveError",
     "TurnAuthError",
     "TurnBudgetError",
     "TurnExecutionError",
@@ -128,6 +130,20 @@ class CrossRegionCalloutError(TurnExecutionError):
     http_status = 403
 
 
+class TurnAgentResolveError(TurnExecutionError):
+    """The turn pinned ``agent_id`` + ``agent_version`` but cp-api
+    couldn't return a matching version.
+
+    Most often: the agent has no promoted active version yet (draft
+    state), or the caller pinned a version number that hasn't been
+    created. The route layer surfaces 404 so the caller can fall back
+    to inline config.
+    """
+
+    code = "LOOP-RT-410"
+    http_status = 404
+
+
 _STREAM_ERROR_MESSAGES: dict[str, str] = {
     "LOOP-GW-101": "Provider credentials were rejected.",
     "LOOP-GW-301": "Provider rate limit exceeded.",
@@ -154,9 +170,17 @@ class RuntimeTurnRequest(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
     received_at: datetime | None = None
     request_id: str | None = Field(default=None, min_length=1)
+    # Two ways to identify the agent for a turn:
+    #   1. Inline (agent_name + model + system_prompt) — legacy / tests.
+    #   2. Bound to a cp-api record (agent_id [+ agent_version]) — the
+    #      runtime resolves the spec from cp before executing.
+    # When ``agent_id`` is set the inline fields become defaults that
+    # can be overridden by the resolved spec.
     agent_name: str = Field(default="default", min_length=1)
     model: str | None = Field(default=None, min_length=1)
     system_prompt: str = ""
+    agent_id: UUID | None = None
+    agent_version: int | None = Field(default=None, ge=1)
     budget: TurnBudget | None = None
 
     @model_validator(mode="after")
@@ -182,10 +206,51 @@ class RuntimeTurnRequest(BaseModel):
         )
 
     def agent(self) -> AgentConfig:
+        """Legacy / inline path. Resolves from the request body alone."""
         return AgentConfig(
             name=self.agent_name,
             model=self.model or default_agent_model(),
             system_prompt=self.system_prompt,
+            budget=self.budget or TurnBudget(),
+        )
+
+    async def resolve_agent(
+        self, cp_client: CpApiClient | None
+    ) -> AgentConfig:
+        """Resolve the AgentConfig for this turn.
+
+        When the request pins ``agent_id`` AND a ``cp_client`` is
+        available, fetch the version's spec from cp-api and merge over
+        the inline defaults — so callers can override model/prompt
+        per-turn without forking a new version. When ``agent_id`` is
+        unset (or cp lookup fails), fall back to the inline fields.
+        """
+        if self.agent_id is None or cp_client is None:
+            return self.agent()
+        try:
+            version = await cp_client.agent_version(
+                agent_id=self.agent_id,
+                version=self.agent_version or 0,
+            )
+        except CpApiLookupError as exc:
+            raise TurnAgentResolveError(
+                f"agent {self.agent_id} version "
+                f"{self.agent_version or 'active'} not found in cp"
+            ) from exc
+        spec = version.config_json
+        # The version.spec dict is free-form. We read well-known keys
+        # for the fields TurnExecutor needs; unknown keys are ignored
+        # so cp can grow the schema without breaking the runtime.
+        return AgentConfig(
+            name=str(spec.get("name") or self.agent_name),
+            model=str(
+                spec.get("model")
+                or self.model
+                or default_agent_model()
+            ),
+            system_prompt=str(
+                spec.get("system_prompt") or self.system_prompt or ""
+            ),
             budget=self.budget or TurnBudget(),
         )
 
@@ -214,6 +279,8 @@ async def stream_turn_sse(
     executor: TurnExecutor,
     body: RuntimeTurnRequest,
     request: _DisconnectProbe | None = None,
+    *,
+    cp_client: CpApiClient | None = None,
 ) -> AsyncIterator[bytes]:
     """Stream a turn over SSE.
 
@@ -231,8 +298,9 @@ async def stream_turn_sse(
     agen: AsyncIterator[TurnEvent] | None = None
     try:
         enforce_residency_metadata(body)
+        agent_config = await body.resolve_agent(cp_client)
         agen = executor.execute(
-            body.agent(),
+            agent_config,
             body.event(),
             request_id=turn_id,
         )
@@ -282,13 +350,16 @@ async def stream_turn_sse(
 async def collect_turn(
     executor: TurnExecutor,
     body: RuntimeTurnRequest,
+    *,
+    cp_client: CpApiClient | None = None,
 ) -> dict[str, Any]:
     turn_id = body.turn_id()
     enforce_residency_metadata(body)
+    agent_config = await body.resolve_agent(cp_client)
     events: list[TurnEvent] = []
     try:
         async for event in executor.execute(
-            body.agent(),
+            agent_config,
             body.event(),
             request_id=turn_id,
         ):

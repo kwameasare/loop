@@ -8,7 +8,10 @@ from fastapi import APIRouter, FastAPI, Header, Query, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from loop_control_plane.rate_limit_middleware import install_rate_limit
 from loop_runtime import TurnExecutor
+from loop_runtime.cp_client import CpApiClient
+from loop_runtime.cp_client_http import HttpCpApiFetcher
 from loop_runtime.healthz import build_runtime_healthz
+from loop_runtime.settings import load_settings
 
 from loop_data_plane._auth import (
     AUTH_CALLER,
@@ -31,9 +34,28 @@ from loop_data_plane.metrics import install_metrics
 from loop_data_plane.tracing import install_tracing
 
 
+def _default_cp_client() -> CpApiClient:
+    """Build a CpApiClient wired to cp-api via HTTP.
+
+    Reads cp_api_url + cp_internal_token from runtime Settings; both
+    can be overridden via LOOP_RUNTIME_CP_API_URL and
+    LOOP_RUNTIME_CP_INTERNAL_TOKEN. Tests substitute a stub fetcher
+    by constructing CpApiClient directly and passing it into
+    RuntimeAppState.
+    """
+    settings = load_settings()
+    fetcher = HttpCpApiFetcher(
+        cp_api_url=str(settings.cp_api_url),
+        internal_token=settings.cp_internal_token.get_secret_value(),
+        timeout_seconds=settings.cp_api_timeout_ms / 1000.0,
+    )
+    return CpApiClient(fetcher=fetcher)
+
+
 @dataclass
 class RuntimeAppState:
     executor: TurnExecutor = field(default_factory=lambda: TurnExecutor(build_gateway()))
+    cp_client: CpApiClient = field(default_factory=_default_cp_client)
 
 
 def _state(request: Request) -> RuntimeAppState:
@@ -99,15 +121,21 @@ async def post_turn(
         body_workspace_id=str(body.workspace_id),
         body_user_id=body.user_id,
     )
-    executor = _state(request).executor
+    state = _state(request)
+    executor = state.executor
+    cp_client = state.cp_client
     if _wants_sse(accept, stream):
         return StreamingResponse(
-            stream_turn_sse(executor, body, request=request),
+            stream_turn_sse(
+                executor, body, request=request, cp_client=cp_client
+            ),
             media_type="text/event-stream",
             headers={"cache-control": "no-cache", "x-accel-buffering": "no"},
         )
     try:
-        return JSONResponse(await collect_turn(executor, body))
+        return JSONResponse(
+            await collect_turn(executor, body, cp_client=cp_client)
+        )
     except TurnExecutionError as exc:
         # vega #6: each TurnExecutionError subclass carries its own
         # http_status (401/402/429/500/502) so the route layer fans
@@ -127,8 +155,11 @@ async def post_turn_stream(
         body_workspace_id=str(body.workspace_id),
         body_user_id=body.user_id,
     )
+    state = _state(request)
     return StreamingResponse(
-        stream_turn_sse(_state(request).executor, body, request=request),
+        stream_turn_sse(
+            state.executor, body, request=request, cp_client=state.cp_client
+        ),
         media_type="text/event-stream",
         headers={"cache-control": "no-cache", "x-accel-buffering": "no"},
     )

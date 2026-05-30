@@ -21,6 +21,12 @@ from loop_control_plane._routes_agent_handoff import router as agent_handoff_rou
 from loop_control_plane._routes_agent_intake import router as agent_intake_router
 from loop_control_plane._routes_agent_memory import router as agent_memory_router
 from loop_control_plane._routes_agent_tools import router as agent_tools_router
+from loop_control_plane._routes_agent_turns import (
+    router as agent_turns_router,
+)
+from loop_control_plane._routes_byoc_credentials import (
+    router as byoc_credentials_router,
+)
 from loop_control_plane._routes_agent_versions import (
     router as agent_versions_router,
 )
@@ -134,6 +140,14 @@ def _cors_origins() -> list[str]:
 def create_app(state: CpApiState | None = None) -> FastAPI:
     app = FastAPI(title="Loop Control Plane", version=package_version())
     app.state.cp = state or CpApiState()
+    # First-agent: cp's test-turn proxy forwards to dp at this URL.
+    # Tests can monkeypatch app.state.dp_internal_url to point at an
+    # httpx mock transport. Defaults to the local dev port.
+    import os
+
+    app.state.dp_internal_url = os.environ.get(
+        "LOOP_DP_INTERNAL_URL", "http://localhost:18181"
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_cors_origins(),
@@ -180,6 +194,13 @@ def create_app(state: CpApiState | None = None) -> FastAPI:
         traces_router,
         # P0.4: agent version create/list/promote.
         agent_versions_router,
+        # First-agent: thin proxy from studio → dp /v1/turns so the
+        # workbench's "Test turn" button can prove the agent runs.
+        agent_turns_router,
+        # BYOC: enterprise admins paste provider credentials per
+        # channel binding; cp encrypts at rest, only the channel
+        # adapter decrypts at send/receive time.
+        byoc_credentials_router,
         # Agent-flow implementation: branch -> change set -> release candidate.
         agent_workflow_router,
         # Agent-flow implementation: versioned Commitment Document contract.

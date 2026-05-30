@@ -50,6 +50,12 @@ class Settings(BaseSettings):
     cp_api_url: HttpUrl = HttpUrl("http://cp-api:8080")
     cp_api_timeout_ms: Annotated[int, Field(ge=100, le=60_000)] = 5_000
     cp_api_cache_ttl_ms: Annotated[int, Field(ge=0, le=600_000)] = 60_000
+    # Shared bearer the runtime sends on every cp-api call. cp's
+    # api-key middleware accepts it. Defaults to a dev sentinel so
+    # local boots work without env wiring; production must override.
+    cp_internal_token: SecretStr = SecretStr(
+        "local-pilot-dp-internal-token-rotate-me"
+    )
     paseto_key: SecretStr = SecretStr("dev-only-paseto-key-change-me-32bytes!!")
     turn_default_timeout_ms: Annotated[int, Field(ge=1_000, le=600_000)] = 60_000
     turn_max_concurrent_per_workspace: Annotated[int, Field(ge=1, le=10_000)] = 200

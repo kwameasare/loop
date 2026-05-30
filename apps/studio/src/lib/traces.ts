@@ -1,4 +1,5 @@
 import { targetUxFixtures } from "@/lib/target-ux";
+import { getCpBaseUrl } from "@/lib/cp-url";
 
 /**
  * Trace types + fixture data.
@@ -794,15 +795,16 @@ export interface TracesClientOptions {
 }
 
 function cpApiBaseUrl(override?: string): string {
-  const raw =
-    override ??
-    process.env.LOOP_CP_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_LOOP_API_URL;
-  if (!raw) {
+  if (override !== undefined) {
+    if (!override) throw new Error(TRACE_DETAIL_CP_API_REQUIRED);
+    const trimmed = override.replace(/\/$/, "");
+    return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+  }
+  try {
+    return getCpBaseUrl({ withV1: true });
+  } catch {
     throw new Error(TRACE_DETAIL_CP_API_REQUIRED);
   }
-  const trimmed = raw.replace(/\/$/, "");
-  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
 }
 
 interface CpTraceItem {

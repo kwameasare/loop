@@ -1,5 +1,6 @@
 import { readSessionToken } from "@/lib/cp-auth-exchange";
 import { createAuthedCpApiFetch } from "@/lib/cp-api-fetch";
+import { getCpBaseUrl } from "@/lib/cp-url";
 import type { WorkspaceCreate } from "@/lib/openapi-types";
 
 export type Workspace = {
@@ -47,13 +48,19 @@ const FIXTURE: Workspace[] = [
 ];
 
 function cpApiBaseUrl(override?: string): string | null {
-  const raw =
-    override ??
-    process.env.LOOP_CP_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_LOOP_API_URL;
-  if (!raw) return null;
-  const trimmed = raw.replace(/\/$/, "");
-  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+  if (override !== undefined) {
+    if (!override) return null;
+    const trimmed = override.replace(/\/$/, "");
+    return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+  }
+  // Browser path always returns ``/api/cp/v1`` (same-origin proxy).
+  // Server path falls back to null when no env var is set so callers
+  // can render a degraded notice instead of crashing.
+  try {
+    return getCpBaseUrl({ withV1: true });
+  } catch {
+    return null;
+  }
 }
 
 function roleFromCp(role: string | undefined): Workspace["role"] {

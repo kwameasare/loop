@@ -30,10 +30,6 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SESSION="loop-dev"
 ENV_FILE="$ROOT_DIR/.env"
 
-CP_PORT="${LOOP_CP_API_PORT:-8080}"
-DP_PORT="${LOOP_RUNTIME_BIND_PORT:-8081}"
-STUDIO_PORT="${LOOP_STUDIO_PORT:-3001}"
-
 if ! command -v tmux >/dev/null 2>&1; then
   echo "error: tmux is required. Install with: brew install tmux" >&2
   exit 1
@@ -44,6 +40,38 @@ if [[ ! -f "$ENV_FILE" ]]; then
   echo "       Copy .env.example to .env and fill in your provider keys." >&2
   exit 1
 fi
+
+# Load .env BEFORE resolving port defaults so the values in .env
+# (LOOP_CP_API_PORT, LOOP_RUNTIME_BIND_PORT, LOOP_STUDIO_PORT) win
+# over the script's hardcoded fallbacks.
+#
+# We DO NOT use ``set -a; . .env`` because that shell-interprets
+# every value. .env routinely holds tokens / subs / keys with chars
+# like ``|`` (pipe), ``$`` (var expansion), ``;``, backticks, or
+# spaces — bash would treat those as syntax and either fail or run
+# them as commands. ``docker compose --env-file`` (used by ``make up``)
+# treats values as literal text, so we match that contract here.
+while IFS='=' read -r raw_key raw_value || [[ -n "$raw_key" ]]; do
+  case "$raw_key" in
+    ''|\#*) continue ;;
+  esac
+  key="${raw_key#"${raw_key%%[![:space:]]*}"}"
+  key="${key%"${key##*[![:space:]]}"}"
+  [[ -z "$key" ]] && continue
+  value="$raw_value"
+  # Strip optional surrounding single/double quotes — both styles
+  # are common in hand-edited .env files.
+  if [[ "$value" == \"*\" ]]; then
+    value="${value:1:${#value}-2}"
+  elif [[ "$value" == \'*\' ]]; then
+    value="${value:1:${#value}-2}"
+  fi
+  export "$key=$value"
+done < "$ENV_FILE"
+
+CP_PORT="${LOOP_CP_API_PORT:-8080}"
+DP_PORT="${LOOP_RUNTIME_BIND_PORT:-8081}"
+STUDIO_PORT="${LOOP_STUDIO_PORT:-3001}"
 
 # If a session is already attached, just re-attach so we don't trample
 # already-running processes.
