@@ -6,6 +6,7 @@ import {
   AgentOverview,
   type DeploySummary,
 } from "@/components/agents/agent-overview";
+import { AgentTestTurn } from "@/components/agents/agent-test-turn";
 import {
   fetchCurrentCommitment,
   type CommitmentDocument,
@@ -266,42 +267,47 @@ export default async function AgentOverviewPage({
   );
 
   return (
-    <AgentOverview
-      id={agent.id}
-      name={agent.name}
-      slug={agent.slug}
-      description={agent.description}
-      model=""
-      activeVersion={agent.active_version}
-      objectState={agent.object_state}
-      stateReason={agent.state_reason}
-      stateEvidenceRef={agent.state_evidence_ref}
-      updatedAt={agent.updated_at}
-      lastDeploy={lastDeploy}
-      dataState={combinedDegradedReason ? "degraded" : "live"}
-      degradedReason={combinedDegradedReason || undefined}
-      channelBindings={channelBindings}
-      channelsDegradedReason={channelsDegradedReason}
-      toolContracts={toolContracts}
-      toolsDegradedReason={toolsDegradedReason}
-      memoryPolicies={memoryPolicies}
-      memoryDegradedReason={memoryDegradedReason}
-      evalSuites={evalSuites}
-      evalsDegradedReason={evalsDegradedReason}
-      knowledgeDocuments={knowledgeDocuments}
-      knowledgeDegradedReason={knowledgeDegradedReason}
-      changePackage={changePackage}
-      changePackageDegradedReason={changePackageDegradedReason}
-      traceSummaries={traceSummaries}
-      tracesDegradedReason={tracesDegradedReason}
-      handoffModel={handoffModel}
-      handoffDegradedReason={handoffDegradedReason}
-      focusedIntakeId={focusedIntakeId}
-      intakeRecord={intakeRecord}
-      intakeDegradedReason={intakeDegradedReason}
-      workflow={workflow}
-      workflowDegradedReason={workflowDegradedReason}
-      commitment={commitment}
-    />
+    <div className="flex flex-col gap-4">
+      <AgentOverview
+        id={agent.id}
+        name={agent.name}
+        slug={agent.slug}
+        description={agent.description}
+        model=""
+        activeVersion={agent.active_version}
+        objectState={agent.object_state}
+        stateReason={agent.state_reason}
+        stateEvidenceRef={agent.state_evidence_ref}
+        updatedAt={agent.updated_at}
+        lastDeploy={lastDeploy}
+        dataState={combinedDegradedReason ? "degraded" : "live"}
+        degradedReason={combinedDegradedReason || undefined}
+        channelBindings={channelBindings}
+        channelsDegradedReason={channelsDegradedReason}
+        toolContracts={toolContracts}
+        toolsDegradedReason={toolsDegradedReason}
+        memoryPolicies={memoryPolicies}
+        memoryDegradedReason={memoryDegradedReason}
+        evalSuites={evalSuites}
+        evalsDegradedReason={evalsDegradedReason}
+        knowledgeDocuments={knowledgeDocuments}
+        knowledgeDegradedReason={knowledgeDegradedReason}
+        changePackage={changePackage}
+        changePackageDegradedReason={changePackageDegradedReason}
+        traceSummaries={traceSummaries}
+        tracesDegradedReason={tracesDegradedReason}
+        handoffModel={handoffModel}
+        handoffDegradedReason={handoffDegradedReason}
+        focusedIntakeId={focusedIntakeId}
+        intakeRecord={intakeRecord}
+        intakeDegradedReason={intakeDegradedReason}
+        workflow={workflow}
+        workflowDegradedReason={workflowDegradedReason}
+        commitment={commitment}
+      />
+      <div className="mx-auto w-full max-w-7xl px-4 lg:px-6">
+        <AgentTestTurn agentId={agent.id} />
+      </div>
+    </div>
   );
 }

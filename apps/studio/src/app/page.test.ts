@@ -34,8 +34,14 @@ describe("resolveHomeWorkspaceId", () => {
             workspace_id: "ws_agent",
           },
         ],
-        [{ id: "ws_workspace", name: "Workspace", slug: "workspace", role: "owner" }],
-        "ws_env",
+        [
+          {
+            id: "ws_workspace",
+            name: "Workspace",
+            slug: "workspace",
+            role: "owner",
+          },
+        ],
       ),
     ).toBe("ws_agent");
   });
@@ -44,7 +50,14 @@ describe("resolveHomeWorkspaceId", () => {
     expect(
       resolveHomeWorkspaceId(
         [],
-        [{ id: "ws_empty", name: "Empty workspace", slug: "empty", role: "owner" }],
+        [
+          {
+            id: "ws_empty",
+            name: "Empty workspace",
+            slug: "empty",
+            role: "owner",
+          },
+        ],
         undefined,
       ),
     ).toBe("ws_empty");
@@ -52,7 +65,7 @@ describe("resolveHomeWorkspaceId", () => {
 
   it("does not invent a local workspace id", () => {
     delete process.env.LOOP_DEFAULT_WORKSPACE_ID;
-    expect(resolveHomeWorkspaceId([], [], undefined)).toBeNull();
+    expect(resolveHomeWorkspaceId([], [])).toBeNull();
   });
 });
 

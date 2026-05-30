@@ -320,6 +320,90 @@ class RS256Verifier:
             raise AuthError(f"invalid claims: {exc}") from exc
 
 
+# ---------------------------------------------------------------------------
+# Prod/dev verifier dispatch
+# ---------------------------------------------------------------------------
+
+
+def _http_jwks_fetcher(jwks_url: str) -> JwksFetcher:
+    """Return a sync :class:`JwksFetcher` that GETs the JWKS document.
+
+    Stdlib :mod:`urllib.request` so cp-api doesn't take a new HTTP
+    client dep. The fetcher is sync because :class:`JwksClient.get` is
+    sync (called from the synchronous claim-validation hot path).
+    """
+    import json as _json
+    import urllib.request
+
+    def _fetch() -> dict[str, Any]:
+        # 10s timeout: Auth0's JWKS endpoint serves a tiny static
+        # document; anything slower than that is almost certainly a
+        # network problem we want to surface as AuthError rather than
+        # hang the request.
+        req = urllib.request.Request(jwks_url, method="GET")
+        with urllib.request.urlopen(req, timeout=10.0) as response:  # noqa: S310 — pinned scheme
+            body = response.read()
+        try:
+            payload = _json.loads(body)
+        except (ValueError, _json.JSONDecodeError) as exc:
+            raise AuthError(f"JWKS at {jwks_url} is not valid JSON") from exc
+        if not isinstance(payload, dict):
+            raise AuthError(f"JWKS at {jwks_url} did not return an object")
+        return payload
+
+    return _fetch
+
+
+def build_token_verifier(
+    *,
+    auth0_domain: str | None,
+    auth0_audience: str | None,
+    hs256_secret: str,
+    hs256_issuer: str,
+    hs256_audience: str,
+) -> TokenVerifier:
+    """Pick the right verifier for the deployment.
+
+    - ``auth0_domain`` set (production / staging with a real Auth0
+      tenant) → :class:`RS256Verifier` against the tenant's JWKS.
+      Issuer is derived from the domain as ``https://{domain}/`` per
+      Auth0 convention.
+    - Otherwise → :class:`HS256Verifier` (dev/test path, signed by the
+      same secret that ``apps/studio/src/app/api/dev-login`` uses).
+
+    Refuses to build the dev verifier when ``hs256_secret`` is empty:
+    that would silently accept any token, which is worse than a
+    visible 500.
+    """
+    if auth0_domain:
+        if not auth0_audience:
+            # The exchange route passes LOOP_AUTH0_CLIENT_ID here because
+            # an Auth0 id_token's ``aud`` is the client_id, not the API
+            # identifier. Either env var being unset breaks RS256, so
+            # surface a message that points at both.
+            raise AuthError(
+                "LOOP_AUTH0_DOMAIN set but the expected audience is empty "
+                "(LOOP_AUTH0_CLIENT_ID for id_token exchange)"
+            )
+        domain = auth0_domain.strip().rstrip("/")
+        issuer = f"https://{domain}/"
+        jwks_url = f"https://{domain}/.well-known/jwks.json"
+        return RS256Verifier(
+            jwks=JwksClient(_http_jwks_fetcher(jwks_url)),
+            issuer=issuer,
+            audience=auth0_audience,
+        )
+    if not hs256_secret:
+        raise AuthError(
+            "no Auth0 tenant configured and LOOP_CP_LOCAL_JWT_SECRET is unset"
+        )
+    return HS256Verifier(
+        secret=hs256_secret,
+        issuer=hs256_issuer,
+        audience=hs256_audience,
+    )
+
+
 __all__ = [
     "AuthError",
     "HS256Verifier",
@@ -328,5 +412,6 @@ __all__ = [
     "JwksFetcher",
     "RS256Verifier",
     "TokenVerifier",
+    "build_token_verifier",
     "has_scope",
 ]

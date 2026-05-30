@@ -63,6 +63,57 @@ async def list_versions(
     return {"items": [_serialise_version(v) for v in rows]}
 
 
+@router.get("/{agent_id}/versions/active")
+async def get_active_version(
+    request: Request,
+    agent_id: UUID,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    """Return the version pinned as ``agent.active_version``.
+    dp-runtime calls this to resolve an agent's executable spec when a
+    turn doesn't pin a specific version. 404 if the agent is draft."""
+    cp = request.app.state.cp
+    workspace_id = await _agent_workspace(request, agent_id)
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    try:
+        version = await cp.agent_versions.get_active(
+            workspace_id=workspace_id, agent_id=agent_id
+        )
+    except AgentVersionError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return _serialise_version(version)
+
+
+@router.get("/{agent_id}/versions/{version}")
+async def get_version_by_number(
+    request: Request,
+    agent_id: UUID,
+    version: int,
+    caller_sub: str = CALLER,
+) -> dict[str, Any]:
+    """Return one immutable version by its monotonic version number.
+    dp-runtime calls this when a turn pins a specific version (e.g.
+    canary deploys serving v3 while production is v2)."""
+    cp = request.app.state.cp
+    workspace_id = await _agent_workspace(request, agent_id)
+    await authorize_workspace_access(
+        workspaces=cp.workspaces,
+        workspace_id=workspace_id,
+        user_sub=caller_sub,
+    )
+    try:
+        row = await cp.agent_versions.get_by_number(
+            workspace_id=workspace_id, agent_id=agent_id, version=version
+        )
+    except AgentVersionError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return _serialise_version(row)
+
+
 @router.post("/{agent_id}/versions", status_code=201)
 async def create_version(
     request: Request,

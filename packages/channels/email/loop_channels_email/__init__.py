@@ -10,6 +10,12 @@ queue consumer and SES client; we only handle wire-shape translation
 and conversation indexing.
 """
 
+from loop_channels_email.byoc import (
+    ByocSmtpSender,
+    SmtpMessageSender,
+    SmtpTransportBuilder,
+    build_byoc_smtp_sender,
+)
 from loop_channels_email.channel import EmailChannel, EmailConversationIndex
 from loop_channels_email.dkim_inbound import (
     DnsTxtLookup,
@@ -26,13 +32,17 @@ from loop_channels_email.sns_verify import (
 )
 
 __all__ = [
+    "ByocSmtpSender",
     "DnsTxtLookup",
     "EmailChannel",
     "EmailConversationIndex",
     "InboundDkimResult",
     "InboundDkimStatus",
     "SigningCertFetcher",
+    "SmtpMessageSender",
+    "SmtpTransportBuilder",
     "SnsSignatureError",
+    "build_byoc_smtp_sender",
     "parse_ses_inbound",
     "to_send_email_body",
     "verify_dkim_inbound",

@@ -19,6 +19,12 @@ or doing anything else with the request. Discord recommends rejecting
 the request entirely if any verification step fails.
 """
 
+from loop_channels_discord.byoc import (
+    ByocDiscordSender,
+    DiscordMessageSender,
+    DiscordTransportBuilder,
+    build_byoc_discord_sender,
+)
 from loop_channels_discord.channel import (
     DiscordChannel,
     DiscordConversationIndex,
@@ -39,6 +45,7 @@ from loop_channels_discord.verify import (
 )
 
 __all__ = [
+    "ByocDiscordSender",
     "DiscordBotProfile",
     "DiscordChannel",
     "DiscordConnectFlow",
@@ -46,7 +53,10 @@ __all__ = [
     "DiscordConnectResult",
     "DiscordConversationIndex",
     "DiscordGatewayMessageParser",
+    "DiscordMessageSender",
     "DiscordSignatureError",
+    "DiscordTransportBuilder",
+    "build_byoc_discord_sender",
     "constant_time_eq",
     "parse_interaction",
     "to_followup_body",

@@ -1,4 +1,5 @@
 import { createAuthedCpApiFetch } from "@/lib/cp-api-fetch";
+import { getCpBaseUrl } from "@/lib/cp-url";
 
 export interface UxWireupClientOptions {
   fetcher?: typeof fetch;
@@ -7,13 +8,20 @@ export interface UxWireupClientOptions {
 }
 
 export function cpApiBaseUrl(override?: string): string | null {
-  const raw =
-    override ??
-    process.env.LOOP_CP_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_LOOP_API_URL;
-  if (!raw) return null;
-  const trimmed = raw.replace(/\/$/, "");
-  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+  // Treat an explicit override of ``""`` as "caller asked for no
+  // cp" → return null. Only fall through to the env helper when
+  // override is ``undefined`` (matches the original ``??`` semantics).
+  if (override !== undefined) {
+    if (!override) return null;
+    const trimmed = override.replace(/\/$/, "");
+    return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+  }
+  // Browser → /api/cp/v1 (same-origin proxy). Server → real cp URL.
+  try {
+    return getCpBaseUrl({ withV1: true });
+  } catch {
+    return null;
+  }
 }
 
 export function cpApiHeaders(
@@ -75,8 +83,19 @@ export function cpWebSocketUrl(
 ): string | null {
   const base = cpApiBaseUrl(opts.baseUrl);
   if (!base) return null;
+  // Same-origin proxy (browser path) returns ``/api/cp/v1`` — a
+  // relative URL the WebSocket constructor can't accept. Next.js
+  // Route Handlers don't support the HTTP upgrade dance either, so
+  // there's nothing to connect to. Return null and let the hook
+  // gracefully render in the "no live presence" state until the
+  // browser is given an absolute cp URL or a real WS proxy is wired.
+  if (!/^https?:\/\//i.test(base)) return null;
   const wsBase = base.replace(/^http/, "ws");
-  const url = new URL(`${wsBase}${path.startsWith("/") ? path : `/${path}`}`);
-  if (opts.callerSub) url.searchParams.set("caller_sub", opts.callerSub);
-  return url.toString();
+  try {
+    const url = new URL(`${wsBase}${path.startsWith("/") ? path : `/${path}`}`);
+    if (opts.callerSub) url.searchParams.set("caller_sub", opts.callerSub);
+    return url.toString();
+  } catch {
+    return null;
+  }
 }

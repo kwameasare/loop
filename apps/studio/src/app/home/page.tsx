@@ -19,6 +19,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { listAgents, type AgentSummary } from "@/lib/cp-api";
 import { fetchEstateHealth } from "@/lib/estate-health";
 import { fetchHomepagePins, type HomepagePin } from "@/lib/homepage-pins";
+import { getCpAccessToken } from "@/lib/server/session";
 import { listWorkspaces, type Workspace } from "@/lib/workspaces";
 
 export const dynamic = "force-dynamic";
@@ -140,9 +141,8 @@ function PinnedWork({
 export function resolveHomeWorkspaceId(
   agents: readonly AgentSummary[],
   workspaces: readonly Workspace[],
-  fallback: string | undefined = process.env.LOOP_DEFAULT_WORKSPACE_ID,
 ): string | null {
-  return agents[0]?.workspace_id || workspaces[0]?.id || fallback || null;
+  return agents[0]?.workspace_id || workspaces[0]?.id || null;
 }
 
 export function homeContextWarnings(
@@ -160,8 +160,11 @@ export function homeContextWarnings(
 }
 
 export default async function HomePage() {
+  // Forward the studio session cookie as the cp bearer for SSR.
+  const token = getCpAccessToken();
+  const auth = token ? { token } : {};
   const { workspaces, degraded_reason: workspacesDegradedReason } =
-    await listWorkspaces().catch((error: unknown) => ({
+    await listWorkspaces(auth).catch((error: unknown) => ({
       workspaces: [],
       degraded_reason:
         error instanceof Error
@@ -170,7 +173,7 @@ export default async function HomePage() {
     }));
   const initialWorkspaceId = resolveHomeWorkspaceId([], workspaces);
   const agentsResult = initialWorkspaceId
-    ? await listAgents({ workspaceId: initialWorkspaceId })
+    ? await listAgents({ ...auth, workspaceId: initialWorkspaceId })
         .then((result) => ({ ...result, degradedReason: undefined }))
         .catch((error: unknown) => ({
           agents: [],
@@ -183,11 +186,11 @@ export default async function HomePage() {
       };
   const { agents, degradedReason: agentsDegradedReason } = agentsResult;
   const existingSlugs = agents.map((agent) => agent.slug).filter(Boolean);
-  const workspaceId = resolveHomeWorkspaceId(
-    agents,
-    workspaces,
-    initialWorkspaceId ?? undefined,
-  );
+  const workspaceId = resolveHomeWorkspaceId(agents, workspaces);
+  const activeWorkspace =
+    workspaces.find((workspace) => workspace.id === workspaceId) ??
+    workspaces[0] ??
+    null;
   const contextWarnings = homeContextWarnings(
     agentsDegradedReason,
     workspacesDegradedReason,
@@ -203,10 +206,7 @@ export default async function HomePage() {
         <EstateOverview health={estateHealth} />
       </div>
 
-      <aside
-        className="grid content-start gap-4"
-        aria-label="Primary actions"
-      >
+      <aside className="grid content-start gap-4" aria-label="Primary actions">
         <div className="instrument-panel rounded-2xl p-4">
           <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Compose
@@ -236,6 +236,8 @@ export default async function HomePage() {
             <NewAgentModal
               existingSlugs={existingSlugs}
               workspaceId={workspaceId}
+              workspaceName={activeWorkspace?.name}
+              workspaceRole={activeWorkspace?.role}
             />
             <Link
               href="/migrate"

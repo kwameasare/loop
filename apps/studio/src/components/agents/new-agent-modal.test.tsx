@@ -141,6 +141,7 @@ function makeCreateIntake(result: Partial<AgentIntakeCreateResult> = {}) {
 describe("NewAgentModal", () => {
   beforeEach(() => {
     push.mockReset();
+    window.localStorage.clear();
   });
 
   it("renders the full Agent Contract Wizard with implementation-stage panels", () => {
@@ -167,6 +168,12 @@ describe("NewAgentModal", () => {
     }
 
     fireEvent.click(screen.getByTestId("new-agent-step-knowledge_tools"));
+    expect(screen.getByTestId("new-agent-step-panel-mission")).toHaveClass(
+      "hidden",
+    );
+    expect(
+      screen.getByTestId("new-agent-step-panel-knowledge-tools"),
+    ).not.toHaveClass("hidden");
     expect(screen.getByTestId("new-agent-artifact-kind")).toHaveTextContent(
       "botpress export",
     );
@@ -175,6 +182,12 @@ describe("NewAgentModal", () => {
     );
 
     fireEvent.click(screen.getByTestId("new-agent-step-generated_tests"));
+    expect(
+      screen.getByTestId("new-agent-step-panel-knowledge-tools"),
+    ).toHaveClass("hidden");
+    expect(
+      screen.getByTestId("new-agent-step-panel-generated-tests"),
+    ).not.toHaveClass("hidden");
     expect(screen.getByTestId("new-agent-generated-tests")).toHaveTextContent(
       /Happy path follows the mission/i,
     );
@@ -468,6 +481,34 @@ describe("NewAgentModal", () => {
     );
   });
 
+  it("blocks creation before submit when the caller is not a workspace admin", () => {
+    const createAgentIntake = makeCreateIntake();
+    render(
+      <NewAgentModal
+        existingSlugs={[]}
+        workspaceId="ws_1"
+        workspaceName="Acme"
+        workspaceRole="viewer"
+        createAgentIntake={createAgentIntake}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("new-agent-button"));
+    expect(
+      screen.getByTestId("new-agent-permission-required"),
+    ).toHaveTextContent(/requires owner or admin access/i);
+    fill("new-agent-name", "Support Bot");
+    fill("new-agent-slug", "support-bot");
+    fillContract();
+
+    expect(screen.getByTestId("new-agent-submit")).toBeDisabled();
+    expect(
+      screen.getByTestId("new-agent-permission-submit-blocked"),
+    ).toHaveTextContent(/workspace role/i);
+    fireEvent.click(screen.getByTestId("new-agent-submit"));
+    expect(createAgentIntake).not.toHaveBeenCalled();
+  });
+
   it("rejects malformed slugs before round-tripping", () => {
     const createAgentIntake = makeCreateIntake();
     render(
@@ -514,6 +555,34 @@ describe("NewAgentModal", () => {
     );
     expect(screen.getByTestId("new-agent-modal")).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it("keeps a local intake draft across close and reopen", async () => {
+    window.localStorage.clear();
+    render(
+      <NewAgentModal
+        existingSlugs={[]}
+        workspaceId="ws_1"
+        createAgentIntake={makeCreateIntake()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("new-agent-button"));
+    fill("new-agent-name", "Saved Draft Bot");
+    fill("new-agent-slug", "saved-draft-bot");
+    await screen.findByTestId("new-agent-draft-status");
+
+    fireEvent.click(screen.getByTestId("new-agent-cancel"));
+    await waitFor(() => {
+      expect(screen.queryByTestId("new-agent-modal")).not.toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("new-agent-button"));
+    expect(
+      await screen.findByTestId("new-agent-draft-status"),
+    ).toHaveTextContent(/restored/i);
+    expect(screen.getByTestId("new-agent-name")).toHaveValue("Saved Draft Bot");
+    expect(screen.getByTestId("new-agent-slug")).toHaveValue("saved-draft-bot");
   });
 
   it("offers retry when the backend saved a failed draft-generation intake", async () => {
@@ -641,7 +710,7 @@ describe("NewAgentModal", () => {
     );
   });
 
-  it("autofocuses the first field and restores focus to trigger on Escape", async () => {
+  it("keeps mobile-friendly focus on the wizard title and restores focus to trigger on Escape", async () => {
     render(
       <NewAgentModal
         existingSlugs={[]}
@@ -655,7 +724,10 @@ describe("NewAgentModal", () => {
     fireEvent.click(trigger);
 
     const nameInput = await screen.findByTestId("new-agent-name");
-    expect(nameInput).toHaveFocus();
+    expect(nameInput).not.toHaveFocus();
+    await waitFor(() => {
+      expect(screen.getByText("Agent Contract Wizard")).toHaveFocus();
+    });
 
     fireEvent.keyDown(document, { key: "Escape" });
 

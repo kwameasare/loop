@@ -17,6 +17,11 @@ from loop_control_plane.authorize import (
     AuthorisationError,
     authorize_workspace_access,
 )
+from loop_control_plane.auth_exchange import map_idp_sub_to_internal_user_id
+from loop_control_plane.enterprise_admin import (
+    EnterpriseSignup,
+    WorkspaceInvite,
+)
 from loop_control_plane.workspaces import Role, WorkspaceError
 
 router_public = APIRouter(prefix="/v1/enterprise", tags=["Enterprise Signup"])
@@ -65,52 +70,60 @@ def _slugify(value: str) -> str:
     return (slug or "workspace")[:64].strip("-") or "workspace"
 
 
-def _signup_payload(record: dict[str, Any]) -> dict[str, Any]:
+def _signup_payload(record: EnterpriseSignup) -> dict[str, Any]:
     return {
-        "id": record["id"],
-        "organization_name": record["organization_name"],
-        "workspace_slug": record["workspace_slug"],
-        "admin_name": record["admin_name"],
-        "admin_email": record["admin_email"],
-        "company_size": record["company_size"],
-        "region": record["region"],
-        "primary_use_case": record["primary_use_case"],
-        "channel_priorities": record["channel_priorities"],
-        "compliance_needs": record["compliance_needs"],
-        "sso_required": record["sso_required"],
-        "status": record["status"],
-        "created_at": _serialise_dt(record["created_at"]),
-        "updated_at": _serialise_dt(record["updated_at"]),
-        "approved_workspace_id": record.get("approved_workspace_id"),
-        "approved_by": record.get("approved_by"),
-        "admin_invite_id": record.get("admin_invite_id"),
+        "id": record.id,
+        "organization_name": record.organization_name,
+        "workspace_slug": record.workspace_slug,
+        "admin_name": record.admin_name,
+        "admin_email": record.admin_email,
+        "company_size": record.company_size,
+        "region": record.region,
+        "primary_use_case": record.primary_use_case,
+        "channel_priorities": list(record.channel_priorities),
+        "compliance_needs": list(record.compliance_needs),
+        "sso_required": record.sso_required,
+        "status": record.status,
+        "created_at": _serialise_dt(record.created_at),
+        "updated_at": _serialise_dt(record.updated_at),
+        "approved_workspace_id": record.approved_workspace_id,
+        "approved_by": record.approved_by,
+        "admin_invite_id": record.admin_invite_id,
     }
 
 
-def _invite_payload(record: dict[str, Any]) -> dict[str, Any]:
+def _invite_payload(record: WorkspaceInvite) -> dict[str, Any]:
     return {
-        "id": record["id"],
-        "workspace_id": str(record["workspace_id"]),
-        "email": record["email"],
-        "role": record["role"],
-        "full_name": record.get("full_name"),
-        "note": record.get("note"),
-        "status": record["status"],
-        "created_at": _serialise_dt(record["created_at"]),
-        "expires_at": _serialise_dt(record["expires_at"]),
-        "created_by": record["created_by"],
-        "invite_url": record["invite_url"],
+        "id": record.id,
+        "workspace_id": str(record.workspace_id),
+        "email": record.email,
+        "role": record.role,
+        "full_name": record.full_name,
+        "note": record.note,
+        "status": record.status,
+        "created_at": _serialise_dt(record.created_at),
+        "expires_at": _serialise_dt(record.expires_at),
+        "created_by": record.created_by,
+        "invite_url": record.invite_url,
     }
 
 
 def _system_admin_context(caller_sub: str) -> dict[str, str]:
-    configured = {
+    raw_configured = {
         item.strip()
         for item in os.environ.get("LOOP_SYSTEM_ADMIN_SUBS", "").split(",")
         if item.strip()
     }
-    if configured:
-        if caller_sub not in configured:
+    if raw_configured:
+        # Operators paste their IdP sub (e.g. ``google-oauth2|123…`` or
+        # ``auth0|abc``) — but the PASETO carries the UUID5 internal
+        # user-id minted by /v1/auth/exchange. Match against both
+        # forms so the env var stays readable while the runtime check
+        # is still done against the internal id.
+        allow = raw_configured | {
+            map_idp_sub_to_internal_user_id(sub) for sub in raw_configured
+        }
+        if caller_sub not in allow:
             raise AuthorisationError("system admin role required")
         return {"mode": "configured", "actor_sub": caller_sub}
     if os.environ.get("LOOP_ENV", "dev").lower() == "production":
@@ -124,7 +137,7 @@ async def _create_invite(
     workspace_id: UUID,
     body: WorkspaceInviteRequest,
     actor_sub: str,
-) -> dict[str, Any]:
+) -> WorkspaceInvite:
     runtime = request.app.state.cp
     await authorize_workspace_access(
         workspaces=runtime.workspaces,
@@ -134,20 +147,20 @@ async def _create_invite(
     )
     now = _now()
     invite_id = f"inv_{uuid4().hex[:12]}"
-    record = {
-        "id": invite_id,
-        "workspace_id": workspace_id,
-        "email": str(body.email).lower(),
-        "role": body.role.value,
-        "full_name": body.full_name,
-        "note": body.note,
-        "status": "pending",
-        "created_at": now,
-        "expires_at": now + timedelta(days=14),
-        "created_by": actor_sub,
-        "invite_url": f"/signup?invite={invite_id}",
-    }
-    runtime.workspace_invites.setdefault(workspace_id, {})[invite_id] = record
+    invite = WorkspaceInvite(
+        id=invite_id,
+        workspace_id=workspace_id,
+        email=str(body.email).lower(),
+        role=body.role.value,
+        full_name=body.full_name,
+        note=body.note,
+        status="pending",
+        created_at=now,
+        expires_at=now + timedelta(days=14),
+        created_by=actor_sub,
+        invite_url=f"/signup?invite={invite_id}",
+    )
+    await runtime.workspace_invites.create(invite)
     record_audit_event(
         workspace_id=workspace_id,
         actor_sub=actor_sub,
@@ -157,12 +170,12 @@ async def _create_invite(
         resource_id=invite_id,
         request_id=request_id(request),
         payload={
-            "email": record["email"],
-            "role": record["role"],
-            "full_name": record["full_name"],
+            "email": invite.email,
+            "role": invite.role,
+            "full_name": invite.full_name,
         },
     )
-    return record
+    return invite
 
 
 @router_public.post("/signups", status_code=201)
@@ -173,25 +186,29 @@ async def create_enterprise_signup(
     """Capture enterprise signup intent without pretending auth is complete."""
     now = _now()
     requested_slug = body.workspace_slug or body.organization_name
-    record = {
-        "id": f"ens_{uuid4().hex[:12]}",
-        "organization_name": body.organization_name.strip(),
-        "workspace_slug": _slugify(requested_slug),
-        "admin_name": body.admin_name.strip(),
-        "admin_email": str(body.admin_email).lower(),
-        "company_size": body.company_size.strip(),
-        "region": body.region.strip(),
-        "primary_use_case": body.primary_use_case.strip(),
-        "channel_priorities": [item.strip() for item in body.channel_priorities if item.strip()],
-        "compliance_needs": [item.strip() for item in body.compliance_needs if item.strip()],
-        "sso_required": body.sso_required,
-        "status": "pending_review",
-        "created_at": now,
-        "updated_at": now,
-    }
-    request.app.state.cp.enterprise_signups[record["id"]] = record
+    signup = EnterpriseSignup(
+        id=f"ens_{uuid4().hex[:12]}",
+        organization_name=body.organization_name.strip(),
+        workspace_slug=_slugify(requested_slug),
+        admin_name=body.admin_name.strip(),
+        admin_email=str(body.admin_email).lower(),
+        company_size=body.company_size.strip(),
+        region=body.region.strip(),
+        primary_use_case=body.primary_use_case.strip(),
+        channel_priorities=tuple(
+            item.strip() for item in body.channel_priorities if item.strip()
+        ),
+        compliance_needs=tuple(
+            item.strip() for item in body.compliance_needs if item.strip()
+        ),
+        sso_required=body.sso_required,
+        status="pending_review",
+        created_at=now,
+        updated_at=now,
+    )
+    await request.app.state.cp.enterprise_signups.create(signup)
     return {
-        "signup": _signup_payload(record),
+        "signup": _signup_payload(signup),
         "next_step": {
             "label": "Review queued",
             "detail": (
@@ -216,11 +233,11 @@ async def list_workspace_invites(
         user_sub=caller_sub,
         required_role=Role.ADMIN,
     )
-    invites = runtime.workspace_invites.get(workspace_id, {})
+    invites = await runtime.workspace_invites.list_for_workspace(workspace_id)
     return {
         "items": [
             _invite_payload(record)
-            for record in sorted(invites.values(), key=lambda item: item["created_at"])
+            for record in sorted(invites, key=lambda item: item.created_at)
         ]
     }
 
@@ -271,19 +288,15 @@ async def get_system_admin_overview(
     context = _system_admin_context(caller_sub)
     runtime = request.app.state.cp
     rollup = await _workspace_rollup(runtime)
+    all_signups = await runtime.enterprise_signups.list_all()
     signups = [
         _signup_payload(record)
         for record in sorted(
-            runtime.enterprise_signups.values(),
-            key=lambda item: item["created_at"],
-            reverse=True,
+            all_signups, key=lambda item: item.created_at, reverse=True
         )
     ]
-    invites = [
-        _invite_payload(invite)
-        for workspace_invites in runtime.workspace_invites.values()
-        for invite in workspace_invites.values()
-    ]
+    all_invites = await runtime.workspace_invites.list_all()
+    invites = [_invite_payload(invite) for invite in all_invites]
     return {
         "access": context,
         "metrics": {
@@ -302,19 +315,19 @@ async def get_system_admin_overview(
 async def _create_workspace_for_signup(
     *,
     runtime: Any,
-    signup: dict[str, Any],
+    signup: EnterpriseSignup,
     owner_sub: str,
 ) -> Any:
-    base_slug = _slugify(signup["workspace_slug"])
+    base_slug = _slugify(signup.workspace_slug)
     last_error: Exception | None = None
     for index in range(0, 10):
         slug = base_slug if index == 0 else f"{base_slug}-{index + 1}"
         try:
             return await runtime.workspaces.create(
-                name=signup["organization_name"],
+                name=signup.organization_name,
                 slug=slug[:64].strip("-"),
                 owner_sub=owner_sub,
-                region=signup["region"],
+                region=signup.region,
             )
         except WorkspaceError as exc:
             if "slug already taken" not in str(exc):
@@ -332,15 +345,18 @@ async def approve_enterprise_signup(
 ) -> dict[str, Any]:
     _system_admin_context(caller_sub)
     runtime = request.app.state.cp
-    signup = runtime.enterprise_signups.get(signup_id)
+    signup = await runtime.enterprise_signups.get(signup_id)
     if signup is None:
         raise WorkspaceError(f"unknown enterprise signup: {signup_id}")
-    if signup["status"] not in {"pending_review", "approved"}:
-        raise WorkspaceError(f"signup is not approvable: {signup['status']}")
-    if signup["status"] == "approved" and signup.get("approved_workspace_id"):
-        workspace_id = UUID(str(signup["approved_workspace_id"]))
-        invites = runtime.workspace_invites.get(workspace_id, {})
-        admin_invite = invites.get(signup.get("admin_invite_id", ""))
+    if signup.status not in {"pending_review", "approved"}:
+        raise WorkspaceError(f"signup is not approvable: {signup.status}")
+    if signup.status == "approved" and signup.approved_workspace_id:
+        workspace_id = UUID(str(signup.approved_workspace_id))
+        admin_invite = (
+            await runtime.workspace_invites.get(signup.admin_invite_id)
+            if signup.admin_invite_id
+            else None
+        )
         return {
             "signup": _signup_payload(signup),
             "workspace_id": str(workspace_id),
@@ -360,31 +376,30 @@ async def approve_enterprise_signup(
         store=runtime.audit_events,
         resource_id=str(workspace.id),
         request_id=request_id(request),
-        payload={"signup_id": signup_id, "admin_email": signup["admin_email"]},
+        payload={"signup_id": signup_id, "admin_email": signup.admin_email},
     )
     invite = await _create_invite(
         request=request,
         workspace_id=workspace.id,
         body=WorkspaceInviteRequest(
-            email=signup["admin_email"],
+            email=signup.admin_email,
             role=Role.OWNER,
-            full_name=signup["admin_name"],
+            full_name=signup.admin_name,
             note=body.note or "Initial enterprise owner invite.",
         ),
         actor_sub=caller_sub,
     )
     now = _now()
-    signup.update(
-        {
-            "status": "approved",
-            "updated_at": now,
-            "approved_workspace_id": str(workspace.id),
-            "approved_by": caller_sub,
-            "admin_invite_id": invite["id"],
-        }
+    updated_signup = await runtime.enterprise_signups.update_approval(
+        signup_id=signup_id,
+        status="approved",
+        approved_workspace_id=str(workspace.id),
+        approved_by=caller_sub,
+        admin_invite_id=invite.id,
+        updated_at=now,
     )
     return {
-        "signup": _signup_payload(signup),
+        "signup": _signup_payload(updated_signup),
         "workspace_id": str(workspace.id),
         "admin_invite": _invite_payload(invite),
     }

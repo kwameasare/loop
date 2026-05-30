@@ -11,9 +11,10 @@ describe("TelemetryConsentGate", () => {
   it("mounts consent in a route-agnostic shell overlay", () => {
     render(<TelemetryConsentGate />);
 
-    expect(screen.getByTestId("telemetry-consent-gate")).toHaveClass(
-      "fixed",
-    );
+    expect(screen.getByTestId("telemetry-consent-gate")).toHaveClass("fixed");
+    expect(
+      screen.getByTestId("telemetry-consent-gate").firstElementChild,
+    ).toHaveClass("max-md:translate-y-[calc(100%-4.25rem)]");
     expect(screen.getByTestId("telemetry-consent-card")).toBeInTheDocument();
   });
 });

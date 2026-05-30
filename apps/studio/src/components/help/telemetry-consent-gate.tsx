@@ -16,7 +16,7 @@ export function TelemetryConsentGate(): JSX.Element {
       data-testid="telemetry-consent-gate"
       aria-live="polite"
     >
-      <div className="pointer-events-auto">
+      <div className="pointer-events-auto transition-transform duration-gentle ease-standard max-md:translate-y-[calc(100%-4.25rem)] max-md:focus-within:translate-y-0 max-md:hover:translate-y-0">
         <TelemetryConsentCard />
       </div>
     </div>

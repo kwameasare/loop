@@ -1,5 +1,6 @@
 import { type Agent, createCpApi } from "@/lib/cp-api/generated";
 import { createAuthedCpApiFetch } from "@/lib/cp-api-fetch";
+import { getCpBaseUrl } from "@/lib/cp-url";
 
 export type AgentSummary = {
   id: string;
@@ -40,13 +41,10 @@ export interface ListAgentsOptions {
 }
 
 function cpApiBaseUrl(): string {
-  const raw =
-    process.env.LOOP_CP_API_BASE_URL ?? process.env.NEXT_PUBLIC_LOOP_API_URL;
-  if (!raw) {
-    throw new Error("LOOP_CP_API_BASE_URL is required to list agents");
-  }
-  const trimmed = raw.replace(/\/$/, "");
-  return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
+  // ``getCpBaseUrl`` returns the same-origin proxy in the browser
+  // (``/api/cp``) and the real cp URL on the server. Always with the
+  // ``/v1`` suffix because the generated client expects it.
+  return getCpBaseUrl({ withV1: true });
 }
 
 function toAgentSummary(agent: Agent): AgentSummary {
@@ -103,17 +101,16 @@ function noStoreFetch(fetcher: typeof fetch): typeof fetch {
 
 /**
  * Inject the selected ``X-Loop-Workspace-Id`` when the caller has
- * resolved workspace context. ``LOOP_DEFAULT_WORKSPACE_ID`` remains a
- * local-dev fallback, but production pages should pass an explicit
- * workspace id before requesting workspace-scoped agent data.
+ * resolved workspace context. Studio should not invent workspace scope
+ * from env vars; if no workspace is selected, cp-api must answer from
+ * the caller's authenticated context or fail clearly.
  */
 function withWorkspaceHeader(
   fetcher: typeof fetch,
   workspaceId?: string | null,
 ): typeof fetch {
   return (input, init) => {
-    const resolvedWorkspaceId =
-      workspaceId?.trim() || process.env.LOOP_DEFAULT_WORKSPACE_ID;
+    const resolvedWorkspaceId = workspaceId?.trim();
     if (!resolvedWorkspaceId) return fetcher(input, init);
     const headers = new Headers(init?.headers);
     if (!headers.has("x-loop-workspace-id")) {
@@ -168,6 +165,10 @@ export async function listAgents(
   opts: ListAgentsOptions = {},
 ): Promise<ListAgentsResponse> {
   const baseUrl = cpApiBaseUrl();
+  // Server Components pass ``token`` explicitly via
+  // ``getCpAccessToken()`` from ``@/lib/server/session``. Client
+  // components let ``createAuthedCpApiFetch`` read sessionStorage.
+  // ``LOOP_TOKEN`` is kept as a legacy escape hatch for scripts.
   const token = opts.token ?? process.env.LOOP_TOKEN;
   const api = createApiClient({
     baseUrl,

@@ -13,6 +13,12 @@ Surface APIs:
 """
 
 from loop_channels_slack.blocks import to_blocks
+from loop_channels_slack.byoc import (
+    ByocSlackSender,
+    SlackMessageSender,
+    SlackTransportBuilder,
+    build_byoc_slack_sender,
+)
 from loop_channels_slack.channel import SlackChannel, ThreadIndex
 from loop_channels_slack.connect import (
     SlackConnectFlow,
@@ -29,13 +35,17 @@ from loop_channels_slack.verify import (
 
 __all__ = [
     "REPLAY_WINDOW_SECONDS",
+    "ByocSlackSender",
     "SignatureError",
     "SlackChannel",
     "SlackConnectFlow",
     "SlackConnectRequest",
     "SlackConnectResult",
     "SlackInstallResult",
+    "SlackMessageSender",
+    "SlackTransportBuilder",
     "ThreadIndex",
+    "build_byoc_slack_sender",
     "parse_command",
     "parse_event",
     "to_blocks",

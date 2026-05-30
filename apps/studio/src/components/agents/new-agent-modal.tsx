@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -147,6 +154,24 @@ const INTAKE_JOBS = [
   "draft_agent_plan",
 ];
 
+const DRAFT_STORAGE_VERSION = 1;
+
+type WorkspaceRole = "owner" | "admin" | "member" | "viewer";
+type WizardStepId = (typeof WIZARD_STEPS)[number]["id"];
+
+type NewAgentDraft = {
+  version: typeof DRAFT_STORAGE_VERSION;
+  step: number;
+  name: string;
+  slug: string;
+  creationPath: AgentIntakePath;
+  templateId: string;
+  contract: CommitmentBody;
+  capabilities: string[];
+  artifact: AgentIntakeArtifactInput;
+  savedAt: string;
+};
+
 type ContractListField =
   | "channels"
   | "systems_touched"
@@ -158,6 +183,10 @@ export interface NewAgentModalProps {
   existingSlugs: string[];
   /** Active workspace receiving the governed intake. */
   workspaceId?: string | null | undefined;
+  /** Workspace display name for clearer degraded/permission copy. */
+  workspaceName?: string | null | undefined;
+  /** Caller role in the active workspace. Owners/admins can create agents. */
+  workspaceRole?: WorkspaceRole | null | undefined;
   /** Override for tests so the wizard doesn't hit the real cp-api. */
   createAgentIntake?: (
     workspaceId: string,
@@ -186,6 +215,56 @@ type Status =
   | { kind: "recoverable_failure"; intake: AgentIntakeRecoveryResult }
   | { kind: "recovering"; action: "retry" | "manual" }
   | { kind: "error"; message: string };
+
+function canCreateWithRole(role: WorkspaceRole | null | undefined): boolean {
+  return (
+    role === undefined || role === null || role === "owner" || role === "admin"
+  );
+}
+
+function panelClass(active: boolean): string {
+  return active ? "grid gap-5" : "hidden";
+}
+
+function draftKeyForWorkspace(workspaceId: string): string {
+  return `loop:new-agent-draft:v${DRAFT_STORAGE_VERSION}:${workspaceId}`;
+}
+
+function isDraftRecord(value: unknown): value is NewAgentDraft {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Partial<NewAgentDraft>;
+  return (
+    record.version === DRAFT_STORAGE_VERSION &&
+    typeof record.name === "string" &&
+    typeof record.slug === "string" &&
+    typeof record.creationPath === "string" &&
+    typeof record.templateId === "string" &&
+    record.contract !== undefined &&
+    Array.isArray(record.capabilities) &&
+    record.artifact !== undefined
+  );
+}
+
+function createErrorMessage(error: unknown): string {
+  const message =
+    error instanceof Error
+      ? error.message
+      : "Failed to create governed agent intake.";
+  const status = message.match(/->\s*(\d{3})/)?.[1];
+  if (status === "401" || status === "403") {
+    return "You do not have permission to create agents in this workspace. Ask a workspace owner or admin for builder access.";
+  }
+  if (status === "404") {
+    return "Workspace unavailable. Studio could not find the selected workspace, so no agent was created. Choose or create a workspace, then try again.";
+  }
+  if (status === "409") {
+    return "An agent with this identity already exists. Change the slug or open the existing agent.";
+  }
+  if (status) {
+    return `Control plane rejected the intake (${status}). The draft was not created; retry after the workspace service is healthy.`;
+  }
+  return message;
+}
 
 function hasArtifact(artifact: AgentIntakeArtifactInput): boolean {
   return Boolean(
@@ -271,12 +350,16 @@ function readinessItems(args: {
 export function NewAgentModal({
   existingSlugs,
   workspaceId,
+  workspaceName,
+  workspaceRole,
   createAgentIntake = defaultCreateAgentIntake,
   retryAgentIntakeGeneration = defaultRetryAgentIntakeGeneration,
   continueAgentIntakeManually = defaultContinueAgentIntakeManually,
   listAgentIntakeTemplates = defaultListAgentIntakeTemplates,
 }: NewAgentModalProps) {
   const router = useRouter();
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const restoringDraftRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
@@ -307,6 +390,8 @@ export function NewAgentModal({
     source_ref: "",
   });
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
   const slugErrorId = useId();
   const formErrorId = useId();
 
@@ -323,15 +408,19 @@ export function NewAgentModal({
   const missingContract = missingCommitmentFields(contract);
   const effectiveWorkspaceId = workspaceId?.trim() ?? "";
   const workspaceMissing = effectiveWorkspaceId.length === 0;
+  const permissionBlocked =
+    !workspaceMissing && !canCreateWithRole(workspaceRole);
   const canSubmit =
     !workspaceMissing &&
+    !permissionBlocked &&
     (creationPath !== "enterprise_template" ||
       templateCatalogState === "approved") &&
     trimmedName.length > 0 &&
     trimmedSlug.length > 0 &&
     missingContract.length === 0 &&
     !slugError &&
-    status.kind !== "submitting" && status.kind !== "recovering";
+    status.kind !== "submitting" &&
+    status.kind !== "recovering";
   const shouldLoadTemplateCatalog =
     !workspaceMissing &&
     (listAgentIntakeTemplates !== defaultListAgentIntakeTemplates ||
@@ -358,6 +447,71 @@ export function NewAgentModal({
   const readyCount = requiredReadiness.filter((item) => item.ready).length;
   const readinessScore = Math.round(
     (readyCount / Math.max(requiredReadiness.length, 1)) * 100,
+  );
+  const draftKey = effectiveWorkspaceId
+    ? draftKeyForWorkspace(effectiveWorkspaceId)
+    : null;
+  const draftHasContent = useMemo(
+    () =>
+      Boolean(
+        trimmedName ||
+          trimmedSlug ||
+          creationPath !== "business_intent" ||
+          capabilities.join("|") !== "Answer from knowledge" ||
+          artifact.name.trim() ||
+          artifact.text.trim() ||
+          artifact.source_ref.trim() ||
+          contract.business_responsibility.trim() ||
+          contract.target_users.trim() ||
+          contract.owner_user_id.trim() ||
+          contract.backup_owner_user_id.trim() ||
+          contract.worst_case_failure.trim() ||
+          contract.systems_touched.length > 0 ||
+          contract.regions.length > 0 ||
+          contract.channels.join("|") !== "web" ||
+          contract.languages.join("|") !== "en" ||
+          contract.success_metric.trim() ||
+          contract.compliance_domain.trim() ||
+          contract.expected_volume.trim() ||
+          contract.launch_date.trim() ||
+          contract.budget_target.trim() ||
+          contract.out_of_scope.trim() ||
+          contract.escalation_policy.trim(),
+      ),
+    [
+      artifact.name,
+      artifact.source_ref,
+      artifact.text,
+      capabilities,
+      contract,
+      creationPath,
+      trimmedName,
+      trimmedSlug,
+    ],
+  );
+  const draftSnapshot = useMemo<NewAgentDraft>(
+    () => ({
+      version: DRAFT_STORAGE_VERSION,
+      step,
+      name,
+      slug,
+      creationPath,
+      templateId,
+      contract,
+      capabilities,
+      artifact,
+      savedAt: new Date().toISOString(),
+    }),
+    [
+      artifact,
+      capabilities,
+      contract,
+      creationPath,
+      name,
+      slug,
+      step,
+      templateId,
+    ],
   );
 
   useEffect(() => {
@@ -403,7 +557,59 @@ export function NewAgentModal({
     shouldLoadTemplateCatalog,
   ]);
 
-  function reset() {
+  useEffect(() => {
+    if (!open || !draftKey || typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(draftKey);
+    if (!raw) {
+      setDraftRestored(false);
+      setDraftSavedAt(null);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (!isDraftRecord(parsed)) return;
+      restoringDraftRef.current = true;
+      setStep(Math.min(Math.max(parsed.step, 0), WIZARD_STEPS.length - 1));
+      setName(parsed.name);
+      setSlug(parsed.slug);
+      setCreationPath(parsed.creationPath);
+      setTemplateId(parsed.templateId);
+      setContract(parsed.contract);
+      setCapabilities(parsed.capabilities);
+      setArtifact(parsed.artifact);
+      setDraftRestored(true);
+      setDraftSavedAt(parsed.savedAt);
+      if (parsed.creationPath !== "enterprise_template") {
+        restoringDraftRef.current = false;
+      }
+    } catch {
+      window.localStorage.removeItem(draftKey);
+      setDraftRestored(false);
+      setDraftSavedAt(null);
+    }
+  }, [draftKey, open]);
+
+  useEffect(() => {
+    if (!open || !draftKey || typeof window === "undefined") return;
+    if (!draftHasContent) {
+      window.localStorage.removeItem(draftKey);
+      setDraftSavedAt(null);
+      return;
+    }
+    const nextDraft = { ...draftSnapshot, savedAt: new Date().toISOString() };
+    window.localStorage.setItem(draftKey, JSON.stringify(nextDraft));
+    setDraftSavedAt(nextDraft.savedAt);
+  }, [draftHasContent, draftKey, draftSnapshot, open]);
+
+  function clearStoredDraft() {
+    if (draftKey && typeof window !== "undefined") {
+      window.localStorage.removeItem(draftKey);
+    }
+    setDraftRestored(false);
+    setDraftSavedAt(null);
+  }
+
+  function reset({ clearDraft = false }: { clearDraft?: boolean } = {}) {
     setStep(0);
     setName("");
     setSlug("");
@@ -417,6 +623,9 @@ export function NewAgentModal({
     setCapabilities(["Answer from knowledge"]);
     setArtifact({ name: "", kind: "transcript", text: "", source_ref: "" });
     setStatus({ kind: "idle" });
+    setDraftRestored(false);
+    setDraftSavedAt(null);
+    if (clearDraft) clearStoredDraft();
   }
 
   function updateContract<K extends keyof CommitmentBody>(
@@ -460,6 +669,10 @@ export function NewAgentModal({
 
   useEffect(() => {
     if (creationPath !== "enterprise_template" || !activeTemplate) return;
+    if (restoringDraftRef.current) {
+      restoringDraftRef.current = false;
+      return;
+    }
     applyTemplateDefaults(activeTemplate);
   }, [activeTemplate, creationPath]);
 
@@ -510,15 +723,12 @@ export function NewAgentModal({
         return;
       }
       setOpen(false);
-      reset();
+      reset({ clearDraft: true });
       router.push(`/agents/${result.agent.id}?intake=${result.id}`);
     } catch (err) {
       setStatus({
         kind: "error",
-        message:
-          err instanceof Error
-            ? err.message
-            : "Failed to create governed agent intake.",
+        message: createErrorMessage(err),
       });
     }
   }
@@ -538,7 +748,7 @@ export function NewAgentModal({
       }
       const agentId = result.agent?.id ?? result.agent_id;
       setOpen(false);
-      reset();
+      reset({ clearDraft: true });
       router.push(`/agents/${agentId}?intake=${result.id}`);
     } catch (err) {
       setStatus({
@@ -569,7 +779,7 @@ export function NewAgentModal({
       );
       const agentId = result.agent?.id ?? result.agent_id;
       setOpen(false);
-      reset();
+      reset({ clearDraft: true });
       router.push(`/agents/${agentId}?intake=${result.id}&manual=1`);
     } catch (err) {
       setStatus({
@@ -617,6 +827,15 @@ export function NewAgentModal({
         aria-label="Create agent"
         data-testid="new-agent-modal"
         className="max-h-[92vh] max-w-5xl overflow-y-auto"
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          const focusTitle = () => titleRef.current?.focus();
+          if (typeof window.requestAnimationFrame === "function") {
+            window.requestAnimationFrame(focusTitle);
+          } else {
+            focusTitle();
+          }
+        }}
       >
         <form
           onSubmit={handleSubmit}
@@ -624,7 +843,9 @@ export function NewAgentModal({
           noValidate
         >
           <DialogHeader>
-            <DialogTitle>Agent Contract Wizard</DialogTitle>
+            <DialogTitle ref={titleRef} tabIndex={-1}>
+              Agent Contract Wizard
+            </DialogTitle>
             <DialogDescription>
               What agent are you building, for whom, and what must it never get
               wrong?
@@ -639,8 +860,46 @@ export function NewAgentModal({
             >
               Select or create a real workspace before starting governed agent
               intake. Studio will not create agents inside a local placeholder
-              workspace.
+              workspace.{" "}
+              <a className="font-medium underline" href="/workspaces/new">
+                Create workspace
+              </a>
+              .
             </p>
+          ) : null}
+
+          {permissionBlocked ? (
+            <p
+              className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+              data-testid="new-agent-permission-required"
+              role="status"
+            >
+              You are a {workspaceRole} in {workspaceName ?? "this workspace"}.
+              Creating governed agents requires owner or admin access. Ask an
+              admin to grant builder permissions or create the draft for you.
+            </p>
+          ) : null}
+
+          {draftRestored || draftSavedAt ? (
+            <div
+              className="flex flex-col gap-2 rounded-md border border-info/30 bg-info/5 p-3 text-sm text-info sm:flex-row sm:items-center sm:justify-between"
+              data-testid="new-agent-draft-status"
+              role="status"
+            >
+              <span>
+                {draftRestored
+                  ? "Restored your saved local intake draft."
+                  : "Local intake draft saved."}
+              </span>
+              <button
+                type="button"
+                className="w-fit rounded-md border border-info/40 px-2 py-1 text-xs font-medium"
+                data-testid="new-agent-discard-draft"
+                onClick={() => reset({ clearDraft: true })}
+              >
+                Discard draft
+              </button>
+            </div>
           ) : null}
 
           <ol
@@ -695,7 +954,7 @@ export function NewAgentModal({
 
           <section
             hidden={activeStep.id !== "mission"}
-            className="grid gap-5"
+            className={panelClass(activeStep.id === "mission")}
             data-testid="new-agent-step-panel-mission"
           >
             <fieldset className="grid gap-3 instrument-panel rounded-2xl p-4">
@@ -777,7 +1036,6 @@ export function NewAgentModal({
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium">Agent name</span>
                 <input
-                  autoFocus
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -813,9 +1071,7 @@ export function NewAgentModal({
                 ) : null}
               </label>
               <label className="flex flex-col gap-1 text-sm md:col-span-2">
-                <span className="font-medium">
-                  Business responsibility
-                </span>
+                <span className="font-medium">Business responsibility</span>
                 <textarea
                   value={contract.business_responsibility}
                   onChange={(e) =>
@@ -857,7 +1113,7 @@ export function NewAgentModal({
 
           <section
             hidden={activeStep.id !== "boundaries"}
-            className="grid gap-5"
+            className={panelClass(activeStep.id === "boundaries")}
             data-testid="new-agent-step-panel-boundaries"
           >
             <div className="grid gap-4 instrument-panel rounded-2xl p-4 md:grid-cols-2">
@@ -998,7 +1254,7 @@ export function NewAgentModal({
 
           <section
             hidden={activeStep.id !== "capabilities"}
-            className="grid gap-5"
+            className={panelClass(activeStep.id === "capabilities")}
             data-testid="new-agent-step-panel-capabilities"
           >
             <fieldset className="grid gap-3 instrument-panel rounded-2xl p-4">
@@ -1035,7 +1291,7 @@ export function NewAgentModal({
 
           <section
             hidden={activeStep.id !== "knowledge_tools"}
-            className="grid gap-5"
+            className={panelClass(activeStep.id === "knowledge_tools")}
             data-testid="new-agent-step-panel-knowledge-tools"
           >
             <fieldset className="grid gap-3 instrument-panel rounded-2xl p-4">
@@ -1142,14 +1398,14 @@ export function NewAgentModal({
 
           <section
             hidden={activeStep.id !== "channels"}
-            className="grid gap-5"
+            className={panelClass(activeStep.id === "channels")}
             data-testid="new-agent-step-panel-channels"
           >
             <fieldset className="grid gap-3 instrument-panel rounded-2xl p-4">
               <legend className="px-1 text-sm font-medium">Channels</legend>
               <p className="text-sm text-muted-foreground">
-                Voice is one channel, not the category. Select every channel
-                the agent may eventually support; only one sandbox channel is
+                Voice is one channel, not the category. Select every channel the
+                agent may eventually support; only one sandbox channel is
                 required for the first draft.
               </p>
               <div className="grid gap-2 md:grid-cols-3">
@@ -1193,7 +1449,7 @@ export function NewAgentModal({
 
           <section
             hidden={activeStep.id !== "generated_tests"}
-            className="grid gap-5"
+            className={panelClass(activeStep.id === "generated_tests")}
             data-testid="new-agent-step-panel-generated-tests"
           >
             <div className="instrument-panel rounded-2xl p-4">
@@ -1225,7 +1481,7 @@ export function NewAgentModal({
 
           <section
             hidden={activeStep.id !== "readiness"}
-            className="grid gap-5"
+            className={panelClass(activeStep.id === "readiness")}
             data-testid="new-agent-step-panel-readiness"
           >
             <div className="grid gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
@@ -1233,9 +1489,7 @@ export function NewAgentModal({
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Draft readiness
                 </p>
-                <p className="mt-2 text-3xl font-semibold">
-                  {readinessScore}%
-                </p>
+                <p className="mt-2 text-3xl font-semibold">{readinessScore}%</p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   The draft can be created when required contract fields are
                   complete. Production remains blocked until proof gates pass.
@@ -1367,6 +1621,15 @@ export function NewAgentModal({
               control plane.
             </p>
           ) : null}
+          {permissionBlocked ? (
+            <p
+              className="text-xs text-muted-foreground"
+              data-testid="new-agent-permission-submit-blocked"
+            >
+              Creation is blocked because your workspace role cannot create
+              governed agents.
+            </p>
+          ) : null}
           {creationPath === "enterprise_template" &&
           templateCatalogState !== "approved" ? (
             <p
@@ -1380,8 +1643,8 @@ export function NewAgentModal({
 
           <div className="grid gap-2 instrument-panel rounded-2xl p-3 text-xs text-muted-foreground md:grid-cols-3">
             <span>
-              Creates <strong className="text-foreground">Commitment</strong>{" "}
-              v1 from this contract.
+              Creates <strong className="text-foreground">Commitment</strong> v1
+              from this contract.
             </span>
             <span>
               Seeds <strong className="text-foreground">channels/tools</strong>{" "}

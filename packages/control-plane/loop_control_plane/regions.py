@@ -56,6 +56,13 @@ regions:
     data_plane_url: https://runtime.eu-cost.loop.example
     concrete:
       hetzner: fsn1
+  af-south:
+    display_name: Africa South (Cape Town)
+    residency: ZA
+    primary: false
+    data_plane_url: https://runtime.af-south.loop.example
+    concrete:
+      aws: af-south-1
 """
 
 

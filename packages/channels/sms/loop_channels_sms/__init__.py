@@ -12,6 +12,13 @@ from loop_channels_sms.connect import (
     TwilioConnectResult,
     TwilioNumberCandidate,
 )
+from loop_channels_sms.byoc import (
+    ByocCredentialsError,
+    ByocCredentialsResolver,
+    ByocTwilioSmsClient,
+    TwilioTransportBuilder,
+    build_byoc_twilio_adapter,
+)
 from loop_channels_sms.twilio import (
     SmsInboundParser,
     SmsOutboundMessage,
@@ -25,6 +32,9 @@ from loop_channels_sms.verify import (
 )
 
 __all__ = [
+    "ByocCredentialsError",
+    "ByocCredentialsResolver",
+    "ByocTwilioSmsClient",
     "ComplianceDecision",
     "ComplianceKeywordHandler",
     "InMemorySmsConsentStore",
@@ -39,5 +49,7 @@ __all__ = [
     "TwilioSignatureError",
     "TwilioSmsAdapter",
     "TwilioSmsClient",
+    "TwilioTransportBuilder",
+    "build_byoc_twilio_adapter",
     "verify_twilio_signature",
 ]

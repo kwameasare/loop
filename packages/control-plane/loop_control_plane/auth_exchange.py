@@ -14,6 +14,7 @@ unit-test the swap without spinning the framework.
 from __future__ import annotations
 
 import secrets
+import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, replace
 from hashlib import sha256
@@ -37,7 +38,20 @@ __all__ = [
     "RefreshTokenRecord",
     "RefreshTokenStore",
     "UnknownIdpUser",
+    "map_idp_sub_to_internal_user_id",
 ]
+
+
+def map_idp_sub_to_internal_user_id(idp_sub: str) -> str:
+    """Deterministic UUID5 mapping from an IdP sub (Auth0, Google,
+    Okta, …) to Loop's internal user-id namespace.
+
+    Same formula the ``/v1/auth/exchange`` route mints into PASETOs,
+    extracted so other code paths (system-admin gating, audit
+    inspection) can apply the same mapping and check both forms
+    when comparing caller subs.
+    """
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"loop:idp:{idp_sub}"))
 
 ACCESS_TTL_MS = 60 * 60 * 1000
 REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000
@@ -106,12 +120,26 @@ class AuthExchange:
     refresh_ttl_ms: int = REFRESH_TTL_MS
     refresh_family_ttl_ms: int = REFRESH_FAMILY_TTL_MS
 
-    async def exchange(self, *, claims: JwtClaims, now_ms: int) -> ExchangeResult:
+    async def exchange(
+        self,
+        *,
+        claims: JwtClaims,
+        now_ms: int,
+        id_token_audience: str | None = None,
+    ) -> ExchangeResult:
         # Audience pinning is the *outer* JwtValidator's job, but we
         # double-check here because exchange is the trust-boundary.
-        if self.expected_audience not in claims.aud:
+        #
+        # OIDC id_tokens carry ``aud=client_id`` (the SPA), while the
+        # access PASETO we mint downstream needs ``aud=API identifier``
+        # so internal services can keep their audience checks
+        # consistent. Callers pass ``id_token_audience`` (the client_id)
+        # for the inbound check; ``self.expected_audience`` (the API
+        # identifier) lands in the minted PASETO below.
+        inbound_aud = id_token_audience or self.expected_audience
+        if inbound_aud not in claims.aud:
             raise AuthExchangeError(
-                f"audience mismatch: got {claims.aud!r}, expected {self.expected_audience!r} present"
+                f"audience mismatch: got {claims.aud!r}, expected {inbound_aud!r} present"
             )
         loop_user_id = await self.user_mapper(claims.sub)
         if loop_user_id is None:

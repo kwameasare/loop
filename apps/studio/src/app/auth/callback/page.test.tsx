@@ -1,10 +1,11 @@
 /**
- * S912: integration-style test for the Auth0 callback page.
+ * Integration test for the Auth0 callback page.
  *
- * The page is wrapped in our auth0 mock (returning an authenticated
- * user) and a stub ``fetch`` that captures the POST to
- * ``/v1/auth/exchange``. We verify the page calls ``router.replace``
- * after a successful exchange.
+ * Since the cookie-session refactor, the callback POSTs to the
+ * studio's own ``/api/session`` Route Handler instead of cp's
+ * ``/v1/auth/exchange`` directly — the Route Handler sets the
+ * HttpOnly session cookie that Server Components read for SSR auth
+ * and proxies the cp call server-side.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -55,7 +56,10 @@ describe("AuthCallbackPage", () => {
   it("exchanges the id_token, stores the session, and redirects home", async () => {
     getIdTokenClaims.mockResolvedValue({ __raw: "id-token-from-auth0" });
     const fetchSpy = vi.fn(async (url, init) => {
-      expect(url).toBe("https://cp.example.test/v1/auth/exchange");
+      // Cookie-session refactor: callback POSTs the studio BFF,
+      // which talks to cp server-side and sets HttpOnly cookies.
+      expect(String(url)).toBe("/api/session");
+      expect(init?.method).toBe("POST");
       expect(JSON.parse(String(init?.body))).toEqual({
         id_token: "id-token-from-auth0",
       });

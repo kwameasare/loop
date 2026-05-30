@@ -78,8 +78,8 @@ export function EmulatorPanel({
     defaultInvoke(
       client ??
         new LoopClient({
-          baseUrl:
-            process.env.NEXT_PUBLIC_LOOP_API_URL ?? "http://localhost:8080/v1",
+          // Same-origin proxy; see /api/cp/[...path]/route.ts.
+          baseUrl: "/api/cp/v1",
         }),
     );
 

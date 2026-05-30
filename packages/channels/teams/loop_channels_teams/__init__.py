@@ -8,6 +8,12 @@ JWT validation, and the outbound HTTP client (``serviceUrl`` +
 conversation id).
 """
 
+from loop_channels_teams.byoc import (
+    ByocTeamsSender,
+    TeamsMessageSender,
+    TeamsTransportBuilder,
+    build_byoc_teams_sender,
+)
 from loop_channels_teams.channel import (
     TeamsChannel,
     TeamsConversationIndex,
@@ -31,6 +37,7 @@ from loop_channels_teams.verify import (
 
 __all__ = [
     "JWKS_URL",
+    "ByocTeamsSender",
     "JwksFetcher",
     "JwksKey",
     "TeamsAppManifest",
@@ -40,6 +47,9 @@ __all__ = [
     "TeamsConnectRequest",
     "TeamsConnectResult",
     "TeamsConversationIndex",
+    "TeamsMessageSender",
+    "TeamsTransportBuilder",
+    "build_byoc_teams_sender",
     "parse_activity",
     "render_adaptive_card",
     "to_reply_activity",

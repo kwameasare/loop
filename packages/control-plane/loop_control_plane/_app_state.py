@@ -13,7 +13,10 @@ from loop_control_plane._app_agents import AgentRegistry, PostgresAgentRegistry
 from loop_control_plane.adversarial_catches import AdversarialCatchRegistry
 from loop_control_plane.agent_commitments import CommitmentRegistry
 from loop_control_plane.agent_handoff import AgentHandoffRegistry
-from loop_control_plane.agent_intake import AgentIntakeRegistry
+from loop_control_plane.agent_intake import (
+    AgentIntakeRegistry,
+    PostgresAgentIntakeRegistry,
+)
 from loop_control_plane.agent_secret_refs import AgentSecretRefRegistry
 from loop_control_plane.agent_versions import AgentVersionService
 from loop_control_plane.agent_workflow import AgentWorkflowRegistry
@@ -143,6 +146,83 @@ def _default_api_key_service() -> ApiKeyService | PostgresApiKeyService:
     return PostgresApiKeyService.from_url(db_url)
 
 
+def _default_byoc_secret_service() -> Any:
+    """Pick between in-memory and Postgres-backed BYOC secret stores.
+
+    Same env-var dispatch as the other ``_default_*_service`` factories:
+    ``LOOP_CP_USE_POSTGRES=1`` + ``LOOP_CP_DB_URL`` →
+    :class:`PostgresBYOCSecretService`; otherwise in-memory.
+
+    Fails closed on a Postgres-requested-but-no-URL config: without
+    persistence, an operator's pasted Twilio/Meta creds would silently
+    evaporate on cp restart — that's the bug we're closing here.
+    """
+    from loop_control_plane._byoc_secrets import (
+        PostgresBYOCSecretService,
+        build_byoc_secret_service,
+    )
+
+    if os.environ.get("LOOP_CP_USE_POSTGRES") != "1":
+        return build_byoc_secret_service()
+    db_url = os.environ.get("LOOP_CP_DB_URL")
+    if not db_url:
+        raise RuntimeError("LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set")
+    return PostgresBYOCSecretService.from_url(db_url)
+
+
+def _default_enterprise_signup_store() -> Any:
+    """Pick between in-memory and Postgres-backed enterprise-signup
+    stores. Same env-var dispatch as the other Postgres factories.
+
+    Without persistence, pending tenant signups would evaporate on cp
+    restart and lose every queued onboarding intent — fail closed if
+    the operator asked for Postgres but didn't supply a URL.
+    """
+    from loop_control_plane.enterprise_admin import (
+        InMemoryEnterpriseSignupStore,
+        PostgresEnterpriseSignupStore,
+    )
+
+    if os.environ.get("LOOP_CP_USE_POSTGRES") != "1":
+        return InMemoryEnterpriseSignupStore()
+    db_url = os.environ.get("LOOP_CP_DB_URL")
+    if not db_url:
+        raise RuntimeError("LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set")
+    return PostgresEnterpriseSignupStore.from_url(db_url)
+
+
+def _default_agent_intake_registry() -> AgentIntakeRegistry | PostgresAgentIntakeRegistry:
+    """Pick between in-memory and Postgres-backed agent-intake evidence.
+
+    Agent creation redirects into ``/agents/{id}?intake={intake_id}``; losing
+    the intake record on cp-api restart breaks the builder's landing evidence.
+    Use Postgres whenever the control plane is running in persistent mode.
+    """
+
+    if os.environ.get("LOOP_CP_USE_POSTGRES") != "1":
+        return AgentIntakeRegistry()
+    db_url = os.environ.get("LOOP_CP_DB_URL")
+    if not db_url:
+        raise RuntimeError("LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set")
+    return PostgresAgentIntakeRegistry.from_url(db_url)
+
+
+def _default_workspace_invite_store() -> Any:
+    """Pick between in-memory and Postgres-backed workspace-invite
+    stores. Mirrors :func:`_default_enterprise_signup_store`."""
+    from loop_control_plane.enterprise_admin import (
+        InMemoryWorkspaceInviteStore,
+        PostgresWorkspaceInviteStore,
+    )
+
+    if os.environ.get("LOOP_CP_USE_POSTGRES") != "1":
+        return InMemoryWorkspaceInviteStore()
+    db_url = os.environ.get("LOOP_CP_DB_URL")
+    if not db_url:
+        raise RuntimeError("LOOP_CP_USE_POSTGRES=1 requires LOOP_CP_DB_URL to be set")
+    return PostgresWorkspaceInviteStore.from_url(db_url)
+
+
 def _default_saml_validator() -> SamlValidator:
     """Pick between Stub and PySAML2 validators per ``LOOP_SAML_USE_PYSAML2``.
 
@@ -221,13 +301,13 @@ class CpApiState:
     # implementation will back with workspace-scoped tables.
     ux_wireup: dict[str, Any] = field(default_factory=dict)
     presence_rooms: dict[UUID, set[Any]] = field(default_factory=dict)
-    # Enterprise onboarding/admin slice. Production can replace these
-    # process-local maps with tenant-scoped tables without changing the
-    # route contract.
-    enterprise_signups: dict[str, dict[str, Any]] = field(default_factory=dict)
-    workspace_invites: dict[UUID, dict[str, dict[str, Any]]] = field(
-        default_factory=dict
-    )
+    # Enterprise onboarding / admin-portal persistence. Factories pick
+    # between in-memory and Postgres-backed stores (cp_0014) based on
+    # ``LOOP_CP_USE_POSTGRES``; see :mod:`enterprise_admin`. The route
+    # handlers call the async surface (``create / get / list_all /
+    # list_for_workspace / update_approval``).
+    enterprise_signups: Any = field(default_factory=_default_enterprise_signup_store)
+    workspace_invites: Any = field(default_factory=_default_workspace_invite_store)
 
     def __post_init__(self) -> None:
         self.workspace_api = WorkspaceAPI(workspaces=self.workspaces)
@@ -270,8 +350,15 @@ class CpApiState:
         # Agent-flow implementation: Studio sees only agent-scoped vault/KMS
         # references, never plaintext credential values.
         self.agent_secret_refs = AgentSecretRefRegistry()
+        # BYOC: enterprise admins paste Twilio / Meta / Slack / etc.
+        # credentials per channel binding; cp encrypts them at rest
+        # (Fernet today, KMS-wrapped in prod). Plaintext only ever
+        # decrypted inside the channel adapter at send/receive time.
+        # ``_default_byoc_secret_service`` picks between in-memory and
+        # Postgres-backed (cp_0013) based on LOOP_CP_USE_POSTGRES.
+        self.byoc_secrets = _default_byoc_secret_service()
         # Agent-flow implementation: intake is a durable draft-generation object.
-        self.agent_intakes = AgentIntakeRegistry()
+        self.agent_intakes = _default_agent_intake_registry()
         # Agent-flow implementation: migration import, parity, cutover, and
         # lineage are durable workspace objects, not derived page fixtures.
         self.migration_runs = MigrationRunRegistry()

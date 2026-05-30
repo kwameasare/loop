@@ -1,3 +1,5 @@
+import { getCpBaseUrl } from "@/lib/cp-url";
+
 /**
  * Enterprise SSO tab — IdP connection helpers (S615).
  *
@@ -93,10 +95,7 @@ export interface PostIdpMetadataOptions {
 export async function postIdpMetadata(
   opts: PostIdpMetadataOptions,
 ): Promise<IdpConnectionResponse> {
-  const raw =
-    opts.baseUrl ??
-    process.env.LOOP_CP_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  const raw = opts.baseUrl ?? getCpBaseUrl();
   if (!raw) {
     throw new Error("LOOP_CP_API_BASE_URL is required to post IdP metadata");
   }
@@ -205,10 +204,7 @@ interface SamlClientOptions {
 }
 
 function _samlBase(override?: string): string {
-  const raw =
-    override ??
-    process.env.LOOP_CP_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  const raw = override ?? getCpBaseUrl();
   if (!raw) throw new Error("LOOP_CP_API_BASE_URL is required for SAML calls");
   const trimmed = raw.replace(/\/$/, "");
   return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
@@ -291,10 +287,7 @@ export async function postSamlConfig(
 export async function putGroupRules(
   opts: PutGroupRulesOptions,
 ): Promise<GroupRulesResponse> {
-  const raw =
-    opts.baseUrl ??
-    process.env.LOOP_CP_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_LOOP_API_URL;
+  const raw = opts.baseUrl ?? getCpBaseUrl();
   if (!raw) {
     throw new Error("LOOP_CP_API_BASE_URL is required to put group rules");
   }
