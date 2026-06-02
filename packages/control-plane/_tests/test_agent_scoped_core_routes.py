@@ -5,6 +5,8 @@ from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
+from loop_control_plane._app_agents import AgentCreate, AgentRecord, AgentRegistry
+from loop_control_plane._app_state import CpApiState
 from loop_control_plane.app import create_app
 from loop_control_plane.paseto import encode_local
 
@@ -20,6 +22,28 @@ def env(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture
 def client(env: None) -> TestClient:
     return TestClient(create_app())
+
+
+class _NoPrivateAgentRegistry:
+    """Adapter that mimics PostgresAgentRegistry's public surface only."""
+
+    def __init__(self) -> None:
+        self._inner = AgentRegistry()
+
+    async def create(self, *, workspace_id: UUID, body: AgentCreate) -> AgentRecord:
+        return await self._inner.create(workspace_id=workspace_id, body=body)
+
+    async def list_for_workspace(self, workspace_id: UUID) -> list[AgentRecord]:
+        return await self._inner.list_for_workspace(workspace_id)
+
+    async def get(self, *, workspace_id: UUID, agent_id: UUID) -> AgentRecord:
+        return await self._inner.get(workspace_id=workspace_id, agent_id=agent_id)
+
+    async def get_by_id(self, *, agent_id: UUID) -> AgentRecord:
+        return await self._inner.get_by_id(agent_id=agent_id)
+
+    async def archive(self, *, workspace_id: UUID, agent_id: UUID) -> None:
+        await self._inner.archive(workspace_id=workspace_id, agent_id=agent_id)
 
 
 def _bearer_for(sub: str) -> str:
@@ -183,6 +207,43 @@ def test_agent_detail_resolves_workspace_from_agent_id(
     assert response.status_code == 200, response.text
     assert response.json()["id"] == str(agent_id)
     assert response.json()["object_state"] == "draft"
+
+
+def test_agent_scoped_routes_do_not_depend_on_private_agent_map(env: None) -> None:
+    client = TestClient(create_app(CpApiState(agents=_NoPrivateAgentRegistry())))  # type: ignore[arg-type]
+    workspace_id = _workspace(client)
+    agent_id = _agent(client, workspace_id)
+
+    detail = client.get(f"/v1/agents/{agent_id}", headers=_auth())
+    assert detail.status_code == 200, detail.text
+    assert detail.json()["object_state"] == "draft"
+
+    current = client.get(f"/v1/agents/{agent_id}/commitment/current", headers=_auth())
+    assert current.status_code == 200, current.text
+
+    workflow = client.get(f"/v1/agents/{agent_id}/workflow", headers=_auth())
+    assert workflow.status_code == 200, workflow.text
+
+    channels = client.get(f"/v1/agents/{agent_id}/channel-bindings", headers=_auth())
+    assert channels.status_code == 200, channels.text
+
+    contracts = client.get(f"/v1/agents/{agent_id}/tool-contracts", headers=_auth())
+    assert contracts.status_code == 200, contracts.text
+
+    memory_policies = client.get(f"/v1/agents/{agent_id}/memory-policies", headers=_auth())
+    assert memory_policies.status_code == 200, memory_policies.text
+
+    kb_docs = client.get(f"/v1/agents/{agent_id}/kb/documents", headers=_auth())
+    assert kb_docs.status_code == 200, kb_docs.text
+
+    current_package = client.get(
+        f"/v1/agents/{agent_id}/change-packages/current",
+        headers=_auth(),
+    )
+    assert current_package.status_code == 200, current_package.text
+
+    handoff = client.get(f"/v1/agents/{agent_id}/handoff", headers=_auth())
+    assert handoff.status_code == 200, handoff.text
 
 
 def test_channel_and_deployment_routes_resolve_workspace_from_agent_id(

@@ -16,6 +16,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
+from loop_control_plane._agent_route_utils import resolve_agent_for_route
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
@@ -99,19 +100,13 @@ async def _agent(
     workspace_id: UUID | None = None,
     required_role: Role | None = None,
 ) -> Any:
-    cp = request.app.state.cp
-    if workspace_id is None:
-        agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
-        if agent is None:
-            raise HTTPException(status_code=404, detail="unknown agent")
-        workspace_id = agent.workspace_id
-    await authorize_workspace_access(
-        workspaces=cp.workspaces,
+    return await resolve_agent_for_route(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
         workspace_id=workspace_id,
-        user_sub=caller_sub,
         required_role=required_role,
     )
-    return await cp.agents.get(workspace_id=workspace_id, agent_id=agent_id)
 
 
 def _agent_id_from_dataset_ref(dataset_ref: str) -> str | None:
