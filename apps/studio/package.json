@@ -19,8 +19,8 @@
     "gen:cp-api:check": "cd ../.. && uv run python tools/gen_cp_api_client.py --check"
   },
   "dependencies": {
-    "@auth0/auth0-react": "2.16.2",
-    "@radix-ui/react-dialog": "1.1.15",
+    "@auth0/auth0-react": "2.19.0",
+    "@radix-ui/react-dialog": "1.1.17",
     "i18next": "23.16.8",
     "react-i18next": "15.7.4",
     "class-variance-authority": "0.7.1",
@@ -33,10 +33,10 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "14.2.35",
-    "@playwright/test": "1.59.1",
+    "@playwright/test": "1.61.0",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
-    "@types/node": "20.19.39",
+    "@types/node": "20.19.43",
     "@types/react": "18.3.11",
     "@types/react-dom": "18.3.0",
     "@vitejs/plugin-react": "4.7.0",
@@ -44,8 +44,8 @@
     "eslint": "8.57.1",
     "eslint-config-next": "14.2.35",
     "jsdom": "25.0.1",
-    "postcss": "8.5.14",
-    "prettier": "3.8.3",
+    "postcss": "8.5.15",
+    "prettier": "3.8.4",
     "tailwindcss": "3.4.19",
     "typescript": "5.9.3",
     "vitest": "2.1.9"
