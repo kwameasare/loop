@@ -34,7 +34,7 @@ This file is the index. Per-runbook detail follows.
 | RB-019 | Hire onboarding (Day 1 access) | CTO | weekly during hiring | SEV3 |
 | RB-020 | Compromised API key | Sec eng | 2026-05-04 (synthetic) | SEV1 |
 | RB-021 | Postgres PITR restore drill | Eng #2 | 2026-07-13 (ci) | SEV1, RTO ≤ 60 min, RPO ≤ 5 min |
-| RB-022 | ClickHouse snapshot restore drill | Eng #4 | 2026-07-06 (ci) | SEV2, RTO ≤ 90 min, RPO ≤ 30 min |
+| RB-022 | ClickHouse snapshot restore drill | Eng #4 | 2026-07-13 (ci) | SEV2, RTO ≤ 90 min, RPO ≤ 30 min |
 | RB-023 | Object-store replication integrity failure | Eng #2 | 2026-05-02 (synthetic) | SEV2, RTO ≤ 30 min |
 | RB-024 | BYO Vault credential rotation | Sec eng | 2026-05-04 (synthetic) | SEV2 if stale; SEV1 if leaked |
 
