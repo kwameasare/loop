@@ -72,22 +72,69 @@ export function buildNavSections(
         {
           id: "agents",
           href: "/agents",
-          label: "Agent Workbench",
-          summary: "Profile, behavior, tools, knowledge, memory, deploy",
+          label: "Agents",
+          summary: "Create, import, switch, and manage the agent registry",
           icon: Bot,
         },
         {
           id: "channels",
-          href: "/channels",
+          href: agentId ? agentHref(agentId, "channels") : "/channels",
           label: "Channels",
           summary: "Web, WhatsApp, Telegram, Slack, Teams, SMS, email, voice",
           icon: MessagesSquare,
           children: [
             {
-              id: "voice-channel-stage",
-              href: "/voice",
-              label: "Voice channel stage",
-              summary: "Specialized staging and debug for one channel",
+              id: "channel-web",
+              href: agentId
+                ? `${agentHref(agentId, "channels")}?channel=web_chat`
+                : "/channels?channel=web_chat",
+              label: "Web",
+              summary: "Widget, portal, and in-app chat binding",
+              icon: MessagesSquare,
+            },
+            {
+              id: "channel-whatsapp",
+              href: agentId
+                ? `${agentHref(agentId, "channels")}?channel=whatsapp`
+                : "/channels?channel=whatsapp",
+              label: "WhatsApp",
+              summary: "Business profile, templates, and transcript capture",
+              icon: MessagesSquare,
+            },
+            {
+              id: "channel-telegram",
+              href: agentId
+                ? `${agentHref(agentId, "channels")}?channel=telegram`
+                : "/channels?channel=telegram",
+              label: "Telegram",
+              summary: "Bot token, commands, and group-safe routing",
+              icon: MessagesSquare,
+            },
+            {
+              id: "channel-slack-teams",
+              href: agentId
+                ? `${agentHref(agentId, "channels")}?channel=slack`
+                : "/channels?channel=slack",
+              label: "Slack / Teams",
+              summary: "Workspace installs, mentions, and approvals",
+              icon: MessagesSquare,
+            },
+            {
+              id: "channel-sms-email",
+              href: agentId
+                ? `${agentHref(agentId, "channels")}?channel=sms`
+                : "/channels?channel=sms",
+              label: "SMS / Email",
+              summary: "Identity, deliverability, opt-out, and archiving",
+              icon: MessagesSquare,
+            },
+            {
+              id: "channel-voice",
+              href: agentId
+                ? `${agentHref(agentId, "channels")}?channel=voice`
+                : "/voice",
+              label: "Voice",
+              summary: "Phone numbers, SIP, ASR, TTS, and barge-in checks",
               icon: Radio,
             },
           ],
