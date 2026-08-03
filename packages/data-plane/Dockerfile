@@ -2,7 +2,7 @@
 # S140: dp-runtime distroless image. Mirrors packages/control-plane/Dockerfile;
 # kept in sync deliberately so a single review covers both planes.
 
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.14-slim-bookworm AS builder
 
 ENV PATH="/opt/venv/bin:${PATH}" \
     UV_COMPILE_BYTECODE=1 \
