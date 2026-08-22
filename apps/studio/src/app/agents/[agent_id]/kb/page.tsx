@@ -1,5 +1,6 @@
 import { KnowledgeAtelier } from "@/components/knowledge/knowledge-atelier";
 import { listKbDocuments } from "@/lib/kb";
+import { getCpAuthOptions } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +22,10 @@ export default async function AgentKbPage({
   params,
   searchParams,
 }: AgentKbPageProps) {
+  const authOptions = getCpAuthOptions();
   const { items, degraded_reason } = await listKbDocuments(
     params.agent_id,
+    authOptions,
   ).catch((error: unknown) => ({
     items: [],
     degraded_reason:

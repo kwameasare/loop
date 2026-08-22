@@ -5,6 +5,7 @@ import {
   type ChangePackage,
 } from "@/lib/change-package";
 import { listDeployments, listEvidencePacks } from "@/lib/deploys";
+import { getCpAuthOptions } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
 
@@ -28,10 +29,11 @@ export default async function AgentDeploysPage({
   params,
   searchParams,
 }: AgentDeploysPageProps) {
+  const authOptions = getCpAuthOptions();
   let deployments: Awaited<ReturnType<typeof listDeployments>>["items"] = [];
   let deploymentsDegradedReason: string | undefined;
   try {
-    const result = await listDeployments(params.agent_id);
+    const result = await listDeployments(params.agent_id, authOptions);
     deployments = result.items;
     deploymentsDegradedReason = result.degraded_reason;
   } catch (error) {
@@ -46,7 +48,7 @@ export default async function AgentDeploysPage({
     [];
   let evidencePacksDegradedReason: string | undefined;
   try {
-    const result = await listEvidencePacks(params.agent_id);
+    const result = await listEvidencePacks(params.agent_id, authOptions);
     evidencePacks = result.items;
     evidencePacksDegradedReason = result.degraded_reason;
   } catch (error) {
@@ -60,7 +62,8 @@ export default async function AgentDeploysPage({
   let changePackage: ChangePackage | null = null;
   let changePackageDegradedReason: string | undefined;
   try {
-    changePackage = (await fetchCurrentChangePackage(params.agent_id)).item;
+    changePackage = (await fetchCurrentChangePackage(params.agent_id, authOptions))
+      .item;
   } catch (error) {
     changePackageDegradedReason =
       error instanceof Error
