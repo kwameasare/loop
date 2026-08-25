@@ -32,9 +32,6 @@ out mark and paged on-call from the same workflow.
 | Checked at (UTC) | Cloud | Region | Mark | Run | Commit |
 |------------------|-------|--------|------|-----|--------|
 <!-- CLOUD_PROOF_HISTORY:BEGIN -->
-| 2026-08-11T05:39:50Z | `aws` | `na-east` | RED | [run](https://github.com/kwameasare/loop/actions/runs/31462337676) | `054ad2ac1f1c` |
-| 2026-08-11T05:39:53Z | `azure` | `eu-west` | RED | [run](https://github.com/kwameasare/loop/actions/runs/31462337676) | `054ad2ac1f1c` |
-| 2026-08-11T05:39:47Z | `gcp` | `apac-sg` | RED | [run](https://github.com/kwameasare/loop/actions/runs/31462337676) | `054ad2ac1f1c` |
 | 2026-08-12T05:49:39Z | `aws` | `na-east` | RED | [run](https://github.com/kwameasare/loop/actions/runs/31567782121) | `c7b8d66f7424` |
 | 2026-08-12T05:49:41Z | `azure` | `eu-west` | RED | [run](https://github.com/kwameasare/loop/actions/runs/31567782121) | `c7b8d66f7424` |
 | 2026-08-12T05:49:40Z | `gcp` | `apac-sg` | RED | [run](https://github.com/kwameasare/loop/actions/runs/31567782121) | `c7b8d66f7424` |
@@ -74,6 +71,9 @@ out mark and paged on-call from the same workflow.
 | 2026-08-24T05:31:36Z | `aws` | `na-east` | RED | [run](https://github.com/kwameasare/loop/actions/runs/32693795569) | `e530115c4632` |
 | 2026-08-24T05:31:40Z | `azure` | `eu-west` | RED | [run](https://github.com/kwameasare/loop/actions/runs/32693795569) | `e530115c4632` |
 | 2026-08-24T05:31:42Z | `gcp` | `apac-sg` | RED | [run](https://github.com/kwameasare/loop/actions/runs/32693795569) | `e530115c4632` |
+| 2026-08-25T05:30:22Z | `aws` | `na-east` | RED | [run](https://github.com/kwameasare/loop/actions/runs/32813039503) | `b61a0fc9419d` |
+| 2026-08-25T05:30:37Z | `azure` | `eu-west` | RED | [run](https://github.com/kwameasare/loop/actions/runs/32813039503) | `b61a0fc9419d` |
+| 2026-08-25T05:30:25Z | `gcp` | `apac-sg` | RED | [run](https://github.com/kwameasare/loop/actions/runs/32813039503) | `b61a0fc9419d` |
 <!-- CLOUD_PROOF_HISTORY:END -->
 
 ## Evidence sources
