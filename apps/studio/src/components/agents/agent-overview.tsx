@@ -2418,6 +2418,14 @@ export function AgentOverview({
   const objectTreatment = OBJECT_STATE_TREATMENTS[data.objectState];
   const trustTreatment = TRUST_STATE_TREATMENTS[data.trust];
   const approvalBlocked = data.deploy.approvals < data.deploy.requiredApprovals;
+  const safeActions =
+    dataState === "degraded"
+      ? data.safeActions.map((action) => ({
+          ...action,
+          disabledReason:
+            "Unavailable until the selected agent loads from the control plane.",
+        }))
+      : data.safeActions;
 
   function closeEditModal() {
     setEditOpen(false);
@@ -2444,7 +2452,7 @@ export function AgentOverview({
       >
         <div className="glass-deep min-w-0 rounded-2xl p-5">
           <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Agent workbench
+            Agent
           </p>
           <div className="mt-3 flex items-start gap-4">
             <AgentGlassOrb
@@ -2540,11 +2548,12 @@ export function AgentOverview({
             className="mt-2 text-sm font-medium"
             data-testid="next-best-action"
           >
-            {data.safeActions[0]?.description ??
+            {safeActions[0]?.disabledReason ??
+              safeActions[0]?.description ??
               "Replay recent production turns against this draft."}
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Evidence: {data.safeActions[0]?.evidence}
+            Evidence: {safeActions[0]?.evidence}
           </p>
         </div>
       </section>
@@ -2757,11 +2766,10 @@ export function AgentOverview({
         <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
           <div>
             <h3 className="text-sm font-semibold" id="agent-outline-heading">
-              Agent outline
+              Readiness map
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Navigation and dependency map for behavior, tools, knowledge,
-              memory, evals, and deploy policy.
+              The shortest path from draft to safe production.
             </p>
           </div>
           <div className="flex gap-2 text-xs text-muted-foreground">
@@ -2780,32 +2788,35 @@ export function AgentOverview({
           {data.sections.map((section) => (
             <article
               key={section.id}
-              className="instrument-panel interactive-lift grid gap-3 rounded-2xl p-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr))]"
+              className="instrument-panel interactive-lift rounded-xl p-3"
               data-testid={`agent-outline-${section.id}`}
             >
-              <div>
-                <Link
-                  href={agentSectionHref(id, section.id)}
-                  className="text-sm font-semibold underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                  data-testid={`agent-outline-link-${section.id}`}
-                >
-                  {section.label}
-                </Link>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <Link
+                    href={agentSectionHref(id, section.id)}
+                    className="text-sm font-semibold underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                    data-testid={`agent-outline-link-${section.id}`}
+                  >
+                    {section.label}
+                  </Link>
+                  <p className="mt-1 text-sm">{section.current}</p>
+                </div>
                 <StatusPill status={section.status}>
                   {section.status}
                 </StatusPill>
               </div>
-              <div className="min-w-0">
-                <p className="text-sm">{section.current}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Diff from production: {section.diffFromProduction}
-                </p>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                <p>Validation: {section.validation}</p>
-                <p className="mt-1">Evidence: {section.evidence}</p>
-                <p className="mt-1">Changed by: {section.lastChangedBy}</p>
-              </div>
+              <details className="mt-2 text-xs text-muted-foreground">
+                <summary className="cursor-pointer select-none font-medium text-foreground/80">
+                  Evidence
+                </summary>
+                <div className="mt-2 space-y-1 rounded-md border bg-background/60 p-2">
+                  <p>Diff from production: {section.diffFromProduction}</p>
+                  <p>Validation: {section.validation}</p>
+                  <p>Evidence: {section.evidence}</p>
+                  <p>Changed by: {section.lastChangedBy}</p>
+                </div>
+              </details>
             </article>
           ))}
         </div>
@@ -2832,7 +2843,7 @@ export function AgentOverview({
             the approval or evidence needed.
           </p>
         </div>
-        {data.safeActions.map((action) => {
+        {safeActions.map((action) => {
           const actionContent = (
             <>
               <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-background">

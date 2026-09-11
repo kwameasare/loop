@@ -12,14 +12,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 
 const replace = vi.fn();
+const refresh = vi.fn();
 const getIdTokenClaims = vi.fn();
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace }),
+  useRouter: () => ({ replace, refresh }),
 }));
 
 vi.mock("@auth0/auth0-react", () => ({
-  Auth0Provider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  Auth0Provider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
   useAuth0: () => ({
     getIdTokenClaims,
     isAuthenticated: true,
@@ -44,8 +47,14 @@ describe("AuthCallbackPage", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_LOOP_API_URL = "https://cp.example.test";
     replace.mockReset();
+    refresh.mockReset();
     getIdTokenClaims.mockReset();
     window.sessionStorage.clear();
+    window.history.pushState(
+      {},
+      "",
+      "/auth/callback?returnTo=%2Fagents%2Fagt_42",
+    );
   });
 
   afterEach(() => {
@@ -53,7 +62,7 @@ describe("AuthCallbackPage", () => {
     delete process.env.NEXT_PUBLIC_LOOP_API_URL;
   });
 
-  it("exchanges the id_token, stores the session, and redirects home", async () => {
+  it("exchanges the id_token, stores the session, and redirects to returnTo", async () => {
     getIdTokenClaims.mockResolvedValue({ __raw: "id-token-from-auth0" });
     const fetchSpy = vi.fn(async (url, init) => {
       // Cookie-session refactor: callback POSTs the studio BFF,
@@ -70,7 +79,7 @@ describe("AuthCallbackPage", () => {
           token_type: "Bearer",
           expires_in: 1800,
         }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
+        { status: 200, headers: { "Content-Type": "application/json" } },
       );
     });
     globalThis.fetch = fetchSpy as typeof fetch;
@@ -78,8 +87,9 @@ describe("AuthCallbackPage", () => {
     render(<AuthCallbackPage />);
 
     await waitFor(() => {
-      expect(replace).toHaveBeenCalledWith("/");
+      expect(replace).toHaveBeenCalledWith("/agents/agt_42");
     });
+    expect(refresh).toHaveBeenCalledTimes(1);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const stored = window.sessionStorage.getItem("loop.cp.session");
     expect(stored).toContain("loop-session-xyz");
@@ -88,7 +98,7 @@ describe("AuthCallbackPage", () => {
   it("renders an error when cp-api rejects the exchange", async () => {
     getIdTokenClaims.mockResolvedValue({ __raw: "id-token-from-auth0" });
     globalThis.fetch = vi.fn(
-      async () => new Response("forbidden", { status: 403 })
+      async () => new Response("forbidden", { status: 403 }),
     ) as typeof fetch;
 
     render(<AuthCallbackPage />);
@@ -109,5 +119,31 @@ describe("AuthCallbackPage", () => {
       expect(screen.getByTestId("auth-error")).toBeInTheDocument();
     });
     expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("falls back to /home for unsafe returnTo values", async () => {
+    window.history.pushState(
+      {},
+      "",
+      "/auth/callback?returnTo=https%3A%2F%2Fevil.example",
+    );
+    getIdTokenClaims.mockResolvedValue({ __raw: "id-token-from-auth0" });
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            access_token: "loop-session-xyz",
+            session_token: "loop-session-xyz",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+    ) as typeof fetch;
+
+    render(<AuthCallbackPage />);
+
+    await waitFor(() => {
+      expect(replace).toHaveBeenCalledWith("/home");
+    });
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 });

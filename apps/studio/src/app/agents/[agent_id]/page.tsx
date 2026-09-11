@@ -22,13 +22,11 @@ import {
 import { listDeployments, type Deployment } from "@/lib/deploys";
 import { listEvalSuites, type EvalSuite } from "@/lib/evals";
 import { fetchAgentHandoff, type AgentHandoffModel } from "@/lib/agent-handoff";
-import {
-  getAgentIntake,
-  type AgentIntakeRecord,
-} from "@/lib/agent-intake";
+import { getAgentIntake, type AgentIntakeRecord } from "@/lib/agent-intake";
 import { listAgentWorkflow, type AgentWorkflow } from "@/lib/agent-workflow";
 import { listKbDocuments, type KbDocument } from "@/lib/kb";
 import { listMemoryPolicies, type MemoryPolicy } from "@/lib/memory-policies";
+import { getCpAuthOptions } from "@/lib/server/session";
 import { listToolContracts, type ToolContract } from "@/lib/tool-contracts";
 import { searchTraces, type TraceSummary } from "@/lib/traces";
 import { getAgentDetailData } from "./agent-detail-data";
@@ -89,12 +87,13 @@ export default async function AgentOverviewPage({
   params,
   searchParams,
 }: AgentOverviewPageProps) {
+  const authOptions = getCpAuthOptions();
   const { agent, degradedReason } = await getAgentDetailData(params.agent_id);
   const focusedIntakeId = firstParam(searchParams?.intake);
   let commitment: CommitmentDocument | undefined;
   let commitmentDegradedReason: string | undefined;
   try {
-    commitment = await fetchCurrentCommitment(params.agent_id);
+    commitment = await fetchCurrentCommitment(params.agent_id, authOptions);
   } catch (error) {
     commitmentDegradedReason = errorMessage(
       error,
@@ -104,7 +103,7 @@ export default async function AgentOverviewPage({
   let deployments: Deployment[] = [];
   let deploymentsDegradedReason: string | undefined;
   try {
-    const result = await listDeployments(params.agent_id);
+    const result = await listDeployments(params.agent_id, authOptions);
     deployments = result.items;
     deploymentsDegradedReason = result.degraded_reason;
   } catch (error) {
@@ -116,7 +115,7 @@ export default async function AgentOverviewPage({
   let channelBindings: ChannelBinding[] = [];
   let channelsDegradedReason: string | undefined;
   try {
-    const result = await listChannelBindings(params.agent_id);
+    const result = await listChannelBindings(params.agent_id, authOptions);
     channelBindings = result.items;
     channelsDegradedReason = result.degraded_reason;
   } catch (error) {
@@ -128,7 +127,7 @@ export default async function AgentOverviewPage({
   let toolContracts: ToolContract[] = [];
   let toolsDegradedReason: string | undefined;
   try {
-    const result = await listToolContracts(params.agent_id);
+    const result = await listToolContracts(params.agent_id, authOptions);
     toolContracts = result.items;
   } catch (error) {
     toolsDegradedReason = errorMessage(error, "Could not load tool contracts.");
@@ -136,7 +135,7 @@ export default async function AgentOverviewPage({
   let memoryPolicies: MemoryPolicy[] = [];
   let memoryDegradedReason: string | undefined;
   try {
-    const result = await listMemoryPolicies(params.agent_id);
+    const result = await listMemoryPolicies(params.agent_id, authOptions);
     memoryPolicies = result.items;
   } catch (error) {
     memoryDegradedReason = errorMessage(
@@ -151,7 +150,10 @@ export default async function AgentOverviewPage({
       "Workspace context is required before loading eval suites.";
   } else {
     try {
-      const result = await listEvalSuites({ workspaceId: agent.workspace_id });
+      const result = await listEvalSuites({
+        workspaceId: agent.workspace_id,
+        ...authOptions,
+      });
       evalSuites = result.items.filter(
         (suite) => suite.agentId === params.agent_id,
       );
@@ -163,7 +165,7 @@ export default async function AgentOverviewPage({
   let knowledgeDocuments: KbDocument[] = [];
   let knowledgeDegradedReason: string | undefined;
   try {
-    const result = await listKbDocuments(params.agent_id);
+    const result = await listKbDocuments(params.agent_id, authOptions);
     knowledgeDocuments = result.items;
     knowledgeDegradedReason = result.degraded_reason;
   } catch (error) {
@@ -176,7 +178,8 @@ export default async function AgentOverviewPage({
   let changePackageDegradedReason: string | undefined;
   try {
     changePackage =
-      (await fetchCurrentChangePackage(params.agent_id)).item ?? undefined;
+      (await fetchCurrentChangePackage(params.agent_id, authOptions)).item ??
+      undefined;
   } catch (error) {
     changePackageDegradedReason = errorMessage(
       error,
@@ -193,7 +196,7 @@ export default async function AgentOverviewPage({
       const result = await searchTraces(agent.workspace_id, {
         agent_id: params.agent_id,
         page_size: 10,
-      });
+      }, authOptions);
       traceSummaries = result.traces;
     } catch (error) {
       tracesDegradedReason = errorMessage(
@@ -205,7 +208,7 @@ export default async function AgentOverviewPage({
   let handoffModel: AgentHandoffModel | undefined;
   let handoffDegradedReason: string | undefined;
   try {
-    handoffModel = await fetchAgentHandoff(params.agent_id);
+    handoffModel = await fetchAgentHandoff(params.agent_id, authOptions);
   } catch (error) {
     handoffDegradedReason = errorMessage(
       error,
@@ -220,7 +223,11 @@ export default async function AgentOverviewPage({
         "Workspace context is required before loading the creation intake record.";
     } else {
       try {
-        intakeRecord = await getAgentIntake(agent.workspace_id, focusedIntakeId);
+        intakeRecord = await getAgentIntake(
+          agent.workspace_id,
+          focusedIntakeId,
+          authOptions,
+        );
         if (intakeRecord.agent_id !== params.agent_id) {
           intakeDegradedReason = `Intake ${focusedIntakeId} belongs to agent ${intakeRecord.agent_id}, not ${params.agent_id}.`;
           intakeRecord = undefined;
@@ -236,7 +243,7 @@ export default async function AgentOverviewPage({
   let workflow: AgentWorkflow | undefined;
   let workflowDegradedReason: string | undefined;
   try {
-    workflow = await listAgentWorkflow(params.agent_id);
+    workflow = await listAgentWorkflow(params.agent_id, authOptions);
     workflowDegradedReason = workflow.degraded_reason;
   } catch (error) {
     workflowDegradedReason = errorMessage(
@@ -306,7 +313,21 @@ export default async function AgentOverviewPage({
         commitment={commitment}
       />
       <div className="mx-auto w-full max-w-7xl px-4 lg:px-6">
-        <AgentTestTurn agentId={agent.id} />
+        {degradedReason ? (
+          <section
+            className="instrument-panel rounded-2xl p-5"
+            data-testid="agent-test-turn-disabled"
+          >
+            <p className="text-sm font-semibold">Test turn unavailable</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Reconnect the control-plane session and reload this agent before
+              sending runtime turns. Studio is not substituting fixture
+              behavior.
+            </p>
+          </section>
+        ) : (
+          <AgentTestTurn agentId={agent.id} />
+        )}
       </div>
     </div>
   );

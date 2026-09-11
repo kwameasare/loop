@@ -42,8 +42,31 @@ describe("useUser", () => {
     expect(result.current.user?.email).toBe("user@example.com");
   });
 
-  it("falls back to an existing Loop session while Auth0 is unresolved", async () => {
+  it("uses the mirrored Loop session after an Auth0-backed reload", async () => {
     vi.stubEnv("NEXT_PUBLIC_AUTH0_DOMAIN", "example.auth0.com");
+    auth0State.isAuthenticated = false;
+    auth0State.isLoading = true;
+    auth0State.user = null as unknown as typeof auth0State.user;
+    window.sessionStorage.setItem(
+      __SESSION_STORAGE_KEY_FOR_TESTS__,
+      JSON.stringify({
+        access_token: "opaque.loop.session",
+        session_token: "opaque.loop.session",
+        refresh_token: "refresh-loop-session",
+        token_type: "Bearer",
+        expires_in: 1800,
+        stored_at: Date.now(),
+      }),
+    );
+
+    const { result } = renderHook(() => useUser());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.user?.sub).toBe("dev-pilot");
+  });
+
+  it("uses the local Loop session only when Auth0 is not configured", async () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTH0_DOMAIN", "");
     auth0State.isAuthenticated = false;
     auth0State.isLoading = true;
     auth0State.user = null as unknown as typeof auth0State.user;
