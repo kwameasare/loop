@@ -15,6 +15,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from loop_control_plane._agent_route_utils import resolve_agent_for_route
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
@@ -33,13 +34,11 @@ class KbRefreshPatch(BaseModel):
     cadence: str = Field(default="manual", max_length=32)
 
 
-def _agent_for_id(request: Request, agent_id: UUID) -> Any:
-    agent = request.app.state.cp.agents._agents.get(  # type: ignore[attr-defined]
-        agent_id
-    )
-    if agent is None:
-        raise HTTPException(status_code=404, detail="unknown agent")
-    return agent
+async def _agent_for_id(request: Request, agent_id: UUID) -> Any:
+    try:
+        return await request.app.state.cp.agents.get_by_id(agent_id=agent_id)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail="unknown agent") from exc
 
 
 async def _authorise_agent(
@@ -49,14 +48,12 @@ async def _authorise_agent(
     caller_sub: str,
     required_role: Role | None = None,
 ) -> Any:
-    agent = _agent_for_id(request, agent_id)
-    await authorize_workspace_access(
-        workspaces=request.app.state.cp.workspaces,
-        workspace_id=agent.workspace_id,
-        user_sub=caller_sub,
+    return await resolve_agent_for_route(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
         required_role=required_role,
     )
-    return agent
 
 
 def _studio_status(state: str) -> str:

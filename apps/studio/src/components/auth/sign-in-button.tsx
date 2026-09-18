@@ -44,10 +44,13 @@ export function SignInButton() {
 export function SignOutButton() {
   const { logout } = useAuth0();
   const auth0Configured = useAuth0Configured();
-  const onClick = () => {
+  const onClick = async () => {
     // Drop the cp-api session token before kicking off any logout
     // flow so a same-tab "Sign In" cannot replay the prior session.
     clearSessionToken();
+    await fetch("/api/session", { method: "DELETE" }).catch(() => {
+      /* best-effort cookie cleanup */
+    });
     if (auth0Configured) {
       const returnTo =
         typeof window !== "undefined" ? window.location.origin : undefined;

@@ -7,6 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request
 
+from loop_control_plane._agent_route_utils import resolve_agent_for_route
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
@@ -22,25 +23,20 @@ router = APIRouter(prefix="/v1/agents", tags=["AgentTools"])
 
 
 async def _agent_workspace(request: Request, agent_id: UUID) -> UUID:
-    cp = request.app.state.cp
-    agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
-    if agent is None:
-        raise HTTPException(status_code=404, detail="unknown agent")
+    try:
+        agent = await request.app.state.cp.agents.get_by_id(agent_id=agent_id)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail="unknown agent") from exc
     return agent.workspace_id
 
 
 async def _agent(request: Request, agent_id: UUID, caller_sub: str, *, admin: bool = False) -> Any:
-    cp = request.app.state.cp
-    agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
-    if agent is None:
-        raise HTTPException(status_code=404, detail="unknown agent")
-    await authorize_workspace_access(
-        workspaces=cp.workspaces,
-        workspace_id=agent.workspace_id,
-        user_sub=caller_sub,
+    return await resolve_agent_for_route(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
         required_role=Role.ADMIN if admin else None,
     )
-    return agent
 
 
 def _audit(
@@ -117,13 +113,13 @@ async def list_agent_tools(
         workspace_id=workspace_id,
         user_sub=caller_sub,
     )
+    agent = await cp.agents.get_by_id(agent_id=agent_id)
     versions = await cp.agent_versions.list_for_agent(
         workspace_id=workspace_id,
         agent_id=agent_id,
     )
     if not versions:
         return {"items": []}
-    agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
     active_version = getattr(agent, "active_version", None)
     selected = None
     if active_version is not None:
