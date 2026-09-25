@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { SectionDegraded, SectionEmpty } from "@/components/section-states";
 import { TraceList } from "@/components/trace/trace-list";
+import { getCpAuthOptions } from "@/lib/server/session";
 import { searchTraces, type TraceSummary } from "@/lib/traces";
 import { getAgentDetailData } from "../agent-detail-data";
 
@@ -62,6 +63,7 @@ export default async function AgentTracesPage({
   params,
   searchParams,
 }: PageProps) {
+  const authOptions = getCpAuthOptions();
   const { agent, degradedReason: agentDegradedReason } =
     await getAgentDetailData(params.agent_id);
   let traces: TraceSummary[] = [];
@@ -77,7 +79,7 @@ export default async function AgentTracesPage({
       const result = await searchTraces(agent.workspace_id, {
         agent_id: params.agent_id,
         page_size: 100,
-      });
+      }, authOptions);
       traces = result.traces;
     } catch (error) {
       tracesDegradedReason = messageFromError(

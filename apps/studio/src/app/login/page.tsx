@@ -22,24 +22,101 @@
 
 import { useAuth0 } from "@auth0/auth0-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { storeSessionToken } from "@/lib/cp-auth-exchange";
 import { useAuth0Configured } from "@/lib/auth-mode";
 import { useUser } from "@/lib/use-user";
 
 function Auth0Login({ returnTo }: { returnTo: string }) {
-  const { loginWithRedirect } = useAuth0();
+  const { getIdTokenClaims, loginWithRedirect } = useAuth0();
   const { isAuthenticated, isLoading } = useUser();
   const router = useRouter();
+  const exchangeRef = useRef(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (isLoading) return;
     if (isAuthenticated) {
-      router.replace(returnTo);
+      if (exchangeRef.current) return;
+      exchangeRef.current = true;
+      void (async () => {
+        try {
+          const claims = await getIdTokenClaims();
+          const idToken = claims?.__raw;
+          if (!idToken) {
+            throw new Error("Auth0 returned no id_token for session exchange.");
+          }
+          const response = await fetch("/api/session", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ id_token: idToken }),
+          });
+          const text = await response.text();
+          if (!response.ok) {
+            throw new Error(
+              `/api/session returned HTTP ${response.status}: ${text.slice(
+                0,
+                180,
+              )}`,
+            );
+          }
+          storeSessionToken(JSON.parse(text));
+          router.replace(returnTo);
+        } catch (err) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Could not establish the Loop control-plane session.",
+          );
+        }
+      })();
       return;
     }
     void loginWithRedirect({ appState: { returnTo } });
-  }, [isLoading, isAuthenticated, loginWithRedirect, returnTo, router]);
+  }, [
+    getIdTokenClaims,
+    isLoading,
+    isAuthenticated,
+    loginWithRedirect,
+    returnTo,
+    router,
+    retryKey,
+  ]);
+
+  if (error) {
+    return (
+      <main
+        className="flex min-h-screen items-center justify-center px-4"
+        role="alert"
+      >
+        <div className="max-w-md rounded-lg border bg-card p-6 text-center shadow-sm">
+          <p className="font-medium text-destructive">
+            Sign-in could not finish
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+          <button
+            type="button"
+            className="mt-4 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted"
+            onClick={() => {
+              exchangeRef.current = false;
+              setError(null);
+              setRetryKey((value) => value + 1);
+            }}
+          >
+            Retry session exchange
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main
@@ -47,7 +124,11 @@ function Auth0Login({ returnTo }: { returnTo: string }) {
       role="status"
       aria-label="Redirecting to sign in"
     >
-      <p className="text-muted-foreground">Redirecting to sign in…</p>
+      <p className="text-muted-foreground">
+        {isAuthenticated
+          ? "Completing control-plane session…"
+          : "Redirecting to sign in…"}
+      </p>
     </main>
   );
 }
@@ -113,9 +194,9 @@ function LocalPilotLogin({ returnTo }: { returnTo: string }) {
             Sign in (local pilot)
           </h1>
           <p className="text-muted-foreground text-sm">
-            No Auth0 configured. Enter any email — the studio will mint a
-            local session via cp&apos;s dev exchange. Production deploys
-            require a real IdP.
+            No Auth0 configured. Enter any email — the studio will mint a local
+            session via cp&apos;s dev exchange. Production deploys require a
+            real IdP.
           </p>
         </div>
         <label className="flex flex-col gap-1 text-sm">

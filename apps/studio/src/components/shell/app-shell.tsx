@@ -42,31 +42,33 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div
-      className="aurora-shell grid min-h-screen grid-cols-1 text-foreground lg:grid-cols-[max-content_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)]"
-      data-testid="app-shell"
-    >
-      <PointerDelight />
-      <aside
-        className="glass-panel quiet-scrollbar border-b shadow-[inset_-1px_0_0_hsl(var(--foreground)/0.03)] lg:row-span-2 lg:w-72 lg:min-w-64 lg:max-w-80 lg:resize-x lg:overflow-auto lg:border-b-0 lg:border-r"
-        aria-label="Workspace navigation"
-        data-testid="asset-rail"
+    <RequireAuth>
+      <div
+        className="aurora-shell grid min-h-screen grid-cols-1 text-foreground lg:grid-cols-[max-content_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)]"
+        data-testid="app-shell"
       >
-        <SidebarNav />
-      </aside>
-      <div>
-        <Topbar />
+        <PointerDelight />
+        <aside
+          className="glass-panel quiet-scrollbar border-b shadow-[inset_-1px_0_0_hsl(var(--foreground)/0.03)] lg:row-span-2 lg:w-72 lg:min-w-64 lg:max-w-80 lg:resize-x lg:overflow-auto lg:border-b-0 lg:border-r"
+          aria-label="Workspace navigation"
+          data-testid="asset-rail"
+        >
+          <SidebarNav />
+        </aside>
+        <div>
+          <Topbar />
+        </div>
+        <section
+          className="page-enter quiet-scrollbar min-w-0 overflow-auto bg-background/48"
+          aria-label="Studio work surface"
+          data-testid="work-surface"
+        >
+          {children}
+        </section>
+        <Suspense fallback={null}>
+          <TelemetryConsentGate />
+        </Suspense>
       </div>
-      <section
-        className="page-enter quiet-scrollbar min-w-0 overflow-auto bg-background/48"
-        aria-label="Studio work surface"
-        data-testid="work-surface"
-      >
-        <RequireAuth>{children}</RequireAuth>
-      </section>
-      <Suspense fallback={null}>
-        <TelemetryConsentGate />
-      </Suspense>
-    </div>
+    </RequireAuth>
   );
 }
