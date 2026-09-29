@@ -5,7 +5,7 @@ description = "Loop MCP client — auto-MCP'd Python tools, JSON Schema generato
 license = { text = "Apache-2.0" }
 requires-python = ">=3.12"
 dependencies = [
-    "pydantic>=2.7",
+    "pydantic>=2.13.4",
 ]
 
 [build-system]
