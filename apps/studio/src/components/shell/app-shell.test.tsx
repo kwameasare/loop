@@ -1,5 +1,11 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const authState = vi.hoisted(() => ({
+  user: { sub: "dev-pilot", email: "dev@loop.local", name: "Pilot User" },
+  isAuthenticated: true,
+  isLoading: false,
+}));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/agents",
@@ -53,11 +59,7 @@ vi.mock("@/lib/use-active-workspace", () => ({
 }));
 
 vi.mock("@/lib/use-user", () => ({
-  useUser: () => ({
-    user: { sub: "dev-pilot", email: "dev@loop.local", name: "Pilot User" },
-    isAuthenticated: true,
-    isLoading: false,
-  }),
+  useUser: () => authState,
 }));
 
 vi.mock("@/lib/use-presence-socket", () => ({
@@ -72,6 +74,16 @@ vi.mock("@/lib/use-presence-socket", () => ({
 import { AppShell } from "@/components/shell/app-shell";
 
 describe("AppShell", () => {
+  beforeEach(() => {
+    authState.user = {
+      sub: "dev-pilot",
+      email: "dev@loop.local",
+      name: "Pilot User",
+    };
+    authState.isAuthenticated = true;
+    authState.isLoading = false;
+  });
+
   it("mounts the disciplined Studio shell without global live fixtures", () => {
     render(
       <AppShell>
@@ -88,5 +100,22 @@ describe("AppShell", () => {
     expect(screen.queryByTestId("activity-timeline")).not.toBeInTheDocument();
     expect(screen.queryByTestId("status-footer")).not.toBeInTheDocument();
     expect(screen.getByTestId("telemetry-consent-gate")).toBeInTheDocument();
+  });
+
+  it("does not mount operational chrome before authentication is ready", () => {
+    authState.user = null;
+    authState.isAuthenticated = false;
+
+    render(
+      <AppShell>
+        <div>Workbench content</div>
+      </AppShell>,
+    );
+
+    expect(screen.queryByTestId("asset-rail")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("topbar")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("status", { name: "Checking session" }),
+    ).toBeInTheDocument();
   });
 });

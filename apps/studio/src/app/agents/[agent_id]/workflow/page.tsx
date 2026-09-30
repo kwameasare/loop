@@ -1,6 +1,7 @@
 import { ReleaseCandidatePanel } from "@/components/agents/release-candidate-panel";
 import { SectionDegraded } from "@/components/section-states";
 import { listAgentWorkflow } from "@/lib/agent-workflow";
+import { getCpAuthOptions } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
 
@@ -16,9 +17,10 @@ export default async function AgentWorkflowPage({
   params,
   searchParams,
 }: AgentWorkflowPageProps) {
+  const authOptions = getCpAuthOptions();
   const branchId = searchParams?.branch_id;
   const changeSetId = searchParams?.change_set_id;
-  const workflow = await listAgentWorkflow(params.agent_id).catch((error: unknown) => ({
+  const workflow = await listAgentWorkflow(params.agent_id, authOptions).catch((error: unknown) => ({
     branches: [],
     change_sets: [],
     release_candidates: [],

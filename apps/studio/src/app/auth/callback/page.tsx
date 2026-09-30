@@ -31,10 +31,18 @@ import {
   type AuthExchangeResponse,
 } from "@/lib/cp-auth-exchange";
 
+function readSafeReturnTo(): string {
+  if (typeof window === "undefined") return "/home";
+  const target = new URLSearchParams(window.location.search).get("returnTo");
+  return target && target.startsWith("/") && !target.startsWith("//")
+    ? target
+    : "/home";
+}
+
 export default function AuthCallbackPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useUser();
-  const { getIdTokenClaims } = useAuth0();
+  const { getIdTokenClaims, user: auth0User } = useAuth0();
   const exchangedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +59,7 @@ export default function AuthCallbackPage() {
           throw new AuthExchangeError(
             "Auth0 returned no id_token after PKCE exchange",
             0,
-            ""
+            "",
           );
         }
         // POST to the BFF Route Handler — it talks to cp server-side
@@ -72,8 +80,14 @@ export default function AuthCallbackPage() {
         const session = (await response.json()) as AuthExchangeResponse;
         // Mirror to sessionStorage for client-side fetches that still
         // read it directly (channel forms, test-turn widget, etc.).
-        storeSessionToken(session);
-        if (!cancelled) router.replace("/");
+        storeSessionToken(session, auth0User);
+        if (!cancelled) {
+          router.replace(readSafeReturnTo());
+          // The target route may have rendered once before `/api/session`
+          // wrote the HttpOnly cp cookie. Force a fresh RSC fetch so
+          // agent/workspace server components re-run with the real session.
+          router.refresh();
+        }
       } catch (err) {
         if (cancelled) return;
         const message = err instanceof Error ? err.message : "Sign-in failed";
@@ -84,7 +98,7 @@ export default function AuthCallbackPage() {
     return () => {
       cancelled = true;
     };
-  }, [isLoading, isAuthenticated, getIdTokenClaims, router]);
+  }, [isLoading, isAuthenticated, getIdTokenClaims, auth0User, router]);
 
   if (error) {
     return (

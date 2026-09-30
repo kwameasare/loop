@@ -61,6 +61,7 @@ export function AgentTestDrawer({ agentId }: AgentTestDrawerProps) {
   const base = `/agents/${encodeURIComponent(agentId)}`;
   return (
     <details
+      id="agent-test-drawer"
       className="rounded-md border bg-card"
       data-testid="agent-test-drawer"
     >

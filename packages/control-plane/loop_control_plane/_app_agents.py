@@ -76,6 +76,13 @@ class AgentRegistry:
                 raise WorkspaceError(f"unknown agent: {agent_id}")
             return agent
 
+    async def get_by_id(self, *, agent_id: UUID) -> AgentRecord:
+        async with self._lock:
+            agent = self._agents.get(agent_id)
+            if agent is None or agent.archived_at is not None:
+                raise WorkspaceError(f"unknown agent: {agent_id}")
+            return agent
+
     async def archive(self, *, workspace_id: UUID, agent_id: UUID) -> None:
         async with self._lock:
             agent = self._agents.get(agent_id)
@@ -212,6 +219,28 @@ class PostgresAgentRegistry:
                         """
                     ),
                     {"id": agent_id, "workspace_id": workspace_id},
+                )
+            ).first()
+        if row is None:
+            raise WorkspaceError(f"unknown agent: {agent_id}")
+        return _row_to_agent(row)
+
+    async def get_by_id(self, *, agent_id: UUID) -> AgentRecord:
+        from sqlalchemy import text
+
+        async with self._engine.begin() as conn:
+            row = (
+                await conn.execute(
+                    text(
+                        """
+                        SELECT id, workspace_id, name, slug, description,
+                               created_at, archived_at
+                          FROM agents
+                         WHERE id = :id
+                           AND archived_at IS NULL
+                        """
+                    ),
+                    {"id": agent_id},
                 )
             ).first()
         if row is None:

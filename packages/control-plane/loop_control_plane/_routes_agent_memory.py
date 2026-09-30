@@ -9,6 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from loop_memory.models import MemoryEntry
 
+from loop_control_plane._agent_route_utils import resolve_agent_for_route
 from loop_control_plane._app_common import CALLER, request_id
 from loop_control_plane.audit_events import record_audit_event
 from loop_control_plane.authorize import Role, authorize_workspace_access
@@ -22,10 +23,10 @@ router = APIRouter(prefix="/v1/agents", tags=["Memory"])
 
 
 async def _agent_workspace(request: Request, agent_id: UUID) -> UUID:
-    cp = request.app.state.cp
-    agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
-    if agent is None:
-        raise HTTPException(status_code=404, detail="unknown agent")
+    try:
+        agent = await request.app.state.cp.agents.get_by_id(agent_id=agent_id)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail="unknown agent") from exc
     return agent.workspace_id
 
 
@@ -36,17 +37,12 @@ async def _agent(
     *,
     admin: bool = False,
 ) -> Any:
-    cp = request.app.state.cp
-    agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
-    if agent is None:
-        raise HTTPException(status_code=404, detail="unknown agent")
-    await authorize_workspace_access(
-        workspaces=cp.workspaces,
-        workspace_id=agent.workspace_id,
-        user_sub=caller_sub,
+    return await resolve_agent_for_route(
+        request,
+        agent_id=agent_id,
+        caller_sub=caller_sub,
         required_role=Role.ADMIN if admin else None,
     )
-    return agent
 
 
 def _audit(
