@@ -36,6 +36,11 @@ export function getCpAccessToken(): string | undefined {
   }
 }
 
+export function getCpAuthOptions(): { token: string } | Record<string, never> {
+  const token = getCpAccessToken();
+  return token ? { token } : {};
+}
+
 /**
  * Read the refresh-token cookie. Used only by
  * ``/api/session/refresh``.

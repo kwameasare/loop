@@ -83,14 +83,27 @@ export function AuthProvider({ children, config, envName }: AuthProviderProps) {
         }}
         useRefreshTokens
         cacheLocation="memory"
-        // S151: route the user back to ``appState.returnTo`` (set by
-        // /login) after the post-callback round-trip.
+        // S151: keep the callback route mounted until it finishes the
+        // Loop /api/session exchange. Rewriting history directly to
+        // returnTo here leaves the AuthCallbackPage component rendered
+        // under the target URL, which strands the UI on
+        // "Completing sign-in…" even though the topbar is authenticated.
         onRedirectCallback={(appState?: AppState) => {
           if (typeof window === "undefined") return;
           const target = appState?.returnTo;
-          if (typeof target === "string" && target.startsWith("/")) {
-            window.history.replaceState({}, document.title, target);
-          }
+          const returnTo =
+            typeof target === "string" &&
+            target.startsWith("/") &&
+            !target.startsWith("//")
+              ? target
+              : "/home";
+          const callbackUrl = new URL("/auth/callback", window.location.origin);
+          callbackUrl.searchParams.set("returnTo", returnTo);
+          window.history.replaceState(
+            {},
+            document.title,
+            `${callbackUrl.pathname}${callbackUrl.search}`,
+          );
         }}
       >
         {children}

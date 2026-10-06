@@ -64,4 +64,22 @@ describe("AgentEvidenceRail", () => {
       "/agents/agent_1/traces",
     );
   });
+
+  it("keeps the rail compact with links to full test surfaces", () => {
+    render(<AgentEvidenceRail agentId="agent_1" pathname="/agents/agent_1" />);
+
+    expect(screen.getByTestId("agent-rail-actions")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-rail-action-simulate")).toHaveAttribute(
+      "href",
+      "/agents/agent_1/simulator",
+    );
+    expect(screen.getByTestId("agent-rail-action-replay")).toHaveAttribute(
+      "href",
+      "/agents/agent_1/traces?mode=replay",
+    );
+    expect(
+      screen.getByTestId("agent-rail-action-open-drawer"),
+    ).toHaveAttribute("href", "#agent-test-drawer");
+    expect(screen.queryByText("Message this agent")).not.toBeInTheDocument();
+  });
 });

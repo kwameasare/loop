@@ -12,7 +12,7 @@ import { TelemetryConsentCard } from "@/components/help/telemetry-consent-card";
 export function TelemetryConsentGate(): JSX.Element {
   return (
     <div
-      className="pointer-events-none fixed bottom-4 right-4 z-40 w-[min(34rem,calc(100vw-2rem))]"
+      className="pointer-events-none fixed bottom-4 right-4 z-40 w-[min(22rem,calc(100vw-2rem))]"
       data-testid="telemetry-consent-gate"
       aria-live="polite"
     >

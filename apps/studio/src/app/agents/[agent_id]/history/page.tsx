@@ -1,6 +1,7 @@
 import { AgentHistoryWalkthrough } from "@/components/agents/agent-history-walkthrough";
 import { SectionDegraded } from "@/components/section-states";
 import { fetchAgentHandoff, type AgentHandoffModel } from "@/lib/agent-handoff";
+import { getCpAuthOptions } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
 
@@ -31,9 +32,10 @@ export default async function AgentHistoryPage({
   params,
   searchParams,
 }: PageProps) {
+  const authOptions = getCpAuthOptions();
   let model: AgentHandoffModel;
   try {
-    model = await fetchAgentHandoff(params.agent_id);
+    model = await fetchAgentHandoff(params.agent_id, authOptions);
   } catch (error) {
     return (
       <main className="mx-auto max-w-3xl p-6">
