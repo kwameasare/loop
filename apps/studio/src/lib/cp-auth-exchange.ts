@@ -25,6 +25,13 @@ export interface AuthRefreshResponse {
   refresh_expires_at_ms?: number;
 }
 
+export interface StoredSessionUser {
+  sub?: string;
+  email?: string;
+  name?: string;
+  picture?: string;
+}
+
 export class AuthExchangeError extends Error {
   status: number;
   body: string;
@@ -159,8 +166,24 @@ export async function refreshSessionToken(
   return obj as unknown as AuthRefreshResponse;
 }
 
-export function storeSessionToken(payload: AuthExchangeResponse): void {
+function cleanStoredUser(
+  user: StoredSessionUser | null | undefined,
+): StoredSessionUser | undefined {
+  if (!user?.sub) return undefined;
+  return {
+    sub: user.sub,
+    ...(user.email ? { email: user.email } : {}),
+    ...(user.name ? { name: user.name } : {}),
+    ...(user.picture ? { picture: user.picture } : {}),
+  };
+}
+
+export function storeSessionToken(
+  payload: AuthExchangeResponse,
+  user?: StoredSessionUser | null,
+): void {
   if (typeof window === "undefined") return;
+  const storedUser = cleanStoredUser(user);
   try {
     window.sessionStorage.setItem(
       SESSION_STORAGE_KEY,
@@ -171,6 +194,7 @@ export function storeSessionToken(payload: AuthExchangeResponse): void {
         expires_in: payload.expires_in ?? null,
         token_type: payload.token_type ?? "Bearer",
         stored_at: Date.now(),
+        ...(storedUser ? { user: storedUser } : {}),
       })
     );
   } catch {
@@ -198,6 +222,7 @@ export function replaceSessionTokens(payload: AuthRefreshResponse): void {
         expires_in: existing?.expires_in ?? null,
         token_type: payload.token_type ?? existing?.token_type ?? "Bearer",
         stored_at: Date.now(),
+        ...(existing?.user ? { user: existing.user } : {}),
       }),
     );
   } catch {
@@ -221,6 +246,7 @@ export function readSessionToken(): {
   expires_in: number | null;
   token_type: string;
   stored_at: number;
+  user?: StoredSessionUser;
 } | null {
   if (typeof window === "undefined") return null;
   try {
