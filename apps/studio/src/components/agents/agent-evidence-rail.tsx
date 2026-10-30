@@ -2,13 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ActivitySquare, ExternalLink } from "lucide-react";
-
-import { EmulatorPanel } from "@/components/agents/emulator-panel";
+import {
+  ActivitySquare,
+  ExternalLink,
+  FlaskConical,
+  GitCompareArrows,
+  LockKeyhole,
+  Rocket,
+  TestTube2,
+} from "lucide-react";
 
 interface AgentEvidenceRailProps {
   agentId: string;
   pathname?: string;
+  degradedReason?: string | undefined;
 }
 
 interface EvidenceLink {
@@ -23,6 +30,43 @@ interface EvidenceContext {
   links: EvidenceLink[];
 }
 
+interface RailAction {
+  id: string;
+  label: string;
+  href: string;
+  icon: typeof TestTube2;
+}
+
+function railActions(agentId: string): RailAction[] {
+  const base = `/agents/${encodeURIComponent(agentId)}`;
+  return [
+    {
+      id: "simulate",
+      label: "Simulate",
+      href: `${base}/simulator`,
+      icon: TestTube2,
+    },
+    {
+      id: "evals",
+      label: "Evals",
+      href: `${base}/evals`,
+      icon: FlaskConical,
+    },
+    {
+      id: "replay",
+      label: "Replay",
+      href: `${base}/traces?mode=replay`,
+      icon: GitCompareArrows,
+    },
+    {
+      id: "preflight",
+      label: "Preflight",
+      href: `${base}/deploys?panel=promotion`,
+      icon: Rocket,
+    },
+  ];
+}
+
 function segmentFromPath(agentId: string, pathname: string): string {
   const base = `/agents/${agentId}`;
   if (!pathname.startsWith(base)) return "";
@@ -35,7 +79,7 @@ function evidenceContext(agentId: string, segment: string): EvidenceContext {
     behavior: {
       title: "Behavior evidence",
       summary:
-        "Use failed traces, affected evals, production version, risk flags, and approval requirements while editing behavior.",
+        "Failed traces, affected evals, production version, and approval requirements.",
       links: [
         {
           id: "failed-traces",
@@ -62,7 +106,7 @@ function evidenceContext(agentId: string, segment: string): EvidenceContext {
     tools: {
       title: "Tool evidence",
       summary:
-        "Review recent tool failures, latency, permissions, secrets status, and audit events before granting or changing tools.",
+        "Recent failures, permissions, secrets, latency, and audit trail.",
       links: [
         {
           id: "tool-failures",
@@ -81,7 +125,7 @@ function evidenceContext(agentId: string, segment: string): EvidenceContext {
     kb: {
       title: "Knowledge evidence",
       summary:
-        "Keep retrieval tests, stale documents, coverage gaps, and recent unanswered questions visible beside knowledge edits.",
+        "Retrieval tests, stale documents, coverage gaps, and unanswered questions.",
       links: [
         {
           id: "retrieval-tests",
@@ -108,7 +152,7 @@ function evidenceContext(agentId: string, segment: string): EvidenceContext {
     memory: {
       title: "Memory evidence",
       summary:
-        "Inspect proposed writes, privacy flags, retention policy, and source traces while changing memory behavior.",
+        "Proposed writes, privacy flags, retention policy, and source traces.",
       links: [
         {
           id: "writes",
@@ -135,7 +179,7 @@ function evidenceContext(agentId: string, segment: string): EvidenceContext {
     channels: {
       title: "Channel evidence",
       summary:
-        "Check channel readiness, transcript capture, compliance status, and preview runs for every binding.",
+        "Readiness, previews, transcripts, and compliance for every channel.",
       links: [
         {
           id: "readiness",
@@ -162,7 +206,7 @@ function evidenceContext(agentId: string, segment: string): EvidenceContext {
     deploys: {
       title: "Deployment evidence",
       summary:
-        "Keep release candidate, eval gates, rollout state, rollback target, and audit evidence together before traffic moves.",
+        "Release candidate, eval gates, rollout state, and rollback target.",
       links: [
         {
           id: "release-candidate",
@@ -189,7 +233,7 @@ function evidenceContext(agentId: string, segment: string): EvidenceContext {
     history: {
       title: "Continuity evidence",
       summary:
-        "Review owners, open risks, incidents, transfers, and source artifacts before handing off responsibility.",
+        "Owners, open risks, incidents, transfers, and source artifacts.",
       links: [
         { id: "owners", label: "Owners", href: `${base}/history#owners` },
         {
@@ -214,7 +258,7 @@ function evidenceContext(agentId: string, segment: string): EvidenceContext {
     contexts[segment] ?? {
       title: "Workbench evidence",
       summary:
-        "State, traces, evals, deploys, and governance remain available while you work inside this agent.",
+        "State, traces, evals, deploys, and governance for this agent.",
       links: [
         { id: "state", label: "State evidence", href: `${base}` },
         { id: "traces", label: "Traces", href: `${base}/traces` },
@@ -228,38 +272,91 @@ function evidenceContext(agentId: string, segment: string): EvidenceContext {
 export function AgentEvidenceRail({
   agentId,
   pathname,
+  degradedReason,
 }: AgentEvidenceRailProps) {
   const currentPathname = usePathname();
   const segment = segmentFromPath(agentId, pathname ?? currentPathname ?? "");
   const context = evidenceContext(agentId, segment);
+  const actions = railActions(agentId);
 
   return (
-    <div className="space-y-4" data-testid="agent-evidence-rail">
+    <div className="space-y-3" data-testid="agent-evidence-rail">
       <section
-        className="instrument-panel rounded-2xl p-4"
+        className="instrument-panel rounded-md p-3"
         data-testid="agent-evidence-context"
       >
-        <div className="flex items-center gap-2">
-          <ActivitySquare className="h-4 w-4" aria-hidden />
-          <h2 className="text-sm font-semibold">{context.title}</h2>
+        <div className="flex items-start gap-2">
+          <ActivitySquare className="mt-0.5 h-4 w-4 text-primary" aria-hidden />
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold">{context.title}</h2>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              {context.summary}
+            </p>
+          </div>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">{context.summary}</p>
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-3 flex flex-wrap gap-2">
           {context.links.map((link) => (
             <li key={link.id}>
               <Link
                 href={link.href}
-                className="flex items-center justify-between gap-2 rounded-md border bg-background px-2.5 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                className="inline-flex items-center gap-1.5 rounded-full border bg-background/80 px-2.5 py-1 text-xs font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 data-testid={`agent-evidence-link-${link.id}`}
               >
                 {link.label}
-                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                <ExternalLink className="h-3 w-3" aria-hidden />
               </Link>
             </li>
           ))}
         </ul>
       </section>
-      <EmulatorPanel agentId={agentId} evidenceMode="empty" />
+      {degradedReason ? (
+        <section
+          className="instrument-panel rounded-md p-3"
+          data-testid="agent-emulator-disabled"
+        >
+          <div className="flex items-center gap-2">
+            <LockKeyhole className="h-4 w-4 text-warning" aria-hidden />
+            <h2 className="text-sm font-semibold">Testing unavailable</h2>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Live test actions stay locked until this agent loads from the
+            control plane.
+          </p>
+          <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 p-2 text-xs leading-5 text-warning">
+            {degradedReason}
+          </p>
+        </section>
+      ) : (
+        <section
+          className="instrument-panel rounded-md p-3"
+          data-testid="agent-rail-actions"
+        >
+          <h2 className="text-sm font-semibold">Test actions</h2>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {actions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <Link
+                  key={action.id}
+                  href={action.href}
+                  className="inline-flex items-center gap-1.5 rounded-md border bg-background/80 px-2.5 py-2 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  data-testid={`agent-rail-action-${action.id}`}
+                >
+                  <Icon className="h-3.5 w-3.5" aria-hidden />
+                  {action.label}
+                </Link>
+              );
+            })}
+          </div>
+          <Link
+            href="#agent-test-drawer"
+            className="mt-3 inline-flex w-full items-center justify-center rounded-md border bg-background px-2.5 py-2 text-xs font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            data-testid="agent-rail-action-open-drawer"
+          >
+            Open full test drawer
+          </Link>
+        </section>
+      )}
     </div>
   );
 }

@@ -32,6 +32,10 @@ describe("SidebarNav", () => {
     render(<SidebarNav />);
     expect(screen.getByTestId("nav-inbox")).toHaveAttribute("href", "/inbox");
     expect(screen.getByTestId("nav-agents")).toHaveAttribute("href", "/agents");
+    expect(screen.getByTestId("nav-agents")).toHaveTextContent("Agents");
+    expect(screen.getByTestId("nav-agents")).not.toHaveTextContent(
+      "Agent Workbench",
+    );
     expect(screen.getByTestId("nav-channels")).toHaveAttribute(
       "href",
       "/channels",
@@ -40,7 +44,15 @@ describe("SidebarNav", () => {
     expect(screen.getByTestId("nav-channels")).toHaveTextContent(
       "Web, WhatsApp, Telegram, Slack, Teams, SMS, email, voice",
     );
-    expect(screen.getByTestId("nav-voice-channel-stage")).toHaveAttribute(
+    expect(screen.getByTestId("nav-channel-whatsapp")).toHaveAttribute(
+      "href",
+      "/channels?channel=whatsapp",
+    );
+    expect(screen.getByTestId("nav-channel-telegram")).toHaveAttribute(
+      "href",
+      "/channels?channel=telegram",
+    );
+    expect(screen.getByTestId("nav-channel-voice")).toHaveAttribute(
       "href",
       "/voice",
     );

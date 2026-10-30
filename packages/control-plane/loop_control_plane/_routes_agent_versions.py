@@ -34,13 +34,10 @@ router = APIRouter(prefix="/v1/agents", tags=["AgentVersions"])
 async def _agent_workspace(request: Request, agent_id: UUID) -> UUID:
     """Find the agent's workspace_id without enforcing membership;
     callers chain into `authorize_workspace_access` afterwards."""
-    cp = request.app.state.cp
-    # AgentRegistry.get requires (workspace_id, agent_id); to look up
-    # cross-workspace we walk the in-memory map. Postgres impl does
-    # `SELECT workspace_id FROM agents WHERE id = $1`.
-    agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
-    if agent is None:
-        raise HTTPException(status_code=404, detail="unknown agent")
+    try:
+        agent = await request.app.state.cp.agents.get_by_id(agent_id=agent_id)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail="unknown agent") from exc
     return agent.workspace_id
 
 
