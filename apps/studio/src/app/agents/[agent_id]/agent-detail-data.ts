@@ -128,7 +128,8 @@ export function agentWorkbenchTopbarFacts(
       id: "production",
       label: "Production",
       value: agentProductionLabel(agent),
-      evidence: agent.active_version !== null ? "agent.active_version" : "agent",
+      evidence:
+        agent.active_version !== null ? "agent.active_version" : "agent",
     },
     {
       id: "environment",
@@ -178,12 +179,7 @@ function slugFromAgentId(agentId: string): string {
 function fallbackAgent(agentId: string): AgentSummary {
   return {
     id: agentId,
-    name:
-      slugFromAgentId(agentId)
-        .split("-")
-        .filter(Boolean)
-        .map((part) => part[0]?.toUpperCase() + part.slice(1))
-        .join(" ") || "Unavailable agent",
+    name: "Agent unavailable",
     description: "Live agent data is unavailable for this request.",
     slug: slugFromAgentId(agentId),
     active_version: null,

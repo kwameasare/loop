@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, Request, Response
 
+from loop_control_plane._agent_route_utils import resolve_agent_for_route
 from loop_control_plane._app_agents import AgentCreate, agent_payload
 from loop_control_plane._app_common import ACTIVE_WORKSPACE, CALLER, request_id
 from loop_control_plane.agent_commitments import missing_required_fields
@@ -46,17 +47,12 @@ async def _agent_by_id(
     caller_sub: str,
     required_role: Role | None = None,
 ) -> Any:
-    cp = request.app.state.cp
-    agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
-    if agent is None:
-        raise HTTPException(status_code=404, detail="unknown agent")
-    await _authorise(
+    return await resolve_agent_for_route(
         request,
-        workspace_id=agent.workspace_id,
+        agent_id=agent_id,
         caller_sub=caller_sub,
         required_role=required_role,
     )
-    return agent
 
 
 async def _agent_payload_with_state(request: Request, agent: Any) -> dict[str, Any]:

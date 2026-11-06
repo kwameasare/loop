@@ -4,8 +4,8 @@
  * S150: ``useUser()`` — the canonical identity hook for studio.
  *
  * Wraps `useAuth0` when Auth0 is configured, falls back to reading
- * the cp-api session from ``sessionStorage`` when it isn't (local
- * pilot mode). The studio's ``/login`` page handles both shapes:
+ * the cp-api session from ``sessionStorage`` only when Auth0 is not
+ * configured (local pilot mode). The studio's ``/login`` page handles both shapes:
  * Auth0 PKCE if configured, an email-only ``POST /api/dev-login``
  * otherwise.
  *
@@ -73,6 +73,14 @@ function decodeAccessToken(token: string): DecodedClaims | null {
 function localUserFromSession(): User | null {
   const session = readSessionToken();
   if (!session?.access_token) return null;
+  if (session.user?.sub) {
+    return {
+      sub: session.user.sub,
+      ...(session.user.email ? { email: session.user.email } : {}),
+      ...(session.user.name ? { name: session.user.name } : {}),
+      ...(session.user.picture ? { picture: session.user.picture } : {}),
+    };
+  }
   const claims = decodeAccessToken(session.access_token);
   // Even if decode fails, the presence of a session token means the
   // user signed in via dev-login. Fall back to a generic dev user.
@@ -150,6 +158,14 @@ export function useUser(): UseUserResult {
   const local = useLocalSession();
   if (!auth0Configured) return local;
   if (auth0.isAuthenticated) return auth0;
-  if (local.isAuthenticated) return local;
-  return auth0;
+  if (local.isLoading) {
+    return { user: null, isAuthenticated: false, isLoading: true };
+  }
+  if (!local.isAuthenticated) return auth0;
+  // The Auth0 SDK keeps its token cache in memory. A full page reload can
+  // therefore leave the Studio with valid Loop session cookies plus a mirrored
+  // cp session in sessionStorage while Auth0 reports anonymous until the next
+  // redirect. Treat that cp session as a UI guard only; all real data still
+  // goes through the server-side HttpOnly cookie or the cp-api proxy.
+  return local;
 }

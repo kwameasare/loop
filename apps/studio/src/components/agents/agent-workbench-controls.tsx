@@ -10,6 +10,7 @@ import {
 
 interface AgentWorkbenchControlsProps {
   agentId: string;
+  disabledReason?: string | undefined;
 }
 
 const CONTROLS = [
@@ -53,6 +54,7 @@ const CONTROLS = [
 
 export function AgentWorkbenchControls({
   agentId,
+  disabledReason,
 }: AgentWorkbenchControlsProps) {
   const base = `/agents/${encodeURIComponent(agentId)}`;
   return (
@@ -63,6 +65,21 @@ export function AgentWorkbenchControls({
     >
       {CONTROLS.map((control) => {
         const Icon = control.icon;
+        if (disabledReason) {
+          return (
+            <button
+              key={control.id}
+              type="button"
+              disabled
+              title={disabledReason}
+              className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 text-xs font-medium text-muted-foreground opacity-60"
+              data-testid={`agent-workbench-control-${control.id}`}
+            >
+              <Icon className="h-3.5 w-3.5" aria-hidden />
+              {control.label}
+            </button>
+          );
+        }
         return (
           <Link
             key={control.id}
