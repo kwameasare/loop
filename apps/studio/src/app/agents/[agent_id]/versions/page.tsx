@@ -3,6 +3,7 @@ import { AgentVersionsList } from "@/components/agents/agent-versions-list";
 import { ReleaseCandidatePanel } from "@/components/agents/release-candidate-panel";
 import { listAgentWorkflow } from "@/lib/agent-workflow";
 import { listAgentVersions } from "@/lib/agent-versions";
+import { getCpAuthOptions } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
 
@@ -26,11 +27,13 @@ export default async function AgentVersionsPage({
   params,
   searchParams,
 }: AgentVersionsPageProps) {
+  const authOptions = getCpAuthOptions();
   const [versionPage, workflow] = await Promise.all([
     listAgentVersions(params.agent_id, {
       pageSize: 100,
+      ...authOptions,
     }),
-    listAgentWorkflow(params.agent_id).catch((error: unknown) => ({
+    listAgentWorkflow(params.agent_id, authOptions).catch((error: unknown) => ({
       branches: [],
       change_sets: [],
       release_candidates: [],

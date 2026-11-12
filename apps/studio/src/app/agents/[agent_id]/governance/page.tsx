@@ -17,6 +17,7 @@ import {
   listPreApprovedClasses,
   type PreApprovedClass,
 } from "@/lib/pre-approved-classes";
+import { getCpAuthOptions } from "@/lib/server/session";
 import { getAgentDetailData } from "../agent-detail-data";
 
 interface PageProps {
@@ -73,17 +74,18 @@ function firstParam(value: string | string[] | undefined): string | undefined {
 async function loadGovernanceEvidence(
   agentId: string,
   workspaceId: string,
+  authOptions: { token: string } | Record<string, never>,
 ): Promise<GovernanceEvidence> {
   const degradedReasons: string[] = [];
 
-  const commitment = await fetchCurrentCommitment(agentId).catch((error) => {
+  const commitment = await fetchCurrentCommitment(agentId, authOptions).catch((error) => {
     degradedReasons.push(
       messageFromError(error, "Could not load the current commitment document."),
     );
     return undefined;
   });
 
-  const secrets = await listAgentSecrets(agentId)
+  const secrets = await listAgentSecrets(agentId, authOptions)
     .then((result) => {
       if (result.degraded_reason) degradedReasons.push(result.degraded_reason);
       return result.items;
@@ -95,7 +97,7 @@ async function loadGovernanceEvidence(
       return [];
     });
 
-  const preApprovedClasses = await listPreApprovedClasses(agentId)
+  const preApprovedClasses = await listPreApprovedClasses(agentId, authOptions)
     .then((result) => result.items)
     .catch((error: unknown) => {
       degradedReasons.push(
@@ -112,7 +114,10 @@ async function loadGovernanceEvidence(
     );
   } else {
     try {
-      const result = await listAuditEvents(workspaceId, { limit: 100 });
+      const result = await listAuditEvents(workspaceId, {
+        limit: 100,
+        ...authOptions,
+      });
       auditEvents = result.events.filter((event) =>
         isAgentAuditEvent(event, agentId),
       );
@@ -180,11 +185,13 @@ export default async function AgentGovernancePage({
   params,
   searchParams,
 }: PageProps) {
+  const authOptions = getCpAuthOptions();
   const { agent, degradedReason: agentDegradedReason } =
     await getAgentDetailData(params.agent_id);
   const evidence = await loadGovernanceEvidence(
     params.agent_id,
     agent.workspace_id,
+    authOptions,
   );
   const degradedEvidence = [
     agentDegradedReason,

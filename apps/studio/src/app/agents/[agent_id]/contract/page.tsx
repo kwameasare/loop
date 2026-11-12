@@ -4,6 +4,7 @@ import {
   listCommitments,
   type CommitmentDocument,
 } from "@/lib/agent-commitment";
+import { getCpAuthOptions } from "@/lib/server/session";
 
 interface PageProps {
   params: { agent_id: string };
@@ -18,12 +19,13 @@ export default async function AgentContractPage({
   params,
   searchParams,
 }: PageProps) {
+  const authOptions = getCpAuthOptions();
   let commitment: CommitmentDocument | undefined;
   let history: CommitmentDocument[] = [];
   let degradedReason: string | undefined;
   let historyDegradedReason: string | undefined;
   try {
-    commitment = await fetchCurrentCommitment(params.agent_id);
+    commitment = await fetchCurrentCommitment(params.agent_id, authOptions);
     history = [commitment];
   } catch (error) {
     degradedReason =
@@ -32,7 +34,7 @@ export default async function AgentContractPage({
         : "Could not load the current Commitment Document.";
   }
   try {
-    history = (await listCommitments(params.agent_id)).items;
+    history = (await listCommitments(params.agent_id, authOptions)).items;
   } catch (error) {
     historyDegradedReason =
       error instanceof Error
