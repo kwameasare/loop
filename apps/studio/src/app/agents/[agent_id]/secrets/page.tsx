@@ -1,5 +1,6 @@
 import { SecretsList } from "@/components/agents/secrets-list";
 import { listAgentSecrets } from "@/lib/agent-secrets";
+import { getCpAuthOptions } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +11,10 @@ interface AgentSecretsPageProps {
 export default async function AgentSecretsPage({
   params,
 }: AgentSecretsPageProps) {
+  const authOptions = getCpAuthOptions();
   const { items, degraded_reason } = await listAgentSecrets(
     params.agent_id,
+    authOptions,
   ).catch((error: unknown) => ({
     items: [],
     degraded_reason:

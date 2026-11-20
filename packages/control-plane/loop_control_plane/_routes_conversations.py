@@ -43,10 +43,10 @@ class OperatorMessageBody(BaseModel):
 
 
 async def _agent_workspace(request: Request, agent_id: UUID) -> UUID:
-    cp = request.app.state.cp
-    agent = cp.agents._agents.get(agent_id)  # type: ignore[attr-defined]
-    if agent is None:
-        raise HTTPException(status_code=404, detail="unknown agent")
+    try:
+        agent = await request.app.state.cp.agents.get_by_id(agent_id=agent_id)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail="unknown agent") from exc
     return agent.workspace_id
 
 

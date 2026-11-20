@@ -8,7 +8,25 @@
  */
 
 import { render } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+const auth0ProviderProps = vi.hoisted(() => ({
+  current: null as null | {
+    onRedirectCallback?: (appState?: { returnTo?: string }) => void;
+    children?: ReactNode;
+  },
+}));
+
+vi.mock("@auth0/auth0-react", () => ({
+  Auth0Provider: (props: {
+    onRedirectCallback?: (appState?: { returnTo?: string }) => void;
+    children?: ReactNode;
+  }) => {
+    auth0ProviderProps.current = props;
+    return <>{props.children}</>;
+  },
+}));
 
 import { AuthProvider } from "./auth-provider";
 
@@ -56,5 +74,28 @@ describe("AuthProvider", () => {
         </AuthProvider>,
       ),
     ).not.toThrow();
+  });
+
+  it("keeps Auth0 callback mounted until the Loop session exchange completes", () => {
+    render(
+      <AuthProvider
+        envName="production"
+        config={{
+          domain: "example.auth0.com",
+          clientId: "abc",
+          audience: "loop",
+          redirectUri: "https://app.example/auth/callback",
+        }}
+      >
+        <div>child</div>
+      </AuthProvider>,
+    );
+
+    auth0ProviderProps.current?.onRedirectCallback?.({
+      returnTo: "/agents/agt_42",
+    });
+
+    expect(window.location.pathname).toBe("/auth/callback");
+    expect(window.location.search).toBe("?returnTo=%2Fagents%2Fagt_42");
   });
 });

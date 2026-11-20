@@ -3,6 +3,7 @@ import Link from "next/link";
 import { EvalSuiteList } from "@/components/evals/eval-suite-list";
 import { SectionDegraded, SectionEmpty } from "@/components/section-states";
 import { listEvalSuites, type EvalSuite } from "@/lib/evals";
+import { getCpAuthOptions } from "@/lib/server/session";
 import { getAgentDetailData } from "../agent-detail-data";
 
 interface PageProps {
@@ -66,6 +67,7 @@ export default async function AgentEvalsPage({
   params,
   searchParams,
 }: PageProps) {
+  const authOptions = getCpAuthOptions();
   const { agent, degradedReason: agentDegradedReason } =
     await getAgentDetailData(params.agent_id);
   let suites: EvalSuite[] = [];
@@ -76,7 +78,10 @@ export default async function AgentEvalsPage({
       "Workspace context is required before loading agent eval suites.";
   } else {
     try {
-      const result = await listEvalSuites({ workspaceId: agent.workspace_id });
+      const result = await listEvalSuites({
+        workspaceId: agent.workspace_id,
+        ...authOptions,
+      });
       suites = result.items.filter(
         (suite) => suite.agentId === params.agent_id,
       );

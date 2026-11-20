@@ -8,6 +8,7 @@ import {
   type ChannelBinding,
   type ChannelBindingType,
 } from "@/lib/channel-bindings";
+import { getCpAuthOptions } from "@/lib/server/session";
 import { type WebChannelBinding, getWebChannel } from "@/lib/web-channels";
 
 export const dynamic = "force-dynamic";
@@ -31,10 +32,11 @@ export default async function AgentChannelsPage({
   params,
   searchParams,
 }: AgentChannelsPageProps) {
+  const authOptions = getCpAuthOptions();
   let bindings: ChannelBinding[] = [];
   let bindingsDegradedReason: string | undefined;
   try {
-    const result = await listChannelBindings(params.agent_id);
+    const result = await listChannelBindings(params.agent_id, authOptions);
     bindings = result.items;
     bindingsDegradedReason = result.degraded_reason;
   } catch (err) {
@@ -57,7 +59,7 @@ export default async function AgentChannelsPage({
   };
   let webChannelDegradedReason: string | undefined;
   try {
-    binding = await getWebChannel(params.agent_id);
+    binding = await getWebChannel(params.agent_id, authOptions);
   } catch (err) {
     webChannelDegradedReason =
       err instanceof Error

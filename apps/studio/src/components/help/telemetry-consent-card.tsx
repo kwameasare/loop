@@ -132,25 +132,30 @@ export function TelemetryConsentCard(): JSX.Element | null {
   }
 
   return (
-    <section
-      className="instrument-panel rounded-md p-3"
+    <details
+      className="instrument-panel group rounded-md p-0"
       data-testid="telemetry-consent-card"
-      aria-label="Telemetry consent"
     >
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-start gap-3">
-          <ShieldCheck
-            className="mt-0.5 h-5 w-5 text-primary"
-            aria-hidden={true}
-          />
-          <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-semibold">Telemetry choices</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              No prompts, messages, KB, secrets, traces, or payloads by default.
-            </p>
-          </div>
-        </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
+      <summary
+        className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold [&::-webkit-details-marker]:hidden"
+        aria-label="Telemetry consent"
+      >
+        <span className="inline-flex min-w-0 items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-primary" aria-hidden={true} />
+          <span>Telemetry choices</span>
+        </span>
+        <span className="rounded-full border bg-background px-2 py-0.5 text-[0.68rem] font-medium text-muted-foreground group-open:hidden">
+          Review
+        </span>
+        <span className="hidden rounded-full border bg-background px-2 py-0.5 text-[0.68rem] font-medium text-muted-foreground group-open:inline">
+          Open
+        </span>
+      </summary>
+      <div className="border-t px-3 py-3">
+        <p className="text-xs leading-5 text-muted-foreground">
+          No prompts, messages, KB, secrets, traces, or payloads by default.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
           <Button
             type="button"
             variant="outline"
@@ -176,42 +181,47 @@ export function TelemetryConsentCard(): JSX.Element | null {
             {saving ? "Saving" : "Save"}
           </Button>
         </div>
+        {error ? (
+          <p
+            className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive"
+            role="alert"
+          >
+            {error}
+          </p>
+        ) : null}
+        <details className="mt-3">
+          <summary className="cursor-pointer select-none text-xs font-medium text-muted-foreground hover:text-foreground">
+            Customize telemetry categories
+          </summary>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {CONSENT_CATEGORIES.map(([key, label]) => {
+              const override = model?.admin_overrides?.[key];
+              const locked = typeof override === "boolean";
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  role="switch"
+                  aria-checked={draft[key]}
+                  disabled={locked}
+                  className="interactive-lift pressable flex items-center justify-between gap-3 rounded-md border bg-card/60 px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-70"
+                  onClick={() => toggle(key)}
+                  data-testid={`telemetry-toggle-${key}`}
+                >
+                  <span>{label}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {locked
+                      ? `Locked ${override ? "on" : "off"}`
+                      : draft[key]
+                        ? "On"
+                        : "Off"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </details>
       </div>
-      {error ? (
-        <p
-          className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive"
-          role="alert"
-        >
-          {error}
-        </p>
-      ) : null}
-      <div className="mt-3 grid gap-2 sm:grid-cols-4">
-        {CONSENT_CATEGORIES.map(([key, label]) => {
-          const override = model?.admin_overrides?.[key];
-          const locked = typeof override === "boolean";
-          return (
-            <button
-              key={key}
-              type="button"
-              role="switch"
-              aria-checked={draft[key]}
-              disabled={locked}
-              className="interactive-lift pressable flex items-center justify-between gap-3 rounded-md border bg-card/60 px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-70"
-              onClick={() => toggle(key)}
-              data-testid={`telemetry-toggle-${key}`}
-            >
-              <span>{label}</span>
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {locked
-                  ? `Locked ${override ? "on" : "off"}`
-                  : draft[key]
-                    ? "On"
-                    : "Off"}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
+    </details>
   );
 }
